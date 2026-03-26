@@ -1,0 +1,214 @@
+[
+  {
+    "id": 1001,
+    "description": "Khwai River Lodge is classic Okavango safari luxury with refined suites, warm service, and a front-row seat to wildlife along the river. Expect expertly guided game drives, lantern-lit evenings, and a slow bush rhythm shaped by sunrise and starlight.",
+    "high_season": "Jun–Oct",
+    "low_season": "Jan–Mar",
+    "rain_season": "Nov–Mar"
+  },
+  {
+    "id": 1002,
+    "description": "Mombo Camp is a legendary Okavango safari icon, pairing exceptional guiding with refined comfort in a wildlife-rich setting. Expect intimate luxury, big cat sightings, and a bush rhythm defined by golden light and unforgettable game drives.",
+    "high_season": "Jun–Oct",
+    "low_season": "Jan–Mar",
+    "rain_season": "Nov–Mar"
+  },
+  {
+    "id": 1003,
+    "description": "Sanctuary Chief’s Camp delivers polished safari luxury in the Okavango with spacious suites, impeccable service, and superb guiding. Expect outstanding game viewing and a serene rhythm shaped by waterways, wildlife, and wide skies.",
+    "high_season": "Jun–Oct",
+    "low_season": "Jan–Mar",
+    "rain_season": "Nov–Mar"
+  },
+  {
+    "id": 1004,
+    "description": "Four Seasons Hotel Cairo at Nile Plaza is polished Nile-side luxury with refined rooms, impeccable service, and a calm, contemporary mood above the city’s energy. Expect excellent dining and a composed base for Cairo’s culture and nights out.",
+    "high_season": "Oct–Apr",
+    "low_season": "Jun–Aug",
+    "rain_season": "Dec–Feb"
+  },
+  {
+    "id": 1005,
+    "description": "Four Seasons Hotel Cairo at The First Residence offers refined city luxury with river views, impeccable service, and an elegant sense of calm. Expect polished suites, strong dining, and a composed base for exploring Cairo.",
+    "high_season": "Oct–Apr",
+    "low_season": "Jun–Aug",
+    "rain_season": "Dec–Feb"
+  },
+  {
+    "id": 1006,
+    "description": "&Beyond Bateleur Camp is classic, romantic safari elegance on the edge of the Masai Mara. Expect refined tented suites, exceptional guiding, and a rhythm shaped by big skies, golden savannah light, and unforgettable wildlife encounters.",
+    "high_season": "Jul–Oct",
+    "low_season": "Apr–Jun",
+    "rain_season": "Mar–May"
+  },
+  {
+    "id": 1007,
+    "description": "&Beyond Kichwa Tembo is polished tented safari luxury with warm service and an excellent Mara setting for game viewing. Expect refined comfort, expert guiding, and a bush rhythm shaped by migration drama and sunset light.",
+    "high_season": "Jul–Oct",
+    "low_season": "Apr–Jun",
+    "rain_season": "Mar–May"
+  },
+  {
+    "id": 1008,
+    "description": "Angama Amboseli offers refined safari design with sweeping views and a calm, contemporary rhythm near iconic elephant country. Expect impeccable service, curated experiences, and days shaped by big skies and Kilimanjaro light.",
+    "high_season": "Jun–Oct",
+    "low_season": "Apr–May",
+    "rain_season": "Mar–May"
+  },
+  {
+    "id": 1009,
+    "description": "Angama Mara is high-design safari luxury perched above the Mara, pairing impeccable service with extraordinary views and exceptional guiding. Expect refined tented suites and a rhythm shaped by migration drama and golden-hour stillness.",
+    "high_season": "Jul–Oct",
+    "low_season": "Apr–Jun",
+    "rain_season": "Mar–May"
+  },
+  {
+    "id": 1010,
+    "description": "Il Moran is an intimate Masai Mara camp with classic safari romance, attentive service, and a front-row seat to wildlife. Expect expertly guided game drives and a bush rhythm shaped by fireside evenings and dawn light.",
+    "high_season": "Jul–Oct",
+    "low_season": "Apr–Jun",
+    "rain_season": "Mar–May"
+  },
+
+  {
+    "id": 1011,
+    "description": "Olarro Lodge is a secluded highland retreat offering refined safari-style luxury, warm service, and wide-open Laikipia landscapes. Expect horseback and game experiences, quiet evenings, and a restorative rhythm shaped by big skies and cool air.",
+    "high_season": "Jun–Oct",
+    "low_season": "Apr–May",
+    "rain_season": "Mar–May"
+  },
+  {
+    "id": 1012,
+    "description": "JW Marriott Mauritius Resort is polished beachfront luxury on the dramatic Le Morne peninsula, with refined rooms and a calm, sunlit rhythm. Expect attentive service, lagoon swims, and days shaped by ocean breezes and mountain views.",
+    "high_season": "Jun–Oct, Dec",
+    "low_season": "Jan–Mar",
+    "rain_season": "Jan–Mar"
+  },
+  {
+    "id": 1013,
+    "description": "One&Only Le Saint Géran is Mauritius grandeur—timeless beachfront elegance, impeccable service, and a beautifully composed resort rhythm. Expect refined suites, excellent dining, and serene lagoon days framed by warm light.",
+    "high_season": "Jun–Oct, Dec",
+    "low_season": "Jan–Mar",
+    "rain_season": "Jan–Mar"
+  },
+  {
+    "id": 1014,
+    "description": "Royal Palm Beachcomber is classic, discreet Mauritius luxury with impeccable service and a calm, refined atmosphere. Expect polished suites, excellent dining, and an unhurried beachfront rhythm.",
+    "high_season": "Jun–Oct, Dec",
+    "low_season": "Jan–Mar",
+    "rain_season": "Jan–Mar"
+  },
+  {
+    "id": 1015,
+    "description": "The Residence Mauritius is relaxed, colonial-inspired beachfront comfort with warm service and an easy, sunlit pace. Expect serene suites, lagoon swims, and resort days shaped by sea breezes and soft evenings.",
+    "high_season": "Jun–Oct, Dec",
+    "low_season": "Jan–Mar",
+    "rain_season": "Jan–Mar"
+  },
+  {
+    "id": 1016,
+    "description": "Amanjena is Marrakech serenity—rose-hued pavilions, impeccable service, and a slow, restorative rhythm just beyond the city. Expect tranquil courtyards, spa-led calm, and evenings shaped by warm Moroccan light.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1017,
+    "description": "El Fenn is a design-led riad sanctuary with bold color, intimate spaces, and a quietly social rooftop rhythm. Expect warm hospitality, artful interiors, and a beautifully atmospheric base for Marrakech nights and medina days.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1018,
+    "description": "Fairmont Royal Palm Marrakech is resort-style luxury with expansive grounds, polished service, and an easy rhythm just outside the medina. Expect golf, spa calm, and sunlit days framed by Atlas Mountain views.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1019,
+    "description": "Four Seasons Resort Marrakech blends polished resort comfort with impeccable service and lush gardens close to the city’s energy. Expect serene pools, elevated dining, and a refined base for medina explorations and calm afternoons.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1020,
+    "description": "Kasbah Tamadot is an Atlas Mountains hideaway with warm hospitality, refined comfort, and a romantic sense of place. Expect intimate terraces, curated experiences, and a slow rhythm shaped by mountain air and golden light.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+
+  {
+    "id": 1021,
+    "description": "La Mamounia is Marrakech’s legendary palace—timeless glamour, impeccable service, and gardens that feel like a world of their own. Expect refined rooms, destination dining, and nights that feel unmistakably iconic.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1022,
+    "description": "Mandarin Oriental Marrakech is villa-led serenity with impeccable service, refined design, and a calm, resort-like rhythm on the edge of the city. Expect private pools, spa-led restoration, and evenings framed by Atlas views.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1023,
+    "description": "Nobu Marrakech is contemporary luxury with a lively, design-forward mood and a strong dining identity. Expect polished rooms and an energetic rhythm that blends resort calm with Marrakech nightlife.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1024,
+    "description": "Palais Ronsard is a design-led boutique sanctuary with romantic gardens, refined suites, and a calm, sunlit rhythm. Expect warm service and a serene counterpoint to Marrakech’s intensity.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1025,
+    "description": "The Ritz-Carlton Tamuda Bay offers polished beachfront luxury on Morocco’s northern coast with refined rooms and an easy resort rhythm. Expect attentive service, sea views, and sunlit days shaped by calm waters.",
+    "high_season": "Jun–Sep",
+    "low_season": "Nov–Feb",
+    "rain_season": "Nov–Jan"
+  },
+  {
+    "id": 1026,
+    "description": "Royal Mansour is Marrakech at its most rarefied—private riads, impeccable service, and extraordinary craftsmanship. Expect destination dining, spa-led indulgence, and a sense of luxury that feels profoundly personal and quietly legendary.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1027,
+    "description": "The Oberoi Marrakech is serene, palace-like luxury with impeccable service, refined suites, and a calm, view-led rhythm outside the medina. Expect elegant design, spa-led restoration, and sunlit days framed by Atlas Mountains.",
+    "high_season": "Mar–May, Sep–Nov",
+    "low_season": "Jun–Aug",
+    "rain_season": "Nov–Feb"
+  },
+  {
+    "id": 1028,
+    "description": "Kisawa is ultra-private island luxury off Mozambique, pairing villa seclusion with impeccable service and a nature-led rhythm. Expect ocean calm, curated experiences, and a slow pace shaped by sea air and total privacy.",
+    "high_season": "May–Oct",
+    "low_season": "Jan–Mar",
+    "rain_season": "Dec–Mar"
+  },
+  {
+    "id": 1029,
+    "description": "Omaanda is an intimate Namibian lodge with refined design, warm service, and a conservation-led sense of calm near Windhoek. Expect safari drives, serene suites, and a restorative rhythm shaped by wide skies and golden light.",
+    "high_season": "May–Oct",
+    "low_season": "Jan–Mar",
+    "rain_season": "Jan–Mar"
+  },
+  {
+    "id": 1030,
+    "description": "Sonop is theatrical desert glamour—tented luxury with impeccable service and a vintage safari mood set in Namibia’s wild landscapes. Expect starlit dinners, dramatic scenery, and a slow rhythm shaped by silence and sky.",
+    "high_season": "May–Oct",
+    "low_season": "Jan–Mar",
+    "rain_season": "Jan–Mar"
+  }
+]

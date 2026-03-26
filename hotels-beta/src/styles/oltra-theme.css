@@ -1,0 +1,600 @@
+:root {
+  /* Typography */
+  --oltra-font-sans: Arial, Helvetica, sans-serif;
+
+  /* Text */
+  --oltra-text-primary: rgba(255, 255, 255, 0.96);
+  --oltra-text-secondary: rgba(255, 255, 255, 0.78);
+  --oltra-text-muted: rgba(255, 255, 255, 0.62);
+  --oltra-text-dark: #173247;
+
+  /* Background */
+  --oltra-bg-image: url("/images/hero-lp.jpg");
+  --oltra-bg-color: #a8cbe6;
+
+  /* Shared glass / panel surfaces */
+  --oltra-glass-bg: rgba(34, 56, 72, 0.26);
+  --oltra-glass-bg-strong: rgba(34, 56, 72, 0.82);
+  --oltra-glass-border: rgba(255, 255, 255, 0.22);
+  --oltra-glass-shadow:
+    0 18px 40px rgba(10, 24, 36, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+
+  /* Shared fields */
+  --oltra-field-bg: rgba(220, 232, 240, 0.14);
+  --oltra-field-bg-strong: rgba(220, 232, 240, 0.22);
+  --oltra-field-bg-solid: #717377;
+  --oltra-field-border: rgba(255, 255, 255, 0.18);
+
+  /* Buttons */
+  --oltra-button-active-bg: rgb(182, 204, 168);
+  --oltra-button-active-text: #173247;
+  --oltra-button-inactive-bg: rgba(255, 255, 255, 0.08);
+  --oltra-button-inactive-border: rgba(255, 255, 255, 0.18);
+  --oltra-button-inactive-text: rgba(255, 255, 255, 0.96);
+
+  /* Radius */
+  --oltra-radius-xl: 16px;
+  --oltra-radius-lg: 14px;
+  --oltra-radius-md: 10px;
+  --oltra-radius-sm: 8px;
+  --oltra-radius-xs: 5px;
+  --oltra-radius-pill: 999px;
+
+  /* Blur */
+  --oltra-blur: blur(20px);
+  --oltra-dropdown-blur: blur(14px);
+
+  /* Spacing */
+  --oltra-page-side: 24px;
+  --oltra-gap-xl: 22px;
+  --oltra-gap-lg: 18px;
+  --oltra-gap-md: 12px;
+  --oltra-gap-sm: 8px;
+  --oltra-gap-xs: 4px;
+
+  /* Shared heights */
+  --oltra-control-height: 44px;
+  --oltra-button-height: 44px;
+  --oltra-checkbox-size: 18px;
+  --oltra-dropdown-item-min-height: 32px;
+
+  /* Header sizing */
+  --oltra-header-top: 20px;
+  --oltra-logo-size: clamp(1.7rem, 2.2vw, 2.3rem);
+  --oltra-section-label-size: 0.72rem;
+
+  /* Dropdown / popup system */
+  --oltra-dropdown-radius: 10px;
+  --oltra-dropdown-border: 1px solid rgba(255, 255, 255, 0.18);
+  --oltra-dropdown-shadow:
+    0 18px 42px rgba(16, 30, 40, 0.16),
+    0 6px 18px rgba(16, 30, 40, 0.08);
+  --oltra-dropdown-padding: 10px;
+  --oltra-dropdown-item-radius: 5px;
+  --oltra-dropdown-item-font-size: 0.72rem;
+  --oltra-dropdown-label-font-size: 0.58rem;
+  --oltra-dropdown-list-max-height: 96px;
+
+  /* Fixed page frame */
+  --oltra-page-top-padding: 110px;
+  --oltra-page-bottom-padding: 32px;
+
+  /* Z-index */
+  --oltra-z-page-bg: 0;
+  --oltra-z-page-content: 1;
+  --oltra-z-header-bg: 20;
+  --oltra-z-header: 30;
+  --oltra-z-dropdown: 200;
+  --oltra-z-popup: 300;
+}
+
+/* Base page behavior */
+html,
+body {
+  font-family: var(--oltra-font-sans);
+  background: var(--oltra-bg-color);
+}
+
+/* Shared fixed background */
+.oltra-page {
+  position: relative;
+  min-height: 100vh;
+  padding: var(--oltra-page-top-padding) var(--oltra-page-side) var(--oltra-page-bottom-padding);
+  overflow: hidden;
+  color: var(--oltra-text-primary);
+  background: var(--oltra-bg-color);
+}
+
+.oltra-page__bg {
+  position: fixed;
+  inset: 0;
+  z-index: var(--oltra-z-page-bg);
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(10, 24, 36, 0.18) 0%,
+      rgba(10, 24, 36, 0.08) 30%,
+      rgba(255, 255, 255, 0.08) 100%
+    ),
+    var(--oltra-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: scale(1.03);
+}
+
+.oltra-page__header-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 96px;
+  z-index: var(--oltra-z-header-bg);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+.oltra-page__content {
+  position: relative;
+  z-index: var(--oltra-z-page-content);
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--oltra-gap-lg);
+}
+
+/* Shared outer floating glass box */
+.oltra-glass {
+  border-radius: var(--oltra-radius-xl);
+  border: 1px solid var(--oltra-glass-border);
+  background: var(--oltra-glass-bg);
+  backdrop-filter: var(--oltra-blur);
+  -webkit-backdrop-filter: var(--oltra-blur);
+  box-shadow: var(--oltra-glass-shadow);
+}
+
+/* Shared content panel */
+.oltra-panel {
+  padding: 16px;
+}
+
+/* Shared inner field */
+.oltra-field,
+.oltra-output,
+.oltra-select,
+.oltra-input,
+.oltra-textarea {
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+}
+
+.oltra-field,
+.oltra-output {
+  padding: 9px 14px;
+}
+
+.oltra-input,
+.oltra-select,
+.oltra-textarea,
+button.oltra-select {
+  width: 100%;
+  min-height: var(--oltra-control-height);
+  height: var(--oltra-control-height);
+  padding: 0 14px;
+  font-family: var(--oltra-font-sans);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.oltra-textarea {
+  min-height: 120px;
+  height: auto;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  resize: vertical;
+}
+
+.oltra-input::placeholder,
+.oltra-textarea::placeholder {
+  color: var(--oltra-text-muted);
+}
+
+.oltra-input:focus,
+.oltra-select:focus,
+.oltra-textarea:focus {
+  background: var(--oltra-field-bg-strong);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+/* Labels / subheaders */
+.oltra-label,
+.oltra-subheader {
+  display: block;
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oltra-text-secondary);
+}
+
+.oltra-label {
+  margin: 0 0 4px 14px;
+}
+
+.oltra-subheader {
+  margin: 0;
+}
+
+/* Shared dropdown / popup shell */
+.oltra-dropdown-panel,
+.oltra-popup-panel {
+  position: absolute;
+  border-radius: var(--oltra-dropdown-radius);
+  border: var(--oltra-dropdown-border);
+  background: var(--oltra-field-bg-solid);
+  color: var(--oltra-text-primary);
+  box-shadow: var(--oltra-dropdown-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: var(--oltra-z-popup);
+  padding: var(--oltra-dropdown-padding);
+}
+
+.oltra-dropdown-list {
+  display: grid;
+  align-content: start;
+  justify-items: stretch;
+  gap: 2px;
+  padding: 2px 0;
+  max-height: var(--oltra-dropdown-list-max-height);
+  overflow-y: auto;
+}
+
+.oltra-dropdown-group + .oltra-dropdown-group {
+  margin-top: 0.45rem;
+}
+
+.oltra-dropdown-group-label {
+  margin-bottom: 0.2rem;
+  padding-left: 2px;
+  font-size: var(--oltra-dropdown-label-font-size);
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.oltra-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--oltra-dropdown-item-min-height);
+  padding: 0.26rem 0.42rem;
+  border: 0;
+  border-radius: var(--oltra-dropdown-item-radius);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.86);
+  font: inherit;
+  font-size: var(--oltra-dropdown-item-font-size);
+  line-height: 1.15;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.oltra-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 1);
+}
+
+/* Buttons */
+.oltra-button,
+.oltra-button-primary,
+.oltra-button-secondary,
+.oltra-chip {
+  font: inherit;
+  cursor: pointer;
+}
+
+.oltra-button,
+.oltra-button-secondary,
+.oltra-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--oltra-button-height);
+  height: var(--oltra-button-height);
+  padding: 0 18px;
+  border-radius: var(--oltra-radius-md);
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.oltra-button,
+.oltra-button-secondary {
+  border: 1px solid var(--oltra-button-inactive-border);
+  background: var(--oltra-button-inactive-bg);
+  color: var(--oltra-button-inactive-text);
+}
+
+.oltra-button-primary,
+.oltra-button--active {
+  border: 1px solid transparent;
+  background: var(--oltra-button-active-bg);
+  color: var(--oltra-button-active-text);
+}
+
+.oltra-button:hover,
+.oltra-button-primary:hover,
+.oltra-button-secondary:hover {
+  text-decoration: none;
+  opacity: 0.95;
+}
+
+.oltra-chip {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-pill);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+}
+
+/* Unified checkbox style */
+.oltra-checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.oltra-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--oltra-control-height);
+  padding: 0 14px;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+}
+
+.oltra-checkbox input {
+  width: var(--oltra-checkbox-size);
+  height: var(--oltra-checkbox-size);
+  accent-color: white;
+}
+
+/* Page body grids */
+.oltra-stack {
+  display: grid;
+  gap: var(--oltra-gap-lg);
+}
+
+.oltra-two-col {
+  display: grid;
+  grid-template-columns: 0.95fr 1.35fr;
+  gap: var(--oltra-gap-lg);
+  align-items: start;
+}
+
+.oltra-three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--oltra-gap-md);
+}
+
+/* Small page section label under logo */
+.oltra-route-label {
+  margin: 2px 0 0;
+  font-size: var(--oltra-section-label-size);
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oltra-text-secondary);
+}
+
+/* Shared header system */
+.oltra-site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--oltra-z-header);
+  padding: 18px var(--oltra-page-side) 14px;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    backdrop-filter 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.oltra-site-header.is-scrolled {
+  background: rgba(34, 56, 72, 0.34);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(10, 24, 36, 0.12);
+}
+
+.oltra-site-header__inner {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  column-gap: 28px;
+}
+
+.oltra-site-header__brand {
+  justify-self: start;
+  text-align: left;
+  min-width: max-content;
+}
+
+.oltra-site-header__logo {
+  color: var(--oltra-text-primary);
+  text-decoration: none;
+  font-size: var(--oltra-logo-size);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+
+.oltra-site-header__logo:hover {
+  text-decoration: none;
+}
+
+.oltra-site-header__route {
+  margin-top: 4px;
+}
+
+.oltra-site-header__nav {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 22px;
+  min-height: 40px;
+  flex-wrap: wrap;
+}
+
+.oltra-site-header__nav-link,
+.oltra-site-header__action-link {
+  color: var(--oltra-text-primary);
+  text-decoration: none;
+  font-size: 0.98rem;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.oltra-site-header__nav-link:hover,
+.oltra-site-header__action-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.oltra-site-header__currency {
+  position: relative;
+}
+
+.oltra-site-header__currency-trigger {
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--oltra-text-primary);
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 400;
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.oltra-site-header__currency-trigger:hover {
+  text-decoration: none;
+}
+
+.oltra-site-header__currency-trigger::-webkit-details-marker,
+.oltra-site-header__currency-trigger::marker {
+  display: none;
+}
+
+.oltra-site-header__currency-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+  transform: translateY(1px);
+}
+
+.oltra-site-header__currency-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 110px;
+  z-index: var(--oltra-z-popup);
+}
+
+@media (max-width: 1000px) {
+  .oltra-site-header__inner {
+    grid-template-columns: 1fr;
+    row-gap: 10px;
+  }
+
+  .oltra-site-header__brand {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .oltra-site-header__nav {
+    justify-content: flex-start;
+    gap: 14px;
+  }
+}
+
+
+/* Make native calendar icon white */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+/* Hide native placeholder-style date text when the date input is empty */
+input[type="date"]:not([value]),
+input[type="date"][value=""] {
+  color: transparent;
+}
+
+/* WebKit: hide the rendered date text while empty */
+input[type="date"][value=""]::-webkit-datetime-edit,
+input[type="date"]:not([value])::-webkit-datetime-edit {
+  color: transparent;
+}
+
+/* Keep the calendar icon visible */
+input[type="date"][value=""]::-webkit-calendar-picker-indicator,
+input[type="date"]:not([value])::-webkit-calendar-picker-indicator {
+  opacity: 0.9;
+}
+
+/* Show the chosen date normally once a value exists */
+input[type="date"]:not([value=""])::-webkit-datetime-edit {
+  color: var(--oltra-text-primary);
+}
+
+.maplibregl-popup.inspire-map-popup .maplibregl-popup-content {
+  padding: 0;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(34, 56, 72, 0.9);
+  box-shadow:
+    0 18px 40px rgba(10, 20, 28, 0.18),
+    0 6px 18px rgba(10, 20, 28, 0.1);
+  color: white;
+}
+
+.maplibregl-popup.inspire-map-popup .maplibregl-popup-tip {
+  border-top-color: rgba(34, 56, 72, 0.9);
+}

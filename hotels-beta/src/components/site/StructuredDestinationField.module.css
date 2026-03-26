@@ -1,0 +1,82 @@
+.wrapper {
+  position: relative;
+  z-index: 20;
+  min-width: 0;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.tokenRow {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tokenPill {
+  max-width: min(100%, 240px);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.34rem 0.72rem;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.74rem;
+  line-height: 1.1;
+}
+
+.tokenPillLabel {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tokenPillClose {
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.72;
+}
+
+.suggestionPanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.suggestionGroup + .suggestionGroup {
+  margin-top: 0.45rem;
+}
+
+.suggestionGroupLabel {
+  margin-bottom: 0.2rem;
+  padding-left: 0.42rem;
+}
+
+.suggestionList {
+  max-height: 96px;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.08rem;
+  padding-right: 0.35rem;
+}
+
+.suggestionItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: transparent;
+  border: 0;
+}

@@ -1,0 +1,273 @@
+.page {
+  display: grid;
+  gap: var(--oltra-gap-lg);
+}
+
+.sectionStack {
+  display: grid;
+  gap: var(--oltra-gap-lg);
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oltra-gap-md);
+}
+
+.compactGrid {
+  display: grid;
+  gap: var(--oltra-gap-md);
+}
+
+.range {
+  width: 100%;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.airlineChip {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-pill);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.airlineChipActive {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--oltra-text-dark);
+  border-color: rgba(255, 255, 255, 0.96);
+}
+
+.resultsStack {
+  display: grid;
+  gap: var(--oltra-gap-lg);
+}
+
+.resultsMeta {
+  display: grid;
+  gap: 8px;
+}
+
+.route {
+  font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--oltra-text-primary);
+}
+
+.metaText {
+  font-size: 0.84rem;
+  color: var(--oltra-text-secondary);
+}
+
+.pinnedStack {
+  display: grid;
+  gap: var(--oltra-gap-md);
+}
+
+.resultsColumnsHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--oltra-gap-md);
+}
+
+.columnHeader {
+  font-size: 0.72rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oltra-text-secondary);
+}
+
+.columnHeaderRight {
+  text-align: right;
+}
+
+.columnBox {
+  min-width: 0;
+}
+
+.cardStack {
+  display: grid;
+  gap: var(--oltra-gap-md);
+}
+
+.selectCard {
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-md);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.selectCard:hover {
+  background: var(--oltra-field-bg-strong);
+}
+
+.selectCardActive {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(255, 255, 255, 0.96);
+  color: var(--oltra-text-dark);
+}
+
+.pinnedRow {
+  display: grid;
+  gap: 10px;
+  padding: 2px;
+  border: 1px solid var(--oltra-glass-border);
+  border-radius: var(--oltra-radius-lg);
+}
+
+.pinnedLabel {
+  width: fit-content;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: var(--oltra-radius-pill);
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pinnedGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--oltra-gap-md);
+}
+
+.flightCardInner {
+  display: grid;
+  gap: 12px;
+}
+
+.flightTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.flightAirline {
+  font-size: 0.72rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.flightNumber {
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+.flightStops {
+  font-size: 0.82rem;
+  color: inherit;
+  opacity: 0.82;
+}
+
+.flightTimes {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.flightDuration {
+  padding-top: 10px;
+  border-top: 1px dashed currentColor;
+  text-align: center;
+  font-size: 0.78rem;
+  opacity: 0.82;
+}
+
+.flightTime {
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.flightCode {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  opacity: 0.82;
+}
+
+.flightTimeBlockRight {
+  text-align: right;
+}
+
+.flightSummary {
+  font-size: 0.9rem;
+  opacity: 0.86;
+}
+
+.priceCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+  min-height: 100%;
+}
+
+.priceTags {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.inlineTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--oltra-radius-pill);
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  font-size: 0.66rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.priceCurrency {
+  font-size: 0.78rem;
+  color: var(--oltra-text-secondary);
+}
+
+.priceValue {
+  margin-top: 6px;
+  font-size: clamp(1.8rem, 2.2vw, 2.4rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+@media (max-width: 1000px) {
+  .fieldGrid,
+  .resultsColumnsHeader,
+  .pinnedGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .columnHeaderRight {
+    text-align: left;
+  }
+}
