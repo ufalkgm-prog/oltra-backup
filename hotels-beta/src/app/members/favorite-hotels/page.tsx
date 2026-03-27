@@ -3,7 +3,7 @@ import FavoriteHotelsView from "../ui/FavoriteHotelsView";
 
 export default function FavoriteHotelsPage() {
   return (
-    <MembersShell title="FAVORITE HOTELS">
+    <MembersShell>
       <FavoriteHotelsView />
     </MembersShell>
   );

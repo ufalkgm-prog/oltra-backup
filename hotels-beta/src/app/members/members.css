@@ -11,7 +11,7 @@
   padding: 0;
   overflow: hidden;
   align-self: start;
-  margin-top: 28px;
+  margin-top: 0;
 }
 
 .members-sidebar__inner {
@@ -53,23 +53,23 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   padding-top: 0;
 }
 
 .members-content-label {
   padding-left: 4px;
-  margin: 0;
+  margin: 0 0 2px;
 }
 
 .members-stack {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
-.members-trip-planner {
-  padding: 22px;
+.members-trip-summary {
+  padding: 18px 20px 20px;
 }
 
 .members-trip-line {
@@ -82,7 +82,7 @@
 .members-trip-inline-field {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -91,15 +91,25 @@
 }
 
 .members-summary-card__value {
-  min-height: 52px;
+  min-height: var(--oltra-control-height);
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
   min-width: 0;
+  padding: 0 14px;
+  border-radius: var(--oltra-radius-md);
+  background: var(--oltra-field-bg);
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--oltra-field-border);
+  overflow: hidden;
+}
+
+.members-summary-card__text {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .members-trip-grid {
@@ -110,13 +120,13 @@
 }
 
 .members-section {
-  padding: 20px 22px;
+  padding: 18px 20px;
   min-width: 0;
   height: 100%;
 }
 
 .members-section__header {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .members-section__body {
@@ -126,7 +136,7 @@
 }
 
 .members-item {
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -135,29 +145,29 @@
 .members-item__top {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   align-items: start;
 }
 
 .members-item__title {
-  font-size: 1rem;
+  font-size: 0.96rem;
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.96);
 }
 
 .members-item__location,
 .members-item__meta {
-  font-size: 0.92rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.45;
   color: rgba(255, 255, 255, 0.68);
 }
 
 .members-item__location {
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .members-item__meta {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .members-item__status {
@@ -175,35 +185,10 @@
   padding: 4px 0;
 }
 
-@media (max-width: 1280px) {
-  .members-trip-line {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .members-trip-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 1100px) {
-  .members-page-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .members-sidebar {
-    margin-top: 0;
-  }
-}
-
-@media (max-width: 760px) {
-  .members-trip-line {
-    grid-template-columns: 1fr;
-  }
-
-  .members-trip-actions {
+.members-trip-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .members-warning-panel {
@@ -227,13 +212,13 @@
 
 .members-item__layout {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
 }
 
 .members-item__thumb {
-  width: 92px;
+  width: 84px;
   aspect-ratio: 1 / 1;
   border-radius: 16px;
   background-size: cover;
@@ -257,7 +242,7 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .members-action-button {
@@ -273,13 +258,17 @@
 .members-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 22px 20px;
+}
+
+.members-form-grid--profile {
+  align-items: start;
 }
 
 .members-form-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -289,7 +278,7 @@
 
 .members-form-stack {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .members-textarea {
@@ -306,7 +295,7 @@
 
 .members-family-stack {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .members-family-card {
@@ -319,7 +308,7 @@
 .members-family-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .members-family-actions {
@@ -359,7 +348,86 @@
   flex-wrap: wrap;
 }
 
+.members-leave-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 16, 24, 0.42);
+}
+
+.members-leave-modal {
+  width: min(420px, 100%);
+}
+
+.members-leave-modal__text {
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.members-leave-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.members-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.members-profile-note {
+  margin-top: 14px;
+}
+
+.members-birthday-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr 1fr;
+  gap: 10px;
+}
+
+.members-trip-column {
+  align-self: stretch;
+}
+
+.members-trip-item {
+  min-height: 100%;
+}
+
+.members-item__head {
+  min-width: 0;
+}
+
+.members-trip-inline-field .oltra-label {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1280px) {
+  .members-trip-line {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .members-trip-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1100px) {
+  .members-page-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .members-sidebar {
+    margin-top: 0;
+  }
+
   .members-form-grid,
   .members-family-grid,
   .members-rating-grid {
@@ -371,9 +439,17 @@
     flex-direction: column;
     align-items: stretch;
   }
+
+  .members-profile-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
+  .members-trip-line {
+    grid-template-columns: 1fr;
+  }
+
   .members-item__layout {
     grid-template-columns: 1fr;
   }
@@ -384,15 +460,15 @@
   }
 
   .members-item__actions,
-  .members-warning-panel__actions {
+  .members-warning-panel__actions,
+  .members-membership-actions,
+  .members-leave-modal__actions {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .members-membership-actions {
-    display: grid;
+  .members-birthday-grid {
     grid-template-columns: 1fr;
   }
 }
 
-}

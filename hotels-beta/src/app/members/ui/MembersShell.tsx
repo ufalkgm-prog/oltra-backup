@@ -18,13 +18,15 @@ const MEMBERS_NAV: MembersNavItem[] = [
   { href: "/members/review", label: "REVIEW" },
 ];
 
+type MembersShellProps = {
+  title?: string;
+  children: ReactNode;
+};
+
 export default function MembersShell({
   title,
   children,
-}: {
-  title?: string;
-  children: ReactNode;
-}) {
+}: MembersShellProps) {
   const pathname = usePathname();
 
   return (

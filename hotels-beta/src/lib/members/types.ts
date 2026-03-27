@@ -1,15 +1,21 @@
+export type MemberBirthday = {
+  day: string;
+  month: string;
+  year: string;
+};
+
 export type MemberProfile = {
   memberName: string;
   email: string;
   phone: string;
   homeAirport: string;
-  preferredCurrency: string;
-  preferredHotelStyles: string[];
-  preferredAirlines: string[];
+  birthday: MemberBirthday;
+  preferredHotelStyle: string;
+  preferredAirline: string;
   familyMembers: Array<{
     id: string;
     fullName: string;
-    birthday: string;
+    birthday: MemberBirthday;
     passportNumber: string;
     passportExpiry: string;
   }>;

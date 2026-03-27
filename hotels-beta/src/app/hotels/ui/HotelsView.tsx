@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
@@ -18,6 +19,7 @@ import {
   createTripBrowser,
   fetchTripChoicesBrowser,
 } from "@/lib/members/db";
+import type { HotelRecord } from "@/lib/directus";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -28,22 +30,36 @@ function serializeList(values: string[]): string {
 function buildHrefWithParam(
   current: PageSearchParams,
   key: string,
-  nextValues: string[]
+  nextValues: string[],
+  extraParams?: Record<string, string>
 ): string {
   const params = new URLSearchParams();
 
   for (const [k, v] of Object.entries(current)) {
     if (k === key) continue;
     if (v === undefined) continue;
+
     if (Array.isArray(v)) {
       for (const vv of v) params.append(k, vv);
     } else {
-      params.set(k, v);
+      params.set(k, String(v));
     }
   }
 
-  if (nextValues.length) params.set(key, serializeList(nextValues));
-  return `/hotels?${params.toString()}`;
+  if (nextValues.length) {
+    params.set(key, serializeList(nextValues));
+  } else {
+    params.delete(key);
+  }
+
+  if (extraParams) {
+    for (const [k, v] of Object.entries(extraParams)) {
+      if (v) params.set(k, v);
+      else params.delete(k);
+    }
+  }
+
+  return params.toString() ? `/hotels?${params.toString()}` : "/hotels";
 }
 
 function clampText(s: string | undefined | null, max = 160): string {
@@ -57,10 +73,20 @@ function TogglePill(props: { label: string; active: boolean; href: string }) {
   return (
     <Link
       href={props.href}
-      className={[
-        "oltra-button",
-        props.active ? "oltra-button--active" : "",
-      ].join(" ")}
+      className="oltra-button-secondary"
+      style={
+        props.active
+          ? {
+              background: "rgba(255,255,255,0.22)",
+              borderColor: "rgba(255,255,255,0.30)",
+              color: "rgba(255,255,255,0.98)",
+            }
+          : {
+              background: "rgba(255,255,255,0.06)",
+              borderColor: "rgba(255,255,255,0.12)",
+              color: "rgba(255,255,255,0.76)",
+            }
+      }
       prefetch={false}
     >
       {props.label}
@@ -84,8 +110,17 @@ function RelDropdown(props: {
       out.push({ id, label });
       if (out.length >= 60) break;
     }
-    out.sort((a, b) => Number(selected.has(b.id)) - Number(selected.has(a.id)));
-    return out;
+    out.sort((a, b) => {
+      const aSelected = selected.has(a.id);
+      const bSelected = selected.has(b.id);
+
+      if (aSelected !== bSelected) {
+        return aSelected ? -1 : 1;
+      }
+
+      return a.label.localeCompare(b.label);
+    });
+  return out;
   }, [props.map, selected]);
 
   return (
@@ -109,7 +144,12 @@ function RelDropdown(props: {
               key={`${props.paramKey}-${opt.id}`}
               label={opt.label}
               active={active}
-              href={buildHrefWithParam(props.searchParams, props.paramKey, next)}
+              href={buildHrefWithParam(
+                props.searchParams,
+                props.paramKey,
+                next,
+                { filters_open: "1" }
+              )}
             />
           );
         })}
@@ -144,35 +184,6 @@ function HiddenPreserveParams(props: {
   );
 }
 
-type Hotel = {
-  id: string | number;
-  hotel_name?: string;
-  hotelid?: string | number;
-  affiliation?: string | null;
-  country?: string | null;
-  region?: string | null;
-  city?: string | null;
-  local_area?: string | null;
-  highlights?: string | null;
-  description?: string | null;
-  www?: string | null;
-  insta?: string | null;
-  editor_rank_13?: number | string | null;
-  ext_points?: number | string | null;
-  activities?: any[] | null;
-  settings?: any[] | null;
-  awards?: any[] | null;
-  styles?: any[] | null;
-
-  booking_provider?: "booking" | "cj_booking" | "official" | "none" | null;
-  booking_url?: string | null;
-  booking_hotel_ref?: string | null;
-  booking_enabled?: boolean | null;
-  booking_label?: string | null;
-  booking_notes?: string | null;
-  official_website_booking_url?: string | null;
-};
-
 type Options = {
   country: string[];
   city: string[];
@@ -195,28 +206,30 @@ const PLACEHOLDERS = [
   "/images/hotel-placeholder-4.jpg",
 ];
 
-function locationLine(h: Hotel): string {
+function locationLine(h: HotelRecord): string {
   return [h.local_area, h.city, h.region, h.country].filter(Boolean).join(" · ");
 }
 
-function distPlaceholder(h: Hotel): string {
+function distPlaceholder(h: HotelRecord): string {
   return h.city ? `Near ${h.city} centre` : "Central location";
 }
 
-function relationIds(items: any[] | null | undefined, key: string): string[] {
+function relationIds(items: unknown[] | null | undefined, key: string): string[] {
   if (!Array.isArray(items)) return [];
 
   return items
     .map((item) => {
-      const rel = item?.[key];
-      const id = rel?.id;
+      if (!item || typeof item !== "object") return null;
+      const rel = (item as Record<string, unknown>)[key];
+      if (!rel || typeof rel !== "object") return null;
+      const id = (rel as Record<string, unknown>).id;
       return id == null ? null : String(id);
     })
-    .filter(Boolean) as string[];
+    .filter((value): value is string => Boolean(value));
 }
 
 function relationLabels(
-  items: any[] | null | undefined,
+  items: unknown[] | null | undefined,
   key: string,
   taxMap: Map<string, string>
 ): string[] {
@@ -226,7 +239,7 @@ function relationLabels(
 }
 
 export default function HotelsView(props: {
-  hotels: Hotel[];
+  hotels: HotelRecord[];
   options: Options;
   tax: TaxMaps;
   suggestions: HotelSuggestionDataset;
@@ -242,9 +255,13 @@ export default function HotelsView(props: {
     awards: string[];
     settings: string[];
     styles: string[];
+    filters_open: string;
   };
 }) {
-  const { hotels, tax, searchParams, selected, suggestions } = props;
+  const { hotels, tax, searchParams, selected } = props;
+
+  const router = useRouter();
+  const pathname = usePathname();
 
   const bookingSearchParams = useMemo<BookingSearchParams>(
   () => ({
@@ -256,6 +273,38 @@ export default function HotelsView(props: {
   }),
   [searchParams]
   );
+
+  const [filtersOpen, setFiltersOpen] = useState(
+    selected.filters_open === "1"
+  );
+
+  useEffect(() => {
+    setFiltersOpen(selected.filters_open === "1");
+  }, [selected.filters_open]);
+
+  function updateFiltersOpen(nextOpen: boolean) {
+    setFiltersOpen(nextOpen);
+
+    const params = new URLSearchParams();
+
+    for (const [k, v] of Object.entries(searchParams)) {
+      if (v === undefined) continue;
+
+      if (Array.isArray(v)) {
+        for (const vv of v) params.append(k, vv);
+      } else {
+        params.set(k, String(v));
+      }
+    }
+
+    params.set("filters_open", nextOpen ? "1" : "0");
+
+    const href = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
+
+    router.replace(href, { scroll: false });
+  }
 
   const [memberActionMessage, setMemberActionMessage] = useState("");
   const [memberActionError, setMemberActionError] = useState("");
@@ -325,6 +374,21 @@ export default function HotelsView(props: {
     hotels.length > 0 ? String(hotels[0].id) : null
   );
 
+  useEffect(() => {
+    if (hotels.length === 0) {
+      setSelectedHotelId(null);
+      return;
+    }
+
+    const stillExists = selectedHotelId
+      ? hotels.some((h) => String(h.id) === selectedHotelId)
+      : false;
+
+    if (!stillExists) {
+      setSelectedHotelId(String(hotels[0].id));
+    }
+  }, [hotels, selectedHotelId]);
+
   const selectedHotel = useMemo(() => {
     if (!selectedHotelId) return hotels[0] ?? null;
     return hotels.find((h) => String(h.id) === selectedHotelId) ?? hotels[0] ?? null;
@@ -332,38 +396,35 @@ export default function HotelsView(props: {
 
   const resultsCount = hotels.length;
 
-const selectedHotelSettings = useMemo(
-  () => relationLabels(selectedHotel?.settings, "settings_id", tax.settings),
-  [selectedHotel, tax.settings]
-);
+  const selectedHotelSettings = useMemo(
+    () => relationLabels(selectedHotel?.settings, "settings_id", tax.settings),
+    [selectedHotel, tax.settings]
+  );
 
-const selectedHotelActivities = useMemo(
-  () => relationLabels(selectedHotel?.activities, "activities_id", tax.activities),
-  [selectedHotel, tax.activities]
-);
+  const selectedHotelActivities = useMemo(
+    () => relationLabels(selectedHotel?.activities, "activities_id", tax.activities),
+    [selectedHotel, tax.activities]
+  );
 
-const selectedHotelAwards = useMemo(
-  () => relationLabels(selectedHotel?.awards, "awards_id", tax.awards),
-  [selectedHotel, tax.awards]
-);
+  const selectedHotelAwards = useMemo(
+    () => relationLabels(selectedHotel?.awards, "awards_id", tax.awards),
+    [selectedHotel, tax.awards]
+  );
 
-const selectedHotelStyles = useMemo(
-  () => relationLabels(selectedHotel?.styles, "styles_id", tax.styles),
-  [selectedHotel, tax.styles]
-);
+  const selectedHotelStyles = useMemo(
+    () => relationLabels(selectedHotel?.styles, "styles_id", tax.styles),
+    [selectedHotel, tax.styles]
+  );
 
-const selectedHotelBookingHref = useMemo(
-  () =>
-    selectedHotel
-      ? buildBookingLink(selectedHotel, bookingSearchParams)
-      : null,
-  [selectedHotel, bookingSearchParams]
-);
+  const selectedHotelBookingHref = useMemo(
+    () => (selectedHotel ? buildBookingLink(selectedHotel, bookingSearchParams) : null),
+    [selectedHotel, bookingSearchParams]
+  );
 
-const selectedHotelBookingLabel = useMemo(
-  () => selectedHotel?.booking_label?.trim() || "BOOK",
-  [selectedHotel]
-);
+  const selectedHotelBookingLabel = useMemo(
+    () => selectedHotel?.booking_label?.trim() || "BOOK",
+    [selectedHotel]
+  );
 
   async function handleAddHotelToTrip(tripId?: string) {
     if (!selectedHotel) return;
@@ -472,14 +533,16 @@ const selectedHotelBookingLabel = useMemo(
 
   return (
     <div className="w-full">
-      <div className="grid gap-5 lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]">
-        <section className="grid gap-5 min-w-0">
+      <div className="grid gap-4 lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]">
+        <section className="grid gap-4 min-w-0">
+
           <div className="relative z-30 overflow-visible oltra-glass oltra-panel !p-4">
             <form
               action="/hotels"
               method="GET"
               className="grid gap-2 md:gap-2.5 md:grid-cols-12 overflow-visible"
->
+            >
+
               <HiddenPreserveParams
                 searchParams={searchParams}
                 excludeKeys={[
@@ -494,6 +557,7 @@ const selectedHotelBookingLabel = useMemo(
                   "adults",
                   "kids",
                   "bedrooms",
+                  "filters_open",
                   "kid_age_1",
                   "kid_age_2",
                   "kid_age_3",
@@ -503,46 +567,73 @@ const selectedHotelBookingLabel = useMemo(
                 ]}
               />
 
+              <input type="hidden" name="filters_open" value={filtersOpen ? "1" : "0"} />
+
               <StructuredDestinationField
-                label="Search"
+                label="Destination / purpose"
                 placeholder="Input hotel name, city, country, and/or purpose of trip"
                 searchParams={searchParams}
-                dataset={suggestions}
-                wrapperClassName="md:col-span-6"
+                dataset={props.suggestions}
+                wrapperClassName="md:col-span-12"
               />
 
-              <div className="relative z-[400] md:col-span-3">
-                <div className="oltra-label mb-1">Guests</div>
+              <div className="relative md:col-span-3">
+                <div className="oltra-label">From</div>
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="from"
+                    value={fromValue}
+                    onChange={(e) => setFromValue(e.target.value)}
+                    onKeyDown={(e) => e.preventDefault()}
+                    onBeforeInput={(e) => e.preventDefault()}
+                    className={[
+                      "oltra-input w-full",
+                      fromValue ? "text-white" : "text-transparent caret-transparent",
+                    ].join(" ")}
+                  />
+                  {!fromValue ? (
+                    <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
+                      date
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="relative md:col-span-3">
+                <div className="oltra-label">To</div>
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="to"
+                    value={toValue}
+                    onChange={(e) => setToValue(e.target.value)}
+                    onKeyDown={(e) => e.preventDefault()}
+                    onBeforeInput={(e) => e.preventDefault()}
+                    className={[
+                      "oltra-input w-full",
+                      toValue ? "text-white" : "text-transparent caret-transparent",
+                    ].join(" ")}
+                  />
+                  {!toValue ? (
+                    <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
+                      date
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="relative md:col-span-3">
+                <div className="oltra-label">Guests</div>
                 <GuestSelector initialValue={guestSelection} />
               </div>
 
               <div className="relative md:col-span-3">
-                <div className="oltra-label mb-1">From</div>
-                <input
-                  type="date"
-                  name="from"
-                  value={fromValue}
-                  onChange={(e) => setFromValue(e.target.value)}
-                  onKeyDown={(e) => e.preventDefault()}
-                  onBeforeInput={(e) => e.preventDefault()}
-                  className={[
-                    "oltra-input w-full",
-                    fromValue ? "text-white" : "text-transparent caret-transparent",
-                  ].join(" ")}
-                />
-                {!fromValue ? (
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-[14px] text-white/62">
-                    From
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="relative z-[100] md:col-span-6">
-                <div className="oltra-label mb-1">Bedrooms</div>
+                <div className="oltra-label">Bedrooms</div>
                 <OltraSelect
                   name="bedrooms"
                   value={normalizeParam(searchParams.bedrooms)}
-                  placeholder="Bedrooms"
+                  placeholder="#"
                   align="left"
                   options={[1, 2, 3, 4].map((n) => ({
                     value: String(n),
@@ -551,96 +642,80 @@ const selectedHotelBookingLabel = useMemo(
                 />
               </div>
 
-              <div className="relative md:col-span-3">
-                <div className="oltra-label mb-1">To</div>
-                <input
-                  type="date"
-                  name="to"
-                  value={toValue}
-                  onChange={(e) => setToValue(e.target.value)}
-                  onKeyDown={(e) => e.preventDefault()}
-                  onBeforeInput={(e) => e.preventDefault()}
-                  className={[
-                    "oltra-input w-full",
-                    toValue ? "text-white" : "text-transparent caret-transparent",
-                  ].join(" ")}
-                />
-                {!toValue ? (
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-[14px] text-white/62">
-                    To
-                  </span>
-                ) : null}
-              </div>
-
-
-
-              <div className="md:col-span-3 flex items-center">
-                <Link
-                  href="/hotels"
-                  className="ml-[14px] text-[11px] tracking-[0.16em] text-white/65 underline underline-offset-4 hover:text-white"
-                  prefetch={false}
-                >
-                  Reset
-                </Link>
-              </div>
-
-              <div className="md:col-span-3 flex items-center justify-end">
-                <button type="submit" className="oltra-button-primary">
+              <div className="md:col-span-3 md:col-start-10 flex flex-col justify-end">
+                <div className="oltra-label opacity-0 select-none">Search</div>
+                <button type="submit" className="oltra-button-primary w-full">
                   Search
                 </button>
               </div>
             </form>
           </div>
 
-          <div className="relative z-10 oltra-glass oltra-panel !p-4">
-            <div className="oltra-label mb-1">Filters</div>
+          <div className="relative z-10 oltra-glass oltra-panel !p-0">
+            <button
+              type="button"
+              onClick={() => updateFiltersOpen(!filtersOpen)}
+              className="flex h-[44px] w-full items-center justify-between px-4 text-left"
+            >
+              <span className="oltra-label !mb-0">Filters</span>
+              <span
+                className="text-white/60 transition"
+                style={{ transform: filtersOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+              >
+                ⌄
+              </span>
+            </button>
 
-            <details className="py-2" open>
-              <summary className="ml-[14px] cursor-pointer select-none text-[12px] uppercase tracking-[0.14em] text-white/70">
-                Price
-              </summary>
+            {filtersOpen ? (
+              <div className="px-4 pb-4">
+                <details className="py-2">
+                  <summary className="ml-[14px] cursor-pointer select-none text-[12px] uppercase tracking-[0.14em] text-white/70">
+                    Price
+                  </summary>
 
-              <div className="mt-2 grid grid-cols-2 gap-2.5">
-                <input
-                  name="min_price"
-                  placeholder="Min"
-                  className="oltra-input"
+                  <div className="mt-2 grid grid-cols-2 gap-2.5">
+                    <input
+                      name="min_price"
+                      placeholder="Min"
+                      className="oltra-input"
+                    />
+                    <input
+                      name="max_price"
+                      placeholder="Max"
+                      className="oltra-input"
+                    />
+                  </div>
+
+                  <div className="mt-1.5 text-[11px] text-white/45">
+                    (Illustrative for now — will connect when pricing fields exist)
+                  </div>
+                </details>
+
+                <RelDropdown
+                  title="Activities"
+                  paramKey="activities"
+                  selectedIds={selected.activities}
+                  map={tax.activities}
+                  searchParams={searchParams}
                 />
-                <input
-                  name="max_price"
-                  placeholder="Max"
-                  className="oltra-input"
+
+                <RelDropdown
+                  title="Settings"
+                  paramKey="settings"
+                  selectedIds={selected.settings}
+                  map={tax.settings}
+                  searchParams={searchParams}
+                />
+
+                <RelDropdown
+                  title="Accolades"
+                  paramKey="awards"
+                  selectedIds={selected.awards}
+                  map={tax.awards}
+                  searchParams={searchParams}
                 />
               </div>
-
-              <div className="mt-1.5 text-[11px] text-white/45">
-                (Illustrative for now — will connect when pricing fields exist)
-              </div>
-            </details>
-
-            <RelDropdown
-              title="Activities"
-              paramKey="activities"
-              selectedIds={selected.activities}
-              map={tax.activities}
-              searchParams={searchParams}
-            />
-
-            <RelDropdown
-              title="Setting"
-              paramKey="settings"
-              selectedIds={selected.settings}
-              map={tax.settings}
-              searchParams={searchParams}
-            />
-
-            <RelDropdown
-              title="Accolades"
-              paramKey="awards"
-              selectedIds={selected.awards}
-              map={tax.awards}
-              searchParams={searchParams}
-            />
+            ) : null}
           </div>
 
           <div className="oltra-glass oltra-panel">
@@ -649,12 +724,13 @@ const selectedHotelBookingLabel = useMemo(
               <div className="text-xs text-white/50">{resultsCount} found</div>
             </div>
 
-            <div className="mt-4 max-h-[62vh] space-y-4 overflow-y-auto pr-2">
+            <div className="mt-3.5 max-h-[62vh] space-y-3 overflow-y-auto pr-2">
               {hotels.map((h, idx) => {
                 const active = String(h.id) === selectedHotelId;
                 const img = PLACEHOLDERS[idx % PLACEHOLDERS.length];
                 const bookingHref = buildBookingLink(h, bookingSearchParams);
                 const bookingLabel = h.booking_label?.trim() || "BOOK";
+                const awardLabels = relationLabels(h.awards, "awards_id", tax.awards);
 
                 return (
                   <button
@@ -708,20 +784,22 @@ const selectedHotelBookingLabel = useMemo(
                           </div>
                         ) : null}
 
-                        {relationLabels(h.awards, "awards_id", tax.awards).length ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {relationLabels(h.awards, "awards_id", tax.awards)
-                              .slice(0, 3)
-                              .map((label) => (
-                                <span
+                        {awardLabels.length ? (
+                          <div className="mt-2 space-y-1">
+                            {awardLabels.slice(0, 3).map((label) => (
+                                <div
                                   key={label}
-                                  className="oltra-chip"
+                                  className="flex items-start gap-2 text-[11px] leading-[1.35] text-white/58"
                                 >
-                                  {label}
-                                </span>
+                                  <span aria-hidden="true" className="mt-[1px] text-[12px] text-white/72">
+                                    ✦
+                                  </span>
+                                  <span className="min-w-0 truncate">{label}</span>
+                                </div>
                               ))}
                           </div>
-                        ) : null}
+                        ) : null}  
+
                         {bookingHref ? (
                           <div className="mt-3 flex justify-end">
                             <a
@@ -779,7 +857,7 @@ const selectedHotelBookingLabel = useMemo(
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-12 gap-3">
+              <div className="mt-4 grid grid-cols-12 gap-3">
                 <div className="col-span-12 overflow-hidden rounded-[var(--oltra-radius-lg)] border border-white/10 lg:col-span-8">
                   <img
                     src={PLACEHOLDERS[0]}
@@ -810,8 +888,8 @@ const selectedHotelBookingLabel = useMemo(
                 </div>
               </div>
 
-              <div className="mt-6 grid items-start gap-8 md:grid-cols-2">
-                <div className="space-y-6">
+              <div className="mt-6 grid items-start gap-6 md:grid-cols-2">
+                <div className="space-y-5">
                   <div>
                     <div className="oltra-subheader">
                       Highlights
@@ -844,7 +922,7 @@ const selectedHotelBookingLabel = useMemo(
                   </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div>
                     <div className="oltra-subheader">
                       Setting

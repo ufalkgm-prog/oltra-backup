@@ -48,16 +48,16 @@
   /* Spacing */
   --oltra-page-side: 24px;
   --oltra-gap-xl: 22px;
-  --oltra-gap-lg: 18px;
-  --oltra-gap-md: 12px;
-  --oltra-gap-sm: 8px;
-  --oltra-gap-xs: 4px;
+  --oltra-gap-lg: 20px;
+  --oltra-gap-md: 16px;
+  --oltra-gap-sm: 10px;
+  --oltra-gap-xs: 6px;
 
   /* Shared heights */
-  --oltra-control-height: 44px;
-  --oltra-button-height: 44px;
+  --oltra-control-height: 34px;
+  --oltra-button-height: 34px;
   --oltra-checkbox-size: 18px;
-  --oltra-dropdown-item-min-height: 32px;
+  --oltra-dropdown-item-min-height: 24px;
 
   /* Header sizing */
   --oltra-header-top: 20px;
@@ -90,7 +90,13 @@
 }
 
 /* Base page behavior */
-html,
+html {
+  font-family: var(--oltra-font-sans);
+  background: var(--oltra-bg-color);
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: var(--oltra-font-sans);
   background: var(--oltra-bg-color);
@@ -175,7 +181,7 @@ body {
 
 .oltra-field,
 .oltra-output {
-  padding: 9px 14px;
+  padding: 7px 14px;
 }
 
 .oltra-input,
@@ -228,7 +234,7 @@ button.oltra-select {
 }
 
 .oltra-label {
-  margin: 0 0 4px 14px;
+  margin-bottom: 8px;
 }
 
 .oltra-subheader {
@@ -279,7 +285,7 @@ button.oltra-select {
   align-items: center;
   width: 100%;
   min-height: var(--oltra-dropdown-item-min-height);
-  padding: 0.26rem 0.42rem;
+  padding: 0.18rem 0.42rem;
   border: 0;
   border-radius: var(--oltra-dropdown-item-radius);
   background: transparent;
@@ -477,18 +483,30 @@ button.oltra-select {
 
 .oltra-site-header__nav-link,
 .oltra-site-header__action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid transparent;
+  border-radius: 11px;
   color: var(--oltra-text-primary);
   text-decoration: none;
   font-size: 0.98rem;
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 .oltra-site-header__nav-link:hover,
 .oltra-site-header__action-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
+  border-color: rgba(255, 255, 255, 0.38);
+  background: transparent;
 }
 
 .oltra-site-header__currency {
@@ -553,7 +571,6 @@ button.oltra-select {
   }
 }
 
-
 /* Make native calendar icon white */
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
@@ -597,4 +614,12 @@ input[type="date"]:not([value=""])::-webkit-datetime-edit {
 
 .maplibregl-popup.inspire-map-popup .maplibregl-popup-tip {
   border-top-color: rgba(34, 56, 72, 0.9);
+}
+
+details > summary {
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
 }

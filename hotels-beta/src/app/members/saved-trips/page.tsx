@@ -3,7 +3,7 @@ import SavedTripsView from "../ui/SavedTripsView";
 
 export default function SavedTripsPage() {
   return (
-    <MembersShell title="SAVED TRIPS">
+    <MembersShell>
       <SavedTripsView />
     </MembersShell>
   );

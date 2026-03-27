@@ -3,6 +3,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import type {
   FavoriteHotel,
   FavoriteRestaurant,
+  MemberBirthday,
   MemberProfile,
   SavedTrip,
 } from "./types";
@@ -48,6 +49,65 @@ type AddRestaurantToTripResult = {
   overlapWarning: boolean;
 };
 
+function parseBirthday(value?: string | null): MemberBirthday {
+  if (!value) {
+    return { day: "", month: "", year: "" };
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { day: "", month: "", year: "" };
+  }
+
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  return {
+    day: String(date.getUTCDate()),
+    month: months[date.getUTCMonth()] ?? "",
+    year: String(date.getUTCFullYear()),
+  };
+}
+
+function serializeBirthday(birthday: MemberBirthday): string | null {
+  const { day, month, year } = birthday;
+
+  if (!day || !month || !year) return null;
+
+  const monthMap: Record<string, string> = {
+    Jan: "01",
+    Feb: "02",
+    Mar: "03",
+    Apr: "04",
+    May: "05",
+    Jun: "06",
+    Jul: "07",
+    Aug: "08",
+    Sep: "09",
+    Oct: "10",
+    Nov: "11",
+    Dec: "12",
+  };
+
+  const monthNumber = monthMap[month];
+  if (!monthNumber) return null;
+
+  const paddedDay = day.padStart(2, "0");
+  return `${year}-${monthNumber}-${paddedDay}`;
+}
+
 export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null> {
   const supabase = createBrowserClient();
 
@@ -81,13 +141,17 @@ export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null>
     email: profile?.email ?? user.email ?? "",
     phone: profile?.phone ?? "",
     homeAirport: profile?.home_airport ?? "",
-    preferredCurrency: profile?.preferred_currency ?? "EUR",
-    preferredHotelStyles: profile?.preferred_hotel_styles ?? [],
-    preferredAirlines: profile?.preferred_airlines ?? [],
+    birthday: { day: "", month: "", year: "" },
+    preferredHotelStyle:
+      profile?.preferred_hotel_styles?.[0] ??
+      "",
+    preferredAirline:
+      profile?.preferred_airlines?.[0] ??
+      "",
     familyMembers: (familyRes.data ?? []).map((member) => ({
       id: member.id,
       fullName: member.full_name ?? "",
-      birthday: member.birthday ?? "",
+      birthday: parseBirthday(member.birthday ?? null),
       passportNumber: member.passport_number ?? "",
       passportExpiry: member.passport_expiry ?? "",
     })),
@@ -116,9 +180,13 @@ export async function saveMemberProfileBrowser(
     email: profile.email || null,
     phone: profile.phone || null,
     home_airport: profile.homeAirport || null,
-    preferred_currency: profile.preferredCurrency || null,
-    preferred_hotel_styles: profile.preferredHotelStyles,
-    preferred_airlines: profile.preferredAirlines,
+    preferred_currency: null,
+    preferred_hotel_styles: profile.preferredHotelStyle
+      ? [profile.preferredHotelStyle]
+      : [],
+    preferred_airlines: profile.preferredAirline
+      ? [profile.preferredAirline]
+      : [],
   };
 
   const { error: upsertError } = await supabase
@@ -139,7 +207,6 @@ export async function saveMemberProfileBrowser(
       id: member.id,
       user_id: userId,
       full_name: member.fullName || null,
-      birthday: member.birthday || null,
       passport_number: member.passportNumber || null,
       passport_expiry: member.passportExpiry || null,
     }));

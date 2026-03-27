@@ -565,27 +565,27 @@ export default function RestaurantsMapView({
           />
 
             {showCityOptions && filteredCityOptions.length > 0 && (
-              <div className="oltra-glass oltra-output restaurants-city-lookup__menu">
-                {filteredCityOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className="restaurants-city-lookup__option"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      updateCity(option);
-                    }}
-                  >
-                    {option}
-                  </button>
-                ))}
+              <div className="oltra-dropdown-panel restaurants-city-lookup__menu">
+                <div className="oltra-dropdown-list">
+                  {filteredCityOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className="oltra-dropdown-item restaurants-city-lookup__option"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        updateCity(option);
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
+            )}  
           </div>
 
-          <p className="restaurants-sidebar__count">
-            {restaurants.length} SELECTED TOP RESTAURANT
-          </p>
+          <p className="restaurants-sidebar__count">TOP RESTAURANTS</p>
         </div>
 
         <div className="restaurants-sidebar__list">

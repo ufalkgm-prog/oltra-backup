@@ -89,6 +89,7 @@ export default async function HotelsPage({ searchParams }: PageProps) {
     awards: listFromParam(resolvedSearchParams.awards),
     settings: listFromParam(resolvedSearchParams.settings),
     styles: listFromParam(resolvedSearchParams.styles),
+    filters_open: normalizeParam(resolvedSearchParams.filters_open),
   };
 
   return (

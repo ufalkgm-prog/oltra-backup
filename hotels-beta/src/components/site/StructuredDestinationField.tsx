@@ -44,11 +44,34 @@ function normalizeParam(v: string | string[] | undefined): string {
   return Array.isArray(v) ? v[0] ?? "" : v;
 }
 
+function listFromParam(v: string | string[] | undefined): string[] {
+  const raw = Array.isArray(v) ? v.join(",") : v ?? "";
+
+  return raw
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function getTaxLabel(
-  list: Array<{ id: string; label: string }>,
-  id: string
+  list: Array<{ id: string; label: string; value?: string }>,
+  raw: string
 ): string {
-  return list.find((item) => item.id === id)?.label ?? id;
+  const normalized = String(raw).trim().toLowerCase();
+
+  const match = list.find((item) => {
+    const itemId = String(item.id).trim().toLowerCase();
+    const itemLabel = String(item.label).trim().toLowerCase();
+    const itemValue = String(item.value ?? "").trim().toLowerCase();
+
+    return (
+      itemId === normalized ||
+      itemLabel === normalized ||
+      itemValue === normalized
+    );
+  });
+
+  return match?.label ?? raw;
 }
 
 function buildInitialTokens(
@@ -66,8 +89,8 @@ function buildInitialTokens(
   const region = normalizeParam(searchParams.region);
   if (region) out.push({ type: "region", label: region, value: region });
 
-  const activityId = normalizeParam(searchParams.activities);
-  if (activityId) {
+  const activityIds = listFromParam(searchParams.activities);
+  for (const activityId of activityIds) {
     out.push({
       type: "purpose",
       label: getTaxLabel(dataset.purposes, activityId),
@@ -76,8 +99,8 @@ function buildInitialTokens(
     });
   }
 
-  const settingId = normalizeParam(searchParams.settings);
-  if (settingId) {
+  const settingIds = listFromParam(searchParams.settings);
+  for (const settingId of settingIds) {
     out.push({
       type: "setting",
       label: getTaxLabel(dataset.settings, settingId),
@@ -88,7 +111,7 @@ function buildInitialTokens(
 
   const q = normalizeParam(searchParams.q);
   const hasStructured =
-    city || country || region || activityId || settingId;
+    city || country || region || activityIds.length > 0 || settingIds.length > 0;
 
   if (q && !hasStructured) {
     out.push({ type: "hotel", label: q, value: q });
@@ -153,8 +176,8 @@ function getExternalSyncKey(
     city: normalizeParam(searchParams.city),
     country: normalizeParam(searchParams.country),
     region: normalizeParam(searchParams.region),
-    activities: normalizeParam(searchParams.activities),
-    settings: normalizeParam(searchParams.settings),
+    activities: listFromParam(searchParams.activities),
+    settings: listFromParam(searchParams.settings),
     allowedTypes,
   });
 }
@@ -199,8 +222,8 @@ export default function StructuredDestinationField({
       normalizeParam(searchParams.city) ||
       normalizeParam(searchParams.country) ||
       normalizeParam(searchParams.region) ||
-      normalizeParam(searchParams.activities) ||
-      normalizeParam(searchParams.settings);
+      listFromParam(searchParams.activities).length > 0 ||
+      listFromParam(searchParams.settings).length > 0;
 
     setTypedValue(hasStructured ? "" : q);
     setOpen(false);
@@ -248,10 +271,8 @@ export default function StructuredDestinationField({
       const target = event.target as HTMLElement | null;
       if (!target) return;
 
-      // ignore if still inside destination field
       if (rootRef.current?.contains(target)) return;
 
-      // ONLY close if hovering another interactive control
       const hoveredInteractive = target.closest(
         'input, button, select, textarea, [role="button"], [data-oltra-control="true"]'
       );
@@ -301,7 +322,7 @@ export default function StructuredDestinationField({
     const nextState = {
       activeHotelCount: activeHotels.length,
       hasSelection: tokens.length > 0,
-      selectedTypes: tokens.map((t) => t.type),
+      selectedTypes: Array.from(new Set(tokens.map((t) => t.type))),
     };
 
     const nextKey = JSON.stringify(nextState);
@@ -311,12 +332,30 @@ export default function StructuredDestinationField({
     onStateChange(nextState);
   }, [activeHotels, onStateChange, tokens]);
 
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        setOpen(false);
+        suppressNextFocusOpenRef.current = true;
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   const suggestions = useMemo(() => {
     const q = typedValue.trim().toLowerCase();
 
     const selectedTypes = new Set(tokens.map((token) => token.type));
     const selectedKeys = new Set(
-      tokens.map((token) => `${token.type}:${token.value.toLowerCase()}`)
+      tokens.map(
+        (token) =>
+          `${token.type}:${String(token.id ?? token.value).toLowerCase()}`
+      )
     );
 
     const items: SuggestionItem[] = [];
@@ -361,7 +400,7 @@ export default function StructuredDestinationField({
       );
     }
 
-    if (allowedTypes.includes("purpose") && !selectedTypes.has("purpose")) {
+    if (allowedTypes.includes("purpose")) {
       const ids = uniq(activeHotels.flatMap((hotel) => hotel.activities));
       items.push(
         ...ids
@@ -378,7 +417,7 @@ export default function StructuredDestinationField({
       );
     }
 
-    if (allowedTypes.includes("setting") && !selectedTypes.has("setting")) {
+    if (allowedTypes.includes("setting")) {
       const ids = uniq(activeHotels.flatMap((hotel) => hotel.settings));
       items.push(
         ...ids
@@ -396,9 +435,19 @@ export default function StructuredDestinationField({
     }
 
     return items
-      .filter((item) => !selectedKeys.has(`${item.type}:${item.value.toLowerCase()}`))
+      .filter((item) => {
+        const itemKey = `${item.type}:${String(item.id ?? item.value).toLowerCase()}`;
+        return !selectedKeys.has(itemKey);
+      })
       .filter((item) => (q ? item.label.toLowerCase().includes(q) : true));
-  }, [activeHotels, dataset.purposes, dataset.settings, tokens, typedValue, allowedTypes]);
+  }, [
+    activeHotels,
+    dataset.purposes,
+    dataset.settings,
+    tokens,
+    typedValue,
+    allowedTypes,
+  ]);
 
   const groupedSuggestions = useMemo(() => {
     const order: SuggestionType[] = [
@@ -422,49 +471,91 @@ export default function StructuredDestinationField({
   const cityToken = tokens.find((token) => token.type === "city");
   const countryToken = tokens.find((token) => token.type === "country");
   const regionToken = tokens.find((token) => token.type === "region");
-  const purposeToken = tokens.find((token) => token.type === "purpose");
-  const settingToken = tokens.find((token) => token.type === "setting");
   const hotelToken = tokens.find((token) => token.type === "hotel");
+  const purposeTokens = tokens.filter((token) => token.type === "purpose");
+  const settingTokens = tokens.filter((token) => token.type === "setting");
 
   const inputPlaceholder =
     tokens.length > 0 ? helperPrompt(tokens) || placeholder : placeholder;
 
-function addToken(item: SuggestionItem) {
-  setTokens((prev) => {
-    const withoutSameType = prev.filter((token) => token.type !== item.type);
-    return [
-      ...withoutSameType,
-      {
-        type: item.type,
-        label: item.label,
-        value: item.value,
-        id: item.id,
-      },
-    ];
-  });
+  function submitParentForm() {
+    const form = rootRef.current?.closest("form");
+    if (form instanceof HTMLFormElement) {
+      form.requestSubmit();
+    }
+  }
 
-  setTypedValue("");
-  setOpen(false);
-  suppressNextFocusOpenRef.current = true;
+  function addToken(item: SuggestionItem) {
+    setTokens((prev) => {
+      const isMulti = item.type === "purpose" || item.type === "setting";
 
-  requestAnimationFrame(() => {
-    inputRef.current?.focus();
-  });
-}
+      if (isMulti) {
+        const exists = prev.some(
+          (token) =>
+            token.type === item.type &&
+            String(token.id ?? token.value) === String(item.id ?? item.value)
+        );
 
-function removeToken(type: SuggestionType) {
-  suppressNextFocusOpenRef.current = true;
-  setTokens((prev) => prev.filter((token) => token.type !== type));
-  setOpen(false);
+        if (exists) return prev;
 
-  requestAnimationFrame(() => {
-    inputRef.current?.focus();
-  });
-}
+        return [
+          ...prev,
+          {
+            type: item.type,
+            label: item.label,
+            value: item.value,
+            id: item.id,
+          },
+        ];
+      }
+
+      const withoutSameType = prev.filter((token) => token.type !== item.type);
+
+      return [
+        ...withoutSameType,
+        {
+          type: item.type,
+          label: item.label,
+          value: item.value,
+          id: item.id,
+        },
+      ];
+    });
+
+    setTypedValue("");
+    setOpen(false);
+    suppressNextFocusOpenRef.current = true;
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      submitParentForm();
+    });
+  }
+
+  function removeToken(target: Token) {
+    suppressNextFocusOpenRef.current = true;
+
+    setTokens((prev) =>
+      prev.filter(
+        (token) =>
+          !(
+            token.type === target.type &&
+            String(token.id ?? token.value) === String(target.id ?? target.value)
+          )
+      )
+    );
+
+    setOpen(false);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      submitParentForm();
+    });
+  }
 
   return (
     <div ref={rootRef} className={`${styles.wrapper} ${wrapperClassName}`}>
-      <div className="oltra-label mb-2">{label}</div>
+      <div className="oltra-label">{label}</div>
 
       <div className={styles.inputWrap}>
         <input
@@ -504,8 +595,13 @@ function removeToken(type: SuggestionType) {
         {open && groupedSuggestions.length > 0 ? (
           <div className={`${styles.suggestionPanel} oltra-dropdown-panel`}>
             {groupedSuggestions.map((group) => (
-              <div key={group.type} className={`${styles.suggestionGroup} oltra-dropdown-group`}>
-                <div className={`${styles.suggestionGroupLabel} oltra-dropdown-group-label`}>
+              <div
+                key={group.type}
+                className={`${styles.suggestionGroup} oltra-dropdown-group`}
+              >
+                <div
+                  className={`${styles.suggestionGroupLabel} oltra-dropdown-group-label`}
+                >
                   {typeLabel(group.type)}
                 </div>
 
@@ -534,7 +630,7 @@ function removeToken(type: SuggestionType) {
             <button
               key={`${token.type}-${token.value}`}
               type="button"
-              onClick={() => removeToken(token.type)}
+              onClick={() => removeToken(token)}
               className={styles.tokenPill}
               title={`${typeLabel(token.type)}: ${token.label}`}
             >
@@ -555,8 +651,16 @@ function removeToken(type: SuggestionType) {
       <input type="hidden" name="city" value={cityToken?.value ?? ""} />
       <input type="hidden" name="country" value={countryToken?.value ?? ""} />
       <input type="hidden" name="region" value={regionToken?.value ?? ""} />
-      <input type="hidden" name="activities" value={purposeToken?.id ?? ""} />
-      <input type="hidden" name="settings" value={settingToken?.id ?? ""} />
+      <input
+        type="hidden"
+        name="activities"
+        value={purposeTokens.map((token) => token.id ?? token.value).join(",")}
+      />
+      <input
+        type="hidden"
+        name="settings"
+        value={settingTokens.map((token) => token.id ?? token.value).join(",")}
+      />
     </div>
   );
 }

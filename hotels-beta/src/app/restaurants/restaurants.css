@@ -21,14 +21,14 @@
 }
 
 .restaurants-sidebar__intro {
-  padding-bottom: 22px;
+  padding-bottom: 18px;
   border-bottom: 0;
 }
 
 .restaurants-sidebar__label {
   display: block;
-  margin: 0 0 10px;
-  padding-left: 18px;
+  margin: 0 0 8px;
+  padding-left: 0;
   text-align: left;
 }
 
@@ -40,8 +40,8 @@
 }
 
 .restaurants-sidebar__count {
-  margin: 22px 0 10px;
-  padding-left: 18px;
+  margin: 18px 0 2px;
+  padding-left: 0;
   font-size: 12px;
   line-height: 1.4;
   letter-spacing: 0.14em;
@@ -64,19 +64,21 @@
   display: grid;
   gap: 14px;
   align-items: stretch;
+  padding-top: 0;
 }
 
 .restaurants-sidebar__detail {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  padding-top: 28px;
+  padding-top: 22px;
   width: 100%;
 }
 
 .restaurants-city-lookup {
   position: relative;
   width: 100%;
+  margin-bottom: 0;
 }
 
 .restaurants-city-lookup__input {
@@ -92,29 +94,17 @@
 }
 
 .restaurants-city-lookup__menu {
-  position: absolute;
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  z-index: 20;
-  max-height: 260px;
+  z-index: var(--oltra-z-dropdown);
+  max-height: 220px;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--oltra-dropdown-padding);
 }
 
 .restaurants-city-lookup__option {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  color: inherit;
-}
-
-.restaurants-city-lookup__option:hover {
-  background: rgba(255, 255, 255, 0.08);
+  justify-content: flex-start;
 }
 
 .restaurant-row {

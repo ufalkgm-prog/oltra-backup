@@ -11,21 +11,33 @@ export const DEFAULT_MEMBER_PROFILE: MemberProfile = {
   email: "alex@example.com",
   phone: "+45 12 34 56 78",
   homeAirport: "Copenhagen (CPH)",
-  preferredCurrency: "EUR",
-  preferredHotelStyles: ["Beachfront", "Contemporary", "Private villas"],
-  preferredAirlines: ["SAS", "Lufthansa", "Emirates"],
+  birthday: {
+    day: "11",
+    month: "Mar",
+    year: "1986",
+  },
+  preferredHotelStyle: "",
+  preferredAirline: "SAS",
   familyMembers: [
     {
       id: "fm-1",
       fullName: "Alex Morgan",
-      birthday: "1986-03-11",
+      birthday: {
+        day: "11",
+        month: "Mar",
+        year: "1986",
+      },
       passportNumber: "XK129933",
       passportExpiry: "2030-05-18",
     },
     {
       id: "fm-2",
       fullName: "Emma Morgan",
-      birthday: "1988-09-27",
+      birthday: {
+        day: "27",
+        month: "Sep",
+        year: "1988",
+      },
       passportNumber: "TR558220",
       passportExpiry: "2029-11-02",
     },

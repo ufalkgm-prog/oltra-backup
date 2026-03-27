@@ -168,10 +168,10 @@ export type HotelRecord = {
   city?: string | null;
   local_area?: string | null;
 
-  activities?: unknown;
-  awards?: unknown;
-  settings?: unknown;
-  styles?: unknown;
+  activities?: unknown[] | null;
+  awards?: unknown[] | null;
+  settings?: unknown[] | null;
+  styles?: unknown[] | null;
 
   highlights?: string | null;
   description?: string | null;

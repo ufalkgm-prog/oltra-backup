@@ -183,7 +183,7 @@ export default function LandingSearchPanel({
   }
 
   return (
-    <div className="oltra-glass oltra-panel">
+    <div className={`oltra-glass oltra-panel ${styles.searchPanel}`}>
       <form
         ref={formRef}
         action="/"

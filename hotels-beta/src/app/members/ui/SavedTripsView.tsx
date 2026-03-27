@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import OltraSelect from "@/components/site/OltraSelect";
 import { DEFAULT_TRIPS } from "@/lib/members/defaults";
 import {
   deleteSavedTripBrowser,
@@ -57,7 +58,7 @@ export default function SavedTripsView() {
 
         setTrips(next);
         setSelectedTripId((prev) => prev || next[0]?.id || "");
-      } catch (error) {
+      } catch {
         if (!active) return;
         setErrorMessage("Could not load saved trips.");
       } finally {
@@ -77,21 +78,14 @@ export default function SavedTripsView() {
     [selectedTripId, trips]
   );
 
-  if (isLoading) {
-    return (
-      <div className="oltra-glass members-section">
-        <div className="members-empty">Loading saved trips...</div>
-      </div>
-    );
-  }
-
-  if (!selectedTrip) {
-    return (
-      <div className="oltra-glass members-section">
-        <div className="members-empty">No saved trips yet.</div>
-      </div>
-    );
-  }
+  const tripOptions = useMemo(
+    () =>
+      trips.map((trip) => ({
+        value: trip.id,
+        label: trip.name,
+      })),
+    [trips]
+  );
 
   async function deleteTrip(tripId: string) {
     try {
@@ -108,7 +102,7 @@ export default function SavedTripsView() {
       }
 
       setStatusMessage("Trip deleted.");
-    } catch (error) {
+    } catch {
       setErrorMessage("Could not delete trip.");
     }
   }
@@ -117,6 +111,8 @@ export default function SavedTripsView() {
     section: "hotels" | "restaurants" | "flights",
     itemId: string
   ) {
+    if (!selectedTrip) return;
+
     try {
       setErrorMessage("");
       setStatusMessage("");
@@ -141,7 +137,7 @@ export default function SavedTripsView() {
       );
 
       setStatusMessage("Trip item deleted.");
-    } catch (error) {
+    } catch {
       setErrorMessage("Could not delete trip item.");
     }
   }
@@ -162,44 +158,71 @@ export default function SavedTripsView() {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="oltra-glass members-section">
+        <div className="members-empty">Loading saved trips...</div>
+      </div>
+    );
+  }
+
+  if (!selectedTrip) {
+    return (
+      <div className="oltra-glass members-section">
+        <div className="members-empty">No saved trips yet.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="members-stack">
-      <section className="oltra-glass members-trip-planner">
+      <section className="oltra-glass members-section members-trip-summary">
         <div className="members-trip-line">
           <div className="members-trip-inline-field members-trip-inline-field--trip">
-            <label className="oltra-label" htmlFor="trip-select">
-              TRIP
-            </label>
-            <select
-              id="trip-select"
-              className="oltra-select"
+            <label className="oltra-label">TRIP</label>
+            <OltraSelect
+              name="savedTrip"
               value={selectedTrip.id}
-              onChange={(e) => setSelectedTripId(e.target.value)}
-            >
-              {trips.map((trip) => (
-                <option key={trip.id} value={trip.id}>
-                  {trip.name}
-                </option>
-              ))}
-            </select>
+              placeholder="Select trip"
+              options={tripOptions}
+              align="left"
+              onValueChange={setSelectedTripId}
+            />
           </div>
 
           <div className="members-trip-inline-field">
             <div className="oltra-label">DESTINATION</div>
-            <div className="members-summary-card__value">
-              {selectedTrip.destination}
+            <div
+              className="members-summary-card__value"
+              title={selectedTrip.destination || "—"}
+            >
+              <span className="members-summary-card__text">
+                {selectedTrip.destination || "—"}
+              </span>
             </div>
           </div>
 
           <div className="members-trip-inline-field">
             <div className="oltra-label">PERIOD</div>
-            <div className="members-summary-card__value">{selectedTrip.period}</div>
+            <div
+              className="members-summary-card__value"
+              title={selectedTrip.period || "—"}
+            >
+              <span className="members-summary-card__text">
+                {selectedTrip.period || "—"}
+              </span>
+            </div>
           </div>
 
           <div className="members-trip-inline-field">
             <div className="oltra-label">TRAVELERS</div>
-            <div className="members-summary-card__value">
-              {selectedTrip.travelers}
+            <div
+              className="members-summary-card__value"
+              title={selectedTrip.travelers || "—"}
+            >
+              <span className="members-summary-card__text">
+                {selectedTrip.travelers || "—"}
+              </span>
             </div>
           </div>
         </div>
@@ -240,7 +263,7 @@ export default function SavedTripsView() {
         </section>
       ) : null}
 
-      {(errorMessage || statusMessage) ? (
+      {errorMessage || statusMessage ? (
         <section className="oltra-glass members-section">
           <div className="members-note">{errorMessage || statusMessage}</div>
         </section>
@@ -308,7 +331,7 @@ function TripSection({
   onBook: (itemId: string, hasOverlapWarning?: boolean) => void;
 }) {
   return (
-    <section className="oltra-glass members-section">
+    <section className="oltra-glass members-section members-trip-column">
       <div className="members-section__header">
         <div className="oltra-label">{title}</div>
       </div>
@@ -316,7 +339,7 @@ function TripSection({
       <div className="members-section__body">
         {items.length ? (
           items.map((item) => (
-            <article key={item.id} className="members-item">
+            <article key={item.id} className="members-item members-trip-item">
               <div className="members-item__layout">
                 <div
                   className="members-item__thumb"
@@ -325,7 +348,7 @@ function TripSection({
 
                 <div className="members-item__content">
                   <div className="members-item__top">
-                    <div>
+                    <div className="members-item__head">
                       <div className="members-item__title">{item.primary}</div>
                       <div className="members-item__location">
                         {item.secondary}

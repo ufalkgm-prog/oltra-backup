@@ -3,7 +3,7 @@ import FavoriteRestaurantsView from "../ui/FavoriteRestaurantsView";
 
 export default function FavoriteRestaurantsPage() {
   return (
-    <MembersShell title="FAVORITE RESTAURANTS">
+    <MembersShell>
       <FavoriteRestaurantsView />
     </MembersShell>
   );

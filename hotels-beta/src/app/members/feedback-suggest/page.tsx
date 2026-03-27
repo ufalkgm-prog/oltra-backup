@@ -3,7 +3,7 @@ import FeedbackSuggestView from "../ui/FeedbackSuggestView";
 
 export default function FeedbackSuggestPage() {
   return (
-    <MembersShell title="FEEDBACK / SUGGEST">
+    <MembersShell>
       <FeedbackSuggestView />
     </MembersShell>
   );

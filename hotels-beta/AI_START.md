@@ -1,181 +1,171 @@
-AI PROJECT CONTEXT — OLTRA (UI DESIGN SYSTEM — REFINEMENT PHASE)
+AI PROJECT CONTEXT — OLTRA (NEXT SESSION: INSPIRE + RESTAURANTS ACTION POPUPS)
 
 You are a senior full-stack engineer working on OLTRA, a curated luxury travel platform.
 
 Act as:
-precise
-minimal-diff focused
-design-system driven
-production-grade
+- precise
+- minimal-diff focused
+- design-system driven
+- production-grade
 
----
+-----------------------------------
+CURRENT STACK / RULES
+-----------------------------------
 
-STACK
+- Next.js 15 App Router + TypeScript
+- Tailwind v4
+- centralized visual system in `src/styles/oltra-theme.css`
+- Directus (Railway) is the single canonical editorial data source
+- all Directus access goes through `/src/lib/directus`
+- no schema redesign unless explicitly requested
+- no new libraries unless explicitly requested
+- keep changes small, composable, and visually consistent
+- no ad-hoc visual styling if it should belong in the shared system
 
-Next.js 15 (App Router)
-TypeScript
-Tailwind v4 + CSS Modules
-Server Components by default
-Directus (Railway) — canonical data
-Supabase — auth/members
-MapLibre + MapTiler
-AI = placeholder only
+-----------------------------------
+CURRENT GLOBAL UI STATUS
+-----------------------------------
 
----
+Stable shared rules now include:
+- header nav uses rounded outline hover, no underline, no fill
+- Members section spacing is denser and improved
+- active buttons use green theme color
+- shared controls use OLTRA theme tokens
+- `/members` opens on personal information, not saved trips
+- global scrollbar/page-width fix has already been added in `src/styles/oltra-theme.css`:
+  `html { overflow-y: scroll; scrollbar-gutter: stable; }`
 
-CORE RULES
+Important shared principle:
+- prefer shared system fixes over page-specific hacks
+- use `oltra-theme.css` for visual rules when appropriate
+- only use local CSS for layout/section-specific adjustments
 
-* Directus = single source of truth (no schema changes)
-* All Directus logic via /src/lib/directus
-* No unnecessary rewrites
-* No new libraries
-* Prefer shared components + shared styling
-* Centralize ALL visuals in `oltra-theme.css`
-* CSS Modules = layout only (no visual duplication)
+-----------------------------------
+MEMBERS STATUS
+-----------------------------------
 
----
+Refined pages:
+- `/members/personal-information`
+- `/members/saved-trips`
+- `/members/favorite-hotels`
+- `/members/favorite-restaurants`
 
-DESIGN SYSTEM (CURRENT STATE)
+MembersShell:
+- redundant page title headers removed where `title` prop is omitted
+- sidebar/content alignment improved
 
-CENTRAL FILE
-src/styles/oltra-theme.css
+Personal Information:
+- no page header
+- left column = member name, email, phone, birthday, home airport
+- right column = preferred hotel styles, preferred airlines
+- preferred hotel styles sourced from Directus taxonomy styles
+- preferred airlines mock options: SAS, Lufthansa, Emirates, easyJet
+- currency removed
+- additional members reduced to name + birthday
+- unsaved changes prompt added: “Do you want to save changes?” Yes/No
 
-Controls:
+Saved Trips:
+- no page header
+- top summary values truncate with ellipsis and show full text on hover via `title`
 
-* colors
-* typography
-* spacing
-* radii
-* buttons
-* dropdown system
-* inputs
-* labels
+Favorite Hotels / Favorite Restaurants:
+- page headers removed
+- aligned visually with Personal Information / Saved Trips
 
----
+-----------------------------------
+RESTAURANTS STATUS
+-----------------------------------
 
-KEY TOKENS
+Restaurants page only needed small tweaks and is close to correct.
 
-Radius (UPDATED — tighter luxury look):
---oltra-radius-xl: 16px
---oltra-radius-lg: 14px
---oltra-radius-md: 10px
---oltra-radius-sm: 8px
---oltra-radius-xs: 5px
---oltra-radius-pill: 999px
+Files involved:
+- `src/app/restaurants/page.tsx`
+- `src/app/restaurants/ui/RestaurantsMapView.tsx`
+- `src/app/restaurants/restaurants.css`
 
-Dropdown:
---oltra-dropdown-radius: 10px
---oltra-dropdown-padding
---oltra-dropdown-shadow
---oltra-dropdown-item-min-height
---oltra-dropdown-list-max-height
+What was already addressed:
+1. city dropdown was moved toward the shared dropdown visual system
+2. city label was aligned to the field edge instead of inner text alignment
+3. spacing between labels and fields was tightened toward Members/Hotels rhythm
+4. `TOP RESTAURANTS` replaced dynamic “X selected top restaurant” text
 
-Buttons:
---oltra-button-height: 44px
---oltra-button-active-bg
---oltra-button-inactive-bg
+Important remaining Restaurants issue for next session:
+- the `Add to trip` and `Add to favourites` popup/dropdown behavior is not correct near the bottom of the selected-card area
+- the popup opens downward and can extend below the visible container area
+- this makes the dropdown/popup partially inaccessible
+- this needs to be fixed carefully with minimal diff
 
----
+Likely cause:
+- popup is absolutely positioned downward inside a constrained scroll/container context
+- relevant selectors include:
+  - `.restaurant-detail-card__actions--relative`
+  - `.restaurant-trip-popup`
+  - `.restaurant-detail-card`
+  - `.restaurants-sidebar__detail`
 
-SHARED CLASSES (AUTHORITATIVE)
+Goal next session:
+- make add-to-trip / add-to-favourites interaction fully accessible
+- popup should not drop below the bottom edge of the usable panel area
+- likely fix is one of:
+  - open upward instead of downward in this context
+  - anchor differently inside the action area
+  - adjust overflow/positioning context carefully
+- keep styling aligned with shared dropdown/popup system
 
-Dropdown:
-.oltra-dropdown-panel
-.oltra-dropdown-list
-.oltra-dropdown-item
-.oltra-dropdown-group-label
+Do NOT do a large rewrite unless clearly necessary.
 
-Buttons:
-.oltra-button
-.oltra-button-primary
-.oltra-button-secondary
-.oltra-button--active
+-----------------------------------
+INSPIRE PAGE — NEXT SESSION MAIN FOCUS
+-----------------------------------
 
-Inputs:
-.oltra-input
-.oltra-select
-.oltra-textarea
+Main next-session focus is now the Inspire page.
 
-Labels:
-.oltra-label
-.oltra-subheader
+Need a consistency and usability pass on:
+- map view
+- text boxes
+- dropdowns
+- pop-ups
+- header / overall layout rhythm
+- visual consistency with Hotels / Members / Restaurants
 
-Chips:
-.oltra-chip
+Prior Inspire requirements from earlier sessions:
+- map view, text boxes, dropdowns and pop-ups should be uniform across all pages
+- Inspire should be in the main menu if not already completed
+- page scroll should not visually move behind the OLTRA header/menu icon
+- there should be a proper fixed header background layer on top of the underlying page
+- maintain dense, calm, editorial luxury spacing
 
-Panels:
-.oltra-glass
-.oltra-panel
+Need to verify current Inspire state next session before patching.
 
----
+-----------------------------------
+SHARED FILES / SYSTEM FILES
+-----------------------------------
 
-WHAT HAS BEEN COMPLETED
+Likely relevant shared files:
+- `src/styles/oltra-theme.css`
+- any Inspire route/view files
+- any shared dropdown component files if Inspire uses them
+- possibly `src/components/site/OltraSelect.tsx` if a true shared dropdown inconsistency is found
 
-✔ Dropdown system fully unified
-✔ GuestSelector refactored to shared dropdown system
-✔ Dropdown spacing, alignment, scroll behavior fixed
-✔ Radius system tightened globally
-✔ Button system centralized (no local styling)
-✔ Hotels page:
+Already relevant shared theme details:
+- `html { overflow-y: scroll; scrollbar-gutter: stable; }`
+- shared dropdown/popup system exists in `oltra-theme.css`
+- use shared classes/tokens where possible rather than local one-off styling
 
-* buttons unified
-* chips unified
-* popup uses shared system
-* card radii aligned
-  ✔ Search panel:
-* duplicate header removed
-* field labels added consistently
-* layout improved
+-----------------------------------
+NEXT SESSION TASKS
+-----------------------------------
 
----
+1. Inspect Inspire route/view files and current CSS
+2. Refine Inspire layout and shared-control consistency
+3. Fix Restaurants action popup issue:
+   - add-to-trip dropdown/popup currently drops below the bottom of the area
+   - popup becomes hard/impossible to access properly
+4. Also review add-to-favourites / action area behavior so both actions feel stable and aligned
+5. Keep all changes minimal-diff and design-system driven
 
-KNOWN REMAINING ISSUE
+-----------------------------------
+START NEXT SESSION WITH
+-----------------------------------
 
-⚠ Landing page dropdown overlap:
-
-* dropdown appears behind output box
-* likely cause: overflow / stacking context
-* NOT yet fixed (defer to next session)
-
----
-
-DESIGN PRINCIPLES (STRICT)
-
-* One visual system → `oltra-theme.css`
-* No component-level visual styling
-* All dropdowns must look identical
-* All buttons must look identical
-* All inputs must share:
-
-  * height
-  * padding
-  * font
-* Reduced radius (not pill-heavy)
-* Dense, premium, editorial UI (NOT airy SaaS)
-
----
-
-NEXT SESSION PRIORITIES
-
-1. Fix landing dropdown overlap (z-index + overflow)
-2. Global alignment pass:
-
-   * labels baseline alignment
-   * left padding consistency
-   * vertical rhythm
-3. Input + placeholder refinement (remove duplication where needed)
-4. Hotels page polish:
-
-   * selected panel spacing
-   * image/card consistency
-5. Restaurants page UI pass
-6. Members UI pass
-
----
-
-START NEXT SESSION WITH:
-
-“We are now refining global layout consistency and fixing dropdown stacking on landing. Confirm.”
-
-Then:
-👉 inspect LandingSearchPanel + page.module.css for overflow/z-index issues
+“We are now refining Inspire and fixing the Restaurants action popups so Add to trip / Add to favourites remain fully accessible within the panel. Confirm.”
