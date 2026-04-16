@@ -483,12 +483,13 @@ export default function HotelsView(props: {
     styles: string[];
     filters_open: string;
     search_submitted: string;
-  };
+    landing_handoff: string;
+  };  
 }) {
   const { hotels, tax, searchParams, selected } = props;
 
   const hasMeaningfulFilters =
-    selected.search_submitted === "1" &&
+    (selected.search_submitted === "1" || selected.landing_handoff === "1") &&
     Boolean(
       selected.q ||
         selected.country.length ||
@@ -501,6 +502,15 @@ export default function HotelsView(props: {
         selected.settings.length ||
         selected.styles.length
     );
+
+  const hasDirectHotelSelection = Boolean(
+    selected.q &&
+      hotels.some(
+        (hotel) =>
+          String(hotel.hotel_name ?? "").trim().toLowerCase() ===
+          String(selected.q).trim().toLowerCase()
+      )
+  );
 
   const hasPendingSearchInput = Boolean(
     normalizeParam(searchParams.q) ||
@@ -516,10 +526,18 @@ export default function HotelsView(props: {
   );
 
   const hasCountrySelected = selected.country.length > 0;
-  const shouldShowResults = hasMeaningfulFilters && (hasCountrySelected || hotels.length < 50);
+  const shouldShowResults =
+    hasMeaningfulFilters &&
+    (hasDirectHotelSelection || hasCountrySelected || hotels.length <= 50);
+
   const visibleHotels = shouldShowResults ? hotels : [];
   const shouldShowFeatured = !shouldShowResults;
-  const showNarrowFurtherMessage = hasMeaningfulFilters && !hasCountrySelected && hotels.length >= 50;
+
+  const showNarrowFurtherMessage =
+    hasMeaningfulFilters &&
+    !hasDirectHotelSelection &&
+    !hasCountrySelected &&
+    hotels.length > 50;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -696,19 +714,26 @@ export default function HotelsView(props: {
   }, []);
 
   useEffect(() => {
-    if (visibleHotels.length === 0) {
+    if (!shouldShowResults || visibleHotels.length === 0) {
       setSelectedHotelId(null);
       return;
     }
 
-    const stillExists = selectedHotelId
-      ? visibleHotels.some((h) => String(h.id) === selectedHotelId)
-      : false;
+    const firstHotelId = String(visibleHotels[0].id);
+
+    if (!selectedHotelId) {
+      setSelectedHotelId(firstHotelId);
+      return;
+    }
+
+    const stillExists = visibleHotels.some(
+      (hotel) => String(hotel.id) === selectedHotelId
+    );
 
     if (!stillExists) {
-      setSelectedHotelId(String(visibleHotels[0].id));
+      setSelectedHotelId(firstHotelId);
     }
-  }, [visibleHotels, selectedHotelId]);
+  }, [shouldShowResults, visibleHotels, selectedHotelId]);
 
   useEffect(() => {
     setSelectedImageIndex(0);
@@ -733,13 +758,17 @@ export default function HotelsView(props: {
   }, [memberActionMessage, memberActionError]);
 
   const selectedHotel = useMemo(() => {
-    if (!selectedHotelId) return visibleHotels[0] ?? null;
-    return (
-      visibleHotels.find((h) => String(h.id) === selectedHotelId) ??
-      visibleHotels[0] ??
-      null
-    );
-  }, [visibleHotels, selectedHotelId]);
+    if (!shouldShowResults) return null;
+    if (visibleHotels.length === 0) return null;
+
+    const byId = selectedHotelId
+      ? visibleHotels.find((hotel) => String(hotel.id) === selectedHotelId)
+      : null;
+
+    if (byId) return byId;
+
+    return visibleHotels[0] ?? null;
+  }, [shouldShowResults, visibleHotels, selectedHotelId]);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current || effectiveView !== "map") {
@@ -948,7 +977,18 @@ export default function HotelsView(props: {
     return () => window.clearInterval(timer);
   }, [effectiveView, featuredHeroImages.length]);
 
-  const featuredHotel = featuredHotels[0] ?? null;
+  const featuredHotel =
+    featuredHotels[0] ??
+    hotels[0] ??
+    {
+      hotel_name: "Featured hotel",
+      city: "",
+      country: "",
+      highlights: "",
+      awards: [],
+      ext_points: 0,
+      editor_rank_13: 0,
+    };
 
   const selectedPriceLabels = useMemo(
     () => getPriceSummary(searchParams, activeCurrency),
@@ -1208,8 +1248,16 @@ export default function HotelsView(props: {
 
   return (
     <div className="w-full">
-      <div className="grid gap-4 lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]">
-        <section className="grid min-w-0 gap-4">
+      <div
+        className={[
+          "grid gap-4",
+          shouldShowFeatured
+            ? "grid-cols-1"
+            : "lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]",
+        ].join(" ")}
+      >
+        {!shouldShowFeatured ? (
+          <section className="grid min-w-0 gap-4">
           <div className="relative z-30 overflow-visible oltra-glass oltra-panel !p-4">
             <form
               action="/hotels"
@@ -1388,26 +1436,26 @@ export default function HotelsView(props: {
                   </button>
                 ) : null}
 
-                <div className="w-full max-w-[180px]">
-                  {!compactTopMode ? (
+                {!compactTopMode ? (
+                  <div className="w-full max-w-[180px]">
                     <div className="oltra-label opacity-0 select-none">Search</div>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled
-                    className="oltra-button-secondary w-full"
-                  >
-                    <span className="inline-flex items-center justify-center gap-2">
-                      {isSubmittingSearch ? (
-                        <span
-                          className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span>Search</span>
-                    </span>
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      disabled
+                      className="oltra-button-secondary w-full"
+                    >
+                      <span className="inline-flex items-center justify-center gap-2">
+                        {isSubmittingSearch ? (
+                          <span
+                            className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <span>Search</span>
+                      </span>
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               {!compactTopMode && filtersOpen ? (
@@ -1578,36 +1626,97 @@ export default function HotelsView(props: {
             </div>
           ) : null}
         </section>
+        ) : null}
 
         <section className="oltra-glass oltra-panel min-w-0 overflow-visible">
           {effectiveView === "featured" ? (
-            <div className="relative">
-              <div className="relative overflow-hidden rounded-[var(--oltra-radius-lg)] border border-white/12">
-                <img
-                  src={featuredHeroImages[selectedImageIndex % featuredHeroImages.length]}
-                  alt=""
-                  className="h-[760px] w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/38" />
+            <div className="relative -m-4 min-h-[820px] overflow-hidden rounded-[var(--oltra-radius-xl)]">
+              <img
+                src={featuredHeroImages[selectedImageIndex % featuredHeroImages.length]}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/24 via-black/8 to-black/34" />
 
-                {featuredHotel ? (
-                  <div className="absolute left-5 top-5 max-w-[360px] rounded-[var(--oltra-radius-md)] bg-[rgba(18,28,36,0.28)] px-4 py-3 backdrop-blur-[10px]">
-                    <div className="text-[11px] uppercase tracking-[0.16em] text-white/72">
-                      Featured hotel
+              <div className="absolute left-5 top-5 z-10 w-[min(420px,calc(100%-40px))] rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(24,34,42,0.22)] p-4 backdrop-blur-[14px]">
+                <form
+                  action="/hotels"
+                  method="GET"
+                  className="grid gap-[14px]"
+                  onChange={(e) => {
+                    const form = e.currentTarget;
+                    setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
+                  }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                  }}
+                >
+                  <HiddenPreserveParams
+                    searchParams={searchParams}
+                    excludeKeys={[
+                      "q",
+                      "city",
+                      "country",
+                      "region",
+                      "activities",
+                      "settings",
+                      "from",
+                      "to",
+                      "adults",
+                      "kids",
+                      "bedrooms",
+                      "filters_open",
+                      "search_submitted",
+                      "kid_age_1",
+                      "kid_age_2",
+                      "kid_age_3",
+                      "kid_age_4",
+                      "kid_age_5",
+                      "kid_age_6",
+                    ]}
+                  />
+
+                  <input
+                    type="hidden"
+                    name="filters_open"
+                    value={filtersOpen ? "1" : "0"}
+                  />
+                  <input
+                    type="hidden"
+                    name="search_submitted"
+                    value={hasMeaningfulFilters ? "1" : simpleSearchSubmitted}
+                  />
+
+                  <StructuredDestinationField
+                    label="Destination / purpose"
+                    placeholder="Input hotel name, city, country, and/or purpose of trip"
+                    searchParams={searchParams}
+                    dataset={props.suggestions}
+                  />
+
+                  {showNarrowFurtherMessage ? (
+                    <div className="text-[12px] leading-relaxed text-white/72">
+                      Narrow results further by adding region, country, city or setting.
                     </div>
-                    <div className="mt-2 text-[1.15rem] font-light tracking-wide text-white">
-                      {featuredHotel.hotel_name ?? "Untitled hotel"}
-                    </div>
-                    <div className="mt-1 text-[12px] text-white/78">
-                      {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "—"}
-                    </div>
-                    <div className="mt-2 text-[12px] leading-relaxed text-white/74">
-                      {getFeaturedAwardsForHotel(featuredHotel)
-                        .map((award) => award.label)
-                        .join(" · ") || "Curated featured selection"}
-                    </div>
-                  </div>
-                ) : null}
+                  ) : null}
+                </form>
+              </div>
+
+              <div className="absolute right-5 top-5 z-10 w-[min(360px,calc(100%-40px))] rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(24,34,42,0.22)] px-4 py-3 backdrop-blur-[14px]">
+                <div className="text-[11px] uppercase tracking-[0.16em] text-white/72">
+                  Featured hotel
+                </div>
+                <div className="mt-2 text-[1.15rem] font-light tracking-wide text-white">
+                  {featuredHotel.hotel_name ?? "Featured hotel"}
+                </div>
+                <div className="mt-1 text-[12px] text-white/78">
+                  {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "Curated selection"}
+                </div>
+                <div className="mt-2 text-[12px] leading-relaxed text-white/74">
+                  {getFeaturedAwardsForHotel(featuredHotel as HotelRecord)
+                    .map((award) => award.label)
+                    .join(" · ") || "Curated featured selection"}
+                </div>
               </div>
             </div>
           ) : effectiveView === "map" ? (

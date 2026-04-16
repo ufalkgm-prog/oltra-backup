@@ -5,6 +5,7 @@ import { buildHotelsDirectusFilter } from "@/lib/hotelFilters";
 import { getHotelFilterOptions } from "@/lib/hotelOptions";
 import { fetchAllHotelTaxonomies } from "@/lib/directus/taxonomy";
 import { getHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
+import { expandCityAliases } from "@/lib/locationAliases";
 import HotelsView from "./ui/HotelsView";
 
 export const metadata: Metadata = {
@@ -36,23 +37,37 @@ const filter = buildHotelsDirectusFilter(resolvedSearchParams);
 
 const q = normalizeParam(resolvedSearchParams.q).trim();
 
+const country = listFromParam(resolvedSearchParams.country);
+const city = expandCityAliases(listFromParam(resolvedSearchParams.city));
+const region = listFromParam(resolvedSearchParams.region);
+const local_area = listFromParam(resolvedSearchParams.local_area);
+const affiliation = listFromParam(resolvedSearchParams.affiliation);
+const activities = listFromParam(resolvedSearchParams.activities);
+const awards = listFromParam(resolvedSearchParams.awards);
+const settings = listFromParam(resolvedSearchParams.settings);
+const styles = listFromParam(resolvedSearchParams.styles);
+
+const landing_handoff =
+  q || country.length || city.length || region.length ? "1" : "";
+
 const selected = {
   q,
-  country: listFromParam(resolvedSearchParams.country),
-  city: listFromParam(resolvedSearchParams.city),
-  region: listFromParam(resolvedSearchParams.region),
-  local_area: listFromParam(resolvedSearchParams.local_area),
-  affiliation: listFromParam(resolvedSearchParams.affiliation),
-  activities: listFromParam(resolvedSearchParams.activities),
-  awards: listFromParam(resolvedSearchParams.awards),
-  settings: listFromParam(resolvedSearchParams.settings),
-  styles: listFromParam(resolvedSearchParams.styles),
+  country,
+  city,
+  region,
+  local_area,
+  affiliation,
+  activities,
+  awards,
+  settings,
+  styles,
   filters_open: normalizeParam(resolvedSearchParams.filters_open),
   search_submitted: normalizeParam(resolvedSearchParams.search_submitted),
+  landing_handoff: q || country.length || city.length || region.length ? "1" : "",
 };
 
 const hasMeaningfulFilters = Boolean(
-  selected.q ||
+  q ||
     selected.country.length ||
     selected.city.length ||
     selected.region.length ||

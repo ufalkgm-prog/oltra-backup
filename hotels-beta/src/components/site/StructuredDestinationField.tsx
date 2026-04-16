@@ -168,6 +168,15 @@ const ALL_TYPES: SuggestionType[] = [
   "setting",
 ];
 
+const GROUP_ORDER: SuggestionType[] = [
+  "hotel",
+  "city",
+  "country",
+  "region",
+  "purpose",
+  "setting",
+];
+
 function getExternalSyncKey(
   searchParams: SearchParams,
   allowedTypes: SuggestionType[]
@@ -180,6 +189,28 @@ function getExternalSyncKey(
     activities: listFromParam(searchParams.activities),
     settings: listFromParam(searchParams.settings),
     allowedTypes,
+  });
+}
+
+function getVisibleTypes(tokens: Token[], allowedTypes: SuggestionType[]) {
+  const hasHotel = tokens.some((token) => token.type === "hotel");
+  const hasCity = tokens.some((token) => token.type === "city");
+  const hasCountry = tokens.some((token) => token.type === "country");
+
+  return allowedTypes.filter((type) => {
+    if (hasHotel && (type === "city" || type === "country" || type === "region")) {
+      return false;
+    }
+
+    if (hasCity && (type === "country" || type === "region")) {
+      return false;
+    }
+
+    if (hasCountry && type === "region") {
+      return false;
+    }
+
+    return true;
   });
 }
 
@@ -350,6 +381,13 @@ export default function StructuredDestinationField({
     };
   }, []);
 
+  const visibleTypes = useMemo(
+    () => getVisibleTypes(tokens, allowedTypes),
+    [tokens, allowedTypes]
+  );
+
+  const minimumCharsReached = typedValue.trim().length >= 2;
+
   const suggestions = useMemo(() => {
     const q = typedValue.trim().toLowerCase();
 
@@ -363,7 +401,10 @@ export default function StructuredDestinationField({
 
     const items: SuggestionItem[] = [];
 
-    if (allowedTypes.includes("hotel") && !selectedTypes.has("hotel")) {
+    if (
+      visibleTypes.includes("hotel") &&
+      !selectedTypes.has("hotel")
+    ) {
       items.push(
         ...uniq(activeHotels.map((hotel) => hotel.hotel_name)).map((value) => ({
           type: "hotel" as const,
@@ -373,7 +414,10 @@ export default function StructuredDestinationField({
       );
     }
 
-    if (allowedTypes.includes("city") && !selectedTypes.has("city")) {
+    if (
+      visibleTypes.includes("city") &&
+      !selectedTypes.has("city")
+    ) {
       items.push(
         ...uniq(activeHotels.map((hotel) => hotel.city)).map((value) => ({
           type: "city" as const,
@@ -383,7 +427,10 @@ export default function StructuredDestinationField({
       );
     }
 
-    if (allowedTypes.includes("country") && !selectedTypes.has("country")) {
+    if (
+      visibleTypes.includes("country") &&
+      !selectedTypes.has("country")
+    ) {
       items.push(
         ...uniq(activeHotels.map((hotel) => hotel.country)).map((value) => ({
           type: "country" as const,
@@ -393,7 +440,10 @@ export default function StructuredDestinationField({
       );
     }
 
-    if (allowedTypes.includes("region") && !selectedTypes.has("region")) {
+    if (
+      visibleTypes.includes("region") &&
+      !selectedTypes.has("region")
+    ) {
       items.push(
         ...uniq(activeHotels.map((hotel) => hotel.region)).map((value) => ({
           type: "region" as const,
@@ -403,7 +453,7 @@ export default function StructuredDestinationField({
       );
     }
 
-    if (allowedTypes.includes("purpose")) {
+    if (visibleTypes.includes("purpose")) {
       const ids = uniq(activeHotels.flatMap((hotel) => hotel.activities));
       items.push(
         ...ids
@@ -420,7 +470,7 @@ export default function StructuredDestinationField({
       );
     }
 
-    if (allowedTypes.includes("setting")) {
+    if (visibleTypes.includes("setting")) {
       const ids = uniq(activeHotels.flatMap((hotel) => hotel.settings));
       items.push(
         ...ids
@@ -449,27 +499,18 @@ export default function StructuredDestinationField({
     dataset.settings,
     tokens,
     typedValue,
-    allowedTypes,
+    visibleTypes,
   ]);
 
   const groupedSuggestions = useMemo(() => {
-    const order: SuggestionType[] = [
-      "hotel",
-      "city",
-      "country",
-      "region",
-      "purpose",
-      "setting",
-    ];
-
-    return order
-      .filter((type) => allowedTypes.includes(type))
+    return GROUP_ORDER
+      .filter((type) => visibleTypes.includes(type))
       .map((type) => ({
         type,
-        items: suggestions.filter((item) => item.type === type).slice(0, 5),
+        items: suggestions.filter((item) => item.type === type),
       }))
       .filter((group) => group.items.length > 0);
-  }, [suggestions, allowedTypes]);
+  }, [suggestions, visibleTypes]);
 
   const cityToken = tokens.find((token) => token.type === "city");
   const countryToken = tokens.find((token) => token.type === "country");
@@ -484,7 +525,7 @@ export default function StructuredDestinationField({
   function submitParentForm() {
     const form = rootRef.current?.closest("form");
     if (form instanceof HTMLFormElement) {
-      form.requestSubmit();
+      form.submit();
     }
   }
 
@@ -566,8 +607,9 @@ export default function StructuredDestinationField({
           ref={inputRef}
           value={typedValue}
           onChange={(e) => {
-            setTypedValue(e.target.value);
-            setOpen(true);
+            const nextValue = e.target.value;
+            setTypedValue(nextValue);
+            setOpen(nextValue.trim().length >= 2);
           }}
           onFocus={() => {
             if (suppressNextFocusOpenRef.current) {
@@ -575,7 +617,9 @@ export default function StructuredDestinationField({
               return;
             }
 
-            if (groupedSuggestions.length > 0) setOpen(true);
+            if (minimumCharsReached && groupedSuggestions.length > 0) {
+              setOpen(true);
+            }
           }}
           onClick={() => {
             if (suppressNextFocusOpenRef.current) {
@@ -583,10 +627,12 @@ export default function StructuredDestinationField({
               return;
             }
 
-            if (groupedSuggestions.length > 0) setOpen(true);
+            if (minimumCharsReached && groupedSuggestions.length > 0) {
+              setOpen(true);
+            }
           }}
           onKeyDown={() => {
-            if (!open && groupedSuggestions.length > 0) {
+            if (!open && minimumCharsReached && groupedSuggestions.length > 0) {
               setOpen(true);
             }
           }}
@@ -596,8 +642,11 @@ export default function StructuredDestinationField({
           spellCheck={false}
         />
 
-        {open && groupedSuggestions.length > 0 ? (
-          <div className={`${styles.suggestionPanel} oltra-dropdown-panel`}>
+        {open && minimumCharsReached && groupedSuggestions.length > 0 ? (
+          <div
+            className={`${styles.suggestionPanel} oltra-popup-panel oltra-scrollbar`}
+            style={{ maxHeight: "min(680px, calc(100vh - 160px))", overflowY: "auto" }}
+          >
             {groupedSuggestions.map((group) => (
               <div
                 key={group.type}
@@ -609,19 +658,22 @@ export default function StructuredDestinationField({
                   {typeLabel(group.type)}
                 </div>
 
-                <div className={styles.suggestionList}>
+                <div
+                  className="oltra-scrollbar flex max-h-[112px] flex-col gap-1 overflow-y-auto pr-1"
+                  style={{ scrollbarWidth: "thin" }}
+                >
                   {group.items.map((item) => (
                     <button
-                      key={`${item.type}-${item.value}`}
+                      key={`${item.type}-${item.id ?? item.value}`}
                       type="button"
                       onClick={() => addToken(item)}
-                      className={`${styles.suggestionItem} oltra-dropdown-item`}
+                      className={`${styles.suggestionItem} oltra-dropdown-item w-full text-left`}
                       title={item.label}
                     >
                       {item.label}
                     </button>
                   ))}
-                </div>
+                </div>                
               </div>
             ))}
           </div>
@@ -632,7 +684,7 @@ export default function StructuredDestinationField({
         <div className={styles.tokenRow}>
           {tokens.map((token) => (
             <button
-              key={`${token.type}-${token.value}`}
+              key={`${token.type}-${token.id ?? token.value}`}
               type="button"
               onClick={() => removeToken(token)}
               className={styles.tokenPill}

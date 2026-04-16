@@ -1,6 +1,7 @@
 import PageShell from "@/components/site/PageShell";
 import RestaurantsMapView from "./ui/RestaurantsMapView";
 import { getRestaurantCities, getRestaurantsByCity } from "@/lib/restaurants";
+import { expandCityAliases } from "@/lib/locationAliases";
 import "./restaurants.css";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -26,9 +27,19 @@ export default async function RestaurantsPage({
       (option) => option.toLowerCase() === requestedCity.toLowerCase()
     ) ?? fallbackCity;
 
-  const restaurants = activeCity
-    ? await getRestaurantsByCity(activeCity)
+  const cityAliases = activeCity ? expandCityAliases([activeCity]) : [];
+
+  const restaurantBatches = cityAliases.length
+    ? await Promise.all(cityAliases.map((city) => getRestaurantsByCity(city)))
     : [];
+
+  const restaurants = Array.from(
+    new Map(
+      restaurantBatches
+        .flat()
+        .map((restaurant) => [String(restaurant.id), restaurant])
+    ).values()
+  );
 
   return (
     <PageShell current="Restaurants">
