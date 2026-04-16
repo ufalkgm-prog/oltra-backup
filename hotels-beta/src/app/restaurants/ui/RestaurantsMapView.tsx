@@ -3,10 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import {
+  getMemberActionAccessBrowser,
+} from "@/lib/members/db";
+import {
+  getMemberActionButtonClass,
+  getMemberActionLoginMessage,
+} from "@/lib/members/memberActionUi";
+
 import type { RestaurantRecord } from "../types";
 import { buildAwardsLabel, buildLocationLabel } from "../utils";
-import "maplibre-gl/dist/maplibre-gl.css";
-import "../restaurants.css";
 import {
   addFavoriteRestaurantBrowser,
   addRestaurantToTripBrowser,
@@ -61,6 +68,8 @@ export default function RestaurantsMapView({
   const [newTripName, setNewTripName] = useState("");
   const [creatingTrip, setCreatingTrip] = useState(false);
 
+  const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
+
   useEffect(() => {
     setCityInput(city);
     setShowCityOptions(false);
@@ -84,7 +93,10 @@ export default function RestaurantsMapView({
 
   async function handleAddRestaurantToTrip(tripId?: string) {
     if (!selectedRestaurant) return;
-
+    if (!isMemberLoggedIn) {
+      setMemberActionError(getMemberActionLoginMessage("favorite"));
+      return;
+    }
     try {
       setMemberActionLoading("trip");
       setMemberActionMessage("");
@@ -105,57 +117,84 @@ export default function RestaurantsMapView({
         setMemberActionMessage("Restaurant added to trip.");
       }
     } catch (error) {
-      setMemberActionError("Could not add restaurant to trip.");
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+      if (
+        message.includes("auth") ||
+        message.includes("login") ||
+        message.includes("sign in") ||
+        message.includes("unauthorized") ||
+        message.includes("not authenticated")
+      ) {
+        setMemberActionError("Log in to add to trip.");
+      } else {
+        setMemberActionError("Could not add restaurant to trip.");
+      }
     } finally {
       setMemberActionLoading(null);
     }
   }
-  
-    useEffect(() => {
-      let active = true;
 
-      async function loadTripChoices() {
-        try {
-          const trips = await fetchTripChoicesBrowser();
-          if (!active) return;
+  useEffect(() => {
+    let active = true;
 
-          setTripChoices(trips);
-          setSelectedTripIdForAdd((prev) => prev || trips[0]?.id || "");
-        } catch {
-          if (!active) return;
-          setTripChoices([]);
-          setSelectedTripIdForAdd("");
-        }
+    async function loadTripChoices() {
+      try {
+        const trips = await fetchTripChoicesBrowser();
+        if (!active) return;
+
+        setTripChoices(trips);
+        setSelectedTripIdForAdd((prev) => prev || trips[0]?.id || "");
+      } catch {
+        if (!active) return;
+        setTripChoices([]);
+        setSelectedTripIdForAdd("");
       }
+    }
 
-      loadTripChoices();
+    loadTripChoices();
 
-      return () => {
-        active = false;
-      };
-    }, []);
+    return () => {
+      active = false;
+    };
+  }, []);
 
-    useEffect(() => {
-      function handleClickOutside(event: MouseEvent) {
-        if (!tripPickerRef.current) return;
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!tripPickerRef.current) return;
 
-        if (!tripPickerRef.current.contains(event.target as Node)) {
-          setShowTripPicker(false);
-        }
+      if (!tripPickerRef.current.contains(event.target as Node)) {
+        setShowTripPicker(false);
       }
+    }
 
-      if (showTripPicker) {
-        document.addEventListener("mousedown", handleClickOutside);
-      }
+    if (showTripPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
 
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, [showTripPicker]);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showTripPicker]);
+
+  useEffect(() => {
+    if (!memberActionMessage && !memberActionError) return;
+
+    const timer = window.setTimeout(() => {
+      setMemberActionMessage("");
+      setMemberActionError("");
+    }, 3200);
+
+    return () => window.clearTimeout(timer);
+  }, [memberActionMessage, memberActionError]);
 
   async function handleCreateTripAndAddRestaurant() {
     if (!selectedRestaurant) return;
-
+    if (!isMemberLoggedIn) {
+      setShowTripPicker(false);
+      setMemberActionError(getMemberActionLoginMessage("trip"));
+      return;
+    }
     try {
       setCreatingTrip(true);
       setMemberActionMessage("");
@@ -188,7 +227,19 @@ export default function RestaurantsMapView({
         setMemberActionMessage("New trip created and restaurant added.");
       }
     } catch (error) {
-      setMemberActionError("Could not create trip.");
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+      if (
+        message.includes("auth") ||
+        message.includes("login") ||
+        message.includes("sign in") ||
+        message.includes("unauthorized") ||
+        message.includes("not authenticated")
+      ) {
+        setMemberActionError("Log in to add to trip.");
+      } else {
+        setMemberActionError("Could not create trip.");
+      }
     } finally {
       setCreatingTrip(false);
     }
@@ -196,7 +247,11 @@ export default function RestaurantsMapView({
 
   async function handleAddRestaurantToFavorites() {
     if (!selectedRestaurant) return;
-
+    if (!isMemberLoggedIn) {
+      setShowTripPicker(false);
+      setMemberActionError(getMemberActionLoginMessage("trip"));
+      return;
+    }
     try {
       setMemberActionLoading("favorite");
       setMemberActionMessage("");
@@ -214,7 +269,19 @@ export default function RestaurantsMapView({
 
       setMemberActionMessage("Restaurant added to favourites.");
     } catch (error) {
-      setMemberActionError("Could not add restaurant to favourites.");
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+      if (
+        message.includes("auth") ||
+        message.includes("login") ||
+        message.includes("sign in") ||
+        message.includes("unauthorized") ||
+        message.includes("not authenticated")
+      ) {
+        setMemberActionError("Log in to add favorites.");
+      } else {
+        setMemberActionError("Could not add restaurant to favourites.");
+      }
     } finally {
       setMemberActionLoading(null);
     }
@@ -235,11 +302,11 @@ export default function RestaurantsMapView({
   const filteredCityOptions = useMemo(() => {
     const query = cityInput.trim().toLowerCase();
 
-    if (!query) return cityOptions.slice(0, 12);
+    if (!query) return cityOptions;
 
-    return cityOptions
-      .filter((option) => option.toLowerCase().includes(query))
-      .slice(0, 12);
+    return cityOptions.filter((option) =>
+      option.toLowerCase().includes(query)
+    );
   }, [cityInput, cityOptions]);
 
   function updateCity(nextCityRaw: string) {
@@ -453,20 +520,6 @@ export default function RestaurantsMapView({
       el.addEventListener("click", (event) => {
         event.stopPropagation();
         selectionFromMapRef.current = true;
-
-        markersRef.current.forEach((marker: any) => {
-          const markerPopup = marker.getPopup?.();
-          if (markerPopup && markerPopup !== popup && markerPopup.isOpen()) {
-            try {
-              markerPopup.remove();
-            } catch {}
-          }
-        });
-
-        try {
-          popup.setLngLat([restaurant.lng!, restaurant.lat!]).addTo(map);
-        } catch {}
-
         setSelectedId(restaurant.id);
       });
 
@@ -494,7 +547,7 @@ export default function RestaurantsMapView({
     }
 
     map.resize();
-  }, [city, mapRestaurants, selectedRestaurant?.id]);
+  }, [city, mapRestaurants]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {
@@ -506,8 +559,11 @@ export default function RestaurantsMapView({
     });
   }, [selectedRestaurant]);
 
-  useEffect(() => {
-    if (selectionFromMapRef.current) return;
+    useEffect(() => {
+    if (selectionFromMapRef.current) {
+      selectionFromMapRef.current = false;
+      return;
+    }
 
     const map = mapInstanceRef.current;
     if (!map || !selectedRestaurant) return;
@@ -515,10 +571,32 @@ export default function RestaurantsMapView({
 
     map.easeTo({
       center: [selectedRestaurant.lng, selectedRestaurant.lat],
-      duration: 600,
+      zoom: map.getZoom(),
+      duration: 500,
       essential: true,
     });
   }, [selectedRestaurant]);
+  
+  useEffect(() => {
+    let active = true;
+
+    async function loadMemberAccess() {
+      try {
+        const result = await getMemberActionAccessBrowser();
+        if (!active) return;
+        setIsMemberLoggedIn(result.isLoggedIn);
+      } catch {
+        if (!active) return;
+        setIsMemberLoggedIn(false);
+      }
+    }
+
+    void loadMemberAccess();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="restaurants-layout">
@@ -527,42 +605,42 @@ export default function RestaurantsMapView({
           <div className="oltra-label restaurants-sidebar__label">CITY</div>
 
           <div className="restaurants-city-lookup">
-          <input
-            ref={cityInputRef}
-            id="restaurants-city"
-            name="city"
-            value={cityInput}
-            onChange={(e) => {
-              setCityInput(e.target.value);
-              setShowCityOptions(true);
-            }}
-            onFocus={() => {
-              setCityInput("");
-              setShowCityOptions(true);
-            }}
-            onBlur={() => {
-              window.setTimeout(() => {
-                setShowCityOptions(false);
-                if (!cityInput.trim()) {
-                  setCityInput(city);
+            <input
+              ref={cityInputRef}
+              id="restaurants-city"
+              name="city"
+              value={cityInput}
+              onChange={(e) => {
+                setCityInput(e.target.value);
+                setShowCityOptions(true);
+              }}
+              onFocus={() => {
+                setCityInput("");
+                setShowCityOptions(true);
+              }}
+              onBlur={() => {
+                window.setTimeout(() => {
+                  setShowCityOptions(false);
+                  if (!cityInput.trim()) {
+                    setCityInput(city);
+                  }
+                }, 120);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  updateCity(cityInput);
                 }
-              }, 120);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                updateCity(cityInput);
-              }
-              if (e.key === "Escape") {
-                setShowCityOptions(false);
-                setCityInput(city);
-                cityInputRef.current?.blur();
-              }
-            }}
-            placeholder="Type city"
-            autoComplete="off"
-            className="oltra-input restaurants-city-lookup__input"
-          />
+                if (e.key === "Escape") {
+                  setShowCityOptions(false);
+                  setCityInput(city);
+                  cityInputRef.current?.blur();
+                }
+              }}
+              placeholder="Type city"
+              autoComplete="off"
+              className="oltra-input restaurants-city-lookup__input"
+            />
 
             {showCityOptions && filteredCityOptions.length > 0 && (
               <div className="oltra-dropdown-panel restaurants-city-lookup__menu">
@@ -582,7 +660,7 @@ export default function RestaurantsMapView({
                   ))}
                 </div>
               </div>
-            )}  
+            )}
           </div>
 
           <p className="restaurants-sidebar__count">TOP RESTAURANTS</p>
@@ -666,127 +744,137 @@ export default function RestaurantsMapView({
                 </div>
               )}
 
-                <div
-                  ref={tripPickerRef}
-                  className="restaurant-detail-card__actions restaurant-detail-card__actions--relative"
-                >
-                <button
-                  type="button"
-                  className="oltra-button-secondary restaurant-detail-card__link"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTripPicker((prev) => !prev);
-                  }}
-                  disabled={memberActionLoading !== null}
-                >
-                  {memberActionLoading === "trip" ? "Adding..." : "Add to trip"}
-                </button>
-
+              <div ref={tripPickerRef} className="relative pt-1">
                 {showTripPicker && (
                   <div
-                    className="restaurant-trip-popup"
-                    onMouseDown={(e) => e.stopPropagation()}
+                    className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"
                     onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
-                    <div className="restaurant-trip-popup__label">
-                      Select trip
-                    </div>
+                    <div className="oltra-subheader">Select trip</div>
 
-                    <div className="restaurant-trip-popup__list">
+                    <div className="mt-2 flex flex-col gap-2">
                       {tripChoices.length ? (
                         tripChoices.map((trip) => (
                           <button
                             key={trip.id}
                             type="button"
-                            className="restaurant-trip-popup__item"
                             onClick={() => {
                               setSelectedTripIdForAdd(trip.id);
                               setShowTripPicker(false);
                               void handleAddRestaurantToTrip(trip.id);
                             }}
+                            className="oltra-dropdown-item"
                           >
                             {trip.label}
                           </button>
                         ))
                       ) : (
-                        <button
-                          type="button"
-                          className="restaurant-trip-popup__item"
-                          onClick={() => {
-                            handleAddRestaurantToTrip();
-                            setShowTripPicker(false);
-                          }}
-                        >
-                          My trip
-                        </button>
+                        <div className="text-[12px] text-white/65">
+                          No trips available.
+                        </div>
                       )}
+
+                      <div className="mt-3 border-t border-white/10 pt-3">
+                        <div className="oltra-subheader">Create new trip</div>
+
+                        <div className="mt-2 flex flex-col gap-2">
+                          <input
+                            type="text"
+                            value={newTripName}
+                            onChange={(e) => setNewTripName(e.target.value)}
+                            placeholder="Trip name"
+                            className="oltra-input"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={handleCreateTripAndAddRestaurant}
+                            disabled={creatingTrip}
+                            className="oltra-dropdown-item"
+                          >
+                            {creatingTrip ? "Creating..." : "Create new trip"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="restaurant-trip-popup__create">
-                      <div className="restaurant-trip-popup__label">
-                        Create new trip
-                      </div>
-
-                      <div className="restaurant-trip-popup__list">
-                        <input
-                          type="text"
-                          value={newTripName}
-                          onChange={(e) => setNewTripName(e.target.value)}
-                          placeholder="Trip name"
-                          className="oltra-input"
-                        />
-
-                        <button
-                          type="button"
-                          className="restaurant-trip-popup__item"
-                          onClick={() => {
-                            handleCreateTripAndAddRestaurant();
-                          }}
-                          disabled={creatingTrip}
-                        >
-                          {creatingTrip ? "Creating..." : "Create new trip"}
-                        </button>
-                      </div>
-                    </div>                    
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  className="oltra-button-secondary restaurant-detail-card__link"
-                  onClick={handleAddRestaurantToFavorites}
-                  disabled={memberActionLoading !== null}
-                >
-                  {memberActionLoading === "favorite"
-                    ? "Adding..."
-                    : "Add to favourites"}
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMemberActionMessage("");
+                      setMemberActionError("");
 
-                {selectedRestaurant.www && (
+                      if (!isMemberLoggedIn) {
+                        setShowTripPicker(false);
+                        setMemberActionError(getMemberActionLoginMessage("trip"));
+                        return;
+                      }
+
+                      setShowTripPicker((prev) => !prev);
+                    }}
+                    className={`${getMemberActionButtonClass(isMemberLoggedIn)} w-full`}
+                    aria-disabled={!isMemberLoggedIn}
+                  >
+                    {memberActionLoading === "trip" ? "ADDING..." : "ADD TO TRIP"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMemberActionMessage("");
+                      setMemberActionError("");
+
+                      if (!isMemberLoggedIn) {
+                        setMemberActionError(getMemberActionLoginMessage("favorite"));
+                        return;
+                      }
+
+                      void handleAddRestaurantToFavorites();
+                    }}
+                    className={`${getMemberActionButtonClass(isMemberLoggedIn)} w-full`}
+                    aria-disabled={!isMemberLoggedIn}
+                  >
+                    {memberActionLoading === "favorite"
+                      ? "ADDING..."
+                      : "ADD TO FAVOURITES"}
+                  </button>
+                </div>
+              </div>
+
+              {(memberActionError || memberActionMessage) ? (
+                <div className="pt-2 text-[12px] text-white/65">
+                  {memberActionError || memberActionMessage}
+                </div>
+              ) : null}
+
+              {selectedRestaurant.www ? (
+                <div className="pt-2">
                   <a
                     href={selectedRestaurant.www}
                     target="_blank"
                     rel="noreferrer"
-                    className="oltra-button-secondary restaurant-detail-card__link"
+                    className="oltra-button-primary w-full rounded-full"
                   >
-                    Website
+                    WEBSITE
                   </a>
-                )}
+                </div>
+              ) : null}
 
-                {selectedRestaurant.insta && (
+              {selectedRestaurant.insta ? (
+                <div className="pt-2">
                   <a
                     href={selectedRestaurant.insta}
                     target="_blank"
                     rel="noreferrer"
-                    className="oltra-button-secondary restaurant-detail-card__link"
+                    className="oltra-button-primary w-full rounded-full"
                   >
-                    Instagram
+                    INSTAGRAM
                   </a>
-                )}
-              </div>
-
-              {(memberActionError || memberActionMessage) ? (
-                <div className="restaurant-detail-card__status">
-                  {memberActionError || memberActionMessage}
                 </div>
               ) : null}
             </article>

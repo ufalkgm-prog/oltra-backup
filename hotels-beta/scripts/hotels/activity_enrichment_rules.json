@@ -1,0 +1,299 @@
+{
+  "source_file": "missing_activities_patch.xlsx",
+  "sheet_name": "activities 20260406-193445",
+  "settings_auto": {
+    "City": [
+      {
+        "id": "95e0fcd3-f25a-4649-99d8-f2e88e3f8379",
+        "name": "Sightseeing",
+        "slug": "sightseeing"
+      },
+      {
+        "id": "97cb0dd1-79aa-4114-8a9a-e6d26262207c",
+        "name": "Shopping",
+        "slug": "shopping"
+      },
+      {
+        "id": "d77f5d26-83ad-4468-839a-f135ec899781",
+        "name": "Spa",
+        "slug": "spa"
+      }
+    ],
+    "Beachfront": [
+      {
+        "id": "0311afd1-605e-4cbe-9120-ec95241318e4",
+        "name": "Water sports",
+        "slug": "water-sports"
+      },
+      {
+        "id": "0e0f6f28-1e98-4c0c-a14c-e164b5b8a519",
+        "name": "Beach",
+        "slug": "beach"
+      },
+      {
+        "id": "0f6bf82f-cc4a-422e-b7c9-a5e4e1e8e688",
+        "name": "Sailing",
+        "slug": "sailing"
+      },
+      {
+        "id": "ac1cdb46-bfaa-4ffd-9269-27a86ea06c69",
+        "name": "Snorkeling",
+        "slug": "snorkeling"
+      },
+      {
+        "id": "bf5493f3-ab64-4713-89eb-9ddcdaa40c35",
+        "name": "Boating",
+        "slug": "boating"
+      },
+      {
+        "id": "c37f9929-ae5c-43e7-9770-e954cfa4367c",
+        "name": "Jet skiing",
+        "slug": "jet_skiing"
+      },
+      {
+        "id": "d77f5d26-83ad-4468-839a-f135ec899781",
+        "name": "Spa",
+        "slug": "spa"
+      }
+    ],
+    "Countryside": [
+      {
+        "id": "d77f5d26-83ad-4468-839a-f135ec899781",
+        "name": "Spa",
+        "slug": "spa"
+      },
+      {
+        "id": "e9d8a39f-a2bd-48b2-a4f4-690b906cecad",
+        "name": "Hiking",
+        "slug": "hiking"
+      }
+    ],
+    "Mountains": [
+      {
+        "id": "664b5c16-0d35-4487-9657-0b2c39990cb6",
+        "name": "Skiing",
+        "slug": "skiing",
+        "rule_note": "1 if in Alps or Rockys"
+      },
+      {
+        "id": "d77f5d26-83ad-4468-839a-f135ec899781",
+        "name": "Spa",
+        "slug": "spa"
+      },
+      {
+        "id": "e9d8a39f-a2bd-48b2-a4f4-690b906cecad",
+        "name": "Hiking",
+        "slug": "hiking"
+      }
+    ]
+  },
+  "settings_notes": {
+    "Mountains": [
+      {
+        "activity": "Skiing",
+        "note": "1 if in Alps or Rockys"
+      }
+    ]
+  },
+  "conditional_when_mentioned": [
+    {
+      "id": "0fdb516d-3f94-4af6-baa0-6abff8d9f3ad",
+      "name": "Rappelling",
+      "slug": "rappelling"
+    },
+    {
+      "id": "187a19df-4e4f-4719-9e58-121e12996511",
+      "name": "Rock climbing",
+      "slug": "rock_climbing"
+    },
+    {
+      "id": "1e1cec74-f876-42d2-b1c7-c3c7eed472cc",
+      "name": "Horseback riding",
+      "slug": "horseback-riding"
+    },
+    {
+      "id": "21272858-1595-4c0e-9d5b-5d01310fde2e",
+      "name": "Family",
+      "slug": "family"
+    },
+    {
+      "id": "32683df6-06ca-4134-a0d3-4247f2c1ddc9",
+      "name": "Whale watching",
+      "slug": "whale_watching"
+    },
+    {
+      "id": "34132677-0125-48cf-ac82-c0e4081303d2",
+      "name": "Basket",
+      "slug": "basket"
+    },
+    {
+      "id": "37fc7285-dca2-44b5-8be4-0e1c18ba3a3f",
+      "name": "Gorilla Hiking",
+      "slug": "gorilla-hiking"
+    },
+    {
+      "id": "53b141a4-2ac3-4000-98ac-c83d0d87410d",
+      "name": "Parasailing",
+      "slug": "parasailing"
+    },
+    {
+      "id": "5b66a6b6-6123-4238-9c6c-72bfec0acfec",
+      "name": "Wine",
+      "slug": "wine"
+    },
+    {
+      "id": "63a7284b-946d-44af-846c-e5485678fc9f",
+      "name": "Archery",
+      "slug": "archery"
+    },
+    {
+      "id": "6a8c1f42-3043-4d7f-833a-2c5e104dffca",
+      "name": "Whitewater rafting",
+      "slug": "whitewater_rafting"
+    },
+    {
+      "id": "6d91bc7c-32e4-4107-a862-e49275a4b0e4",
+      "name": "Nature",
+      "slug": "nature"
+    },
+    {
+      "id": "85eee8e8-4ce6-4c2c-b11a-57ae7b591fb0",
+      "name": "Rafting",
+      "slug": "rafting"
+    },
+    {
+      "id": "8933f05e-e256-4287-a9c1-851ae5f76fce",
+      "name": "Whalewatching",
+      "slug": "whalewatching"
+    },
+    {
+      "id": "8cb77689-5840-4edc-aeef-68ea9f57db44",
+      "name": "Diving",
+      "slug": "diving"
+    },
+    {
+      "id": "8fc7a2a6-3fd1-4ed1-b843-989693724045",
+      "name": "Fly fishing",
+      "slug": "fly-fishing"
+    },
+    {
+      "id": "95bd9b21-a404-4825-99d9-f9142e52fe0b",
+      "name": "Kayaking",
+      "slug": "kayaking"
+    },
+    {
+      "id": "a461600f-d8bb-441d-a25d-dccbb1ec8e30",
+      "name": "Tennis",
+      "slug": "tennis"
+    },
+    {
+      "id": "a747a6e7-6b42-4032-a3f7-57436cbc65e2",
+      "name": "Bowling",
+      "slug": "bowling"
+    },
+    {
+      "id": "a9d894a9-a656-4b32-8e77-e0c963297d83",
+      "name": "History",
+      "slug": "history"
+    },
+    {
+      "id": "ae687443-eb24-4cf8-8794-31d0701c4a5f",
+      "name": "Hunting",
+      "slug": "hunting"
+    },
+    {
+      "id": "b638c250-5b5c-459f-bab6-e350d14193b7",
+      "name": "Polo",
+      "slug": "polo"
+    },
+    {
+      "id": "b7fbb74a-bc44-45e1-bfd6-3ced361e3e22",
+      "name": "Badminton",
+      "slug": "badminton"
+    },
+    {
+      "id": "bbe8e8bb-996e-49b4-aa0b-736f9a543394",
+      "name": "Aqua park",
+      "slug": "aqua-park"
+    },
+    {
+      "id": "bca5d3cb-9eef-439f-b647-95fdad4c3bcc",
+      "name": "Wilderness safari",
+      "slug": "wilderness-safari"
+    },
+    {
+      "id": "bdeaf53c-afe5-4e85-a391-d273af2a8a7c",
+      "name": "Kitesurfing",
+      "slug": "kitesurfing"
+    },
+    {
+      "id": "be62369d-3a99-46e8-a309-bc393b8d1524",
+      "name": "Falconry",
+      "slug": "falconry"
+    },
+    {
+      "id": "c455a2d4-fa51-44b7-ac90-d8abf4683af6",
+      "name": "Paragliding",
+      "slug": "paragliding"
+    },
+    {
+      "id": "d187c8df-c1e7-4677-9ae5-e9d115c483cc",
+      "name": "Fishing",
+      "slug": "fishing"
+    },
+    {
+      "id": "df4f920f-92c8-492a-8e23-a4025733fd2c",
+      "name": "River cruise",
+      "slug": "river-cruise"
+    },
+    {
+      "id": "e5129276-b8b4-4dd1-8a68-e6efcf67a6b7",
+      "name": "Iceskating",
+      "slug": "iceskating"
+    },
+    {
+      "id": "e5b46eb8-d042-423d-acb1-564d12005276",
+      "name": "Cooking classes",
+      "slug": "cooking_classes"
+    },
+    {
+      "id": "edea17c3-6fc9-4406-b79e-10c3bb7bbeea",
+      "name": "Golf",
+      "slug": "golf"
+    },
+    {
+      "id": "f0ae3130-fee2-48cd-bde2-d5e564a221c9",
+      "name": "Biking",
+      "slug": "biking"
+    },
+    {
+      "id": "f835467b-56ca-4889-b72a-806bc936228d",
+      "name": "Yoga",
+      "slug": "yoga"
+    },
+    {
+      "id": "fdf91f5d-51fe-451f-af37-3de9ae9fe42c",
+      "name": "Padel",
+      "slug": "Padel"
+    }
+  ],
+  "conditional_when_michelin_restaurant_at_hotel": [
+    {
+      "id": "32a27b14-f229-42e7-a040-754c3cb98331",
+      "name": "Gastronomy",
+      "slug": "gastronomy"
+    }
+  ],
+  "conditional_when_wildlife_reserve": [
+    {
+      "id": "c42027fb-e650-4347-9fae-ade962851872",
+      "name": "Safari",
+      "slug": "safari"
+    },
+    {
+      "id": "fa4fc016-7b6f-4d0e-b234-269272e9b4f5",
+      "name": "Wildlife",
+      "slug": "wildlife"
+    }
+  ]
+}

@@ -109,11 +109,12 @@ function buildInitialTokens(
     });
   }
 
-  const q = normalizeParam(searchParams.q);
-  const hasStructured =
-    city || country || region || activityIds.length > 0 || settingIds.length > 0;
+  const q = normalizeParam(searchParams.q).trim();
+  const qMatchesHotel = q
+    ? dataset.hotels.some((hotel) => hotel.hotel_name === q)
+    : false;
 
-  if (q && !hasStructured) {
+  if (q && qMatchesHotel) {
     out.push({ type: "hotel", label: q, value: q });
   }
 
@@ -225,7 +226,9 @@ export default function StructuredDestinationField({
       listFromParam(searchParams.activities).length > 0 ||
       listFromParam(searchParams.settings).length > 0;
 
-    setTypedValue(hasStructured ? "" : q);
+    const hasHotelToken = nextTokens.some((token) => token.type === "hotel");
+
+    setTypedValue(hasStructured || hasHotelToken ? "" : q);
     setOpen(false);
   }, [searchParams, dataset, allowedTypes]);
 
@@ -463,7 +466,7 @@ export default function StructuredDestinationField({
       .filter((type) => allowedTypes.includes(type))
       .map((type) => ({
         type,
-        items: suggestions.filter((item) => item.type === type).slice(0, 50),
+        items: suggestions.filter((item) => item.type === type).slice(0, 5),
       }))
       .filter((group) => group.items.length > 0);
   }, [suggestions, allowedTypes]);
@@ -545,6 +548,7 @@ export default function StructuredDestinationField({
       )
     );
 
+    setTypedValue("");
     setOpen(false);
 
     requestAnimationFrame(() => {

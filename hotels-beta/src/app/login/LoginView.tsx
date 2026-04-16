@@ -57,80 +57,90 @@ export default function LoginView() {
     }
   }
 
-  return (
-    <main className="oltra-page">
-      <div className="oltra-page__header-bg" />
-      <section className="oltra-page__content">
-        <div className="oltra-glass oltra-panel" style={{ maxWidth: 560, margin: "40px auto 0" }}>
-          <div className="oltra-label">MEMBERS LOGIN</div>
+return (
+<main className="oltra-page members-login-page">
+  <div className="oltra-page__bg" />
+  <div className="oltra-page__header-bg" />
+    <section className="oltra-page__content">
+      <div
+        className="oltra-glass oltra-panel members-login-panel"
+        style={{ maxWidth: 560, margin: "40px auto 0" }}
+      >
+        <div className="oltra-label members-login-panel__title">MEMBERS LOGIN</div>
 
-          <form onSubmit={handlePasswordAuth} className="members-form-stack">
-            <div className="members-form-field">
-              <label className="oltra-label">E-MAIL</label>
-              <input
-                className="oltra-input"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        <form onSubmit={handlePasswordAuth} className="members-form-stack members-login-panel__form">
+          <div className="members-form-field">
+            <label className="oltra-label">E-MAIL</label>
+            <input
+              className="oltra-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-            <div className="members-form-field">
-              <label className="oltra-label">PASSWORD</label>
-              <input
-                className="oltra-input"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+          <div className="members-form-field">
+            <label className="oltra-label">PASSWORD</label>
+            <input
+              className="oltra-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-            {error ? <div className="members-note">{error}</div> : null}
-            {message ? <div className="members-note">{message}</div> : null}
+          {error ? <div className="members-note">{error}</div> : null}
+          {message ? <div className="members-note">{message}</div> : null}
 
-            <div className="members-item__actions">
-              <button type="submit" className="oltra-button-primary members-action-button" disabled={loading}>
-                {mode === "login" ? "Log in" : "Create account"}
-              </button>
+          <div className="members-login-panel__top-actions">
+            <button
+              type="submit"
+              className="oltra-button-primary members-action-button members-login-panel__login"
+              disabled={loading}
+            >
+              LOG IN
+            </button>
 
-              <button
-                type="button"
-                className="oltra-button-secondary members-action-button"
-                onClick={() => setMode((prev) => (prev === "login" ? "signup" : "login"))}
-                disabled={loading}
-              >
-                {mode === "login" ? "Create account" : "Use existing account"}
-              </button>
-            </div>
+            <button
+              type="button"
+              className="oltra-button-secondary members-action-button members-login-panel__create"
+              onClick={() => setMode("signup")}
+              disabled={loading}
+            >
+              CREATE NEW ACCOUNT
+            </button>
+          </div>
 
-            <div className="members-item__actions">
-              <button
-                type="button"
-                className="oltra-button-secondary members-action-button"
-                onClick={() => handleOAuth("google")}
-                disabled={loading}
-              >
-                Continue with Google
-              </button>
+          <div className="members-login-panel__oauth">
+            <button
+              type="button"
+              className="oltra-button-secondary members-action-button"
+              onClick={() => handleOAuth("google")}
+              disabled={loading}
+            >
+              CONTINUE WITH GOOGLE
+            </button>
 
-              <button
-                type="button"
-                className="oltra-button-secondary members-action-button"
-                onClick={() => handleOAuth("facebook")}
-                disabled={loading}
-              >
-                Continue with Facebook
-              </button>
-            </div>
+            <button
+              type="button"
+              className="oltra-button-secondary members-action-button"
+              onClick={() => handleOAuth("facebook")}
+              disabled={loading}
+            >
+              CONTINUE WITH FACEBOOK
+            </button>
+          </div>
 
-            <a href="/forgot-password" className="members-nav__item" style={{ borderTop: 0, paddingTop: 0 }}>
+          <div className="members-login-panel__footer">
+            <a href="/forgot-password" className="members-login-panel__forgot">
               Forgot password
             </a>
-          </form>
-        </div>
-      </section>
-    </main>
-  );
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+);
 }

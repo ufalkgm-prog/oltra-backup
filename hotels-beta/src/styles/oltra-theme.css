@@ -74,7 +74,9 @@
   --oltra-dropdown-item-radius: 5px;
   --oltra-dropdown-item-font-size: 0.72rem;
   --oltra-dropdown-label-font-size: 0.58rem;
-  --oltra-dropdown-list-max-height: 96px;
+ --oltra-dropdown-list-max-height: 160px;
+  --oltra-dropdown-panel-max-height: min(360px, calc(100vh - 160px));
+  --oltra-dropdown-viewport-gap: 24px;
 
   /* Fixed page frame */
   --oltra-page-top-padding: 110px;
@@ -107,7 +109,8 @@ body {
   position: relative;
   min-height: 100vh;
   padding: var(--oltra-page-top-padding) var(--oltra-page-side) var(--oltra-page-bottom-padding);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   color: var(--oltra-text-primary);
   background: var(--oltra-bg-color);
 }
@@ -237,6 +240,18 @@ button.oltra-select {
   margin-bottom: 8px;
 }
 
+.oltra-field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oltra-actions-row {
+  display: flex;
+  align-items: flex-end;
+}
+
 .oltra-subheader {
   margin: 0;
 }
@@ -256,6 +271,18 @@ button.oltra-select {
   padding: var(--oltra-dropdown-padding);
 }
 
+.oltra-dropdown-panel--bounded,
+.oltra-popup-panel--bounded {
+  max-height: var(--oltra-dropdown-panel-max-height);
+  overflow-y: auto;
+}
+
+.oltra-dropdown-panel--up,
+.oltra-popup-panel--up {
+  top: auto !important;
+  bottom: calc(100% + 8px);
+}
+
 .oltra-dropdown-list {
   display: grid;
   align-content: start;
@@ -264,6 +291,44 @@ button.oltra-select {
   padding: 2px 0;
   max-height: var(--oltra-dropdown-list-max-height);
   overflow-y: auto;
+}
+
+.oltra-dropdown-list,
+.oltra-scrollbar,
+textarea,
+*[style*="overflow-y-auto"],
+*[class*="overflow-y-auto"] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.82) var(--oltra-field-bg);
+}
+
+.oltra-dropdown-list::-webkit-scrollbar,
+.oltra-scrollbar::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+*[style*="overflow-y-auto"]::-webkit-scrollbar,
+*[class*="overflow-y-auto"]::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.oltra-dropdown-list::-webkit-scrollbar-track,
+.oltra-scrollbar::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track,
+*[style*="overflow-y-auto"]::-webkit-scrollbar-track,
+*[class*="overflow-y-auto"]::-webkit-scrollbar-track {
+  background: var(--oltra-field-bg);
+  border-radius: 999px;
+}
+
+.oltra-dropdown-list::-webkit-scrollbar-thumb,
+.oltra-scrollbar::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+*[style*="overflow-y-auto"]::-webkit-scrollbar-thumb,
+*[class*="overflow-y-auto"]::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .oltra-dropdown-group + .oltra-dropdown-group {
@@ -301,6 +366,52 @@ button.oltra-select {
 .oltra-dropdown-item:hover {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 1);
+}
+
+.oltra-dropdown-row-link {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  border-radius: var(--oltra-radius-sm);
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.oltra-dropdown-row-link:hover {
+  background: var(--oltra-field-bg);
+  color: rgba(255, 255, 255, 0.98);
+  text-decoration: none;
+}
+
+.oltra-dropdown-row-link.is-active {
+  background: var(--oltra-field-bg-strong);
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.oltra-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0;
+  font-size: 0.62rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.oltra-status-badge--gold {
+  background: rgb(196 168 104 / 82%);
+  color: rgba(255, 247, 226, 0.98);
+}
+
+.oltra-status-badge--silver {
+  background: rgb(168 175 187 / 82%);
+  color: rgba(250, 252, 255, 0.98);
 }
 
 /* Buttons */
@@ -383,10 +494,12 @@ button.oltra-select {
   color: var(--oltra-text-primary);
 }
 
-.oltra-checkbox input {
+.oltra-checkbox input,
+.includeOption input {
   width: var(--oltra-checkbox-size);
   height: var(--oltra-checkbox-size);
   accent-color: white;
+  cursor: pointer;
 }
 
 /* Page body grids */
@@ -622,4 +735,315 @@ details > summary {
 
 details > summary::-webkit-details-marker {
   display: none;
+}
+
+
+.members-login-panel .oltra-label:first-child {
+  margin-bottom: 12px;
+}
+
+.members-login-panel .members-form-stack {
+  gap: 0;
+}
+
+.members-login-panel .members-login-panel__actions {
+  margin-top: 14px;
+}
+
+.members-login-panel .members-login-panel__social {
+  margin-top: 10px;
+}
+
+.members-login-panel {
+  padding: 20px 24px;
+}
+
+.members-login-panel__title {
+  margin-bottom: 12px;
+}
+
+.members-login-panel__form {
+  gap: 0;
+}
+
+.members-login-panel .members-form-field + .members-form-field {
+  margin-top: 12px;
+}
+
+.members-login-panel .members-form-field .oltra-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.members-login-panel__submit {
+  margin-top: 14px;
+}
+
+.members-login-panel__submit-button,
+.members-login-panel__create {
+  width: 100%;
+}
+
+.members-login-panel__oauth {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.members-login-panel__oauth {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.members-login-panel__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.members-login-panel__forgot {
+  font-size: 13px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+}
+
+.members-login-panel__forgot:hover {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.members-login-panel .members-action-button {
+  width: 100%;
+}
+
+.members-login-panel__top-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.members-login-panel__login {
+  flex: 0 0 140px; /* smaller fixed width */
+}
+
+.members-login-panel__create {
+  flex: 1 1 auto; /* takes remaining space */
+  white-space: nowrap; /* keep on one line */
+}
+
+@media (max-width: 640px) {
+  .members-login-panel__oauth,
+  .members-login-panel__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .members-login-panel__forgot {
+    align-self: flex-start;
+  }
+}
+
+.oltra-button-muted {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(28, 38, 48, 0.5);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hotel-marker {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hotel-marker__inner {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(33, 50, 66, 0.88);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.22);
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.hotel-marker[data-selected="true"] .hotel-marker__inner {
+  background: rgba(255, 255, 255, 0.94);
+  color: rgba(25, 42, 56, 0.96);
+  border-color: rgba(255, 255, 255, 0.94);
+  transform: scale(1.07);
+}
+
+.hotel-map-popup {
+  min-width: 220px;
+  background: rgba(34, 56, 72, 0.9);
+}
+
+.hotel-map-popup__title {
+  font-size: 0.94rem;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.hotel-map-popup__meta {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.hotel-map-popup__desc {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.oltra-button-function {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--oltra-button-height);
+  height: var(--oltra-button-height);
+  padding: 0 18px;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(220, 232, 240, 0.16);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.oltra-button-function:hover {
+  background: rgba(220, 232, 240, 0.22);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.98);
+  text-decoration: none;
+}
+
+.oltra-button-secondary {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.hotel-result-card--active {
+  position: relative;
+}
+
+.hotel-result-card--active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--oltra-radius-md);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.hotel-marker {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hotel-marker__inner {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(33, 50, 66, 0.88);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.22);
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.hotel-marker[data-selected="true"] .hotel-marker__inner {
+  background: rgba(255, 255, 255, 0.94);
+  color: rgba(25, 42, 56, 0.96);
+  border-color: rgba(255, 255, 255, 0.94);
+  transform: scale(1.07);
+}
+
+.hotel-map-popup {
+  min-width: 220px;
+  background: rgba(34, 56, 72, 0.9);
+}
+
+.hotel-map-popup__title {
+  font-size: 0.94rem;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.hotel-map-popup__meta {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.hotel-map-popup__desc {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.oltra-button-map-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--oltra-button-height);
+  height: var(--oltra-button-height);
+  padding: 0 18px;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(34, 40, 46, 0.82);
+  color: rgba(255, 255, 255, 0.94);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.oltra-button-map-toggle:hover {
+  background: rgba(40, 46, 52, 0.9);
+  border-color: rgba(255, 255, 255, 0.26);
+  color: rgba(255, 255, 255, 0.98);
+  text-decoration: none;
 }

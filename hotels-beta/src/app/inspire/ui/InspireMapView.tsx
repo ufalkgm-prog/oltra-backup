@@ -7,6 +7,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 type Props = {
   matches: InspireCityMatch[];
+  activeCityId: string | null;
+  onSelectCity: (match: InspireCityMatch) => void;
 };
 
 const DEFAULT_FALLBACK_CENTER: [number, number] = [12.5683, 55.6761];
@@ -16,7 +18,9 @@ const CIRCLE_LAYER_ID = "inspire-city-circles";
 const LABEL_LAYER_ID = "inspire-city-labels";
 const DIM_LAYER_ID = "inspire-dim-layer";
 
-function buildGeoJson(matches: InspireCityMatch[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
+function buildGeoJson(
+  matches: InspireCityMatch[]
+): GeoJSON.FeatureCollection<GeoJSON.Point> {
   return {
     type: "FeatureCollection",
     features: matches.map((match) => {
@@ -46,12 +50,108 @@ function buildGeoJson(matches: InspireCityMatch[]): GeoJSON.FeatureCollection<Ge
   };
 }
 
-export default function InspireMapView({ matches }: Props) {
+function getCircleColorExpression(activeCityId: string | null) {
+  return [
+    "case",
+    ["==", ["get", "id"], activeCityId ?? ""],
+    "rgba(255,255,255,0.28)",
+    [
+      "interpolate",
+      ["linear"],
+      ["get", "hotelCount"],
+      1,
+      "rgba(214, 221, 226, 0.24)",
+      10,
+      "rgba(214, 221, 226, 0.30)",
+      40,
+      "rgba(214, 221, 226, 0.36)",
+    ],
+  ] as maplibregl.ExpressionSpecification;
+}
+
+function getCircleStrokeColorExpression(activeCityId: string | null) {
+  return [
+    "case",
+    ["==", ["get", "id"], activeCityId ?? ""],
+    "rgba(255,255,255,1)",
+    "rgba(255,255,255,0.92)",
+  ] as maplibregl.ExpressionSpecification;
+}
+
+function getCircleStrokeWidthExpression(activeCityId: string | null) {
+  return [
+    "case",
+    ["==", ["get", "id"], activeCityId ?? ""],
+    3.2,
+    [
+      "interpolate",
+      ["linear"],
+      ["get", "hotelCount"],
+      1,
+      1.1,
+      40,
+      1.7,
+    ],
+  ] as maplibregl.ExpressionSpecification;
+}
+
+function getCircleRadiusExpression(activeCityId: string | null) {
+  return [
+    "case",
+    ["==", ["get", "id"], activeCityId ?? ""],
+    [
+      "interpolate",
+      ["linear"],
+      ["get", "hotelCount"],
+      1,
+      13,
+      5,
+      17,
+      10,
+      22,
+      20,
+      29,
+      40,
+      39,
+    ],
+    [
+      "interpolate",
+      ["linear"],
+      ["get", "hotelCount"],
+      1,
+      10,
+      5,
+      14,
+      10,
+      19,
+      20,
+      26,
+      40,
+      36,
+    ],
+  ] as maplibregl.ExpressionSpecification;
+}
+
+export default function InspireMapView({
+  matches,
+  activeCityId,
+  onSelectCity,
+}: Props) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
+  const matchesRef = useRef<InspireCityMatch[]>(matches);
+  const onSelectCityRef = useRef(onSelectCity);
 
   const geoJson = useMemo(() => buildGeoJson(matches), [matches]);
+
+  useEffect(() => {
+    matchesRef.current = matches;
+  }, [matches]);
+
+  useEffect(() => {
+    onSelectCityRef.current = onSelectCity;
+  }, [onSelectCity]);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -82,7 +182,7 @@ export default function InspireMapView({ matches }: Props) {
 
       map.addSource(SOURCE_ID, {
         type: "geojson",
-        data: geoJson,
+        data: buildGeoJson(matchesRef.current),
       });
 
       map.addLayer({
@@ -90,32 +190,10 @@ export default function InspireMapView({ matches }: Props) {
         type: "circle",
         source: SOURCE_ID,
         paint: {
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["get", "hotelCount"],
-            1, 10,
-            5, 14,
-            10, 19,
-            20, 26,
-            40, 36,
-          ],
-          "circle-color": [
-            "interpolate",
-            ["linear"],
-            ["get", "hotelCount"],
-            1, "rgba(214, 221, 226, 0.24)",
-            10, "rgba(214, 221, 226, 0.30)",
-            40, "rgba(214, 221, 226, 0.36)",
-          ],
-          "circle-stroke-color": "rgba(255,255,255,0.92)",
-          "circle-stroke-width": [
-            "interpolate",
-            ["linear"],
-            ["get", "hotelCount"],
-            1, 1.1,
-            40, 1.7,
-          ],
+          "circle-radius": getCircleRadiusExpression(activeCityId),
+          "circle-color": getCircleColorExpression(activeCityId),
+          "circle-stroke-color": getCircleStrokeColorExpression(activeCityId),
+          "circle-stroke-width": getCircleStrokeWidthExpression(activeCityId),
           "circle-blur": 0.02,
           "circle-opacity": 1,
         },
@@ -174,15 +252,23 @@ export default function InspireMapView({ matches }: Props) {
           </div>
         `;
 
-        popupRef.current
-          ?.setLngLat(coordinates)
-          .setHTML(html)
-          .addTo(map);
+        popupRef.current?.setLngLat(coordinates).setHTML(html).addTo(map);
       });
 
       map.on("mouseleave", CIRCLE_LAYER_ID, () => {
         map.getCanvas().style.cursor = "";
         popupRef.current?.remove();
+      });
+
+      map.on("click", CIRCLE_LAYER_ID, (e) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+
+        const id = String(feature.properties?.id ?? "");
+        const match = matchesRef.current.find((item) => item.city.id === id);
+        if (match) {
+          onSelectCityRef.current(match);
+        }
       });
 
       map.resize();
@@ -200,8 +286,9 @@ export default function InspireMapView({ matches }: Props) {
 
       mapInstanceRef.current = null;
     };
-  }, [geoJson]);
+  }, []);
 
+  /* Update source data + fit bounds only when dropdown selections change */
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !map.isStyleLoaded()) return;
@@ -236,13 +323,40 @@ export default function InspireMapView({ matches }: Props) {
     }
   }, [geoJson, matches]);
 
+  /* Update highlight only when hovering/selecting a city card */
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !map.isStyleLoaded() || !map.getLayer(CIRCLE_LAYER_ID)) return;
+
+    map.setPaintProperty(
+      CIRCLE_LAYER_ID,
+      "circle-radius",
+      getCircleRadiusExpression(activeCityId)
+    );
+    map.setPaintProperty(
+      CIRCLE_LAYER_ID,
+      "circle-color",
+      getCircleColorExpression(activeCityId)
+    );
+    map.setPaintProperty(
+      CIRCLE_LAYER_ID,
+      "circle-stroke-color",
+      getCircleStrokeColorExpression(activeCityId)
+    );
+    map.setPaintProperty(
+      CIRCLE_LAYER_ID,
+      "circle-stroke-width",
+      getCircleStrokeWidthExpression(activeCityId)
+    );
+  }, [activeCityId]);
+
   return (
     <div
       ref={mapRef}
       style={{
         width: "100%",
         height: "100%",
-        minHeight: 640,
+        minHeight: 0,
         borderRadius: 24,
       }}
     />

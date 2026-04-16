@@ -1,6 +1,7 @@
 import PageShell from "@/components/site/PageShell";
 import RestaurantsMapView from "./ui/RestaurantsMapView";
 import { getRestaurantCities, getRestaurantsByCity } from "@/lib/restaurants";
+import "./restaurants.css";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 

@@ -280,8 +280,47 @@ export default function LandingSearchPanel({
               </div>
             </>
           ) : null}
+        </div>
 
-          <div className={styles.searchButtonWrap}>
+        <div className={styles.includeRow}>
+          <div className={styles.includeLeft}>
+            <div className={`${styles.includeLabel} oltra-subheader`}>Search in</div>
+
+            <label className={styles.includeOption}>
+              <input
+                type="checkbox"
+                name="include"
+                value="hotels"
+                checked={includes.includes("hotels")}
+                onChange={() => toggleInclude("hotels")}
+              />
+              <span>Hotels</span>
+            </label>
+
+            <label className={styles.includeOption}>
+              <input
+                type="checkbox"
+                name="include"
+                value="flights"
+                checked={includes.includes("flights")}
+                onChange={() => toggleInclude("flights")}
+              />
+              <span>Flights</span>
+            </label>
+
+            <label className={styles.includeOption}>
+              <input
+                type="checkbox"
+                name="include"
+                value="restaurants"
+                checked={includes.includes("restaurants")}
+                onChange={() => toggleInclude("restaurants")}
+              />
+              <span>Restaurants</span>
+            </label>
+          </div>
+
+          <div className={styles.includeSearchButtonWrap}>
             <button
               type="submit"
               className={[
@@ -296,43 +335,6 @@ export default function LandingSearchPanel({
               Search
             </button>
           </div>
-        </div>
-
-        <div className={styles.includeRow}>
-          <div className={`${styles.includeLabel} oltra-subheader`}>Search in</div>
-
-          <label className={styles.includeOption}>
-            <input
-              type="checkbox"
-              name="include"
-              value="hotels"
-              checked={includes.includes("hotels")}
-              onChange={() => toggleInclude("hotels")}
-            />
-            <span>Hotels</span>
-          </label>
-
-          <label className={styles.includeOption}>
-            <input
-              type="checkbox"
-              name="include"
-              value="flights"
-              checked={includes.includes("flights")}
-              onChange={() => toggleInclude("flights")}
-            />
-            <span>Flights</span>
-          </label>
-
-          <label className={styles.includeOption}>
-            <input
-              type="checkbox"
-              name="include"
-              value="restaurants"
-              checked={includes.includes("restaurants")}
-              onChange={() => toggleInclude("restaurants")}
-            />
-            <span>Restaurants</span>
-          </label>
         </div>
       </form>
     </div>

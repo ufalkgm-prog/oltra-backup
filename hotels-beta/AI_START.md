@@ -156,16 +156,5 @@ Already relevant shared theme details:
 NEXT SESSION TASKS
 -----------------------------------
 
-1. Inspect Inspire route/view files and current CSS
-2. Refine Inspire layout and shared-control consistency
-3. Fix Restaurants action popup issue:
-   - add-to-trip dropdown/popup currently drops below the bottom of the area
-   - popup becomes hard/impossible to access properly
-4. Also review add-to-favourites / action area behavior so both actions feel stable and aligned
-5. Keep all changes minimal-diff and design-system driven
-
------------------------------------
-START NEXT SESSION WITH
------------------------------------
-
-“We are now refining Inspire and fixing the Restaurants action popups so Add to trip / Add to favourites remain fully accessible within the panel. Confirm.”
+1. Fix Restaurants page
+2. Fix Inspire page

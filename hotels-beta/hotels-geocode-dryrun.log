@@ -1,0 +1,1833 @@
+Loaded hotels: 821
+--------------------------------------------------
+Hotel:     Jumby Bay Island
+Country:   Antigua and Barbuda
+City:      Jumby Bay
+Current:   lat=null lng=null
+Proposed:  lat=17.154332 lng=-61.760042
+Query:     Jumby Bay Island, Oetker Collection, Jumby Bay, Caribbean, Antigua and Barbuda
+Address:   Jumby Bay Island, Antigua and Barbuda
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJhbUSUrWTEowR7lYjqJ-ljqM
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Cavas Wine Lodge, Mendoza, Arge
+Country:   Argentina
+City:      Alto Agrelo
+Current:   lat=null lng=null
+Proposed:  lat=-33.095707 lng=-68.969607
+Query:     Cavas Wine Lodge, Mendoza, Arge, Alto Agrelo, Mendoza, South America, Argentina
+Address:   Alto Agrelo, Mendoza, Argentina
+Type:      APPROXIMATE
+Place ID:  ChIJIXQCgMLefZYROi-tP_pFN_4
+--------------------------------------------------
+Hotel:     Alvear Palace Hotel
+Country:   Argentina
+City:      Buenos Aires
+Current:   lat=null lng=null
+Proposed:  lat=-34.587584 lng=-58.388846
+Query:     Alvear Palace Hotel, Recoleta, Buenos Aires, Buenos Aires, South America, Argentina
+Address:   Av. Alvear 1891, C1129AAA Cdad. Autónoma de Buenos Aires, Argentina
+Type:      ROOFTOP
+Place ID:  ChIJrVCUfKPKvJURAcHULil-35w
+--------------------------------------------------
+Hotel:     Faena Hotel Buenos Aires
+Country:   Argentina
+City:      Buenos Aires
+Current:   lat=null lng=null
+Proposed:  lat=-34.614603 lng=-58.361808
+Query:     Faena Hotel Buenos Aires, Faena Hotels, El Porteño Building, Buenos Aires, Buenos Aires, South America, Argentina
+Address:   Petrona Eyle 450, C1107 Cdad. Autónoma de Buenos Aires, Argentina
+Type:      ROOFTOP
+Place ID:  ChIJgdJHDdc0o5URk4m46PR8Ypg
+--------------------------------------------------
+Hotel:     Llao Llao Resort & Golf-Spa
+Country:   Argentina
+City:      Rio Negro
+Current:   lat=null lng=null
+Proposed:  lat=-41.056424 lng=-71.529367
+Query:     Llao Llao Resort & Golf-Spa, Rio Negro, Patagonia, South America, Argentina
+Address:   Villa Llao Llao, Río Negro Province, Argentina
+Type:      APPROXIMATE
+Place ID:  ChIJ7S3rZnx1GpYRoyZxWhmarDA
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Southern Ocean Lodge
+Country:   Australia
+City:      Kangaroo Island
+Current:   lat=null lng=null
+Proposed:  lat=-36.017929 lng=136.832625
+Query:     Southern Ocean Lodge, Kangaroo Island, South Australia, South Pacific, Australia
+Address:   Southern Ocean Lodge, Karatta SA 5223, Australia
+Type:      ROOFTOP
+Place ID:  ChIJpVWOk-cprWoRiXDeCe1Wa9w
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Capella Lodge
+Country:   Australia
+City:      Lord Howe Island
+Current:   lat=null lng=null
+Proposed:  lat=-31.550069 lng=159.076077
+Query:     Capella Lodge, Capella Hotels, Lord Howe Island, New South Wales, South Pacific, Australia
+Address:   Lagoon Rd, Lord Howe Island NSW 2898, Australia
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJKbh2424afGwRrgb35HUmMqE
+--------------------------------------------------
+Hotel:     Crown Towers
+Country:   Australia
+City:      Melbourne
+Current:   lat=null lng=null
+Proposed:  lat=-37.823801 lng=144.95984
+Query:     Crown Towers, Crown Hotels, Southbank, Melbourne, South Pacific, Australia
+Address:   8 Whiteman St, Southbank VIC 3006, Australia
+Type:      ROOFTOP
+Place ID:  ChIJs-Q2IlNd1moRB8j2FaFBgBQ
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Silky Oaks Lodge
+Country:   Australia
+City:      Mossman
+Current:   lat=null lng=null
+Proposed:  lat=-16.469632 lng=145.346669
+Query:     Silky Oaks Lodge, Mossman, North Queensland, South Pacific, Australia
+Address:   423 Finlayvale Rd, Finlayvale QLD 4873, Australia
+Type:      ROOFTOP
+Place ID:  ChIJuV460HSvgmkRtZgGZ_Y1kBE
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Langham Gold Coast
+Country:   Australia
+City:      Surfers Paradise
+Current:   lat=null lng=null
+Proposed:  lat=-28.015659 lng=153.432214
+Query:     The Langham Gold Coast, Langham Hotels & Resorts, Surfers Paradise, Queensland, South Pacific, Australia
+Address:   38 Old Burleigh Rd, Surfers Paradise QLD 4217, Australia
+Type:      ROOFTOP
+Place ID:  ChIJWxamrfgFkWsR-MIUEDmuO1c
+--------------------------------------------------
+Hotel:     Capella Sydney
+Country:   Australia
+City:      Sydney
+Current:   lat=null lng=null
+Proposed:  lat=-33.863857 lng=151.210406
+Query:     Capella Sydney, Capella Hotels, Sydney, South Pacific, Australia
+Address:   24 Loftus St, Sydney NSW 2000, Australia
+Type:      ROOFTOP
+Place ID:  ChIJ9Zcet0ivEmsRgInM0K7in-Q
+--------------------------------------------------
+Hotel:     Longitude 131°
+Country:   Australia
+City:      Uluru-Kata Tjuta National Park
+Current:   lat=null lng=null
+Proposed:  lat=-25.250359 lng=131.008058
+Query:     Longitude 131°, Uluru-Kata Tjuta National Park, South Pacific, Australia
+Address:   Yulara Drive, Yulara NT 0872, Australia
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ24TZRSNAIysRwqrWEVV1tFs
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     One&Only Wolgan Valley
+Country:   Australia
+City:      Wolgan Valley
+Current:   lat=null lng=null
+Proposed:  lat=-33.252301 lng=150.195989
+Query:     One&Only Wolgan Valley, One&Only, Wolgan Valley, South Pacific, Australia
+Address:   2600 Wolgan Rd, Wolgan Valley NSW 2790, Australia
+Type:      ROOFTOP
+Place ID:  ChIJF_Hzih3tDWsRiZXYbL8oHVA
+--------------------------------------------------
+Hotel:     Almhof Schneider
+Country:   Austria
+City:      Lech Am Arlberg
+Current:   lat=null lng=null
+Proposed:  lat=47.20878 lng=10.139727
+Query:     Almhof Schneider, Lech Am Arlberg, Europe, Austria
+Address:   Tannberg 59, 6764 Lech, Austria
+Type:      ROOFTOP
+Place ID:  ChIJ00De0OymnEcRhYy3j_2g01o
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Aurelio Lech
+Country:   Austria
+City:      Lech Am Arlberg
+Current:   lat=null lng=null
+Proposed:  lat=47.209539 lng=10.138881
+Query:     Aurelio Lech, Lech Am Arlberg, Europe, Austria
+Address:   Tannberg 130, 6764 Lech, Austria
+Type:      ROOFTOP
+Place ID:  ChIJF1uQtuymnEcRUSqe59__rp0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Gasthof Post
+Country:   Austria
+City:      Lech Am Arlberg
+Current:   lat=null lng=null
+Proposed:  lat=47.211193 lng=10.14394
+Query:     Gasthof Post, Lech Am Arlberg, Europe, Austria
+Address:   Lech, Austria
+Type:      APPROXIMATE
+Place ID:  ChIJ01SQDZKmnEcR1uL2pqy_S3c
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Kristiania Lech
+Country:   Austria
+City:      Lech Am Arlberg
+Current:   lat=null lng=null
+Proposed:  lat=47.204873 lng=10.13583
+Query:     Kristiania Lech, Lech Am Arlberg, Europe, Austria
+Address:   Omesberg 331, 6764 Lech, Austria
+Type:      ROOFTOP
+Place ID:  ChIJ3YnF8_KmnEcRYjhBv3UdDsM
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hotel Motto
+Country:   Austria
+City:      Vienna
+Current:   lat=null lng=null
+Proposed:  lat=48.198219 lng=16.350653
+Query:     Hotel Motto, Vienna, Europe, Austria
+Address:   Mariahilfer Straße 71A, Schadekgasse 20, 1060 Wien, Austria
+Type:      ROOFTOP
+Place ID:  ChIJ4XYT7ioHbUcR5kY3ZJAeaoU
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hotel Sacher Wien
+Country:   Austria
+City:      Vienna
+Current:   lat=null lng=null
+Proposed:  lat=48.204001 lng=16.369796
+Query:     Hotel Sacher Wien, Vienna, Europe, Austria
+Address:   Philharmoniker Str. 4, 1010 Wien, Austria
+Type:      ROOFTOP
+Place ID:  ChIJI85wbpwHbUcRiJL_xm_zLE4
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Palais Coburg Hotel Residenz
+Country:   Austria
+City:      Vienna
+Current:   lat=null lng=null
+Proposed:  lat=48.205633 lng=16.376718
+Query:     Palais Coburg Hotel Residenz, Vienna, Europe, Austria
+Address:   Coburgbastei 4, 1010 Wien, Austria
+Type:      ROOFTOP
+Place ID:  ChIJMSPZIZ4HbUcRtTEF1FhMe0E
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Sandy Lane
+Country:   Barbados
+City:      St. James
+Current:   lat=null lng=null
+Proposed:  lat=13.175289 lng=-59.631949
+Query:     Sandy Lane, St. James, Caribbean, Barbados
+Address:   Sandy Lane, Holetown, Saint James Barbados
+Type:      APPROXIMATE
+Place ID:  ChIJP-79Sl7wQ4wRmrFkNfCbghQ
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Amankora
+Country:   Bhutan
+City:      Paro
+Current:   lat=null lng=null
+Proposed:  lat=27.49693 lng=89.321938
+Query:     Amankora, Aman Resorts, Paro, Asia, Bhutan
+Address:   Balakha Tshento, Drugyel 12001, Bhutan
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJFVLUloBz4TkRkTbZditPK6s
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     COMO Uma Paro
+Country:   Bhutan
+City:      Paro
+Current:   lat=null lng=null
+Proposed:  lat=27.415713 lng=89.428448
+Query:     COMO Uma Paro, COMO Hotels, Paro, Asia, Bhutan
+Address:   Paro Valley Paro, Paro 00000, Bhutan
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJE0B8juqd4TkRZi4zXO3-xOw
+--------------------------------------------------
+Hotel:     COMO Uma Punakha
+Country:   Bhutan
+City:      Punakha
+Current:   lat=null lng=null
+Proposed:  lat=27.634902 lng=89.800585
+Query:     COMO Uma Punakha, COMO Hotels, Punakha, Asia, Bhutan
+Address:   Botokha Kabesa Punakha, Punakha, Bhutan
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJzfn-9o7D4TkRGGHOqX10fbE
+--------------------------------------------------
+Hotel:     Six Senses Punakha
+Country:   Bhutan
+City:      
+Current:   lat=null lng=null
+Proposed:  lat=27.624945 lng=89.800279
+Query:     Six Senses Punakha, IHG - Six Senses Resorts & Spas, Punakha Valley, Asia, Bhutan
+Address:   JRF2+X4C, Bhutan
+Type:      ROOFTOP
+Place ID:  ChIJLYLfWVXd4TkRImMmHMb5OG8
+FLAG:      city_blank_in_directus
+--------------------------------------------------
+Hotel:     Khwai River Lodge
+Country:   Botswana
+City:      Okawango Delta
+Current:   lat=null lng=null
+Proposed:  lat=-19.274399 lng=23.19526
+Query:     Khwai River Lodge, Belmond, Okawango Delta, Moremi Game Reserve, Africa, Botswana
+Address:   Moremi Game Reserve, Botswana
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJOenjBYFyVhkRyBxKehVwTDg
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Mombo Camp
+Country:   Botswana
+City:      
+Current:   lat=null lng=null
+Proposed:  lat=-19.226859 lng=22.777235
+Query:     Mombo Camp, Moremi Game Reserve, Africa, Botswana
+Address:   Masarwa, Botswana
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJM2u3w58iVhkRGkWUQ_77LHw
+FLAG:      city_blank_in_directus
+--------------------------------------------------
+Hotel:     Sanctuary Chief's Camp
+Country:   Botswana
+City:      
+Current:   lat=null lng=null
+Proposed:  lat=-19.293318 lng=22.909051
+Query:     Sanctuary Chief's Camp, Sanctuary Retreats, Moremi Game Reserve, Africa, Botswana
+Address:   Chiefs Camp, Botswana
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJORG0__4TVhkREJjqBxg7ytM
+FLAG:      city_blank_in_directus
+--------------------------------------------------
+Hotel:     Hotel das Cataratas, Iguacu Falls
+Country:   Brazil
+City:      Iguazu National Park
+Current:   lat=null lng=null
+Proposed:  lat=-25.684177 lng=-54.438852
+Query:     Hotel das Cataratas, Iguacu Falls, Belmond, Iguazu National Park, South America, Brazil
+Address:   Iguassu National Park - Rodovia Br 469, Km 32 - s/n - Foz do Iguaçu, PR, 85855-750, Brazil
+Type:      ROOFTOP
+Place ID:  ChIJWZUzp3jq9pQRaUqL9AJx9Fg
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Copacabana Palace
+Country:   Brazil
+City:      Rio de Janeiro
+Current:   lat=null lng=null
+Proposed:  lat=-22.967311 lng=-43.178954
+Query:     Copacabana Palace, Rio de Janeiro, South America, Brazil
+Address:   Av. Atlântica, 1702 - Copacabana, Rio de Janeiro - RJ, 22021-001, Brazil
+Type:      ROOFTOP
+Place ID:  ChIJjZJPDlTVmwARroitzBhRLu8
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Emiliano Hotel Rio de Janeiro
+Country:   Brazil
+City:      Rio de Janeiro
+Current:   lat=null lng=null
+Proposed:  lat=-22.98222 lng=-43.190357
+Query:     Emiliano Hotel Rio de Janeiro, Copacabana, Rio de Janeiro, South America, Brazil
+Address:   Av. Atlântica, 3804 - Copacabana, Rio de Janeiro - RJ, 22070-001, Brazil
+Type:      ROOFTOP
+Place ID:  ChIJPRfpuT7VmwAR2l_60dDBDok
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hotel Fasano Rio de Janeiro
+Country:   Brazil
+City:      Rio de Janeiro
+Current:   lat=null lng=null
+Proposed:  lat=-22.987156 lng=-43.19621
+Query:     Hotel Fasano Rio de Janeiro, Fasano, Rio de Janeiro, South America, Brazil
+Address:   Av. Vieira Souto, 80 - Ipanema, Rio de Janeiro - RJ, 22420-002, Brazil
+Type:      ROOFTOP
+Place ID:  ChIJNTWt6wTVmwARCOFLpbd5MsQ
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Carmel Taiba Exclusive Resort
+Country:   Brazil
+City:      São Gonçalo do Amarante
+Current:   lat=null lng=null
+Proposed:  lat=-3.506229 lng=-38.903732
+Query:     Carmel Taiba Exclusive Resort, São Gonçalo do Amarante, South America, Brazil
+Address:   R. Cap. Inácio Prata, 900 - Taiba, São Gonçalo do Amarante - CE, 62670-000, Brazil
+Type:      ROOFTOP
+Place ID:  ChIJ9feoAD_dwAcRbJSMwVbZd7c
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Rosewood Sao Paulo
+Country:   Brazil
+City:      Sao Paulo
+Current:   lat=null lng=null
+Proposed:  lat=-23.560171 lng=-46.652702
+Query:     Rosewood Sao Paulo, Rosewood Hotels & Resorts, Sao Paulo, South America, Brazil
+Address:   R. Itapeva, 435 - Bela Vista, São Paulo - SP, 01332-000, Brazil
+Type:      ROOFTOP
+Place ID:  ChIJsbAShclZzpQRiiYQjjaTjIA
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Fasano Trancoso
+Country:   Brazil
+City:      Trancoso
+Current:   lat=null lng=null
+Proposed:  lat=-16.622092 lng=-39.094985
+Query:     Fasano Trancoso, Trancoso, Porto Seguro, South America, Brazil
+Address:   Estrada de Itaquena, 3925 Praia de Itapororoca - Trancoso, Porto Seguro - BA, 45810-000, Brazil
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJy3IZgkmcNgcRjal5Lpnjdes
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Malliouhana Hotel & Spa
+Country:   British Virgin Islands
+City:      Long Bay Village
+Current:   lat=null lng=null
+Proposed:  lat=18.420695 lng=-64.639968
+Query:     Malliouhana Hotel & Spa, Long Bay Village, Anguilla, Caribbean, British Virgin Islands
+Address:   British Virgin Islands
+Type:      APPROXIMATE
+Place ID:  ChIJzVNkK5xzBYwRPTvsse5woG0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Belmond Cap Juluca
+Country:   British Virgin Islands
+City:      Maundays Bay
+Current:   lat=null lng=null
+Proposed:  lat=18.420695 lng=-64.639968
+Query:     Belmond Cap Juluca, Belmond, Maundays Bay, Maundays Bay, Anguilla, Caribbean, British Virgin Islands
+Address:   British Virgin Islands
+Type:      APPROXIMATE
+Place ID:  ChIJzVNkK5xzBYwRPTvsse5woG0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Moskito Island
+Country:   British Virgin Islands
+City:      Moskito Island
+Current:   lat=null lng=null
+Proposed:  lat=18.511285 lng=-64.394147
+Query:     Moskito Island, Moskito Island, Virgin Gorda, Caribbean, British Virgin Islands
+Address:   Moskito Island, British Virgin Islands
+Type:      APPROXIMATE
+Place ID:  ChIJx35Clq-BBYwR9Lb2uNHw8Hc
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Necker Island
+Country:   British Virgin Islands
+City:      Necker Island
+Current:   lat=null lng=null
+Proposed:  lat=18.526767 lng=-64.358628
+Query:     Necker Island, Virgin Limited Edition, Necker Island, Necker Island, Caribbean, British Virgin Islands
+Address:   Necker Island, British Virgin Islands
+Type:      APPROXIMATE
+Place ID:  ChIJedVYZZKABYwRQylSDNJBSf0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Cuisinart Resort & Spa
+Country:   British Virgin Islands
+City:      Rendezvous Bay
+Current:   lat=null lng=null
+Proposed:  lat=18.420695 lng=-64.639968
+Query:     Cuisinart Resort & Spa, Rendezvous Bay, Rendezvous Bay, Anguilla, Caribbean, British Virgin Islands
+Address:   British Virgin Islands
+Type:      APPROXIMATE
+Place ID:  ChIJzVNkK5xzBYwRPTvsse5woG0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Rosewood Little Dix Bay
+Country:   British Virgin Islands
+City:      Spanish Town
+Current:   lat=null lng=null
+Proposed:  lat=18.459185 lng=-64.433876
+Query:     Rosewood Little Dix Bay, Rosewood Hotels & Resorts, Spanish Town, Virgin Gorda, Caribbean, British Virgin Islands
+Address:   Valley, Lee Rd, Spanish Town VG1150, British Virgin Islands
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJmTsaQgR0BYwRxXWyt1Hibu0
+--------------------------------------------------
+Hotel:     Four Seasons Anguilla
+Country:   British Virgin Islands
+City:      West End
+Current:   lat=null lng=null
+Proposed:  lat=18.420695 lng=-64.639968
+Query:     Four Seasons Anguilla, Four Seasons, Barnes Bay Beach, West End, Anguilla, Caribbean, British Virgin Islands
+Address:   British Virgin Islands
+Type:      APPROXIMATE
+Place ID:  ChIJzVNkK5xzBYwRPTvsse5woG0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Six Senses Krabey Island
+Country:   Cambodia
+City:      Koh Krabey Island
+Current:   lat=null lng=null
+Proposed:  lat=10.509722 lng=103.565
+Query:     Six Senses Krabey Island, IHG - Six Senses Resorts & Spas, Koh Krabey Island, Koh Krabey Island, Asia, Cambodia
+Address:   Kaôh Chrâlŭh, Cambodia
+Type:      APPROXIMATE
+Place ID:  ChIJvVihbAsICDER2-gkS5Db5gg
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Phum Baitang Resort
+Country:   Cambodia
+City:      Krong Siem Reap
+Current:   lat=null lng=null
+Proposed:  lat=13.358093 lng=103.826916
+Query:     Phum Baitang Resort, Zannier Hotels, Krong Siem Reap, Siem Reap, Asia, Cambodia
+Address:   Neelka Way, Krong Siem Reap 171202, Cambodia
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJced2CE4XEDERNvRFG-OA2IA
+--------------------------------------------------
+Hotel:     La Résidence d'Angkor, A Belmond Hotel
+Country:   Cambodia
+City:      Siem Reap
+Current:   lat=null lng=null
+Proposed:  lat=13.357647 lng=103.859314
+Query:     La Résidence d'Angkor, A Belmond Hotel, Belmond, Siem Reap, Asia, Cambodia
+Address:   River Rd, Krong Siem Reap 93101, Cambodia
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJOb4JDXcXEDERTQzzHJOQxEA
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Fairmont Banff Springs
+Country:   Canada
+City:      Banff
+Current:   lat=null lng=null
+Proposed:  lat=51.164332 lng=-115.56183
+Query:     Fairmont Banff Springs, Accor - Fairmont, Banff, Alberta, North America, Canada
+Address:   405 Spray Ave, Banff, AB T1L 1J4, Canada
+Type:      ROOFTOP
+Place ID:  ChIJv7gvLjvKcFMRzvb0LKnpmQA
+--------------------------------------------------
+Hotel:     Fairmont Chateau Lake Louise
+Country:   Canada
+City:      Lake Louise
+Current:   lat=null lng=null
+Proposed:  lat=51.417719 lng=-116.216882
+Query:     Fairmont Chateau Lake Louise, Accor - Fairmont, Lake Louise, Alberta, North America, Canada
+Address:   111 Lake Louise Dr, Lake Louise, AB T0L 1E0, Canada
+Type:      ROOFTOP
+Place ID:  ChIJNZqvCRJdd1MRBBS7Nem5IEQ
+--------------------------------------------------
+Hotel:     The Ritz-Carlton Montréal
+Country:   Canada
+City:      Montreal
+Current:   lat=null lng=null
+Proposed:  lat=45.500186 lng=-73.577806
+Query:     The Ritz-Carlton Montréal, Marriott - Ritz-Carlton, Montreal, Quebec, North America, Canada
+Address:   1228 Rue Sherbrooke O, Montréal, QC H3G 1W9, Canada
+Type:      ROOFTOP
+Place ID:  ChIJIQzw90AayUwRmOnaxkuXVUk
+--------------------------------------------------
+Hotel:     1 Hotel Toronto
+Country:   Canada
+City:      Toronto
+Current:   lat=null lng=null
+Proposed:  lat=43.643042 lng=-79.401618
+Query:     1 Hotel Toronto, Toronto, North America, Canada
+Address:   550 Wellington St W, Toronto, ON M5V 2V4, Canada
+Type:      ROOFTOP
+Place ID:  ChIJtVVuA0A1K4gRvpFVah4kFdQ
+--------------------------------------------------
+Hotel:     The Ritz-Carlton Toronto
+Country:   Canada
+City:      Toronto
+Current:   lat=null lng=null
+Proposed:  lat=43.645457 lng=-79.387129
+Query:     The Ritz-Carlton Toronto, Marriott - Ritz-Carlton, Toronto, Ontario, North America, Canada
+Address:   181 Wellington St W, Toronto, ON M5V 0C3, Canada
+Type:      ROOFTOP
+Place ID:  ChIJgwWVR9E0K4gR1sDNta9PIL0
+--------------------------------------------------
+Hotel:     Fairmont Waterfront
+Country:   Canada
+City:      Vancouver
+Current:   lat=null lng=null
+Proposed:  lat=49.286958 lng=-123.113901
+Query:     Fairmont Waterfront, Accor - Fairmont, Vancouver, British Columbia, North America, Canada
+Address:   900 Canada Pl, Vancouver, BC V6C 3L5, Canada
+Type:      ROOFTOP
+Place ID:  ChIJDXoq6oJxhlQRew8O_6dS7as
+--------------------------------------------------
+Hotel:     Fairmont Chateau Whistler
+Country:   Canada
+City:      Whistler
+Current:   lat=null lng=null
+Proposed:  lat=50.116647 lng=-122.946213
+Query:     Fairmont Chateau Whistler, Accor - Fairmont, Whistler, British Columbia, North America, Canada
+Address:   4599 Chateau Blvd, Whistler, BC V8E 0Z5, Canada
+Type:      ROOFTOP
+Place ID:  ChIJC5wOpKw8h1QRzlqVDIThdYY
+--------------------------------------------------
+Hotel:     The Ritz-Carlton Grand Cayman
+Country:   Cayman Islands
+City:      Seven Mile Beach
+Current:   lat=null lng=null
+Proposed:  lat=19.31746 lng=-81.383537
+Query:     The Ritz-Carlton Grand Cayman, Marriott - Ritz-Carlton, Seven Mile Beach, Caribbean, Cayman Islands
+Address:   Seven Mile Beach, 389 W Bay Rd, KY1-1202, Cayman Islands
+Type:      ROOFTOP
+Place ID:  ChIJhx0SqaqHJY8RaBgXRgAQwzA
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Singular Patagonia
+Country:   Chile
+City:      Natales
+Current:   lat=null lng=null
+Proposed:  lat=-51.69278 lng=-72.533575
+Query:     The Singular Patagonia, The Singular Hotels, Natales, Patagonia, South America, Chile
+Address:   5 Norte S/N, 8F48+M9 Km 5, 6160000 Puerto Bories, Natales, Magallanes y la Antártica Chilena, Chile
+Type:      ROOFTOP
+Place ID:  ChIJMaItXKbCr70Ro-LQyOpojBw
+--------------------------------------------------
+Hotel:     The Singular Santiago
+Country:   Chile
+City:      Santiago
+Current:   lat=null lng=null
+Proposed:  lat=-33.43726 lng=-70.640714
+Query:     The Singular Santiago, The Singular Hotels, Santiago, South America, Chile
+Address:   Merced 294, 8320128 Santiago, Región Metropolitana, Chile
+Type:      ROOFTOP
+Place ID:  ChIJ_ZTOaJnFYpYRUiyVDCJ59YQ
+--------------------------------------------------
+Hotel:     Awasi Patagonia, Chile
+Country:   Chile
+City:      
+Current:   lat=null lng=null
+Proposed:  lat=-50.911228 lng=-72.639504
+Query:     Awasi Patagonia, Chile, Torres del Paine National Park, South America, Chile
+Address:   Estancia Tercera Barranca, Torres del Paine, Torres de Paine, Magallanes y la Antártica Chilena, Chile
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJddGPIL_Nur0RSk1FKFPUThM
+FLAG:      city_blank_in_directus
+--------------------------------------------------
+Hotel:     Tierra Patagonia Hotel & Spa
+Country:   Chile
+City:      
+Current:   lat=null lng=null
+Proposed:  lat=-51.034981 lng=-72.583405
+Query:     Tierra Patagonia Hotel & Spa, Torres del Paine National Park, South America, Chile
+Address:   On the edge of Torres del Paine National Park, Torres de Paine, Magallanes y la Antártica Chilena, Chile
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJF1gP2WvKur0RECj2QSiOe2A
+FLAG:      city_blank_in_directus
+--------------------------------------------------
+Hotel:     Bulgari Hotel Beijing
+Country:   China
+City:      Beijing
+Current:   lat=null lng=null
+Proposed:  lat=39.947563 lng=116.452261
+Query:     Bulgari Hotel Beijing, Bulgari Hotels & Resorts, Chaoyang District, Beijing, Asia, China
+Address:   China, Bei Jing Shi, Chao Yang Qu, CN CN 北京市 朝阳区新源南路8号院2号楼 邮政编码: 100027
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJF4C6Dpus8TUR6VpkEE6m6eA
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Beijing
+Country:   China
+City:      Beijing
+Current:   lat=null lng=null
+Proposed:  lat=39.950455 lng=116.4672
+Query:     Four Seasons Hotel Beijing, Four Seasons, Beijing, Asia, China
+Address:   48 Liang Ma Qiao Lu, Chao Yang Qu, Bei Jing Shi, China, 100125
+Type:      ROOFTOP
+Place ID:  ChIJq-YMgIGs8TURdmJe3C_YWSM
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Rosewood Beijing
+Country:   China
+City:      Beijing
+Current:   lat=null lng=null
+Proposed:  lat=39.920335 lng=116.460705
+Query:     Rosewood Beijing, Rosewood Hotels & Resorts, Beijing, Asia, China
+Address:   China, Bei Jing Shi, Chao Yang Qu, Chao Yang Men Wai Da Jie, 1号京广中心 邮政编码: 100020
+Type:      ROOFTOP
+Place ID:  ChIJVz31ffms8TURDSuZCxDT8KY
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Opposite House
+Country:   China
+City:      Beijing
+Current:   lat=null lng=null
+Proposed:  lat=39.937486 lng=116.454648
+Query:     The Opposite House, Beijing, Asia, China
+Address:   11 San Li Tun Lu, 使馆区 Chao Yang Qu, Bei Jing Shi, China, 100027
+Type:      ROOFTOP
+Place ID:  ChIJt9cD3yNT8DURKxKV2M_6Ex0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Peninsula Beijing
+Country:   China
+City:      Beijing
+Current:   lat=null lng=null
+Proposed:  lat=39.91535 lng=116.416427
+Query:     The Peninsula Beijing, The Peninsula Hotels, Beijing, Asia, China
+Address:   8 Jin Yu Hu Tong, Dong Cheng Qu, Bei Jing Shi, China, 100006
+Type:      ROOFTOP
+Place ID:  ChIJP3xnYtJS8DUR2wxjhFtw67Y
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The PuXuan Hotel & Spa
+Country:   China
+City:      Beijing
+Current:   lat=null lng=null
+Proposed:  lat=39.90445 lng=116.40729
+Query:     The PuXuan Hotel & Spa, DongCheng District, Beijing, Asia, China
+Address:   No.1 WangFuJing Street, 东城区 China, 100006
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ-bte17lS8DURvKtmaO2KfBk
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The St. Regis Beijing
+Country:   China
+City:      Beijing
+Current:   lat=null lng=null
+Proposed:  lat=39.910847 lng=116.440155
+Query:     The St. Regis Beijing, Marriott - St. Regis, Beijing, Asia, China
+Address:   21 Jian Guo Men Wai Da Jie, Chao Yang Qu, Bei Jing Shi, China, 100020
+Type:      ROOFTOP
+Place ID:  ChIJiWNTtN378TURM2I2_vAYWoQ
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Temple House
+Country:   China
+City:      Chengdu
+Current:   lat=null lng=null
+Proposed:  lat=30.651789 lng=104.084835
+Query:     The Temple House, Chengdu, Asia, China
+Address:   邮编号, 81 Bi Tie Shi Jie, Jin Jiang Qu, Cheng Du Shi, Si Chuan Sheng, China, 610021
+Type:      ROOFTOP
+Place ID:  ChIJn58kQ0LF7zYRPxdPGtOarhE
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     LUX* Chongzuo, Guangxi
+Country:   China
+City:      Chongzuo
+Current:   lat=null lng=null
+Proposed:  lat=22.707428 lng=106.913903
+Query:     LUX* Chongzuo, Guangxi, LUX Hotels, Chongzuo, Guangxi, Asia, China
+Address:   PW47+XHC, Daxin County, Chongzuo, Guangxi, China, 532300
+Type:      ROOFTOP
+Place ID:  ChIJ11r49IC9tTYRw_JFnSLFrjQ
+--------------------------------------------------
+Hotel:     Rosewood Guangzhou
+Country:   China
+City:      Guangzhou
+Current:   lat=null lng=null
+Proposed:  lat=23.117376 lng=113.326049
+Query:     Rosewood Guangzhou, Rosewood Hotels & Resorts, Tianhe District, Guangzhou, Guangdong, Asia, China
+Address:   6 Zhu Jiang Dong Lu, Tian He Qu, Guang Zhou Shi, Guang Dong Sheng, China, 510655
+Type:      ROOFTOP
+Place ID:  ChIJfUmvLJD_AjQR1nBc9PV8qOM
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Sanya Edition
+Country:   China
+City:      Hainan Island
+Current:   lat=null lng=null
+Proposed:  lat=18.365167 lng=109.745577
+Query:     The Sanya Edition, Marriott - Edition Hotels, Hainan Island, Asia, China
+Address:   100 Hai Tang Bei Lu, Hai Tang Qu, San Ya Shi, Hai Nan Sheng, China, 572013
+Type:      ROOFTOP
+Place ID:  ChIJAQCwxB5MRTERBAUeu_vJPKg
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Hangzhou at West Lake
+Country:   China
+City:      Hangzhou
+Current:   lat=null lng=null
+Proposed:  lat=30.251272 lng=120.127648
+Query:     Four Seasons Hotel Hangzhou at West Lake, Four Seasons, Hangzhou, Asia, China
+Address:   5 Ling Yin Lu, Xi Hu Qu, Hang Zhou Shi, Zhe Jiang Sheng, China, 310058
+Type:      ROOFTOP
+Place ID:  ChIJ576mGStjSzQRtr13SnqAvO4
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.28637 lng=114.157041
+Query:     Four Seasons Hotel Hong Kong, Four Seasons, Hong Kong Island, Hong Kong, Asia, China
+Address:   8 Finance St, Central, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJzbDWTWIABDQR_WNi3VDdv-U
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Mandarin Oriental Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.281879 lng=114.159443
+Query:     Mandarin Oriental Hong Kong, Mandarin Oriental, Hong Kong Island, Hong Kong, Asia, China
+Address:   5 Connaught Road, Central, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJuY8iZWQABDQR81RwhbR5TXE
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Rosewood Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.294976 lng=114.175832
+Query:     Rosewood Hong Kong, Rosewood Hotels & Resorts, Kowloon, Hong Kong, Asia, China
+Address:   18 Salisbury Rd, Tsim Sha Tsui, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJ4cj9uvEABDQRn5SxnnZaBi0
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     The Hari
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=35.86166 lng=104.195397
+Query:     The Hari, Hong Kong, Asia, China
+Address:   China
+Type:      APPROXIMATE
+Place ID:  ChIJwULG5WSOUDERbzafNHyqHZU
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Landmark Mandarin Oriental
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.280518 lng=114.157939
+Query:     The Landmark Mandarin Oriental, Mandarin Oriental, Hong Kong Island, Hong Kong, Asia, China
+Address:   15 Queen's Road Central, Central, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJcYGO5GQABDQRac6ASI5lchM
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     The Langham Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.296398 lng=114.169746
+Query:     The Langham Hong Kong, Langham Hotels & Resorts, Kowloon, Hong Kong, Asia, China
+Address:   8 Peking Rd, Tsim Sha Tsui, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJCWhLAYYBBDQRfJBPDl_JtJ0
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     The Murray Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.278087 lng=114.160102
+Query:     The Murray Hong Kong, Niccolo Hotels, Hong Kong, Asia, China
+Address:   22 Cotton Tree Dr, Central, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJR8R6lGUABDQRFBg15YAbeac
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     The Peninsula Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.295102 lng=114.171854
+Query:     The Peninsula Hong Kong, The Peninsula Hotels, Kowloon, Hong Kong, Asia, China
+Address:   Salisbury Rd, Tsim Sha Tsui, Hong Kong
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJdRlVSfIABDQRq5S65hPQo-8
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     The Ritz-Carlton Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.303403 lng=114.160191
+Query:     The Ritz-Carlton Hong Kong, Marriott - Ritz-Carlton, Kowloon, Hong Kong, Asia, China
+Address:   九龙柯士甸道西1号, International Commerce Centre (ICC), 1 Austin Rd W, Kowloon, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJsz7XbJEABDQRhZtEqR96mI0
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Upper House Hong Kong
+Country:   China
+City:      Hong Kong
+Current:   lat=null lng=null
+Proposed:  lat=22.277503 lng=114.166341
+Query:     Upper House Hong Kong, Upper House, Hong Kong, Hong Kong Island, Asia, China
+Address:   Upper House, 88 Queensway, Admiralty, Hong Kong
+Type:      ROOFTOP
+Place ID:  ChIJDVW9tmcABDQRamXo3aZeQlw
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Shinta Mani Mustang - A Bensley Collection
+Country:   China
+City:      Jomsom
+Current:   lat=null lng=null
+Proposed:  lat=35.86166 lng=104.195397
+Query:     Shinta Mani Mustang - A Bensley Collection, Jomsom, Nepal, Asia, China
+Address:   China
+Type:      APPROXIMATE
+Place ID:  ChIJwULG5WSOUDERbzafNHyqHZU
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Altira Macau
+Country:   China
+City:      Macau
+Current:   lat=null lng=null
+Proposed:  lat=35.86166 lng=104.195397
+Query:     Altira Macau, Macau, Asia, China
+Address:   China
+Type:      APPROXIMATE
+Place ID:  ChIJwULG5WSOUDERbzafNHyqHZU
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Ritz-Carlton Macau
+Country:   China
+City:      Macau
+Current:   lat=null lng=null
+Proposed:  lat=35.86166 lng=104.195397
+Query:     The Ritz-Carlton Macau, Marriott - Ritz-Carlton, Macau, Asia, China
+Address:   China
+Type:      APPROXIMATE
+Place ID:  ChIJwULG5WSOUDERbzafNHyqHZU
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Ritz-Carlton Nanjing
+Country:   China
+City:      Nanjing
+Current:   lat=null lng=null
+Proposed:  lat=32.042683 lng=118.78415
+Query:     Ritz-Carlton Nanjing, Marriott - Ritz-Carlton, Nanjing, Asia, China
+Address:   No, 18 中山路新街口地区鼓楼区南京市 China, 210018
+Type:      ROOFTOP
+Place ID:  ChIJo8nn_I2MtTURpC-iNxccE1M
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Mandarin Oriental Sanya
+Country:   China
+City:      Sanya
+Current:   lat=null lng=null
+Proposed:  lat=18.21433 lng=109.53241
+Query:     Mandarin Oriental Sanya, Mandarin Oriental, Sanya, Hainan Island, Asia, China
+Address:   12 Yuhai Road, 吉阳区三亚市海南省 China, 572000
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ_ds3UAVLRTERNkd_eX-aD4k
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Amanyangyun
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.037461 lng=121.357389
+Query:     Amanyangyun, Aman Resorts, Minhang District, Shanghai, Asia, China
+Address:   6161 Yuan Jiang Lu, Min Hang Qu, China, 201111
+Type:      ROOFTOP
+Place ID:  ChIJya710YGJsjURXnym1-fCS70
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Banyan Tree Shanghai On The Bund
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.249909 lng=121.50708
+Query:     Banyan Tree Shanghai On The Bund, Banyan Tree, Shanghai, Asia, China
+Address:   19 Gong Ping Lu, Hong Kou Qu, Shang Hai Shi, China, 200086
+Type:      ROOFTOP
+Place ID:  ChIJ__97qfxvsjURQLqbKW11nI4
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Bulgari Hotel Shanghai
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.243008 lng=121.481412
+Query:     Bulgari Hotel Shanghai, Bulgari Hotels & Resorts, Shanghai, Asia, China
+Address:   Shang Hai Bao Ge Li Jiu Dian, 杨树浦 Jing An Qu, Shang Hai Shi, China, 200085
+Type:      ROOFTOP
+Place ID:  ChIJvRtZtVFwsjURYqTlfzpPcAM
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Shanghai at Pudong
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.227348 lng=121.462199
+Query:     Four Seasons Hotel Shanghai at Pudong, Four Seasons, Shanghai, Asia, China
+Address:   500 Wei Hai Lu, Jing An Qu, Shang Hai Shi, China, 200041
+Type:      ROOFTOP
+Place ID:  ChIJXYBDiBBwsjURxZf6M-T_3qo
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Peninsula Shanghai
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.24145 lng=121.488775
+Query:     The Peninsula Shanghai, The Peninsula Hotels, Shanghai, Asia, China
+Address:   Shang Hai Ban Dao Jiu Dian, 杨思 Huang Pu Qu, Shang Hai Shi, China, 200002
+Type:      ROOFTOP
+Place ID:  ChIJt_fUUFZwsjURqinNAQLRdfs
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The PuLi Hotel & Spa
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.222292 lng=121.448319
+Query:     The PuLi Hotel & Spa, Shanghai, Asia, China
+Address:   1 Chang De Lu, 久光 Jing An Qu, Shang Hai Shi, China, 200040
+Type:      ROOFTOP
+Place ID:  ChIJbQazdgFwsjURUQctfrYp_Es
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Ritz-Carlton Shanghai, Pudong
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.236545 lng=121.501247
+Query:     The Ritz-Carlton Shanghai, Pudong, Marriott - Ritz-Carlton, Shanghai, Asia, China
+Address:   8 Shi Ji Da Dao, Lujiazui, Pu Dong Xin Qu, China, 200120
+Type:      ROOFTOP
+Place ID:  ChIJWY-sruVwsjURtX4aDE9bKGI
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     The Shanghai Edition
+Country:   China
+City:      Shanghai
+Current:   lat=null lng=null
+Proposed:  lat=31.237886 lng=121.485916
+Query:     The Shanghai Edition, Marriott - Edition Hotels, Shanghai, Asia, China
+Address:   199 Nanjing Road East, Huangpu, Shanghai, 上海市 China, 200002
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJCaa69FlwsjURGEAlMiWAkfI
+--------------------------------------------------
+Hotel:     Nayara Springs
+Country:   Costa Rica
+City:      Arenal
+Current:   lat=null lng=null
+Proposed:  lat=10.502802 lng=-84.687524
+Query:     Nayara Springs, Arenal, Central America, Costa Rica
+Address:   Arenal Volcano National Park, de, 702 Road, Provincia de Alajuela, La Fortuna, 21007, Costa Rica
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJhz017uELoI8ReBhBgO1bJek
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Nayara Tented Camp
+Country:   Costa Rica
+City:      Arenal
+Current:   lat=null lng=null
+Proposed:  lat=10.505146 lng=-84.688795
+Query:     Nayara Tented Camp, Arenal, Central America, Costa Rica
+Address:   Arenal Volcano National Park, de, 702 Road, Provincia de Alajuela, La Fortuna, 21007, Costa Rica
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ_fBRdOELoI8RluKUP81bvDw
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Resort Costa Rica at Peninsula Papagayo
+Country:   Costa Rica
+City:      Guanacaste
+Current:   lat=null lng=null
+Proposed:  lat=10.611586 lng=-85.688415
+Query:     Four Seasons Resort Costa Rica at Peninsula Papagayo, Four Seasons, Guanacaste, Central America, Costa Rica
+Address:   Liberia Guanaste 26Km al Norte del Doit, CR-G, Peninsula Papagayo, 05000, Costa Rica
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ4-8la0qHdY8RGP3Buof_FrE
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hacienda AltaGracia
+Country:   Costa Rica
+City:      Perez Zeledón
+Current:   lat=null lng=null
+Proposed:  lat=9.334625 lng=-83.57711
+Query:     Hacienda AltaGracia, Auberge Resorts, Perez Zeledón, Talamanca Mountains, Central America, Costa Rica
+Address:   Contiguo a la Escuela de Santa Teresa de Cajón, San José, Pérez Zeledón, 11908, Costa Rica
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ7a45p8aypo8RDWZhtLI5T_M
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Habitas Santa Teresa, Costa Rica
+Country:   Costa Rica
+City:      Santa Teresa
+Current:   lat=null lng=null
+Proposed:  lat=9.641456 lng=-85.165269
+Query:     Habitas Santa Teresa, Costa Rica, Our Habitas, Santa Teresa, Central America, Costa Rica
+Address:   Puntarenas Province, Santa Teresa, Costa Rica
+Type:      APPROXIMATE
+Place ID:  ChIJOy2b519un48RhY0NoTvQ1h8
+--------------------------------------------------
+Hotel:     Villa Dubrovnik
+Country:   Croatia
+City:      Dubrovnik
+Current:   lat=null lng=null
+Proposed:  lat=42.638309 lng=18.127256
+Query:     Villa Dubrovnik, Dubrovnik, Europe, Croatia
+Address:   Ul. Vlaha Bukovca 6, 20000, Dubrovnik, Croatia
+Type:      ROOFTOP
+Place ID:  ChIJ1y-a9kwLTBMRaNucgQdfvw8
+--------------------------------------------------
+Hotel:     Almyra
+Country:   Cyprus
+City:      Paphos
+Current:   lat=null lng=null
+Proposed:  lat=34.754573 lng=32.418889
+Query:     Almyra, Thanos Hotels & Resorts, Paphos, Europe, Cyprus
+Address:   Poseidonos Ave 12, Pafos 8042, Cyprus
+Type:      ROOFTOP
+Place ID:  ChIJ2dD6bfQb5xQRtmQzdOGgVHE
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Andaz Prague
+Country:   Czech Republic
+City:      Prague
+Current:   lat=null lng=null
+Proposed:  lat=50.085512 lng=14.430237
+Query:     Andaz Prague, Hyatt - Andaz, Prague, Europe, Czech Republic
+Address:   Senovážné nám. 976/31, Nové Město, 110 00 Praha-Praha 1, Czechia
+Type:      ROOFTOP
+Place ID:  ChIJ56bH5ruVC0cRFwQAtY9dnDg
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Prague
+Country:   Czech Republic
+City:      Prague
+Current:   lat=null lng=null
+Proposed:  lat=50.087542 lng=14.414916
+Query:     Four Seasons Hotel Prague, Four Seasons, Prague, Europe, Czech Republic
+Address:   Veleslavínova 1098/2a, Staré Město, 110 00 Praha-Praha 1, Czechia
+Type:      ROOFTOP
+Place ID:  ChIJV98mG-aUC0cRFRxITFMotnk
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Hotel d'Angleterre, Copenhagen
+Country:   Denmark
+City:      Copenhagen
+Current:   lat=null lng=null
+Proposed:  lat=55.680605 lng=12.5847
+Query:     Hotel d'Angleterre, Copenhagen, Copenhagen, Europe, Denmark
+Address:   Kongens Nytorv 34, 1050 København, Denmark
+Type:      ROOFTOP
+Place ID:  ChIJtRm9KRhTUkYRdv7vSCAmeVM
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hotel Sanders
+Country:   Denmark
+City:      Copenhagen
+Current:   lat=null lng=null
+Proposed:  lat=55.678406 lng=12.587559
+Query:     Hotel Sanders, Copenhagen, Europe, Denmark
+Address:   Tordenskjoldsgade 15, 1055 København, Denmark
+Type:      ROOFTOP
+Place ID:  ChIJ9di4Yz1TUkYRSqrY2LJndpw
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Amanera
+Country:   Dominican Republic
+City:      Rio San Juan
+Current:   lat=null lng=null
+Proposed:  lat=19.678 lng=-70.017914
+Query:     Amanera, Aman Resorts, Playa Grande, Rio San Juan, Caribbean, Dominican Republic
+Address:   Auto. 5. Carretera, Carretera, Rio San Juan 33300, Dominican Republic
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ02704Oxsro4RjvvAkUjMbus
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Cairo at Nile Plaza
+Country:   Egypt
+City:      Cairo
+Current:   lat=null lng=null
+Proposed:  lat=30.03611 lng=31.229632
+Query:     Four Seasons Hotel Cairo at Nile Plaza, Four Seasons, Cairo, Africa, Egypt
+Address:   1089 CORNICHE EL NIL, Qasr El Nil, Cairo Governorate 11519, Egypt
+Type:      ROOFTOP
+Place ID:  ChIJCXj1Ps1AWBQRsB73IUIL9dc
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Cairo at The First Residence
+Country:   Egypt
+City:      Cairo
+Current:   lat=null lng=null
+Proposed:  lat=30.024305 lng=31.216831
+Query:     Four Seasons Hotel Cairo at The First Residence, Four Seasons, Cairo, Africa, Egypt
+Address:   35 Giza St, Oula, Al Giza, Giza Governorate 12311, Egypt
+Type:      ROOFTOP
+Place ID:  ChIJh9b52a5BWBQRGPh8hnRv3Tc
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Lucknam Park, Bath
+Country:   England
+City:      Bath
+Current:   lat=null lng=null
+Proposed:  lat=51.45505 lng=-2.25939
+Query:     Lucknam Park, Bath, Bath, Bath Region, Europe, England
+Address:   Lucknam Park, Thickwood, Chippenham SN14 8AZ, UK
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJt_zHOVR4cUgRONaAmLjRN6c
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     The Gainsborough Bath Spa
+Country:   England
+City:      Bath
+Current:   lat=null lng=null
+Proposed:  lat=51.380311 lng=-2.36096
+Query:     The Gainsborough Bath Spa, Bath, Bath Region, Europe, England
+Address:   Beau St, Bath BA1 1QY, UK
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJhUJaXRGBcUgRG2mqT2T3OkU
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel Hampshire
+Country:   England
+City:      Hampshire
+Current:   lat=null lng=null
+Proposed:  lat=51.258093 lng=-0.89589
+Query:     Four Seasons Hotel Hampshire, Four Seasons, Hampshire, Europe, England
+Address:   Dogmersfield Park, Chalky Ln, Hook RG27 8TD, UK
+Type:      ROOFTOP
+Place ID:  ChIJha_FANYudEgRPW2tJ_yGzvs
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     1 Hotel Mayfair
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.507584 lng=-0.142212
+Query:     1 Hotel Mayfair, 1 Hotels, Mayfair, London, Europe, England
+Address:   3 Berkeley St, London W1J 8DL, UK
+Type:      ROOFTOP
+Place ID:  ChIJLcpxhKcFdkgRfWjpSLIzZ_4
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Baglioni Hotel London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.501689 lng=-0.184631
+Query:     Baglioni Hotel London, Baglioni Hotels & Resorts, Kensington, London, Europe, England
+Address:   60 Hyde Park Gate, South Kensington, London SW7 5BB, UK
+Type:      ROOFTOP
+Place ID:  ChIJFSZeB1kFdkgRTixgFHqP13g
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Bulgari Hotel London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.501467 lng=-0.163548
+Query:     Bulgari Hotel London, Bulgari Hotels & Resorts, Knightsbridge, London, Europe, England
+Address:   171 Knightsbridge, London SW7 1DW, UK
+Type:      ROOFTOP
+Place ID:  ChIJB4FBeEcFdkgRF8Hd6yhDQqA
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Chateaux Denmark
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.515547 lng=-0.129584
+Query:     Chateaux Denmark, SoHo, London, Europe, England
+Address:   Denmark St, London WC2H 0LA, UK
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJjYNvTS0bdkgR86XdZbu_PnU
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Claridge's
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.510366 lng=-0.140903
+Query:     Claridge's, Maybourne Hotel Group, Mayfair, London, Europe, England
+Address:   30 Old Burlington St, London W1S 3AR, UK
+Type:      ROOFTOP
+Place ID:  ChIJXaTk99UEdkgRmllBY_afTvQ
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Corinthia Hotel London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.50646 lng=-0.124313
+Query:     Corinthia Hotel London, Trafalgar Square, London, Europe, England
+Address:   Corinthia Hotel, 10 Whitehall Pl, London SW1A 2BD, UK
+Type:      ROOFTOP
+Place ID:  ChIJ0dU6L88EdkgRSRva6TI0lsY
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Four Seasons Hotel London at Park Lane
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.50446 lng=-0.149999
+Query:     Four Seasons Hotel London at Park Lane, Four Seasons, Mayfair, London, Europe, England
+Address:   Hamilton Pl, Park Ln, London W1J 7DR, UK
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJPTReYyUFdkgRFxvvBDglXXE
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Hotel 41
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.498223 lng=-0.143525
+Query:     Hotel 41, Westminster, London, Europe, England
+Address:   41 Buckingham Palace Rd, London SW1W 0PS, UK
+Type:      ROOFTOP
+Place ID:  ChIJ4fry2CAFdkgRDUqvI09T1ck
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Mandarin Oriental Hyde Park
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.502132 lng=-0.159994
+Query:     Mandarin Oriental Hyde Park, Mandarin Oriental, Knightsbridge, London, Europe, England
+Address:   66 Knightsbridge, London SW1X 7LA, UK
+Type:      ROOFTOP
+Place ID:  ChIJG4IcmDkFdkgR3IYfJhJy-SM
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     ME London by Melia
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.507218 lng=-0.127586
+Query:     ME London by Melia, Melia, West End, London, Europe, England
+Address:   London, UK
+Type:      APPROXIMATE
+Place ID:  ChIJdd4hrwug2EcRmSrV3Vo6llI
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     NoMad London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.513507 lng=-0.12208
+Query:     NoMad London, Covent Garden, London, Europe, England
+Address:   28 Bow St, London WC2E 7AW, UK
+Type:      ROOFTOP
+Place ID:  ChIJP2dA6OsFdkgRLhWn8pqJMcA
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     One Aldwych
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.511791 lng=-0.11934
+Query:     One Aldwych, Covent Garden, London, Europe, England
+Address:   1 Aldwych, London WC2B 4BZ, UK
+Type:      ROOFTOP
+Place ID:  ChIJq5XIW8oEdkgRqmg5RAC_ih8
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Raffles at The OWO
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.505137 lng=-0.125668
+Query:     Raffles at The OWO, Raffles, Whitehall, London, Europe, England
+Address:   57 Whitehall, London SW1A 2BX, UK
+Type:      ROOFTOP
+Place ID:  ChIJZfEMTNkFdkgRXHTECATydW8
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Rosewood London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.517572 lng=-0.117838
+Query:     Rosewood London, Rosewood Hotels & Resorts, Covent Garden, London, Europe, England
+Address:   252 High Holborn, London WC1V 7EN, UK
+Type:      ROOFTOP
+Place ID:  ChIJi-8-gTUbdkgRvgRcAHEwuyc
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Shangri-La Hotel, At The Shard
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.50431 lng=-0.086785
+Query:     Shangri-La Hotel, At The Shard, Shangri-La Hotels and Resorts, South Bank, London, Europe, England
+Address:   31 St Thomas St, London SE1 9QU, UK
+Type:      ROOFTOP
+Place ID:  ChIJl5tV7FoDdkgRcHC9YrS_2Dk
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     St. Pancras Renaissance
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.529732 lng=-0.125912
+Query:     St. Pancras Renaissance, Camden Town, London, Europe, England
+Address:   Euston Rd., London NW1 2AR, UK
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJbSikmDsbdkgR-nC2sxkGYpg
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Berkeley
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.501846 lng=-0.156061
+Query:     The Berkeley, Maybourne Hotel Group, Knightsbridge, London, Europe, England
+Address:   The Berkeley, Wilton Pl, London SW1X 7RL, UK
+Type:      ROOFTOP
+Place ID:  ChIJ5YHhqjsFdkgR3-qEY9FMp_M
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Connaught
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.510252 lng=-0.149817
+Query:     The Connaught, Maybourne Hotel Group, Mayfair, London, Europe, England
+Address:   The Connaught, Carlos Pl, London W1K 2AL, UK
+Type:      ROOFTOP
+Place ID:  ChIJiTyvxdcEdkgRIE3fJmxwzVM
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Dorchester
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.507073 lng=-0.152244
+Query:     The Dorchester, Dorchester Collection, Mayfair, London, Europe, England
+Address:   53 Park Ln, London W1K 1QA, UK
+Type:      ROOFTOP
+Place ID:  ChIJiTyvxdcEdkgR53XBqdKYBFE
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Franklin, London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.496033 lng=-0.16861
+Query:     The Franklin, London, Starhotels Collezione, Knightsbridge, London, Europe, England
+Address:   24 Egerton Gardens, London SW3 2DB, UK
+Type:      ROOFTOP
+Place ID:  ChIJvUTFo0EFdkgRBC3UH9t_FYU
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Goring
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.497572 lng=-0.145468
+Query:     The Goring, Belgravia, London, Europe, England
+Address:   15 Beeston Pl, London SW1W 0JW, UK
+Type:      ROOFTOP
+Place ID:  ChIJpyeYGW8FdkgRqfqKh8Yxrs8
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Lanesborough
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.502662 lng=-0.15272
+Query:     The Lanesborough, Oetker Collection, Hyde Park Corner, London, Europe, England
+Address:   Hyde, Park Corner, London SW1X 7TA, UK
+Type:      ROOFTOP
+Place ID:  ChIJ2_19mdYEdkgRoZ6Ys0Mcj7I
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Langham London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.517801 lng=-0.143993
+Query:     The Langham London, Langham Hotels & Resorts, West End, London, Europe, England
+Address:   The Langham, 1C Portland Pl, Regent St., London W1B 1JA, UK
+Type:      ROOFTOP
+Place ID:  ChIJj375B9UadkgRkmFrWaFBXww
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The London Edition
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.516768 lng=-0.136256
+Query:     The London Edition, Marriott - Edition Hotels, Covent Garden, London, Europe, England
+Address:   10 Berners St, London W1T 3NP, UK
+Type:      ROOFTOP
+Place ID:  ChIJpeLYbSsbdkgRONduZ20Z3sQ
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Peninsula London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.501835 lng=-0.151712
+Query:     The Peninsula London, The Peninsula Hotels, Belgravia, London, Europe, England
+Address:   The Peninsula, 1 Grosvenor Pl, London SW1X 7HJ, UK
+Type:      ROOFTOP
+Place ID:  ChIJWYHD7s4FdkgRUFT2qTJ19-w
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     The Ritz London
+Country:   England
+City:      London
+Current:   lat=null lng=null
+Proposed:  lat=51.507078 lng=-0.141627
+Query:     The Ritz London, Piccadilly, London, Europe, England
+Address:   150 Piccadilly, London W1J 9BR, UK
+Type:      ROOFTOP
+Place ID:  ChIJV8gP0ykFdkgRFEAEHoE1YVk
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Grantley Hall
+Country:   England
+City:      Rippon
+Current:   lat=null lng=null
+Proposed:  lat=54.119016 lng=-1.620272
+Query:     Grantley Hall, Rippon, Yorkshire, Europe, England
+Address:   Grantley Hall, Ripon HG4 3ET, UK
+Type:      ROOFTOP
+Place ID:  ChIJE8rZQFaqfkgRdT-DngxrqP4
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Rusacks St Andrews — Scotland
+Country:   England
+City:      St. Andrews
+Current:   lat=null lng=null
+Proposed:  lat=56.34242 lng=-2.804257
+Query:     Rusacks St Andrews — Scotland, St. Andrews, Europe, England
+Address:   Pilmour Links, 16 Pilmour Links, St Andrews KY16 9JQ, UK
+Type:      ROOFTOP
+Place ID:  ChIJY_BLfYRXhkgRjFz3QNDuo6A
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Galapagos Safari Camp
+Country:   Equador
+City:      Galapagos
+Current:   lat=null lng=null
+Proposed:  lat=-0.618201 lng=-90.425784
+Query:     Galapagos Safari Camp, Galapagos, South America, Equador
+Address:   Finca Palo Santo, Barrio Salasaca, Parroquia Santa Rosa Santa Cruz Island, 200350, Ecuador
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJf-R1FjdYqpoRU7PvD1BUYp4
+FLAG:      city_mismatch, country_mismatch
+--------------------------------------------------
+Hotel:     Mashpi Lodge
+Country:   Equador
+City:      Mashpi
+Current:   lat=null lng=null
+Proposed:  lat=0.165986 lng=-78.878285
+Query:     Mashpi Lodge, Mashpi, South America, Equador
+Address:   Reserva Privada Mashpi, 150150 Mashpi, Ecuador
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJd7Id9nyHKo4RN_3HkslOUNM
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Casa Gangotena
+Country:   Equador
+City:      Quito
+Current:   lat=null lng=null
+Proposed:  lat=-0.22119 lng=-78.515401
+Query:     Casa Gangotena, Quito, South America, Equador
+Address:   Bolívar, Cuenca, OE6-41, 170401 Quito, Ecuador
+Type:      ROOFTOP
+Place ID:  ChIJQbEdyoCZ1ZERFQWQltNsXVY
+FLAG:      country_mismatch
+--------------------------------------------------
+Hotel:     Kokomo Private Island Fiji
+Country:   Fiji
+City:      Kokomo Island
+Current:   lat=null lng=null
+Proposed:  lat=-18.804533 lng=178.529719
+Query:     Kokomo Private Island Fiji, Kokomo Island, Kokomo Island, South Pacific, Fiji
+Address:   Yaukuve Levu Island, Fiji
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJx8XeMiaeG24R7F5u7MdCt-Q
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     COMO Laucala Island
+Country:   Fiji
+City:      Laucala Island
+Current:   lat=null lng=null
+Proposed:  lat=-16.743591 lng=-179.682717
+Query:     COMO Laucala Island, COMO Hotels, Laucala Island, Laucala Island, South Pacific, Fiji
+Address:   Laucala Island, Fiji
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJj_BeK0Bt4HERyrDoeWbd-IU
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hôtel du Cap Eden-Roc
+Country:   France
+City:      Antibes
+Current:   lat=null lng=null
+Proposed:  lat=43.548346 lng=7.121603
+Query:     Hôtel du Cap Eden-Roc, Oetker Collection, Antibes, Cote d'Azur, Europe, France
+Address:   167-165 Bd J. F. Kennedy, 06160 Antibes, France
+Type:      ROOFTOP
+Place ID:  ChIJgUQSbb1_zhIRaXQjX38vUD8
+--------------------------------------------------
+Hotel:     La Réserve de Beaulieu
+Country:   France
+City:      Beaulieu-Sur-Mer
+Current:   lat=null lng=null
+Proposed:  lat=43.705941 lng=7.335042
+Query:     La Réserve de Beaulieu, La Réserve, Beaulieu-Sur-Mer, Cote d'Azur, Europe, France
+Address:   5 Bd du Maréchal Leclerc, 06310 Beaulieu-sur-Mer, France
+Type:      ROOFTOP
+Place ID:  ChIJf1dLd0zbzRIRtOGrBCokkKU
+--------------------------------------------------
+Hotel:     Hotel du Palais
+Country:   France
+City:      Biarritz
+Current:   lat=null lng=null
+Proposed:  lat=43.486796 lng=-1.556205
+Query:     Hotel du Palais, Hyatt, Biarritz, Basque Country, Europe, France
+Address:   1 Av. de l'Impératrice, 64200 Biarritz, France
+Type:      ROOFTOP
+Place ID:  ChIJeTDzZdlqUQ0RqtrDVkfhYw0
+--------------------------------------------------
+Hotel:     Fleur de Loire, Blois, Loire Valley, France
+Country:   France
+City:      Blois
+Current:   lat=null lng=null
+Proposed:  lat=47.582336 lng=1.337854
+Query:     Fleur de Loire, Blois, Loire Valley, France, Blois, Loire Valley, Europe, France
+Address:   26 Quai Villebois Mareuil, 41000 Blois, France
+Type:      ROOFTOP
+Place ID:  ChIJk6YyDvOp5EcRD6-Y9TkhyYA
+--------------------------------------------------
+Hotel:     Les Sources de Caudalie
+Country:   France
+City:      Bordeaux
+Current:   lat=null lng=null
+Proposed:  lat=44.730984 lng=-0.557353
+Query:     Les Sources de Caudalie, Les Sources Hotels, Bordeaux, Europe, France
+Address:   Smith Haut-Lafitte, 33650 Martillac, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ82kXZakhVQ0RqBJyHiJQh8g
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hôtel Barrière Le Majestic Cannes
+Country:   France
+City:      Cannes
+Current:   lat=null lng=null
+Proposed:  lat=43.550882 lng=7.01976
+Query:     Hôtel Barrière Le Majestic Cannes, Hotels Barriere, Cannes, Cote d'Azur, Europe, France
+Address:   10 Bd de la Croisette, 06400 Cannes, France
+Type:      ROOFTOP
+Place ID:  ChIJ76FknZGBzhIRL394VZWcbbo
+--------------------------------------------------
+Hotel:     Grand Hôtel du Cap Ferrat
+Country:   France
+City:      Cap Ferrat
+Current:   lat=null lng=null
+Proposed:  lat=43.676994 lng=7.331497
+Query:     Grand Hôtel du Cap Ferrat, Four Seasons, Cap Ferrat, Cote d'Azur, Europe, France
+Address:   71 Bd du Général de Gaulle, 06230 Saint-Jean-Cap-Ferrat, France
+Type:      ROOFTOP
+Place ID:  ChIJr5bDI3PbzRIRQ8hg-UCx31A
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hameau Albert 1er
+Country:   France
+City:      Chamonix
+Current:   lat=null lng=null
+Proposed:  lat=45.9245 lng=6.874586
+Query:     Hameau Albert 1er, Chamonix, Rhone / Alps, Europe, France
+Address:   38 Rte du Bouchet, 74400 Chamonix-Mont-Blanc, France
+Type:      ROOFTOP
+Place ID:  ChIJq2qHL3hOiUcRRdYJstiyUXo
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Royal Champagne Hotel & Spa
+Country:   France
+City:      Champillon
+Current:   lat=null lng=null
+Proposed:  lat=49.091229 lng=3.976683
+Query:     Royal Champagne Hotel & Spa, Champillon, Europe, France
+Address:   Hameau de Bellevue, 9 Rue de la République, 51160 Champillon, France
+Type:      ROOFTOP
+Place ID:  ChIJkehuJt5s6UcRiQ1ZfLtPvx8
+--------------------------------------------------
+Hotel:     Hôtel Chais Monnet
+Country:   France
+City:      Cognac
+Current:   lat=null lng=null
+Proposed:  lat=45.690785 lng=-0.333756
+Query:     Hôtel Chais Monnet, Cognac, Europe, France
+Address:   50 Av. Paul Firino Martell, 16100 Cognac, France
+Type:      ROOFTOP
+Place ID:  ChIJP15SH2zzAEgRHiR0lu1bF8o
+--------------------------------------------------
+Hotel:     Airelles Courchevel
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.41008 lng=6.634122
+Query:     Airelles Courchevel, Airelles, Courchevel 1850, Savoie, Europe, France
+Address:   Rue du Jardin Alpin, 73120 Courchevel, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJE91Z1bTEC0gRt1-4UvziYVc
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Aman Le Melezin
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.412912 lng=6.6361
+Query:     Aman Le Melezin, Aman Resorts, Courchevel 1850, Savoie, Europe, France
+Address:   310 Rue de Bellecôte, 73120 Courchevel, France
+Type:      ROOFTOP
+Place ID:  ChIJtwejrK54iUcRXgM489YNlRQ
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Cheval Blanc Courchevel
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.409768 lng=6.633611
+Query:     Cheval Blanc Courchevel, Cheval Blanc, Courchevel 1850, Savoie, Europe, France
+Address:   Le 1947 à Cheval Blanc Le, Rue du Jardin Alpin, 73120 Courchevel, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJebDjJst5iUcRKYmYbva4sgI
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hôtel Barrière Les Neiges
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.412326 lng=6.636732
+Query:     Hôtel Barrière Les Neiges, Hotels Barriere, Courchevel 1850, Savoie, Europe, France
+Address:   422 Rue de Bellecôte, 73120 Courchevel, France
+Type:      ROOFTOP
+Place ID:  ChIJDXJwIqx4iUcRvjAqhnL9EA8
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hotel Le Lana
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.414158 lng=6.635108
+Query:     Hotel Le Lana, Courchevel 1850, Savoie, Europe, France
+Address:   Rue de Bellecôte, 73120 Courchevel, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJ5-8x-6x4iUcRkefkZ5CtzL0
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hotel le Saint Roch
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.413938 lng=6.635454
+Query:     Hotel le Saint Roch, Courchevel 1850, Savoie, Europe, France
+Address:   Piste de bellecote, 73120 Courchevel, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJW3iBGhuCiUcR8ww652PZAFA
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     L'Apogee
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.411942 lng=6.633112
+Query:     L'Apogee, Oetker Collection, Courchevel 1850, Savoie, Europe, France
+Address:   5 Rue Emile Allais, 73120 Courchevel, France
+Type:      ROOFTOP
+Place ID:  ChIJ2dqBDKt4iUcRnlaYTHZ3Vj4
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     La Sivoliere
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.416679 lng=6.627981
+Query:     La Sivoliere, Courchevel 1850, Savoie, Europe, France
+Address:   Rue des Chenus, 73120 Courchevel, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJueyQRBl_iUcRYQc4zrJyhmw
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Le K2 Palace
+Country:   France
+City:      Courchevel 1850
+Current:   lat=null lng=null
+Proposed:  lat=45.412161 lng=6.638823
+Query:     Le K2 Palace, Courchevel 1850, Savoie, Europe, France
+Address:   238 Rue des Clarines, 73120 Courchevel, France
+Type:      ROOFTOP
+Place ID:  ChIJRS6R6q54iUcRfSPTq70HDSQ
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Hôtel Barrière Le Royal Deauville
+Country:   France
+City:      Deauville
+Current:   lat=null lng=null
+Proposed:  lat=49.35856 lng=0.067552
+Query:     Hôtel Barrière Le Royal Deauville, Hotels Barriere, Deauville, Europe, France
+Address:   Bd Eugène Cornuche, 14800 Deauville, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJi7_0irbU4UcRzZfilOc2ndI
+--------------------------------------------------
+Hotel:     Les Pres D'Eugenie
+Country:   France
+City:      Eurgenie les Bains
+Current:   lat=null lng=null
+Proposed:  lat=43.695706 lng=-0.37971
+Query:     Les Pres D'Eugenie, Eurgenie les Bains, Landes, Europe, France
+Address:   Place de l'Impératrice, 334 Rue René Vielle Vieille, 40320 Eugénie-les-Bains, France
+Type:      ROOFTOP
+Place ID:  ChIJD6BkQV5xVg0RSZsafdGLI6s
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Château Eza
+Country:   France
+City:      Eze
+Current:   lat=null lng=null
+Proposed:  lat=43.72769 lng=7.361159
+Query:     Château Eza, Eze, Cote d'Azur, Europe, France
+Address:   Rue de la Pise, 06360 Èze, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJMU_UF2bDzRIR2OeasRNgJbk
+--------------------------------------------------
+Hotel:     La Chèvre d’Or
+Country:   France
+City:      Èze
+Current:   lat=null lng=null
+Proposed:  lat=43.727315 lng=7.361861
+Query:     La Chèvre d’Or, Èze, Cote d'Azur, Europe, France
+Address:   Rue du Barri, 06360 Èze, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJkzb602fDzRIRnT5iz2d2u4w
+--------------------------------------------------
+Hotel:     Cap Estel
+Country:   France
+City:      Èze Bord-De-Mer
+Current:   lat=null lng=null
+Proposed:  lat=43.719964 lng=7.373631
+Query:     Cap Estel, Èze Bord-De-Mer, Cote d'Azur, Europe, France
+Address:   Cap Estel, 06360 Èze, France
+Type:      APPROXIMATE
+Place ID:  ChIJJcKurjjDzRIRc7sdFKIDGs4
+FLAG:      city_mismatch
+--------------------------------------------------
+Hotel:     Airelles Gordes
+Country:   France
+City:      Gordes
+Current:   lat=null lng=null
+Proposed:  lat=43.911594 lng=5.198692
+Query:     Airelles Gordes, Airelles, Gordes, Luberon, Europe, France
+Address:   61 Rue de la Combe, 84220 Gordes, France
+Type:      ROOFTOP
+Place ID:  ChIJ2UuLUtsNyhIRyWiV_tmXcL4
+--------------------------------------------------
+Hotel:     Hôtel Belles Rives
+Country:   France
+City:      Juan-les-Pins
+Current:   lat=null lng=null
+Proposed:  lat=43.56919 lng=7.112385
+Query:     Hôtel Belles Rives, Juan-les-Pins, Cote d'Azur, Europe, France
+Address:   Juan-les-Pins, 06160 Antibes, France
+Type:      APPROXIMATE
+Place ID:  ChIJs9R4Bpp_zhIRHU6YFpi5C0k
+--------------------------------------------------
+Hotel:     Lily of the Valley
+Country:   France
+City:      La Croix-Valmer
+Current:   lat=null lng=null
+Proposed:  lat=43.188071 lng=6.594716
+Query:     Lily of the Valley, La Croix-Valmer, Cote d'Azur, Europe, France
+Address:   Boulevard Abel Faivre, Colline Saint Michel, Quartier de Gigaro, 83420 La Croix-Valmer, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJyUmrHJrFzhIRUVDFvHAr35s
+--------------------------------------------------
+Hotel:     Domaine de Manville
+Country:   France
+City:      Le Baux de Provence
+Current:   lat=null lng=null
+Proposed:  lat=43.732725 lng=4.801684
+Query:     Domaine de Manville, Le Baux de Provence, Provence, Europe, France
+Address:   Route de la terre des Baux, 13520 Les Baux-de-Provence, France
+Type:      GEOMETRIC_CENTER
+Place ID:  ChIJkRmpEHzhtRIRic-lU-mgu40
+FLAG:      city_mismatch

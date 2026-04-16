@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
-import { buildBookingLink, type BookingSearchParams } from "@/lib/hotels/buildBookingLink";
+import {
+  buildBookingLink,
+  type BookingSearchParams,
+} from "@/lib/hotels/buildBookingLink";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import {
   normalizeParam,
@@ -18,10 +23,115 @@ import {
   addHotelToTripBrowser,
   createTripBrowser,
   fetchTripChoicesBrowser,
+  getMemberActionAccessBrowser,
 } from "@/lib/members/db";
 import type { HotelRecord } from "@/lib/directus";
+import {
+  getMemberActionButtonClass,
+  getMemberActionLoginMessage,
+} from "@/lib/members/memberActionUi";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
+
+type Options = {
+  country: string[];
+  city: string[];
+  region: string[];
+  local_area: string[];
+  affiliation: string[];
+};
+
+type TaxMaps = {
+  activities: Map<string, string>;
+  awards: Map<string, string>;
+  settings: Map<string, string>;
+  styles: Map<string, string>;
+};
+
+type ViewMode = "details" | "map" | "featured";
+
+const CURRENCY_STORAGE_KEY = "oltra_currency";
+const MAP_FALLBACK_CENTER: [number, number] = [103.8198, 1.3521];
+
+const PLACEHOLDERS = [
+  "/images/hotel-placeholder-1.jpg",
+  "/images/hotel-placeholder-2.jpg",
+  "/images/hotel-placeholder-3.jpg",
+  "/images/hotel-placeholder-4.jpg",
+];
+
+const FEATURED_AWARDS = [
+  {
+    code: "forbes5",
+    id: "cb4f80af-963d-4f09-a8aa-213718e399fb",
+    label: "Forbes 5 Star (2026)",
+  },
+  {
+    code: "michelin3keys",
+    id: "fd18110a-9764-4c20-90f4-fd149d890ead",
+    label: "Michelin 3 Keys (2026)",
+  },
+  {
+    code: "best50",
+    id: "74a666bf-f7fb-4fff-b550-52eccfa98c4b",
+    label: "The World's 50 Best (2025)",
+  },
+  {
+    code: "cn",
+    id: "902c14cc-50a7-4be9-a4ee-b582afb9112e",
+    label: "Condé Nast Gold List (2025)",
+  },
+  {
+    code: "tl100",
+    id: "f8ac8e9c-397e-4e44-ba71-b1f9224e7c3f",
+    label: "T+L 100 (2025)",
+  },
+  {
+    code: "telegraph",
+    id: "d292cfb3-a88f-44dd-b052-2980cfd3bac8",
+    label: "The Telegraph Top 50 (2024)",
+  },
+  {
+    code: "aaa",
+    id: "32f0e878-e188-4ed1-98f8-6b22914f8f22",
+    label: "AAA Five Diamond Award (2025)",
+  },
+] as const;
+
+const MANDARIN_ORIENTAL_BANGKOK_IMAGES = [
+  "/images/hotels/mobangkok/mobk1.webp",
+  "/images/hotels/mobangkok/mobk2.webp",
+  "/images/hotels/mobangkok/mobk3.webp",
+  "/images/hotels/mobangkok/mobk4.webp",
+  "/images/hotels/mobangkok/mobk5.webp",
+  "/images/hotels/mobangkok/mobk6.webp",
+  "/images/hotels/mobangkok/mobk7.webp",
+  "/images/hotels/mobangkok/mobk8.webp",
+];
+
+function ChevronDown({
+  className = "",
+}: {
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className={className}
+      style={{ width: 12, height: 12, display: "block" }}
+    >
+      <path
+        d="M5.5 7.5 10 12l4.5-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function serializeList(values: string[]): string {
   return values.join(",");
@@ -59,7 +169,26 @@ function buildHrefWithParam(
     }
   }
 
+  if (!params.get("search_submitted")) {
+    params.set("search_submitted", "1");
+  }
+
   return params.toString() ? `/hotels?${params.toString()}` : "/hotels";
+}
+
+function removeSingleValueHref(
+  current: PageSearchParams,
+  key: string,
+  valueToRemove: string
+): string {
+  const currentValue = normalizeParam(current[key]);
+  const nextValues = currentValue
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .filter((x) => x !== valueToRemove);
+
+  return buildHrefWithParam(current, key, nextValues, { filters_open: "1" });
 }
 
 function clampText(s: string | undefined | null, max = 160): string {
@@ -69,29 +198,11 @@ function clampText(s: string | undefined | null, max = 160): string {
   return t.slice(0, max).replace(/\s+\S*$/, "") + "…";
 }
 
-function TogglePill(props: { label: string; active: boolean; href: string }) {
-  return (
-    <Link
-      href={props.href}
-      className="oltra-button-secondary"
-      style={
-        props.active
-          ? {
-              background: "rgba(255,255,255,0.22)",
-              borderColor: "rgba(255,255,255,0.30)",
-              color: "rgba(255,255,255,0.98)",
-            }
-          : {
-              background: "rgba(255,255,255,0.06)",
-              borderColor: "rgba(255,255,255,0.12)",
-              color: "rgba(255,255,255,0.76)",
-            }
-      }
-      prefetch={false}
-    >
-      {props.label}
-    </Link>
-  );
+function getCoord(hotel: HotelRecord, key: "lat" | "lng"): number | null {
+  const raw = (hotel as Record<string, unknown>)[key];
+  if (raw == null || raw === "") return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function RelDropdown(props: {
@@ -100,61 +211,106 @@ function RelDropdown(props: {
   selectedIds: string[];
   map: Map<string, string>;
   searchParams: PageSearchParams;
-  defaultOpen?: boolean;
+  open: boolean;
+  onToggle: () => void;
 }) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const selected = useMemo(() => new Set(props.selectedIds), [props.selectedIds]);
 
-  const options = useMemo(() => {
-    const out: Array<{ id: string; label: string }> = [];
-    for (const [id, label] of props.map.entries()) {
-      out.push({ id, label });
-      if (out.length >= 60) break;
+  useEffect(() => {
+    function handlePointerOver(event: PointerEvent) {
+      if (!props.open) return;
+
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (rootRef.current?.contains(target)) return;
+
+      const hoveredInteractive = target.closest(
+        'input, button, select, textarea, a, [role="button"], [data-oltra-control="true"]'
+      );
+
+      if (hoveredInteractive) props.onToggle();
     }
+
+    document.addEventListener("pointerover", handlePointerOver);
+    return () => {
+      document.removeEventListener("pointerover", handlePointerOver);
+    };
+  }, [props.open, props.onToggle]);
+
+  const options = useMemo(() => {
+    const out: Array<{ id: string; label: string; active: boolean }> = [];
+
+    for (const [id, label] of props.map.entries()) {
+      out.push({
+        id,
+        label,
+        active: selected.has(id),
+      });
+    }
+
     out.sort((a, b) => {
-      const aSelected = selected.has(a.id);
-      const bSelected = selected.has(b.id);
-
-      if (aSelected !== bSelected) {
-        return aSelected ? -1 : 1;
-      }
-
+      if (a.active !== b.active) return a.active ? -1 : 1;
       return a.label.localeCompare(b.label);
     });
-  return out;
+
+    return out;
   }, [props.map, selected]);
 
   return (
-    <details
-      className="border-t border-white/10 py-2"
-      open={props.defaultOpen ?? false}
-    >
-      <summary className="ml-[14px] cursor-pointer select-none text-[12px] uppercase tracking-[0.14em] text-white/70">
-        {props.title}
-      </summary>
+    <div ref={rootRef} className="border-t border-white/10 py-2">
+      <button
+        type="button"
+        onClick={props.onToggle}
+        className="flex w-full items-center justify-between px-[14px] text-left"
+      >
+        <span className="text-[12px] uppercase tracking-[0.14em] text-white/70">
+          {props.title}
+        </span>
+        <span
+          className="flex h-4 w-4 items-center justify-center text-white/55 transition-transform duration-150"
+          style={{ transform: props.open ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+          <ChevronDown />
+        </span>
+      </button>
 
-      <div className="mt-1.5 flex flex-wrap gap-2">
-        {options.map((opt) => {
-          const active = selected.has(opt.id);
-          const next = active
-            ? Array.from(selected).filter((x) => x !== opt.id)
-            : Array.from(new Set([...selected, opt.id]));
+      {props.open ? (
+        <div className="mt-2">
+          <div className="oltra-popup-panel oltra-scrollbar !relative !left-auto !right-auto !top-auto z-0 !p-2">
+            <div className="oltra-dropdown-list max-h-[220px]">
+              {options.map((opt) => {
+                const next = opt.active
+                  ? Array.from(selected).filter((x) => x !== opt.id)
+                  : Array.from(new Set([...selected, opt.id]));
 
-          return (
-            <TogglePill
-              key={`${props.paramKey}-${opt.id}`}
-              label={opt.label}
-              active={active}
-              href={buildHrefWithParam(
-                props.searchParams,
-                props.paramKey,
-                next,
-                { filters_open: "1" }
-              )}
-            />
-          );
-        })}
-      </div>
-    </details>
+                return (
+                  <Link
+                    key={`${props.paramKey}-${opt.id}`}
+                    href={buildHrefWithParam(
+                      props.searchParams,
+                      props.paramKey,
+                      next,
+                      { filters_open: "1" }
+                    )}
+                    className={[
+                      "oltra-dropdown-item flex items-center gap-2",
+                      opt.active ? "bg-white/10 text-white" : "",
+                    ].join(" ")}
+                    prefetch={false}
+                  >
+                    <span className="w-4 shrink-0 text-white/72">
+                      {opt.active ? "✓" : ""}
+                    </span>
+                    <span>{opt.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -184,34 +340,8 @@ function HiddenPreserveParams(props: {
   );
 }
 
-type Options = {
-  country: string[];
-  city: string[];
-  region: string[];
-  local_area: string[];
-  affiliation: string[];
-};
-
-type TaxMaps = {
-  activities: Map<string, string>;
-  awards: Map<string, string>;
-  settings: Map<string, string>;
-  styles: Map<string, string>;
-};
-
-const PLACEHOLDERS = [
-  "/images/hotel-placeholder-1.jpg",
-  "/images/hotel-placeholder-2.jpg",
-  "/images/hotel-placeholder-3.jpg",
-  "/images/hotel-placeholder-4.jpg",
-];
-
 function locationLine(h: HotelRecord): string {
   return [h.local_area, h.city, h.region, h.country].filter(Boolean).join(" · ");
-}
-
-function distPlaceholder(h: HotelRecord): string {
-  return h.city ? `Near ${h.city} centre` : "Central location";
 }
 
 function relationIds(items: unknown[] | null | undefined, key: string): string[] {
@@ -238,6 +368,102 @@ function relationLabels(
     .filter(Boolean);
 }
 
+function getFeaturedAwardsForHotel(hotel: HotelRecord) {
+  const hotelAwardIds = new Set(relationIds(hotel.awards, "awards_id"));
+  return FEATURED_AWARDS.filter((award) => hotelAwardIds.has(award.id));
+}
+
+function getTotalPoints(hotel: HotelRecord): number {
+  const extPoints = Number(hotel.ext_points ?? 0);
+  const editorRank = Number(hotel.editor_rank_13 ?? 0);
+
+  const safeExtPoints = Number.isFinite(extPoints) ? extPoints : 0;
+  const safeEditorRank = Number.isFinite(editorRank) ? editorRank : 0;
+
+  return safeExtPoints + safeEditorRank * 3;
+}
+
+function getFeaturedAwardsFilterMap(): Map<string, string> {
+  return new Map(FEATURED_AWARDS.map((award) => [award.id, award.label]));
+}
+
+function getAwardLabelById(id: string, map: Map<string, string>): string {
+  return map.get(id) ?? id;
+}
+
+function getPriceSummary(searchParams: PageSearchParams, currency: string): string[] {
+  const min = normalizeParam(searchParams.min_price);
+  const max = normalizeParam(searchParams.max_price);
+  if (!min && !max) return [];
+  if (min && max) return [`Price / total stay: ${min}–${max} ${currency}`];
+  if (min) return [`Price / total stay: from ${min} ${currency}`];
+  return [`Price / total stay: up to ${max} ${currency}`];
+}
+
+function getHotelImageSet(hotel: HotelRecord): string[] {
+  const name = (hotel.hotel_name ?? "").trim().toLowerCase();
+
+  if (name === "mandarin oriental bangkok") {
+    return MANDARIN_ORIENTAL_BANGKOK_IMAGES;
+  }
+
+  return PLACEHOLDERS;
+}
+
+function formHasMeaningfulSearchInput(form: HTMLFormElement): boolean {
+  const data = new FormData(form);
+
+  const keys = [
+    "q",
+    "city",
+    "country",
+    "region",
+    "local_area",
+    "affiliation",
+    "activities",
+    "awards",
+    "settings",
+    "styles",
+  ];
+
+  return keys.some((key) => {
+    const value = data.get(key);
+    return typeof value === "string" && value.trim() !== "";
+  });
+}
+
+function setParamOrDelete(params: URLSearchParams, key: string, value: string) {
+  if (value.trim()) params.set(key, value);
+  else params.delete(key);
+}
+
+function accoladeTier(hotel: HotelRecord): "gold" | "silver" | null {
+  const totalPoints = getTotalPoints(hotel);
+  if (totalPoints > 25) return "gold";
+  if (totalPoints >= 10) return "silver";
+  return null;
+}
+
+function AccoladeBadge({ hotel }: { hotel: HotelRecord }) {
+  const tier = accoladeTier(hotel);
+  if (!tier) return null;
+
+  const totalPoints = getTotalPoints(hotel);
+
+  return (
+    <div
+      className={[
+        "oltra-status-badge",
+        tier === "gold" ? "oltra-status-badge--gold" : "oltra-status-badge--silver",
+      ].join(" ")}
+    >
+      {tier === "gold"
+        ? `Top Accolades ${totalPoints}`
+        : `Highly Accredited ${totalPoints}`}
+    </div>
+  );
+}
+
 export default function HotelsView(props: {
   hotels: HotelRecord[];
   options: Options;
@@ -256,61 +482,79 @@ export default function HotelsView(props: {
     settings: string[];
     styles: string[];
     filters_open: string;
+    search_submitted: string;
   };
 }) {
   const { hotels, tax, searchParams, selected } = props;
 
+  const hasMeaningfulFilters =
+    selected.search_submitted === "1" &&
+    Boolean(
+      selected.q ||
+        selected.country.length ||
+        selected.city.length ||
+        selected.region.length ||
+        selected.local_area.length ||
+        selected.affiliation.length ||
+        selected.activities.length ||
+        selected.awards.length ||
+        selected.settings.length ||
+        selected.styles.length
+    );
+
+  const hasPendingSearchInput = Boolean(
+    normalizeParam(searchParams.q) ||
+      normalizeParam(searchParams.city) ||
+      normalizeParam(searchParams.country) ||
+      normalizeParam(searchParams.region) ||
+      normalizeParam(searchParams.local_area) ||
+      normalizeParam(searchParams.affiliation) ||
+      normalizeParam(searchParams.activities) ||
+      normalizeParam(searchParams.awards) ||
+      normalizeParam(searchParams.settings) ||
+      normalizeParam(searchParams.styles)
+  );
+
+  const hasCountrySelected = selected.country.length > 0;
+  const shouldShowResults = hasMeaningfulFilters && (hasCountrySelected || hotels.length < 50);
+  const visibleHotels = shouldShowResults ? hotels : [];
+  const shouldShowFeatured = !shouldShowResults;
+  const showNarrowFurtherMessage = hasMeaningfulFilters && !hasCountrySelected && hotels.length >= 50;
+
   const router = useRouter();
   const pathname = usePathname();
+  const tripPickerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const selectionFromMapRef = useRef(false);
+
+  const featuredAwardsFilterMap = useMemo(() => getFeaturedAwardsFilterMap(), []);
 
   const bookingSearchParams = useMemo<BookingSearchParams>(
-  () => ({
-    from: normalizeParam(searchParams.from) || null,
-    to: normalizeParam(searchParams.to) || null,
-    adults: normalizeParam(searchParams.adults) || null,
-    kids: normalizeParam(searchParams.kids) || null,
-    bedrooms: normalizeParam(searchParams.bedrooms) || null,
-  }),
-  [searchParams]
+    () => ({
+      from: normalizeParam(searchParams.from) || null,
+      to: normalizeParam(searchParams.to) || null,
+      adults: normalizeParam(searchParams.adults) || null,
+      kids: normalizeParam(searchParams.kids) || null,
+      bedrooms: normalizeParam(searchParams.bedrooms) || null,
+    }),
+    [searchParams]
   );
 
-  const [filtersOpen, setFiltersOpen] = useState(
-    selected.filters_open === "1"
-  );
-
-  useEffect(() => {
-    setFiltersOpen(selected.filters_open === "1");
-  }, [selected.filters_open]);
-
-  function updateFiltersOpen(nextOpen: boolean) {
-    setFiltersOpen(nextOpen);
-
-    const params = new URLSearchParams();
-
-    for (const [k, v] of Object.entries(searchParams)) {
-      if (v === undefined) continue;
-
-      if (Array.isArray(v)) {
-        for (const vv of v) params.append(k, vv);
-      } else {
-        params.set(k, String(v));
-      }
-    }
-
-    params.set("filters_open", nextOpen ? "1" : "0");
-
-    const href = params.toString()
-      ? `${pathname}?${params.toString()}`
-      : pathname;
-
-    router.replace(href, { scroll: false });
-  }
-
+  const [filtersOpen, setFiltersOpen] = useState(selected.filters_open === "1");
+  const [priceOpen, setPriceOpen] = useState(false);
+  const [activitiesOpen, setActivitiesOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [awardsOpen, setAwardsOpen] = useState(false);
+  const [activeCurrency, setActiveCurrency] = useState("EUR");
   const [memberActionMessage, setMemberActionMessage] = useState("");
   const [memberActionError, setMemberActionError] = useState("");
   const [memberActionLoading, setMemberActionLoading] = useState<
     "trip" | "favorite" | null
   >(null);
+  const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
 
   const [tripChoices, setTripChoices] = useState<
     Array<{ id: string; name: string; label: string }>
@@ -326,6 +570,30 @@ export default function HotelsView(props: {
     readGuestSelection(searchParams)
   );
 
+  const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("featured");
+
+  const [hasPendingSearchInputLocal, setHasPendingSearchInputLocal] = useState(
+    hasPendingSearchInput
+  );
+  const [isSubmittingSearch, setIsSubmittingSearch] = useState(false);
+  const [simpleSearchSubmitted, setSimpleSearchSubmitted] = useState("0");
+
+  const compactTopMode = shouldShowFeatured;
+  const effectiveView: ViewMode = shouldShowFeatured ? "featured" : viewMode;
+
+  useEffect(() => {
+    setIsSubmittingSearch(false);
+    setHasPendingSearchInputLocal(hasPendingSearchInput);
+    setSimpleSearchSubmitted("0");
+  }, [searchParams, hasPendingSearchInput]);
+
+  useEffect(() => {
+    setFiltersOpen(selected.filters_open === "1");
+  }, [selected.filters_open]);
+
   useEffect(() => {
     setFromValue(normalizeParam(searchParams.from));
     setToValue(normalizeParam(searchParams.to));
@@ -333,8 +601,44 @@ export default function HotelsView(props: {
   }, [searchParams]);
 
   useEffect(() => {
-    function handleClickOutside() {
-      setShowTripPicker(false);
+    function readCurrency() {
+      if (typeof window === "undefined") return;
+      const stored = window.localStorage.getItem(CURRENCY_STORAGE_KEY);
+      setActiveCurrency(stored || "EUR");
+    }
+
+    function handleCurrencyChange(event: Event) {
+      const customEvent = event as CustomEvent<{ currency?: string }>;
+      const nextCurrency = customEvent.detail?.currency;
+      if (nextCurrency) setActiveCurrency(nextCurrency);
+      else readCurrency();
+    }
+
+    readCurrency();
+
+    window.addEventListener(
+      "oltra:currency-change",
+      handleCurrencyChange as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        "oltra:currency-change",
+        handleCurrencyChange as EventListener
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!tripPickerRef.current) {
+        setShowTripPicker(false);
+        return;
+      }
+
+      if (!tripPickerRef.current.contains(event.target as Node)) {
+        setShowTripPicker(false);
+      }
     }
 
     if (showTripPicker) {
@@ -345,6 +649,27 @@ export default function HotelsView(props: {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showTripPicker]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadMemberAccess() {
+      try {
+        const result = await getMemberActionAccessBrowser();
+        if (!active) return;
+        setIsMemberLoggedIn(result.isLoggedIn);
+      } catch {
+        if (!active) return;
+        setIsMemberLoggedIn(false);
+      }
+    }
+
+    void loadMemberAccess();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -363,38 +688,274 @@ export default function HotelsView(props: {
       }
     }
 
-    loadTripChoices();
+    void loadTripChoices();
 
     return () => {
       active = false;
     };
   }, []);
 
-  const [selectedHotelId, setSelectedHotelId] = useState<string | null>(
-    hotels.length > 0 ? String(hotels[0].id) : null
-  );
-
   useEffect(() => {
-    if (hotels.length === 0) {
+    if (visibleHotels.length === 0) {
       setSelectedHotelId(null);
       return;
     }
 
     const stillExists = selectedHotelId
-      ? hotels.some((h) => String(h.id) === selectedHotelId)
+      ? visibleHotels.some((h) => String(h.id) === selectedHotelId)
       : false;
 
     if (!stillExists) {
-      setSelectedHotelId(String(hotels[0].id));
+      setSelectedHotelId(String(visibleHotels[0].id));
     }
-  }, [hotels, selectedHotelId]);
+  }, [visibleHotels, selectedHotelId]);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+    setLightboxOpen(false);
+  }, [selectedHotelId]);
+
+  useEffect(() => {
+    if (!shouldShowFeatured && viewMode === "featured") {
+      setViewMode("details");
+    }
+  }, [shouldShowFeatured, viewMode]);
+
+  useEffect(() => {
+    if (!memberActionMessage && !memberActionError) return;
+
+    const timer = window.setTimeout(() => {
+      setMemberActionMessage("");
+      setMemberActionError("");
+    }, 3200);
+
+    return () => window.clearTimeout(timer);
+  }, [memberActionMessage, memberActionError]);
 
   const selectedHotel = useMemo(() => {
-    if (!selectedHotelId) return hotels[0] ?? null;
-    return hotels.find((h) => String(h.id) === selectedHotelId) ?? hotels[0] ?? null;
-  }, [hotels, selectedHotelId]);
+    if (!selectedHotelId) return visibleHotels[0] ?? null;
+    return (
+      visibleHotels.find((h) => String(h.id) === selectedHotelId) ??
+      visibleHotels[0] ??
+      null
+    );
+  }, [visibleHotels, selectedHotelId]);
 
-  const resultsCount = hotels.length;
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current || effectiveView !== "map") {
+      return;
+    }
+
+    const key = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+    if (!key) {
+      console.error("Missing NEXT_PUBLIC_MAPTILER_KEY");
+      return;
+    }
+
+    const map = new maplibregl.Map({
+      container: mapRef.current,
+      style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+      center: MAP_FALLBACK_CENTER,
+      zoom: 11,
+    });
+
+    map.addControl(new maplibregl.NavigationControl(), "top-right");
+
+    map.on("load", () => {
+      map.resize();
+      window.setTimeout(() => map.resize(), 100);
+      window.setTimeout(() => map.resize(), 350);
+    });
+
+    mapInstanceRef.current = map;
+
+    const onWindowResize = () => {
+      map.resize();
+    };
+
+    window.addEventListener("resize", onWindowResize);
+
+    if (typeof ResizeObserver !== "undefined" && mapRef.current) {
+      const observer = new ResizeObserver(() => {
+        map.resize();
+      });
+      observer.observe(mapRef.current);
+      resizeObserverRef.current = observer;
+    }
+
+    return () => {
+      window.removeEventListener("resize", onWindowResize);
+
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
+
+      markersRef.current.forEach((marker) => {
+        try {
+          marker.remove();
+        } catch {}
+      });
+      markersRef.current = [];
+
+      try {
+        map.remove();
+      } catch {}
+
+      mapInstanceRef.current = null;
+    };
+  }, [effectiveView]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || effectiveView !== "map") return;
+
+    markersRef.current.forEach((marker) => {
+      try {
+        marker.remove();
+      } catch {}
+    });
+    markersRef.current = [];
+
+    const bounds = new maplibregl.LngLatBounds();
+    let hasBounds = false;
+
+    for (const hotel of visibleHotels) {
+      const lat = getCoord(hotel, "lat");
+      const lng = getCoord(hotel, "lng");
+      if (lat === null || lng === null) continue;
+
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "hotel-marker";
+      el.dataset.hotelId = String(hotel.id);
+      el.dataset.selected = String(String(hotel.id) === selectedHotelId);
+      el.setAttribute("aria-label", hotel.hotel_name ?? "Hotel");
+
+      const inner = document.createElement("span");
+      inner.className = "hotel-marker__inner";
+      inner.textContent = "✦";
+      el.appendChild(inner);
+
+      const popup = new maplibregl.Popup({
+        closeButton: false,
+        closeOnClick: true,
+        closeOnMove: false,
+        offset: 14,
+      }).setHTML(`
+        <div class="oltra-glass oltra-output hotel-map-popup">
+          <div class="hotel-map-popup__title">${hotel.hotel_name ?? "Untitled hotel"}</div>
+          <div class="hotel-map-popup__meta">${locationLine(hotel) || "—"}</div>
+          ${
+            hotel.highlights?.trim()
+              ? `<div class="hotel-map-popup__desc">${clampText(hotel.highlights, 120)}</div>`
+              : ""
+          }
+        </div>
+      `);
+
+      el.addEventListener("mouseenter", () => {
+        try {
+          popup.setLngLat([lng, lat]).addTo(map);
+        } catch {}
+      });
+
+      el.addEventListener("mouseleave", () => {
+        if (popup.isOpen()) {
+          try {
+            popup.remove();
+          } catch {}
+        }
+      });
+
+      el.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectionFromMapRef.current = true;
+        setSelectedHotelId(String(hotel.id));
+      });
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map);
+
+      markersRef.current.push(marker);
+      bounds.extend([lng, lat]);
+      hasBounds = true;
+    }
+
+    if (hasBounds) {
+      map.fitBounds(bounds, {
+        padding: { top: 72, right: 72, bottom: 72, left: 72 },
+        maxZoom: 14,
+        duration: 0,
+      });
+    } else {
+      map.jumpTo({
+        center: MAP_FALLBACK_CENTER,
+        zoom: 11,
+      });
+    }
+
+    map.resize();
+  }, [effectiveView, visibleHotels]);
+
+  useEffect(() => {
+    markersRef.current.forEach((marker) => {
+      const el = marker.getElement() as HTMLElement | null;
+      if (!el) return;
+      el.dataset.selected = String(el.dataset.hotelId === selectedHotelId);
+    });
+  }, [selectedHotelId]);
+
+    useEffect(() => {
+    if (selectionFromMapRef.current) {
+      selectionFromMapRef.current = false;
+      return;
+    }
+
+    const map = mapInstanceRef.current;
+    if (!map || effectiveView !== "map" || !selectedHotel) return;
+
+    const lat = getCoord(selectedHotel, "lat");
+    const lng = getCoord(selectedHotel, "lng");
+    if (lat === null || lng === null) return;
+
+    map.easeTo({
+      center: [lng, lat],
+      zoom: map.getZoom(),
+      duration: 500,
+      essential: true,
+    });
+  }, [selectedHotel, effectiveView]);
+  
+  const featuredHotels = useMemo(() => {
+    if (!hotels.length) return [];
+    return [...hotels]
+      .sort((a, b) => getTotalPoints(b) - getTotalPoints(a))
+      .slice(0, 12);
+  }, [hotels]);
+
+  const featuredHeroImages = MANDARIN_ORIENTAL_BANGKOK_IMAGES;
+
+  useEffect(() => {
+    if (effectiveView !== "featured") return;
+
+    const timer = window.setInterval(() => {
+      setSelectedImageIndex((prev) => (prev + 1) % featuredHeroImages.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, [effectiveView, featuredHeroImages.length]);
+
+  const featuredHotel = featuredHotels[0] ?? null;
+
+  const selectedPriceLabels = useMemo(
+    () => getPriceSummary(searchParams, activeCurrency),
+    [searchParams, activeCurrency]
+  );
+
+  const resultsCount = visibleHotels.length;
 
   const selectedHotelSettings = useMemo(
     () => relationLabels(selectedHotel?.settings, "settings_id", tax.settings),
@@ -407,8 +968,11 @@ export default function HotelsView(props: {
   );
 
   const selectedHotelAwards = useMemo(
-    () => relationLabels(selectedHotel?.awards, "awards_id", tax.awards),
-    [selectedHotel, tax.awards]
+    () =>
+      selectedHotel
+        ? getFeaturedAwardsForHotel(selectedHotel).map((award) => award.label)
+        : [],
+    [selectedHotel]
   );
 
   const selectedHotelStyles = useMemo(
@@ -426,8 +990,71 @@ export default function HotelsView(props: {
     [selectedHotel]
   );
 
+  const selectedHotelImages = useMemo(
+    () => (selectedHotel ? getHotelImageSet(selectedHotel) : PLACEHOLDERS),
+    [selectedHotel]
+  );
+
+    function replaceSearchParams(
+    updates: Record<string, string>,
+    extraDeletes: string[] = []
+  ) {
+    const params = new URLSearchParams();
+
+    for (const [k, v] of Object.entries(searchParams)) {
+      if (v === undefined) continue;
+
+      if (Array.isArray(v)) {
+        for (const vv of v) params.append(k, vv);
+      } else {
+        params.set(k, String(v));
+      }
+    }
+
+    for (const key of extraDeletes) {
+      params.delete(key);
+    }
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (value.trim()) params.set(key, value);
+      else params.delete(key);
+    }
+
+    params.set("search_submitted", "1");
+
+    const href = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(href, { scroll: false });
+  }
+
+  function updateFiltersOpen(nextOpen: boolean) {
+    setFiltersOpen(nextOpen);
+
+    const params = new URLSearchParams();
+
+    for (const [k, v] of Object.entries(searchParams)) {
+      if (v === undefined) continue;
+
+      if (Array.isArray(v)) {
+        for (const vv of v) params.append(k, vv);
+      } else {
+        params.set(k, String(v));
+      }
+    }
+
+    params.set("filters_open", nextOpen ? "1" : "0");
+
+    const href = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(href, { scroll: false });
+  }
+
   async function handleAddHotelToTrip(tripId?: string) {
     if (!selectedHotel) return;
+
+    if (!isMemberLoggedIn) {
+      setShowTripPicker(false);
+      setMemberActionError(getMemberActionLoginMessage("trip"));
+      return;
+    }
 
     try {
       setMemberActionLoading("trip");
@@ -439,22 +1066,33 @@ export default function HotelsView(props: {
         hotelDirectusId: String(selectedHotel.id),
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
-        stayLabel:
-          fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-        thumbnail: PLACEHOLDERS[0],
+        stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+        thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
         checkIn: fromValue || null,
         checkOut: toValue || null,
       });
 
-      if (result.duplicate) {
-        setMemberActionMessage("Hotel already exists in this trip.");
+      if (result.status === "already_exists") {
+        setMemberActionMessage("Already in this trip.");
       } else if (result.overlapWarning) {
-        setMemberActionMessage("Hotel added to trip with overlap warning.");
+        setMemberActionMessage("Added with overlap warning.");
       } else {
-        setMemberActionMessage("Hotel added to trip.");
+        setMemberActionMessage("Added.");
       }
     } catch (error) {
-      setMemberActionError("Could not add hotel to trip.");
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+      if (
+        message.includes("auth") ||
+        message.includes("login") ||
+        message.includes("sign in") ||
+        message.includes("unauthorized") ||
+        message.includes("not authenticated")
+      ) {
+        setMemberActionError("Log in to add to trip.");
+      } else {
+        setMemberActionError("Could not add hotel to trip.");
+      }
     } finally {
       setMemberActionLoading(null);
     }
@@ -462,6 +1100,12 @@ export default function HotelsView(props: {
 
   async function handleCreateTripAndAddHotel() {
     if (!selectedHotel) return;
+
+    if (!isMemberLoggedIn) {
+      setShowTripPicker(false);
+      setMemberActionError(getMemberActionLoginMessage("trip"));
+      return;
+    }
 
     try {
       setCreatingTrip(true);
@@ -473,8 +1117,7 @@ export default function HotelsView(props: {
         destination:
           [selectedHotel.city, selectedHotel.country].filter(Boolean).join(" · ") ||
           null,
-        periodLabel:
-          fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+        periodLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
       });
 
       setTripChoices((prev) => [...prev, createdTrip]);
@@ -485,9 +1128,8 @@ export default function HotelsView(props: {
         hotelDirectusId: String(selectedHotel.id),
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
-        stayLabel:
-          fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-        thumbnail: PLACEHOLDERS[0],
+        stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+        thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
         checkIn: fromValue || null,
         checkOut: toValue || null,
       });
@@ -496,12 +1138,24 @@ export default function HotelsView(props: {
       setShowTripPicker(false);
 
       if (result.overlapWarning) {
-        setMemberActionMessage("New trip created and hotel added with overlap warning.");
+        setMemberActionMessage("Created and added with overlap warning.");
       } else {
-        setMemberActionMessage("New trip created and hotel added.");
+        setMemberActionMessage("Added.");
       }
     } catch (error) {
-      setMemberActionError("Could not create trip.");
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+      if (
+        message.includes("auth") ||
+        message.includes("login") ||
+        message.includes("sign in") ||
+        message.includes("unauthorized") ||
+        message.includes("not authenticated")
+      ) {
+        setMemberActionError("Log in to add to trip.");
+      } else {
+        setMemberActionError("Could not create trip.");
+      }
     } finally {
       setCreatingTrip(false);
     }
@@ -510,22 +1164,43 @@ export default function HotelsView(props: {
   async function handleAddHotelToFavorites() {
     if (!selectedHotel) return;
 
+    if (!isMemberLoggedIn) {
+      setMemberActionError(getMemberActionLoginMessage("favorite"));
+      return;
+    }
+
     try {
       setMemberActionLoading("favorite");
       setMemberActionMessage("");
       setMemberActionError("");
 
-      await addFavoriteHotelBrowser({
+      const result = await addFavoriteHotelBrowser({
         hotelDirectusId: String(selectedHotel.id),
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
         meta: selectedHotel.affiliation?.trim() || "",
-        thumbnail: PLACEHOLDERS[0],
+        thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
       });
 
-      setMemberActionMessage("Hotel added to favourites.");
+      if (result.status === "already_exists") {
+        setMemberActionMessage("Already in your favorites list.");
+      } else {
+        setMemberActionMessage("Added.");
+      }
     } catch (error) {
-      setMemberActionError("Could not add hotel to favourites.");
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+      if (
+        message.includes("auth") ||
+        message.includes("login") ||
+        message.includes("sign in") ||
+        message.includes("unauthorized") ||
+        message.includes("not authenticated")
+      ) {
+        setMemberActionError("Log in to add favorites.");
+      } else {
+        setMemberActionError("Could not add hotel to favourites.");
+      }
     } finally {
       setMemberActionLoading(null);
     }
@@ -534,15 +1209,20 @@ export default function HotelsView(props: {
   return (
     <div className="w-full">
       <div className="grid gap-4 lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]">
-        <section className="grid gap-4 min-w-0">
-
+        <section className="grid min-w-0 gap-4">
           <div className="relative z-30 overflow-visible oltra-glass oltra-panel !p-4">
             <form
               action="/hotels"
               method="GET"
-              className="grid gap-2 md:gap-2.5 md:grid-cols-12 overflow-visible"
+              className="grid gap-[14px] md:grid-cols-12 md:gap-[14px] overflow-visible"
+              onChange={(e) => {
+                const form = e.currentTarget;
+                setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
+              }}
+              onSubmit={(e) => {
+                e.preventDefault();
+              }}
             >
-
               <HiddenPreserveParams
                 searchParams={searchParams}
                 excludeKeys={[
@@ -558,6 +1238,7 @@ export default function HotelsView(props: {
                   "kids",
                   "bedrooms",
                   "filters_open",
+                  "search_submitted",
                   "kid_age_1",
                   "kid_age_2",
                   "kid_age_3",
@@ -567,276 +1248,389 @@ export default function HotelsView(props: {
                 ]}
               />
 
-              <input type="hidden" name="filters_open" value={filtersOpen ? "1" : "0"} />
+              <input
+                type="hidden"
+                name="filters_open"
+                value={filtersOpen ? "1" : "0"}
+              />
+
+              <input
+                type="hidden"
+                name="search_submitted"
+                value={hasMeaningfulFilters ? "1" : simpleSearchSubmitted}
+              />
 
               <StructuredDestinationField
                 label="Destination / purpose"
                 placeholder="Input hotel name, city, country, and/or purpose of trip"
                 searchParams={searchParams}
                 dataset={props.suggestions}
-                wrapperClassName="md:col-span-12"
+                wrapperClassName="md:col-span-12 pt-[2px]"
               />
 
-              <div className="relative md:col-span-3">
-                <div className="oltra-label">From</div>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="from"
-                    value={fromValue}
-                    onChange={(e) => setFromValue(e.target.value)}
-                    onKeyDown={(e) => e.preventDefault()}
-                    onBeforeInput={(e) => e.preventDefault()}
-                    className={[
-                      "oltra-input w-full",
-                      fromValue ? "text-white" : "text-transparent caret-transparent",
-                    ].join(" ")}
-                  />
-                  {!fromValue ? (
-                    <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
-                      date
-                    </span>
+              {!compactTopMode ? (
+                <>
+                  {(selected.awards.length > 0 || selectedPriceLabels.length > 0) ? (
+                    <div className="md:col-span-12 flex flex-wrap gap-2">
+                      {selected.awards.map((awardId) => {
+                        const label = getAwardLabelById(awardId, featuredAwardsFilterMap);
+
+                        return (
+                          <Link
+                            key={`selected-award-${awardId}`}
+                            href={removeSingleValueHref(searchParams, "awards", awardId)}
+                            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-3 py-[3px] text-[12px] text-white/74 hover:bg-white/12"
+                            prefetch={false}
+                          >
+                            <span>{label}</span>
+                            <span className="text-white/62">×</span>
+                          </Link>
+                        );
+                      })}
+
+                      {selectedPriceLabels.map((label) => (
+                        <div
+                          key={`selected-price-${label}`}
+                          className="inline-flex items-center rounded-full border border-white/12 bg-white/8 px-3 py-[3px] text-[12px] text-white/74"
+                        >
+                          {label}
+                        </div>
+                      ))}
+                    </div>
                   ) : null}
+
+                  <div className="relative md:col-span-3" data-oltra-control="true">
+                    <div className="oltra-label">From</div>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        name="from"
+                        value={fromValue}
+                        onChange={(e) => setFromValue(e.target.value)}
+                        onKeyDown={(e) => e.preventDefault()}
+                        onBeforeInput={(e) => e.preventDefault()}
+                        className={[
+                          "oltra-input w-full",
+                          fromValue ? "text-white" : "text-transparent caret-transparent",
+                        ].join(" ")}
+                      />
+                      {!fromValue ? (
+                        <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
+                          date
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="relative md:col-span-3" data-oltra-control="true">
+                    <div className="oltra-label">To</div>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        name="to"
+                        value={toValue}
+                        onChange={(e) => setToValue(e.target.value)}
+                        onKeyDown={(e) => e.preventDefault()}
+                        onBeforeInput={(e) => e.preventDefault()}
+                        className={[
+                          "oltra-input w-full",
+                          toValue ? "text-white" : "text-transparent caret-transparent",
+                        ].join(" ")}
+                      />
+                      {!toValue ? (
+                        <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
+                          date
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="relative md:col-span-3" data-oltra-control="true">
+                    <div className="oltra-label">Guests</div>
+                    <GuestSelector initialValue={guestSelection} />
+                  </div>
+
+                  <div className="relative md:col-span-3" data-oltra-control="true">
+                    <div className="oltra-label">Bedrooms</div>
+                    <OltraSelect
+                      name="bedrooms"
+                      value={normalizeParam(searchParams.bedrooms)}
+                      placeholder="#"
+                      align="left"
+                      options={[1, 2, 3, 4].map((n) => ({
+                        value: String(n),
+                        label: `${n} bedroom${n === 1 ? "" : "s"}`,
+                      }))}
+                    />
+                  </div>
+                </>
+              ) : null}
+
+              {showNarrowFurtherMessage ? (
+                <div className="md:col-span-12 text-[12px] leading-relaxed text-white/64">
+                  Narrow results further by adding region, country, city or setting.
+                </div>
+              ) : null}
+
+              <div
+                className={[
+                  "md:col-span-12 flex gap-3",
+                  compactTopMode ? "justify-end items-start" : "justify-between items-end",
+                ].join(" ")}
+              >
+                {!compactTopMode ? (
+                  <button
+                    type="button"
+                    onClick={() => updateFiltersOpen(!filtersOpen)}
+                    className="oltra-button-function"
+                  >
+                    {filtersOpen ? "Hide filters" : "Show filters"}
+                  </button>
+                ) : null}
+
+                <div className="w-full max-w-[180px]">
+                  {!compactTopMode ? (
+                    <div className="oltra-label opacity-0 select-none">Search</div>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled
+                    className="oltra-button-secondary w-full"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      {isSubmittingSearch ? (
+                        <span
+                          className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <span>Search</span>
+                    </span>
+                  </button>
                 </div>
               </div>
 
-              <div className="relative md:col-span-3">
-                <div className="oltra-label">To</div>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="to"
-                    value={toValue}
-                    onChange={(e) => setToValue(e.target.value)}
-                    onKeyDown={(e) => e.preventDefault()}
-                    onBeforeInput={(e) => e.preventDefault()}
-                    className={[
-                      "oltra-input w-full",
-                      toValue ? "text-white" : "text-transparent caret-transparent",
-                    ].join(" ")}
+              {!compactTopMode && filtersOpen ? (
+                <div className="md:col-span-12 border-t border-white/10 pt-3">
+                  <div className="border-t border-white/10 py-2">
+                    <button
+                      type="button"
+                      onClick={() => setPriceOpen((prev) => !prev)}
+                      className="flex w-full items-center justify-between px-[14px] text-left"
+                    >
+                      <span className="text-[12px] uppercase tracking-[0.14em] text-white/70">
+                        PRICE / TOTAL STAY ({activeCurrency})
+                      </span>
+                      <span
+                        className="flex h-4 w-4 items-center justify-center text-white/55 transition-transform duration-150"
+                        style={{ transform: priceOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                      >
+                        <ChevronDown />
+                      </span>
+                    </button>
+
+                    {priceOpen ? (
+                      <div className="mt-2">
+                        <div className="oltra-popup-panel !relative !left-auto !right-auto !top-auto z-0 !p-2">
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <input
+                              name="min_price"
+                              placeholder="Min"
+                              className="oltra-input"
+                            />
+                            <input
+                              name="max_price"
+                              placeholder="Max"
+                              className="oltra-input"
+                            />
+                          </div>
+
+                          <div className="mt-2 text-[11px] text-white/45">
+                            (Illustrative for now — will connect when pricing fields exist)
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <RelDropdown
+                    title="Activities"
+                    paramKey="activities"
+                    selectedIds={selected.activities}
+                    map={tax.activities}
+                    searchParams={searchParams}
+                    open={activitiesOpen}
+                    onToggle={() => setActivitiesOpen((prev) => !prev)}
                   />
-                  {!toValue ? (
-                    <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
-                      date
-                    </span>
-                  ) : null}
+
+                  <RelDropdown
+                    title="Settings"
+                    paramKey="settings"
+                    selectedIds={selected.settings}
+                    map={tax.settings}
+                    searchParams={searchParams}
+                    open={settingsOpen}
+                    onToggle={() => setSettingsOpen((prev) => !prev)}
+                  />
+
+                  <RelDropdown
+                    title="Accolades"
+                    paramKey="awards"
+                    selectedIds={selected.awards}
+                    map={featuredAwardsFilterMap}
+                    searchParams={searchParams}
+                    open={awardsOpen}
+                    onToggle={() => setAwardsOpen((prev) => !prev)}
+                  />
                 </div>
-              </div>
-
-              <div className="relative md:col-span-3">
-                <div className="oltra-label">Guests</div>
-                <GuestSelector initialValue={guestSelection} />
-              </div>
-
-              <div className="relative md:col-span-3">
-                <div className="oltra-label">Bedrooms</div>
-                <OltraSelect
-                  name="bedrooms"
-                  value={normalizeParam(searchParams.bedrooms)}
-                  placeholder="#"
-                  align="left"
-                  options={[1, 2, 3, 4].map((n) => ({
-                    value: String(n),
-                    label: `${n} bedroom${n === 1 ? "" : "s"}`,
-                  }))}
-                />
-              </div>
-
-              <div className="md:col-span-3 md:col-start-10 flex flex-col justify-end">
-                <div className="oltra-label opacity-0 select-none">Search</div>
-                <button type="submit" className="oltra-button-primary w-full">
-                  Search
-                </button>
-              </div>
+              ) : null}
             </form>
           </div>
 
-          <div className="relative z-10 oltra-glass oltra-panel !p-0">
-            <button
-              type="button"
-              onClick={() => updateFiltersOpen(!filtersOpen)}
-              className="flex h-[44px] w-full items-center justify-between px-4 text-left"
-            >
-              <span className="oltra-label !mb-0">Filters</span>
-              <span
-                className="text-white/60 transition"
-                style={{ transform: filtersOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-              >
-                ⌄
-              </span>
-            </button>
-
-            {filtersOpen ? (
-              <div className="px-4 pb-4">
-                <details className="py-2">
-                  <summary className="ml-[14px] cursor-pointer select-none text-[12px] uppercase tracking-[0.14em] text-white/70">
-                    Price
-                  </summary>
-
-                  <div className="mt-2 grid grid-cols-2 gap-2.5">
-                    <input
-                      name="min_price"
-                      placeholder="Min"
-                      className="oltra-input"
-                    />
-                    <input
-                      name="max_price"
-                      placeholder="Max"
-                      className="oltra-input"
-                    />
-                  </div>
-
-                  <div className="mt-1.5 text-[11px] text-white/45">
-                    (Illustrative for now — will connect when pricing fields exist)
-                  </div>
-                </details>
-
-                <RelDropdown
-                  title="Activities"
-                  paramKey="activities"
-                  selectedIds={selected.activities}
-                  map={tax.activities}
-                  searchParams={searchParams}
-                />
-
-                <RelDropdown
-                  title="Settings"
-                  paramKey="settings"
-                  selectedIds={selected.settings}
-                  map={tax.settings}
-                  searchParams={searchParams}
-                />
-
-                <RelDropdown
-                  title="Accolades"
-                  paramKey="awards"
-                  selectedIds={selected.awards}
-                  map={tax.awards}
-                  searchParams={searchParams}
-                />
+          {shouldShowResults ? (
+            <div className="oltra-glass oltra-panel">
+              <div className="flex items-baseline justify-between">
+                <div className="oltra-label">Results</div>
+                <div className="text-xs text-white/50">{resultsCount} found</div>
               </div>
-            ) : null}
-          </div>
 
-          <div className="oltra-glass oltra-panel">
-            <div className="flex items-baseline justify-between">
-              <div className="oltra-label">Results</div>
-              <div className="text-xs text-white/50">{resultsCount} found</div>
-            </div>
+              <div className="oltra-scrollbar mt-3.5 max-h-[62vh] space-y-3 overflow-y-auto pr-2">
+                {visibleHotels.map((h) => {
+                  const active = String(h.id) === selectedHotelId;
+                  const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
+                  const bookingHref = buildBookingLink(h, bookingSearchParams);
+                  const bookingLabel = h.booking_label?.trim() || "BOOK";
+                  const featuredAwards = getFeaturedAwardsForHotel(h);
+                  const nameAndLocation = [h.city, h.country].filter(Boolean).join(" · ");
 
-            <div className="mt-3.5 max-h-[62vh] space-y-3 overflow-y-auto pr-2">
-              {hotels.map((h, idx) => {
-                const active = String(h.id) === selectedHotelId;
-                const img = PLACEHOLDERS[idx % PLACEHOLDERS.length];
-                const bookingHref = buildBookingLink(h, bookingSearchParams);
-                const bookingLabel = h.booking_label?.trim() || "BOOK";
-                const awardLabels = relationLabels(h.awards, "awards_id", tax.awards);
+                  return (
+                    <button
+                      key={String(h.id)}
+                      type="button"
+                      onClick={() => setSelectedHotelId(String(h.id))}
+                      className={[
+                        "oltra-output w-full text-left transition",
+                        active
+                          ? "bg-[var(--oltra-field-bg-strong)] hotel-result-card--active"
+                          : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
+                      ].join(" ")}
+                      style={
+                        active
+                          ? {
+                              borderColor: "rgba(255,255,255,0.38)",
+                              boxShadow:
+                                "0 16px 32px rgba(10,24,36,0.22), inset 0 0 0 1px rgba(255,255,255,0.18)",
+                            }
+                          : undefined
+                      }
+                    >
+                      <div className="grid grid-cols-[132px_1fr] gap-3.5">
+                        <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
+                          <img src={img} alt="" className="h-20 w-full object-cover" />
+                        </div>
 
-                return (
-                  <button
-                    key={String(h.id)}
-                    type="button"
-                    onClick={() => setSelectedHotelId(String(h.id))}
-                    className={[
-                      "oltra-output w-full text-left transition",
-                      active ? "bg-white/16" : "hover:bg-white/10",
-                    ].join(" ")}
-                    style={
-                      active
-                        ? {
-                            borderColor: "rgba(255,255,255,0.28)",
-                            boxShadow:
-                              "0 10px 24px rgba(10,24,36,0.14), inset 0 1px 0 rgba(255,255,255,0.08)",
-                          }
-                        : undefined
-                    }
-                  >
-                    <div className="grid grid-cols-[132px_1fr] gap-3.5">
-                      <div className="overflow-hidden rounded-[var(--oltra-radius-md)] border border-white/10">
-                        <img src={img} alt="" className="h-20 w-full object-cover" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex min-h-[80px] min-w-0 flex-col">
                           <div className="min-w-0">
                             <div className="truncate text-base font-light tracking-wide text-white">
                               {h.hotel_name ?? "Untitled hotel"}
                             </div>
                             <div className="mt-0.5 text-xs text-white/55">
-                              {locationLine(h) || "—"}
+                              {nameAndLocation || "—"}
                             </div>
-                            <div className="mt-1 text-xs text-white/45">
-                              {distPlaceholder(h)}
+                            <div className="mt-1.5">
+                              <AccoladeBadge hotel={h} />
                             </div>
                           </div>
 
-                          <div className="shrink-0 text-xs text-white/60">
-                            Rank{" "}
-                            <span className="text-white/85">
-                              {h.editor_rank_13 ?? "—"}
-                            </span>
+                          {h.highlights ? (
+                            <div className="mt-2 text-xs leading-relaxed text-white/65">
+                              {clampText(h.highlights, 170)}
+                            </div>
+                          ) : null}
+
+                          <div className="mt-auto pt-2">
+                            {featuredAwards.length ? (
+                              <div className="truncate text-[11px] text-white/60">
+                                {featuredAwards.map((award) => award.label).join(" · ")}
+                              </div>
+                            ) : null}
+
+                            {bookingHref ? (
+                              <div className="mt-3 flex justify-end">
+                                <a
+                                  href={bookingHref}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex min-h-9 items-center justify-center rounded-full border border-white/18 px-3.5 py-1.5 text-[11px] tracking-[0.16em] text-white/85 transition hover:bg-white/12 hover:text-white"
+                                >
+                                  {bookingLabel}
+                                </a>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
-
-                        {h.highlights ? (
-                          <div className="mt-1.5 text-xs leading-relaxed text-white/65">
-                            {clampText(h.highlights, 170)}
-                          </div>
-                        ) : null}
-
-                        {awardLabels.length ? (
-                          <div className="mt-2 space-y-1">
-                            {awardLabels.slice(0, 3).map((label) => (
-                                <div
-                                  key={label}
-                                  className="flex items-start gap-2 text-[11px] leading-[1.35] text-white/58"
-                                >
-                                  <span aria-hidden="true" className="mt-[1px] text-[12px] text-white/72">
-                                    ✦
-                                  </span>
-                                  <span className="min-w-0 truncate">{label}</span>
-                                </div>
-                              ))}
-                          </div>
-                        ) : null}  
-
-                        {bookingHref ? (
-                          <div className="mt-3 flex justify-end">
-                            <a
-                              href={bookingHref}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex min-h-9 items-center justify-center rounded-full border border-white/18 px-3.5 py-1.5 text-[11px] tracking-[0.16em] text-white/85 transition hover:bg-white/12 hover:text-white"
-                            >
-                              {bookingLabel}
-                            </a>
-                          </div>
-                        ) : null}
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
-
-              {hotels.length === 0 ? (
-                <div className="oltra-output p-8 text-sm text-white/70">
-                  No hotels match your filters. Try resetting or removing a
-                  constraint.
-                </div>
-              ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : null}
         </section>
 
-        <section className="oltra-glass oltra-panel min-w-0 overflow-hidden">
-          {selectedHotel ? (
-            <div>
+        <section className="oltra-glass oltra-panel min-w-0 overflow-visible">
+          {effectiveView === "featured" ? (
+            <div className="relative">
+              <div className="relative overflow-hidden rounded-[var(--oltra-radius-lg)] border border-white/12">
+                <img
+                  src={featuredHeroImages[selectedImageIndex % featuredHeroImages.length]}
+                  alt=""
+                  className="h-[760px] w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/38" />
+
+                {featuredHotel ? (
+                  <div className="absolute left-5 top-5 max-w-[360px] rounded-[var(--oltra-radius-md)] bg-[rgba(18,28,36,0.28)] px-4 py-3 backdrop-blur-[10px]">
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-white/72">
+                      Featured hotel
+                    </div>
+                    <div className="mt-2 text-[1.15rem] font-light tracking-wide text-white">
+                      {featuredHotel.hotel_name ?? "Untitled hotel"}
+                    </div>
+                    <div className="mt-1 text-[12px] text-white/78">
+                      {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "—"}
+                    </div>
+                    <div className="mt-2 text-[12px] leading-relaxed text-white/74">
+                      {getFeaturedAwardsForHotel(featuredHotel)
+                        .map((award) => award.label)
+                        .join(" · ") || "Curated featured selection"}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : effectiveView === "map" ? (
+            <div className="relative">
+              <div className="overflow-hidden rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(18,28,36,0.22)]">
+                <div ref={mapRef} className="h-[760px] w-full" />
+
+                <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("details")}
+                    className="oltra-button-map-toggle pointer-events-auto"
+                  >
+                    Switch to hotel view
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : selectedHotel ? (
+            <div className="relative">
               <div className="flex items-start justify-between gap-6">
                 <div className="min-w-0">
-                  <div className="oltra-subheader">
-                    Selected hotel
-                  </div>
+                  <div className="oltra-subheader">Selected hotel</div>
 
                   <h2 className="mt-2 truncate text-2xl font-light tracking-wide text-white md:text-3xl">
                     {selectedHotel.hotel_name ?? "Untitled hotel"}
@@ -847,64 +1641,72 @@ export default function HotelsView(props: {
                       .filter(Boolean)
                       .join(" · ") || "—"}
                   </div>
+
+                  {selectedHotel.highlights?.trim() ? (
+                    <div className="mt-2 text-sm leading-relaxed text-white/72">
+                      {clampText(selectedHotel.highlights, 320)}
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className="shrink-0 text-sm text-white/70">
-                  Editor rank{" "}
-                  <span className="text-white/90">
-                    {selectedHotel.editor_rank_13 ?? "—"}
-                  </span>
+                <div className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("map")}
+                    className="oltra-button-function"
+                  >
+                    Switch to map view
+                  </button>
                 </div>
               </div>
 
               <div className="mt-4 grid grid-cols-12 gap-3">
-                <div className="col-span-12 overflow-hidden rounded-[var(--oltra-radius-lg)] border border-white/10 lg:col-span-8">
-                  <img
-                    src={PLACEHOLDERS[0]}
-                    alt=""
-                    className="h-[340px] w-full object-cover"
-                  />
+                <div className="col-span-12 overflow-hidden rounded-[var(--oltra-radius-lg)] lg:col-span-8">
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    className="block w-full overflow-hidden rounded-[var(--oltra-radius-lg)]"
+                  >
+                    <img
+                      src={
+                        selectedHotelImages[selectedImageIndex] ??
+                        selectedHotelImages[0]
+                      }
+                      alt=""
+                      className="h-[340px] w-full object-cover"
+                    />
+                  </button>
                 </div>
 
                 <div className="col-span-12 lg:col-span-4">
-                  <div className="space-y-2.5">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
-                        key={i}
-                        className="overflow-hidden rounded-[var(--oltra-radius-md)] border border-white/10"
+                  <div className="oltra-scrollbar grid max-h-[340px] grid-cols-2 gap-2 overflow-y-auto pr-2 content-start">
+                    {selectedHotelImages.map((src, index) => (
+                      <button
+                        key={src}
+                        type="button"
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={[
+                          "overflow-hidden rounded-[var(--oltra-radius-md)] text-left transition",
+                          selectedImageIndex === index
+                            ? "bg-[var(--oltra-field-bg-strong)]"
+                            : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
+                        ].join(" ")}
                       >
                         <img
-                          src={PLACEHOLDERS[i % PLACEHOLDERS.length]}
+                          src={src}
                           alt=""
-                          className="h-[78px] w-full object-cover"
+                          className="aspect-[4/3] w-full object-cover"
                         />
-                      </div>
+                      </button>
                     ))}
-                  </div>
-
-                  <div className="mt-3 text-xs text-white/45">
-                    (Next: thumbnail slider with all hotel images)
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 grid items-start gap-6 md:grid-cols-2">
+              <div className="mt-6 grid items-start gap-6 md:grid-cols-[7fr_3fr]">
                 <div className="space-y-5">
                   <div>
-                    <div className="oltra-subheader">
-                      Highlights
-                    </div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
-                      {selectedHotel.highlights?.trim()
-                        ? clampText(selectedHotel.highlights, 220)
-                        : "—"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="oltra-subheader">
-                      Description
-                    </div>
+                    <div className="oltra-subheader">Description</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
                       {selectedHotel.description?.trim()
                         ? clampText(selectedHotel.description, 520)
@@ -913,9 +1715,7 @@ export default function HotelsView(props: {
                   </div>
 
                   <div className="oltra-output p-4">
-                    <div className="oltra-subheader">
-                      Relevant available rooms
-                    </div>
+                    <div className="oltra-subheader">Relevant available rooms</div>
                     <div className="mt-2 text-sm text-white/65">
                       Placeholder section — will be fed by availability logic later.
                     </div>
@@ -924,9 +1724,7 @@ export default function HotelsView(props: {
 
                 <div className="space-y-5">
                   <div>
-                    <div className="oltra-subheader">
-                      Setting
-                    </div>
+                    <div className="oltra-subheader">Setting</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
                       {selectedHotelSettings.length
                         ? selectedHotelSettings.slice(0, 8).join(" · ")
@@ -935,9 +1733,7 @@ export default function HotelsView(props: {
                   </div>
 
                   <div>
-                    <div className="oltra-subheader">
-                      Style
-                    </div>
+                    <div className="oltra-subheader">Style</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
                       {selectedHotelStyles.length
                         ? selectedHotelStyles.slice(0, 8).join(" · ")
@@ -946,9 +1742,7 @@ export default function HotelsView(props: {
                   </div>
 
                   <div>
-                    <div className="oltra-subheader">
-                      Activities
-                    </div>
+                    <div className="oltra-subheader">Activities</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
                       {selectedHotelActivities.length
                         ? selectedHotelActivities.slice(0, 10).join(" · ")
@@ -957,9 +1751,7 @@ export default function HotelsView(props: {
                   </div>
 
                   <div>
-                    <div className="oltra-subheader">
-                      Accolades
-                    </div>
+                    <div className="oltra-subheader">Accolades</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
                       {selectedHotelAwards.length
                         ? selectedHotelAwards.slice(0, 8).join(" · ")
@@ -968,18 +1760,14 @@ export default function HotelsView(props: {
                   </div>
 
                   <div>
-                    <div className="oltra-subheader">
-                      Brand
-                    </div>
+                    <div className="oltra-subheader">Brand</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
                       {selectedHotel.affiliation?.trim() || "—"}
                     </div>
                   </div>
 
                   <div>
-                    <div className="oltra-subheader">
-                      Links
-                    </div>
+                    <div className="oltra-subheader">Links</div>
                     <div className="mt-1.5 flex flex-wrap gap-3 text-sm text-white/75">
                       {selectedHotel.www ? (
                         <a
@@ -1014,20 +1802,16 @@ export default function HotelsView(props: {
                       </Link>
                     </div>
                   </div>
-                
 
-
-                  <div className="relative pt-1">
+                  <div ref={tripPickerRef} className="relative pt-1">
                     {showTripPicker && (
                       <div
-                        className="oltra-popup-panel absolute left-0 right-0 top-full mt-2 z-50"
+                        className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="oltra-subheader">
-                          Select trip
-                        </div>
+                        <div className="oltra-subheader">Select trip</div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="mt-2 flex flex-col gap-2">
                           {tripChoices.length ? (
                             tripChoices.map((trip) => (
                               <button
@@ -1044,23 +1828,15 @@ export default function HotelsView(props: {
                               </button>
                             ))
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleAddHotelToTrip();
-                                setShowTripPicker(false);
-                              }}
-                              className="oltra-dropdown-item"
-                            >
-                              My trip
-                            </button>                       
-                          )}
-                          <div className="mt-3 border-t border-white/10 pt-3">
-                            <div className="oltra-subheader">
-                              Create new trip
+                            <div className="text-[12px] text-white/65">
+                              No trips available.
                             </div>
+                          )}
 
-                            <div className="flex flex-col gap-2">
+                          <div className="mt-3 border-t border-white/10 pt-3">
+                            <div className="oltra-subheader">Create new trip</div>
+
+                            <div className="mt-2 flex flex-col gap-2">
                               <input
                                 type="text"
                                 value={newTripName}
@@ -1078,27 +1854,55 @@ export default function HotelsView(props: {
                                 {creatingTrip ? "Creating..." : "Create new trip"}
                               </button>
                             </div>
-                          </div>                        
+                          </div>
                         </div>
                       </div>
                     )}
+
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => {
                           setMemberActionMessage("");
                           setMemberActionError("");
+
+                          if (!isMemberLoggedIn) {
+                            setShowTripPicker(false);
+                            setMemberActionError(
+                              getMemberActionLoginMessage("trip")
+                            );
+                            return;
+                          }
+
                           setShowTripPicker((prev) => !prev);
                         }}
-                        className="oltra-button-secondary w-full"
+                        className={`${getMemberActionButtonClass(
+                          isMemberLoggedIn
+                        )} w-full`}
+                        aria-disabled={!isMemberLoggedIn}
                       >
                         ADD TO TRIP
                       </button>
                       <button
                         type="button"
-                        onClick={handleAddHotelToFavorites}
+                        onClick={() => {
+                          setMemberActionMessage("");
+                          setMemberActionError("");
+
+                          if (!isMemberLoggedIn) {
+                            setMemberActionError(
+                              getMemberActionLoginMessage("favorite")
+                            );
+                            return;
+                          }
+
+                          void handleAddHotelToFavorites();
+                        }}
                         disabled={memberActionLoading !== null}
-                        className="oltra-button-secondary w-full"
+                        className={`${getMemberActionButtonClass(
+                          isMemberLoggedIn
+                        )} w-full`}
+                        aria-disabled={!isMemberLoggedIn}
                       >
                         {memberActionLoading === "favorite"
                           ? "ADDING..."
@@ -1127,9 +1931,60 @@ export default function HotelsView(props: {
                   ) : null}
                 </div>
               </div>
+
+              {lightboxOpen ? (
+                <div className="absolute left-0 right-0 top-[108px] z-[500] bg-[rgba(10,18,26,0.58)] py-3">
+                  <div className="relative mx-auto w-[calc(100%-24px)] max-w-none rounded-[var(--oltra-radius-xl)] border border-white/12 bg-[rgba(20,32,42,0.94)] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-[18px]">
+                    <button
+                      type="button"
+                      onClick={() => setLightboxOpen(false)}
+                      className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                    >
+                      ×
+                    </button>
+
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedImageIndex((prev) =>
+                            prev === 0 ? selectedHotelImages.length - 1 : prev - 1
+                          )
+                        }
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                      >
+                        ‹
+                      </button>
+
+                      <div className="flex h-[700px] min-w-0 flex-1 items-center justify-center overflow-hidden">
+                        <img
+                          src={
+                            selectedHotelImages[selectedImageIndex] ??
+                            selectedHotelImages[0]
+                          }
+                          alt=""
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedImageIndex((prev) =>
+                            prev === selectedHotelImages.length - 1 ? 0 : prev + 1
+                          )
+                        }
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                      >
+                        ›
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : (
-            <div className="p-10 text-white/60">No selection.</div>
+            <div className="p-10 text-white/60">Select a hotel to view details.</div>
           )}
         </section>
       </div>

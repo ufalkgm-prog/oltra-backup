@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import InspireMapView from "./InspireMapView";
 import styles from "./InspireView.module.css";
 import { filterInspireCities } from "@/lib/inspire/filterCities";
 import type {
   InspireCity,
+  InspireCityMatch,
   InspireMonth,
   InspirePurpose,
 } from "@/lib/inspire/types";
@@ -107,6 +109,30 @@ type DropdownFieldProps = {
   children: React.ReactNode;
 };
 
+function ChevronDown({
+  className = "",
+}: {
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className={className}
+      style={{ display: "block" }}
+    >
+      <path
+        d="M5.5 7.5 10 12l4.5-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function DropdownField({
   label,
   valueLabel,
@@ -115,7 +141,7 @@ function DropdownField({
   children,
 }: DropdownFieldProps) {
   return (
-    <div className={styles.field}>
+    <div className={`${styles.field} ${open ? styles.fieldOpen : ""}`}>
       <div className="oltra-label">{label}</div>
       <div className={styles.dropdownWrap}>
         <button
@@ -126,7 +152,11 @@ function DropdownField({
           }`}
         >
           <span className={styles.dropdownValue}>{valueLabel}</span>
-          <span className={styles.dropdownChevron}>⌄</span>
+          <ChevronDown
+            className={`${styles.dropdownChevron} ${
+              open ? styles.dropdownChevronOpen : ""
+            }`}
+          />
         </button>
         {open ? <div className={styles.dropdownPanel}>{children}</div> : null}
       </div>
@@ -134,7 +164,25 @@ function DropdownField({
   );
 }
 
+function purposeToQueryLabel(purpose: InspirePurpose | ""): string {
+  switch (purpose) {
+    case "beach":
+      return "beach";
+    case "ski":
+      return "ski";
+    case "city_break":
+      return "city break";
+    case "safari":
+      return "safari";
+    case "mountains":
+      return "mountains";
+    default:
+      return "";
+  }
+}
+
 export default function InspireView({ cities }: Props) {
+  const router = useRouter();
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const [month, setMonth] = useState<InspireMonth>("june");
@@ -146,8 +194,9 @@ export default function InspireView({ cities }: Props) {
   );
 
   const [openMenu, setOpenMenu] = useState<
-    null | "origin" | "month" | "purpose" | "flight"
+    null | "month" | "purpose" | "flight" | "origin"
   >(null);
+  const [activeCityId, setActiveCityId] = useState<string | null>(null);
 
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
@@ -180,182 +229,226 @@ export default function InspireView({ cities }: Props) {
     });
   }, [cities, month, purpose, maxFlightHours, origin]);
 
+  useEffect(() => {
+    if (!matches.length) {
+      setActiveCityId(null);
+      return;
+    }
+
+    if (!activeCityId || !matches.some((match) => match.city.id === activeCityId)) {
+      setActiveCityId(matches[0].city.id);
+    }
+  }, [matches, activeCityId]);
+
   const selectedPurposeLabel =
     PURPOSES.find((item) => item.value === purpose)?.label ?? "All";
 
+  const monthLabel = month.charAt(0).toUpperCase() + month.slice(1);
+
+  const goToHotels = useCallback(
+    (match: InspireCityMatch) => {
+      const params = new URLSearchParams();
+      params.set("city", match.city.city);
+
+      const q = purposeToQueryLabel(purpose);
+      if (q) {
+        params.set("q", q);
+      }
+
+      router.push(`/hotels?${params.toString()}`);
+    },
+    [router, purpose]
+  );
+
   return (
     <div ref={rootRef} className={styles.page}>
-      <section className={`oltra-glass oltra-panel ${styles.filters}`}>
-        <div className={styles.filtersHeader}>
-          <div>
-            <div className="oltra-label">INSPIRE</div>
-            <h1 className={styles.title}>Find where to go next</h1>
-          </div>
-
-          <p className={styles.intro}>
-            Explore destinations by season, trip purpose, and direct-flight
-            radius.
-          </p>
-        </div>
-
-        <div className={styles.filterGrid}>
-          <DropdownField
-            label="Starting point"
-            valueLabel={origin.label}
-            open={openMenu === "origin"}
-            onToggle={() =>
-              setOpenMenu((prev) => (prev === "origin" ? null : "origin"))
-            }
-          >
-            <div className={styles.dropdownScroll}>
-              {SORTED_ORIGIN_CITIES.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  className={`${styles.dropdownOption} ${
-                    origin.label === item.label
-                      ? styles.dropdownOptionActive
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setOrigin(item);
-                    setOpenMenu(null);
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </DropdownField>
-
-          <DropdownField
-            label="Month"
-            valueLabel={month.charAt(0).toUpperCase() + month.slice(1)}
-            open={openMenu === "month"}
-            onToggle={() =>
-              setOpenMenu((prev) => (prev === "month" ? null : "month"))
-            }
-          >
-            <div className={styles.dropdownScroll}>
-              {MONTHS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`${styles.dropdownOption} ${
-                    month === item ? styles.dropdownOptionActive : ""
-                  }`}
-                  onClick={() => {
-                    setMonth(item);
-                    setOpenMenu(null);
-                  }}
-                >
-                  {item.charAt(0).toUpperCase() + item.slice(1)}
-                </button>
-              ))}
-            </div>
-          </DropdownField>
-
-          <DropdownField
-            label="Purpose"
-            valueLabel={selectedPurposeLabel}
-            open={openMenu === "purpose"}
-            onToggle={() =>
-              setOpenMenu((prev) => (prev === "purpose" ? null : "purpose"))
-            }
-          >
-            <div className={styles.dropdownScroll}>
-              {PURPOSES.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  className={`${styles.dropdownOption} ${
-                    purpose === item.value ? styles.dropdownOptionActive : ""
-                  }`}
-                  onClick={() => {
-                    setPurpose(item.value);
-                    setOpenMenu(null);
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </DropdownField>
-
-          <DropdownField
-            label="Max direct flight time"
-            valueLabel={`${maxFlightHours} hour${
-              maxFlightHours > 1 ? "s" : ""
-            }`}
-            open={openMenu === "flight"}
-            onToggle={() =>
-              setOpenMenu((prev) => (prev === "flight" ? null : "flight"))
-            }
-          >
-            <div className={styles.dropdownScroll}>
-              {FLIGHT_HOURS.map((hour) => (
-                <button
-                  key={hour}
-                  type="button"
-                  className={`${styles.dropdownOption} ${
-                    maxFlightHours === hour
-                      ? styles.dropdownOptionActive
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setMaxFlightHours(hour);
-                    setOpenMenu(null);
-                  }}
-                >
-                  {hour} hour{hour > 1 ? "s" : ""}
-                </button>
-              ))}
-            </div>
-          </DropdownField>
-        </div>
-      </section>
-
       <section className={styles.content}>
         <aside className={`oltra-glass oltra-panel ${styles.sidebar}`}>
-          <div className={styles.sidebarHeader}>
-            <div className="oltra-label">RESULTS</div>
-            <div className={styles.resultCount}>
-              {matches.length} destination{matches.length === 1 ? "" : "s"}
+          <div className={styles.filters}>
+            <div className={styles.filtersHeader}>
+              <p className={styles.intro}>
+                Explore destinations by season, trip purpose, and direct-flight
+                radius.
+              </p>
+            </div>
+
+            <div className={styles.filterGrid}>
+              <DropdownField
+                label="Month"
+                valueLabel={monthLabel}
+                open={openMenu === "month"}
+                onToggle={() =>
+                  setOpenMenu((prev) => (prev === "month" ? null : "month"))
+                }
+              >
+                <div className={styles.dropdownScroll}>
+                  {MONTHS.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className={`${styles.dropdownOption} ${
+                        month === item ? styles.dropdownOptionActive : ""
+                      }`}
+                      onClick={() => {
+                        setMonth(item);
+                        setOpenMenu(null);
+                      }}
+                    >
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </DropdownField>
+
+              <DropdownField
+                label="Purpose"
+                valueLabel={selectedPurposeLabel}
+                open={openMenu === "purpose"}
+                onToggle={() =>
+                  setOpenMenu((prev) => (prev === "purpose" ? null : "purpose"))
+                }
+              >
+                <div className={styles.dropdownScroll}>
+                  {PURPOSES.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className={`${styles.dropdownOption} ${
+                        purpose === item.value ? styles.dropdownOptionActive : ""
+                      }`}
+                      onClick={() => {
+                        setPurpose(item.value);
+                        setOpenMenu(null);
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </DropdownField>
+
+              <DropdownField
+                label="Max direct flight time"
+                valueLabel={`${maxFlightHours} hour${
+                  maxFlightHours > 1 ? "s" : ""
+                }`}
+                open={openMenu === "flight"}
+                onToggle={() =>
+                  setOpenMenu((prev) => (prev === "flight" ? null : "flight"))
+                }
+              >
+                <div className={styles.dropdownScroll}>
+                  {FLIGHT_HOURS.map((hour) => (
+                    <button
+                      key={hour}
+                      type="button"
+                      className={`${styles.dropdownOption} ${
+                        maxFlightHours === hour
+                          ? styles.dropdownOptionActive
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setMaxFlightHours(hour);
+                        setOpenMenu(null);
+                      }}
+                    >
+                      {hour} hour{hour > 1 ? "s" : ""}
+                    </button>
+                  ))}
+                </div>
+              </DropdownField>
+
+              <DropdownField
+                label="Starting point"
+                valueLabel={origin.label}
+                open={openMenu === "origin"}
+                onToggle={() =>
+                  setOpenMenu((prev) => (prev === "origin" ? null : "origin"))
+                }
+              >
+                <div className={styles.dropdownScroll}>
+                  {SORTED_ORIGIN_CITIES.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className={`${styles.dropdownOption} ${
+                        origin.label === item.label
+                          ? styles.dropdownOptionActive
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setOrigin(item);
+                        setOpenMenu(null);
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </DropdownField>
             </div>
           </div>
 
-          <div className={styles.destinationList}>
-            {matches.length === 0 ? (
-              <div className={`oltra-output ${styles.destinationCard}`}>
-                <div className={styles.destinationTitle}>No matching destinations</div>
-                <div className={styles.destinationMeta}>
-                  Try increasing max direct flight time or changing purpose/month.
-                </div>
+          <div className={styles.resultsBlock}>
+            <div className={styles.sidebarHeader}>
+              <div className="oltra-label">Results</div>
+              <div className={styles.resultCount}>
+                {matches.length} destination{matches.length === 1 ? "" : "s"}
               </div>
-            ) : (
-              matches.map((match) => (
-                <article
-                  key={match.city.id}
-                  className={`oltra-output ${styles.destinationCard}`}
-                >
+            </div>
+
+            <div className={styles.destinationList}>
+              {matches.length === 0 ? (
+                <div className={`oltra-output ${styles.destinationCard}`}>
                   <div className={styles.destinationTitle}>
-                    {match.city.city}, {match.city.country}
+                    No matching destinations
                   </div>
                   <div className={styles.destinationMeta}>
-                    {match.city.region} · {match.city.hotelCount} hotels
+                    Try increasing max direct flight time or changing purpose/month.
                   </div>
-                  <div className={styles.destinationMeta}>
-                    {match.selectedMonthTempC}°C avg ·{" "}
-                    {match.estimatedFlightHours}h approx.
-                  </div>
-                </article>
-              ))
-            )}
+                </div>
+              ) : (
+                matches.map((match) => {
+                  const isActive = activeCityId === match.city.id;
+
+                  return (
+                    <button
+                      key={match.city.id}
+                      type="button"
+                      className={`oltra-output ${styles.destinationCard} ${
+                        isActive ? styles.destinationCardActive : ""
+                      }`}
+                      onMouseEnter={() => setActiveCityId(match.city.id)}
+                      onFocus={() => setActiveCityId(match.city.id)}
+                      onClick={() => goToHotels(match)}
+                    >
+                      <div className={styles.destinationTitle}>
+                        {match.city.city}, {match.city.country}
+                      </div>
+                      <div className={styles.destinationMeta}>
+                        {match.city.region} · {match.city.hotelCount} hotels
+                      </div>
+                      <div className={styles.destinationMeta}>
+                        {match.selectedMonthTempC}°C avg ·{" "}
+                        {match.estimatedFlightHours}h approx.
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
         </aside>
 
         <section className={styles.mapPane}>
-          <InspireMapView matches={matches} />
+          <InspireMapView
+            matches={matches}
+            activeCityId={activeCityId}
+            onSelectCity={(match) => {
+              setActiveCityId(match.city.id);
+              goToHotels(match);
+            }}
+          />
         </section>
       </section>
     </div>

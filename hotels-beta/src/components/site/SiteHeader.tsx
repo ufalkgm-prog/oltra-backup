@@ -10,6 +10,7 @@ type SiteHeaderProps = {
 };
 
 const currencies = ["EUR", "USD", "GBP", "CHF", "AED"];
+const CURRENCY_STORAGE_KEY = "oltra_currency";
 
 function ChevronDown() {
   return (
@@ -36,6 +37,8 @@ export default function SiteHeader({
 }: SiteHeaderProps) {
   const [user, setUser] = useState<any>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState(currentCurrency);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -62,6 +65,45 @@ export default function SiteHeader({
       window.removeEventListener("scroll", onScroll);
     };
   }, [supabase]);
+
+  useEffect(() => {
+    const stored =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem(CURRENCY_STORAGE_KEY)
+        : null;
+
+    if (stored && currencies.includes(stored)) {
+      setSelectedCurrency(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest(".oltra-site-header__currency")) {
+        setCurrencyOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  function updateCurrency(currency: string) {
+    setSelectedCurrency(currency);
+    setCurrencyOpen(false);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
+      window.dispatchEvent(
+        new CustomEvent("oltra:currency-change", {
+          detail: { currency },
+        })
+      );
+    }
+  }
 
   return (
     <header className={`oltra-site-header ${isScrolled ? "is-scrolled" : ""}`}>
@@ -100,24 +142,37 @@ export default function SiteHeader({
             Members
           </Link>
 
-          <details className="oltra-site-header__currency">
-            <summary className="oltra-site-header__currency-trigger">
-              <span>{currentCurrency}</span>
+          <div className="oltra-site-header__currency">
+            <button
+              type="button"
+              className="oltra-site-header__currency-trigger"
+              onClick={() => setCurrencyOpen((prev) => !prev)}
+              aria-haspopup="listbox"
+              aria-expanded={currencyOpen}
+            >
+              <span>{selectedCurrency}</span>
               <span className="oltra-site-header__currency-chevron">
                 <ChevronDown />
               </span>
-            </summary>
+            </button>
 
-            <div className="oltra-site-header__currency-panel oltra-dropdown-panel">
-              <div className="oltra-dropdown-list">
-                {currencies.map((currency) => (
-                  <button key={currency} type="button" className="oltra-dropdown-item">
-                    {currency}
-                  </button>
-                ))}
+            {currencyOpen ? (
+              <div className="oltra-site-header__currency-panel oltra-dropdown-panel">
+                <div className="oltra-dropdown-list" role="listbox">
+                  {currencies.map((currency) => (
+                    <button
+                      key={currency}
+                      type="button"
+                      className="oltra-dropdown-item"
+                      onClick={() => updateCurrency(currency)}
+                    >
+                      {currency}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </details>
+            ) : null}
+          </div>
         </nav>
       </div>
     </header>

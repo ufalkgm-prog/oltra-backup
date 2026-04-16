@@ -6,29 +6,22 @@ type DirectusRestaurantRow = {
   status?: string | null;
   sort?: number | null;
   rank?: number | null;
-
   restaurant_name?: string | null;
   slug?: string | null;
-
   description?: string | null;
   highlights?: string | null;
   cuisine?: string | null;
-
   country?: string | null;
   region?: string | null;
   city?: string | null;
   local_area?: string | null;
   state_province__county__island?: string | null;
-
   lat?: number | string | null;
   lng?: number | string | null;
-
   www?: string | null;
   insta?: string | null;
-
   restaurant_setting?: string | null;
   restaurant_style?: string | null;
-
   awards?: unknown;
   hotel_name_hint?: string | null;
   sources?: string | null;
@@ -62,29 +55,22 @@ export function normalizeRestaurant(row: DirectusRestaurantRow): RestaurantRecor
     status: row.status ?? null,
     sort: row.sort ?? null,
     rank: row.rank ?? null,
-
     restaurant_name: row.restaurant_name?.trim() || "Untitled restaurant",
     slug: row.slug ?? null,
-
     description: row.description ?? null,
     highlights: row.highlights ?? null,
     cuisine: row.cuisine ?? null,
-
     country: row.country ?? null,
     region: row.region ?? null,
     city: row.city ?? null,
     local_area: row.local_area ?? null,
     state_province__county__island: row.state_province__county__island ?? null,
-
     lat: toNumber(row.lat),
     lng: toNumber(row.lng),
-
     www: row.www ?? null,
     insta: row.insta ?? null,
-
     restaurant_setting: row.restaurant_setting ?? null,
     restaurant_style: row.restaurant_style ?? null,
-
     awards: normalizeAwards(row.awards),
     hotel_name_hint: row.hotel_name_hint ?? null,
     sources: row.sources ?? null,
@@ -122,20 +108,19 @@ function buildRestaurantFields() {
 
 export async function getRestaurantCities(): Promise<string[]> {
   const params = new URLSearchParams({
-    fields: "city,status",
+    fields: "city",
+    "filter[status][_eq]": "published",
     sort: "city",
-    limit: "500",
+    limit: "-1",
   });
 
-  const rows = await directusFetchJson<Pick<DirectusRestaurantRow, "city" | "status">[]>(
+  const rows = await directusFetchJson<Pick<DirectusRestaurantRow, "city">[]>(
     `/items/restaurants?${params.toString()}`
   );
 
   const cityMap = new Map<string, string>();
 
   for (const row of rows ?? []) {
-    if (row.status !== "published") continue;
-
     const originalCity = normalizeText(row.city);
     if (!originalCity) continue;
 
@@ -150,33 +135,40 @@ export async function getRestaurantCities(): Promise<string[]> {
 
 export async function getRestaurantsByCity(city: string): Promise<RestaurantRecord[]> {
   const requestedCity = normalizeText(city);
-
   if (!requestedCity) return [];
 
   const params = new URLSearchParams({
     fields: buildRestaurantFields(),
     sort: "rank,sort,restaurant_name",
-    limit: "200",
+    "filter[status][_eq]": "published",
+    "filter[city][_eq]": requestedCity,
+    limit: "-1",
   });
 
   const rows = await directusFetchJson<DirectusRestaurantRow[]>(
     `/items/restaurants?${params.toString()}`
   );
 
-  const allRows = (rows ?? []).map(normalizeRestaurant);
-  const cityKey = normalizeCityKey(requestedCity);
-
-  const exactCityMatches = allRows.filter((r) => {
-    return r.status === "published" && normalizeCityKey(r.city) === cityKey;
-  });
+  const exactCityMatches = (rows ?? []).map(normalizeRestaurant);
 
   if (exactCityMatches.length > 0) {
     return exactCityMatches;
   }
 
-  const fallbackMatches = allRows.filter((r) => {
-    if (r.status !== "published") return false;
+  const fallbackParams = new URLSearchParams({
+    fields: buildRestaurantFields(),
+    sort: "rank,sort,restaurant_name",
+    "filter[status][_eq]": "published",
+    limit: "-1",
+  });
 
+  const fallbackRows = await directusFetchJson<DirectusRestaurantRow[]>(
+    `/items/restaurants?${fallbackParams.toString()}`
+  );
+
+  const cityKey = normalizeCityKey(requestedCity);
+
+  return (fallbackRows ?? []).map(normalizeRestaurant).filter((r) => {
     const haystack = [
       r.city,
       r.local_area,
@@ -190,6 +182,4 @@ export async function getRestaurantsByCity(city: string): Promise<RestaurantReco
 
     return haystack.includes(cityKey);
   });
-
-  return fallbackMatches;
 }

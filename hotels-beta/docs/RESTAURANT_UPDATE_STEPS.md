@@ -1,9 +1,10 @@
 Updating Directus restaurants from JSON:
 Insert output from prompt into restaurants_import.json
 Then run from terminal:
-pwd
-ls scripts
-DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/directus-upsert-restaurants.mjs --file scripts/restaurants_import.json
+
+DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/directus-upsert-restaurants.mjs --file scripts/restaurants_import.json --dry-run --debug
+
+DOTENV_CONFIG_PATH=.env.local node -r dotenv/config scripts/directus-upsert-restaurants.mjs --file scripts/restaurants_import.json --verify
 
 
 Cities included:

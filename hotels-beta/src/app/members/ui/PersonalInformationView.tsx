@@ -4,10 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
 import { DEFAULT_MEMBER_PROFILE } from "@/lib/members/defaults";
 import type { MemberBirthday, MemberProfile } from "@/lib/members/types";
-import {
-  fetchMemberProfileBrowser,
-  saveMemberProfileBrowser,
-} from "@/lib/members/db";
+import { fetchMemberProfileBrowser, saveMemberProfileBrowser } from "@/lib/members/db";
+import { createClient } from "@/lib/supabase/client";
 
 type Option = {
   value: string;
@@ -80,7 +78,7 @@ export default function PersonalInformationView({
   const [errorMessage, setErrorMessage] = useState("");
   const [showLeavePrompt, setShowLeavePrompt] = useState(false);
   const pendingHrefRef = useRef<string | null>(null);
-
+  const supabase = useMemo(() => createClient(), []);
   const isDirty = useMemo(
     () => !profilesEqual(profile, savedProfile),
     [profile, savedProfile]
@@ -243,6 +241,17 @@ export default function PersonalInformationView({
       setErrorMessage("Could not save personal information.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+    async function handleLogout() {
+    try {
+      setErrorMessage("");
+      setStatusMessage("");
+      await supabase.auth.signOut();
+      window.location.href = "/login";
+    } catch {
+      setErrorMessage("Could not log out.");
     }
   }
 
@@ -494,6 +503,14 @@ export default function PersonalInformationView({
                 disabled={isSaving}
               >
                 {isSaving ? "Saving..." : "Save"}
+              </button>
+
+              <button
+                type="button"
+                className="oltra-button-secondary members-action-button"
+                onClick={handleLogout}
+              >
+                Log out
               </button>
 
               <button

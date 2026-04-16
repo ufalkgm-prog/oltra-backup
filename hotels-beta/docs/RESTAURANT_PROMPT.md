@@ -1,10 +1,12 @@
-Task: Identify the 25 most relevant high-end restaurants in SINGAPORE, SINGAPORE for a luxury dining customer, and output the results in a format that maps cleanly into a Directus restaurants database.
+Task: Identify the 25 most relevant high-end restaurants in the Saint Tropez area, France for a luxury dining customer, and output the results in a format that maps cleanly into a Directus restaurants database.
 The objective is not to create a generic “best restaurants” list.
 The objective is to identify the restaurants that are most relevant to an affluent, international, design-conscious diner, typically aged 35+, choosing where to book for lunch or dinner.
 The final list should combine:
 1. the city’s Michelin-starred restaurants and any restaurants recognized by World’s 50 Best Restaurants, and
 2. the strongest non-Michelin alternatives targeting the same luxury customer segment.
 These non-Michelin restaurants should be places that a Michelin customer would realistically consider booking instead of a Michelin restaurant on a given night: venues with similar spending power, clientele, and culinary standards, often with stronger atmosphere, design, or social appeal.
+3. VERY IMPORTANT: These restaurants must be included with the same information as the other restaurants: Matsuhisa, Palladio, Le Café, Beefbar, Kinugawa, Gigi, Jardin Tropezina, L'Opera, La Petite Plage, La Vegue d'Or, La Reserve a la Plage, Le Patio, Le B. at Byblos, Nao, Salama, Zuma. Also include these beach clubs only open for lunch + note that they are beach clobs and only open for lunch in the highlight: Bagatelle, Byblos Beach, LouLou, Verde Beach, Nikki Beach, Les Palmiers.
+So to arrive at the total of 25 restaurants you only need to find 2 more amazing restaurants that I have missed.
 
 ________________________________________
 Core definition of relevance
@@ -374,13 +376,21 @@ Required JSON structure
 ]
 
 Final output requirements:
-- Return only one raw JSON array.
+
+- You MUST wrap the entire JSON output inside a single markdown code block.
+- The code block MUST start with ```json and end with ``` on its own line.
+- Inside the code block, output ONLY the JSON array.
+- Do NOT include any text before or after the code block.
+- Do NOT include explanations, comments, or markdown outside the code block.
+
 - The JSON must be fully valid and parseable with JSON.parse.
-- Every object must be on a single line where possible, and no string value may contain any newline, carriage return, or tab characters.
+- Every object must be on a single line where possible.
+- No string value may contain newline, carriage return, or tab characters.
 - Do not wrap lines inside quoted strings.
 - Do not insert line breaks inside URLs.
 - Use only straight ASCII double quotes for JSON strings.
 - Escape any internal double quotes correctly.
-- Before returning, perform a final internal check that the entire response is valid minified JSON and that copying it directly into a .json file will parse without edits.
-- lat, lng, www, and insta must be explicitly researched before final output and should be populated whenever verification is possible.
-- ALWAYS provide output in a copy-paste box.
+
+- lat, lng, www, and insta must be explicitly researched and populated wherever possible.
+
+- If you cannot comply with the code block requirement, do NOT output anything.

@@ -73,16 +73,35 @@ export default function OltraSelect({
       if (event.key === "Escape") setOpen(false);
     }
 
+    function handlePointerOver(event: PointerEvent) {
+      if (!open) return;
+
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      if (rootRef.current?.contains(target)) return;
+
+      const hoveredInteractive = target.closest(
+        'input, button, select, textarea, [role="button"], [data-oltra-control="true"]'
+      );
+
+      if (hoveredInteractive) {
+        setOpen(false);
+      }
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("focusin", handleFocusIn);
     document.addEventListener("keydown", handleEscape);
+    document.addEventListener("pointerover", handlePointerOver);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("focusin", handleFocusIn);
       document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("pointerover", handlePointerOver);
     };
-  }, []);
+  }, [open]);
 
   const selected = useMemo(
     () => options.find((opt) => opt.value === selectedValue),

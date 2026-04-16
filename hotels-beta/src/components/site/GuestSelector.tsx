@@ -48,18 +48,46 @@ export default function GuestSelector({
       }
     }
 
+    function handleFocusIn(event: FocusEvent) {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
 
+    function handlePointerOver(event: PointerEvent) {
+      if (!open) return;
+
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      if (rootRef.current?.contains(target)) return;
+
+      const hoveredInteractive = target.closest(
+        'input, button, select, textarea, [role="button"], [data-oltra-control="true"]'
+      );
+
+      if (hoveredInteractive) {
+        setOpen(false);
+      }
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("focusin", handleFocusIn);
     document.addEventListener("keydown", handleEscape);
+    document.addEventListener("pointerover", handlePointerOver);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("focusin", handleFocusIn);
       document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("pointerover", handlePointerOver);
     };
-  }, []);
+  }, [open]);
 
   const summaryLabel = useMemo(() => {
     const selection: GuestSelection = { adults, kids, kidAges };
@@ -76,7 +104,11 @@ export default function GuestSelector({
   }
 
   return (
-    <div ref={rootRef} className={`${styles.root} ${className}`}>
+    <div
+      ref={rootRef}
+      className={`${styles.root} ${className}`}
+      data-oltra-control="true"
+    >
       <input type="hidden" name="adults" value={String(adults)} />
       <input type="hidden" name="kids" value={String(kids)} />
       {Array.from({ length: 6 }, (_, idx) => {

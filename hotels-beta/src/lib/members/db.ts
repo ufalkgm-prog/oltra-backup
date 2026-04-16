@@ -39,16 +39,19 @@ type TripChoice = {
   label: string;
 };
 
-type AddHotelToTripResult = {
-  duplicate: boolean;
-  overlapWarning: boolean;
-};
-
 type AddRestaurantToTripResult = {
   duplicate: boolean;
   overlapWarning: boolean;
 };
 
+type AddFavoriteHotelResult = {
+  status: "added" | "already_exists";
+};
+
+type AddHotelToTripUiResult = {
+  status: "added" | "already_exists";
+  overlapWarning: boolean;
+};
 function parseBirthday(value?: string | null): MemberBirthday {
   if (!value) {
     return { day: "", month: "", year: "" };
@@ -680,13 +683,28 @@ export async function submitReviewBrowser(input: {
   if (error) throw error;
 }
 
+export async function getMemberActionAccessBrowser(): Promise<{
+  isLoggedIn: boolean;
+}> {
+  try {
+    // Reuse the same auth/session source already used by your browser member actions.
+    // Example: current Supabase session / current member user lookup.
+    // Return true only when a real authenticated member session exists.
+
+    const isLoggedIn = false; // replace with your real auth check
+    return { isLoggedIn };
+  } catch {
+    return { isLoggedIn: false };
+  }
+}
+
 export async function addFavoriteHotelBrowser(input: {
   hotelDirectusId: string;
   name: string;
   location: string;
   meta: string;
   thumbnail?: string | null;
-}): Promise<void> {
+}): Promise<AddFavoriteHotelResult> {
   const supabase = createBrowserClient();
 
   const {
@@ -696,6 +714,19 @@ export async function addFavoriteHotelBrowser(input: {
 
   if (userError || !user) {
     throw new Error("Not authenticated");
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("member_favorite_hotels")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("hotel_directus_id", input.hotelDirectusId)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existing) {
+    return { status: "already_exists" };
   }
 
   const payload: FavoriteHotelInsert = {
@@ -709,9 +740,11 @@ export async function addFavoriteHotelBrowser(input: {
 
   const { error } = await supabase
     .from("member_favorite_hotels")
-    .upsert(payload, { onConflict: "user_id,hotel_directus_id" });
+    .insert(payload);
 
   if (error) throw error;
+
+  return { status: "added" };
 }
 
 export async function addFavoriteRestaurantBrowser(input: {
@@ -903,7 +936,7 @@ export async function addHotelToTripBrowser(input: {
   thumbnail?: string | null;
   checkIn?: string | null;
   checkOut?: string | null;
-}): Promise<AddHotelToTripResult> {
+}): Promise<AddHotelToTripUiResult> {
   const supabase = createBrowserClient();
 
   const {
@@ -931,7 +964,7 @@ export async function addHotelToTripBrowser(input: {
 
   if (duplicate) {
     return {
-      duplicate: true,
+      status: "already_exists",
       overlapWarning: false,
     };
   }
@@ -959,7 +992,7 @@ export async function addHotelToTripBrowser(input: {
   if (error) throw error;
 
   return {
-    duplicate: false,
+    status: "added",
     overlapWarning,
   };
 }
