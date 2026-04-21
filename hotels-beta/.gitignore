@@ -43,3 +43,7 @@ next-env.d.ts
 # backups
 backups/*.sql
 backups/*.sql.gz
+
+# Agoda
+scripts/agoda/agoda.csv
+scripts/agoda/output/

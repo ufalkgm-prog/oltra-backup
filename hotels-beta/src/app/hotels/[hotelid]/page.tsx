@@ -6,6 +6,7 @@ import {
   buildBookingLink,
   type BookingSearchParams,
 } from "@/lib/hotels/buildBookingLink";
+import { getAgodaPhotos } from "@/lib/agoda/content";
 
 type Hotel = {
   id: string | number;
@@ -52,6 +53,14 @@ type Hotel = {
   booking_label?: string | null;
   booking_notes?: string | null;
   official_website_booking_url?: string | null;
+
+  // Agoda
+  agoda_hotel_id?: string | null;
+  agoda_photo1?: string | null;
+  agoda_photo2?: string | null;
+  agoda_photo3?: string | null;
+  agoda_photo4?: string | null;
+  agoda_photo5?: string | null;  
 };
 
 function toArray<T>(v: T[] | null | undefined): T[] {
@@ -153,6 +162,12 @@ async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
               "settings.settings_id.*",
               "styles.styles_id.*",
               "awards.awards_id.*",
+              "agoda_hotel_id",
+              "agoda_photo1",
+              "agoda_photo2",
+              "agoda_photo3",
+              "agoda_photo4",
+              "agoda_photo5",
             ].join(",")
           ),
       ].join("&")
@@ -205,6 +220,12 @@ async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
                 "settings.settings_id.*",
                 "styles.styles_id.*",
                 "awards.awards_id.*",
+                "agoda_hotel_id",
+                "agoda_photo1",
+                "agoda_photo2",
+                "agoda_photo3",
+                "agoda_photo4",
+                "agoda_photo5",
               ].join(",")
             ),
         ].join("&")
@@ -259,6 +280,12 @@ async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
               "settings.settings_id.*",
               "styles.styles_id.*",
               "awards.awards_id.*",
+              "agoda_hotel_id",
+              "agoda_photo1",
+              "agoda_photo2",
+              "agoda_photo3",
+              "agoda_photo4",
+              "agoda_photo5",
             ].join(",")
           ),
       ].join("&")
@@ -281,6 +308,8 @@ export default async function HotelDetailPage({
   const hotel = await fetchHotelByHotelidOrId(hotelid);
 
   if (!hotel) notFound();
+
+  const agodaPhotos = getAgodaPhotos(hotel.agoda_hotel_id);
 
   const loc = locationLine(hotel);
 
@@ -328,6 +357,19 @@ export default async function HotelDetailPage({
 
       {/* Hero */}
       <header className="mb-10">
+
+        {agodaPhotos.length > 0 && (
+          <div className="mb-8 grid gap-3 sm:grid-cols-2">
+            {agodaPhotos.slice(0, 5).map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
+              />
+            ))}
+          </div>
+        )}
+        
         <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
           {hotel.hotel_name ?? "Hotel"}
         </h1>

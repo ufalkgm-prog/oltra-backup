@@ -1,0 +1,229 @@
+Processing 6 rows
+PATCH FAILED
+{
+  "id": "1621",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "47248",
+    "agoda_hotel_name": "Fairmont Chateau Whistler Hotel",
+    "agoda_city": "Whistler (BC)",
+    "agoda_country": "Canada",
+    "agoda_addressline1": "4599 Chateau Boulevard",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "V8E 1G1",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -122.94622,
+    "agoda_latitude": 50.116837,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=47248",
+    "agoda_photo1": "http://pix3.agoda.net/hotelimages/472/47248/47248_17062319170054042908.jpg?s=312x&ca=6&ce=1",
+    "agoda_photo2": "http://pix1.agoda.net/hotelimages/22628611/344213485/305c2b5b7d20f3f657867479b493f09b.jpg?s=312x&ca=19&ce=1",
+    "agoda_photo3": "http://pix5.agoda.net/hotelimages/472/47248/47248_17062319170054042910.jpg?s=312x&ca=6&ce=1",
+    "agoda_photo4": "http://pix3.agoda.net/hotelimages/472/47248/47248_17062319170054042914.jpg?s=312x&ca=6&ce=1",
+    "agoda_photo5": "http://pix5.agoda.net/hotelimages/472/47248/47248_17062319170054042916.jpg?s=312x&ca=6&ce=1",
+    "agoda_overview": "Fairmont Chateau Whistler Hotel provides flawless service and all the necessary facilities for visitors. Share your photos and respond to emails at your convenience, thanks to the free Wi-Fi internet access offered by hotel. Should you require transportation to or from the airport, hotel is able to organize it prior to your arrival date.Taxi, car hire and shuttle offerings at the hotel simplify arranging your excursions, explorations, and additional activities in Whistler (BC). Visitors can take advantage of the accessible parking options directly at the hotel. Reception services such as concierge service, express check-in or check-out, luggage storage and safety deposit boxes are available to accommodate your requirements.Securing top-notch tickets and snagging sought-after dining reservations become effortless, thanks to the hotel's ticket service and tours.Relax and feel the warmth in the hotel's inviting lobby, featuring an enchanting on-site fireplace.Traveling with minimal baggage is achievable at Fairmont Chateau Whistler Hotel, as the hotel's laundromat, dry cleaning service and laundry service ensures your garments stay fresh. Room amenities like 24-hour room service, room service and daily housekeeping contribute to making a perfect selection for your stay.Minor items you neglected to bring won't cause major issues! Simply visit convenience stores to acquire what's necessary. The hotel maintains a completely smoke-free zone, providing a breathable atmosphere. Smoking is limited to specified smoking zones.Each accommodation at Fairmont Chateau Whistler Hotel is thoughtfully created and adorned to provide visitors with a comfortable, home-like atmosphere.In certain rooms, the hotel offers linen service, blackout curtains and air conditioning for guest convenience and satisfaction.At Fairmont Chateau Whistler Hotel, the uniquely tailored rooms provide a configuration choice resembling a balcony or terrace. In select rooms, guests at the hotel can enjoy top-notch in-room entertainment with daily newspaper, television, in-room video streaming and cable TV available for their convenience.Rest assured, in a few chosen rooms, you will find the convenience of a refrigerator, a coffee or tea maker and mini bar at your disposal. Maintain your cleanliness and comfort using a hair dryer, toiletries and bathrobes available in select guest restrooms. Embark on your holiday experience in the most ideal manner. Commence each morning of your visit with an on-site breakfast.Experience the delight of a fresh morning by savoring excellent coffee at the cafe situated within hotel. Should you prefer not to venture out for a meal, the enticing culinary choices at hotel are always available for your satisfaction.Experience an unforgettable evening with your fellow travelers just a short distance away, at hotel's bar.Throughout the day and evening, grab a bite to eat from hotel's self-service vending machines whenever you please. Indulge in the numerous pursuits available at Fairmont Chateau Whistler Hotel. Experience daily skiing adventures with convenient proximity to the on-site ski slopes and ski equipment rentals. Unwind after a long day by stopping by massage, hot tub, solarium, steam room, spa and sauna to rejuvenate your senses. Each day at hotel, immerse yourself in the invigorating waters of the pool, perfect for a rejuvenating plunge or a series of revitalizing laps.Bypass the formal attire and choose a laid-back mixed drink or brew at hotel's waterside lounge. For individuals who don't want to skip their exercise routine, visiting the hotel fitness center ensures you maintain your vitality and wellness.",
+    "agoda_number_of_reviews": 218,
+    "agoda_rating_average": 9.1
+  }
+}
+FAIL 1621 Patch failed for id=1621
+PATCH FAILED
+{
+  "id": "1622",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "6693355",
+    "agoda_hotel_name": "Fairmont Waterfront",
+    "agoda_city": "Vancouver (BC)",
+    "agoda_country": "Canada",
+    "agoda_addressline1": "900 Canada Place Way",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "V6C 3L5",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -123.113388,
+    "agoda_latitude": 49.2873,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=6693355",
+    "agoda_photo1": "http://pix1.agoda.net/hotelimages/6693355/-1/eea93777c907f5bcbb3cbd07f1d4f286.jpg?s=312x&ca=13&ce=1",
+    "agoda_photo2": "http://pix1.agoda.net/hotelimages/669/6693355/6693355_19022121320072439739.jpg?s=312x&ca=7&ce=1",
+    "agoda_photo3": "http://pix5.agoda.net/hotelimages/6693355/-1/10fa9eef4520aa57e61cf88be0e5b41e.jpg?s=312x&ca=13&ce=1",
+    "agoda_photo4": "http://pix5.agoda.net/hotelimages/6693355/-1/d3f6799b5b320e2af83d3a8a19cc0682.jpg?s=312x&ca=7&ce=1",
+    "agoda_photo5": "http://pix4.agoda.net/hotelimages/6693355/-1/85bcfa70cf81fed1c47aace530a5a9c1.jpg?s=312x&ca=7&ce=1",
+    "agoda_overview": "At Fairmont Waterfront, exceptional service and top-notch amenities create a memorable experience for guests. Complimentary internet access is available in the hotel to ensure you stay connected during your visit. Discover the wonders of Vancouver (BC) with ease by utilizing the services provided by taxi and car hire. For guests with their own vehicle, parking facilities are provided.Continuously receive the support you require through front desk amenities such as concierge service, express check-in or check-out, luggage storage and safety deposit boxes.At the hotel, their ticket service and tours is also capable of assisting with booking tickets and securing reservations for entertainment and adventures.Always look your best in your preferred attire with the dry cleaning service and laundry service provided at Fairmont Waterfront.Craving relaxation? In-room amenities such as 24-hour room service, room service and daily housekeeping allow you to maximize your time spent inside the room. Due to health concerns, smoking is strictly prohibited within the entire premises of hotel. For the health and well-being of all guests and staff, smoking is restricted exclusively to assigned zones.Accommodations come equipped with all the conveniences required for a restful night's slumber. A selection of rooms feature linen service, blackout curtains and air conditioning to ensure your comfort and convenience. A few accommodations at Fairmont Waterfront also include unique design elements like a balcony or terrace. A few chosen rooms are equipped with television and in-room video streaming to ensure guest amusement.In certain rooms, the hotel offers visitors access to a refrigerator and mini bar. Fairmont Waterfront offers a hair dryer, toiletries and bathrobes in the restrooms of specific accommodations.An additional advantage for guests is the executive lounge, which offers an outstandingly cozy and excellently furnished environment for relaxation. A delightful breakfast is the perfect way to begin your day, and at Fairmont Waterfront, you can always indulge in a scrumptious meal on-site. Allow your journey to be free from the pangs of hunger! On-site eateries offer delicious and accessible meal choices. An evening spent at hotel's bar can offer as much enjoyment as venturing out with your fellow travelers.At Fairmont Waterfront, affordable refreshments are available 24/7 through the convenient vending machines on-site.At Fairmont Waterfront, guests can take pleasure in the delightful recreational amenities provided for their entertainment. At the hotel, a wide array of leisure activities guarantees a fulfilling experience during your visit. Enjoy skiing every day as the ski slopes on the premises provides seamless access for your convenience. Conclude your days in complete tranquility by paying a visit to massage, hot tub, salon and steam room for ultimate relaxation.At Fairmont Waterfront, a wide array of amenities guarantees a fulfilling experience throughout your visit. Make your holiday truly memorable by taking a rejuvenating plunge into the pool.At Fairmont Waterfront, the poolside bar provides an excellent incentive to enjoy extended hours in your swimwear.At the hotel fitness center, you have the option to engage in your daily exercise routine or simply alleviate your jet lag by breaking a sweat.",
+    "agoda_number_of_reviews": 103,
+    "agoda_rating_average": 8.9
+  }
+}
+FAIL 1622 Patch failed for id=1622
+PATCH FAILED
+{
+  "id": "1727",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "2449289",
+    "agoda_hotel_name": "The Langham Boston",
+    "agoda_city": "Boston (MA)",
+    "agoda_country": "United States",
+    "agoda_addressline1": "250 Franklin Street",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "02110",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -71.054626,
+    "agoda_latitude": 42.356293,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=2449289",
+    "agoda_photo1": "http://pix1.agoda.net/hotelimages/6796784/0/38c008b69dd38d8ed369732120e055b1.jpeg?s=312x&ce=3",
+    "agoda_photo2": "http://pix2.agoda.net/hotelimages/6796784/0/969c74f7dfd58d8e336205119140d85f.jpg?s=312x&ca=24&ce=0",
+    "agoda_photo3": "http://pix4.agoda.net/hotelimages/6796784/0/91e0b9ee15f02d98b1aea88473e2228c.jpeg?s=312x&ce=3",
+    "agoda_photo4": "http://pix5.agoda.net/hotelimages/6796784/0/df13ed62497dec075ae7263b2d78bf4f.jpeg?s=312x&ce=3",
+    "agoda_photo5": "http://pix5.agoda.net/hotelimages/6796784/0/ba745be84811e725792618c69258ac5d.jpeg?s=312x&ce=3",
+    "agoda_overview": "The Langham Boston provides flawless service and all the necessary facilities for visitors.Stay connected with your associates, as complimentary Wi-Fi is available during your entire visit. The hotel offers taxi and car hire amenities for your ease in navigating around Boston (MA).When arriving by car, take advantage of the hotel's convenient on-site parking facilities.The hotel offers reception amenities including concierge service, express check-in or check-out and luggage storage to ensure a comfortable stay for guests.The hotel also features a fireplace, providing a cozy ambience during cool evenings. Whether it's an extended stay or simply needing fresh attire, dry cleaning service and laundry service provided by hotel ensures your cherished travel garments stay spotless and accessible.Your stay will be comfortable with the presence of 24-hour room service, room service and daily housekeeping as an in-room amenity for your relaxation and enjoyment. To ensure the well-being and convenience of all visitors, smoking is strictly prohibited throughout the entire hotel. In order to ensure the utmost level of relaxation, the guestrooms feature an inviting design and are equipped with all basic necessities, creating a delightful stay experience. To ensure your satisfaction, certain rooms in the hotel come fitted with air conditioning for a more pleasant stay.Selected rooms offer in-room amusement like cable TV as a source of entertainment for guests to enjoy. Within specific rooms, a refrigerator and mini bar is conveniently available for your use.Understanding the significance of bathroom facilities in enhancing visitor contentment, hotel offers a hair dryer, toiletries and bathrobes within a few chosen chambers. Various excellent meal offerings at hotel ensure that enticing and easily accessible options are constantly available.Upon your arrival, don't miss experiencing bar for enjoyable in-house evening entertainment. Throughout the day, engage in the entertaining activities available at The Langham Boston.Make sure to discover the readily available beach at hotel. Unwind and conclude each day delightfully by stopping by massage, steam room, spa and sauna, ensuring a soothing experience. Unwind by the pool at hotel and cherish a leisurely moment.Guests who enjoy maintaining their fitness regimen while on holiday can visit the fitness center provided by hotel.",
+    "agoda_number_of_reviews": 19,
+    "agoda_rating_average": 9.3
+  }
+}
+FAIL 1727 Patch failed for id=1727
+PATCH FAILED
+{
+  "id": "1647",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "46063157",
+    "agoda_hotel_name": "The Riviera Maya EDITION at Kanai",
+    "agoda_city": "Playa Del Carmen",
+    "agoda_country": "Mexico",
+    "agoda_addressline1": "Paseo Kanai 14",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "77730",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -86.988731,
+    "agoda_latitude": 20.71887,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=46063157",
+    "agoda_photo1": "http://pix2.agoda.net/hotelimages/59428886/0/8a62e1189cb62e5de40dd0eff57c2352.jpeg?s=312x&ce=3",
+    "agoda_photo2": "http://pix5.agoda.net/hotelimages/59428886/895039222/157a6242b45d3cc04ff716aca2a29a04.jpeg?s=312x&ce=0",
+    "agoda_photo3": "http://pix1.agoda.net/hotelimages/59428886/0/1d44f64b2a872a920729d1afd265ff31.jpeg?s=312x&ce=3",
+    "agoda_photo4": "http://pix2.agoda.net/hotelimages/59428886/0/75fa0c66aad194779b31fb482306a272.jpeg?s=312x&ce=3",
+    "agoda_photo5": "http://pix4.agoda.net/hotelimages/59428886/0/3155308eee44239243507f8f3fe061cf.jpeg?s=312x&ce=3",
+    "agoda_overview": "Great care is taken to ensure guests experience comfort through top-notch services and amenities. Discovering Playa Del Carmen becomes even more accessible, thanks to the car hire amenities provided at the hotel.Parking is accessible, supplied by the hotel for guests who arrive by car. Reception services featuring safety deposit boxes are available to cater to your requirements.Repeatedly enjoy your best-loved attire with the aid of the dry cleaning service available at The Riviera Maya EDITION at Kanai. During leisurely days and evenings, in-room amenities such as room service and daily housekeeping enable you to maximize your stay in the room.Crafted for coziness, every guestroom provides an array of features, guaranteeing a tranquil night's sleep while maintaining the level of comfort. For an elevated experience at hotel, select rooms are equipped with air conditioning to improve your stay. Expand your in-room entertainment choices with various amenities, such as cable TV offered in certain accommodations. Rest assured that your hydration needs will be met, as some guestrooms are equipped with instant tea and mini bar. Maintain your cleanliness and comfort using a hair dryer and bathrobes available in select guest restrooms. Experience a fantastic evening effortlessly! Relish an entertaining night without venturing beyond the confines of the bar.",
+    "agoda_number_of_reviews": 1,
+    "agoda_rating_average": 10
+  }
+}
+FAIL 1647 Patch failed for id=1647
+PATCH FAILED
+{
+  "id": "1688",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "31455263",
+    "agoda_hotel_name": "Gansevoort Meatpacking NYC",
+    "agoda_city": "New York (NY)",
+    "agoda_country": "United States",
+    "agoda_addressline1": "18 9th Ave",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "10014",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -74.005852,
+    "agoda_latitude": 40.739944,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=31455263",
+    "agoda_photo1": "http://pix3.agoda.net/hotelimages/2288818/0/d9f8ba20d31c26eb372960300ae7c1b2.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo2": "http://pix3.agoda.net/hotelimages/2288818/0/c7cefffd9456759af432670e0e2bb27a.jpg?s=312x&ca=14&ce=1",
+    "agoda_photo3": "http://pix1.agoda.net/hotelimages/2288818/0/25df24dabc90d6b2020571f3d83a0f1b.jpg?s=312x&ca=14&ce=1",
+    "agoda_photo4": "http://pix3.agoda.net/hotelimages/2288818/0/1b422820f7ab809e4f61bfbcd8c3d908.jpg?s=312x&ca=27&ce=0",
+    "agoda_photo5": "http://pix2.agoda.net/hotelimages/2288818/0/ce65d4c77e77e245ab5f1daabfc4b949.jpg?s=312x&ca=27&ce=0",
+    "agoda_overview": "Gansevoort Meatpacking NYC provides flawless service and all the necessary facilities for visitors. Visitors can take advantage of the accessible parking options directly at the hotel. Indulge in the numerous pursuits available at Gansevoort Meatpacking NYC. Make certain to allocate time for discovering the shoreline, easily reachable right from the hotel. Each day at hotel, immerse yourself in the invigorating waters of the pool, perfect for a rejuvenating plunge or a series of revitalizing laps.",
+    "agoda_number_of_reviews": 37,
+    "agoda_rating_average": 9.2
+  }
+}
+FAIL 1688 Patch failed for id=1688
+PATCH FAILED
+{
+  "id": "1662",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "2461027",
+    "agoda_hotel_name": "Bernardus Lodge & Spa",
+    "agoda_city": "Carmel Valley (CA)",
+    "agoda_country": "United States",
+    "agoda_addressline1": "415 West Carmel Valley Road",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "93924",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -121.753922,
+    "agoda_latitude": 36.499352,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=2461027",
+    "agoda_photo1": "http://pix2.agoda.net/hotelimages/2461027/-1/8c03ea0a6c403a8fe3dcd493578cde90.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo2": "http://pix4.agoda.net/hotelimages/2461027/-1/e2695b60a1deee5d60a1e620a7cf45ee.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo3": "http://pix4.agoda.net/hotelimages/2461027/-1/20b9ea23641f894cf0f02734c3f82d0b.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo4": "http://pix4.agoda.net/hotelimages/2461027/-1/34af62c96fd892b0739081ded80f7cb7.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo5": "http://pix3.agoda.net/hotelimages/2461027/-1/29c97f3a233afc2c8c5b193d7589c178.jpg?s=312x&ca=9&ce=1",
+    "agoda_overview": "Bernardus Lodge & Spa provides flawless service and all the necessary facilities for visitors. Reception services featuring safety deposit boxes are available to cater to your requirements. During your stay at this fantastic resort, experience comfort and warmth from the delightful on-site fireplace on those chilly days and nights.Repeatedly enjoy your best-loved attire with the aid of the laundry service available at Bernardus Lodge & Spa. Crafted for coziness, every guestroom provides an array of features, guaranteeing a tranquil night's sleep while maintaining the level of comfort. For an elevated experience at resort, select rooms are equipped with air conditioning to improve your stay. At Bernardus Lodge & Spa, a selection of rooms can be found that showcase unique design elements such as a balcony or terrace.Expand your in-room entertainment choices with various amenities, such as cable TV offered in certain accommodations. In select rooms, the resort offers visitors access to mini bar. It is worth noting that certain guest bathrooms feature a hair dryer and toiletries for your convenience. Begin your holiday mornings right with your essential cup of coffee, offered daily at the cafe on-site.During your visit, indulge in a range of delightful culinary choices at resort to enhance your experience. During your stay at resort, an array of engaging activities and amenities guarantees a delightful experience. During your stay, the resort provides direct access to a beach, ensuring you remain near the sea throughout your visit. Treat and spoil yourself by stopping at spa and sauna for a memorable experience.Begin your holiday perfectly by taking a plunge into the swimming pool. At the resort, enjoy a laid-back beverage experience by the poolside bar, sipping on a soothing cocktail.",
+    "agoda_number_of_reviews": 26,
+    "agoda_rating_average": 9.5
+  }
+}
+FAIL 1662 Patch failed for id=1662

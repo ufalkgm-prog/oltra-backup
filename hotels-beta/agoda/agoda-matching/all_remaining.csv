@@ -1,0 +1,41 @@
+oltra_id,oltra_hotelid,oltra_hotel_name,oltra_city,oltra_country,agoda_hotel_id,agoda_hotel_name,agoda_city,agoda_country,score,source,decision,notes,second_best_agoda_hotel_id,second_best_agoda_hotel_name,second_best_score
+1195,,Anantara Resort Golden Triangle Thailand,Chiang Rai,Thailand,168870,Golden Triangle Palace,Chiang Rai,Thailand,85,match_possible_manual,RESEARCH,moderate name; country match; city match; rare token overlap,,,
+1402,,Katikies Santorini,Oia,Greece,75012069,Katikies Garden Santorini,Santorini,Greece,76.67,match_possible_manual,RESEARCH,moderate name; country match; rare token overlap,,,
+1559,,La Reserve Zurich,Zurich,Switzerland,70354,La Reserve EDEN AU LAC Zurich,Zürich,Switzerland,85,match_possible_manual,RESEARCH,moderate name; country match; city match; rare token overlap,,,
+1737,,"The Ocean Club, Bahamas",Paradise Island,USA,265519,Ocean Club Hotel,Cape May (NJ),United States,76.67,match_possible_manual,RESEARCH,moderate name; country match; rare token overlap,,,
+1104,,The Temple House,Chengdu,China,3014425,Temple House,Kathmandu,Nepal,80,match_possible_manual,RESEARCH,very strong name; rare token overlap,,,
+1765,,Thompson Savannah,Savannah,USA,354799,Savannah Lodge,Savannah (TN),United States,75,match_possible_manual,RESEARCH,moderate name; country match; city partial; rare token overlap,,,
+1006,,&Beyond Bateleur Camp,,Kenya,53655480,Classy & Beyond,Namulanda,Uganda,33.33,no_candidate,NO_CANDIDATE,rare token overlap,141,Sarova Whitesands Beach Resort & Spa,20
+1007,,&Beyond Kichwa Tembo Kenya,,Kenya,546711,Kenya Comfort Hotel Suites,Nairobi,Kenya,44,no_candidate,NO_CANDIDATE,country match; rare token overlap,546712,Kenya Comfort Hotel,44
+1372,,Althoff Grandhotel Schloss Bensberg,Cologne,Germany,64045,Althoff Hotel Furstenhof,Celle,Germany,44,no_candidate,NO_CANDIDATE,country match; rare token overlap,134223,Schloss Dottingen,44
+1317,,Aman Le Melezin,Courchevel 1850,France,7627293,Le Petit Randonneur,Courchevel,France,44,no_candidate,NO_CANDIDATE,country match; city partial,194593,Hotel Le A,43.33
+1245,,Amanera,Rio San Juan,Dominican Republic,1118262,Apartamentos Nuevo Amanecer,Rio San Juan,Dominican Republic,40,no_candidate,NO_CANDIDATE,country match; city match,2667681,Grand Bahia Principe San Juan ,40
+1655,,Amangani,Jackson Hole,USA,1905,Four Seasons Hotel Las Vegas,Las Vegas (NV),United States,20,no_candidate,NO_CANDIDATE,country match,1914,OUTRIGGER Reef Waikiki Beach Resort,20
+1656,,Amangiri,Canyon Point,USA,1905,Four Seasons Hotel Las Vegas,Las Vegas (NV),United States,20,no_candidate,NO_CANDIDATE,country match,1914,OUTRIGGER Reef Waikiki Beach Resort,20
+1116,,Amanjiwo,Borobudur,Indonesia,1961,Legian Beach Hotel,Bali,Indonesia,20,no_candidate,NO_CANDIDATE,country match,2009,Mercure Resort Sanur,20
+1066,,Amankora,Paro,Bhutan,564451,Nak Sel Boutique Hotel & Spa,Paro,Bhutan,40,no_candidate,NO_CANDIDATE,country match; city match,1189115,"Le Méridien Paro, Riverfront",40
+1226,,Amanoi,Vinh Hy Village,Vietnam,75224,Saigon Kim Lien Hotel - Vinh City,Vinh,Vietnam,30,no_candidate,NO_CANDIDATE,country match; city partial,280290,Muong Thanh Phuong Dong Hotel,30
+1193,,Amanpuri,Pansea Beach,Thailand,1867,Krabi Heritage Hotel,Krabi,Thailand,20,no_candidate,NO_CANDIDATE,country match,1930,Centara Hotel Hat Yai,20
+1256,,Amanyara,Providenciales,Turks & Caicos Islands,41119,Beaches Turks & Caicos Resort  [Deleted],Providenciales,Turks & Caicos Islands,40,no_candidate,NO_CANDIDATE,country match; city match,106651,Sibonne Beach Hotel,40
+1381,,Amanzoe,Argolida,Greece,1558,Plaka Hotel,Athens,Greece,20,no_candidate,NO_CANDIDATE,country match,1249,"Radisson Blu Park Hotel, Athens",20
+1009,,Angama Mara,,Kenya,1162358,Mara Leisure Camp,Narok,Kenya,43.33,no_candidate,NO_CANDIDATE,country match,1226073,Sentinel Mara Camp,43.33
+1420,,Ballyfin,Ballyfin,Ireland,2368,Trinity City Hotel,Dublin,Ireland,20,no_candidate,NO_CANDIDATE,country match,6,Marine Hotel,20
+1505,,Barvikha Hotel & Spa,Moscow,Russia,514948,Palace Hotel & SPA,Durres,Albania,35,no_candidate,NO_CANDIDATE,moderate name,1096275,No 139 Apartments ,35
+1248,,Cheval Blanc St-Barth Isle de France,Flamands,St. Barthelemy,60083,Hotel de France,St. Saviour,Jersey,30,no_candidate,NO_CANDIDATE,rare token overlap,112117,Hotel de France,30
+1249,,Eden Rock St Barths,St. Barthelemy,St. Barthelemy,20031592,Villa Eden Rock,Schœlcher,Martinique,35,no_candidate,NO_CANDIDATE,moderate name,6734280,EDEN BEACH SAINT-LOUIS,33.33
+1578,,Hotel Des Indes,Den Haag,The Netherlands,817860,Hotel des Palmistes,Cayenne,French Guiana,23.33,no_candidate,NO_CANDIDATE,,1242036,Hotel des Roches,23.33
+1271,,Hotel Motto,Vienna,Austria,3153,Hotel Atlanta,Vienna,Austria,40,no_candidate,NO_CANDIDATE,country match; city match,2590,Mercure Hotel Raphael Wien,40
+1010,,Il Moran,,Kenya,118966,Il Palazzin Hotel,St. Paul's Bay,Malta,23.33,no_candidate,NO_CANDIDATE,,417225,Hotel IL Castellino,23.33
+1253,,La Samanna,Marigot,St. Martin,261584,"La Samanna, A Belmond Hotel, St Martin",Saint Martin,Saint Martin (France),38,no_candidate,NO_CANDIDATE,rare token overlap,55333747,La Colline Enchantée,37.5
+1250,,Le Carl Gustaf,Gustavia,St. Barthelemy,556025,Le Sereno,Gustavia,Saint Barthelemy,37.5,no_candidate,NO_CANDIDATE,city match,1527599,Le Barthelemy Hotel & Spa,34
+1797,,Longitude 131°,Uluru-Kata Tjuta National Park,Australia,72228544,131 inn,Tainan,Taiwan,23.33,no_candidate,NO_CANDIDATE,,1920,Adina Town Hall Sydney,20
+1240,,Malliouhana Hotel & Spa,Long Bay Village,British Virgin Islands,514948,Palace Hotel & SPA,Durres,Albania,35,no_candidate,NO_CANDIDATE,moderate name,1096275,No 139 Apartments ,35
+1002,,Mombo Camp,,Botswana,197469,Avani Gaborone Resort & Casino,Gaborone,Botswana,20,no_candidate,NO_CANDIDATE,country match,216794,Cresta Thapama Hotel,20
+1060,,Namiri Plains,Namiri Plains,Tanzania,442335,The Plains Green,Nuwara Eliya,Sri Lanka,33.33,no_candidate,NO_CANDIDATE,rare token overlap,107812,Hotel White Sands Resort and Conference Centre,20
+1062,,Singita Faru Faru Lodge,Grumeti Game Reserve,Tanzania,107812,Hotel White Sands Resort and Conference Centre,Dar Es Salaam,Tanzania,20,no_candidate,NO_CANDIDATE,country match,107816,Four Points by Sheraton Dar es Salaam New Africa,20
+1035,,Singita Kwitonda Lodge,,Rwanda,189966,Kigali Serena Hotel,Kigali,Rwanda,20,no_candidate,NO_CANDIDATE,country match,788954,Inside Afrika Boutique Hotel,20
+1055,,Singita Lebombo Lodge,,South Africa,1981,Balmoral Hotel,Durban,South Africa,20,no_candidate,NO_CANDIDATE,country match,618,Southern Sun Waterfront Cape Town,20
+1065,,Singita Pamushana Lodge,Pamushana,Zimbabwe,103868,Holiday Inn Bulawayo Hotel By IHG,Bulawayo,Zimbabwe,20,no_candidate,NO_CANDIDATE,country match,103870,Holiday Inn Harare Hotel By IHG,20
+1064,,Singita Sasaskwa Lodge,Grumeti Game Reserve,Tanzania,107812,Hotel White Sands Resort and Conference Centre,Dar Es Salaam,Tanzania,20,no_candidate,NO_CANDIDATE,country match,107816,Four Points by Sheraton Dar es Salaam New Africa,20
+1107,,The Hari,Hong Kong,China,18456810,The Hari Hong Kong,Hong Kong,"Hong Kong SAR, China",43.33,no_candidate,NO_CANDIDATE,city match,39000514,Hari Club Beach Resort,23.33
+1015,,The Residence,Belle Mare,Mauritius,59245,Heritage Awali Golf & Spa Resort - All Inclusive,Mauritius Island,Mauritius,20,no_candidate,NO_CANDIDATE,country match,59248,Hilton Mauritius Resort & Spa,20

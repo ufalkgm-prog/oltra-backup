@@ -1,0 +1,852 @@
+Processing 629 rows
+OK 1652
+OK 1281
+OK 1618
+OK 1513
+OK 1591
+OK 1115
+OK 1276
+OK 1073
+OK 1774
+OK 1136
+OK 1016
+OK 1117
+OK 1183
+OK 1075
+OK 1197
+OK 1277
+OK 1383
+OK 1419
+OK 1598
+OK 1659
+OK 1541
+OK 1514
+OK 1594
+OK 1199
+OK 1625
+OK 1200
+OK 1626
+OK 1076
+OK 1542
+OK 1543
+OK 1661
+OK 1427
+OK 1428
+OK 1792
+OK 1044
+OK 1429
+OK 1824
+OK 1386
+OK 1373
+OK 1498
+OK 1387
+OK 1388
+OK 1389
+OK 1319
+OK 1517
+OK 1201
+OK 1228
+OK 1186
+OK 1795
+OK 1122
+OK 1432
+OK 1778
+OK 1433
+OK 1434
+OK 1789
+OK 1518
+OK 1435
+OK 1390
+OK 1628
+OK 1320
+OK 1321
+OK 1579
+OK 1158
+OK 1325
+OK 1159
+OK 1257
+OK 1123
+OK 1067
+OK 1494
+OK 1037
+OK 1779
+OK 1286
+OK 1796
+OK 1580
+OK 1326
+OK 1267
+OK 1421
+OK 1017
+OK 1045
+OK 1630
+OK 1375
+OK 1776
+OK 1667
+OK 1619
+OK 1620
+PATCH FAILED
+{
+  "id": "1621",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "47248",
+    "agoda_hotel_name": "Fairmont Chateau Whistler Hotel",
+    "agoda_city": "Whistler (BC)",
+    "agoda_country": "Canada",
+    "agoda_addressline1": "4599 Chateau Boulevard",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "V8E 1G1",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -122.94622,
+    "agoda_latitude": 50.116837,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=47248",
+    "agoda_photo1": "http://pix3.agoda.net/hotelimages/472/47248/47248_17062319170054042908.jpg?s=312x&ca=6&ce=1",
+    "agoda_photo2": "http://pix1.agoda.net/hotelimages/22628611/344213485/305c2b5b7d20f3f657867479b493f09b.jpg?s=312x&ca=19&ce=1",
+    "agoda_photo3": "http://pix5.agoda.net/hotelimages/472/47248/47248_17062319170054042910.jpg?s=312x&ca=6&ce=1",
+    "agoda_photo4": "http://pix3.agoda.net/hotelimages/472/47248/47248_17062319170054042914.jpg?s=312x&ca=6&ce=1",
+    "agoda_photo5": "http://pix5.agoda.net/hotelimages/472/47248/47248_17062319170054042916.jpg?s=312x&ca=6&ce=1",
+    "agoda_overview": "Fairmont Chateau Whistler Hotel provides flawless service and all the necessary facilities for visitors. Share your photos and respond to emails at your convenience, thanks to the free Wi-Fi internet access offered by hotel. Should you require transportation to or from the airport, hotel is able to organize it prior to your arrival date.Taxi, car hire and shuttle offerings at the hotel simplify arranging your excursions, explorations, and additional activities in Whistler (BC). Visitors can take advantage of the accessible parking options directly at the hotel. Reception services such as concierge service, express check-in or check-out, luggage storage and safety deposit boxes are available to accommodate your requirements.Securing top-notch tickets and snagging sought-after dining reservations become effortless, thanks to the hotel's ticket service and tours.Relax and feel the warmth in the hotel's inviting lobby, featuring an enchanting on-site fireplace.Traveling with minimal baggage is achievable at Fairmont Chateau Whistler Hotel, as the hotel's laundromat, dry cleaning service and laundry service ensures your garments stay fresh. Room amenities like 24-hour room service, room service and daily housekeeping contribute to making a perfect selection for your stay.Minor items you neglected to bring won't cause major issues! Simply visit convenience stores to acquire what's necessary. The hotel maintains a completely smoke-free zone, providing a breathable atmosphere. Smoking is limited to specified smoking zones.Each accommodation at Fairmont Chateau Whistler Hotel is thoughtfully created and adorned to provide visitors with a comfortable, home-like atmosphere.In certain rooms, the hotel offers linen service, blackout curtains and air conditioning for guest convenience and satisfaction.At Fairmont Chateau Whistler Hotel, the uniquely tailored rooms provide a configuration choice resembling a balcony or terrace. In select rooms, guests at the hotel can enjoy top-notch in-room entertainment with daily newspaper, television, in-room video streaming and cable TV available for their convenience.Rest assured, in a few chosen rooms, you will find the convenience of a refrigerator, a coffee or tea maker and mini bar at your disposal. Maintain your cleanliness and comfort using a hair dryer, toiletries and bathrobes available in select guest restrooms. Embark on your holiday experience in the most ideal manner. Commence each morning of your visit with an on-site breakfast.Experience the delight of a fresh morning by savoring excellent coffee at the cafe situated within hotel. Should you prefer not to venture out for a meal, the enticing culinary choices at hotel are always available for your satisfaction.Experience an unforgettable evening with your fellow travelers just a short distance away, at hotel's bar.Throughout the day and evening, grab a bite to eat from hotel's self-service vending machines whenever you please. Indulge in the numerous pursuits available at Fairmont Chateau Whistler Hotel. Experience daily skiing adventures with convenient proximity to the on-site ski slopes and ski equipment rentals. Unwind after a long day by stopping by massage, hot tub, solarium, steam room, spa and sauna to rejuvenate your senses. Each day at hotel, immerse yourself in the invigorating waters of the pool, perfect for a rejuvenating plunge or a series of revitalizing laps.Bypass the formal attire and choose a laid-back mixed drink or brew at hotel's waterside lounge. For individuals who don't want to skip their exercise routine, visiting the hotel fitness center ensures you maintain your vitality and wellness.",
+    "agoda_number_of_reviews": 218,
+    "agoda_rating_average": 9.1
+  }
+}
+FAIL 1621 Patch failed for id=1621
+OK 1812
+OK 1376
+OK 1546
+OK 1018
+PATCH FAILED
+{
+  "id": "1622",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "6693355",
+    "agoda_hotel_name": "Fairmont Waterfront",
+    "agoda_city": "Vancouver (BC)",
+    "agoda_country": "Canada",
+    "agoda_addressline1": "900 Canada Place Way",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "V6C 3L5",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -123.113388,
+    "agoda_latitude": 49.2873,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=6693355",
+    "agoda_photo1": "http://pix1.agoda.net/hotelimages/6693355/-1/eea93777c907f5bcbb3cbd07f1d4f286.jpg?s=312x&ca=13&ce=1",
+    "agoda_photo2": "http://pix1.agoda.net/hotelimages/669/6693355/6693355_19022121320072439739.jpg?s=312x&ca=7&ce=1",
+    "agoda_photo3": "http://pix5.agoda.net/hotelimages/6693355/-1/10fa9eef4520aa57e61cf88be0e5b41e.jpg?s=312x&ca=13&ce=1",
+    "agoda_photo4": "http://pix5.agoda.net/hotelimages/6693355/-1/d3f6799b5b320e2af83d3a8a19cc0682.jpg?s=312x&ca=7&ce=1",
+    "agoda_photo5": "http://pix4.agoda.net/hotelimages/6693355/-1/85bcfa70cf81fed1c47aace530a5a9c1.jpg?s=312x&ca=7&ce=1",
+    "agoda_overview": "At Fairmont Waterfront, exceptional service and top-notch amenities create a memorable experience for guests. Complimentary internet access is available in the hotel to ensure you stay connected during your visit. Discover the wonders of Vancouver (BC) with ease by utilizing the services provided by taxi and car hire. For guests with their own vehicle, parking facilities are provided.Continuously receive the support you require through front desk amenities such as concierge service, express check-in or check-out, luggage storage and safety deposit boxes.At the hotel, their ticket service and tours is also capable of assisting with booking tickets and securing reservations for entertainment and adventures.Always look your best in your preferred attire with the dry cleaning service and laundry service provided at Fairmont Waterfront.Craving relaxation? In-room amenities such as 24-hour room service, room service and daily housekeeping allow you to maximize your time spent inside the room. Due to health concerns, smoking is strictly prohibited within the entire premises of hotel. For the health and well-being of all guests and staff, smoking is restricted exclusively to assigned zones.Accommodations come equipped with all the conveniences required for a restful night's slumber. A selection of rooms feature linen service, blackout curtains and air conditioning to ensure your comfort and convenience. A few accommodations at Fairmont Waterfront also include unique design elements like a balcony or terrace. A few chosen rooms are equipped with television and in-room video streaming to ensure guest amusement.In certain rooms, the hotel offers visitors access to a refrigerator and mini bar. Fairmont Waterfront offers a hair dryer, toiletries and bathrobes in the restrooms of specific accommodations.An additional advantage for guests is the executive lounge, which offers an outstandingly cozy and excellently furnished environment for relaxation. A delightful breakfast is the perfect way to begin your day, and at Fairmont Waterfront, you can always indulge in a scrumptious meal on-site. Allow your journey to be free from the pangs of hunger! On-site eateries offer delicious and accessible meal choices. An evening spent at hotel's bar can offer as much enjoyment as venturing out with your fellow travelers.At Fairmont Waterfront, affordable refreshments are available 24/7 through the convenient vending machines on-site.At Fairmont Waterfront, guests can take pleasure in the delightful recreational amenities provided for their entertainment. At the hotel, a wide array of leisure activities guarantees a fulfilling experience during your visit. Enjoy skiing every day as the ski slopes on the premises provides seamless access for your convenience. Conclude your days in complete tranquility by paying a visit to massage, hot tub, salon and steam room for ultimate relaxation.At Fairmont Waterfront, a wide array of amenities guarantees a fulfilling experience throughout your visit. Make your holiday truly memorable by taking a rejuvenating plunge into the pool.At Fairmont Waterfront, the poolside bar provides an excellent incentive to enjoy extended hours in your swimwear.At the hotel fitness center, you have the option to engage in your daily exercise routine or simply alleviate your jet lag by breaking a sweat.",
+    "agoda_number_of_reviews": 103,
+    "agoda_rating_average": 8.9
+  }
+}
+FAIL 1622 Patch failed for id=1622
+OK 1781
+OK 1395
+OK 1204
+OK 1601
+OK 1079
+OK 1670
+OK 1004
+OK 1005
+OK 1671
+OK 1547
+OK 1438
+OK 1329
+OK 1415
+OK 1287
+OK 1105
+OK 1106
+OK 1581
+OK 1124
+OK 1672
+OK 1288
+OK 1522
+OK 1439
+OK 1109
+OK 1673
+OK 1278
+OK 1187
+OK 1676
+OK 1125
+OK 1822
+OK 1804
+OK 1205
+OK 1262
+OK 1602
+OK 1678
+OK 1163
+OK 1164
+OK 1019
+OK 1813
+OK 1633
+OK 1681
+OK 1039
+OK 1682
+OK 1229
+OK 1440
+OK 1683
+OK 1138
+OK 1270
+OK 1507
+OK 1258
+OK 1684
+OK 1523
+OK 1548
+OK 1443
+OK 1444
+OK 1549
+OK 1550
+OK 1551
+OK 1445
+OK 1540
+OK 1447
+OK 1448
+OK 1553
+OK 1139
+OK 1289
+OK 1555
+OK 1264
+OK 1290
+OK 1526
+OK 1332
+OK 1336
+OK 1337
+OK 1338
+OK 1279
+OK 1339
+OK 1489
+OK 1783
+OK 1490
+OK 1527
+OK 1346
+OK 1280
+OK 1454
+OK 1455
+OK 1456
+OK 1399
+OK 1458
+OK 1209
+OK 1230
+OK 1508
+OK 1459
+OK 1400
+OK 1020
+OK 1401
+OK 1273
+OK 1557
+OK 1360
+OK 1819
+OK 1021
+OK 1348
+OK 1558
+OK 1349
+OK 1636
+OK 1355
+OK 1356
+OK 1460
+OK 1562
+OK 1358
+OK 1820
+OK 1361
+OK 1047
+OK 1362
+OK 1588
+OK 1823
+OK 1603
+OK 1210
+OK 1528
+OK 1582
+OK 1082
+OK 1292
+OK 1126
+OK 1604
+OK 1150
+OK 1022
+OK 1690
+OK 1462
+OK 1691
+OK 1363
+OK 1529
+OK 1083
+OK 1188
+OK 1148
+OK 1530
+OK 1693
+OK 1564
+OK 1694
+OK 1695
+OK 1696
+OK 1409
+OK 1265
+OK 1266
+OK 1639
+OK 1697
+OK 1698
+OK 1699
+OK 1294
+OK 1011
+OK 1029
+OK 1295
+OK 1411
+OK 1033
+OK 1412
+OK 1013
+OK 1641
+OK 1034
+OK 1642
+OK 1493
+OK 1606
+OK 1274
+OK 1024
+OK 1464
+OK 1466
+OK 1565
+OK 1607
+OK 1701
+OK 1702
+OK 1128
+OK 1149
+OK 1703
+OK 1231
+OK 1061
+OK 1704
+OK 1211
+OK 1212
+OK 1259
+OK 1706
+OK 1471
+OK 1472
+OK 1608
+OK 1296
+OK 1129
+OK 1501
+OK 1189
+OK 1213
+OK 1364
+OK 1174
+OK 1084
+OK 1609
+OK 1610
+OK 1214
+OK 1085
+OK 1816
+OK 1593
+OK 1086
+OK 1087
+OK 1243
+OK 1297
+OK 1644
+OK 1708
+OK 1215
+OK 1645
+OK 1784
+OK 1532
+OK 1821
+OK 1473
+OK 1052
+OK 1026
+OK 1298
+OK 1365
+OK 1475
+OK 1236
+OK 1533
+OK 1799
+OK 1567
+OK 1503
+OK 1534
+OK 1072
+OK 1175
+OK 1234
+OK 1476
+OK 1477
+OK 1589
+OK 1592
+OK 1042
+OK 1218
+OK 1497
+OK 1499
+OK 1176
+OK 1177
+OK 1800
+OK 1512
+OK 1178
+OK 1568
+OK 1510
+OK 1536
+OK 1301
+OK 1585
+OK 1805
+OK 1716
+OK 1717
+OK 1718
+OK 1570
+OK 1302
+OK 1571
+OK 1720
+OK 1303
+OK 1611
+OK 1304
+OK 1810
+OK 1306
+OK 1723
+OK 1479
+OK 1724
+PATCH FAILED
+{
+  "id": "1727",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "2449289",
+    "agoda_hotel_name": "The Langham Boston",
+    "agoda_city": "Boston (MA)",
+    "agoda_country": "United States",
+    "agoda_addressline1": "250 Franklin Street",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "02110",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -71.054626,
+    "agoda_latitude": 42.356293,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=2449289",
+    "agoda_photo1": "http://pix1.agoda.net/hotelimages/6796784/0/38c008b69dd38d8ed369732120e055b1.jpeg?s=312x&ce=3",
+    "agoda_photo2": "http://pix2.agoda.net/hotelimages/6796784/0/969c74f7dfd58d8e336205119140d85f.jpg?s=312x&ca=24&ce=0",
+    "agoda_photo3": "http://pix4.agoda.net/hotelimages/6796784/0/91e0b9ee15f02d98b1aea88473e2228c.jpeg?s=312x&ce=3",
+    "agoda_photo4": "http://pix5.agoda.net/hotelimages/6796784/0/df13ed62497dec075ae7263b2d78bf4f.jpeg?s=312x&ce=3",
+    "agoda_photo5": "http://pix5.agoda.net/hotelimages/6796784/0/ba745be84811e725792618c69258ac5d.jpeg?s=312x&ce=3",
+    "agoda_overview": "The Langham Boston provides flawless service and all the necessary facilities for visitors.Stay connected with your associates, as complimentary Wi-Fi is available during your entire visit. The hotel offers taxi and car hire amenities for your ease in navigating around Boston (MA).When arriving by car, take advantage of the hotel's convenient on-site parking facilities.The hotel offers reception amenities including concierge service, express check-in or check-out and luggage storage to ensure a comfortable stay for guests.The hotel also features a fireplace, providing a cozy ambience during cool evenings. Whether it's an extended stay or simply needing fresh attire, dry cleaning service and laundry service provided by hotel ensures your cherished travel garments stay spotless and accessible.Your stay will be comfortable with the presence of 24-hour room service, room service and daily housekeeping as an in-room amenity for your relaxation and enjoyment. To ensure the well-being and convenience of all visitors, smoking is strictly prohibited throughout the entire hotel. In order to ensure the utmost level of relaxation, the guestrooms feature an inviting design and are equipped with all basic necessities, creating a delightful stay experience. To ensure your satisfaction, certain rooms in the hotel come fitted with air conditioning for a more pleasant stay.Selected rooms offer in-room amusement like cable TV as a source of entertainment for guests to enjoy. Within specific rooms, a refrigerator and mini bar is conveniently available for your use.Understanding the significance of bathroom facilities in enhancing visitor contentment, hotel offers a hair dryer, toiletries and bathrobes within a few chosen chambers. Various excellent meal offerings at hotel ensure that enticing and easily accessible options are constantly available.Upon your arrival, don't miss experiencing bar for enjoyable in-house evening entertainment. Throughout the day, engage in the entertaining activities available at The Langham Boston.Make sure to discover the readily available beach at hotel. Unwind and conclude each day delightfully by stopping by massage, steam room, spa and sauna, ensuring a soothing experience. Unwind by the pool at hotel and cherish a leisurely moment.Guests who enjoy maintaining their fitness regimen while on holiday can visit the fitness center provided by hotel.",
+    "agoda_number_of_reviews": 19,
+    "agoda_rating_average": 9.3
+  }
+}
+FAIL 1727 Patch failed for id=1727
+OK 1728
+OK 1090
+OK 1133
+OK 1308
+OK 1731
+OK 1733
+OK 1309
+OK 1537
+OK 1734
+OK 1368
+OK 1735
+OK 1736
+OK 1112
+OK 1027
+OK 1113
+OK 1114
+OK 1221
+OK 1092
+OK 1222
+OK 1093
+OK 1738
+OK 1094
+OK 1586
+OK 1310
+OK 1185
+OK 1740
+OK 1369
+OK 1095
+OK 1141
+OK 1742
+OK 1097
+OK 1744
+OK 1235
+OK 1417
+OK 1311
+OK 1613
+OK 1745
+OK 1380
+OK 1746
+OK 1747
+OK 1748
+OK 1749
+OK 1244
+OK 1098
+OK 1152
+OK 1142
+OK 1751
+OK 1752
+OK 1099
+OK 1180
+OK 1190
+OK 1623
+OK 1143
+OK 1614
+OK 1754
+OK 1755
+OK 1100
+OK 1144
+OK 1624
+OK 1814
+PATCH FAILED
+{
+  "id": "1647",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "46063157",
+    "agoda_hotel_name": "The Riviera Maya EDITION at Kanai",
+    "agoda_city": "Playa Del Carmen",
+    "agoda_country": "Mexico",
+    "agoda_addressline1": "Paseo Kanai 14",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "77730",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -86.988731,
+    "agoda_latitude": 20.71887,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=46063157",
+    "agoda_photo1": "http://pix2.agoda.net/hotelimages/59428886/0/8a62e1189cb62e5de40dd0eff57c2352.jpeg?s=312x&ce=3",
+    "agoda_photo2": "http://pix5.agoda.net/hotelimages/59428886/895039222/157a6242b45d3cc04ff716aca2a29a04.jpeg?s=312x&ce=0",
+    "agoda_photo3": "http://pix1.agoda.net/hotelimages/59428886/0/1d44f64b2a872a920729d1afd265ff31.jpeg?s=312x&ce=3",
+    "agoda_photo4": "http://pix2.agoda.net/hotelimages/59428886/0/75fa0c66aad194779b31fb482306a272.jpeg?s=312x&ce=3",
+    "agoda_photo5": "http://pix4.agoda.net/hotelimages/59428886/0/3155308eee44239243507f8f3fe061cf.jpeg?s=312x&ce=3",
+    "agoda_overview": "Great care is taken to ensure guests experience comfort through top-notch services and amenities. Discovering Playa Del Carmen becomes even more accessible, thanks to the car hire amenities provided at the hotel.Parking is accessible, supplied by the hotel for guests who arrive by car. Reception services featuring safety deposit boxes are available to cater to your requirements.Repeatedly enjoy your best-loved attire with the aid of the dry cleaning service available at The Riviera Maya EDITION at Kanai. During leisurely days and evenings, in-room amenities such as room service and daily housekeeping enable you to maximize your stay in the room.Crafted for coziness, every guestroom provides an array of features, guaranteeing a tranquil night's sleep while maintaining the level of comfort. For an elevated experience at hotel, select rooms are equipped with air conditioning to improve your stay. Expand your in-room entertainment choices with various amenities, such as cable TV offered in certain accommodations. Rest assured that your hydration needs will be met, as some guestrooms are equipped with instant tea and mini bar. Maintain your cleanliness and comfort using a hair dryer and bathrobes available in select guest restrooms. Experience a fantastic evening effortlessly! Relish an entertaining night without venturing beyond the confines of the bar.",
+    "agoda_number_of_reviews": 1,
+    "agoda_rating_average": 10
+  }
+}
+FAIL 1647 Patch failed for id=1647
+OK 1482
+OK 1153
+OK 1756
+OK 1101
+OK 1811
+OK 1757
+OK 1102
+OK 1056
+OK 1786
+OK 1787
+OK 1615
+OK 1758
+OK 1135
+OK 1224
+OK 1103
+OK 1759
+OK 1483
+OK 1154
+OK 1538
+OK 1648
+OK 1760
+OK 1145
+OK 1616
+OK 1484
+OK 1761
+OK 1146
+OK 1511
+OK 1762
+OK 1763
+OK 1572
+OK 1764
+OK 1225
+OK 1766
+OK 1815
+OK 1181
+OK 1575
+OK 1370
+OK 1485
+OK 1486
+OK 1576
+OK 1371
+OK 1488
+OK 1617
+OK 1768
+OK 1649
+OK 1769
+OK 1770
+OK 1577
+OK 1772
+OK 1773
+OK 1192
+OK 1653
+OK 1382
+OK 1196
+OK 1118
+OK 1425
+OK 1227
+OK 1237
+OK 1587
+OK 1663
+OK 1385
+OK 1817
+OK 1119
+OK 1544
+OK 1121
+OK 1545
+OK 1391
+OK 1629
+OK 1284
+OK 1160
+OK 1519
+OK 1495
+OK 1393
+OK 1394
+OK 1161
+OK 1631
+OK 1247
+OK 1521
+OK 1437
+OK 1396
+OK 1632
+OK 1677
+OK 1554
+OK 1595
+OK 1685
+OK 1333
+OK 1334
+OK 1782
+OK 1450
+OK 1634
+PATCH FAILED
+{
+  "id": "1688",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "31455263",
+    "agoda_hotel_name": "Gansevoort Meatpacking NYC",
+    "agoda_city": "New York (NY)",
+    "agoda_country": "United States",
+    "agoda_addressline1": "18 9th Ave",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "10014",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -74.005852,
+    "agoda_latitude": 40.739944,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=31455263",
+    "agoda_photo1": "http://pix3.agoda.net/hotelimages/2288818/0/d9f8ba20d31c26eb372960300ae7c1b2.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo2": "http://pix3.agoda.net/hotelimages/2288818/0/c7cefffd9456759af432670e0e2bb27a.jpg?s=312x&ca=14&ce=1",
+    "agoda_photo3": "http://pix1.agoda.net/hotelimages/2288818/0/25df24dabc90d6b2020571f3d83a0f1b.jpg?s=312x&ca=14&ce=1",
+    "agoda_photo4": "http://pix3.agoda.net/hotelimages/2288818/0/1b422820f7ab809e4f61bfbcd8c3d908.jpg?s=312x&ca=27&ce=0",
+    "agoda_photo5": "http://pix2.agoda.net/hotelimages/2288818/0/ce65d4c77e77e245ab5f1daabfc4b949.jpg?s=312x&ca=27&ce=0",
+    "agoda_overview": "Gansevoort Meatpacking NYC provides flawless service and all the necessary facilities for visitors. Visitors can take advantage of the accessible parking options directly at the hotel. Indulge in the numerous pursuits available at Gansevoort Meatpacking NYC. Make certain to allocate time for discovering the shoreline, easily reachable right from the hotel. Each day at hotel, immerse yourself in the invigorating waters of the pool, perfect for a rejuvenating plunge or a series of revitalizing laps.",
+    "agoda_number_of_reviews": 37,
+    "agoda_rating_average": 9.2
+  }
+}
+FAIL 1688 Patch failed for id=1688
+OK 1398
+OK 1496
+OK 1635
+OK 1168
+OK 1261
+OK 1404
+OK 1352
+OK 1347
+OK 1351
+OK 1405
+OK 1406
+OK 1777
+OK 1689
+OK 1291
+OK 1407
+OK 1040
+OK 1416
+OK 1170
+OK 1640
+OK 1605
+OK 1191
+OK 1468
+OK 1469
+OK 1531
+OK 1232
+OK 1474
+OK 1366
+OK 1088
+OK 1246
+OK 1110
+OK 1132
+OK 1031
+OK 1220
+OK 1710
+OK 1646
+OK 1713
+OK 1379
+OK 1612
+OK 1307
+OK 1801
+OK 1729
+OK 1732
+OK 1422
+OK 1134
+OK 1179
+OK 1739
+OK 1590
+OK 1223
+OK 1182
+OK 1573
+OK 1539
+OK 1487
+OK 1650
+OK 1651
+OK 1155
+OK 1194
+OK 1036
+OK 1424
+OK 1658
+OK 1660
+OK 1426
+OK 1515
+PATCH FAILED
+{
+  "id": "1662",
+  "status": 500,
+  "statusText": "",
+  "body": {
+    "errors": [
+      {
+        "message": "update \"hotels\" set \"agoda_hotel_id\" = $1, \"agoda_hotel_name\" = $2, \"agoda_city\" = $3, \"agoda_country\" = $4, \"agoda_addressline1\" = $5, \"agoda_addressline2\" = $6, \"agoda_zipcode\" = $7, \"agoda_star_rating\" = $8, \"agoda_longitude\" = $9, \"agoda_latitude\" = $10, \"agoda_url\" = $11, \"agoda_photo1\" = $12, \"agoda_photo2\" = $13, \"agoda_photo3\" = $14, \"agoda_photo4\" = $15, \"agoda_photo5\" = $16, \"agoda_number_of_reviews\" = $17, \"agoda_overview\" = $18, \"agoda_rating_average\" = $19 where \"id\" in ($20) - invalid input syntax for type integer: \"4.5\"",
+        "extensions": {
+          "code": "INTERNAL_SERVER_ERROR"
+        }
+      }
+    ]
+  },
+  "data": {
+    "agoda_hotel_id": "2461027",
+    "agoda_hotel_name": "Bernardus Lodge & Spa",
+    "agoda_city": "Carmel Valley (CA)",
+    "agoda_country": "United States",
+    "agoda_addressline1": "415 West Carmel Valley Road",
+    "agoda_addressline2": null,
+    "agoda_zipcode": "93924",
+    "agoda_star_rating": 4.5,
+    "agoda_longitude": -121.753922,
+    "agoda_latitude": 36.499352,
+    "agoda_url": "https://www.agoda.com/partners/partnersearch.aspx?hid=2461027",
+    "agoda_photo1": "http://pix2.agoda.net/hotelimages/2461027/-1/8c03ea0a6c403a8fe3dcd493578cde90.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo2": "http://pix4.agoda.net/hotelimages/2461027/-1/e2695b60a1deee5d60a1e620a7cf45ee.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo3": "http://pix4.agoda.net/hotelimages/2461027/-1/20b9ea23641f894cf0f02734c3f82d0b.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo4": "http://pix4.agoda.net/hotelimages/2461027/-1/34af62c96fd892b0739081ded80f7cb7.jpg?s=312x&ca=9&ce=1",
+    "agoda_photo5": "http://pix3.agoda.net/hotelimages/2461027/-1/29c97f3a233afc2c8c5b193d7589c178.jpg?s=312x&ca=9&ce=1",
+    "agoda_overview": "Bernardus Lodge & Spa provides flawless service and all the necessary facilities for visitors. Reception services featuring safety deposit boxes are available to cater to your requirements. During your stay at this fantastic resort, experience comfort and warmth from the delightful on-site fireplace on those chilly days and nights.Repeatedly enjoy your best-loved attire with the aid of the laundry service available at Bernardus Lodge & Spa. Crafted for coziness, every guestroom provides an array of features, guaranteeing a tranquil night's sleep while maintaining the level of comfort. For an elevated experience at resort, select rooms are equipped with air conditioning to improve your stay. At Bernardus Lodge & Spa, a selection of rooms can be found that showcase unique design elements such as a balcony or terrace.Expand your in-room entertainment choices with various amenities, such as cable TV offered in certain accommodations. In select rooms, the resort offers visitors access to mini bar. It is worth noting that certain guest bathrooms feature a hair dryer and toiletries for your convenience. Begin your holiday mornings right with your essential cup of coffee, offered daily at the cafe on-site.During your visit, indulge in a range of delightful culinary choices at resort to enhance your experience. During your stay at resort, an array of engaging activities and amenities guarantees a delightful experience. During your stay, the resort provides direct access to a beach, ensuring you remain near the sea throughout your visit. Treat and spoil yourself by stopping at spa and sauna for a memorable experience.Begin your holiday perfectly by taking a plunge into the swimming pool. At the resort, enjoy a laid-back beverage experience by the poolside bar, sipping on a soothing cocktail.",
+    "agoda_number_of_reviews": 26,
+    "agoda_rating_average": 9.5
+  }
+}
+FAIL 1662 Patch failed for id=1662
+OK 1600
+OK 1254
+OK 1818
+OK 1323
+OK 1157
+OK 1202
+OK 1285
+OK 1203
+OK 1374
+OK 1808
+OK 1666
+OK 1108
+OK 1328
+OK 1669
+OK 1239
+OK 1038
+OK 1206
+OK 1207
+OK 1165
+OK 1524
+OK 1330
+OK 1442
+OK 1446
+OK 1525
+OK 1556
+OK 1377
+OK 1451
+OK 1793
+OK 1272
+OK 1167
+OK 1457
+OK 1560
+OK 1353
+OK 1561
+OK 1255
+OK 1461
+OK 1637
+OK 1791
+OK 1809
+OK 1293
+OK 1051
+OK 1171
+OK 1467
+OK 1470
+OK 1707
+OK 1566
+OK 1251
+OK 1299
+OK 1233
+OK 1216
+OK 1217
+OK 1584
+OK 1597
+OK 1131
+OK 1535
+OK 1478
+OK 1111
+OK 1367
+OK 1151
+OK 1305
+OK 1480
+OK 1726
+OK 1091
+OK 1741
+OK 1750
+OK 1260
+OK 1806
+OK 1500
+OK 1788
+OK 1574
+OK 1504
