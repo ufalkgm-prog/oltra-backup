@@ -143,7 +143,7 @@ export default function OltraSelect({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={[
-          "oltra-select relative flex w-full items-center gap-2 pr-3",
+          "oltra-select relative flex w-full cursor-pointer items-center gap-2 pr-3",
           justifyClass,
           selectedValue ? "text-white" : "text-white/62",
         ].join(" ")}

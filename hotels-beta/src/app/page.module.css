@@ -92,7 +92,7 @@
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0.16em;
-  text-transform: uppercase;
+  text-transform: none;
   min-height: var(--oltra-button-height);
   height: var(--oltra-button-height);
   padding: 0 18px;
@@ -133,7 +133,7 @@
 }
 
 .includeLeft {
-  grid-column: 1 / 5;
+  grid-column: 1 / 4;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -142,7 +142,7 @@
 }
 
 .includeSearchButtonWrap {
-  grid-column: 5;
+  grid-column: 4 / 6;
   display: flex;
   align-items: flex-end;
   justify-content: stretch;

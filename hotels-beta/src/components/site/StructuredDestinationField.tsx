@@ -525,7 +525,7 @@ export default function StructuredDestinationField({
   function submitParentForm() {
     const form = rootRef.current?.closest("form");
     if (form instanceof HTMLFormElement) {
-      form.submit();
+      form.requestSubmit();
     }
   }
 

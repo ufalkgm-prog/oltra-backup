@@ -79,52 +79,65 @@ const hasMeaningfulFilters = Boolean(
     selected.styles.length
 );
 
-const [options, hotels, tax, suggestions] = await Promise.all([
+const hotelFields = [
+  "id",
+  "hotel_name",
+  "hotelid",
+  "published",
+  "country",
+  "region",
+  "city",
+  "local_area",
+  "lat",
+  "lng",
+  "highlights",
+  "www",
+  "insta",
+  "editor_rank_13",
+  "ext_points",
+  "description",
+  "affiliation",
+  "agoda_photo1",
+  "agoda_photo2",
+  "agoda_photo3",
+  "agoda_photo4",
+  "agoda_photo5",
+  "booking_provider",
+  "booking_url",
+  "booking_hotel_ref",
+  "booking_enabled",
+  "booking_label",
+  "booking_notes",
+  "official_website_booking_url",
+  "activities.activities_id.id",
+  "activities.activities_id.name",
+  "settings.settings_id.id",
+  "settings.settings_id.name",
+  "awards.awards_id.id",
+  "awards.awards_id.name",
+  "styles.styles_id.id",
+  "styles.styles_id.name",
+] as const;
+
+const [options, hotelsRaw, tax, suggestions] = await Promise.all([
   getHotelFilterOptions(),
-  hasMeaningfulFilters
-    ? getHotels({
-        fields: [
-          "id",
-          "hotel_name",
-          "hotelid",
-          "published",
-          "country",
-          "region",
-          "city",
-          "local_area",
-          "lat",
-          "lng",
-          "highlights",
-          "www",
-          "insta",
-          "editor_rank_13",
-          "ext_points",
-          "description",
-          "affiliation",
-          "booking_provider",
-          "booking_url",
-          "booking_hotel_ref",
-          "booking_enabled",
-          "booking_label",
-          "booking_notes",
-          "official_website_booking_url",
-          "activities.activities_id.id",
-          "activities.activities_id.name",
-          "settings.settings_id.id",
-          "settings.settings_id.name",
-          "awards.awards_id.id",
-          "awards.awards_id.name",
-          "styles.styles_id.id",
-          "styles.styles_id.name",
-        ],
-        filter,
-        sort: ["-editor_rank_13", "-ext_points", "hotel_name"],
-        limit: -1,
-      })
-    : Promise.resolve([]),
+  getHotels({
+    fields: hotelFields as unknown as string[],
+    filter: hasMeaningfulFilters ? filter : undefined,
+    sort: ["-editor_rank_13", "-ext_points", "hotel_name"],
+    limit: hasMeaningfulFilters ? -1 : 60,
+  }),
   fetchAllHotelTaxonomies(),
   getHotelSuggestionDataset(),
 ]);
+
+const hotelsPublished = hotelsRaw.filter((hotel) => hotel.published === true);
+
+const hotels = hasMeaningfulFilters
+  ? hotelsPublished
+  : hotelsPublished
+      .filter((hotel) => Number(hotel.ext_points ?? 0) > 15)
+      .slice(0, 12);
 
   return (
     <PageShell current="Hotels">

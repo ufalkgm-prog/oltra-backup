@@ -53,9 +53,11 @@ export default function LandingSearchPanel({
   const [fromValue, setFromValue] = useState(
     normalizeParam(initialSearchParams.from)
   );
+
   const [toValue, setToValue] = useState(
     normalizeParam(initialSearchParams.to)
   );
+
   const [guestSelection, setGuestSelection] = useState<GuestSelection>(
     readGuestSelection(initialSearchParams)
   );
@@ -71,6 +73,8 @@ export default function LandingSearchPanel({
   });
 
   const formRef = useRef<HTMLFormElement | null>(null);
+  const fromRef = useRef<HTMLInputElement | null>(null);
+  const toRef = useRef<HTMLInputElement | null>(null);
   const autoSubmitTimerRef = useRef<number | null>(null);
   const lastSubmittedKeyRef = useRef(
     buildComparableSearchKey(initialSearchParams)
@@ -97,45 +101,91 @@ export default function LandingSearchPanel({
     };
   }, []);
 
-  const restaurantsOnly = useMemo(
-    () => includes.length === 1 && includes[0] === "restaurants",
-    [includes]
-  );
-
   const hotelsSelected = includes.includes("hotels");
+  const flightsSelected = includes.includes("flights");
   const noVerticalSelected = includes.length === 0;
 
+  const bedroomsValue = normalizeParam(initialSearchParams.bedrooms);
+
+  const hasGuestDetails = guestSelection.adults > 0;
+  const hasRequiredStayDetails =
+    Boolean(fromValue) &&
+    Boolean(toValue) &&
+    hasGuestDetails &&
+    Boolean(bedroomsValue);
+
+  const fromDate = fromValue ? new Date(fromValue) : null;
+  const toDate = toValue ? new Date(toValue) : null;
+
+  const stayLengthMs =
+    fromDate && toDate ? toDate.getTime() - fromDate.getTime() : 0;
+
+  const maxStayLengthMs = 42 * 24 * 60 * 60 * 1000;
+
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const minToIso = fromValue
+    ? new Date(new Date(fromValue).getTime() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+
+  const datesAreValid =
+    Boolean(fromDate) &&
+    Boolean(toDate) &&
+    stayLengthMs > 0 &&
+    stayLengthMs <= maxStayLengthMs;
+
+  const resultCountTooLarge =
+    hotelsSelected &&
+    destinationState.hasSelection &&
+    destinationState.activeHotelCount > 50;
+
   const allowedTypes = useMemo<SuggestionType[]>(
-    () =>
-      hotelsSelected
-        ? ["hotel", "city", "country", "region", "purpose", "setting"]
-        : ["city"],
-    [hotelsSelected]
+    () => ["hotel", "city", "country", "region", "purpose", "setting"],
+    []
   );
 
   const searchDisabledReason = useMemo(() => {
     if (noVerticalSelected) {
-      return "Please select Hotels, Flights and/or Restaurants";
+      return "PLEASE SELECT HOTELS AND/OR FLIGHTS";
     }
 
-    if (!hotelsSelected) {
-      if (!destinationState.selectedTypes.includes("city")) {
-        return "Please select a city";
-      }
-      return "";
+    if (resultCountTooLarge) {
+      return "PLEASE LIMIT NO OF RESULTS";
     }
 
-    if (
-      !destinationState.hasSelection ||
-      destinationState.activeHotelCount > 50
-    ) {
-      return "Add more precise destination or purpose to limit search results.";
+    if (!hasRequiredStayDetails || !datesAreValid) {
+      return "PLEASE SELECT DATES AND GUEST DETAILS";
+    }
+
+    if (hotelsSelected && !destinationState.hasSelection) {
+      return "PLEASE LIMIT NO OF RESULTS";
+    }
+
+    if (flightsSelected && !destinationState.hasSelection) {
+      return "PLEASE LIMIT NO OF RESULTS";
     }
 
     return "";
-  }, [noVerticalSelected, hotelsSelected, destinationState]);
+  }, [
+    noVerticalSelected,
+    resultCountTooLarge,
+    hasRequiredStayDetails,
+    datesAreValid,
+    hotelsSelected,
+    flightsSelected,
+    destinationState,
+  ]);
 
   const searchIsActive = searchDisabledReason === "";
+
+  function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
+    ref.current?.focus();
+    ref.current?.showPicker?.();
+  }
 
   function scheduleAutoSubmit() {
     if (!hasSubmittedOnce) return;
@@ -153,6 +203,7 @@ export default function LandingSearchPanel({
 
       for (const [key, value] of formData.entries()) {
         if (key === "submitted") continue;
+
         const stringValue = String(value);
         if (stringValue) params.append(key, stringValue);
       }
@@ -204,13 +255,16 @@ export default function LandingSearchPanel({
           />
 
           <div className={styles.landingField}>
-            <span className="oltra-label">
-              {restaurantsOnly ? "Date" : "From"}
-            </span>
-            <div className={styles.dateFieldWrap}>
+            <span className="oltra-label">From</span>
+            <div
+              className={styles.dateFieldWrap}
+              onClick={() => openDatePicker(fromRef)}
+            >
               <input
+                ref={fromRef}
                 type="date"
                 name="from"
+                min={todayIso}
                 value={fromValue}
                 onChange={(e) => {
                   setFromValue(e.target.value);
@@ -219,7 +273,7 @@ export default function LandingSearchPanel({
                 onKeyDown={(e) => e.preventDefault()}
                 onBeforeInput={(e) => e.preventDefault()}
                 className={[
-                  "oltra-input w-full",
+                  "oltra-input w-full cursor-pointer",
                   fromValue ? "text-white" : "text-transparent caret-transparent",
                 ].join(" ")}
               />
@@ -229,62 +283,67 @@ export default function LandingSearchPanel({
             </div>
           </div>
 
-          {!restaurantsOnly ? (
-            <div className={styles.landingField}>
-              <span className="oltra-label">To</span>
-              <div className={styles.dateFieldWrap}>
-                <input
-                  type="date"
-                  name="to"
-                  value={toValue}
-                  onChange={(e) => {
-                    setToValue(e.target.value);
-                    scheduleAutoSubmit();
-                  }}
-                  onKeyDown={(e) => e.preventDefault()}
-                  onBeforeInput={(e) => e.preventDefault()}
-                  className={[
-                    "oltra-input w-full",
-                    toValue ? "text-white" : "text-transparent caret-transparent",
-                  ].join(" ")}
-                />
-                {!toValue ? (
-                  <span className={styles.datePlaceholder}>date</span>
-                ) : null}
-              </div>
+          <div className={styles.landingField}>
+            <span className="oltra-label">To</span>
+            <div
+              className={styles.dateFieldWrap}
+              onClick={() => openDatePicker(toRef)}
+            >
+              <input
+                ref={toRef}
+                type="date"
+                name="to"
+                min={minToIso}
+                value={toValue}
+                onChange={(e) => {
+                  setToValue(e.target.value);
+                  scheduleAutoSubmit();
+                }}
+                onKeyDown={(e) => e.preventDefault()}
+                onBeforeInput={(e) => e.preventDefault()}
+                className={[
+                  "oltra-input w-full cursor-pointer",
+                  toValue ? "text-white" : "text-transparent caret-transparent",
+                ].join(" ")}
+              />
+              {!toValue ? (
+                <span className={styles.datePlaceholder}>date</span>
+              ) : null}
             </div>
-          ) : null}
+          </div>
 
-          {!restaurantsOnly ? (
-            <>
-              <div className={styles.landingField}>
-                <span className="oltra-label">Guests</span>
-                <GuestSelector
-                  initialValue={guestSelection}
-                  className={styles.guestSelectorField}
-                />
-              </div>
+          <div className={styles.landingField}>
+            <span className="oltra-label">Guests</span>
+            <GuestSelector
+              initialValue={guestSelection}
+              className={styles.guestSelectorField}
+              onChange={(selection) => {
+                setGuestSelection(selection);
+                scheduleAutoSubmit();
+              }}
+            />
+          </div>
 
-              <div className={styles.landingField}>
-                <span className="oltra-label">Bedrooms</span>
-                <OltraSelect
-                  name="bedrooms"
-                  value={normalizeParam(initialSearchParams.bedrooms)}
-                  placeholder="#"
-                  align="left"
-                  options={[1, 2, 3, 4].map((n) => ({
-                    value: String(n),
-                    label: String(n),
-                  }))}
-                />
-              </div>
-            </>
-          ) : null}
+          <div className={styles.landingField}>
+            <span className="oltra-label">Bedrooms</span>
+            <OltraSelect
+              name="bedrooms"
+              value={normalizeParam(initialSearchParams.bedrooms)}
+              placeholder="#"
+              align="left"
+              options={[1, 2, 3, 4].map((n) => ({
+                value: String(n),
+                label: String(n),
+              }))}
+            />
+          </div>
         </div>
 
         <div className={styles.includeRow}>
           <div className={styles.includeLeft}>
-            <div className={`${styles.includeLabel} oltra-subheader`}>Search in</div>
+            <div className={`${styles.includeLabel} oltra-subheader`}>
+              Search in
+            </div>
 
             <label className={styles.includeOption}>
               <input
@@ -307,17 +366,6 @@ export default function LandingSearchPanel({
               />
               <span>Flights</span>
             </label>
-
-            <label className={styles.includeOption}>
-              <input
-                type="checkbox"
-                name="include"
-                value="restaurants"
-                checked={includes.includes("restaurants")}
-                onChange={() => toggleInclude("restaurants")}
-              />
-              <span>Restaurants</span>
-            </label>
           </div>
 
           <div className={styles.includeSearchButtonWrap}>
@@ -332,7 +380,10 @@ export default function LandingSearchPanel({
               disabled={!searchIsActive}
               title={searchDisabledReason || undefined}
             >
-              Search
+              {searchIsActive
+                ? "CHECK AVAILABILITY"
+                : searchDisabledReason.charAt(0) +
+                  searchDisabledReason.slice(1).toLowerCase()}
             </button>
           </div>
         </div>

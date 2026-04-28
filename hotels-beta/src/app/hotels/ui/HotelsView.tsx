@@ -98,17 +98,6 @@ const FEATURED_AWARDS = [
   },
 ] as const;
 
-const MANDARIN_ORIENTAL_BANGKOK_IMAGES = [
-  "/images/hotels/mobangkok/mobk1.webp",
-  "/images/hotels/mobangkok/mobk2.webp",
-  "/images/hotels/mobangkok/mobk3.webp",
-  "/images/hotels/mobangkok/mobk4.webp",
-  "/images/hotels/mobangkok/mobk5.webp",
-  "/images/hotels/mobangkok/mobk6.webp",
-  "/images/hotels/mobangkok/mobk7.webp",
-  "/images/hotels/mobangkok/mobk8.webp",
-];
-
 function ChevronDown({
   className = "",
 }: {
@@ -400,11 +389,38 @@ function getPriceSummary(searchParams: PageSearchParams, currency: string): stri
   return [`Price / total stay: up to ${max} ${currency}`];
 }
 
-function getHotelImageSet(hotel: HotelRecord): string[] {
-  const name = (hotel.hotel_name ?? "").trim().toLowerCase();
+function normalizeAgodaImage(url: string | null | undefined): string | null {
+  if (!url) return null;
 
-  if (name === "mandarin oriental bangkok") {
-    return MANDARIN_ORIENTAL_BANGKOK_IMAGES;
+  try {
+    const u = new URL(url);
+
+    // remove ALL query params (Agoda uses them for resizing/compression)
+    u.search = "";
+
+    // force https
+    u.protocol = "https:";
+
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+function getHotelImageSet(hotel: HotelRecord): string[] {
+  const agodaImages = [
+    hotel.agoda_photo1,
+    hotel.agoda_photo2,
+    hotel.agoda_photo3,
+    hotel.agoda_photo4,
+    hotel.agoda_photo5,
+  ]
+    .map((value) => normalizeAgodaImage(value))
+    .filter((value): value is string => Boolean(value))
+    .filter((value, index, array) => array.indexOf(value) === index);
+
+  if (agodaImages.length > 0) {
+    return agodaImages;
   }
 
   return PLACEHOLDERS;
@@ -542,6 +558,8 @@ export default function HotelsView(props: {
   const router = useRouter();
   const pathname = usePathname();
   const tripPickerRef = useRef<HTMLDivElement | null>(null);
+  const fromRef = useRef<HTMLInputElement | null>(null);
+  const toRef = useRef<HTMLInputElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -588,6 +606,61 @@ export default function HotelsView(props: {
     readGuestSelection(searchParams)
   );
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const minToIso = fromValue
+    ? new Date(new Date(fromValue).getTime() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+
+  const [bedroomsValue, setBedroomsValue] = useState(
+    normalizeParam(searchParams.bedrooms)
+  );
+
+  const fromDate = fromValue ? new Date(fromValue) : null;
+  const toDate = toValue ? new Date(toValue) : null;
+
+  const stayLengthMs =
+    fromDate && toDate ? toDate.getTime() - fromDate.getTime() : 0;
+
+  const maxStayLengthMs = 42 * 24 * 60 * 60 * 1000;
+
+  const hasGuestDetails = guestSelection.adults > 0;
+
+  const hasRequiredStayDetails =
+    Boolean(fromValue) &&
+    Boolean(toValue) &&
+    hasGuestDetails &&
+    Boolean(bedroomsValue);
+
+  const datesAreValid =
+    Boolean(fromDate) &&
+    Boolean(toDate) &&
+    stayLengthMs > 0 &&
+    stayLengthMs <= maxStayLengthMs;
+
+  const resultCountTooLarge =
+    hasMeaningfulFilters &&
+    !hasDirectHotelSelection &&
+    !hasCountrySelected &&
+    hotels.length > 50;
+
+  const searchDisabledReason = resultCountTooLarge
+    ? "Please limit no of results"
+    : !hasRequiredStayDetails || !datesAreValid
+      ? "Please select dates and guest details"
+      : "";
+
+  const searchIsActive = searchDisabledReason === "";
+
+  function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
+    ref.current?.focus();
+    ref.current?.showPicker?.();
+  }
+
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -616,6 +689,7 @@ export default function HotelsView(props: {
     setFromValue(normalizeParam(searchParams.from));
     setToValue(normalizeParam(searchParams.to));
     setGuestSelection(readGuestSelection(searchParams));
+    setBedroomsValue(normalizeParam(searchParams.bedrooms));
   }, [searchParams]);
 
   useEffect(() => {
@@ -747,6 +821,12 @@ export default function HotelsView(props: {
   }, [shouldShowFeatured, viewMode]);
 
   useEffect(() => {
+    if (effectiveView === "featured") {
+      setSelectedImageIndex(0);
+    }
+  }, [effectiveView]);
+
+  useEffect(() => {
     if (!memberActionMessage && !memberActionError) return;
 
     const timer = window.setTimeout(() => {
@@ -866,26 +946,64 @@ export default function HotelsView(props: {
       inner.textContent = "✦";
       el.appendChild(inner);
 
+      const popupImage = getHotelImageSet(hotel)[0] ?? PLACEHOLDERS[0];
+
+      const popupRoot = document.createElement("div");
+      popupRoot.className = "oltra-glass oltra-output hotel-map-popup";
+      popupRoot.style.minWidth = "260px";
+
+      const imageWrap = document.createElement("div");
+      imageWrap.style.marginBottom = "12px";
+      imageWrap.style.overflow = "hidden";
+      imageWrap.style.borderRadius = "12px";
+
+      const imageEl = document.createElement("img");
+      imageEl.src = popupImage;
+      imageEl.alt = "";
+      imageEl.style.display = "block";
+      imageEl.style.width = "100%";
+      imageEl.style.height = "120px";
+      imageEl.style.objectFit = "cover";
+
+      imageWrap.appendChild(imageEl);
+      popupRoot.appendChild(imageWrap);
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "hotel-map-popup__title";
+      titleEl.textContent = hotel.hotel_name ?? "Untitled hotel";
+      popupRoot.appendChild(titleEl);
+
+      const metaEl = document.createElement("div");
+      metaEl.className = "hotel-map-popup__meta";
+      metaEl.textContent = locationLine(hotel) || "—";
+      popupRoot.appendChild(metaEl);
+
+      if (hotel.highlights?.trim()) {
+        const descEl = document.createElement("div");
+        descEl.className = "hotel-map-popup__desc";
+        descEl.textContent = clampText(hotel.highlights, 120);
+        popupRoot.appendChild(descEl);
+      }
+
       const popup = new maplibregl.Popup({
         closeButton: false,
-        closeOnClick: true,
+        closeOnClick: false,
         closeOnMove: false,
         offset: 14,
-      }).setHTML(`
-        <div class="oltra-glass oltra-output hotel-map-popup">
-          <div class="hotel-map-popup__title">${hotel.hotel_name ?? "Untitled hotel"}</div>
-          <div class="hotel-map-popup__meta">${locationLine(hotel) || "—"}</div>
-          ${
-            hotel.highlights?.trim()
-              ? `<div class="hotel-map-popup__desc">${clampText(hotel.highlights, 120)}</div>`
-              : ""
-          }
-        </div>
-      `);
+      }).setDOMContent(popupRoot);
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .setPopup(popup)
+        .addTo(map);
 
       el.addEventListener("mouseenter", () => {
         try {
-          popup.setLngLat([lng, lat]).addTo(map);
+          popup.addTo(map);
+          marker.togglePopup();
+          if (!popup.isOpen()) {
+            marker.togglePopup();
+          }
         } catch {}
       });
 
@@ -902,11 +1020,6 @@ export default function HotelsView(props: {
         selectionFromMapRef.current = true;
         setSelectedHotelId(String(hotel.id));
       });
-
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([lng, lat])
-        .setPopup(popup)
-        .addTo(map);
 
       markersRef.current.push(marker);
       bounds.extend([lng, lat]);
@@ -927,7 +1040,7 @@ export default function HotelsView(props: {
     }
 
     map.resize();
-  }, [effectiveView, visibleHotels]);
+  }, [effectiveView, visibleHotels, selectedHotelId]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {
@@ -960,25 +1073,29 @@ export default function HotelsView(props: {
   
   const featuredHotels = useMemo(() => {
     if (!hotels.length) return [];
+
     return [...hotels]
       .sort((a, b) => getTotalPoints(b) - getTotalPoints(a))
+      .filter((hotel) => {
+        const images = getHotelImageSet(hotel);
+        return images.length > 0;
+      })
       .slice(0, 12);
   }, [hotels]);
 
-  const featuredHeroImages = MANDARIN_ORIENTAL_BANGKOK_IMAGES;
-
   useEffect(() => {
     if (effectiveView !== "featured") return;
+    if (featuredHotels.length <= 1) return;
 
     const timer = window.setInterval(() => {
-      setSelectedImageIndex((prev) => (prev + 1) % featuredHeroImages.length);
+      setSelectedImageIndex((prev) => (prev + 1) % featuredHotels.length);
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, [effectiveView, featuredHeroImages.length]);
+  }, [effectiveView, featuredHotels.length]);
 
   const featuredHotel =
-    featuredHotels[0] ??
+    featuredHotels[selectedImageIndex % Math.max(featuredHotels.length, 1)] ??
     hotels[0] ??
     {
       hotel_name: "Featured hotel",
@@ -989,6 +1106,9 @@ export default function HotelsView(props: {
       ext_points: 0,
       editor_rank_13: 0,
     };
+
+  const featuredHeroImage =
+    getHotelImageSet(featuredHotel as HotelRecord)[0] ?? PLACEHOLDERS[0];
 
   const selectedPriceLabels = useMemo(
     () => getPriceSummary(searchParams, activeCurrency),
@@ -1267,9 +1387,6 @@ export default function HotelsView(props: {
                 const form = e.currentTarget;
                 setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
               }}
-              onSubmit={(e) => {
-                e.preventDefault();
-              }}
             >
               <HiddenPreserveParams
                 searchParams={searchParams}
@@ -1349,16 +1466,21 @@ export default function HotelsView(props: {
 
                   <div className="relative md:col-span-3" data-oltra-control="true">
                     <div className="oltra-label">From</div>
-                    <div className="relative">
+                    <div
+                      className="relative cursor-pointer"
+                      onClick={() => openDatePicker(fromRef)}
+                    >
                       <input
+                        ref={fromRef}
                         type="date"
                         name="from"
+                        min={todayIso}
                         value={fromValue}
                         onChange={(e) => setFromValue(e.target.value)}
                         onKeyDown={(e) => e.preventDefault()}
                         onBeforeInput={(e) => e.preventDefault()}
                         className={[
-                          "oltra-input w-full",
+                          "oltra-input w-full cursor-pointer",
                           fromValue ? "text-white" : "text-transparent caret-transparent",
                         ].join(" ")}
                       />
@@ -1372,16 +1494,21 @@ export default function HotelsView(props: {
 
                   <div className="relative md:col-span-3" data-oltra-control="true">
                     <div className="oltra-label">To</div>
-                    <div className="relative">
+                    <div
+                      className="relative cursor-pointer"
+                      onClick={() => openDatePicker(toRef)}
+                    >
                       <input
+                        ref={toRef}
                         type="date"
                         name="to"
+                        min={minToIso}
                         value={toValue}
                         onChange={(e) => setToValue(e.target.value)}
                         onKeyDown={(e) => e.preventDefault()}
                         onBeforeInput={(e) => e.preventDefault()}
                         className={[
-                          "oltra-input w-full",
+                          "oltra-input w-full cursor-pointer",
                           toValue ? "text-white" : "text-transparent caret-transparent",
                         ].join(" ")}
                       />
@@ -1395,16 +1522,22 @@ export default function HotelsView(props: {
 
                   <div className="relative md:col-span-3" data-oltra-control="true">
                     <div className="oltra-label">Guests</div>
-                    <GuestSelector initialValue={guestSelection} />
+                    <GuestSelector
+                      initialValue={guestSelection}
+                      onChange={(selection) => {
+                        setGuestSelection(selection);
+                      }}
+                    />
                   </div>
 
                   <div className="relative md:col-span-3" data-oltra-control="true">
                     <div className="oltra-label">Bedrooms</div>
                     <OltraSelect
                       name="bedrooms"
-                      value={normalizeParam(searchParams.bedrooms)}
+                      value={bedroomsValue}
                       placeholder="#"
                       align="left"
+                      onValueChange={setBedroomsValue}
                       options={[1, 2, 3, 4].map((n) => ({
                         value: String(n),
                         label: `${n} bedroom${n === 1 ? "" : "s"}`,
@@ -1420,29 +1553,25 @@ export default function HotelsView(props: {
                 </div>
               ) : null}
 
-              <div
-                className={[
-                  "md:col-span-12 flex gap-3",
-                  compactTopMode ? "justify-end items-start" : "justify-between items-end",
-                ].join(" ")}
-              >
-                {!compactTopMode ? (
-                  <button
-                    type="button"
-                    onClick={() => updateFiltersOpen(!filtersOpen)}
-                    className="oltra-button-function"
-                  >
-                    {filtersOpen ? "Hide filters" : "Show filters"}
-                  </button>
-                ) : null}
-
-                {!compactTopMode ? (
-                  <div className="w-full max-w-[180px]">
-                    <div className="oltra-label opacity-0 select-none">Search</div>
+              <div className="md:col-span-12 grid gap-3 md:grid-cols-4">
+                {!compactTopMode && (
+                  <>
                     <button
                       type="button"
-                      disabled
-                      className="oltra-button-secondary w-full"
+                      onClick={() => updateFiltersOpen(!filtersOpen)}
+                      className="oltra-button-function w-full"
+                    >
+                      Filters
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={!searchIsActive}
+                      title={searchDisabledReason || undefined}
+                      className={[
+                        "w-full md:col-start-3 md:col-span-2",
+                        searchIsActive ? "oltra-button-primary" : "oltra-button-secondary",
+                      ].join(" ")}
                     >
                       <span className="inline-flex items-center justify-center gap-2">
                         {isSubmittingSearch ? (
@@ -1451,11 +1580,16 @@ export default function HotelsView(props: {
                             aria-hidden="true"
                           />
                         ) : null}
-                        <span>Search</span>
+                        <span>
+                          {searchIsActive
+                            ? "CHECK AVAILABILITY"
+                            : searchDisabledReason.charAt(0) +
+                              searchDisabledReason.slice(1).toLowerCase()}
+                        </span>
                       </span>
                     </button>
-                  </div>
-                ) : null}
+                  </>
+                )}
               </div>
 
               {!compactTopMode && filtersOpen ? (
@@ -1632,8 +1766,8 @@ export default function HotelsView(props: {
           {effectiveView === "featured" ? (
             <div className="relative -m-4 min-h-[820px] overflow-hidden rounded-[var(--oltra-radius-xl)]">
               <img
-                src={featuredHeroImages[selectedImageIndex % featuredHeroImages.length]}
-                alt=""
+                src={featuredHeroImage}
+                alt={featuredHotel.hotel_name ?? "Featured hotel"}
                 className="absolute inset-0 h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/24 via-black/8 to-black/34" />
@@ -1646,9 +1780,6 @@ export default function HotelsView(props: {
                   onChange={(e) => {
                     const form = e.currentTarget;
                     setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
-                  }}
-                  onSubmit={(e) => {
-                    e.preventDefault();
                   }}
                 >
                   <HiddenPreserveParams

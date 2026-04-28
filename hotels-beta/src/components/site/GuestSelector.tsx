@@ -14,12 +14,41 @@ type Props = {
   initialValue: GuestSelection;
   className?: string;
   placeholder?: string;
+  onChange?: (selection: GuestSelection) => void;
 };
+
+function sameSelection(a: GuestSelection, b: GuestSelection): boolean {
+  return (
+    a.adults === b.adults &&
+    a.kids === b.kids &&
+    a.kidAges.join("|") === b.kidAges.join("|")
+  );
+}
+
+function ChevronDown() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className="pointer-events-none h-3 w-3 shrink-0 opacity-90"
+    >
+      <path
+        d="M5.5 7.5 10 12l4.5-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export default function GuestSelector({
   initialValue,
   className = "",
   placeholder = "Guests",
+  onChange,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [adults, setAdults] = useState(initialValue.adults);
@@ -27,8 +56,14 @@ export default function GuestSelector({
   const [kidAges, setKidAges] = useState<string[]>(initialValue.kidAges);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const lastInitialKeyRef = useRef("");
 
   useEffect(() => {
+    const nextKey = JSON.stringify(initialValue);
+
+    if (lastInitialKeyRef.current === nextKey) return;
+    lastInitialKeyRef.current = nextKey;
+
     setAdults(initialValue.adults);
     setKids(initialValue.kids);
     setKidAges(initialValue.kidAges);
@@ -89,18 +124,47 @@ export default function GuestSelector({
     };
   }, [open]);
 
+  const currentSelection = useMemo<GuestSelection>(
+    () => ({ adults, kids, kidAges }),
+    [adults, kids, kidAges]
+  );
+
   const summaryLabel = useMemo(() => {
-    const selection: GuestSelection = { adults, kids, kidAges };
-    const label = buildGuestSummaryLabel(selection);
+    const label = buildGuestSummaryLabel(currentSelection);
     return label || placeholder;
-  }, [adults, kids, kidAges, placeholder]);
+  }, [currentSelection, placeholder]);
+
+  function emitChange(nextSelection: GuestSelection) {
+    if (!sameSelection(nextSelection, currentSelection)) {
+      onChange?.(nextSelection);
+    }
+  }
 
   function changeAdults(delta: number) {
-    setAdults((prev) => clampAdultsCount(prev + delta));
+    setAdults((prev) => {
+      const nextAdults = clampAdultsCount(prev + delta);
+      const nextSelection = { adults: nextAdults, kids, kidAges };
+      onChange?.(nextSelection);
+      return nextAdults;
+    });
   }
 
   function changeKids(delta: number) {
-    setKids((prev) => clampKidsCount(prev + delta));
+    setKids((prev) => {
+      const nextKids = clampKidsCount(prev + delta);
+      const nextKidAges = Array.from(
+        { length: nextKids },
+        (_, i) => kidAges[i] ?? ""
+      );
+
+      onChange?.({
+        adults,
+        kids: nextKids,
+        kidAges: nextKidAges,
+      });
+
+      return nextKids;
+    });
   }
 
   return (
@@ -131,6 +195,7 @@ export default function GuestSelector({
         aria-expanded={open}
       >
         <span className={styles.triggerText}>{summaryLabel}</span>
+        <ChevronDown />
       </button>
 
       {open ? (
@@ -212,6 +277,13 @@ export default function GuestSelector({
                           setKidAges((prev) => {
                             const next = [...prev];
                             next[idx] = value;
+
+                            onChange?.({
+                              adults,
+                              kids,
+                              kidAges: next,
+                            });
+
                             return next;
                           });
                         }}

@@ -188,6 +188,12 @@ export type HotelRecord = {
   www?: string | null;
   insta?: string | null;
 
+  agoda_photo1?: string | null;
+  agoda_photo2?: string | null;
+  agoda_photo3?: string | null;
+  agoda_photo4?: string | null;
+  agoda_photo5?: string | null;
+
   booking_provider?: "booking" | "cj_booking" | "official" | "none" | null;
   booking_url?: string | null;
   booking_hotel_ref?: string | null;
