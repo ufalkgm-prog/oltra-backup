@@ -22,10 +22,25 @@ export default async function RestaurantsPage({
   const cityOptions = await getRestaurantCities();
   const fallbackCity = cityOptions[0] ?? "";
 
-  const activeCity =
+  const requestedCityMatch =
     cityOptions.find(
       (option) => option.toLowerCase() === requestedCity.toLowerCase()
-    ) ?? fallbackCity;
+    ) ?? "";
+
+  const requestedCityAliases = requestedCity
+    ? expandCityAliases([requestedCity])
+    : [];
+
+  const aliasCityMatch =
+    requestedCityAliases
+      .map((alias) =>
+        cityOptions.find(
+          (option) => option.toLowerCase() === alias.toLowerCase()
+        )
+      )
+      .find(Boolean) ?? "";
+
+  const activeCity = requestedCityMatch || aliasCityMatch || fallbackCity;
 
   const cityAliases = activeCity ? expandCityAliases([activeCity]) : [];
 

@@ -226,7 +226,9 @@ export default function InspireView({ cities }: Props) {
       month,
       maxFlightHours,
       purpose,
-    });
+    }).filter(
+      (match) => match.city.city.toLowerCase() !== origin.label.toLowerCase()
+    );
   }, [cities, month, purpose, maxFlightHours, origin]);
 
   useEffect(() => {
@@ -267,8 +269,7 @@ export default function InspireView({ cities }: Props) {
           <div className={styles.filters}>
             <div className={styles.filtersHeader}>
               <p className={styles.intro}>
-                Explore destinations by season, trip purpose, and direct-flight
-                radius.
+                Explore possible destinations by weather, purpose and max flight time
               </p>
             </div>
 
@@ -391,7 +392,9 @@ export default function InspireView({ cities }: Props) {
 
           <div className={styles.resultsBlock}>
             <div className={styles.sidebarHeader}>
-              <div className="oltra-label">Results</div>
+              <div className="oltra-label" style={{ marginBottom: 0 }}>
+                Results
+              </div>
               <div className={styles.resultCount}>
                 {matches.length} destination{matches.length === 1 ? "" : "s"}
               </div>
@@ -443,6 +446,8 @@ export default function InspireView({ cities }: Props) {
         <section className={styles.mapPane}>
           <InspireMapView
             matches={matches}
+            origin={origin}
+            maxFlightHours={maxFlightHours}
             activeCityId={activeCityId}
             onSelectCity={(match) => {
               setActiveCityId(match.city.id);

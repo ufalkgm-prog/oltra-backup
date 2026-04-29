@@ -1047,3 +1047,115 @@ details > summary::-webkit-details-marker {
   color: rgba(255, 255, 255, 0.98);
   text-decoration: none;
 }
+
+.oltra-map-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: var(--oltra-radius-xl);
+  overflow: hidden;
+}
+
+.oltra-map-city-marker,
+.oltra-map-origin-marker {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.oltra-map-city-marker__inner {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  background: rgba(33, 50, 66, 0.7);
+  color: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.22);
+}
+
+.oltra-map-city-marker[data-selected="true"] .oltra-map-city-marker__inner {
+  background: rgba(255, 255, 255, 0.94);
+  color: rgba(25, 42, 56, 0.96);
+  border-color: rgba(255, 255, 255, 0.94);
+  transform: scale(1.06);
+}
+
+.oltra-map-city-marker__count {
+  font-size: 0.74rem;
+  line-height: 1;
+}
+
+.oltra-map-origin-marker__inner {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.86);
+  background: rgba(8, 12, 16, 0.96);
+  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.28);
+}
+
+.maplibregl-popup.oltra-map-popup .maplibregl-popup-content {
+  padding: 0;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(34, 56, 72, 0.9);
+  box-shadow:
+    0 18px 40px rgba(10, 20, 28, 0.18),
+    0 6px 18px rgba(10, 20, 28, 0.1);
+  color: white;
+}
+
+.maplibregl-popup.oltra-map-popup .maplibregl-popup-tip {
+  border-top-color: rgba(34, 56, 72, 0.9);
+}
+
+.oltra-map-popup__title {
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 1px 5px rgba(10, 18, 26, 0.5);
+}
+
+.oltra-map-popup__meta {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 5px rgba(10, 18, 26, 0.5);
+}
+
+.oltra-map-popup__box {
+  min-width: 210px;
+  padding: 12px 14px;
+}
+
+.oltra-map-origin-marker {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: default;
+}
+
+.oltra-map-origin-marker__star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(10, 12, 14, 0.98); /* deep black */
+  transform: scale(1.1);
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
+}
+
+.oltra-map-popup__image {
+  display: block;
+  width: 220px;
+  height: 124px;
+  object-fit: cover;
+  border-radius: var(--oltra-radius-sm);
+  margin-bottom: 10px;
+}

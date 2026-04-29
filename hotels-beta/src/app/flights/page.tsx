@@ -1,10 +1,18 @@
 import PageShell from "@/components/site/PageShell";
 import FlightsView from "./ui/FlightsView";
 
-export default function FlightsPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+export default async function FlightsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const resolvedSearchParams = await searchParams;
+
   return (
     <PageShell current="Flights">
-      <FlightsView />
+      <FlightsView searchParams={resolvedSearchParams} />
     </PageShell>
   );
 }

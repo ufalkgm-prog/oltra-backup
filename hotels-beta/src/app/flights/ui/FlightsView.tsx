@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import PageShell from "@/components/site/PageShell";
 import styles from "./FlightsView.module.css";
+import { readHotelFlightSearch, saveHotelFlightSearch } from "@/lib/searchSession";
+
+type PageSearchParams = Record<string, string | string[] | undefined>;
+
+type Props = {
+  searchParams: PageSearchParams;
+};
 
 type CabinClass = "Economy" | "Premium Economy" | "Business" | "First";
 
@@ -46,6 +52,11 @@ type Itinerary = {
   tags?: string[];
   score: number;
 };
+
+function normalizeParam(v: string | string[] | undefined): string {
+  if (!v) return "";
+  return Array.isArray(v) ? v[0] ?? "" : v;
+}
 
 const INITIAL_SEARCH: SearchState = {
   from: "Copenhagen",
@@ -216,6 +227,42 @@ const MOCK_ITINERARIES: Itinerary[] = [
   },
 ];
 
+function hasFlightSearchParams(searchParams: PageSearchParams): boolean {
+  return Boolean(
+    normalizeParam(searchParams.q) ||
+      normalizeParam(searchParams.city) ||
+      normalizeParam(searchParams.country) ||
+      normalizeParam(searchParams.region) ||
+      normalizeParam(searchParams.from) ||
+      normalizeParam(searchParams.to) ||
+      normalizeParam(searchParams.adults) ||
+      normalizeParam(searchParams.kids)
+  );
+}
+
+function buildInitialSearch(searchParams: PageSearchParams): SearchState {
+  const saved =
+    typeof window !== "undefined" && !hasFlightSearchParams(searchParams)
+      ? readHotelFlightSearch()
+      : null;
+
+  const source = saved ?? searchParams;
+
+  return {
+    ...INITIAL_SEARCH,
+    to:
+      normalizeParam(source.city) ||
+      normalizeParam(source.q) ||
+      normalizeParam(source.country) ||
+      normalizeParam(source.region) ||
+      INITIAL_SEARCH.to,
+    departDate: normalizeParam(source.from) || INITIAL_SEARCH.departDate,
+    returnDate: normalizeParam(source.to) || INITIAL_SEARCH.returnDate,
+    adults: Number(normalizeParam(source.adults)) || INITIAL_SEARCH.adults,
+    children: Number(normalizeParam(source.kids)) || INITIAL_SEARCH.children,
+  };
+}
+
 function formatDuration(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -285,10 +332,46 @@ function dedupeById<T extends { id: string }>(items: T[]): T[] {
   });
 }
 
-export default function FlightsView() {
-  const [search, setSearch] = useState<SearchState>(INITIAL_SEARCH);
+export default function FlightsView({ searchParams }: Props) {
+  const [search, setSearch] = useState<SearchState>(() =>
+    buildInitialSearch(searchParams)
+  );
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [selectedOutboundId, setSelectedOutboundId] = useState("");
+
+  useEffect(() => {
+    setSearch((current) => ({
+      ...current,
+      to:
+        normalizeParam(searchParams.city) ||
+        normalizeParam(searchParams.q) ||
+        normalizeParam(searchParams.country) ||
+        current.to,
+      departDate: normalizeParam(searchParams.from) || current.departDate,
+      returnDate: normalizeParam(searchParams.to) || current.returnDate,
+      adults: Number(normalizeParam(searchParams.adults)) || current.adults,
+      children: Number(normalizeParam(searchParams.kids)) || current.children,
+    }));
+  }, [searchParams]);
+
+  useEffect(() => {
+    saveHotelFlightSearch({
+      q: normalizeParam(searchParams.q),
+      city: normalizeParam(searchParams.city) || search.to,
+      country: normalizeParam(searchParams.country),
+      region: normalizeParam(searchParams.region),
+      from: search.departDate,
+      to: search.returnDate,
+      adults: String(search.adults),
+      kids: String(search.children),
+      kid_age_1: normalizeParam(searchParams.kid_age_1),
+      kid_age_2: normalizeParam(searchParams.kid_age_2),
+      kid_age_3: normalizeParam(searchParams.kid_age_3),
+      kid_age_4: normalizeParam(searchParams.kid_age_4),
+      kid_age_5: normalizeParam(searchParams.kid_age_5),
+      kid_age_6: normalizeParam(searchParams.kid_age_6),
+    });
+  }, [search, searchParams]);
 
   const allAirlines = useMemo(() => {
     return [...new Set(MOCK_ITINERARIES.map((item) => item.outbound.airline))].sort();
@@ -353,304 +436,302 @@ export default function FlightsView() {
   }
 
   return (
-    <PageShell current="flights">
-      <section className={styles.page}>
-        <div className="oltra-two-col">
-          <aside className="oltra-stack">
-            <div className="oltra-glass oltra-panel">
-              <div className={styles.sectionStack}>
-                <div className={styles.fieldGrid}>
-                  <Field
-                    label="From"
-                    value={search.from}
-                    onChange={(value) =>
-                      setSearch((current) => ({ ...current, from: value }))
-                    }
-                  />
-                  <Field
-                    label="To"
-                    value={search.to}
-                    onChange={(value) =>
-                      setSearch((current) => ({ ...current, to: value }))
-                    }
-                  />
-                  <DateField
-                    label="Depart"
-                    value={search.departDate}
-                    onChange={(value) =>
-                      setSearch((current) => ({ ...current, departDate: value }))
-                    }
-                  />
-                  <DateField
-                    label="Return"
-                    value={search.returnDate}
-                    onChange={(value) =>
-                      setSearch((current) => ({ ...current, returnDate: value }))
-                    }
-                  />
-                </div>
-
-                <div className={styles.compactGrid}>
-                  <NumberField
-                    label="Adults"
-                    value={search.adults}
-                    min={1}
-                    onChange={(value) =>
-                      setSearch((current) => ({ ...current, adults: value }))
-                    }
-                  />
-                  <NumberField
-                    label="Children"
-                    value={search.children}
-                    min={0}
-                    onChange={(value) =>
-                      setSearch((current) => ({ ...current, children: value }))
-                    }
-                  />
-                  <SelectField
-                    label="Cabin"
-                    value={search.cabin}
-                    onChange={(value) =>
-                      setSearch((current) => ({
-                        ...current,
-                        cabin: value as CabinClass,
-                      }))
-                    }
-                    options={[
-                      "Economy",
-                      "Premium Economy",
-                      "Business",
-                      "First",
-                    ]}
-                  />
-                </div>
-
-                <button type="button" className="oltra-button-primary">
-                  Search
-                </button>
+    <section className={styles.page}>
+      <div className="oltra-two-col">
+        <aside className="oltra-stack">
+          <div className="oltra-glass oltra-panel">
+            <div className={styles.sectionStack}>
+              <div className={styles.fieldGrid}>
+                <Field
+                  label="From"
+                  value={search.from}
+                  onChange={(value) =>
+                    setSearch((current) => ({ ...current, from: value }))
+                  }
+                />
+                <Field
+                  label="To"
+                  value={search.to}
+                  onChange={(value) =>
+                    setSearch((current) => ({ ...current, to: value }))
+                  }
+                />
+                <DateField
+                  label="Depart"
+                  value={search.departDate}
+                  onChange={(value) =>
+                    setSearch((current) => ({ ...current, departDate: value }))
+                  }
+                />
+                <DateField
+                  label="Return"
+                  value={search.returnDate}
+                  onChange={(value) =>
+                    setSearch((current) => ({ ...current, returnDate: value }))
+                  }
+                />
               </div>
-            </div>
 
-            <div className="oltra-glass oltra-panel">
-              <div className={styles.sectionStack}>
-                <div className={styles.compactGrid}>
-                  <SelectField
-                    label="Stops"
-                    value={filters.maxStops}
-                    onChange={(value) =>
-                      setFilters((current) => ({
-                        ...current,
-                        maxStops: value as FilterState["maxStops"],
-                      }))
-                    }
-                    options={["any", "direct", "1"]}
-                    labels={{
-                      any: "Any",
-                      direct: "Direct only",
-                      "1": "Max 1 stop",
-                    }}
-                  />
-
-                  <SelectField
-                    label="Departure time"
-                    value={filters.departTime}
-                    onChange={(value) =>
-                      setFilters((current) => ({
-                        ...current,
-                        departTime: value as FilterState["departTime"],
-                      }))
-                    }
-                    options={["any", "morning", "afternoon", "evening"]}
-                    labels={{
-                      any: "Any",
-                      morning: "Morning",
-                      afternoon: "Afternoon",
-                      evening: "Evening",
-                    }}
-                  />
-
-                  <SelectField
-                    label="Return time"
-                    value={filters.returnTime}
-                    onChange={(value) =>
-                      setFilters((current) => ({
-                        ...current,
-                        returnTime: value as FilterState["returnTime"],
-                      }))
-                    }
-                    options={["any", "morning", "afternoon", "evening"]}
-                    labels={{
-                      any: "Any",
-                      morning: "Morning",
-                      afternoon: "Afternoon",
-                      evening: "Evening",
-                    }}
-                  />
-
-                  <SelectField
-                    label="Flex dates"
-                    value={filters.flexDays}
-                    onChange={(value) =>
-                      setFilters((current) => ({
-                        ...current,
-                        flexDays: value as FilterState["flexDays"],
-                      }))
-                    }
-                    options={["none", "+/- 1 day", "+/- 2 days"]}
-                    labels={{
-                      none: "None",
-                      "+/- 1 day": "+/- 1 day",
-                      "+/- 2 days": "+/- 2 days",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label className="oltra-label">
-                    Max duration · {filters.maxDurationHours}h
-                  </label>
-                  <input
-                    type="range"
-                    min={6}
-                    max={24}
-                    step={1}
-                    value={filters.maxDurationHours}
-                    onChange={(e) =>
-                      setFilters((current) => ({
-                        ...current,
-                        maxDurationHours: Number(e.target.value),
-                      }))
-                    }
-                    className={styles.range}
-                  />
-                </div>
-
-                <div>
-                  <label className="oltra-label">Airlines</label>
-                  <div className={styles.chips}>
-                    {allAirlines.map((airline) => {
-                      const active = filters.airlines.includes(airline);
-
-                      return (
-                        <button
-                          key={airline}
-                          type="button"
-                          onClick={() => toggleAirline(airline)}
-                          className={`${styles.airlineChip} ${active ? styles.airlineChipActive : ""}`}
-                        >
-                          {airline}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+              <div className={styles.compactGrid}>
+                <NumberField
+                  label="Adults"
+                  value={search.adults}
+                  min={1}
+                  onChange={(value) =>
+                    setSearch((current) => ({ ...current, adults: value }))
+                  }
+                />
+                <NumberField
+                  label="Children"
+                  value={search.children}
+                  min={0}
+                  onChange={(value) =>
+                    setSearch((current) => ({ ...current, children: value }))
+                  }
+                />
+                <SelectField
+                  label="Cabin"
+                  value={search.cabin}
+                  onChange={(value) =>
+                    setSearch((current) => ({
+                      ...current,
+                      cabin: value as CabinClass,
+                    }))
+                  }
+                  options={[
+                    "Economy",
+                    "Premium Economy",
+                    "Business",
+                    "First",
+                  ]}
+                />
               </div>
+
+              <button type="button" className="oltra-button-primary">
+                Search
+              </button>
             </div>
-          </aside>
+          </div>
 
           <div className="oltra-glass oltra-panel">
-            <div className={styles.resultsStack}>
-              <div className={styles.resultsMeta}>
-                <div className={styles.route}>
-                  {search.from} → {search.to}
+            <div className={styles.sectionStack}>
+              <div className={styles.compactGrid}>
+                <SelectField
+                  label="Stops"
+                  value={filters.maxStops}
+                  onChange={(value) =>
+                    setFilters((current) => ({
+                      ...current,
+                      maxStops: value as FilterState["maxStops"],
+                    }))
+                  }
+                  options={["any", "direct", "1"]}
+                  labels={{
+                    any: "Any",
+                    direct: "Direct only",
+                    "1": "Max 1 stop",
+                  }}
+                />
+
+                <SelectField
+                  label="Departure time"
+                  value={filters.departTime}
+                  onChange={(value) =>
+                    setFilters((current) => ({
+                      ...current,
+                      departTime: value as FilterState["departTime"],
+                    }))
+                  }
+                  options={["any", "morning", "afternoon", "evening"]}
+                  labels={{
+                    any: "Any",
+                    morning: "Morning",
+                    afternoon: "Afternoon",
+                    evening: "Evening",
+                  }}
+                />
+
+                <SelectField
+                  label="Return time"
+                  value={filters.returnTime}
+                  onChange={(value) =>
+                    setFilters((current) => ({
+                      ...current,
+                      returnTime: value as FilterState["returnTime"],
+                    }))
+                  }
+                  options={["any", "morning", "afternoon", "evening"]}
+                  labels={{
+                    any: "Any",
+                    morning: "Morning",
+                    afternoon: "Afternoon",
+                    evening: "Evening",
+                  }}
+                />
+
+                <SelectField
+                  label="Flex dates"
+                  value={filters.flexDays}
+                  onChange={(value) =>
+                    setFilters((current) => ({
+                      ...current,
+                      flexDays: value as FilterState["flexDays"],
+                    }))
+                  }
+                  options={["none", "+/- 1 day", "+/- 2 days"]}
+                  labels={{
+                    none: "None",
+                    "+/- 1 day": "+/- 1 day",
+                    "+/- 2 days": "+/- 2 days",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="oltra-label">
+                  Max duration · {filters.maxDurationHours}h
+                </label>
+                <input
+                  type="range"
+                  min={6}
+                  max={24}
+                  step={1}
+                  value={filters.maxDurationHours}
+                  onChange={(e) =>
+                    setFilters((current) => ({
+                      ...current,
+                      maxDurationHours: Number(e.target.value),
+                    }))
+                  }
+                  className={styles.range}
+                />
+              </div>
+
+              <div>
+                <label className="oltra-label">Airlines</label>
+                <div className={styles.chips}>
+                  {allAirlines.map((airline) => {
+                    const active = filters.airlines.includes(airline);
+
+                    return (
+                      <button
+                        key={airline}
+                        type="button"
+                        onClick={() => toggleAirline(airline)}
+                        className={`${styles.airlineChip} ${active ? styles.airlineChipActive : ""}`}
+                      >
+                        {airline}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className={styles.metaText}>
-                  {filteredItineraries.length} itineraries · {search.adults} adults
-                  {search.children > 0 ? `, ${search.children} children` : ""} · {search.cabin}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div className="oltra-glass oltra-panel">
+          <div className={styles.resultsStack}>
+            <div className={styles.resultsMeta}>
+              <div className={styles.route}>
+                {search.from} → {search.to}
+              </div>
+              <div className={styles.metaText}>
+                {filteredItineraries.length} itineraries · {search.adults} adults
+                {search.children > 0 ? `, ${search.children} children` : ""} · {search.cabin}
+              </div>
+            </div>
+
+            <div className={styles.pinnedStack}>
+              {recommended ? (
+                <PinnedRow label="Recommended" itinerary={recommended} />
+              ) : null}
+
+              {fastest && fastest.id !== recommended?.id ? (
+                <PinnedRow label="Fastest" itinerary={fastest} />
+              ) : null}
+            </div>
+
+            <div className={styles.resultsColumnsHeader}>
+              <div className={styles.columnHeader}>Departure flight</div>
+              <div className={styles.columnHeader}>Return flight</div>
+              <div className={`${styles.columnHeader} ${styles.columnHeaderRight}`}>
+                Price
+              </div>
+            </div>
+
+            <div className="oltra-three-col">
+              <div className={styles.columnBox}>
+                <div className={styles.cardStack}>
+                  {outboundOptions.length ? (
+                    outboundOptions.map((flight) => (
+                      <button
+                        key={flight.id}
+                        type="button"
+                        onClick={() => setSelectedOutboundId(flight.id)}
+                        className={`${styles.selectCard} ${
+                          flight.id === selectedOutboundId ? styles.selectCardActive : ""
+                        }`}
+                      >
+                        <FlightCardContent flight={flight} />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="oltra-output">No outbound flights match the selected filters.</div>
+                  )}
                 </div>
               </div>
 
-              <div className={styles.pinnedStack}>
-                {recommended ? (
-                  <PinnedRow label="Recommended" itinerary={recommended} />
-                ) : null}
-
-                {fastest && fastest.id !== recommended?.id ? (
-                  <PinnedRow label="Fastest" itinerary={fastest} />
-                ) : null}
-              </div>
-
-              <div className={styles.resultsColumnsHeader}>
-                <div className={styles.columnHeader}>Departure flight</div>
-                <div className={styles.columnHeader}>Return flight</div>
-                <div className={`${styles.columnHeader} ${styles.columnHeaderRight}`}>
-                  Price
+              <div className={styles.columnBox}>
+                <div className={styles.cardStack}>
+                  {!selectedOutboundId ? (
+                    <div className="oltra-output">Select a departure flight to view return options.</div>
+                  ) : visibleReturnItineraries.length ? (
+                    visibleReturnItineraries.map((item) => (
+                      <div key={item.id} className="oltra-output">
+                        <FlightCardContent flight={item.inbound} />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="oltra-output">No compatible return flights found.</div>
+                  )}
                 </div>
               </div>
 
-              <div className="oltra-three-col">
-                <div className={styles.columnBox}>
-                  <div className={styles.cardStack}>
-                    {outboundOptions.length ? (
-                      outboundOptions.map((flight) => (
-                        <button
-                          key={flight.id}
-                          type="button"
-                          onClick={() => setSelectedOutboundId(flight.id)}
-                          className={`${styles.selectCard} ${
-                            flight.id === selectedOutboundId ? styles.selectCardActive : ""
-                          }`}
-                        >
-                          <FlightCardContent flight={flight} />
-                        </button>
-                      ))
-                    ) : (
-                      <div className="oltra-output">No outbound flights match the selected filters.</div>
-                    )}
-                  </div>
-                </div>
+              <div className={styles.columnBox}>
+                <div className={styles.cardStack}>
+                  {!selectedOutboundId ? (
+                    <div className="oltra-output">Price appears when a departure flight is selected.</div>
+                  ) : visibleReturnItineraries.length ? (
+                    visibleReturnItineraries.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`oltra-output ${styles.priceCard}`}
+                      >
+                        {item.tags?.length ? (
+                          <div className={styles.priceTags}>
+                            {item.tags.map((tag) => (
+                              <span key={tag} className={styles.inlineTag}>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
 
-                <div className={styles.columnBox}>
-                  <div className={styles.cardStack}>
-                    {!selectedOutboundId ? (
-                      <div className="oltra-output">Select a departure flight to view return options.</div>
-                    ) : visibleReturnItineraries.length ? (
-                      visibleReturnItineraries.map((item) => (
-                        <div key={item.id} className="oltra-output">
-                          <FlightCardContent flight={item.inbound} />
-                        </div>
-                      ))
-                    ) : (
-                      <div className="oltra-output">No compatible return flights found.</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className={styles.columnBox}>
-                  <div className={styles.cardStack}>
-                    {!selectedOutboundId ? (
-                      <div className="oltra-output">Price appears when a departure flight is selected.</div>
-                    ) : visibleReturnItineraries.length ? (
-                      visibleReturnItineraries.map((item) => (
-                        <div
-                          key={item.id}
-                          className={`oltra-output ${styles.priceCard}`}
-                        >
-                          {item.tags?.length ? (
-                            <div className={styles.priceTags}>
-                              {item.tags.map((tag) => (
-                                <span key={tag} className={styles.inlineTag}>
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
-
-                          <div className={styles.priceCurrency}>EUR</div>
-                          <div className={styles.priceValue}>{formatPrice(item.priceEur)}</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="oltra-output">No prices available.</div>
-                    )}
-                  </div>
+                        <div className={styles.priceCurrency}>EUR</div>
+                        <div className={styles.priceValue}>{formatPrice(item.priceEur)}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="oltra-output">No prices available.</div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
-    </PageShell>
+      </div>
+    </section>
   );
 }
 

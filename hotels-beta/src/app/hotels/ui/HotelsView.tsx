@@ -30,6 +30,10 @@ import {
   getMemberActionButtonClass,
   getMemberActionLoginMessage,
 } from "@/lib/members/memberActionUi";
+import {
+  readHotelFlightSearch,
+  saveHotelFlightSearch,
+} from "@/lib/searchSession";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -185,6 +189,20 @@ function clampText(s: string | undefined | null, max = 160): string {
   if (!t) return "";
   if (t.length <= max) return t;
   return t.slice(0, max).replace(/\s+\S*$/, "") + "…";
+}
+
+function hasHotelSearchContext(params: PageSearchParams): boolean {
+  return Boolean(
+    normalizeParam(params.q) ||
+      normalizeParam(params.city) ||
+      normalizeParam(params.country) ||
+      normalizeParam(params.region) ||
+      normalizeParam(params.from) ||
+      normalizeParam(params.to) ||
+      normalizeParam(params.adults) ||
+      normalizeParam(params.kids) ||
+      normalizeParam(params.bedrooms)
+  );
 }
 
 function getCoord(hotel: HotelRecord, key: "lat" | "lng"): number | null {
@@ -686,11 +704,71 @@ export default function HotelsView(props: {
   }, [selected.filters_open]);
 
   useEffect(() => {
+    if (!hasHotelSearchContext(searchParams)) return;
+
     setFromValue(normalizeParam(searchParams.from));
     setToValue(normalizeParam(searchParams.to));
     setGuestSelection(readGuestSelection(searchParams));
     setBedroomsValue(normalizeParam(searchParams.bedrooms));
   }, [searchParams]);
+
+  useEffect(() => {
+    if (hasHotelSearchContext(searchParams)) return;
+
+    const saved = readHotelFlightSearch();
+    if (!saved) return;
+
+    const params = new URLSearchParams();
+
+    if (saved.q) params.set("q", saved.q);
+    if (saved.city) params.set("city", saved.city);
+    if (saved.country) params.set("country", saved.country);
+    if (saved.region) params.set("region", saved.region);
+    if (saved.from) params.set("from", saved.from);
+    if (saved.to) params.set("to", saved.to);
+    if (saved.adults) params.set("adults", saved.adults);
+    if (saved.kids) params.set("kids", saved.kids);
+    if (saved.bedrooms) params.set("bedrooms", saved.bedrooms);
+
+    for (let i = 1; i <= 6; i += 1) {
+      const key = `kid_age_${i}` as keyof typeof saved;
+      const value = saved[key];
+      if (value) params.set(`kid_age_${i}`, String(value));
+    }
+
+    if (!params.toString()) return;
+
+    params.set("search_submitted", "1");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, router, pathname]);
+
+  useEffect(() => {
+    const hasAnythingToSave =
+      hasHotelSearchContext(searchParams) ||
+      Boolean(fromValue) ||
+      Boolean(toValue) ||
+      Boolean(bedroomsValue);
+
+    if (!hasAnythingToSave) return;
+
+    saveHotelFlightSearch({
+      q: normalizeParam(searchParams.q),
+      city: normalizeParam(searchParams.city),
+      country: normalizeParam(searchParams.country),
+      region: normalizeParam(searchParams.region),
+      from: fromValue,
+      to: toValue,
+      adults: String(guestSelection.adults),
+      kids: String(guestSelection.kids),
+      bedrooms: bedroomsValue,
+      kid_age_1: normalizeParam(searchParams.kid_age_1),
+      kid_age_2: normalizeParam(searchParams.kid_age_2),
+      kid_age_3: normalizeParam(searchParams.kid_age_3),
+      kid_age_4: normalizeParam(searchParams.kid_age_4),
+      kid_age_5: normalizeParam(searchParams.kid_age_5),
+      kid_age_6: normalizeParam(searchParams.kid_age_6),
+    });
+  }, [searchParams, fromValue, toValue, guestSelection, bedroomsValue]);
 
   useEffect(() => {
     function readCurrency() {
@@ -1186,6 +1264,26 @@ export default function HotelsView(props: {
     router.replace(href, { scroll: false });
   }
 
+  function saveCurrentHotelFlightSearch() {
+    saveHotelFlightSearch({
+      q: normalizeParam(searchParams.q),
+      city: normalizeParam(searchParams.city),
+      country: normalizeParam(searchParams.country),
+      region: normalizeParam(searchParams.region),
+      from: fromValue,
+      to: toValue,
+      adults: String(guestSelection.adults),
+      kids: String(guestSelection.kids),
+      bedrooms: bedroomsValue,
+      kid_age_1: normalizeParam(searchParams.kid_age_1),
+      kid_age_2: normalizeParam(searchParams.kid_age_2),
+      kid_age_3: normalizeParam(searchParams.kid_age_3),
+      kid_age_4: normalizeParam(searchParams.kid_age_4),
+      kid_age_5: normalizeParam(searchParams.kid_age_5),
+      kid_age_6: normalizeParam(searchParams.kid_age_6),
+    });
+  }
+
   function updateFiltersOpen(nextOpen: boolean) {
     setFiltersOpen(nextOpen);
 
@@ -1566,6 +1664,7 @@ export default function HotelsView(props: {
 
                     <button
                       type="submit"
+                      onClick={saveCurrentHotelFlightSearch}
                       disabled={!searchIsActive}
                       title={searchDisabledReason || undefined}
                       className={[
