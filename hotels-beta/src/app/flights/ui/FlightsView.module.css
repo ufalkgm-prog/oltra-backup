@@ -3,9 +3,45 @@
   gap: var(--oltra-gap-lg);
 }
 
+.layout {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: var(--oltra-gap-lg);
+  align-items: start;
+}
+
+.sidebar {
+  display: grid;
+  gap: var(--oltra-gap-lg);
+  min-width: 0;
+}
+
+.searchPanel {
+  position: relative;
+  z-index: 80;
+}
+
 .sectionStack {
   display: grid;
   gap: var(--oltra-gap-lg);
+}
+
+.tripTypeTabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tripTypeTabs button {
+  width: 100%;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.segmentButtonActive {
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: var(--oltra-text-dark) !important;
+  border-color: rgba(255, 255, 255, 0.96) !important;
 }
 
 .fieldGrid {
@@ -14,30 +50,148 @@
   gap: var(--oltra-gap-md);
 }
 
-.compactGrid {
+.guestCabinGrid {
+  position: relative;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oltra-gap-md);
+  align-items: start;
+}
+
+.guestCabinGrid > div {
+  min-width: 0;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--oltra-gap-md);
+}
+
+.multiCityStack {
   display: grid;
   gap: var(--oltra-gap-md);
 }
 
+.multiCityRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 132px;
+  gap: 10px;
+  align-items: end;
+}
+
+.legFilterBlock {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.legFilterBlock + .legFilterBlock {
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.legFilterTitle {
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oltra-text-secondary);
+}
+
 .range {
   width: 100%;
+  accent-color: rgba(255, 255, 255, 0.92);
+}
+
+.rangeSlider {
+  position: relative;
+  height: 28px;
+  display: grid;
+  align-items: center;
+}
+
+.rangeSlider::before,
+.rangeSlider::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.rangeSlider::before {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.rangeSlider::after {
+  left: var(--start);
+  right: calc(100% - var(--end));
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.rangeThumb {
+  position: absolute;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+  accent-color: white;
+}
+
+.rangeThumb::-webkit-slider-thumb {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.96);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.rangeThumb::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.96);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.rangeThumb::-webkit-slider-runnable-track {
+  height: 3px;
+  background: transparent;
+}
+
+.rangeThumb::-moz-range-track {
+  height: 3px;
+  background: transparent;
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .airlineChip {
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid var(--oltra-field-border);
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.96);
   border-radius: var(--oltra-radius-pill);
-  background: var(--oltra-field-bg);
-  color: var(--oltra-text-primary);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--oltra-text-dark);
   cursor: pointer;
   font: inherit;
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
 .airlineChipActive {
@@ -46,18 +200,24 @@
   border-color: rgba(255, 255, 255, 0.96);
 }
 
+.airlineChip:not(.airlineChipActive) {
+  border-color: var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+}
+
 .resultsStack {
   display: grid;
-  gap: var(--oltra-gap-lg);
+  gap: var(--oltra-gap-md);
 }
 
 .resultsMeta {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .route {
-  font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+  font-size: clamp(1.28rem, 2vw, 1.85rem);
   line-height: 1;
   letter-spacing: -0.03em;
   color: var(--oltra-text-primary);
@@ -68,15 +228,20 @@
   color: var(--oltra-text-secondary);
 }
 
-.pinnedStack {
+.resultsColumnsHeader,
+.resultsColumnsHeaderOneWay {
   display: grid;
   gap: var(--oltra-gap-md);
+  align-items: end;
+  margin-top: 4px;
 }
 
 .resultsColumnsHeader {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--oltra-gap-md);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 112px;
+}
+
+.resultsColumnsHeaderOneWay {
+  grid-template-columns: minmax(0, 1fr) 112px;
 }
 
 .columnHeader {
@@ -91,13 +256,118 @@
   text-align: right;
 }
 
-.columnBox {
+.pinnedStack {
+  display: grid;
+  gap: var(--oltra-gap-sm);
+}
+
+.pinnedRow {
+  display: grid;
+  gap: 10px;
+  padding: 2px;
+  border: 1px solid var(--oltra-glass-border);
+  border-radius: var(--oltra-radius-lg);
+}
+
+.pinnedLabel {
+  width: fit-content;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  border-radius: var(--oltra-radius-pill);
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-primary);
+  font-size: 0.66rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pinnedGrid,
+.pinnedGridOneWay,
+.resultsGrid,
+.resultsGridOneWay {
+  display: grid;
+  gap: var(--oltra-gap-md);
+  align-items: start;
+}
+
+.pinnedGrid,
+.resultsGrid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 112px;
+}
+
+.pinnedGridOneWay,
+.resultsGridOneWay {
+  grid-template-columns: minmax(0, 1fr) 112px;
+}
+
+.multiResultsScroller {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.multiResultsGrid {
+  display: grid;
+  gap: var(--oltra-gap-md);
+  align-items: start;
+  min-width: 100%;
+}
+
+.multiResultsWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: var(--oltra-gap-md);
+  align-items: start;
+}
+
+.multiPriceColumn {
+  display: grid;
+  gap: var(--oltra-gap-md);
+  align-items: start;
+}
+
+.multiResultsHeader {
+  display: grid;
+  grid-template-columns: repeat(var(--multi-columns, 3), minmax(0, 1fr)) 112px;
+  gap: var(--oltra-gap-md);
+  align-items: end;
+  margin-top: 4px;
+}
+
+.multiResultsGridFixed {
+  display: grid;
+  grid-template-columns: repeat(var(--multi-columns, 3), minmax(0, 1fr)) 112px;
+  gap: var(--oltra-gap-md);
+  align-items: start;
+}
+
+.multiPinnedGrid {
+  display: grid;
+  gap: var(--oltra-gap-md);
+  align-items: start;
+}
+
+.multiResultsScoped {
+  display: grid;
+  gap: var(--oltra-gap-md);
+}
+
+.columnBox,
+.priceColumn {
   min-width: 0;
+}
+
+.priceColumn {
+  align-self: start;
 }
 
 .cardStack {
   display: grid;
   gap: var(--oltra-gap-md);
+  align-items: start;
 }
 
 .selectCard {
@@ -119,36 +389,6 @@
   background: rgba(255, 255, 255, 0.96);
   border-color: rgba(255, 255, 255, 0.96);
   color: var(--oltra-text-dark);
-}
-
-.pinnedRow {
-  display: grid;
-  gap: 10px;
-  padding: 2px;
-  border: 1px solid var(--oltra-glass-border);
-  border-radius: var(--oltra-radius-lg);
-}
-
-.pinnedLabel {
-  width: fit-content;
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 12px;
-  border-radius: var(--oltra-radius-pill);
-  border: 1px solid var(--oltra-field-border);
-  background: var(--oltra-field-bg);
-  color: var(--oltra-text-primary);
-  font-size: 0.68rem;
-  line-height: 1;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.pinnedGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--oltra-gap-md);
 }
 
 .flightCardInner {
@@ -198,7 +438,7 @@
 }
 
 .flightTime {
-  font-size: 1.75rem;
+  font-size: 1.55rem;
   line-height: 1;
   letter-spacing: -0.03em;
 }
@@ -214,60 +454,61 @@
 }
 
 .flightSummary {
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   opacity: 0.86;
 }
 
 .priceCard {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  min-height: 72px;
+  padding: 10px 12px;
   text-align: right;
-  min-height: 100%;
-}
-
-.priceTags {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.inlineTag {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: var(--oltra-radius-pill);
-  border: 1px solid var(--oltra-field-border);
-  background: var(--oltra-field-bg);
-  font-size: 0.66rem;
-  line-height: 1;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 .priceCurrency {
-  font-size: 0.78rem;
+  font-size: 0.62rem;
+  line-height: 1;
   color: var(--oltra-text-secondary);
 }
 
 .priceValue {
-  margin-top: 6px;
-  font-size: clamp(1.8rem, 2.2vw, 2.4rem);
+  margin-top: 5px;
+  font-size: clamp(1rem, 1.25vw, 1.28rem);
   line-height: 1;
   letter-spacing: -0.04em;
 }
 
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1000px) {
   .fieldGrid,
+  .filterGrid,
+  .guestCabinGrid,
   .resultsColumnsHeader,
-  .pinnedGrid {
+  .resultsColumnsHeaderOneWay,
+  .pinnedGrid,
+  .pinnedGridOneWay,
+  .resultsGrid,
+  .resultsGridOneWay {
+    grid-template-columns: 1fr;
+  }
+
+  .multiCityRow {
     grid-template-columns: 1fr;
   }
 
   .columnHeaderRight {
+    text-align: left;
+  }
+
+  .priceCard {
+    justify-items: start;
     text-align: left;
   }
 }
