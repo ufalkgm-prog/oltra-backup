@@ -16,8 +16,6 @@ export type MemberProfile = {
     id: string;
     fullName: string;
     birthday: MemberBirthday;
-    passportNumber: string;
-    passportExpiry: string;
   }>;
 };
 

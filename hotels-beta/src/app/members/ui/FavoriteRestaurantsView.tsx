@@ -80,11 +80,6 @@ export default function FavoriteRestaurantsView() {
         {items.length ? (
           items.map((item) => (
             <article key={item.id} className="members-item">
-              <div className="members-item__layout">
-                <div
-                  className="members-item__thumb"
-                  style={{ backgroundImage: `url(${item.thumbnail})` }}
-                />
                 <div className="members-item__content">
                   <div className="members-item__title">{item.name}</div>
                   <div className="members-item__location">{item.location}</div>
@@ -99,14 +94,13 @@ export default function FavoriteRestaurantsView() {
                     </button>
                     <button
                       type="button"
-                      className="oltra-button-secondary members-action-button"
+                      className="members-text-danger-action"
                       onClick={() => handleDelete(item.id)}
                     >
                       Delete
                     </button>
                   </div>
                 </div>
-              </div>
             </article>
           ))
         ) : (

@@ -2,9 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
+import {
+  AIRPORT_OPTIONS,
+  type AirportOption,
+} from "@/lib/airportOptions";
 import { DEFAULT_MEMBER_PROFILE } from "@/lib/members/defaults";
 import type { MemberBirthday, MemberProfile } from "@/lib/members/types";
-import { fetchMemberProfileBrowser, saveMemberProfileBrowser } from "@/lib/members/db";
+import {
+  fetchMemberProfileBrowser,
+  saveMemberProfileBrowser,
+} from "@/lib/members/db";
 import { createClient } from "@/lib/supabase/client";
 
 type Option = {
@@ -12,10 +19,34 @@ type Option = {
   label: string;
 };
 
-type Props = {
-  preferredHotelStyleOptions: Option[];
-  preferredAirlineOptions: Option[];
-};
+const MAX_FAMILY_MEMBERS = 10;
+
+const PREFERRED_AIRLINE_OPTIONS: Option[] = [
+  { value: "Air France", label: "Air France" },
+  { value: "Air New Zealand", label: "Air New Zealand" },
+  { value: "ANA", label: "ANA" },
+  { value: "American Airlines", label: "American Airlines" },
+  { value: "Austrian Airlines", label: "Austrian Airlines" },
+  { value: "British Airways", label: "British Airways" },
+  { value: "Cathay Pacific", label: "Cathay Pacific" },
+  { value: "Delta Air Lines", label: "Delta Air Lines" },
+  { value: "Emirates", label: "Emirates" },
+  { value: "Etihad Airways", label: "Etihad Airways" },
+  { value: "Finnair", label: "Finnair" },
+  { value: "Iberia", label: "Iberia" },
+  { value: "Japan Airlines", label: "Japan Airlines" },
+  { value: "KLM", label: "KLM" },
+  { value: "Korean Air", label: "Korean Air" },
+  { value: "Lufthansa", label: "Lufthansa" },
+  { value: "Qantas", label: "Qantas" },
+  { value: "Qatar Airways", label: "Qatar Airways" },
+  { value: "SAS", label: "SAS" },
+  { value: "Singapore Airlines", label: "Singapore Airlines" },
+  { value: "Swiss", label: "Swiss" },
+  { value: "Turkish Airlines", label: "Turkish Airlines" },
+  { value: "United Airlines", label: "United Airlines" },
+  { value: "Virgin Atlantic", label: "Virgin Atlantic" },
+];
 
 const DAY_OPTIONS: Option[] = Array.from({ length: 31 }, (_, index) => {
   const value = String(index + 1);
@@ -37,6 +68,42 @@ const MONTH_OPTIONS: Option[] = [
   { value: "Dec", label: "Dec" },
 ];
 
+function normalizeAirportValue(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "";
+
+  const directMatch = AIRPORT_OPTIONS.find(
+    (airport: AirportOption) =>
+      airport.value.toLowerCase() === raw.toLowerCase()
+  );
+
+  if (directMatch) return directMatch.value;
+
+  const labelMatch = AIRPORT_OPTIONS.find((airport: AirportOption) =>
+    airport.label.toLowerCase().includes(raw.toLowerCase())
+  );
+
+  return labelMatch?.value ?? raw;
+}
+
+function normalizeMemberProfile(profile: MemberProfile): MemberProfile {
+  return {
+    ...profile,
+    homeAirport: normalizeAirportValue(profile.homeAirport),
+  };
+}
+
+function parseMultiValue(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function stringifyMultiValue(values: string[]): string {
+  return values.join(", ");
+}
+
 function birthdaysEqual(a: MemberBirthday, b: MemberBirthday) {
   return a.day === b.day && a.month === b.month && a.year === b.year;
 }
@@ -47,7 +114,6 @@ function profilesEqual(a: MemberProfile, b: MemberProfile) {
     a.email !== b.email ||
     a.phone !== b.phone ||
     a.homeAirport !== b.homeAirport ||
-    a.preferredHotelStyle !== b.preferredHotelStyle ||
     a.preferredAirline !== b.preferredAirline ||
     !birthdaysEqual(a.birthday, b.birthday) ||
     a.familyMembers.length !== b.familyMembers.length
@@ -57,6 +123,7 @@ function profilesEqual(a: MemberProfile, b: MemberProfile) {
 
   return a.familyMembers.every((member, index) => {
     const other = b.familyMembers[index];
+
     return (
       member.id === other.id &&
       member.fullName === other.fullName &&
@@ -65,24 +132,46 @@ function profilesEqual(a: MemberProfile, b: MemberProfile) {
   });
 }
 
-export default function PersonalInformationView({
-  preferredHotelStyleOptions,
-  preferredAirlineOptions,
-}: Props) {
-  const [profile, setProfile] = useState<MemberProfile>(DEFAULT_MEMBER_PROFILE);
-  const [savedProfile, setSavedProfile] =
-    useState<MemberProfile>(DEFAULT_MEMBER_PROFILE);
+export default function PersonalInformationView() {
+  const [profile, setProfile] = useState<MemberProfile>(() =>
+    normalizeMemberProfile(DEFAULT_MEMBER_PROFILE)
+  );
+  const [savedProfile, setSavedProfile] = useState<MemberProfile>(() =>
+    normalizeMemberProfile(DEFAULT_MEMBER_PROFILE)
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showLeavePrompt, setShowLeavePrompt] = useState(false);
+  const [showTerminatePrompt, setShowTerminatePrompt] = useState(false);
   const pendingHrefRef = useRef<string | null>(null);
   const supabase = useMemo(() => createClient(), []);
+
   const isDirty = useMemo(
     () => !profilesEqual(profile, savedProfile),
     [profile, savedProfile]
   );
+
+  const homeAirportOptions = useMemo<Option[]>(() => {
+    const currentValue = profile.homeAirport.trim();
+
+    const airportOptions: Option[] = AIRPORT_OPTIONS.map(
+      (airport: AirportOption) => ({
+        value: airport.value,
+        label: airport.label,
+      })
+    );
+
+    if (
+      !currentValue ||
+      airportOptions.some((airport: Option) => airport.value === currentValue)
+    ) {
+      return airportOptions;
+    }
+
+    return [{ value: currentValue, label: currentValue }, ...airportOptions];
+  }, [profile.homeAirport]);
 
   useEffect(() => {
     let active = true;
@@ -96,8 +185,9 @@ export default function PersonalInformationView({
         if (!active) return;
 
         if (next) {
-          setProfile(next);
-          setSavedProfile(next);
+          const normalizedProfile = normalizeMemberProfile(next);
+          setProfile(normalizedProfile);
+          setSavedProfile(normalizedProfile);
         }
       } catch {
         if (!active) return;
@@ -117,17 +207,21 @@ export default function PersonalInformationView({
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!isDirty) return;
+
       event.preventDefault();
       event.returnValue = "";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, [isDirty]);
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
-      if (!isDirty) return;
+      if (!isDirty || showLeavePrompt) return;
 
       const target = event.target as HTMLElement | null;
       if (!target) return;
@@ -138,14 +232,23 @@ export default function PersonalInformationView({
       const href = anchor.getAttribute("href");
       if (!href || href.startsWith("#") || anchor.target === "_blank") return;
 
+      const url = new URL(href, window.location.origin);
+      if (url.origin !== window.location.origin) return;
+
       event.preventDefault();
-      pendingHrefRef.current = href;
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      pendingHrefRef.current = url.pathname + url.search + url.hash;
       setShowLeavePrompt(true);
     };
 
-    document.addEventListener("click", handleDocumentClick);
-    return () => document.removeEventListener("click", handleDocumentClick);
-  }, [isDirty]);
+    document.addEventListener("click", handleDocumentClick, true);
+
+    return () => {
+      document.removeEventListener("click", handleDocumentClick, true);
+    };
+  }, [isDirty, showLeavePrompt]);
 
   function clearMessages() {
     setStatusMessage("");
@@ -204,6 +307,8 @@ export default function PersonalInformationView({
   }
 
   function addFamilyMember() {
+    if (profile.familyMembers.length >= MAX_FAMILY_MEMBERS) return;
+
     setProfile((prev) => ({
       ...prev,
       familyMembers: [
@@ -212,8 +317,6 @@ export default function PersonalInformationView({
           id: `fm-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           fullName: "",
           birthday: { day: "", month: "", year: "" },
-          passportNumber: "",
-          passportExpiry: "",
         },
       ],
     }));
@@ -229,6 +332,8 @@ export default function PersonalInformationView({
   }
 
   async function handleSave() {
+    if (!isDirty || isSaving) return;
+
     try {
       setIsSaving(true);
       setStatusMessage("");
@@ -244,7 +349,7 @@ export default function PersonalInformationView({
     }
   }
 
-    async function handleLogout() {
+  async function handleLogout() {
     try {
       setErrorMessage("");
       setStatusMessage("");
@@ -253,6 +358,14 @@ export default function PersonalInformationView({
     } catch {
       setErrorMessage("Could not log out.");
     }
+  }
+
+  function handleTerminateMembership() {
+    setShowTerminatePrompt(false);
+    setStatusMessage("");
+    setErrorMessage(
+      "Membership termination will be connected in the next phase."
+    );
   }
 
   async function handleLeaveDecision(shouldSave: boolean) {
@@ -264,6 +377,7 @@ export default function PersonalInformationView({
         setIsSaving(true);
         setStatusMessage("");
         setErrorMessage("");
+
         await saveMemberProfileBrowser(profile);
         setSavedProfile(profile);
         setStatusMessage("Personal information saved.");
@@ -305,7 +419,9 @@ export default function PersonalInformationView({
                 <input
                   className="oltra-input"
                   value={profile.memberName}
-                  onChange={(e) => updateField("memberName", e.target.value)}
+                  onChange={(event) =>
+                    updateField("memberName", event.target.value)
+                  }
                 />
               </div>
 
@@ -314,7 +430,7 @@ export default function PersonalInformationView({
                 <input
                   className="oltra-input"
                   value={profile.email}
-                  onChange={(e) => updateField("email", e.target.value)}
+                  onChange={(event) => updateField("email", event.target.value)}
                 />
               </div>
 
@@ -323,7 +439,7 @@ export default function PersonalInformationView({
                 <input
                   className="oltra-input"
                   value={profile.phone}
-                  onChange={(e) => updateField("phone", e.target.value)}
+                  onChange={(event) => updateField("phone", event.target.value)}
                 />
               </div>
 
@@ -338,6 +454,7 @@ export default function PersonalInformationView({
                     align="left"
                     onValueChange={(value) => updateBirthday("day", value)}
                   />
+
                   <OltraSelect
                     name="birthdayMonth"
                     value={profile.birthday.month}
@@ -346,73 +463,113 @@ export default function PersonalInformationView({
                     align="left"
                     onValueChange={(value) => updateBirthday("month", value)}
                   />
+
                   <input
                     className="oltra-input"
                     placeholder="Year"
                     value={profile.birthday.year}
-                    onChange={(e) => updateBirthday("year", e.target.value)}
+                    onChange={(event) =>
+                      updateBirthday("year", event.target.value)
+                    }
                   />
                 </div>
               </div>
 
-              <div className="members-form-field">
-                <label className="oltra-label">HOME AIRPORT</label>
-                <input
-                  className="oltra-input"
-                  value={profile.homeAirport}
-                  onChange={(e) => updateField("homeAirport", e.target.value)}
-                />
+              <div className="members-profile-note">
+                <div className="members-note">
+                  Only for use in booking context - OLTRA will not send
+                  advertising information or pass on contact details to third
+                  parties.
+                </div>
               </div>
             </div>
 
-            <div className="members-form-stack">
-              <div className="members-form-field">
-                <label className="oltra-label">PREFERRED HOTEL STYLES</label>
-                <OltraSelect
-                  name="preferredHotelStyle"
-                  value={profile.preferredHotelStyle}
-                  placeholder="Select style"
-                  options={preferredHotelStyleOptions}
-                  align="left"
-                  onValueChange={(value) =>
-                    updateField("preferredHotelStyle", value)
-                  }
-                />
+            <div className="members-profile-side">
+              <div className="members-form-stack">
+                <div className="members-form-field">
+                  <label className="oltra-label">HOME AIRPORT</label>
+                  <OltraSelect
+                    name="homeAirport"
+                    value={profile.homeAirport}
+                    placeholder="Home airport"
+                    options={homeAirportOptions}
+                    align="left"
+                    onValueChange={(value) =>
+                      updateField("homeAirport", value)
+                    }
+                  />
+                </div>
+
+                <div className="members-form-field">
+                  <label className="oltra-label">PREFERRED AIRLINES</label>
+                  <MultiSelectDropdown
+                    value={parseMultiValue(profile.preferredAirline)}
+                    placeholder="Preferred airlines"
+                    options={PREFERRED_AIRLINE_OPTIONS}
+                    onChange={(values) =>
+                      updateField(
+                        "preferredAirline",
+                        stringifyMultiValue(values)
+                      )
+                    }
+                  />
+                </div>
               </div>
 
-              <div className="members-form-field">
-                <label className="oltra-label">PREFERRED AIRLINES</label>
-                <OltraSelect
-                  name="preferredAirline"
-                  value={profile.preferredAirline}
-                  placeholder="Select airline"
-                  options={preferredAirlineOptions}
-                  align="left"
-                  onValueChange={(value) =>
-                    updateField("preferredAirline", value)
-                  }
-                />
-              </div>
-            </div>
-          </div>
+              <div className="members-profile-actions">
+                <div className="members-profile-status">
+                  {errorMessage ? (
+                    <div className="members-note">{errorMessage}</div>
+                  ) : statusMessage ? (
+                    <div className="members-note">{statusMessage}</div>
+                  ) : null}
+                </div>
 
-          <div className="members-profile-note">
-            <div className="members-note">
-              Only for use in booking context - OLTRA will not send advertising
-              information or pass on contact details to third parties.
+                <div className="members-membership-buttons">
+                  <button
+                    type="button"
+                    className={[
+                      isDirty ? "oltra-button-primary" : "oltra-button-secondary",
+                      "members-action-button",
+                    ].join(" ")}
+                    onClick={handleSave}
+                    disabled={!isDirty || isSaving}
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="oltra-button-secondary members-action-button"
+                    onClick={handleLogout}
+                  >
+                    Log out
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="members-text-danger-action members-terminate-link"
+                  onClick={() => setShowTerminatePrompt(true)}
+                >
+                  Terminate membership
+                </button>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="oltra-glass members-section">
           <div className="members-section__header members-section__header--row">
-            <div className="oltra-label">ADDITIONAL MEMBERS</div>
+            <div className="oltra-label">ADDITIONAL FAMILY MEMBERS</div>
+
             <button
               type="button"
               className="oltra-button-primary members-action-button"
               onClick={addFamilyMember}
+              disabled={profile.familyMembers.length >= MAX_FAMILY_MEMBERS}
             >
-              Add member
+              Add family member
             </button>
           </div>
 
@@ -425,8 +582,8 @@ export default function PersonalInformationView({
                     <input
                       className="oltra-input"
                       value={member.fullName}
-                      onChange={(e) =>
-                        updateFamilyMember(member.id, e.target.value)
+                      onChange={(event) =>
+                        updateFamilyMember(member.id, event.target.value)
                       }
                     />
                   </div>
@@ -444,6 +601,7 @@ export default function PersonalInformationView({
                           updateFamilyBirthday(member.id, "day", value)
                         }
                       />
+
                       <OltraSelect
                         name={`family-month-${member.id}`}
                         value={member.birthday.month}
@@ -454,12 +612,17 @@ export default function PersonalInformationView({
                           updateFamilyBirthday(member.id, "month", value)
                         }
                       />
+
                       <input
                         className="oltra-input"
                         placeholder="Year"
                         value={member.birthday.year}
-                        onChange={(e) =>
-                          updateFamilyBirthday(member.id, "year", e.target.value)
+                        onChange={(event) =>
+                          updateFamilyBirthday(
+                            member.id,
+                            "year",
+                            event.target.value
+                          )
                         }
                       />
                     </div>
@@ -469,7 +632,7 @@ export default function PersonalInformationView({
                 <div className="members-family-actions">
                   <button
                     type="button"
-                    className="oltra-button-secondary members-action-button members-action-button--danger"
+                    className="members-text-danger-action"
                     onClick={() => removeFamilyMember(member.id)}
                   >
                     Delete member
@@ -477,49 +640,6 @@ export default function PersonalInformationView({
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="oltra-glass members-section">
-          <div className="members-membership-row">
-            <div>
-              {errorMessage ? (
-                <div className="members-note">{errorMessage}</div>
-              ) : statusMessage ? (
-                <div className="members-note">{statusMessage}</div>
-              ) : (
-                <div className="members-empty">
-                  Membership settings will be connected to account/auth in the next
-                  phase.
-                </div>
-              )}
-            </div>
-
-            <div className="members-membership-actions">
-              <button
-                type="button"
-                className="oltra-button-primary members-action-button"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-
-              <button
-                type="button"
-                className="oltra-button-secondary members-action-button"
-                onClick={handleLogout}
-              >
-                Log out
-              </button>
-
-              <button
-                type="button"
-                className="oltra-button-secondary members-action-button members-action-button--danger"
-              >
-                Terminate membership
-              </button>
-            </div>
           </div>
         </section>
       </div>
@@ -540,6 +660,7 @@ export default function PersonalInformationView({
               >
                 Yes
               </button>
+
               <button
                 type="button"
                 className="oltra-button-secondary members-action-button"
@@ -552,6 +673,139 @@ export default function PersonalInformationView({
           </div>
         </div>
       ) : null}
+
+      {showTerminatePrompt ? (
+        <div className="members-leave-overlay">
+          <div className="oltra-glass oltra-panel members-leave-modal">
+            <div className="members-leave-modal__text">
+              Are you sure you want to terminate your membership?
+            </div>
+
+            <div className="members-leave-modal__actions">
+              <button
+                type="button"
+                className="members-confirm-danger-button members-action-button"
+                onClick={handleTerminateMembership}
+              >
+                Yes
+              </button>
+
+              <button
+                type="button"
+                className="oltra-button-primary members-action-button"
+                onClick={() => setShowTerminatePrompt(false)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
+  );
+}
+
+function MultiSelectDropdown({
+  value,
+  placeholder,
+  options,
+  onChange,
+}: {
+  value: string[];
+  placeholder: string;
+  options: Option[];
+  onChange: (value: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(event.target as Node)) setOpen(false);
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  const selectedLabels: string[] = value
+    .map((selectedValue: string) => {
+      const matchedOption = options.find(
+        (item: Option) => item.value === selectedValue
+      );
+
+      return matchedOption?.label ?? "";
+    })
+    .filter((label: string) => Boolean(label));
+
+  const displayLabel =
+    selectedLabels.length > 0 ? selectedLabels.join(", ") : placeholder;
+
+  function toggleValue(nextValue: string) {
+    if (value.includes(nextValue)) {
+      onChange(value.filter((item) => item !== nextValue));
+      return;
+    }
+
+    onChange([...value, nextValue]);
+  }
+
+  return (
+    <div
+      ref={rootRef}
+      className="members-multiselect"
+      data-oltra-control="true"
+    >
+      <button
+        type="button"
+        className={[
+          "oltra-select",
+          "members-multiselect__trigger",
+          selectedLabels.length ? "" : "members-multiselect__trigger--empty",
+        ].join(" ")}
+        onClick={() => setOpen((current) => !current)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="members-multiselect__text">{displayLabel}</span>
+        <span className="members-multiselect__chevron">⌄</span>
+      </button>
+
+      {open ? (
+        <div className="oltra-dropdown-panel members-multiselect__panel">
+          <div className="oltra-dropdown-list members-multiselect__list">
+            {options.map((item: Option) => {
+              const selected = value.includes(item.value);
+
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  className={[
+                    "oltra-dropdown-item",
+                    "members-multiselect__option",
+                    selected ? "members-multiselect__option--active" : "",
+                  ].join(" ")}
+                  onClick={() => toggleValue(item.value)}
+                >
+                  <span>{item.label}</span>
+                  <span>{selected ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

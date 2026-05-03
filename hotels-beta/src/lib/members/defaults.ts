@@ -27,8 +27,6 @@ export const DEFAULT_MEMBER_PROFILE: MemberProfile = {
         month: "Mar",
         year: "1986",
       },
-      passportNumber: "XK129933",
-      passportExpiry: "2030-05-18",
     },
     {
       id: "fm-2",
@@ -38,8 +36,6 @@ export const DEFAULT_MEMBER_PROFILE: MemberProfile = {
         month: "Sep",
         year: "1988",
       },
-      passportNumber: "TR558220",
-      passportExpiry: "2029-11-02",
     },
   ],
 };

@@ -144,19 +144,13 @@ export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null>
     email: profile?.email ?? user.email ?? "",
     phone: profile?.phone ?? "",
     homeAirport: profile?.home_airport ?? "",
-    birthday: { day: "", month: "", year: "" },
-    preferredHotelStyle:
-      profile?.preferred_hotel_styles?.[0] ??
-      "",
-    preferredAirline:
-      profile?.preferred_airlines?.[0] ??
-      "",
+    birthday: parseBirthday(profile?.birthday ?? null),
+    preferredHotelStyle: "",
+    preferredAirline: profile?.preferred_airlines?.[0] ?? "",
     familyMembers: (familyRes.data ?? []).map((member) => ({
       id: member.id,
       fullName: member.full_name ?? "",
       birthday: parseBirthday(member.birthday ?? null),
-      passportNumber: member.passport_number ?? "",
-      passportExpiry: member.passport_expiry ?? "",
     })),
   };
 }
@@ -183,10 +177,8 @@ export async function saveMemberProfileBrowser(
     email: profile.email || null,
     phone: profile.phone || null,
     home_airport: profile.homeAirport || null,
+    birthday: serializeBirthday(profile.birthday),
     preferred_currency: null,
-    preferred_hotel_styles: profile.preferredHotelStyle
-      ? [profile.preferredHotelStyle]
-      : [],
     preferred_airlines: profile.preferredAirline
       ? [profile.preferredAirline]
       : [],
@@ -210,8 +202,7 @@ export async function saveMemberProfileBrowser(
       id: member.id,
       user_id: userId,
       full_name: member.fullName || null,
-      passport_number: member.passportNumber || null,
-      passport_expiry: member.passportExpiry || null,
+      birthday: serializeBirthday(member.birthday),
     }));
 
     const { error: insertFamilyError } = await supabase
@@ -645,6 +636,7 @@ export async function submitReviewBrowser(input: {
   reviewType: "hotel" | "restaurant";
   targetLabel: string;
   targetDirectusId?: string | null;
+  dateVisited?: string | null;
   overallRating: number;
   serviceRating: number;
   designRating: number;
@@ -671,6 +663,7 @@ export async function submitReviewBrowser(input: {
       review_type: input.reviewType,
       target_directus_id: input.targetDirectusId ?? null,
       target_label: input.targetLabel,
+      date_visited: input.dateVisited || null,
       overall_rating: input.overallRating,
       service_rating: input.serviceRating,
       design_rating: input.designRating,
@@ -687,12 +680,18 @@ export async function getMemberActionAccessBrowser(): Promise<{
   isLoggedIn: boolean;
 }> {
   try {
-    // Reuse the same auth/session source already used by your browser member actions.
-    // Example: current Supabase session / current member user lookup.
-    // Return true only when a real authenticated member session exists.
+    const supabase = createBrowserClient();
 
-    const isLoggedIn = false; // replace with your real auth check
-    return { isLoggedIn };
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return { isLoggedIn: false };
+    }
+
+    return { isLoggedIn: true };
   } catch {
     return { isLoggedIn: false };
   }

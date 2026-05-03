@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 type Option = {
   value: string;
   label: string;
+  selectedLabel?: string;
 };
 
 type Props = {
@@ -111,7 +112,7 @@ export default function OltraSelect({
   const displayLabel =
     selectedValue === "" || (name === "kids" && selectedValue === "0")
       ? placeholder
-      : selected?.label ?? placeholder;
+      : selected?.selectedLabel ?? selected?.label ?? placeholder;
 
   const justifyClass =
     align === "center"

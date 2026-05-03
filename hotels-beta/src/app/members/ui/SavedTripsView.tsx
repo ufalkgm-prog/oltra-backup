@@ -38,6 +38,9 @@ export default function SavedTripsView() {
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [selectedTripId, setSelectedTripId] = useState("");
   const [warningItemId, setWarningItemId] = useState<string | null>(null);
+  const [tripPendingDelete, setTripPendingDelete] = useState<SavedTrip | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -100,8 +103,6 @@ export default function SavedTripsView() {
       if (tripId === selectedTripId) {
         setSelectedTripId(next[0]?.id ?? "");
       }
-
-      setStatusMessage("Trip deleted.");
     } catch {
       setErrorMessage("Could not delete trip.");
     }
@@ -135,8 +136,6 @@ export default function SavedTripsView() {
               }
         )
       );
-
-      setStatusMessage("Trip item deleted.");
     } catch {
       setErrorMessage("Could not delete trip item.");
     }
@@ -230,8 +229,8 @@ export default function SavedTripsView() {
         <div className="members-trip-actions">
           <button
             type="button"
-            className="oltra-button-secondary members-action-button"
-            onClick={() => deleteTrip(selectedTrip.id)}
+            className="members-text-danger-action members-terminate-link"
+            onClick={() => setTripPendingDelete(selectedTrip)}
           >
             Delete trip
           </button>
@@ -261,6 +260,39 @@ export default function SavedTripsView() {
             </button>
           </div>
         </section>
+      ) : null}
+
+      {tripPendingDelete ? (
+        <div className="members-leave-overlay">
+          <div className="oltra-glass oltra-panel members-leave-modal">
+            <div className="members-leave-modal__text">
+              Are you sure you want to delete{" "}
+              {tripPendingDelete.name ? `"${tripPendingDelete.name}"` : "this trip"}?
+            </div>
+
+            <div className="members-leave-modal__actions">
+              <button
+                type="button"
+                className="members-confirm-danger-button members-action-button"
+                onClick={async () => {
+                  const tripId = tripPendingDelete.id;
+                  setTripPendingDelete(null);
+                  await deleteTrip(tripId);
+                }}
+              >
+                Yes
+              </button>
+
+              <button
+                type="button"
+                className="oltra-button-primary members-action-button"
+                onClick={() => setTripPendingDelete(null)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {errorMessage || statusMessage ? (

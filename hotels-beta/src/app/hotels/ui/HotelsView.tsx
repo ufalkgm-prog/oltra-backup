@@ -1356,68 +1356,75 @@ export default function HotelsView(props: {
     }
   }
 
-  async function handleCreateTripAndAddHotel() {
-    if (!selectedHotel) return;
+async function handleCreateTripAndAddHotel() {
+  if (!selectedHotel) return;
 
-    if (!isMemberLoggedIn) {
-      setShowTripPicker(false);
-      setMemberActionError(getMemberActionLoginMessage("trip"));
-      return;
-    }
-
-    try {
-      setCreatingTrip(true);
-      setMemberActionMessage("");
-      setMemberActionError("");
-
-      const createdTrip = await createTripBrowser({
-        name: newTripName || "New trip",
-        destination:
-          [selectedHotel.city, selectedHotel.country].filter(Boolean).join(" · ") ||
-          null,
-        periodLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-      });
-
-      setTripChoices((prev) => [...prev, createdTrip]);
-      setSelectedTripIdForAdd(createdTrip.id);
-
-      const result = await addHotelToTripBrowser({
-        tripId: createdTrip.id,
-        hotelDirectusId: String(selectedHotel.id),
-        name: selectedHotel.hotel_name ?? "Untitled hotel",
-        location: locationLine(selectedHotel),
-        stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-        thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
-        checkIn: fromValue || null,
-        checkOut: toValue || null,
-      });
-
-      setNewTripName("");
-      setShowTripPicker(false);
-
-      if (result.overlapWarning) {
-        setMemberActionMessage("Created and added with overlap warning.");
-      } else {
-        setMemberActionMessage("Added.");
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : "";
-
-      if (
-        message.includes("auth") ||
-        message.includes("login") ||
-        message.includes("sign in") ||
-        message.includes("unauthorized") ||
-        message.includes("not authenticated")
-      ) {
-        setMemberActionError("Log in to add to trip.");
-      } else {
-        setMemberActionError("Could not create trip.");
-      }
-    } finally {
-      setCreatingTrip(false);
-    }
+  if (!isMemberLoggedIn) {
+    setShowTripPicker(false);
+    setMemberActionError(getMemberActionLoginMessage("trip"));
+    return;
   }
+
+  const cleanTripName = newTripName.trim();
+
+  if (!cleanTripName) {
+    setMemberActionError("Please name your trip before creating it.");
+    return;
+  }
+
+  try {
+    setCreatingTrip(true);
+    setMemberActionMessage("");
+    setMemberActionError("");
+
+    const createdTrip = await createTripBrowser({
+      name: cleanTripName,
+      destination:
+        [selectedHotel.city, selectedHotel.country].filter(Boolean).join(" · ") ||
+        null,
+      periodLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+    });
+
+    setTripChoices((prev) => [...prev, createdTrip]);
+    setSelectedTripIdForAdd(createdTrip.id);
+
+    const result = await addHotelToTripBrowser({
+      tripId: createdTrip.id,
+      hotelDirectusId: String(selectedHotel.id),
+      name: selectedHotel.hotel_name ?? "Untitled hotel",
+      location: locationLine(selectedHotel),
+      stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+      thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
+      checkIn: fromValue || null,
+      checkOut: toValue || null,
+    });
+
+    setNewTripName("");
+    setShowTripPicker(false);
+
+    if (result.overlapWarning) {
+      setMemberActionMessage("Created and added with overlap warning.");
+    } else {
+      setMemberActionMessage("Added.");
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+    if (
+      message.includes("auth") ||
+      message.includes("login") ||
+      message.includes("sign in") ||
+      message.includes("unauthorized") ||
+      message.includes("not authenticated")
+    ) {
+      setMemberActionError("Log in to add to trip.");
+    } else {
+      setMemberActionError("Could not create trip.");
+    }
+  } finally {
+    setCreatingTrip(false);
+  }
+}
 
   async function handleAddHotelToFavorites() {
     if (!selectedHotel) return;
@@ -2179,7 +2186,10 @@ export default function HotelsView(props: {
                               <input
                                 type="text"
                                 value={newTripName}
-                                onChange={(e) => setNewTripName(e.target.value)}
+                                onChange={(e) => {
+                                  setNewTripName(e.target.value);
+                                  setMemberActionError("");
+                                }}
                                 placeholder="Trip name"
                                 className="oltra-input"
                               />
@@ -2187,7 +2197,7 @@ export default function HotelsView(props: {
                               <button
                                 type="button"
                                 onClick={handleCreateTripAndAddHotel}
-                                disabled={creatingTrip}
+                                disabled={creatingTrip || !newTripName.trim()}
                                 className="oltra-dropdown-item"
                               >
                                 {creatingTrip ? "Creating..." : "Create new trip"}

@@ -142,6 +142,7 @@ export type Database = {
       }
       member_profiles: {
         Row: {
+          birthday: string | null
           created_at: string
           email: string | null
           home_airport: string | null
@@ -154,6 +155,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          birthday?: string | null
           created_at?: string
           email?: string | null
           home_airport?: string | null
@@ -166,6 +168,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          birthday?: string | null
           created_at?: string
           email?: string | null
           home_airport?: string | null
