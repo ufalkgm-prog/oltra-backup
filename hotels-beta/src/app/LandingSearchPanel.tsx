@@ -19,7 +19,6 @@ type PageSearchParams = Record<string, string | string[] | undefined>;
 
 type Props = {
   initialSearchParams: PageSearchParams;
-  selectedIncludes: string[];
   dataset: HotelSuggestionDataset;
 };
 
@@ -41,14 +40,25 @@ function buildComparableSearchKey(params: PageSearchParams): string {
   return out.toString();
 }
 
+function formatDisplayDate(value: string): string {
+  if (!value) return "";
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+    .format(new Date(year, month - 1, day))
+    .replace(/ /g, " ");
+}
+
 export default function LandingSearchPanel({
   initialSearchParams,
-  selectedIncludes,
   dataset,
 }: Props) {
-  const [includes, setIncludes] = useState<string[]>(
-    selectedIncludes.length ? selectedIncludes : ["hotels"]
-  );
 
   const [fromValue, setFromValue] = useState(
     normalizeParam(initialSearchParams.from)
@@ -101,11 +111,7 @@ export default function LandingSearchPanel({
     };
   }, []);
 
-  const hotelsSelected = includes.includes("hotels");
-  const flightsSelected = includes.includes("flights");
-  const noVerticalSelected = includes.length === 0;
-
-  const bedroomsValue = normalizeParam(initialSearchParams.bedrooms);
+  const bedroomsValue = normalizeParam(initialSearchParams.bedrooms) || "1";
 
   const hasGuestDetails = guestSelection.adults > 0;
   const hasRequiredStayDetails =
@@ -139,7 +145,6 @@ export default function LandingSearchPanel({
     stayLengthMs <= maxStayLengthMs;
 
   const resultCountTooLarge =
-    hotelsSelected &&
     destinationState.hasSelection &&
     destinationState.activeHotelCount > 50;
 
@@ -149,10 +154,6 @@ export default function LandingSearchPanel({
   );
 
   const searchDisabledReason = useMemo(() => {
-    if (noVerticalSelected) {
-      return "PLEASE SELECT HOTELS AND/OR FLIGHTS";
-    }
-
     if (resultCountTooLarge) {
       return "PLEASE LIMIT NO OF RESULTS";
     }
@@ -161,23 +162,16 @@ export default function LandingSearchPanel({
       return "PLEASE SELECT DATES AND GUEST DETAILS";
     }
 
-    if (hotelsSelected && !destinationState.hasSelection) {
-      return "PLEASE LIMIT NO OF RESULTS";
-    }
-
-    if (flightsSelected && !destinationState.hasSelection) {
+    if (!destinationState.hasSelection) {
       return "PLEASE LIMIT NO OF RESULTS";
     }
 
     return "";
   }, [
-    noVerticalSelected,
     resultCountTooLarge,
     hasRequiredStayDetails,
     datesAreValid,
-    hotelsSelected,
-    flightsSelected,
-    destinationState,
+    destinationState.hasSelection,
   ]);
 
   const searchIsActive = searchDisabledReason === "";
@@ -219,20 +213,6 @@ export default function LandingSearchPanel({
     }, 220);
   }
 
-  function toggleInclude(value: string) {
-    setIncludes((prev) => {
-      const next = prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value];
-
-      window.setTimeout(() => {
-        scheduleAutoSubmit();
-      }, 0);
-
-      return next;
-    });
-  }
-
   return (
     <div className={`oltra-glass oltra-panel ${styles.searchPanel}`}>
       <form
@@ -272,14 +252,16 @@ export default function LandingSearchPanel({
                 }}
                 onKeyDown={(e) => e.preventDefault()}
                 onBeforeInput={(e) => e.preventDefault()}
-                className={[
-                  "oltra-input w-full cursor-pointer",
-                  fromValue ? "text-white" : "text-transparent caret-transparent",
-                ].join(" ")}
+                className={`${styles.nativeDateInput} oltra-input w-full cursor-pointer`}
               />
-              {!fromValue ? (
-                <span className={styles.datePlaceholder}>date</span>
-              ) : null}
+
+              <span
+                className={styles.dateDisplay}
+                data-has-value={fromValue ? "true" : "false"}
+                aria-hidden="true"
+              >
+                {fromValue ? formatDisplayDate(fromValue) : "date"}
+              </span>
             </div>
           </div>
 
@@ -301,14 +283,16 @@ export default function LandingSearchPanel({
                 }}
                 onKeyDown={(e) => e.preventDefault()}
                 onBeforeInput={(e) => e.preventDefault()}
-                className={[
-                  "oltra-input w-full cursor-pointer",
-                  toValue ? "text-white" : "text-transparent caret-transparent",
-                ].join(" ")}
+                className={`${styles.nativeDateInput} oltra-input w-full cursor-pointer`}
               />
-              {!toValue ? (
-                <span className={styles.datePlaceholder}>date</span>
-              ) : null}
+
+              <span
+                className={styles.dateDisplay}
+                data-has-value={toValue ? "true" : "false"}
+                aria-hidden="true"
+              >
+                {toValue ? formatDisplayDate(toValue) : "date"}
+              </span>
             </div>
           </div>
 
@@ -328,8 +312,8 @@ export default function LandingSearchPanel({
             <span className="oltra-label">Bedrooms</span>
             <OltraSelect
               name="bedrooms"
-              value={normalizeParam(initialSearchParams.bedrooms)}
-              placeholder="#"
+              value={bedroomsValue}
+              placeholder="1"
               align="left"
               options={[1, 2, 3, 4].map((n) => ({
                 value: String(n),
@@ -340,34 +324,6 @@ export default function LandingSearchPanel({
         </div>
 
         <div className={styles.includeRow}>
-          <div className={styles.includeLeft}>
-            <div className={`${styles.includeLabel} oltra-subheader`}>
-              Search in
-            </div>
-
-            <label className={styles.includeOption}>
-              <input
-                type="checkbox"
-                name="include"
-                value="hotels"
-                checked={includes.includes("hotels")}
-                onChange={() => toggleInclude("hotels")}
-              />
-              <span>Hotels</span>
-            </label>
-
-            <label className={styles.includeOption}>
-              <input
-                type="checkbox"
-                name="include"
-                value="flights"
-                checked={includes.includes("flights")}
-                onChange={() => toggleInclude("flights")}
-              />
-              <span>Flights</span>
-            </label>
-          </div>
-
           <div className={styles.includeSearchButtonWrap}>
             <button
               type="submit"

@@ -563,6 +563,7 @@ textarea::-webkit-scrollbar-thumb,
 }
 
 .oltra-site-header__brand {
+  position: relative;
   justify-self: start;
   text-align: left;
   min-width: max-content;
@@ -594,6 +595,54 @@ textarea::-webkit-scrollbar-thumb,
   text-decoration: none;
 }
 
+.oltra-site-header__beta-badge {
+  position: absolute;
+  top: 2px;
+  left: calc(100% - 18px);
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.4rem 0.1rem;
+  border: 1px solid rgba(255, 140, 64, 0.78);
+  border-radius: 999px;
+  background: rgba(255, 122, 43, 0.16);
+  color: rgba(255, 178, 112, 0.98);
+  font-size: 0.56rem;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  font-weight: 500;
+  cursor: default;
+  z-index: var(--oltra-z-popup);
+}
+
+.oltra-site-header__beta-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  width: min(280px, calc(100vw - 2rem));
+  padding: 0.72rem 0.72rem 0.72rem 0.78rem;
+  border-radius: var(--oltra-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(24, 37, 46, 0.94);
+  color: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.oltra-site-header__beta-badge:hover .oltra-site-header__beta-popover,
+.oltra-site-header__beta-badge:focus .oltra-site-header__beta-popover {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .oltra-site-header__route {
   margin-top: 4px;
 }
@@ -609,9 +658,11 @@ textarea::-webkit-scrollbar-thumb,
 
 .oltra-site-header__nav-link,
 .oltra-site-header__action-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.38rem;
   min-height: 36px;
   padding: 0 12px;
   border: 1.5px solid transparent;
@@ -626,6 +677,26 @@ textarea::-webkit-scrollbar-thumb,
     border-color 160ms ease,
     background-color 160ms ease,
     color 160ms ease;
+}
+
+.oltra-site-header__nav-badge {
+  position: absolute;
+  top: -0.05rem;
+  right: 0.12rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem 0.3rem 0.08rem;
+  border: 1px solid rgba(255, 140, 64, 0.85);
+  border-radius: 4px;
+  background: rgba(255, 122, 43, 0.2);
+  color: rgba(255, 178, 112, 0.98);
+  font-size: 0.5rem;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  transform: rotate(14deg) translate(0.46rem, -0.04rem);
+  transform-origin: center;
+  pointer-events: none;
 }
 
 .oltra-site-header__nav-link.is-active,
@@ -704,6 +775,10 @@ textarea::-webkit-scrollbar-thumb,
   .oltra-site-header__nav {
     justify-content: flex-start;
     gap: 14px;
+  }
+
+  .oltra-site-header__beta-badge {
+    left: calc(100% - 10px);
   }
 }
 

@@ -37,7 +37,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
 
   const navItems = [
     { label: "Hotels", href: hotelsHref, match: "/hotels" },
-    { label: "Flights", href: flightsHref, match: "/flights" },
+    { label: "Flights", href: flightsHref, match: "/flights", badge: "WIP" },
     { label: "Restaurants", href: restaurantsHref, match: "/restaurants" },
     { label: "Inspire", href: "/inspire", match: "/inspire" },
     { label: "Members", href: user ? "/members" : "/login", match: user ? "/members" : "/login" },
@@ -154,6 +154,16 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
             />
           </Link>
 
+          <span
+            className="oltra-site-header__beta-badge"
+            tabIndex={0}
+            aria-label="OLTRA beta launch notice"
+          >
+            BETA
+            <span className="oltra-site-header__beta-popover" role="tooltip">
+              This site is at beta launch stage and does not yet include full hotel list or flights search functionality. Additional content and functionality will be added pending partner discussions.
+            </span>
+          </span>
           {current ? <div className="oltra-site-header__route oltra-route-label">{current}</div> : null}
         </div>
 
@@ -168,7 +178,10 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
                 className={`oltra-site-header__nav-link ${isActive ? "is-active" : ""}`}
                 aria-current={isActive ? "page" : undefined}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {"badge" in item && item.badge ? (
+                  <span className="oltra-site-header__nav-badge">{item.badge}</span>
+                ) : null}
               </Link>
             );
           })}

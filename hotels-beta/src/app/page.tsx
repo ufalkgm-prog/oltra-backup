@@ -70,8 +70,7 @@ export default async function HomePage({
   const resolvedSearchParams = await searchParams;
   const submitted = normalizeParam(resolvedSearchParams.submitted) === "1";
 
-  const selectedIncludes = listFromParam(resolvedSearchParams.include);
-  const includes = selectedIncludes.length ? selectedIncludes : ["hotels"];
+  const includes = ["hotels"];
 
   const q = normalizeParam(resolvedSearchParams.q).trim();
 
@@ -79,7 +78,6 @@ export default async function HomePage({
 
   let hotelCount: number | null = null;
   let hotelLine: string | null = null;
-  let flightLine: string | null = null;
 
   if (submitted && includes.includes("hotels")) {
     const filter = buildHotelsDirectusFilter(resolvedSearchParams);
@@ -108,19 +106,12 @@ export default async function HomePage({
     }
   }
 
-  if (submitted && includes.includes("flights")) {
-    flightLine = q
-      ? `Top flight options for ${q} will appear here once the flight API is connected.`
-      : "Top flight options will appear here once the flight API is connected.";
-  }
-
   const sharedQuery = buildQueryString({
     ...resolvedSearchParams,
     submitted: undefined,
   });
 
   const hotelsHref = `/hotels${sharedQuery ? `?${sharedQuery}` : ""}`;
-  const flightsHref = `/flights${sharedQuery ? `?${sharedQuery}` : ""}`;
 
   return (
     <PageShell current="" disableBackground>
@@ -130,7 +121,6 @@ export default async function HomePage({
         <section className={styles.heroPanel}>
           <LandingSearchPanel
             initialSearchParams={resolvedSearchParams}
-            selectedIncludes={includes}
             dataset={dataset}
           />
 
@@ -144,10 +134,6 @@ export default async function HomePage({
                 {includes.includes("hotels") && hotelLine ? (
                   <div className={styles.summaryLine}>{hotelLine}</div>
                 ) : null}
-
-                {includes.includes("flights") && flightLine ? (
-                  <div className={styles.summaryLine}>{flightLine}</div>
-                ) : null}
               </div>
 
               <div className={styles.summaryActions}>
@@ -158,16 +144,6 @@ export default async function HomePage({
                     prefetch={false}
                   >
                     Hotels
-                  </Link>
-                ) : null}
-
-                {includes.includes("flights") ? (
-                  <Link
-                    href={flightsHref}
-                    className={`oltra-button-primary ${styles.summaryButton}`}
-                    prefetch={false}
-                  >
-                    Flights
                   </Link>
                 ) : null}
               </div>

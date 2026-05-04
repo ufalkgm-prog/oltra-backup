@@ -1,160 +1,128 @@
-AI PROJECT CONTEXT — OLTRA (NEXT SESSION: INSPIRE + RESTAURANTS ACTION POPUPS)
+We are continuing work on OLTRA.
 
-You are a senior full-stack engineer working on OLTRA, a curated luxury travel platform.
+Project context:
+OLTRA is a curated luxury travel platform built with Next.js 15 App Router, TypeScript, Tailwind v4, Server Components by default, Directus on Railway as canonical CMS via /src/lib/directus, and Supabase for auth/member-specific data only. The AI layer is placeholder only and must not query Directus directly.
 
-Act as:
-- precise
-- minimal-diff focused
-- design-system driven
-- production-grade
+Strict rules:
+- Minimal-diff, production-grade changes only.
+- No new libraries unless explicitly approved.
+- No schema redesign unless explicitly requested.
+- Preserve the editorial luxury UX.
+- Centralize reusable logic.
+- Use Hotels as behavioral/design reference.
+- Avoid temporary hacks unless explicitly marked and documented.
+- Provide exact file-level edits and terminal commands one step at a time.
+- Do not give multiple terminal commands without explaining what each checks or changes.
 
------------------------------------
-CURRENT STACK / RULES
------------------------------------
+Repo/deployment status:
+- Real repo root: /workspaces/oltra-beta.
+- Real Next.js app: /workspaces/oltra-beta/hotels-beta.
+- Ignore/edit nothing in old nested copies.
+- GitHub origin repo: ufalkgm-prog/oltra-beta.
+- Backup remote: backup → ufalkgm-prog/oltra-backup.
+- Plain `git push` may track backup/main; for deployment use `git push origin main:main`.
+- Backup push command: `git push backup main:main`.
+- If backup push has permission issues, run `unset GITHUB_TOKEN` first.
+- Vercel project root directory is hotels-beta.
+- Production branch is main.
+- Always build locally before pushing to origin.
+- Push to origin/main to trigger Vercel deployment.
+- Push to backup/main after origin succeeds.
+- After changing Vercel env vars, redeploy in Vercel.
 
-- Next.js 15 App Router + TypeScript
-- Tailwind v4
-- centralized visual system in `src/styles/oltra-theme.css`
-- Directus (Railway) is the single canonical editorial data source
-- all Directus access goes through `/src/lib/directus`
-- no schema redesign unless explicitly requested
-- no new libraries unless explicitly requested
-- keep changes small, composable, and visually consistent
-- no ad-hoc visual styling if it should belong in the shared system
+Important working commands:
+Repo/root checks:
+  cd /workspaces/oltra-beta
+  git status -sb
+  git log --oneline --decorate -5
+  git remote -v
 
------------------------------------
-CURRENT GLOBAL UI STATUS
------------------------------------
+Local build:
+  cd /workspaces/oltra-beta/hotels-beta
+  rm -rf .next
+  npm run build
 
-Stable shared rules now include:
-- header nav uses rounded outline hover, no underline, no fill
-- Members section spacing is denser and improved
-- active buttons use green theme color
-- shared controls use OLTRA theme tokens
-- `/members` opens on personal information, not saved trips
-- global scrollbar/page-width fix has already been added in `src/styles/oltra-theme.css`:
-  `html { overflow-y: scroll; scrollbar-gutter: stable; }`
+Local dev:
+  cd /workspaces/oltra-beta/hotels-beta
+  npm run dev
 
-Important shared principle:
-- prefer shared system fixes over page-specific hacks
-- use `oltra-theme.css` for visual rules when appropriate
-- only use local CSS for layout/section-specific adjustments
+Commit/deploy:
+  cd /workspaces/oltra-beta
+  git add -A hotels-beta
+  git commit -m "..."
+  git push origin main:main
+  unset GITHUB_TOKEN
+  git push backup main:main
 
------------------------------------
-MEMBERS STATUS
------------------------------------
+Current completed changes from latest session:
+- Landing page search panel made darker using page-level CSS override, not global glass variables.
+- Landing search now searches Hotels only.
+- Removed “Search in”, Hotels checkbox, and Flights checkbox from landing search.
+- Removed Flights summary line/action from landing page.
+- Bedrooms dropdown defaults to 1.
+- Landing date fields changed to display format `dd mmm yyyy`, using a display span over native date input.
+- Date fields should open picker on click and prevent typing/text entry.
+- Old duplicate date placeholder spans/classes were removed or should be removed if still present.
+- Header has OLTRA SVG logo at /public/images/oltra-logo.svg.
+- Added orange BETA badge near logo with hover/focus popup:
+  “This site is at beta launch stage and does not yet include full hotel list or flights search functionality. Additional content and functionality will be added pending partner discussions.”
+- BETA popup was narrowed to around 280px with reduced padding.
+- Added orange slanted WIP stamp to Flights nav item, overlapping the top-right of “Flights”.
+- WIP should slant positively and sit slightly lower over the “ts”.
+- Top nav active outline behavior remains: active page outline stays after navigation but clears while hovering other top menu pages.
 
-Refined pages:
-- `/members/personal-information`
-- `/members/saved-trips`
-- `/members/favorite-hotels`
-- `/members/favorite-restaurants`
+Files likely touched last session:
+- hotels-beta/src/app/page.tsx
+- hotels-beta/src/app/LandingSearchPanel.tsx
+- hotels-beta/src/app/page.module.css
+- hotels-beta/src/components/site/SiteHeader.tsx
+- hotels-beta/src/styles/oltra-theme.css
 
-MembersShell:
-- redundant page title headers removed where `title` prop is omitted
-- sidebar/content alignment improved
+Known relevant implementation notes:
+- SiteHeader uses global `.oltra-site-header...` styles in `src/styles/oltra-theme.css`, not `siteheader.module`.
+- Keep landing search panel opacity changes scoped to `src/app/page.module.css`; do not globally change `--oltra-glass-bg`.
+- Landing page now assumes `includes = ["hotels"]`.
+- `flightsHref` and `flightLine` should no longer be referenced in `page.tsx`.
+- `LandingSearchPanel` should no longer accept `selectedIncludes`.
+- `hotelsSelected`, `flightsSelected`, `noVerticalSelected`, and `toggleInclude` should no longer exist.
+- `resultCountTooLarge` should now only depend on destination state and active hotel count.
+- Date display uses `formatDisplayDate(value)` and `data-has-value`.
+- CSS date height should use `--oltra-control-height`, not `--oltra-input-height`.
 
-Personal Information:
-- no page header
-- left column = member name, email, phone, birthday, home airport
-- right column = preferred hotel styles, preferred airlines
-- preferred hotel styles sourced from Directus taxonomy styles
-- preferred airlines mock options: SAS, Lufthansa, Emirates, easyJet
-- currency removed
-- additional members reduced to name + birthday
-- unsaved changes prompt added: “Do you want to save changes?” Yes/No
+Current product status:
+- Hotels UI is stable and functional, but next session should fix a few remaining Hotels page UI issues.
+- Restaurants UI is functional and aligned.
+- Shared dropdown behavior is implemented.
+- Saint Tropez ↔ Ramatuelle city alias logic is implemented.
+- Agoda Affiliate Lite / Long Tail availability integration is functional.
+- Single selected hotel Agoda availability works.
+- Batch Agoda availability for visible hotel results works.
+- Result thumbnails show Agoda price/night or “Not available on Agoda.”
+- Agoda hotel IDs come from Directus field `agoda_hotel_id`.
+- Agoda endpoint path should resolve to `/affiliateservice/lt_v1`.
+- Agoda image URLs are stored in Directus fields `agoda_photo1`–`agoda_photo5`; fallback handling may need small UI checks.
+- GuestSelector was corrected so `onChange` fires from `useEffect` after local state changes.
+- Agoda dirty-state behavior should make both Agoda buttons active again when destination/purpose, dates, guests, or bedrooms change.
 
-Saved Trips:
-- no page header
-- top summary values truncate with ellipsis and show full text on hover via `title`
+Members status:
+- Member pages were heavily refined and mostly stable.
+- Personal information, saved trips, favorites, feedback/suggest, and review page updates are complete as of prior sessions.
 
-Favorite Hotels / Favorite Restaurants:
-- page headers removed
-- aligned visually with Personal Information / Saved Trips
+Next session focus:
+1. Disable the Flights page/functionality for beta launch while preserving the menu item with WIP sticker.
+   - Likely options: make `/flights` show a polished beta/WIP page or prevent navigation and show/route to a simple notice.
+   - Keep minimal-diff and luxury editorial tone.
+   - Do not remove Flights permanently.
+2. Fix a few UI issues on the Hotels page.
+   - Ask me for the specific Hotels UI issues first.
+   - Ask for only the minimum relevant files/snippets if not already known.
+3. Then guide through:
+   - local build/test from `/workspaces/oltra-beta/hotels-beta`
+   - git status from `/workspaces/oltra-beta`
+   - commit
+   - push to origin/main for Vercel
+   - push to backup/main
+   - Vercel deployment check
 
------------------------------------
-RESTAURANTS STATUS
------------------------------------
-
-Restaurants page only needed small tweaks and is close to correct.
-
-Files involved:
-- `src/app/restaurants/page.tsx`
-- `src/app/restaurants/ui/RestaurantsMapView.tsx`
-- `src/app/restaurants/restaurants.css`
-
-What was already addressed:
-1. city dropdown was moved toward the shared dropdown visual system
-2. city label was aligned to the field edge instead of inner text alignment
-3. spacing between labels and fields was tightened toward Members/Hotels rhythm
-4. `TOP RESTAURANTS` replaced dynamic “X selected top restaurant” text
-
-Important remaining Restaurants issue for next session:
-- the `Add to trip` and `Add to favourites` popup/dropdown behavior is not correct near the bottom of the selected-card area
-- the popup opens downward and can extend below the visible container area
-- this makes the dropdown/popup partially inaccessible
-- this needs to be fixed carefully with minimal diff
-
-Likely cause:
-- popup is absolutely positioned downward inside a constrained scroll/container context
-- relevant selectors include:
-  - `.restaurant-detail-card__actions--relative`
-  - `.restaurant-trip-popup`
-  - `.restaurant-detail-card`
-  - `.restaurants-sidebar__detail`
-
-Goal next session:
-- make add-to-trip / add-to-favourites interaction fully accessible
-- popup should not drop below the bottom edge of the usable panel area
-- likely fix is one of:
-  - open upward instead of downward in this context
-  - anchor differently inside the action area
-  - adjust overflow/positioning context carefully
-- keep styling aligned with shared dropdown/popup system
-
-Do NOT do a large rewrite unless clearly necessary.
-
------------------------------------
-INSPIRE PAGE — NEXT SESSION MAIN FOCUS
------------------------------------
-
-Main next-session focus is now the Inspire page.
-
-Need a consistency and usability pass on:
-- map view
-- text boxes
-- dropdowns
-- pop-ups
-- header / overall layout rhythm
-- visual consistency with Hotels / Members / Restaurants
-
-Prior Inspire requirements from earlier sessions:
-- map view, text boxes, dropdowns and pop-ups should be uniform across all pages
-- Inspire should be in the main menu if not already completed
-- page scroll should not visually move behind the OLTRA header/menu icon
-- there should be a proper fixed header background layer on top of the underlying page
-- maintain dense, calm, editorial luxury spacing
-
-Need to verify current Inspire state next session before patching.
-
------------------------------------
-SHARED FILES / SYSTEM FILES
------------------------------------
-
-Likely relevant shared files:
-- `src/styles/oltra-theme.css`
-- any Inspire route/view files
-- any shared dropdown component files if Inspire uses them
-- possibly `src/components/site/OltraSelect.tsx` if a true shared dropdown inconsistency is found
-
-Already relevant shared theme details:
-- `html { overflow-y: scroll; scrollbar-gutter: stable; }`
-- shared dropdown/popup system exists in `oltra-theme.css`
-- use shared classes/tokens where possible rather than local one-off styling
-
------------------------------------
-NEXT SESSION TASKS
------------------------------------
-
-1. Fix Restaurants page
-2. Fix Inspire page
+Please start by asking exactly:
+“What should the disabled Flights experience be for beta: a non-clickable WIP nav item, or a clickable polished beta notice page? And what Hotels page UI issue should we fix first?”
