@@ -19,7 +19,7 @@ export type BookingSearchParams = {
   bedrooms?: string | number | null;
 };
 
-function normalizeBookingProvider(provider: BookingProvider): BookingProvider {
+function normalizeBookingProvider(provider: BookingProvider | null | undefined): BookingProvider {
   return provider ?? "none";
 }
 
@@ -96,7 +96,7 @@ export function buildBookingLink(
 ): string | null {
   if (hotel.booking_enabled === false) return null;
 
-  const provider = normalizeBookingProvider(hotel.booking_provider);
+  const provider = normalizeBookingProvider(hotel.booking_provider ?? null);
   if (provider === "none") return null;
 
   if (provider === "official") {
