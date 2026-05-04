@@ -566,15 +566,28 @@ textarea::-webkit-scrollbar-thumb,
   justify-self: start;
   text-align: left;
   min-width: max-content;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .oltra-site-header__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
   color: var(--oltra-text-primary);
   text-decoration: none;
   font-size: var(--oltra-logo-size);
   line-height: 1;
   letter-spacing: 0.08em;
   font-weight: 400;
+}
+
+.oltra-site-header__logo-image {
+  display: block;
+  width: auto;
+  height: clamp(32px, 3vw, 46px);
+  object-fit: contain;
 }
 
 .oltra-site-header__logo:hover {
@@ -615,11 +628,21 @@ textarea::-webkit-scrollbar-thumb,
     color 160ms ease;
 }
 
+.oltra-site-header__nav-link.is-active,
+.oltra-site-header__action-link.is-active {
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
 .oltra-site-header__nav-link:hover,
 .oltra-site-header__action-link:hover {
   text-decoration: none;
   border-color: rgba(255, 255, 255, 0.38);
   background: transparent;
+}
+
+.oltra-site-header__nav:has(.oltra-site-header__nav-link:hover)
+  .oltra-site-header__nav-link.is-active:not(:hover) {
+  border-color: transparent;
 }
 
 .oltra-site-header__currency {
@@ -1159,3 +1182,4 @@ details > summary::-webkit-details-marker {
   border-radius: var(--oltra-radius-sm);
   margin-bottom: 10px;
 }
+

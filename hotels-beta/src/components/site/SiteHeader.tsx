@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { readHotelFlightSearch } from "@/lib/searchSession";
 
 type SiteHeaderProps = {
@@ -22,6 +23,8 @@ function ChevronDown() {
 }
 
 export default function SiteHeader({ current = "", currentCurrency = "EUR" }: SiteHeaderProps) {
+  const pathname = usePathname();
+
   const [user, setUser] = useState<any>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(currentCurrency);
@@ -31,6 +34,14 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const [restaurantsHref, setRestaurantsHref] = useState("/restaurants");
 
   const supabase = createClient();
+
+  const navItems = [
+    { label: "Hotels", href: hotelsHref, match: "/hotels" },
+    { label: "Flights", href: flightsHref, match: "/flights" },
+    { label: "Restaurants", href: restaurantsHref, match: "/restaurants" },
+    { label: "Inspire", href: "/inspire", match: "/inspire" },
+    { label: "Members", href: user ? "/members" : "/login", match: user ? "/members" : "/login" },
+  ];
 
   useEffect(() => {
     let mounted = true;
@@ -135,21 +146,41 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       <div className="oltra-site-header__inner">
         <div className="oltra-site-header__brand">
           <Link href="/" className="oltra-site-header__logo" aria-label="Go to OLTRA home">
-            OLTRA
+            <img
+              src="/images/oltra-logo.svg"
+              alt="OLTRA"
+              className="oltra-site-header__logo-image"
+              style={{ transform: "translateX(-9px)" }}
+            />
           </Link>
 
           {current ? <div className="oltra-site-header__route oltra-route-label">{current}</div> : null}
         </div>
 
         <nav className="oltra-site-header__nav" aria-label="Primary">
-          <Link href={hotelsHref} className="oltra-site-header__nav-link">Hotels</Link>
-          <Link href={flightsHref} className="oltra-site-header__nav-link">Flights</Link>
-          <Link href={restaurantsHref} className="oltra-site-header__nav-link">Restaurants</Link>
-          <Link href="/inspire" className="oltra-site-header__nav-link">Inspire</Link>
-          <Link href={user ? "/members" : "/login"} className="oltra-site-header__nav-link">Members</Link>
+          {navItems.map((item) => {
+            const isActive = pathname === item.match || pathname.startsWith(`${item.match}/`);
+
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`oltra-site-header__nav-link ${isActive ? "is-active" : ""}`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
 
           <div className="oltra-site-header__currency">
-            <button type="button" className="oltra-site-header__currency-trigger" onClick={() => setCurrencyOpen((prev) => !prev)} aria-haspopup="listbox" aria-expanded={currencyOpen}>
+            <button
+              type="button"
+              className="oltra-site-header__currency-trigger"
+              onClick={() => setCurrencyOpen((prev) => !prev)}
+              aria-haspopup="listbox"
+              aria-expanded={currencyOpen}
+            >
               <span>{selectedCurrency}</span>
               <span className="oltra-site-header__currency-chevron"><ChevronDown /></span>
             </button>

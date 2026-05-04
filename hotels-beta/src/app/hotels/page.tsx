@@ -109,6 +109,7 @@ const hotelFields = [
   "booking_label",
   "booking_notes",
   "official_website_booking_url",
+  "agoda_hotel_id",
   "activities.activities_id.id",
   "activities.activities_id.name",
   "settings.settings_id.id",

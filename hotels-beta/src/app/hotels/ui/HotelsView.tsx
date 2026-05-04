@@ -54,6 +54,36 @@ type TaxMaps = {
 
 type ViewMode = "details" | "map" | "featured";
 
+type AgodaAvailabilityState =
+  | { status: "idle"; result: null; error: "" }
+  | { status: "loading"; result: null; error: "" }
+  | {
+      status: "available";
+      result: {
+        dailyRate: number;
+        crossedOutRate: number;
+        currency: string;
+        discountPercentage: number;
+        landingURL: string;
+        includeBreakfast: boolean;
+        freeWifi: boolean;
+      };
+      error: "";
+    }
+  | { status: "unavailable"; result: null; error: "" }
+  | { status: "error"; result: null; error: string };
+
+type AgodaResultCardAvailability = {
+  status: "available" | "unavailable";
+  dailyRate?: number;
+  crossedOutRate?: number;
+  currency?: string;
+  discountPercentage?: number;
+  landingURL?: string;
+  includeBreakfast?: boolean;
+  freeWifi?: boolean;
+};
+
 const CURRENCY_STORAGE_KEY = "oltra_currency";
 const MAP_FALLBACK_CENTER: [number, number] = [103.8198, 1.3521];
 
@@ -609,6 +639,24 @@ export default function HotelsView(props: {
     "trip" | "favorite" | null
   >(null);
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
+  const [agodaAvailability, setAgodaAvailability] =
+    useState<AgodaAvailabilityState>({
+      status: "idle",
+      result: null,
+      error: "",
+    });
+
+  const [agodaResultAvailability, setAgodaResultAvailability] = useState<
+    Record<string, AgodaResultCardAvailability>
+  >({});
+
+  const [agodaResultAvailabilityStatus, setAgodaResultAvailabilityStatus] =
+    useState<"idle" | "loading" | "loaded" | "error">("idle");
+
+  const agodaResultAvailabilityLoading =
+    agodaResultAvailabilityStatus === "loading";
+
+  const [agodaSearchDirty, setAgodaSearchDirty] = useState(false);
 
   const [tripChoices, setTripChoices] = useState<
     Array<{ id: string; name: string; label: string }>
@@ -674,6 +722,14 @@ export default function HotelsView(props: {
 
   const searchIsActive = searchDisabledReason === "";
 
+  const topAgodaAvailabilityChecked =
+    agodaResultAvailabilityStatus === "loaded" && !agodaSearchDirty;
+
+  const topAgodaAvailabilityButtonDisabled =
+    !searchIsActive ||
+    agodaResultAvailabilityStatus === "loading" ||
+    topAgodaAvailabilityChecked;
+
   function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
     ref.current?.focus();
     ref.current?.showPicker?.();
@@ -697,6 +753,7 @@ export default function HotelsView(props: {
     setIsSubmittingSearch(false);
     setHasPendingSearchInputLocal(hasPendingSearchInput);
     setSimpleSearchSubmitted("0");
+    setAgodaSearchDirty(false);
   }, [searchParams, hasPendingSearchInput]);
 
   useEffect(() => {
@@ -914,6 +971,34 @@ export default function HotelsView(props: {
 
     return () => window.clearTimeout(timer);
   }, [memberActionMessage, memberActionError]);
+
+  useEffect(() => {
+    setAgodaAvailability({
+      status: "idle",
+      result: null,
+      error: "",
+    });
+  }, [
+    selectedHotelId,
+    fromValue,
+    toValue,
+    guestSelection.adults,
+    guestSelection.kids,
+    bedroomsValue,
+    activeCurrency,
+  ]);
+
+  useEffect(() => {
+    if (!agodaSearchDirty) return;
+
+    setAgodaResultAvailability({});
+    setAgodaResultAvailabilityStatus("idle");
+    setAgodaAvailability({
+      status: "idle",
+      result: null,
+      error: "",
+    });
+  }, [agodaSearchDirty]);
 
   const selectedHotel = useMemo(() => {
     if (!shouldShowResults) return null;
@@ -1228,6 +1313,46 @@ export default function HotelsView(props: {
     [selectedHotel]
   );
 
+  const selectedAgodaHotelId = useMemo(() => {
+    const raw = selectedHotel?.agoda_hotel_id;
+    if (!raw) return null;
+
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [selectedHotel]);
+
+  function getAgodaHotelIdForHotel(hotel: HotelRecord): number | null {
+    const raw = hotel.agoda_hotel_id;
+    if (!raw) return null;
+
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  const selectedHotelBatchAvailability = selectedHotel
+    ? agodaResultAvailability[String(selectedHotel.id)]
+    : undefined;
+
+  const selectedHotelHasBatchAvailability = Boolean(selectedHotelBatchAvailability);
+
+  const selectedHotelAgodaResult =
+    selectedHotelBatchAvailability?.status === "available"
+      ? selectedHotelBatchAvailability
+      : agodaAvailability.status === "available"
+        ? agodaAvailability.result
+        : null;
+
+  const selectedHotelAgodaUnavailable =
+    selectedHotelBatchAvailability?.status === "unavailable" ||
+    agodaAvailability.status === "unavailable";
+
+  const selectedHotelCanCheckAgoda =
+    !selectedHotelHasBatchAvailability &&
+    Boolean(selectedAgodaHotelId) &&
+    Boolean(fromValue) &&
+    Boolean(toValue) &&
+    datesAreValid;
+
   const selectedHotelImages = useMemo(
     () => (selectedHotel ? getHotelImageSet(selectedHotel) : PLACEHOLDERS),
     [selectedHotel]
@@ -1264,6 +1389,158 @@ export default function HotelsView(props: {
     router.replace(href, { scroll: false });
   }
 
+  function getChildrenAgesFromSearchParams(): number[] {
+    const ages: number[] = [];
+
+    for (let i = 1; i <= 6; i += 1) {
+      const raw = normalizeParam(searchParams[`kid_age_${i}`]);
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed)) ages.push(Math.max(0, Math.floor(parsed)));
+    }
+
+    return ages;
+  }
+
+  useEffect(() => {
+    if (agodaSearchDirty) {
+      setAgodaResultAvailability({});
+      setAgodaResultAvailabilityStatus("idle");
+      return;
+    }
+
+    if (!shouldShowResults || !visibleHotels.length) {
+      setAgodaResultAvailability({});
+      setAgodaResultAvailabilityStatus("idle");
+      return;
+    }
+
+    if (!fromValue || !toValue || !datesAreValid) {
+      setAgodaResultAvailability({});
+      setAgodaResultAvailabilityStatus("idle");
+      return;
+    }
+
+    const hotelsWithAgodaIds = visibleHotels
+      .map((hotel) => ({
+        directusId: String(hotel.id),
+        agodaHotelId: getAgodaHotelIdForHotel(hotel),
+      }))
+      .filter(
+        (item): item is { directusId: string; agodaHotelId: number } =>
+          item.agodaHotelId !== null
+      );
+
+      if (!hotelsWithAgodaIds.length) {
+        setAgodaResultAvailability({});
+        setAgodaResultAvailabilityStatus("loaded");
+        return;
+      }
+
+    let cancelled = false;
+
+    async function loadResultAvailability() {
+      try {
+        setAgodaResultAvailabilityStatus("loading");
+
+        const response = await fetch("/api/agoda/availability/batch", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            hotelIds: hotelsWithAgodaIds.map((item) => item.agodaHotelId),
+            checkInDate: fromValue,
+            checkOutDate: toValue,
+            currency: activeCurrency,
+            adults: guestSelection.adults,
+            kids: guestSelection.kids,
+            childrenAges: getChildrenAgesFromSearchParams(),
+          }),
+        });
+
+        const json = (await response.json()) as {
+          ok?: boolean;
+          results?: Array<{
+            hotelId: number;
+            dailyRate: number;
+            crossedOutRate?: number;
+            currency: string;
+            discountPercentage?: number;
+            landingURL: string;
+            includeBreakfast?: boolean;
+            freeWifi?: boolean;
+          }>;
+        };
+
+        if (cancelled) return;
+
+        if (!response.ok || !json.ok) {
+          setAgodaResultAvailability({});
+          setAgodaResultAvailabilityStatus("error");
+          return;
+        }
+
+        const availabilityByDirectusId: Record<string, AgodaResultCardAvailability> =
+          {};
+
+        const agodaToDirectus = new Map(
+          hotelsWithAgodaIds.map((item) => [
+            item.agodaHotelId,
+            item.directusId,
+          ])
+        );
+
+        for (const item of hotelsWithAgodaIds) {
+          availabilityByDirectusId[item.directusId] = {
+            status: "unavailable",
+          };
+        }
+
+        for (const result of json.results ?? []) {
+          const directusId = agodaToDirectus.get(Number(result.hotelId));
+          if (!directusId) continue;
+
+          availabilityByDirectusId[directusId] = {
+            status: "available",
+            dailyRate: result.dailyRate,
+            crossedOutRate: result.crossedOutRate,
+            currency: result.currency,
+            discountPercentage: result.discountPercentage,
+            landingURL: result.landingURL,
+            includeBreakfast: result.includeBreakfast,
+            freeWifi: result.freeWifi,
+          };
+        }
+
+        setAgodaResultAvailability(availabilityByDirectusId);
+        setAgodaResultAvailabilityStatus("loaded");
+        setAgodaSearchDirty(false);
+      } catch {
+        if (!cancelled) {
+          setAgodaResultAvailability({});
+          setAgodaResultAvailabilityStatus("error");
+        }
+      }
+    }
+
+    void loadResultAvailability();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    agodaSearchDirty,
+    shouldShowResults,
+    visibleHotels,
+    fromValue,
+    toValue,
+    datesAreValid,
+    activeCurrency,
+    guestSelection.adults,
+    guestSelection.kids,
+    searchParams,
+  ]);
+
   function saveCurrentHotelFlightSearch() {
     saveHotelFlightSearch({
       q: normalizeParam(searchParams.q),
@@ -1282,6 +1559,88 @@ export default function HotelsView(props: {
       kid_age_5: normalizeParam(searchParams.kid_age_5),
       kid_age_6: normalizeParam(searchParams.kid_age_6),
     });
+  }
+
+  async function handleCheckAgodaAvailability() {
+    if (!selectedHotel) return;
+
+    if (!selectedAgodaHotelId) {
+      setAgodaAvailability({
+        status: "error",
+        result: null,
+        error: "Missing Agoda hotel ID.",
+      });
+      return;
+    }
+
+    if (!fromValue || !toValue || !datesAreValid) {
+      setAgodaAvailability({
+        status: "error",
+        result: null,
+        error: "Select valid dates first.",
+      });
+      return;
+    }
+
+    try {
+      setAgodaAvailability({
+        status: "loading",
+        result: null,
+        error: "",
+      });
+
+      const response = await fetch("/api/agoda/availability", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          hotelId: selectedAgodaHotelId,
+          checkInDate: fromValue,
+          checkOutDate: toValue,
+          currency: activeCurrency,
+          adults: guestSelection.adults,
+          kids: guestSelection.kids,
+          childrenAges: getChildrenAgesFromSearchParams(),
+        }),
+      });
+
+      const json = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        result?: AgodaAvailabilityState["result"];
+      };
+
+      if (!response.ok || !json.ok) {
+        setAgodaAvailability({
+          status: "error",
+          result: null,
+          error: json.error || "Could not check availability.",
+        });
+        return;
+      }
+
+      if (!json.result) {
+        setAgodaAvailability({
+          status: "unavailable",
+          result: null,
+          error: "",
+        });
+        return;
+      }
+
+      setAgodaAvailability({
+        status: "available",
+        result: json.result,
+        error: "",
+      });
+    } catch {
+      setAgodaAvailability({
+        status: "error",
+        result: null,
+        error: "Could not check availability.",
+      });
+    }
   }
 
   function updateFiltersOpen(nextOpen: boolean) {
@@ -1491,6 +1850,7 @@ async function handleCreateTripAndAddHotel() {
               onChange={(e) => {
                 const form = e.currentTarget;
                 setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
+                setAgodaSearchDirty(true);
               }}
             >
               <HiddenPreserveParams
@@ -1581,7 +1941,10 @@ async function handleCreateTripAndAddHotel() {
                         name="from"
                         min={todayIso}
                         value={fromValue}
-                        onChange={(e) => setFromValue(e.target.value)}
+                        onChange={(e) => {
+                          setFromValue(e.target.value);
+                          setAgodaSearchDirty(true);
+                        }}
                         onKeyDown={(e) => e.preventDefault()}
                         onBeforeInput={(e) => e.preventDefault()}
                         className={[
@@ -1609,7 +1972,10 @@ async function handleCreateTripAndAddHotel() {
                         name="to"
                         min={minToIso}
                         value={toValue}
-                        onChange={(e) => setToValue(e.target.value)}
+                        onChange={(e) => {
+                          setToValue(e.target.value);
+                          setAgodaSearchDirty(true);
+                        }}
                         onKeyDown={(e) => e.preventDefault()}
                         onBeforeInput={(e) => e.preventDefault()}
                         className={[
@@ -1631,6 +1997,7 @@ async function handleCreateTripAndAddHotel() {
                       initialValue={guestSelection}
                       onChange={(selection) => {
                         setGuestSelection(selection);
+                        setAgodaSearchDirty(true);
                       }}
                     />
                   </div>
@@ -1642,7 +2009,10 @@ async function handleCreateTripAndAddHotel() {
                       value={bedroomsValue}
                       placeholder="#"
                       align="left"
-                      onValueChange={setBedroomsValue}
+                      onValueChange={(value) => {
+                        setBedroomsValue(value);
+                        setAgodaSearchDirty(true);
+                      }}
                       options={[1, 2, 3, 4].map((n) => ({
                         value: String(n),
                         label: `${n} bedroom${n === 1 ? "" : "s"}`,
@@ -1672,11 +2042,13 @@ async function handleCreateTripAndAddHotel() {
                     <button
                       type="submit"
                       onClick={saveCurrentHotelFlightSearch}
-                      disabled={!searchIsActive}
+                      disabled={topAgodaAvailabilityButtonDisabled}
                       title={searchDisabledReason || undefined}
                       className={[
                         "w-full md:col-start-3 md:col-span-2",
-                        searchIsActive ? "oltra-button-primary" : "oltra-button-secondary",
+                        searchIsActive && !topAgodaAvailabilityButtonDisabled
+                          ? "oltra-button-primary"
+                          : "oltra-button-secondary",
                       ].join(" ")}
                     >
                       <span className="inline-flex items-center justify-center gap-2">
@@ -1687,10 +2059,14 @@ async function handleCreateTripAndAddHotel() {
                           />
                         ) : null}
                         <span>
-                          {searchIsActive
-                            ? "CHECK AVAILABILITY"
-                            : searchDisabledReason.charAt(0) +
-                              searchDisabledReason.slice(1).toLowerCase()}
+                          {agodaResultAvailabilityStatus === "loading"
+                            ? "CHECKING AGODA..."
+                            : topAgodaAvailabilityChecked
+                              ? "AGODA AVAILABILITY CHECKED"
+                              : searchIsActive
+                                ? "CHECK AGODA AVAILABILITY"
+                                : searchDisabledReason.charAt(0) +
+                                  searchDisabledReason.slice(1).toLowerCase()}
                         </span>
                       </span>
                     </button>
@@ -1786,8 +2162,7 @@ async function handleCreateTripAndAddHotel() {
                 {visibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
-                  const bookingHref = buildBookingLink(h, bookingSearchParams);
-                  const bookingLabel = h.booking_label?.trim() || "BOOK";
+                  const agodaCardAvailability = agodaResultAvailability[String(h.id)];
                   const featuredAwards = getFeaturedAwardsForHotel(h);
                   const nameAndLocation = [h.city, h.country].filter(Boolean).join(" · ");
 
@@ -1813,8 +2188,40 @@ async function handleCreateTripAndAddHotel() {
                       }
                     >
                       <div className="grid grid-cols-[132px_1fr] gap-3.5">
-                        <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
-                          <img src={img} alt="" className="h-20 w-full object-cover" />
+                        <div>
+                          <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
+                            <img src={img} alt="" className="h-20 w-full object-cover" />
+                          </div>
+
+                          <div className="mt-2">
+                            {agodaResultAvailabilityLoading ? (
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/10 bg-white/8 px-2 py-1.5 text-center text-[11px] leading-tight text-white/62">
+                                Checking Agoda...
+                              </div>
+                            ) : agodaCardAvailability?.status === "available" ? (
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-2 py-1.5 text-center shadow-[0_8px_18px_rgba(10,18,26,0.18)]">
+                                <div className="text-[13px] font-light leading-tight tracking-wide text-white">
+                                  {agodaCardAvailability.currency}{" "}
+                                  {Math.round(agodaCardAvailability.dailyRate ?? 0).toLocaleString()}
+                                </div>
+                                <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-white/48">
+                                  / night
+                                </div>
+                              </div>
+                            ) : agodaCardAvailability?.status === "unavailable" ? (
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/10 bg-white/6 px-2 py-1.5 text-center text-[11px] leading-tight text-white/56">
+                                Not available on Agoda
+                              </div>
+                            ) : getAgodaHotelIdForHotel(h) ? (
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/8 bg-white/5 px-2 py-1.5 text-center text-[11px] leading-tight text-white/45">
+                                Select dates
+                              </div>
+                            ) : (
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/8 bg-white/5 px-2 py-1.5 text-center text-[11px] leading-tight text-white/45">
+                                No Agoda ID
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div className="flex min-h-[80px] min-w-0 flex-col">
@@ -1841,21 +2248,7 @@ async function handleCreateTripAndAddHotel() {
                               <div className="truncate text-[11px] text-white/60">
                                 {featuredAwards.map((award) => award.label).join(" · ")}
                               </div>
-                            ) : null}
-
-                            {bookingHref ? (
-                              <div className="mt-3 flex justify-end">
-                                <a
-                                  href={bookingHref}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex min-h-9 items-center justify-center rounded-full border border-white/18 px-3.5 py-1.5 text-[11px] tracking-[0.16em] text-white/85 transition hover:bg-white/12 hover:text-white"
-                                >
-                                  {bookingLabel}
-                                </a>
-                              </div>
-                            ) : null}
+                            ) : null}                            
                           </div>
                         </div>
                       </div>
@@ -1886,6 +2279,7 @@ async function handleCreateTripAndAddHotel() {
                   onChange={(e) => {
                     const form = e.currentTarget;
                     setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
+                    setAgodaSearchDirty(true);
                   }}
                 >
                   <HiddenPreserveParams
@@ -2266,18 +2660,111 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   ) : null}
 
-                  {selectedHotelBookingHref ? (
-                    <div className="pt-2">
+                  <div className="pt-2">
+                    {selectedHotelAgodaResult ? (
+                      <div className="space-y-2">
+                        <div className="rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 py-2.5 text-sm text-white/78 shadow-[0_10px_24px_rgba(10,18,26,0.18)]">
+                          <div className="flex items-baseline justify-between gap-3">
+                            <span className="text-white/58">From</span>
+                            <span className="text-[1.05rem] font-light tracking-wide text-white">
+                              {selectedHotelAgodaResult.currency}{" "}
+                              {Math.round(selectedHotelAgodaResult.dailyRate ?? 0).toLocaleString()}
+                              <span className="text-sm text-white/55"> / night</span>
+                            </span>
+                          </div>
+
+                          <div className="mt-1 text-[12px] text-white/55">
+                            {[
+                              selectedHotelAgodaResult.includeBreakfast ? "Breakfast included" : "",
+                              selectedHotelAgodaResult.freeWifi ? "Free Wi-Fi" : "",
+                              (selectedHotelAgodaResult.discountPercentage ?? 0) > 0
+                                ? `${Math.round(selectedHotelAgodaResult.discountPercentage ?? 0)}% discount`
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </div>
+                        </div>
+
+                        {selectedHotelAgodaResult.landingURL ? (
+                          <a
+                            href={selectedHotelAgodaResult.landingURL}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="oltra-button-secondary w-full rounded-full"
+                          >
+                            BOOK WITH AGODA
+                          </a>
+                        ) : null}
+
+                        {selectedHotelHasBatchAvailability ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="oltra-button-secondary w-full rounded-full opacity-60"
+                          >
+                            AGODA AVAILABILITY CHECKED
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleCheckAgodaAvailability}
+                        disabled={
+                          selectedHotelHasBatchAvailability ||
+                          agodaAvailability.status === "loading" ||
+                          !selectedHotelCanCheckAgoda
+                        }
+                        title={
+                          !selectedAgodaHotelId
+                            ? "Missing Agoda hotel ID"
+                            : !fromValue || !toValue || !datesAreValid
+                              ? "Select valid dates first"
+                              : undefined
+                        }
+                        className={[
+                          "w-full rounded-full",
+                          selectedHotelCanCheckAgoda &&
+                          !selectedHotelHasBatchAvailability &&
+                          agodaAvailability.status !== "loading"
+                            ? "oltra-button-primary"
+                            : "oltra-button-secondary opacity-60",
+                        ].join(" ")}
+                      >
+                        {selectedHotelHasBatchAvailability
+                          ? "AGODA AVAILABILITY CHECKED"
+                          : agodaAvailability.status === "loading"
+                            ? "CHECKING AGODA..."
+                            : "CHECK AGODA AVAILABILITY"}
+                      </button>
+                    )}
+
+                    {selectedHotelAgodaUnavailable ? (
+                      <div className="mt-2 text-[12px] text-white/58">
+                        Not available on Agoda for the selected dates.
+                      </div>
+                    ) : null}
+
+                    {agodaAvailability.status === "error" && !selectedHotelHasBatchAvailability ? (
+                      <div className="mt-2 text-[12px] text-white/58">
+                        {agodaAvailability.error}
+                      </div>
+                    ) : null}
+
+                    {!selectedHotelAgodaResult &&
+                    !selectedHotelHasBatchAvailability &&
+                    selectedHotelBookingHref ? (
                       <a
                         href={selectedHotelBookingHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="oltra-button-secondary w-full rounded-full"
+                        className="mt-2 inline-flex w-full justify-center text-[12px] text-white/60 underline underline-offset-4 hover:text-white"
                       >
                         {selectedHotelBookingLabel}
                       </a>
-                    </div>
-                  ) : null}
+                    ) : null}
+                  </div>
                 </div>
               </div>
 

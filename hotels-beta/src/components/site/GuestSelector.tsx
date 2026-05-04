@@ -17,12 +17,12 @@ type Props = {
   onChange?: (selection: GuestSelection) => void;
 };
 
-function sameSelection(a: GuestSelection, b: GuestSelection): boolean {
-  return (
-    a.adults === b.adults &&
-    a.kids === b.kids &&
-    a.kidAges.join("|") === b.kidAges.join("|")
-  );
+function selectionKey(selection: GuestSelection): string {
+  return JSON.stringify({
+    adults: selection.adults,
+    kids: selection.kids,
+    kidAges: selection.kidAges,
+  });
 }
 
 function ChevronDown() {
@@ -56,13 +56,16 @@ export default function GuestSelector({
   const [kidAges, setKidAges] = useState<string[]>(initialValue.kidAges);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const lastInitialKeyRef = useRef("");
+  const lastInitialKeyRef = useRef(selectionKey(initialValue));
+  const lastEmittedKeyRef = useRef(selectionKey(initialValue));
 
   useEffect(() => {
-    const nextKey = JSON.stringify(initialValue);
+    const nextKey = selectionKey(initialValue);
 
     if (lastInitialKeyRef.current === nextKey) return;
+
     lastInitialKeyRef.current = nextKey;
+    lastEmittedKeyRef.current = nextKey;
 
     setAdults(initialValue.adults);
     setKids(initialValue.kids);
@@ -129,42 +132,26 @@ export default function GuestSelector({
     [adults, kids, kidAges]
   );
 
+  useEffect(() => {
+    const nextKey = selectionKey(currentSelection);
+
+    if (lastEmittedKeyRef.current === nextKey) return;
+
+    lastEmittedKeyRef.current = nextKey;
+    onChange?.(currentSelection);
+  }, [currentSelection, onChange]);
+
   const summaryLabel = useMemo(() => {
     const label = buildGuestSummaryLabel(currentSelection);
     return label || placeholder;
   }, [currentSelection, placeholder]);
 
-  function emitChange(nextSelection: GuestSelection) {
-    if (!sameSelection(nextSelection, currentSelection)) {
-      onChange?.(nextSelection);
-    }
-  }
-
   function changeAdults(delta: number) {
-    setAdults((prev) => {
-      const nextAdults = clampAdultsCount(prev + delta);
-      const nextSelection = { adults: nextAdults, kids, kidAges };
-      onChange?.(nextSelection);
-      return nextAdults;
-    });
+    setAdults((prev) => clampAdultsCount(prev + delta));
   }
 
   function changeKids(delta: number) {
-    setKids((prev) => {
-      const nextKids = clampKidsCount(prev + delta);
-      const nextKidAges = Array.from(
-        { length: nextKids },
-        (_, i) => kidAges[i] ?? ""
-      );
-
-      onChange?.({
-        adults,
-        kids: nextKids,
-        kidAges: nextKidAges,
-      });
-
-      return nextKids;
-    });
+    setKids((prev) => clampKidsCount(prev + delta));
   }
 
   return (
@@ -277,13 +264,6 @@ export default function GuestSelector({
                           setKidAges((prev) => {
                             const next = [...prev];
                             next[idx] = value;
-
-                            onChange?.({
-                              adults,
-                              kids,
-                              kidAges: next,
-                            });
-
                             return next;
                           });
                         }}
