@@ -15,6 +15,8 @@ type Props = {
   options: Option[];
   className?: string;
   align?: "center" | "left";
+  closeOnHoverOutside?: boolean;
+  closeOnFocusOutside?: boolean;
   onValueChange?: (value: string) => void;
 };
 
@@ -44,6 +46,8 @@ export default function OltraSelect({
   options,
   className = "",
   align = "center",
+  closeOnHoverOutside = true,
+  closeOnFocusOutside = true,
   onValueChange,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -64,6 +68,7 @@ export default function OltraSelect({
     }
 
     function handleFocusIn(event: FocusEvent) {
+      if (!closeOnFocusOutside) return;
       if (!rootRef.current) return;
       if (!rootRef.current.contains(event.target as Node)) {
         setOpen(false);
@@ -75,6 +80,7 @@ export default function OltraSelect({
     }
 
     function handlePointerOver(event: PointerEvent) {
+      if (!closeOnHoverOutside) return;
       if (!open) return;
 
       const target = event.target as HTMLElement | null;
@@ -102,7 +108,7 @@ export default function OltraSelect({
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("pointerover", handlePointerOver);
     };
-  }, [open]);
+  }, [open, closeOnFocusOutside, closeOnHoverOutside]);
 
   const selected = useMemo(
     () => options.find((opt) => opt.value === selectedValue),

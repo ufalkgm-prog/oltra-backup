@@ -53,80 +53,79 @@ export default function GuestSelector({
   const [open, setOpen] = useState(false);
   const [adults, setAdults] = useState(initialValue.adults);
   const [kids, setKids] = useState(initialValue.kids);
-  const [kidAges, setKidAges] = useState<string[]>(initialValue.kidAges);
+  const [kidAges, setKidAges] = useState<string[]>(
+    Array.from(
+      { length: initialValue.kids },
+      (_, index) => initialValue.kidAges[index] ?? ""
+    )
+  );
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const lastInitialKeyRef = useRef(selectionKey(initialValue));
   const lastEmittedKeyRef = useRef(selectionKey(initialValue));
+  const onChangeRef = useRef(onChange);
 
   useEffect(() => {
-    const nextKey = selectionKey(initialValue);
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
-    if (lastInitialKeyRef.current === nextKey) return;
+  const initialValueKey = useMemo(
+    () => selectionKey(initialValue),
+    [initialValue]
+  );
 
-    lastInitialKeyRef.current = nextKey;
-    lastEmittedKeyRef.current = nextKey;
+  useEffect(() => {
+    if (lastInitialKeyRef.current === initialValueKey) return;
+
+    lastInitialKeyRef.current = initialValueKey;
+    lastEmittedKeyRef.current = initialValueKey;
 
     setAdults(initialValue.adults);
     setKids(initialValue.kids);
-    setKidAges(initialValue.kidAges);
-  }, [initialValue]);
-
-  useEffect(() => {
-    setKidAges((prev) =>
-      Array.from({ length: kids }, (_, i) => prev[i] ?? "")
+    setKidAges(
+      Array.from(
+        { length: initialValue.kids },
+        (_, index) => initialValue.kidAges[index] ?? ""
+      )
     );
-  }, [kids]);
+  }, [initialValueKey, initialValue.adults, initialValue.kids, initialValue.kidAges]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
+    setKidAges((prev) => {
+      const next = Array.from({ length: kids }, (_, index) => prev[index] ?? "");
 
-    function handleFocusIn(event: FocusEvent) {
+      return selectionKey({ adults, kids, kidAges: prev }) ===
+        selectionKey({ adults, kids, kidAges: next })
+        ? prev
+        : next;
+    });
+  }, [adults, kids]);
+
+  useEffect(() => {
+    function handleMouseDown(event: MouseEvent) {
       if (!rootRef.current) return;
+
       if (!rootRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     }
 
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    function handlePointerOver(event: PointerEvent) {
-      if (!open) return;
-
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-
-      if (rootRef.current?.contains(target)) return;
-
-      const hoveredInteractive = target.closest(
-        'input, button, select, textarea, [role="button"], [data-oltra-control="true"]'
-      );
-
-      if (hoveredInteractive) {
+      if (event.key === "Escape") {
         setOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("mousedown", handleMouseDown);
     document.addEventListener("keydown", handleEscape);
-    document.addEventListener("pointerover", handlePointerOver);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("mousedown", handleMouseDown);
       document.removeEventListener("keydown", handleEscape);
-      document.removeEventListener("pointerover", handlePointerOver);
     };
-  }, [open]);
+  }, []);
 
+  
   const currentSelection = useMemo<GuestSelection>(
     () => ({ adults, kids, kidAges }),
     [adults, kids, kidAges]
@@ -138,8 +137,8 @@ export default function GuestSelector({
     if (lastEmittedKeyRef.current === nextKey) return;
 
     lastEmittedKeyRef.current = nextKey;
-    onChange?.(currentSelection);
-  }, [currentSelection, onChange]);
+    onChangeRef.current?.(currentSelection);
+  }, [currentSelection]);
 
   const summaryLabel = useMemo(() => {
     const label = buildGuestSummaryLabel(currentSelection);
@@ -162,14 +161,16 @@ export default function GuestSelector({
     >
       <input type="hidden" name="adults" value={String(adults)} />
       <input type="hidden" name="kids" value={String(kids)} />
-      {Array.from({ length: 6 }, (_, idx) => {
-        const key = idx + 1;
+
+      {Array.from({ length: 6 }, (_, index) => {
+        const key = index + 1;
+
         return (
           <input
             key={`kid-age-hidden-${key}`}
             type="hidden"
             name={`kid_age_${key}`}
-            value={kidAges[idx] ?? ""}
+            value={kidAges[index] ?? ""}
           />
         );
       })}
@@ -205,7 +206,9 @@ export default function GuestSelector({
                   >
                     −
                   </button>
+
                   <div className={styles.counterValue}>{adults}</div>
+
                   <button
                     type="button"
                     className={styles.counterButton}
@@ -234,7 +237,9 @@ export default function GuestSelector({
                   >
                     −
                   </button>
+
                   <div className={styles.counterValue}>{kids}</div>
+
                   <button
                     type="button"
                     className={styles.counterButton}
@@ -253,23 +258,28 @@ export default function GuestSelector({
                 <div className="oltra-dropdown-group-label">Children’s ages</div>
 
                 <div className={styles.agesGrid}>
-                  {Array.from({ length: kids }, (_, idx) => (
-                    <div key={`kid-age-${idx + 1}`} className={styles.ageItem}>
+                  {Array.from({ length: kids }, (_, index) => (
+                    <div
+                      key={`kid-age-${index + 1}`}
+                      className={styles.ageItem}
+                    >
                       <OltraSelect
-                        name={`kid_age_visible_${idx + 1}`}
-                        value={kidAges[idx] ?? ""}
+                        name={`kid_age_visible_${index + 1}`}
+                        value={kidAges[index] ?? ""}
                         placeholder="Age"
                         align="left"
+                        closeOnHoverOutside={false}
+                        closeOnFocusOutside={false}
                         onValueChange={(value) => {
                           setKidAges((prev) => {
                             const next = [...prev];
-                            next[idx] = value;
+                            next[index] = value;
                             return next;
                           });
                         }}
-                        options={Array.from({ length: 18 }, (_, n) => ({
-                          value: String(n),
-                          label: String(n),
+                        options={Array.from({ length: 18 }, (_, age) => ({
+                          value: String(age),
+                          label: String(age),
                         }))}
                       />
                     </div>

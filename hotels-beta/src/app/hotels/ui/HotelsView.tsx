@@ -501,6 +501,19 @@ function setParamOrDelete(params: URLSearchParams, key: string, value: string) {
   else params.delete(key);
 }
 
+function formatDisplayDate(value: string): string {
+  if (!value) return "";
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(year, month - 1, day));
+}
+
 function accoladeTier(hotel: HotelRecord): "gold" | "silver" | null {
   const totalPoints = getTotalPoints(hotel);
   if (totalPoints > 25) return "gold";
@@ -683,7 +696,7 @@ export default function HotelsView(props: {
         .slice(0, 10);
 
   const [bedroomsValue, setBedroomsValue] = useState(
-    normalizeParam(searchParams.bedrooms)
+    normalizeParam(searchParams.bedrooms) || "1"
   );
 
   const fromDate = fromValue ? new Date(fromValue) : null;
@@ -735,6 +748,33 @@ export default function HotelsView(props: {
     ref.current?.showPicker?.();
   }
 
+  useEffect(() => {
+    function handlePointerOver(event: PointerEvent) {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      const hoveredInteractive = target.closest(
+        'input, button, select, textarea, a, [role="button"], [data-oltra-control="true"]'
+      );
+
+      if (!hoveredInteractive) return;
+
+      const isFromDateField = fromRef.current?.parentElement?.contains(target);
+      const isToDateField = toRef.current?.parentElement?.contains(target);
+
+      if (isFromDateField || isToDateField) return;
+
+      fromRef.current?.blur();
+      toRef.current?.blur();
+    }
+
+    document.addEventListener("pointerover", handlePointerOver);
+
+    return () => {
+      document.removeEventListener("pointerover", handlePointerOver);
+    };
+  }, []);
+
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -766,7 +806,7 @@ export default function HotelsView(props: {
     setFromValue(normalizeParam(searchParams.from));
     setToValue(normalizeParam(searchParams.to));
     setGuestSelection(readGuestSelection(searchParams));
-    setBedroomsValue(normalizeParam(searchParams.bedrooms));
+    setBedroomsValue(normalizeParam(searchParams.bedrooms) || "1");
   }, [searchParams]);
 
   useEffect(() => {
@@ -1842,11 +1882,11 @@ async function handleCreateTripAndAddHotel() {
       >
         {!shouldShowFeatured ? (
           <section className="grid min-w-0 gap-4">
-          <div className="relative z-30 overflow-visible oltra-glass oltra-panel !p-4">
+          <div className="relative z-30 oltra-glass oltra-panel !p-4">
             <form
               action="/hotels"
               method="GET"
-              className="grid gap-[14px] md:grid-cols-12 md:gap-[14px] overflow-visible"
+              className="grid gap-[14px] md:grid-cols-12 md:gap-[14px]"
               onChange={(e) => {
                 const form = e.currentTarget;
                 setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
@@ -1929,95 +1969,99 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   ) : null}
 
-                  <div className="relative md:col-span-3" data-oltra-control="true">
-                    <div className="oltra-label">From</div>
-                    <div
-                      className="relative cursor-pointer"
-                      onClick={() => openDatePicker(fromRef)}
-                    >
-                      <input
-                        ref={fromRef}
-                        type="date"
-                        name="from"
-                        min={todayIso}
-                        value={fromValue}
-                        onChange={(e) => {
-                          setFromValue(e.target.value);
+                  <div className="md:col-span-12 grid gap-[14px] md:grid-cols-[minmax(0,1.45fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
+                    <div className="relative min-w-0" data-oltra-control="true">
+                      <div className="oltra-label">From</div>
+                      <div
+                        className="hotel-date-field relative cursor-pointer"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => openDatePicker(fromRef)}
+                      >
+                        <input
+                          ref={fromRef}
+                          type="date"
+                          name="from"
+                          min={todayIso}
+                          value={fromValue}
+                          tabIndex={-1}
+                          onChange={(e) => {
+                            setFromValue(e.target.value);
+                            setAgodaSearchDirty(true);
+                          }}
+                          onKeyDown={(e) => e.preventDefault()}
+                          onBeforeInput={(e) => e.preventDefault()}
+                          className="oltra-input hotel-date-field__input w-full cursor-pointer"
+                          data-has-value={fromValue ? "true" : "false"}
+                        />
+                        <span
+                          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
+                          data-has-value={fromValue ? "true" : "false"}
+                        >
+                          {formatDisplayDate(fromValue) || "dd mmm yyyy"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative min-w-0" data-oltra-control="true">
+                      <div className="oltra-label">To</div>
+                      <div
+                        className="hotel-date-field relative cursor-pointer"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => openDatePicker(toRef)}
+                      >
+                        <input
+                          ref={toRef}
+                          type="date"
+                          name="to"
+                          min={minToIso}
+                          value={toValue}
+                          tabIndex={-1}
+                          onChange={(e) => {
+                            setToValue(e.target.value);
+                            setAgodaSearchDirty(true);
+                          }}
+                          onKeyDown={(e) => e.preventDefault()}
+                          onBeforeInput={(e) => e.preventDefault()}
+                          className="oltra-input hotel-date-field__input w-full cursor-pointer"
+                          data-has-value={toValue ? "true" : "false"}
+                        />
+                        <span
+                          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
+                          data-has-value={toValue ? "true" : "false"}
+                        >
+                          {formatDisplayDate(toValue) || "dd mmm yyyy"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative min-w-0" data-oltra-control="true">
+                      <div className="oltra-label">Guests</div>
+                      <GuestSelector
+                        initialValue={guestSelection}
+                        onChange={(selection) => {
+                          setGuestSelection(selection);
                           setAgodaSearchDirty(true);
                         }}
-                        onKeyDown={(e) => e.preventDefault()}
-                        onBeforeInput={(e) => e.preventDefault()}
-                        className={[
-                          "oltra-input w-full cursor-pointer",
-                          fromValue ? "text-white" : "text-transparent caret-transparent",
-                        ].join(" ")}
                       />
-                      {!fromValue ? (
-                        <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
-                          date
-                        </span>
-                      ) : null}
                     </div>
-                  </div>
 
-                  <div className="relative md:col-span-3" data-oltra-control="true">
-                    <div className="oltra-label">To</div>
-                    <div
-                      className="relative cursor-pointer"
-                      onClick={() => openDatePicker(toRef)}
-                    >
-                      <input
-                        ref={toRef}
-                        type="date"
-                        name="to"
-                        min={minToIso}
-                        value={toValue}
-                        onChange={(e) => {
-                          setToValue(e.target.value);
+                    <div className="relative min-w-0" data-oltra-control="true">
+                      <div className="oltra-label">Bedrooms</div>
+                      <OltraSelect
+                        name="bedrooms"
+                        value={bedroomsValue}
+                        placeholder="#"
+                        align="left"
+                        onValueChange={(value) => {
+                          setBedroomsValue(value);
                           setAgodaSearchDirty(true);
                         }}
-                        onKeyDown={(e) => e.preventDefault()}
-                        onBeforeInput={(e) => e.preventDefault()}
-                        className={[
-                          "oltra-input w-full cursor-pointer",
-                          toValue ? "text-white" : "text-transparent caret-transparent",
-                        ].join(" ")}
+                        options={[1, 2, 3, 4].map((n) => ({
+                          value: String(n),
+                          label: String(n),
+                        }))}
                       />
-                      {!toValue ? (
-                        <span className="pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] text-white/62">
-                          date
-                        </span>
-                      ) : null}
                     </div>
-                  </div>
-
-                  <div className="relative md:col-span-3" data-oltra-control="true">
-                    <div className="oltra-label">Guests</div>
-                    <GuestSelector
-                      initialValue={guestSelection}
-                      onChange={(selection) => {
-                        setGuestSelection(selection);
-                        setAgodaSearchDirty(true);
-                      }}
-                    />
-                  </div>
-
-                  <div className="relative md:col-span-3" data-oltra-control="true">
-                    <div className="oltra-label">Bedrooms</div>
-                    <OltraSelect
-                      name="bedrooms"
-                      value={bedroomsValue}
-                      placeholder="#"
-                      align="left"
-                      onValueChange={(value) => {
-                        setBedroomsValue(value);
-                        setAgodaSearchDirty(true);
-                      }}
-                      options={[1, 2, 3, 4].map((n) => ({
-                        value: String(n),
-                        label: `${n} bedroom${n === 1 ? "" : "s"}`,
-                      }))}
-                    />
                   </div>
                 </>
               ) : null}
@@ -2028,51 +2072,49 @@ async function handleCreateTripAndAddHotel() {
                 </div>
               ) : null}
 
-              <div className="md:col-span-12 grid gap-3 md:grid-cols-4">
-                {!compactTopMode && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => updateFiltersOpen(!filtersOpen)}
-                      className="oltra-button-function w-full"
-                    >
-                      Filters
-                    </button>
+              {!compactTopMode ? (
+                <div className="md:col-span-12 grid items-start gap-3 md:grid-cols-5">
+                  <button
+                    type="button"
+                    onClick={() => updateFiltersOpen(!filtersOpen)}
+                    className="oltra-button-function h-[var(--oltra-button-height)] w-full whitespace-nowrap"
+                  >
+                    Filters
+                  </button>
 
-                    <button
-                      type="submit"
-                      onClick={saveCurrentHotelFlightSearch}
-                      disabled={topAgodaAvailabilityButtonDisabled}
-                      title={searchDisabledReason || undefined}
-                      className={[
-                        "w-full md:col-start-3 md:col-span-2",
-                        searchIsActive && !topAgodaAvailabilityButtonDisabled
-                          ? "oltra-button-primary"
-                          : "oltra-button-secondary",
-                      ].join(" ")}
-                    >
-                      <span className="inline-flex items-center justify-center gap-2">
-                        {isSubmittingSearch ? (
-                          <span
-                            className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <span>
-                          {agodaResultAvailabilityStatus === "loading"
-                            ? "CHECKING AGODA..."
-                            : topAgodaAvailabilityChecked
-                              ? "AGODA AVAILABILITY CHECKED"
-                              : searchIsActive
-                                ? "CHECK AGODA AVAILABILITY"
-                                : searchDisabledReason.charAt(0) +
-                                  searchDisabledReason.slice(1).toLowerCase()}
-                        </span>
+                  <button
+                    type="submit"
+                    onClick={saveCurrentHotelFlightSearch}
+                    disabled={topAgodaAvailabilityButtonDisabled}
+                    title={searchDisabledReason || undefined}
+                    className={[
+                      "h-[var(--oltra-button-height)] w-full md:col-start-3 md:col-span-3 whitespace-nowrap text-[0.68rem] tracking-[0.12em]",
+                      searchIsActive && !topAgodaAvailabilityButtonDisabled
+                        ? "oltra-button-primary"
+                        : "oltra-button-secondary",
+                    ].join(" ")}
+                  >
+                    <span className="inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap">
+                      {isSubmittingSearch ? (
+                        <span
+                          className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <span className="truncate">
+                        {agodaResultAvailabilityStatus === "loading"
+                          ? "CHECKING AGODA..."
+                          : topAgodaAvailabilityChecked
+                            ? "AGODA AVAILABILITY CHECKED"
+                            : searchIsActive
+                              ? "CHECK AGODA AVAILABILITY"
+                              : searchDisabledReason.charAt(0) +
+                                searchDisabledReason.slice(1).toLowerCase()}
                       </span>
-                    </button>
-                  </>
-                )}
-              </div>
+                    </span>
+                  </button>
+                </div>
+              ) : null}
 
               {!compactTopMode && filtersOpen ? (
                 <div className="md:col-span-12 border-t border-white/10 pt-3">

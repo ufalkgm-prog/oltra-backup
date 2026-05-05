@@ -35,9 +35,9 @@
   left: 0;
   z-index: var(--oltra-z-popup);
 
-  width: max-content;
-  min-width: 320px;
-  max-width: 420px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
 }
 
 .section {
@@ -115,18 +115,30 @@
 .agesGrid {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, 110px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   justify-content: start;
   padding-left: 0;
 }
 
 .ageItem {
+  position: relative;
   min-width: 0;
-  width: 110px;
+  width: 100%;
+  z-index: 1;
+}
+
+.ageItem:focus-within {
+  z-index: 20;
 }
 
 @media (max-width: 700px) {
+  .panel {
+    width: 280px;
+    min-width: 280px;
+    max-width: calc(100vw - 32px);
+  }
+
   .agesGrid {
-    grid-template-columns: repeat(2, 110px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

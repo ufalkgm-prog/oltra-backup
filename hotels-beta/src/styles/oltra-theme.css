@@ -782,6 +782,47 @@ textarea::-webkit-scrollbar-thumb,
   }
 }
 
+.hotel-date-field {
+  height: var(--oltra-control-height);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hotel-date-field__input {
+  color: transparent !important;
+  caret-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hotel-date-field__input::-webkit-datetime-edit,
+.hotel-date-field__input::-webkit-datetime-edit-fields-wrapper,
+.hotel-date-field__input::-webkit-datetime-edit-text,
+.hotel-date-field__input::-webkit-datetime-edit-month-field,
+.hotel-date-field__input::-webkit-datetime-edit-day-field,
+.hotel-date-field__input::-webkit-datetime-edit-year-field {
+  color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hotel-date-field__display {
+  right: 34px;
+  height: var(--oltra-control-height);
+  color: var(--oltra-text-primary);
+  font-family: var(--oltra-font-sans);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hotel-date-field__display[data-has-value="false"] {
+  color: var(--oltra-text-muted);
+}
+
 /* Make native calendar icon white */
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
