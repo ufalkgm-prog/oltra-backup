@@ -22,6 +22,7 @@ import {
   addFavoriteHotelBrowser,
   addHotelToTripBrowser,
   createTripBrowser,
+  fetchFavoriteHotelsBrowser,
   fetchTripChoicesBrowser,
   getMemberActionAccessBrowser,
 } from "@/lib/members/db";
@@ -676,6 +677,7 @@ export default function HotelsView(props: {
   >([]);
   const [selectedTripIdForAdd, setSelectedTripIdForAdd] = useState("");
   const [showTripPicker, setShowTripPicker] = useState(false);
+  const [favoriteHotelIds, setFavoriteHotelIds] = useState<Set<string>>(new Set());
   const [newTripName, setNewTripName] = useState("");
   const [creatingTrip, setCreatingTrip] = useState(false);
 
@@ -744,7 +746,6 @@ export default function HotelsView(props: {
     topAgodaAvailabilityChecked;
 
   function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
-    ref.current?.focus();
     ref.current?.showPicker?.();
   }
 
@@ -916,6 +917,44 @@ export default function HotelsView(props: {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showTripPicker]);
+
+  useEffect(() => {
+    if (!showTripPicker) return;
+
+    function handleMouseOver(e: MouseEvent) {
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (tripPickerRef.current?.contains(target)) return;
+      if (target.closest("button, a, input, [data-oltra-control]")) {
+        setShowTripPicker(false);
+      }
+    }
+
+    document.addEventListener("mouseover", handleMouseOver);
+    return () => document.removeEventListener("mouseover", handleMouseOver);
+  }, [showTripPicker]);
+
+  useEffect(() => {
+    if (!isMemberLoggedIn) {
+      setFavoriteHotelIds(new Set());
+      return;
+    }
+
+    let active = true;
+
+    async function loadFavorites() {
+      try {
+        const list = await fetchFavoriteHotelsBrowser();
+        if (!active) return;
+        setFavoriteHotelIds(new Set(list.map((f) => f.id)));
+      } catch {
+        // not critical
+      }
+    }
+
+    void loadFavorites();
+    return () => { active = false; };
+  }, [isMemberLoggedIn]);
 
   useEffect(() => {
     let active = true;
@@ -1398,6 +1437,10 @@ export default function HotelsView(props: {
     [selectedHotel]
   );
 
+  const isFavorited = Boolean(
+    selectedHotel && favoriteHotelIds.has(String(selectedHotel.id))
+  );
+
     function replaceSearchParams(
     updates: Record<string, string>,
     extraDeletes: string[] = []
@@ -1846,10 +1889,9 @@ async function handleCreateTripAndAddHotel() {
         thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
       });
 
-      if (result.status === "already_exists") {
-        setMemberActionMessage("Already in your favorites list.");
-      } else {
-        setMemberActionMessage("Added.");
+      if (result.status !== "already_exists") {
+        setFavoriteHotelIds((prev) => new Set([...prev, String(selectedHotel.id)]));
+        setMemberActionMessage("Added to favourites.");
       }
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
@@ -1861,9 +1903,9 @@ async function handleCreateTripAndAddHotel() {
         message.includes("unauthorized") ||
         message.includes("not authenticated")
       ) {
-        setMemberActionError("Log in to add favorites.");
+        setMemberActionError("Log in to add favourites.");
       } else {
-        setMemberActionError("Could not add hotel to favourites.");
+        setMemberActionError("Could not add to favourites.");
       }
     } finally {
       setMemberActionLoading(null);
@@ -1881,8 +1923,8 @@ async function handleCreateTripAndAddHotel() {
         ].join(" ")}
       >
         {!shouldShowFeatured ? (
-          <section className="grid min-w-0 gap-4">
-          <div className="relative z-30 oltra-glass oltra-panel !p-4">
+          <section className="flex min-w-0 flex-col gap-4 [contain:size]">
+          <div className="relative z-30 oltra-glass oltra-panel !p-4 flex-none">
             <form
               action="/hotels"
               method="GET"
@@ -1997,7 +2039,7 @@ async function handleCreateTripAndAddHotel() {
                           className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
                           data-has-value={fromValue ? "true" : "false"}
                         >
-                          {formatDisplayDate(fromValue) || "dd mmm yyyy"}
+                          {formatDisplayDate(fromValue) || "date"}
                         </span>
                       </div>
                     </div>
@@ -2029,7 +2071,7 @@ async function handleCreateTripAndAddHotel() {
                           className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
                           data-has-value={toValue ? "true" : "false"}
                         >
-                          {formatDisplayDate(toValue) || "dd mmm yyyy"}
+                          {formatDisplayDate(toValue) || "date"}
                         </span>
                       </div>
                     </div>
@@ -2073,11 +2115,11 @@ async function handleCreateTripAndAddHotel() {
               ) : null}
 
               {!compactTopMode ? (
-                <div className="md:col-span-12 grid items-start gap-3 md:grid-cols-5">
+                <div className="md:col-span-12 grid items-start gap-[14px] md:grid-cols-[minmax(0,1.45fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
                   <button
                     type="button"
                     onClick={() => updateFiltersOpen(!filtersOpen)}
-                    className="oltra-button-function h-[var(--oltra-button-height)] w-full whitespace-nowrap"
+                    className={`${filtersOpen ? "oltra-button-function" : "oltra-button-primary"} h-[var(--oltra-button-height)] w-full whitespace-nowrap`}
                   >
                     Filters
                   </button>
@@ -2088,20 +2130,20 @@ async function handleCreateTripAndAddHotel() {
                     disabled={topAgodaAvailabilityButtonDisabled}
                     title={searchDisabledReason || undefined}
                     className={[
-                      "h-[var(--oltra-button-height)] w-full md:col-start-3 md:col-span-3 whitespace-nowrap text-[0.68rem] tracking-[0.12em]",
+                      "min-h-[var(--oltra-button-height)] w-full md:col-start-2 md:col-span-3 text-[0.68rem] tracking-[0.12em]",
                       searchIsActive && !topAgodaAvailabilityButtonDisabled
                         ? "oltra-button-primary"
                         : "oltra-button-secondary",
                     ].join(" ")}
                   >
-                    <span className="inline-flex min-w-0 items-center justify-center gap-2 whitespace-nowrap">
+                    <span className="inline-flex min-w-0 items-center justify-center gap-2">
                       {isSubmittingSearch ? (
                         <span
-                          className="inline-block h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
+                          className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-current border-t-transparent"
                           aria-hidden="true"
                         />
                       ) : null}
-                      <span className="truncate">
+                      <span className="line-clamp-2 text-center leading-snug">
                         {agodaResultAvailabilityStatus === "loading"
                           ? "CHECKING AGODA..."
                           : topAgodaAvailabilityChecked
@@ -2194,13 +2236,13 @@ async function handleCreateTripAndAddHotel() {
           </div>
 
           {shouldShowResults ? (
-            <div className="oltra-glass oltra-panel">
-              <div className="flex items-baseline justify-between">
+            <div className="oltra-glass oltra-panel flex flex-1 flex-col min-h-0">
+              <div className="flex flex-none items-baseline justify-between">
                 <div className="oltra-label">Results</div>
-                <div className="text-xs text-white/50">{resultsCount} found</div>
+                <div className="text-xs text-white/50">{resultsCount} matching hotels found</div>
               </div>
 
-              <div className="oltra-scrollbar mt-3.5 max-h-[62vh] space-y-3 overflow-y-auto pr-2">
+              <div className="oltra-scrollbar mt-3.5 flex-1 min-h-0 space-y-3 overflow-y-auto pr-2">
                 {visibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
@@ -2241,7 +2283,7 @@ async function handleCreateTripAndAddHotel() {
                                 Checking Agoda...
                               </div>
                             ) : agodaCardAvailability?.status === "available" ? (
-                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-2 py-1.5 text-center shadow-[0_8px_18px_rgba(10,18,26,0.18)]">
+                              <div className="px-2 py-1.5 text-center">
                                 <div className="text-[13px] font-light leading-tight tracking-wide text-white">
                                   {agodaCardAvailability.currency}{" "}
                                   {Math.round(agodaCardAvailability.dailyRate ?? 0).toLocaleString()}
@@ -2251,7 +2293,7 @@ async function handleCreateTripAndAddHotel() {
                                 </div>
                               </div>
                             ) : agodaCardAvailability?.status === "unavailable" ? (
-                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/10 bg-white/6 px-2 py-1.5 text-center text-[11px] leading-tight text-white/56">
+                              <div className="px-2 py-1.5 text-center text-[11px] leading-tight text-white/56">
                                 Not available on Agoda
                               </div>
                             ) : getAgodaHotelIdForHotel(h) ? (
@@ -2303,7 +2345,7 @@ async function handleCreateTripAndAddHotel() {
         </section>
         ) : null}
 
-        <section className="oltra-glass oltra-panel min-w-0 overflow-visible">
+        <section className="oltra-glass oltra-panel min-w-0 self-start overflow-visible">
           {effectiveView === "featured" ? (
             <div className="relative -m-4 min-h-[820px] overflow-hidden rounded-[var(--oltra-radius-xl)]">
               <img
@@ -2410,8 +2452,9 @@ async function handleCreateTripAndAddHotel() {
             </div>
           ) : selectedHotel ? (
             <div className="relative">
-              <div className="flex items-start justify-between gap-6">
-                <div className="min-w-0">
+              <div className="grid grid-cols-12 gap-3">
+                {/* Row 1 left: hotel name + city */}
+                <div className="col-span-12 min-w-0 lg:col-span-8">
                   <div className="oltra-subheader">Selected hotel</div>
 
                   <h2 className="mt-2 truncate text-2xl font-light tracking-wide text-white md:text-3xl">
@@ -2423,15 +2466,10 @@ async function handleCreateTripAndAddHotel() {
                       .filter(Boolean)
                       .join(" · ") || "—"}
                   </div>
-
-                  {selectedHotel.highlights?.trim() ? (
-                    <div className="mt-2 text-sm leading-relaxed text-white/72">
-                      {clampText(selectedHotel.highlights, 320)}
-                    </div>
-                  ) : null}
                 </div>
 
-                <div className="shrink-0">
+                {/* Row 1 right: switch button */}
+                <div className="col-span-12 flex justify-end lg:col-span-4">
                   <button
                     type="button"
                     onClick={() => setViewMode("map")}
@@ -2440,6 +2478,39 @@ async function handleCreateTripAndAddHotel() {
                     Switch to map view
                   </button>
                 </div>
+
+                {/* Row 2 left: highlights — same row as links for vertical alignment */}
+                {selectedHotel.highlights?.trim() ? (
+                  <div className="col-span-12 text-sm leading-relaxed text-white/72 lg:col-span-8">
+                    {clampText(selectedHotel.highlights, 320)}
+                  </div>
+                ) : null}
+
+                {/* Row 2 right: Website + Instagram — left-aligned, same column as thumbnails/metadata */}
+                {(selectedHotel.www || selectedHotel.insta) ? (
+                  <div className="col-span-12 flex gap-4 text-sm lg:col-start-9 lg:col-span-4">
+                    {selectedHotel.www ? (
+                      <a
+                        className="underline underline-offset-4 text-white/80 hover:text-white"
+                        href={selectedHotel.www}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Website
+                      </a>
+                    ) : null}
+                    {selectedHotel.insta ? (
+                      <a
+                        className="underline underline-offset-4 text-white/80 hover:text-white"
+                        href={selectedHotel.insta}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Instagram
+                      </a>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               <div className="mt-4 grid grid-cols-12 gap-3">
@@ -2485,8 +2556,9 @@ async function handleCreateTripAndAddHotel() {
                 </div>
               </div>
 
-              <div className="mt-6 grid items-start gap-6 md:grid-cols-[7fr_3fr]">
-                <div className="space-y-5">
+              <div className="mt-4 grid grid-cols-12 gap-3">
+                {/* col-span-8: Description + price/Agoda + links/member buttons */}
+                <div className="col-span-12 lg:col-span-8 space-y-4">
                   <div>
                     <div className="oltra-subheader">Description</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
@@ -2496,15 +2568,213 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   </div>
 
-                  <div className="oltra-output p-4">
-                    <div className="oltra-subheader">Relevant available rooms</div>
-                    <div className="mt-2 text-sm text-white/65">
-                      Placeholder section — will be fed by availability logic later.
+                  {/* 2-col grid: left=price+links, right=buttons. Explicit placement keeps rows aligned. */}
+                  <div className="grid grid-cols-2 items-center gap-x-6 gap-y-2">
+
+                    {/* Left col row 1: price box when available, unavailable notice, or nothing */}
+                    {selectedHotelAgodaResult ? (
+                      <div className="col-start-1 row-start-1 flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 text-sm text-white/78">
+                        <span className="text-[12px] text-white/55">From</span>
+                        <span className="font-light text-white">
+                          {selectedHotelAgodaResult.currency}{" "}
+                          {Math.round(selectedHotelAgodaResult.dailyRate ?? 0).toLocaleString()}
+                          <span className="text-[11px] text-white/55"> /night</span>
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {/* Right col row 1: Agoda button */}
+                    {selectedHotelAgodaResult?.landingURL ? (
+                      <a
+                        href={selectedHotelAgodaResult.landingURL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="col-start-2 row-start-1 oltra-button-primary w-full rounded-full"
+                      >
+                        BOOK WITH AGODA
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleCheckAgodaAvailability}
+                        disabled={
+                          selectedHotelHasBatchAvailability ||
+                          agodaAvailability.status === "loading" ||
+                          !selectedHotelCanCheckAgoda ||
+                          selectedHotelAgodaUnavailable
+                        }
+                        title={
+                          !selectedAgodaHotelId
+                            ? "Missing Agoda hotel ID"
+                            : !fromValue || !toValue || !datesAreValid
+                              ? "Select valid dates first"
+                              : undefined
+                        }
+                        className={[
+                          "col-start-2 row-start-1 w-full rounded-full",
+                          selectedHotelCanCheckAgoda &&
+                          !selectedHotelHasBatchAvailability &&
+                          agodaAvailability.status !== "loading" &&
+                          !selectedHotelAgodaUnavailable
+                            ? "oltra-button-primary"
+                            : "oltra-button-secondary opacity-60",
+                        ].join(" ")}
+                      >
+                        {agodaAvailability.status === "loading"
+                          ? "CHECKING AGODA..."
+                          : selectedHotelAgodaUnavailable
+                            ? "NO AVAILABILITY ON AGODA"
+                            : selectedHotelHasBatchAvailability
+                              ? "AGODA AVAILABILITY CHECKED"
+                              : "CHECK AGODA AVAILABILITY"}
+                      </button>
+                    )}
+
+                    {/* Right col row 2: ADD TO TRIP */}
+                    <div ref={tripPickerRef} className="col-start-2 row-start-2 relative">
+                      {showTripPicker && (
+                        <div
+                          className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="oltra-subheader">Select trip</div>
+
+                          <div className="mt-2 flex flex-col gap-2">
+                            {tripChoices.length ? (
+                              tripChoices.map((trip) => (
+                                <button
+                                  key={trip.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedTripIdForAdd(trip.id);
+                                    setShowTripPicker(false);
+                                    void handleAddHotelToTrip(trip.id);
+                                  }}
+                                  className="oltra-dropdown-item"
+                                >
+                                  {trip.label}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="text-[12px] text-white/65">
+                                No trips available.
+                              </div>
+                            )}
+
+                            <div className="mt-3 border-t border-white/10 pt-3">
+                              <div className="oltra-subheader">Create new trip</div>
+
+                              <div className="mt-2 flex flex-col gap-2">
+                                <input
+                                  type="text"
+                                  value={newTripName}
+                                  onChange={(e) => {
+                                    setNewTripName(e.target.value);
+                                    setMemberActionError("");
+                                  }}
+                                  placeholder="Trip name"
+                                  className="oltra-input"
+                                />
+
+                                <button
+                                  type="button"
+                                  onClick={handleCreateTripAndAddHotel}
+                                  disabled={creatingTrip || !newTripName.trim()}
+                                  className="oltra-dropdown-item"
+                                >
+                                  {creatingTrip ? "Creating..." : "Create new trip"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMemberActionMessage("");
+                          setMemberActionError("");
+
+                          if (!isMemberLoggedIn) {
+                            setShowTripPicker(false);
+                            setMemberActionError(
+                              getMemberActionLoginMessage("trip")
+                            );
+                            return;
+                          }
+
+                          setShowTripPicker((prev) => !prev);
+                        }}
+                        className={`${getMemberActionButtonClass(
+                          isMemberLoggedIn
+                        )} w-full`}
+                        aria-disabled={!isMemberLoggedIn}
+                      >
+                        ADD TO TRIP
+                      </button>
                     </div>
+
+                    {/* Right col row 3: ADD TO FAVOURITES */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMemberActionMessage("");
+                        setMemberActionError("");
+
+                        if (!isMemberLoggedIn) {
+                          setMemberActionError(
+                            getMemberActionLoginMessage("favorite")
+                          );
+                          return;
+                        }
+
+                        void handleAddHotelToFavorites();
+                      }}
+                      disabled={memberActionLoading !== null || isFavorited}
+                      className={`col-start-2 row-start-3 ${getMemberActionButtonClass(
+                        isMemberLoggedIn && !isFavorited
+                      )} w-full`}
+                      aria-disabled={!isMemberLoggedIn || isFavorited}
+                    >
+                      {memberActionLoading === "favorite"
+                        ? "ADDING..."
+                        : isFavorited
+                          ? "ALREADY IN FAVOURITES"
+                          : "ADD TO FAVOURITES"}
+                    </button>
+
+                    {agodaAvailability.status === "error" && !selectedHotelHasBatchAvailability ? (
+                      <div className="col-start-2 text-[12px] text-white/58">
+                        {agodaAvailability.error}
+                      </div>
+                    ) : null}
+
+                    {!selectedHotelAgodaResult &&
+                    !selectedHotelHasBatchAvailability &&
+                    selectedHotelBookingHref ? (
+                      <div className="col-start-2">
+                        <a
+                          href={selectedHotelBookingHref}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex w-full justify-center text-[12px] text-white/60 underline underline-offset-4 hover:text-white"
+                        >
+                          {selectedHotelBookingLabel}
+                        </a>
+                      </div>
+                    ) : null}
+
+                    {(memberActionError || memberActionMessage) ? (
+                      <div className="col-start-2 text-[12px] text-white/65">
+                        {memberActionError || memberActionMessage}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
-                <div className="space-y-5">
+                {/* col-span-4: Metadata aligned with thumbnail column */}
+                <div className="col-span-12 lg:col-span-4 space-y-4">
                   <div>
                     <div className="oltra-subheader">Setting</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
@@ -2546,266 +2816,6 @@ async function handleCreateTripAndAddHotel() {
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
                       {selectedHotel.affiliation?.trim() || "—"}
                     </div>
-                  </div>
-
-                  <div>
-                    <div className="oltra-subheader">Links</div>
-                    <div className="mt-1.5 flex flex-wrap gap-3 text-sm text-white/75">
-                      {selectedHotel.www ? (
-                        <a
-                          className="underline underline-offset-4 text-white/80 hover:text-white"
-                          href={selectedHotel.www}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Website
-                        </a>
-                      ) : null}
-
-                      {selectedHotel.insta ? (
-                        <a
-                          className="underline underline-offset-4 text-white/80 hover:text-white"
-                          href={selectedHotel.insta}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Instagram
-                        </a>
-                      ) : null}
-
-                      <Link
-                        href={`/hotels/${encodeURIComponent(
-                          String(selectedHotel.hotelid ?? selectedHotel.id)
-                        )}`}
-                        className="underline underline-offset-4 text-white/80 hover:text-white"
-                        prefetch={false}
-                      >
-                        Open detail route
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div ref={tripPickerRef} className="relative pt-1">
-                    {showTripPicker && (
-                      <div
-                        className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="oltra-subheader">Select trip</div>
-
-                        <div className="mt-2 flex flex-col gap-2">
-                          {tripChoices.length ? (
-                            tripChoices.map((trip) => (
-                              <button
-                                key={trip.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedTripIdForAdd(trip.id);
-                                  setShowTripPicker(false);
-                                  void handleAddHotelToTrip(trip.id);
-                                }}
-                                className="oltra-dropdown-item"
-                              >
-                                {trip.label}
-                              </button>
-                            ))
-                          ) : (
-                            <div className="text-[12px] text-white/65">
-                              No trips available.
-                            </div>
-                          )}
-
-                          <div className="mt-3 border-t border-white/10 pt-3">
-                            <div className="oltra-subheader">Create new trip</div>
-
-                            <div className="mt-2 flex flex-col gap-2">
-                              <input
-                                type="text"
-                                value={newTripName}
-                                onChange={(e) => {
-                                  setNewTripName(e.target.value);
-                                  setMemberActionError("");
-                                }}
-                                placeholder="Trip name"
-                                className="oltra-input"
-                              />
-
-                              <button
-                                type="button"
-                                onClick={handleCreateTripAndAddHotel}
-                                disabled={creatingTrip || !newTripName.trim()}
-                                className="oltra-dropdown-item"
-                              >
-                                {creatingTrip ? "Creating..." : "Create new trip"}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMemberActionMessage("");
-                          setMemberActionError("");
-
-                          if (!isMemberLoggedIn) {
-                            setShowTripPicker(false);
-                            setMemberActionError(
-                              getMemberActionLoginMessage("trip")
-                            );
-                            return;
-                          }
-
-                          setShowTripPicker((prev) => !prev);
-                        }}
-                        className={`${getMemberActionButtonClass(
-                          isMemberLoggedIn
-                        )} w-full`}
-                        aria-disabled={!isMemberLoggedIn}
-                      >
-                        ADD TO TRIP
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMemberActionMessage("");
-                          setMemberActionError("");
-
-                          if (!isMemberLoggedIn) {
-                            setMemberActionError(
-                              getMemberActionLoginMessage("favorite")
-                            );
-                            return;
-                          }
-
-                          void handleAddHotelToFavorites();
-                        }}
-                        disabled={memberActionLoading !== null}
-                        className={`${getMemberActionButtonClass(
-                          isMemberLoggedIn
-                        )} w-full`}
-                        aria-disabled={!isMemberLoggedIn}
-                      >
-                        {memberActionLoading === "favorite"
-                          ? "ADDING..."
-                          : "ADD TO FAVOURITES"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {(memberActionError || memberActionMessage) ? (
-                    <div className="pt-2 text-[12px] text-white/65">
-                      {memberActionError || memberActionMessage}
-                    </div>
-                  ) : null}
-
-                  <div className="pt-2">
-                    {selectedHotelAgodaResult ? (
-                      <div className="space-y-2">
-                        <div className="rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 py-2.5 text-sm text-white/78 shadow-[0_10px_24px_rgba(10,18,26,0.18)]">
-                          <div className="flex items-baseline justify-between gap-3">
-                            <span className="text-white/58">From</span>
-                            <span className="text-[1.05rem] font-light tracking-wide text-white">
-                              {selectedHotelAgodaResult.currency}{" "}
-                              {Math.round(selectedHotelAgodaResult.dailyRate ?? 0).toLocaleString()}
-                              <span className="text-sm text-white/55"> / night</span>
-                            </span>
-                          </div>
-
-                          <div className="mt-1 text-[12px] text-white/55">
-                            {[
-                              selectedHotelAgodaResult.includeBreakfast ? "Breakfast included" : "",
-                              selectedHotelAgodaResult.freeWifi ? "Free Wi-Fi" : "",
-                              (selectedHotelAgodaResult.discountPercentage ?? 0) > 0
-                                ? `${Math.round(selectedHotelAgodaResult.discountPercentage ?? 0)}% discount`
-                                : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </div>
-                        </div>
-
-                        {selectedHotelAgodaResult.landingURL ? (
-                          <a
-                            href={selectedHotelAgodaResult.landingURL}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="oltra-button-secondary w-full rounded-full"
-                          >
-                            BOOK WITH AGODA
-                          </a>
-                        ) : null}
-
-                        {selectedHotelHasBatchAvailability ? (
-                          <button
-                            type="button"
-                            disabled
-                            className="oltra-button-secondary w-full rounded-full opacity-60"
-                          >
-                            AGODA AVAILABILITY CHECKED
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleCheckAgodaAvailability}
-                        disabled={
-                          selectedHotelHasBatchAvailability ||
-                          agodaAvailability.status === "loading" ||
-                          !selectedHotelCanCheckAgoda
-                        }
-                        title={
-                          !selectedAgodaHotelId
-                            ? "Missing Agoda hotel ID"
-                            : !fromValue || !toValue || !datesAreValid
-                              ? "Select valid dates first"
-                              : undefined
-                        }
-                        className={[
-                          "w-full rounded-full",
-                          selectedHotelCanCheckAgoda &&
-                          !selectedHotelHasBatchAvailability &&
-                          agodaAvailability.status !== "loading"
-                            ? "oltra-button-primary"
-                            : "oltra-button-secondary opacity-60",
-                        ].join(" ")}
-                      >
-                        {selectedHotelHasBatchAvailability
-                          ? "AGODA AVAILABILITY CHECKED"
-                          : agodaAvailability.status === "loading"
-                            ? "CHECKING AGODA..."
-                            : "CHECK AGODA AVAILABILITY"}
-                      </button>
-                    )}
-
-                    {selectedHotelAgodaUnavailable ? (
-                      <div className="mt-2 text-[12px] text-white/58">
-                        Not available on Agoda for the selected dates.
-                      </div>
-                    ) : null}
-
-                    {agodaAvailability.status === "error" && !selectedHotelHasBatchAvailability ? (
-                      <div className="mt-2 text-[12px] text-white/58">
-                        {agodaAvailability.error}
-                      </div>
-                    ) : null}
-
-                    {!selectedHotelAgodaResult &&
-                    !selectedHotelHasBatchAvailability &&
-                    selectedHotelBookingHref ? (
-                      <a
-                        href={selectedHotelBookingHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-2 inline-flex w-full justify-center text-[12px] text-white/60 underline underline-offset-4 hover:text-white"
-                      >
-                        {selectedHotelBookingLabel}
-                      </a>
-                    ) : null}
                   </div>
                 </div>
               </div>

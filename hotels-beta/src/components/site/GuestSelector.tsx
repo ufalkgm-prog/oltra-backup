@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
 import {
-  buildGuestSummaryLabel,
   clampAdultsCount,
   clampKidsCount,
   type GuestSelection,
@@ -141,8 +140,9 @@ export default function GuestSelector({
   }, [currentSelection]);
 
   const summaryLabel = useMemo(() => {
-    const label = buildGuestSummaryLabel(currentSelection);
-    return label || placeholder;
+    if (currentSelection.adults === 0 && currentSelection.kids === 0) return placeholder;
+    if (currentSelection.kids > 0) return `${currentSelection.adults}+${currentSelection.kids}`;
+    return String(currentSelection.adults);
   }, [currentSelection, placeholder]);
 
   function changeAdults(delta: number) {

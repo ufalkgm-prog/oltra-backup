@@ -802,6 +802,7 @@ textarea::-webkit-scrollbar-thumb,
 .hotel-date-field__input::-webkit-datetime-edit-day-field,
 .hotel-date-field__input::-webkit-datetime-edit-year-field {
   color: transparent;
+  background-color: transparent;
   user-select: none;
   -webkit-user-select: none;
 }
