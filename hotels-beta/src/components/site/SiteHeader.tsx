@@ -147,10 +147,10 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
         <div className="oltra-site-header__brand">
           <Link href="/" className="oltra-site-header__logo" aria-label="Go to OLTRA home">
             <img
-              src="/images/oltra-logo.png"
+              src="/images/myOLTRA.svg"
               alt="OLTRA"
               className="oltra-site-header__logo-image"
-              style={{ transform: "translateX(-9px)" }}
+              style={{ transform: "translateX(calc(-4px))" }}
             />
           </Link>
 

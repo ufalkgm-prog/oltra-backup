@@ -1,5 +1,68 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Duffel flights integration
+
+OLTRA uses the [Duffel API](https://duffel.com/docs) for flight search and concierge hand-off. Booking is **not** handled on-site — searches surface offers which are then passed to the concierge team.
+
+### Environment variables
+
+Add these to `.env.local` (local) and the Vercel project settings (deployed):
+
+| Variable | When used |
+|---|---|
+| `DUFFEL_ACCESS_TOKEN_TEST` | All environments except `VERCEL_ENV=production` |
+| `DUFFEL_ACCESS_TOKEN_LIVE` | `VERCEL_ENV=production` only |
+
+The active token is selected automatically in `src/lib/flights/duffelClient.ts`.
+
+### API routes
+
+All routes are server-side only — the Duffel token is never exposed to the client.
+
+| Route | Method | Purpose |
+|---|---|---|
+| `/api/flights/search` | `POST` | Create an offer request via Duffel. Results cached in-memory for 15 min per unique param set. |
+| `/api/flights/offer/[id]` | `GET` | Refresh a single offer's price and availability. |
+| `/api/flights/inquiry` | `POST` | Accept contact details + offer snapshot, re-fetch latest offer, and send a concierge inquiry email (email delivery is a placeholder — wire up a provider in `src/app/api/flights/inquiry/route.ts`). |
+
+### POST `/api/flights/search` body
+
+```json
+{
+  "origin": "LHR",
+  "destination": "JFK",
+  "departureDate": "2026-08-01",
+  "returnDate": "2026-08-10",
+  "adults": 2,
+  "children": 0,
+  "infants": 0,
+  "cabinClass": "business"
+}
+```
+
+`returnDate` is optional (omit for one-way). `cabinClass` defaults to `"business"`.
+
+### POST `/api/flights/inquiry` body
+
+```json
+{
+  "offerId": "off_...",
+  "offerSnapshot": { /* full Offer object captured at selection time */ },
+  "contact": { "name": "Jane Smith", "email": "jane@example.com", "phone": "+44..." },
+  "notes": "Window seat preferred"
+}
+```
+
+### Wiring up email delivery
+
+Open `src/app/api/flights/inquiry/route.ts` and find the `// TODO: wire up email delivery` comment. Replace the `console.log` block with your chosen provider (Resend, SendGrid, etc.) using the pre-built `emailPayload` object.
+
+### Test page
+
+Visit `/flights/test` in development to exercise the search endpoint end-to-end.
+
+> **Cache note:** the in-memory cache works within a single Vercel lambda instance. Cache is not shared across concurrent instances. For a production-grade shared cache, replace the `Map` in `src/app/api/flights/search/route.ts` with Redis / KV.
+
 ## Getting Started
 
 First, run the development server:

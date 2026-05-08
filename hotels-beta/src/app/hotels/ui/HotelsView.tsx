@@ -608,7 +608,10 @@ export default function HotelsView(props: {
     hasMeaningfulFilters &&
     (hasDirectHotelSelection || hasCountrySelected || hotels.length <= 50);
 
-  const visibleHotels = shouldShowResults ? hotels : [];
+  const visibleHotels = useMemo(
+    () => (shouldShowResults ? hotels : []),
+    [shouldShowResults, hotels]
+  );
   const shouldShowFeatured = !shouldShowResults;
 
   const showNarrowFurtherMessage =
@@ -1282,7 +1285,7 @@ export default function HotelsView(props: {
     }
 
     map.resize();
-  }, [effectiveView, visibleHotels, selectedHotelId]);
+  }, [effectiveView, visibleHotels]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {

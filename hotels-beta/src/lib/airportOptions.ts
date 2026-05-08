@@ -62,4 +62,32 @@ export const AIRPORT_OPTIONS: AirportOption[] = [
   { value: "MIA", label: "MIA · Miami" },
   { value: "LAX", label: "LAX · Los Angeles" },
   { value: "SFO", label: "SFO · San Francisco" },
+  { value: "ORD", label: "ORD · Chicago O'Hare" },
+  { value: "YYZ", label: "YYZ · Toronto Pearson" },
+  { value: "MEX", label: "MEX · Mexico City" },
+  { value: "GRU", label: "GRU · São Paulo Guarulhos" },
+  { value: "EZE", label: "EZE · Buenos Aires Ezeiza" },
+  { value: "LIM", label: "LIM · Lima" },
+
+  { value: "JNB", label: "JNB · Johannesburg O.R. Tambo" },
+  { value: "CPT", label: "CPT · Cape Town" },
+  { value: "NBO", label: "NBO · Nairobi Jomo Kenyatta" },
+  { value: "CMN", label: "CMN · Casablanca Mohammed V" },
+  { value: "RAK", label: "RAK · Marrakech Menara" },
+  { value: "CAI", label: "CAI · Cairo" },
+  { value: "TLV", label: "TLV · Tel Aviv Ben Gurion" },
+
+  { value: "DEL", label: "DEL · New Delhi Indira Gandhi" },
+  { value: "BOM", label: "BOM · Mumbai Chhatrapati Shivaji" },
+  { value: "CMB", label: "CMB · Colombo Bandaranaike" },
+  { value: "MLE", label: "MLE · Malé Velana" },
+  { value: "SEZ", label: "SEZ · Mahé Seychelles" },
+  { value: "MRU", label: "MRU · Mauritius Sir Seewoosagur Ramgoolam" },
+
+  { value: "SYD", label: "SYD · Sydney Kingsford Smith" },
+  { value: "MEL", label: "MEL · Melbourne Tullamarine" },
+  { value: "AKL", label: "AKL · Auckland" },
+
+  { value: "PPT", label: "PPT · Papeete Faa'a (Tahiti)" },
+  { value: "NAN", label: "NAN · Nadi (Fiji)" },
 ];
