@@ -33,8 +33,8 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [])
 
-  const query = text.toLowerCase()
-  const matches = query.length >= 1
+  const query = text.toLowerCase().trim()
+  const matches = query.length >= 2
     ? AIRPORT_OPTIONS.filter(o =>
         o.label.toLowerCase().includes(query) ||
         o.value.toLowerCase().startsWith(query)
@@ -42,33 +42,37 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
     : []
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative' }} data-oltra-control="true">
       <label className="oltra-label">{label}</label>
       <input
         className="oltra-input"
         value={text}
+        placeholder="Type 2+ letters…"
         onChange={e => { setText(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
         autoComplete="off"
         spellCheck={false}
       />
       {open && matches.length > 0 && (
-        <div className={styles.autocompleteDropdown}>
-          {matches.map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              className={styles.autocompleteOption}
-              onPointerDown={e => {
-                e.preventDefault()
-                onChange(opt.value)
-                setText(opt.label)
-                setOpen(false)
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className={`oltra-dropdown-panel ${styles.autocompletePanel}`}>
+          <div className="oltra-dropdown-list">
+            {matches.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                className="oltra-dropdown-item"
+                role="option"
+                onPointerDown={e => {
+                  e.preventDefault()
+                  onChange(opt.value)
+                  setText(opt.label)
+                  setOpen(false)
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

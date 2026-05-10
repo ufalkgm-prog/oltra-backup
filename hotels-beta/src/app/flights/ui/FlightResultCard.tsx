@@ -1,5 +1,4 @@
 import type { FlightOption } from "@/app/flights/types";
-import { formatPrice } from "@/lib/flights";
 
 type Props = {
   flight: FlightOption;
@@ -40,10 +39,10 @@ export default function FlightResultCard({ flight, selected = false, compact = f
         <p className="flight-meta">{flight.layoverLabel}</p>
       </div>
 
-      <div className="flight-card__price">
-        <span className="price-label">{compact ? "From" : "Total"}</span>
-        <strong>{formatPrice(flight.price)}</strong>
-      </div>
+      <button type="button" className="flight-card__book">
+        <span className="flight-card__book-price">{`EUR ${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(flight.price)}`}</span>
+        <span className="flight-card__book-label">BOOK</span>
+      </button>
     </article>
   );
 }

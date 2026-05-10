@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { readHotelFlightSearch, saveHotelFlightSearch } from "@/lib/searchSession";
 import { type Itinerary, type FlightLeg, normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { useCurrency } from "@/lib/currency/useCurrency";
+import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
 import AirportAutocomplete from "./AirportAutocomplete";
 import styles from "./FlightsView.module.css";
 
@@ -109,6 +110,20 @@ function hasFlightSearchParams(searchParams: PageSearchParams): boolean {
   );
 }
 
+function resolveAirportCode(value: string): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const upper = trimmed.toUpperCase();
+  if (AIRPORT_OPTIONS.some(o => o.value === upper)) return upper;
+  const lower = trimmed.toLowerCase();
+  for (const opt of AIRPORT_OPTIONS) {
+    const cityPart = opt.label.split("·")[1]?.trim().toLowerCase() ?? "";
+    if (cityPart.startsWith(lower)) return opt.value;
+  }
+  return "";
+}
+
 function buildInitialSearch(searchParams: PageSearchParams): SearchState {
   const saved =
     typeof window !== "undefined" && !hasFlightSearchParams(searchParams)
@@ -117,9 +132,12 @@ function buildInitialSearch(searchParams: PageSearchParams): SearchState {
 
   const source = saved ?? searchParams;
 
+  const cityHandover = normalizeParam(source.city) || normalizeParam(source.q);
+  const resolvedTo = cityHandover ? resolveAirportCode(cityHandover) : INITIAL_SEARCH.to;
+
   return {
     ...INITIAL_SEARCH,
-    to: normalizeParam(source.city) || normalizeParam(source.q) || INITIAL_SEARCH.to,
+    to: cityHandover ? resolvedTo : INITIAL_SEARCH.to,
     departDate: normalizeParam(source.from) || INITIAL_SEARCH.departDate,
     returnDate: normalizeParam(source.to) || INITIAL_SEARCH.returnDate,
     adults: Number(normalizeParam(source.adults)) || INITIAL_SEARCH.adults,
@@ -129,10 +147,6 @@ function buildInitialSearch(searchParams: PageSearchParams): SearchState {
 
 function formatDuration(totalMinutes: number): string {
   return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(price);
 }
 
 function getHour(time: string): number {
@@ -196,14 +210,20 @@ export default function FlightsView({ searchParams }: Props) {
   const isOneWay = search.tripType === "one-way";
   const isMultiple = search.tripType === "multiple";
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const minReturnIso = search.departDate
+    ? new Date(new Date(search.departDate).getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    : todayIso;
+
   function markDirty() {
     setIsDirty(true);
   }
 
   useEffect(() => {
+    const cityHandover = normalizeParam(searchParams.city) || normalizeParam(searchParams.q);
     setSearch(current => ({
       ...current,
-      to: normalizeParam(searchParams.city) || normalizeParam(searchParams.q) || current.to,
+      to: cityHandover ? resolveAirportCode(cityHandover) : current.to,
       departDate: normalizeParam(searchParams.from) || current.departDate,
       returnDate: normalizeParam(searchParams.to) || current.returnDate,
       adults: Number(normalizeParam(searchParams.adults)) || current.adults,
@@ -523,12 +543,14 @@ export default function FlightsView({ searchParams }: Props) {
                   <DateField
                     label="Depart"
                     value={search.departDate}
+                    min={todayIso}
                     onChange={v => { setSearch(c => ({ ...c, departDate: v })); markDirty(); }}
                   />
                   {isReturnTrip ? (
                     <DateField
                       label="Return"
                       value={search.returnDate}
+                      min={minReturnIso}
                       onChange={v => { setSearch(c => ({ ...c, returnDate: v })); markDirty(); }}
                     />
                   ) : null}
@@ -593,32 +615,36 @@ export default function FlightsView({ searchParams }: Props) {
                 search.multiCity.map((leg, index) => (
                   <div key={`filters-${leg.id}`} className={styles.legFilterBlock}>
                     <div className={styles.legFilterTitle}>Flight {index + 1}</div>
-                    <DurationFilter
-                      label="Max duration"
-                      value={filters.multi[index]?.maxDurationHours ?? 20}
-                      onChange={v => updateMultiLegFilter(index, { maxDurationHours: v })}
-                    />
-                    <TimeIntervalFilter
-                      label="Departure time"
-                      value={filters.multi[index] ?? DEFAULT_LEG_FILTER}
-                      onChange={patch => updateMultiLegFilter(index, patch)}
-                    />
+                    <div className={styles.legFilterTimeGroup}>
+                      <DurationFilter
+                        label="Max duration"
+                        value={filters.multi[index]?.maxDurationHours ?? 20}
+                        onChange={v => updateMultiLegFilter(index, { maxDurationHours: v })}
+                      />
+                      <TimeIntervalFilter
+                        label="Departure time"
+                        value={filters.multi[index] ?? DEFAULT_LEG_FILTER}
+                        onChange={patch => updateMultiLegFilter(index, patch)}
+                      />
+                    </div>
                   </div>
                 ))
               ) : (
                 <>
-                  <DurationFilter
-                    label="Departure max duration"
-                    value={filters.outbound.maxDurationHours}
-                    onChange={v => updateLegFilter("outbound", { maxDurationHours: v })}
-                  />
-                  <TimeIntervalFilter
-                    label="Departure time"
-                    value={filters.outbound}
-                    onChange={patch => updateLegFilter("outbound", patch)}
-                  />
+                  <div className={styles.legFilterTimeGroup}>
+                    <DurationFilter
+                      label="Departure max duration"
+                      value={filters.outbound.maxDurationHours}
+                      onChange={v => updateLegFilter("outbound", { maxDurationHours: v })}
+                    />
+                    <TimeIntervalFilter
+                      label="Departure time"
+                      value={filters.outbound}
+                      onChange={patch => updateLegFilter("outbound", patch)}
+                    />
+                  </div>
                   {isReturnTrip ? (
-                    <>
+                    <div className={styles.legFilterTimeGroup}>
                       <DurationFilter
                         label="Return max duration"
                         value={filters.inbound.maxDurationHours}
@@ -629,13 +655,13 @@ export default function FlightsView({ searchParams }: Props) {
                         value={filters.inbound}
                         onChange={patch => updateLegFilter("inbound", patch)}
                       />
-                    </>
+                    </div>
                   ) : null}
                 </>
               )}
 
               {allAirlines.length > 0 && (
-                <ChipGroup
+                <MultiSelectDropdown
                   label="Airlines"
                   items={allAirlines}
                   selected={filters.airlines}
@@ -644,7 +670,7 @@ export default function FlightsView({ searchParams }: Props) {
               )}
 
               {layoverAirports.length > 0 && (
-                <ChipGroup
+                <MultiSelectDropdown
                   label="Lay-over airports"
                   items={layoverAirports}
                   selected={filters.layoverAirports}
@@ -686,18 +712,23 @@ export default function FlightsView({ searchParams }: Props) {
                 </div>
               ) : (
                 <>
+                  <div className={isOneWay ? styles.columnHeadersOneWay : styles.columnHeaders}>
+                    <div className={styles.columnLabel}>Departure</div>
+                    {!isOneWay ? <div className={styles.columnLabel}>Return</div> : null}
+                    <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Price</div>
+                  </div>
+
                   <div className={styles.pinnedStack}>
                     {recommended ? (
-                      <PinnedRow label="Recommended" variant="recommended" itinerary={recommended} oneWay={isOneWay} onBook={handleBook} />
+                      <PinnedRow label="Recommended" itinerary={recommended} oneWay={isOneWay} onBook={handleBook} />
                     ) : null}
                     {fastest ? (
-                      <PinnedRow label="Fastest" variant="fastest" itinerary={fastest} oneWay={isOneWay} onBook={handleBook} />
+                      <PinnedRow label="Fastest" itinerary={fastest} oneWay={isOneWay} onBook={handleBook} />
                     ) : null}
                   </div>
 
                   <div className={isOneWay ? styles.resultsGridOneWay : styles.resultsGrid}>
                     <div className={styles.columnBox}>
-                      <div className={styles.columnLabel}>Departure</div>
                       <div className={styles.cardStack}>
                         {outboundOptions.length ? (
                           outboundOptions.map(flight => (
@@ -718,7 +749,6 @@ export default function FlightsView({ searchParams }: Props) {
 
                     {!isOneWay ? (
                       <div className={styles.columnBox}>
-                        <div className={styles.columnLabel}>Return</div>
                         <div className={styles.cardStack}>
                           {!selectedOutboundId ? (
                             <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
@@ -741,37 +771,18 @@ export default function FlightsView({ searchParams }: Props) {
                     ) : null}
 
                     <div className={styles.priceColumn}>
-                      <div className={styles.columnLabel}>Price</div>
                       <div className={styles.cardStack}>
                         {isOneWay
                           ? outboundOptions
                               .map(flight => itineraryByOutboundId.get(flight.id))
                               .filter((it): it is Itinerary => Boolean(it))
-                              .map(it => {
-                                const isSelected = it.outbound.id === selectedOutboundId;
-                                return (
-                                  <PriceCard
-                                    key={it.id}
-                                    itinerary={it}
-                                    onBook={handleBook}
-                                    active={isSelected}
-                                    lit={isSelected}
-                                  />
-                                );
-                              })
+                              .map(it => (
+                                <PriceCard key={it.id} itinerary={it} onBook={handleBook} />
+                              ))
                           : selectedOutboundId
-                          ? visibleReturnItineraries.map(it => {
-                              const isSelected = it.id === selectedReturnId;
-                              return (
-                                <PriceCard
-                                  key={it.id}
-                                  itinerary={it}
-                                  onBook={handleBook}
-                                  active={isSelected}
-                                  lit={isSelected}
-                                />
-                              );
-                            })
+                          ? visibleReturnItineraries.map(it => (
+                              <PriceCard key={it.id} itinerary={it} onBook={handleBook} />
+                            ))
                           : null}
                       </div>
                     </div>
@@ -790,11 +801,46 @@ export default function FlightsView({ searchParams }: Props) {
   );
 }
 
-function DateField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function formatDisplayDate(value: string): string {
+  if (!value) return "";
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(year, month - 1, day));
+}
+
+function DateField({ label, value, onChange, min }: { label: string; value: string; onChange: (v: string) => void; min?: string }) {
+  const ref = useRef<HTMLInputElement | null>(null);
   return (
-    <div>
+    <div className="relative min-w-0" data-oltra-control="true">
       <label className="oltra-label">{label}</label>
-      <input type="date" value={value} onChange={e => onChange(e.target.value)} className="oltra-input" />
+      <div
+        className="hotel-date-field relative cursor-pointer"
+        onMouseDown={e => e.preventDefault()}
+        onClick={() => ref.current?.showPicker?.()}
+      >
+        <input
+          ref={ref}
+          type="date"
+          value={value}
+          min={min}
+          tabIndex={-1}
+          onChange={e => onChange(e.target.value)}
+          onKeyDown={e => e.preventDefault()}
+          onBeforeInput={e => e.preventDefault()}
+          className="oltra-input hotel-date-field__input w-full cursor-pointer"
+          data-has-value={value ? "true" : "false"}
+        />
+        <span
+          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
+          data-has-value={value ? "true" : "false"}
+        >
+          {formatDisplayDate(value) || "date"}
+        </span>
+      </div>
     </div>
   );
 }
@@ -861,27 +907,79 @@ function TimeIntervalFilter({
   );
 }
 
-function ChipGroup({
+function MultiSelectDropdown({
   label, items, selected, onToggle,
 }: {
   label: string; items: string[]; selected: string[]; onToggle: (v: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleDown(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleDown);
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("mousedown", handleDown);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, []);
+
+  const allSelected = selected.length === items.length;
+  const display = !items.length
+    ? "—"
+    : allSelected
+    ? "All"
+    : selected.length === 0
+    ? "None"
+    : selected.length <= 2
+    ? selected.join(", ")
+    : `${selected.length} selected`;
+
   return (
-    <div>
+    <div ref={rootRef} className={styles.multiSelectRoot} data-oltra-control="true">
       <label className="oltra-label">{label}</label>
-      <div className={styles.chips}>
-        {items.map(item => {
-          const active = selected.includes(item);
-          return (
-            <button
-              key={item} type="button" onClick={() => onToggle(item)}
-              className={`${styles.airlineChip} ${active ? styles.airlineChipActive : ""}`}
-            >
-              {item}
-            </button>
-          );
-        })}
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`oltra-select ${styles.multiSelectTrigger}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className={styles.multiSelectValue}>{display}</span>
+        <svg viewBox="0 0 20 20" aria-hidden="true" className={styles.multiSelectChevron}>
+          <path d="M5.5 7.5 10 12l4.5-4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open ? (
+        <div className={`oltra-dropdown-panel ${styles.multiSelectPanel}`}>
+          <div className="oltra-dropdown-list">
+            {items.map(item => {
+              const active = selected.includes(item);
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => onToggle(item)}
+                  className={`oltra-dropdown-item ${styles.multiSelectItem} ${active ? styles.multiSelectItemActive : ""}`}
+                  role="option"
+                  aria-selected={active}
+                >
+                  <span className={styles.multiSelectCheck} aria-hidden="true">
+                    {active ? "✓" : ""}
+                  </span>
+                  <span>{item}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -920,9 +1018,9 @@ function MultipleResults({ columns }: { columns: { leg: MultiCityLeg; options: F
         ))}
         <div className={styles.priceColumn}>
           <div className={styles.cardStack}>
-            <div className={`oltra-output ${styles.priceCard}`}>
-              <div className={styles.priceCurrency}>—</div>
-              <div className={styles.priceValue}>—</div>
+            <div className={styles.priceCard}>
+              <span className={styles.priceCardAmount}>—</span>
+              <span className={styles.priceCardLabel}>BOOK</span>
             </div>
           </div>
         </div>
@@ -934,35 +1032,33 @@ function MultipleResults({ columns }: { columns: { leg: MultiCityLeg; options: F
 function MultiPinnedRow({ label, flights }: { label: string; flights: FlightLeg[] }) {
   return (
     <div className={styles.pinnedRow}>
-      <div className={styles.pinnedLabel}>{label}</div>
+      <span className={styles.pinnedLegend}>{label}</span>
       <div
         className={styles.multiPinnedGrid}
-        style={{ gridTemplateColumns: `repeat(${flights.length}, minmax(0, 1fr)) 112px` }}
+        style={{ gridTemplateColumns: `repeat(${flights.length}, minmax(0, 1fr)) 140px` }}
       >
         {flights.map(f => (
-          <div key={f.id} className="oltra-output"><FlightCardContent flight={f} /></div>
+          <div key={f.id} className={styles.staticCard}><FlightCardContent flight={f} /></div>
         ))}
-        <div className={`oltra-output ${styles.priceCard}`}>
-          <div className={styles.priceCurrency}>—</div>
-          <div className={styles.priceValue}>—</div>
+        <div className={styles.priceCard}>
+          <span className={styles.priceCardAmount}>—</span>
+          <span className={styles.priceCardLabel}>BOOK</span>
         </div>
       </div>
     </div>
   );
 }
 
-function PinnedRow({ label, variant, itinerary, oneWay, onBook }: { label: string; variant: "recommended" | "fastest"; itinerary: Itinerary; oneWay: boolean; onBook: (id: string) => void }) {
-  const rowClass = variant === "recommended" ? styles.pinnedRowRecommended : styles.pinnedRowFastest;
-  const labelClass = variant === "recommended" ? styles.pinnedLabelRecommended : styles.pinnedLabelFastest;
+function PinnedRow({ label, itinerary, oneWay, onBook }: { label: string; itinerary: Itinerary; oneWay: boolean; onBook: (id: string) => void }) {
   return (
-    <div className={`${styles.pinnedRow} ${rowClass}`}>
-      <div className={`${styles.pinnedLabel} ${labelClass}`}>{label}</div>
+    <div className={styles.pinnedRow}>
+      <span className={styles.pinnedLegend}>{label}</span>
       <div className={oneWay ? styles.pinnedGridOneWay : styles.pinnedGrid}>
         <div className={styles.staticCard}><FlightCardContent flight={itinerary.outbound} /></div>
         {!oneWay && itinerary.inbound ? (
           <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} /></div>
         ) : null}
-        <PriceCard itinerary={itinerary} onBook={onBook} active />
+        <PriceCard itinerary={itinerary} onBook={onBook} />
       </div>
     </div>
   );
@@ -990,27 +1086,22 @@ function BookingBar({ itinerary, onBook }: { itinerary: Itinerary; onBook: (id: 
 function PriceCard({
   itinerary,
   onBook,
-  active = false,
-  lit = false,
 }: {
   itinerary: Itinerary;
   onBook: (id: string) => void;
-  active?: boolean;
-  lit?: boolean;
 }) {
   const { currency, format } = useCurrency();
   return (
-    <div className={`oltra-output ${styles.priceCard} ${lit ? styles.priceCardLit : ""}`}>
-      <div className={styles.priceCurrency}>{currency}</div>
-      <div className={styles.priceValue}>{format(itinerary.priceEur, itinerary.currency)}</div>
-      <button
-        type="button"
-        className={`${styles.bookButton} ${active ? styles.bookButtonActive : ""}`}
-        onClick={() => onBook(itinerary.offerId)}
-      >
-        Book
-      </button>
-    </div>
+    <button
+      type="button"
+      className={styles.priceCard}
+      onClick={() => onBook(itinerary.offerId)}
+    >
+      <span className={styles.priceCardAmount}>
+        {currency} {format(itinerary.priceEur, itinerary.currency)}
+      </span>
+      <span className={styles.priceCardLabel}>BOOK</span>
+    </button>
   );
 }
 
