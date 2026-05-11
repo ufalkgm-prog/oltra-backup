@@ -2,28 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-const IMAGES = [
-  "/images/landing/landing-01.jpg",
-  "/images/landing/landing-02.jpg",
-  "/images/landing/landing-03.jpg",
-  "/images/landing/landing-04.jpg",
-  "/images/landing/landing-05.jpg",
-  "/images/landing/landing-06.jpg",
-  "/images/landing/landing-07.jpg",
-  "/images/landing/landing-08.jpg",
-  "/images/landing/landing-09.jpg",
-  "/images/landing/landing-10.jpg",
-  "/images/landing/landing-11.jpg",
-  "/images/landing/landing-12.jpg",
-  "/images/landing/landing-13.jpg",
-  "/images/landing/landing-14.jpg",
-  "/images/landing/landing-15.jpg",
-  "/images/landing/landing-16.jpg",
-  "/images/landing/landing-17.jpg",
-  "/images/landing/landing-18.jpg",
-  "/images/landing/landing-19.jpg",
-  "/images/landing/landing-20.jpg",
-];
+const IMAGES = Array.from({ length: 49 }, (_, i) =>
+  `/images/landing/landing-${String(i + 1).padStart(2, "0")}.jpg`
+);
 
 const SLIDE_MS = 5000;
 const FADE_MS = 1200;
@@ -38,8 +19,15 @@ const MOTIONS: MotionMode[] = [
   "fly-over",
 ];
 
-function motionFor(index: number): MotionMode {
-  return MOTIONS[index % MOTIONS.length];
+function randomMotion(): MotionMode {
+  return MOTIONS[Math.floor(Math.random() * MOTIONS.length)];
+}
+
+function pickRandomIndex(exclude: number): number {
+  if (IMAGES.length <= 1) return 0;
+  let i = Math.floor(Math.random() * IMAGES.length);
+  if (i === exclude) i = (i + 1) % IMAGES.length;
+  return i;
 }
 
 function transformFor(mode: MotionMode, end: boolean): string {
@@ -70,6 +58,8 @@ export default function LandingBackground() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [nextIndex, setNextIndex] = useState(1);
+  const [currentMotion, setCurrentMotion] = useState<MotionMode>("zoom-in");
+  const [nextMotion, setNextMotion] = useState<MotionMode>("zoom-out");
 
   const [currentEnd, setCurrentEnd] = useState(false);
   const [nextEnd, setNextEnd] = useState(false);
@@ -85,7 +75,9 @@ export default function LandingBackground() {
 
     const start = Math.floor(Math.random() * IMAGES.length);
     setCurrentIndex(start);
-    setNextIndex((start + 1) % IMAGES.length);
+    setNextIndex(pickRandomIndex(start));
+    setCurrentMotion(randomMotion());
+    setNextMotion(randomMotion());
   }, []);
 
   useEffect(() => {
@@ -115,10 +107,12 @@ export default function LandingBackground() {
 
     const swapTimer = window.setTimeout(() => {
       const newCurrent = nextIndex;
-      const newNext = (nextIndex + 1) % IMAGES.length;
+      const newNext = pickRandomIndex(newCurrent);
 
       setCurrentIndex(newCurrent);
       setNextIndex(newNext);
+      setCurrentMotion(nextMotion);
+      setNextMotion(randomMotion());
     }, SLIDE_MS);
 
     return () => {
@@ -126,7 +120,7 @@ export default function LandingBackground() {
       window.clearTimeout(fadeTimer);
       window.clearTimeout(swapTimer);
     };
-  }, [mounted, nextIndex]);
+  }, [mounted, nextIndex, nextMotion]);
 
   if (!mounted) {
     return (
@@ -173,7 +167,7 @@ export default function LandingBackground() {
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           opacity: showNext ? 0 : 1,
-          transform: transformFor(motionFor(currentIndex), currentEnd),
+          transform: transformFor(currentMotion, currentEnd),
           transition: `opacity ${FADE_MS}ms ease-in-out, transform ${SLIDE_MS}ms linear`,
           willChange: "opacity, transform",
           backfaceVisibility: "hidden",
@@ -189,7 +183,7 @@ export default function LandingBackground() {
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           opacity: showNext ? 1 : 0,
-          transform: transformFor(motionFor(nextIndex), nextEnd),
+          transform: transformFor(nextMotion, nextEnd),
           transition: `opacity ${FADE_MS}ms ease-in-out, transform ${SLIDE_MS}ms linear`,
           willChange: "opacity, transform",
           backfaceVisibility: "hidden",

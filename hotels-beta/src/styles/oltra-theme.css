@@ -598,7 +598,7 @@ textarea::-webkit-scrollbar-thumb,
 .oltra-site-header__beta-badge {
   position: absolute;
   top: 2px;
-  left: calc(100% - 18px);
+  left: calc(100% - 16px);
   display: inline-flex;
   align-items: center;
   padding: 0.12rem 0.4rem 0.1rem;
@@ -687,16 +687,17 @@ textarea::-webkit-scrollbar-thumb,
   align-items: center;
   justify-content: center;
   padding: 0.1rem 0.3rem 0.08rem;
-  border: 1px solid rgba(255, 140, 64, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 4px;
-  background: rgba(255, 122, 43, 0.2);
-  color: rgba(255, 178, 112, 0.98);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.5rem;
   line-height: 1;
   letter-spacing: 0.12em;
   transform: rotate(14deg) translate(0.46rem, -0.04rem);
   transform-origin: center;
   pointer-events: none;
+  opacity: 0.7;
 }
 
 .oltra-site-header__nav-link.is-active,

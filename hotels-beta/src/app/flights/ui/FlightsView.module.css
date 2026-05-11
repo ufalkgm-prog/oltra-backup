@@ -14,11 +14,7 @@
   display: grid;
   gap: var(--oltra-gap-lg);
   min-width: 0;
-  position: sticky;
-  top: 16px;
   align-self: start;
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
 }
 
 .searchPanel {
@@ -219,8 +215,10 @@
 .multiSelectPanel {
   left: 0;
   right: 0;
-  top: calc(100% + 8px);
+  bottom: calc(100% + 8px);
   z-index: 500;
+  max-height: 380px;
+  overflow-y: auto;
 }
 
 .multiSelectItem {
@@ -312,14 +310,14 @@
   position: absolute;
   top: -7px;
   left: 16px;
-  padding: 0 8px;
+  padding: 0 4px;
   background: var(--oltra-glass-bg-strong);
+  border-radius: 0;
   font-size: 0.62rem;
   line-height: 1;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--oltra-text-secondary);
-  border-radius: 4px;
 }
 
 .columnHeaders,
@@ -328,6 +326,7 @@
   gap: var(--oltra-gap-md);
   align-items: end;
   padding: 0 13px;
+  margin-bottom: -4px;
 }
 
 .columnHeaders {
@@ -339,7 +338,7 @@
 }
 
 .columnLabelRight {
-  text-align: right;
+  text-align: left;
 }
 
 .pinnedGrid,
@@ -367,6 +366,16 @@
 .resultsGridOneWay {
   grid-template-columns: minmax(0, 1fr) 140px;
   padding: 0 13px;
+}
+
+.resultsScroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-bottom: 4px;
+}
+
+.withScrollGutter {
+  padding-right: 12px;
 }
 
 .multiResultsScroller {
@@ -436,6 +445,7 @@
 }
 
 .selectCard {
+  position: relative;
   border: 1px solid var(--oltra-field-border);
   border-radius: var(--oltra-radius-md);
   background: var(--oltra-field-bg);
@@ -444,7 +454,7 @@
   text-align: left;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease;
-  min-height: 80px;
+  height: 96px;
   display: grid;
   align-content: center;
 }
@@ -454,14 +464,251 @@
 }
 
 .selectCardActive {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(255, 255, 255, 0.96);
-  color: var(--oltra-text-dark);
+  background: rgba(20, 32, 48, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  color: var(--oltra-text-primary);
+  padding: 9px 13px;
+}
+
+.selectCardMatchStrong {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.selectCardMatchStrong:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.selectCardMatchWeak {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.selectCardMatchWeak:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .flightCardInner {
+  position: relative;
   display: grid;
   gap: 3px;
+}
+
+.infoButton {
+  margin-left: 4px;
+  margin-top: -4px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--oltra-text-secondary);
+  font-size: 0.62rem;
+  line-height: 1;
+  font-family: serif;
+  font-style: italic;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.infoButton:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--oltra-text-primary);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 16, 24, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+}
+
+.modal {
+  width: min(560px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  background: rgba(24, 37, 46, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--oltra-radius-lg);
+  color: var(--oltra-text-primary);
+  padding: 22px 24px;
+}
+
+.modalHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modalTitle {
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.modalSubtitle {
+  font-size: 0.78rem;
+  color: var(--oltra-text-secondary);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+
+.modalClose {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--oltra-text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modalClose:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modalBody {
+  display: grid;
+  gap: 14px;
+}
+
+.segmentBlock {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--oltra-radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.segmentAirline {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oltra-text-secondary);
+}
+
+.segmentAircraft {
+  opacity: 0.75;
+}
+
+.segmentRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.segmentTime {
+  display: grid;
+  gap: 2px;
+}
+
+.segmentHour {
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.segmentDate {
+  font-size: 0.7rem;
+  color: var(--oltra-text-secondary);
+}
+
+.segmentMidLine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.segmentMidLine::before {
+  content: "";
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.segmentDuration {
+  font-size: 0.7rem;
+  color: var(--oltra-text-secondary);
+  letter-spacing: 0.04em;
+  padding: 0 6px;
+  background: rgba(24, 37, 46, 0.96);
+  position: absolute;
+  top: -7px;
+}
+
+.segmentAirports {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.segmentAirportRight {
+  text-align: right;
+}
+
+.segmentAirport {
+  color: var(--oltra-text-primary);
+}
+
+.segmentCode {
+  font-size: 0.68rem;
+  color: var(--oltra-text-secondary);
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+.layoverBlock {
+  margin: 4px 0;
+  padding: 8px 14px;
+  border-left: 2px solid var(--oltra-button-active-bg);
+  font-size: 0.78rem;
+  color: var(--oltra-text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.modalSummary {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.82rem;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.summaryRow span:first-child {
+  color: var(--oltra-text-secondary);
 }
 
 .flightTimesRow {
@@ -489,16 +736,27 @@
   white-space: nowrap;
 }
 
-.flightMetaRow {
+.flightMetaRow,
+.flightStopsRow {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.flightStopsRow {
+  margin-top: 1px;
 }
 
 .flightMetaText {
   font-size: 0.68rem;
   opacity: 0.6;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .flightMetaDot {
@@ -509,38 +767,77 @@
 .priceCard {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
   align-self: stretch;
   width: 100%;
-  height: 100%;
-  min-height: 80px;
-  padding: 10px 12px;
+  height: 96px;
+  padding: 14px 12px 12px;
   border: 1px solid var(--oltra-field-border);
   border-radius: var(--oltra-radius-md);
   background: var(--oltra-field-bg);
   color: var(--oltra-text-primary);
   font: inherit;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
-}
-
-.priceCard:hover {
-  background: var(--oltra-field-bg-strong);
-  border-color: rgba(255, 255, 255, 0.24);
 }
 
 .priceCardAmount {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   letter-spacing: -0.02em;
   line-height: 1;
+  text-align: center;
 }
 
-.priceCardLabel {
+.bookButtonActive,
+.bookButtonInactive {
+  width: 100%;
+  border-radius: var(--oltra-radius-sm, 6px);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.18em;
+  padding: 7px 0;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.bookButtonActive {
+  background: var(--oltra-button-active-bg);
+  border: 1px solid var(--oltra-button-active-bg);
+  color: var(--oltra-button-active-text);
+}
+
+.bookButtonActive:hover {
+  opacity: 0.95;
+}
+
+.bookButtonInactive {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--oltra-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.matchBadgeStrong,
+.matchBadgeWeak {
+  margin-left: 6px;
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 999px;
+  line-height: 1.4;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.matchBadgeStrong {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--oltra-text-primary);
+}
+
+.matchBadgeWeak {
+  background: rgba(255, 255, 255, 0.1);
   color: var(--oltra-text-secondary);
 }
 
@@ -582,9 +879,10 @@
 }
 .autocompletePanel {
   left: 0;
-  right: 0;
   top: calc(100% + 8px);
   z-index: 500;
+  min-width: 320px;
+  white-space: nowrap;
 }
 
 .searchButtonDirty {
@@ -593,12 +891,13 @@
 }
 
 .staticCard {
+  position: relative;
   border: 1px solid var(--oltra-field-border);
   border-radius: var(--oltra-radius-md);
   background: var(--oltra-field-bg);
   color: var(--oltra-text-primary);
   padding: 10px 14px;
-  min-height: 80px;
+  height: 96px;
   display: grid;
   align-content: center;
 }

@@ -3,9 +3,39 @@ import type { OfferRequest, OfferSlice } from '@duffel/api/types'
 type OfferWithoutServices = OfferRequest['offers'][number]
 type TripType = 'one-way' | 'return' | 'multiple'
 
+export type AirlineRef = {
+  name: string
+  iataCode: string
+}
+
+export type Layover = {
+  code: string
+  name: string
+  durationMinutes: number
+}
+
+export type Segment = {
+  airline: AirlineRef
+  flightNumber: string
+  originCode: string
+  originName: string
+  destinationCode: string
+  destinationName: string
+  departIso: string
+  arriveIso: string
+  departTime: string
+  arriveTime: string
+  durationMinutes: number
+  aircraft: string
+  originTimezone: string
+  destinationTimezone: string
+}
+
 export type FlightLeg = {
   id: string
   airline: string
+  airlines: AirlineRef[]
+  longHaulAirline: AirlineRef | null
   flightNumber: string
   originCode: string
   destinationCode: string
@@ -14,6 +44,8 @@ export type FlightLeg = {
   durationMinutes: number
   stops: number
   stopSummary: string
+  layovers: Layover[]
+  segments: Segment[]
 }
 
 export type Itinerary = {
@@ -48,23 +80,81 @@ function placeCode(place: unknown): string {
   return (place as { iata_code?: string | null })?.iata_code ?? ''
 }
 
-function buildStopSummary(slice: OfferSlice): string {
+function placeDisplayName(place: unknown): string {
+  const p = place as { name?: string | null; city?: { name?: string | null } | null; iata_code?: string | null } | null
+  return p?.city?.name ?? p?.name ?? p?.iata_code ?? ''
+}
+
+function buildLayovers(slice: OfferSlice): Layover[] {
   const segs = slice.segments
-  if (segs.length <= 1) return 'Direct'
-  const parts = segs.slice(0, -1).map((seg, i) => {
+  if (segs.length <= 1) return []
+  return segs.slice(0, -1).map((seg, i) => {
     const next = segs[i + 1]!
     const mins = Math.round(
       (new Date(next.departing_at).getTime() - new Date(seg.arriving_at).getTime()) / 60000
     )
-    return `${placeCode(seg.destination)} ${Math.floor(mins / 60)}h ${mins % 60}m`
+    return {
+      code: placeCode(seg.destination),
+      name: placeDisplayName(seg.destination),
+      durationMinutes: mins,
+    }
   })
-  return `${segs.length - 1} stop · ${parts[0] ?? ''}`
+}
+
+function formatStopDuration(mins: number): string {
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`
+}
+
+function buildStopSummary(layovers: Layover[]): string {
+  if (!layovers.length) return 'Direct'
+  const stopWord = layovers.length === 1 ? 'stop' : 'stops'
+  const parts = layovers.map(l => `${l.name} ${formatStopDuration(l.durationMinutes)}`)
+  return `${layovers.length} ${stopWord} · ${parts.join(', ')}`
+}
+
+function placeTimezone(place: unknown): string {
+  return (place as { time_zone?: string | null })?.time_zone ?? ''
+}
+
+function placeName(place: unknown): string {
+  const p = place as { name?: string | null; city?: { name?: string | null } | null } | null
+  return p?.city?.name ?? p?.name ?? ''
+}
+
+function normalizeSegment(seg: OfferSlice['segments'][number]): Segment {
+  return {
+    airline: {
+      name: seg.marketing_carrier.name,
+      iataCode: seg.marketing_carrier.iata_code ?? '',
+    },
+    flightNumber: `${seg.marketing_carrier.iata_code}${seg.marketing_carrier_flight_number}`,
+    originCode: placeCode(seg.origin),
+    originName: placeName(seg.origin) || placeCode(seg.origin),
+    destinationCode: placeCode(seg.destination),
+    destinationName: placeName(seg.destination) || placeCode(seg.destination),
+    departIso: seg.departing_at,
+    arriveIso: seg.arriving_at,
+    departTime: formatTime(seg.departing_at),
+    arriveTime: formatTime(seg.arriving_at),
+    durationMinutes: segmentDurationMinutes(seg),
+    aircraft: (seg as { aircraft?: { name?: string | null } | null }).aircraft?.name ?? '',
+    originTimezone: placeTimezone(seg.origin),
+    destinationTimezone: placeTimezone(seg.destination),
+  }
 }
 
 function sliceFingerprint(slice: OfferSlice): string {
   return slice.segments
     .map(s => `${s.marketing_carrier.iata_code}${s.marketing_carrier_flight_number}@${s.departing_at.slice(0, 16)}`)
     .join('|')
+}
+
+function segmentDurationMinutes(seg: OfferSlice['segments'][number]): number {
+  const iso = parseDuration(seg.duration as string | null | undefined)
+  if (iso) return iso
+  return Math.round(
+    (new Date(seg.arriving_at).getTime() - new Date(seg.departing_at).getTime()) / 60000
+  )
 }
 
 function normalizeSlice(slice: OfferSlice): FlightLeg {
@@ -76,9 +166,32 @@ function normalizeSlice(slice: OfferSlice): FlightLeg {
     (new Date(last.arriving_at).getTime() - new Date(first.departing_at).getTime()) / 60000
   )
 
+  const seenCarriers = new Set<string>()
+  const airlines: AirlineRef[] = []
+  for (const seg of segs) {
+    const code = seg.marketing_carrier.iata_code
+    if (!code || seenCarriers.has(code)) continue
+    seenCarriers.add(code)
+    airlines.push({ name: seg.marketing_carrier.name, iataCode: code })
+  }
+
+  const longestSeg = segs.reduce(
+    (best, seg) => (segmentDurationMinutes(seg) > segmentDurationMinutes(best) ? seg : best),
+    first
+  )
+  const longHaulAirline: AirlineRef | null =
+    longestSeg && longestSeg.marketing_carrier.iata_code
+      ? { name: longestSeg.marketing_carrier.name, iataCode: longestSeg.marketing_carrier.iata_code }
+      : null
+
+  const layovers = buildLayovers(slice)
+  const segments = segs.map(normalizeSegment)
+
   return {
     id: sliceFingerprint(slice),
     airline: first.marketing_carrier.name,
+    airlines,
+    longHaulAirline,
     flightNumber: `${first.marketing_carrier.iata_code}${first.marketing_carrier_flight_number}`,
     originCode: placeCode(slice.origin) || placeCode(first.origin),
     destinationCode: placeCode(slice.destination) || placeCode(last.destination),
@@ -86,7 +199,9 @@ function normalizeSlice(slice: OfferSlice): FlightLeg {
     arriveTime: formatTime(last.arriving_at) + dayOffsetLabel(first.departing_at, last.arriving_at),
     durationMinutes: parseDuration(slice.duration) || computedDuration,
     stops: segs.length - 1,
-    stopSummary: buildStopSummary(slice),
+    stopSummary: buildStopSummary(layovers),
+    layovers,
+    segments,
   }
 }
 

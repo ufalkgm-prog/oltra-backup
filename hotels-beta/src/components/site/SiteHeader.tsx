@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { readHotelFlightSearch } from "@/lib/searchSession";
+import { fetchMemberProfileBrowser } from "@/lib/members/db";
 
 type SiteHeaderProps = {
   current?: string;
@@ -26,6 +27,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const pathname = usePathname();
 
   const [user, setUser] = useState<any>(null);
+  const [memberName, setMemberName] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(currentCurrency);
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -35,12 +37,21 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
 
   const supabase = createClient();
 
-  const navItems = [
+  const memberFirstName = memberName.trim().split(/\s+/)[0] ?? "";
+  const truncatedFirstName =
+    memberFirstName.length > 12 ? `${memberFirstName.slice(0, 12)}...` : memberFirstName;
+  const membersLabel = user
+    ? truncatedFirstName
+      ? `Hello ${truncatedFirstName}`
+      : "Hello"
+    : "Members";
+
+  const navItems: { label: string; href: string; match: string; badge?: string }[] = [
     { label: "Hotels", href: hotelsHref, match: "/hotels" },
-    { label: "Flights", href: flightsHref, match: "/flights", badge: "WIP" },
+    { label: "Flights", href: flightsHref, match: "/flights" /* , badge: "WIP" */ },
     { label: "Restaurants", href: restaurantsHref, match: "/restaurants" },
     { label: "Inspire", href: "/inspire", match: "/inspire" },
-    { label: "Members", href: user ? "/members" : "/login", match: user ? "/members" : "/login" },
+    { label: membersLabel, href: user ? "/members" : "/login", match: user ? "/members" : "/login" },
   ];
 
   useEffect(() => {
@@ -51,7 +62,10 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) setUser(session?.user ?? null);
+      if (mounted) {
+        setUser(session?.user ?? null);
+        if (!session?.user) setMemberName("");
+      }
     });
 
     const onScroll = () => setIsScrolled(window.scrollY > 8);
@@ -70,6 +84,18 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
     const stored = window.localStorage.getItem(CURRENCY_STORAGE_KEY);
     if (stored && currencies.includes(stored)) setSelectedCurrency(stored);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setMemberName("");
+      return;
+    }
+    let cancelled = false;
+    fetchMemberProfileBrowser()
+      .then(profile => { if (!cancelled) setMemberName(profile?.memberName ?? ""); })
+      .catch(() => { if (!cancelled) setMemberName(""); });
+    return () => { cancelled = true; };
+  }, [user]);
 
   useEffect(() => {
     function updateSearchHrefs() {

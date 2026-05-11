@@ -5,6 +5,8 @@ import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { readHotelFlightSearch, saveHotelFlightSearch } from "@/lib/searchSession";
 import { type Itinerary, type FlightLeg, normalizeOffers } from "@/lib/flights/duffelNormalizer";
+import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
+import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
 import AirportAutocomplete from "./AirportAutocomplete";
@@ -55,8 +57,8 @@ type Props = {
 
 const DEFAULT_LEG_FILTER: LegFilter = {
   maxDurationHours: 20,
-  departStartHour: 5,
-  departEndHour: 23,
+  departStartHour: 8,
+  departEndHour: 24,
 };
 
 const INITIAL_SEARCH: SearchState = {
@@ -110,6 +112,13 @@ function hasFlightSearchParams(searchParams: PageSearchParams): boolean {
   );
 }
 
+function cityForCode(code: string): string {
+  if (!code) return "";
+  const label = AIRPORT_OPTIONS.find(o => o.value === code)?.label ?? "";
+  const cityPart = label.split("·")[1]?.trim();
+  return cityPart || code;
+}
+
 function resolveAirportCode(value: string): string {
   if (!value) return "";
   const trimmed = value.trim();
@@ -154,9 +163,7 @@ function getHour(time: string): number {
 }
 
 function getLayoverAirport(leg: FlightLeg): string {
-  if (leg.stops === 0) return "";
-  const match = leg.stopSummary.match(/·\s*([A-Z]{3})\s/);
-  return match?.[1]?.trim() ?? "";
+  return leg.layovers[0]?.code ?? "";
 }
 
 function legMatchesFilters(leg: FlightLeg, filters: FilterState, legFilter: LegFilter): boolean {
@@ -178,6 +185,22 @@ function dedupeById<T extends { id: string }>(items: T[]): T[] {
     seen.add(item.id);
     return true;
   });
+}
+
+type ReturnMatchTier = "long-haul" | "alliance" | null;
+
+function getReturnMatchTier(outbound: FlightLeg, inbound: FlightLeg): ReturnMatchTier {
+  const outLong = outbound.longHaulAirline?.iataCode ?? "";
+  const inLong = inbound.longHaulAirline?.iataCode ?? "";
+  if (outLong && inLong && outLong === inLong) return "long-haul";
+
+  const allCodes = [...outbound.airlines, ...inbound.airlines].map(a => a.iataCode);
+  if (allCodes.length >= 2 && sharedAlliance(allCodes)) {
+    const outAlliance = outbound.airlines.length ? getAlliance(outbound.airlines[0]?.iataCode) : null;
+    const inAlliance = inbound.airlines.length ? getAlliance(inbound.airlines[0]?.iataCode) : null;
+    if (outAlliance && outAlliance === inAlliance) return "alliance";
+  }
+  return null;
 }
 
 function getPinnedItineraries(itineraries: Itinerary[], tripType: TripType) {
@@ -205,6 +228,7 @@ export default function FlightsView({ searchParams }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(true);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [detailFlight, setDetailFlight] = useState<FlightLeg | null>(null);
 
   const isReturnTrip = search.tripType === "return";
   const isOneWay = search.tripType === "one-way";
@@ -249,15 +273,20 @@ export default function FlightsView({ searchParams }: Props) {
     [itineraries]
   );
 
+  const layoverAirportMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const it of itineraries) {
+      for (const lay of it.outbound.layovers) if (lay.code) map.set(lay.code, lay.name || lay.code);
+      if (it.inbound) for (const lay of it.inbound.layovers) if (lay.code) map.set(lay.code, lay.name || lay.code);
+    }
+    return map;
+  }, [itineraries]);
+
   const layoverAirports = useMemo(
-    () =>
-      [...new Set(
-        itineraries.flatMap(item => [
-          getLayoverAirport(item.outbound),
-          item.inbound ? getLayoverAirport(item.inbound) : "",
-        ]).filter(Boolean)
-      )].sort(),
-    [itineraries]
+    () => Array.from(layoverAirportMap.keys()).sort((a, b) =>
+      (layoverAirportMap.get(a) ?? a).localeCompare(layoverAirportMap.get(b) ?? b)
+    ),
+    [layoverAirportMap]
   );
 
   useEffect(() => {
@@ -267,6 +296,26 @@ export default function FlightsView({ searchParams }: Props) {
       return { ...current, airlines: allAirlines, layoverAirports };
     });
   }, [allAirlines, layoverAirports]);
+
+  const autoDurationKeyRef = useRef("");
+  useEffect(() => {
+    if (!itineraries.length) return;
+    const key = itineraries.map(i => i.id).join("|");
+    if (autoDurationKeyRef.current === key) return;
+    autoDurationKeyRef.current = key;
+
+    const minOut = Math.min(...itineraries.map(i => i.outbound.durationMinutes));
+    const minIn = itineraries.some(i => i.inbound)
+      ? Math.min(...itineraries.flatMap(i => (i.inbound ? [i.inbound.durationMinutes] : [])))
+      : 0;
+    const cap = (mins: number) => Math.min(24, Math.max(6, Math.ceil((mins / 60) * 1.5)));
+
+    setFilters(current => ({
+      ...current,
+      outbound: { ...current.outbound, maxDurationHours: cap(minOut) },
+      inbound: minIn ? { ...current.inbound, maxDurationHours: cap(minIn) } : current.inbound,
+    }));
+  }, [itineraries]);
 
   const filteredItineraries = useMemo(() => {
     return itineraries
@@ -321,12 +370,24 @@ export default function FlightsView({ searchParams }: Props) {
     return standardItineraries.filter(item => item.outbound.id === selectedOutboundId);
   }, [selectedOutboundId, standardItineraries]);
 
-  const selectedItinerary = useMemo(() => {
-    if (!selectedOutboundId) return null;
-    if (isOneWay) return standardItineraries.find(i => i.outbound.id === selectedOutboundId) ?? null;
-    if (!selectedReturnId) return null;
-    return standardItineraries.find(i => i.id === selectedReturnId) ?? null;
-  }, [selectedOutboundId, selectedReturnId, isOneWay, standardItineraries]);
+  const selectedOutboundLeg = useMemo(
+    () => outboundOptions.find(f => f.id === selectedOutboundId) ?? null,
+    [outboundOptions, selectedOutboundId]
+  );
+
+  const resultsScrollRef = useRef<HTMLDivElement | null>(null);
+  const [hasScrollGutter, setHasScrollGutter] = useState(false);
+
+  useEffect(() => {
+    const el = resultsScrollRef.current;
+    if (!el) return;
+    const check = () => setHasScrollGutter(el.scrollHeight > el.clientHeight + 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    Array.from(el.children).forEach(c => ro.observe(c));
+    return () => ro.disconnect();
+  }, [filteredItineraries, selectedOutboundId, visibleReturnItineraries]);
 
   const handleSearch = useCallback(async () => {
     if (isMultiple) {
@@ -630,34 +691,32 @@ export default function FlightsView({ searchParams }: Props) {
                   </div>
                 ))
               ) : (
-                <>
-                  <div className={styles.legFilterTimeGroup}>
-                    <DurationFilter
-                      label="Departure max duration"
-                      value={filters.outbound.maxDurationHours}
-                      onChange={v => updateLegFilter("outbound", { maxDurationHours: v })}
-                    />
-                    <TimeIntervalFilter
-                      label="Departure time"
-                      value={filters.outbound}
-                      onChange={patch => updateLegFilter("outbound", patch)}
-                    />
-                  </div>
+                <div className={styles.legFilterTimeGroup}>
+                  <DurationFilter
+                    label="Departure max duration"
+                    value={filters.outbound.maxDurationHours}
+                    onChange={v => updateLegFilter("outbound", { maxDurationHours: v })}
+                  />
                   {isReturnTrip ? (
-                    <div className={styles.legFilterTimeGroup}>
-                      <DurationFilter
-                        label="Return max duration"
-                        value={filters.inbound.maxDurationHours}
-                        onChange={v => updateLegFilter("inbound", { maxDurationHours: v })}
-                      />
-                      <TimeIntervalFilter
-                        label="Return time"
-                        value={filters.inbound}
-                        onChange={patch => updateLegFilter("inbound", patch)}
-                      />
-                    </div>
+                    <DurationFilter
+                      label="Return max duration"
+                      value={filters.inbound.maxDurationHours}
+                      onChange={v => updateLegFilter("inbound", { maxDurationHours: v })}
+                    />
                   ) : null}
-                </>
+                  <TimeIntervalFilter
+                    label="Departure time"
+                    value={filters.outbound}
+                    onChange={patch => updateLegFilter("outbound", patch)}
+                  />
+                  {isReturnTrip ? (
+                    <TimeIntervalFilter
+                      label="Return time"
+                      value={filters.inbound}
+                      onChange={patch => updateLegFilter("inbound", patch)}
+                    />
+                  ) : null}
+                </div>
               )}
 
               {allAirlines.length > 0 && (
@@ -675,6 +734,7 @@ export default function FlightsView({ searchParams }: Props) {
                   items={layoverAirports}
                   selected={filters.layoverAirports}
                   onToggle={toggleLayoverAirport}
+                  labelMap={layoverAirportMap}
                 />
               )}
             </div>
@@ -685,7 +745,7 @@ export default function FlightsView({ searchParams }: Props) {
           <div className={styles.resultsStack}>
             <div className={styles.resultsMeta}>
               <div className={styles.route}>
-                {isMultiple ? "Multi-city itinerary" : `${search.from} → ${search.to}`}
+                {isMultiple ? "Multi-city itinerary" : `${cityForCode(search.from) || search.from} → ${cityForCode(search.to) || search.to}`}
               </div>
               <div className={styles.metaText}>
                 {isLoading
@@ -712,21 +772,22 @@ export default function FlightsView({ searchParams }: Props) {
                 </div>
               ) : (
                 <>
-                  <div className={isOneWay ? styles.columnHeadersOneWay : styles.columnHeaders}>
+                  <div className={`${isOneWay ? styles.columnHeadersOneWay : styles.columnHeaders} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
                     <div className={styles.columnLabel}>Departure</div>
                     {!isOneWay ? <div className={styles.columnLabel}>Return</div> : null}
                     <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Price</div>
                   </div>
 
-                  <div className={styles.pinnedStack}>
+                  <div className={`${styles.pinnedStack} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
                     {recommended ? (
-                      <PinnedRow label="Recommended" itinerary={recommended} oneWay={isOneWay} onBook={handleBook} />
+                      <PinnedRow label="Top pick" itinerary={recommended} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} />
                     ) : null}
                     {fastest ? (
-                      <PinnedRow label="Fastest" itinerary={fastest} oneWay={isOneWay} onBook={handleBook} />
+                      <PinnedRow label="Fastest" itinerary={fastest} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} />
                     ) : null}
                   </div>
 
+                  <div className={styles.resultsScroll} ref={resultsScrollRef}>
                   <div className={isOneWay ? styles.resultsGridOneWay : styles.resultsGrid}>
                     <div className={styles.columnBox}>
                       <div className={styles.cardStack}>
@@ -738,7 +799,7 @@ export default function FlightsView({ searchParams }: Props) {
                               onClick={() => setSelectedOutboundId(flight.id)}
                               className={`${styles.selectCard} ${flight.id === selectedOutboundId ? styles.selectCardActive : ""}`}
                             >
-                              <FlightCardContent flight={flight} />
+                              <FlightCardContent flight={flight} onInfo={setDetailFlight} />
                             </button>
                           ))
                         ) : (
@@ -753,16 +814,28 @@ export default function FlightsView({ searchParams }: Props) {
                           {!selectedOutboundId ? (
                             <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
                           ) : visibleReturnItineraries.length ? (
-                            visibleReturnItineraries.map(item => (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => setSelectedReturnId(item.id)}
-                                className={`${styles.selectCard} ${item.id === selectedReturnId ? styles.selectCardActive : ""}`}
-                              >
-                                {item.inbound ? <FlightCardContent flight={item.inbound} /> : null}
-                              </button>
-                            ))
+                            visibleReturnItineraries.map(item => {
+                              const tier = item.inbound && selectedOutboundLeg
+                                ? getReturnMatchTier(selectedOutboundLeg, item.inbound)
+                                : null;
+                              const matchClass = item.id === selectedReturnId
+                                ? styles.selectCardActive
+                                : tier === "long-haul"
+                                ? styles.selectCardMatchStrong
+                                : tier === "alliance"
+                                ? styles.selectCardMatchWeak
+                                : "";
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => setSelectedReturnId(item.id)}
+                                  className={`${styles.selectCard} ${matchClass}`}
+                                >
+                                  {item.inbound ? <FlightCardContent flight={item.inbound} matchTier={tier} onInfo={setDetailFlight} /> : null}
+                                </button>
+                              );
+                            })
                           ) : (
                             <div className={styles.emptyHint}>No compatible return flights found.</div>
                           )}
@@ -777,26 +850,37 @@ export default function FlightsView({ searchParams }: Props) {
                               .map(flight => itineraryByOutboundId.get(flight.id))
                               .filter((it): it is Itinerary => Boolean(it))
                               .map(it => (
-                                <PriceCard key={it.id} itinerary={it} onBook={handleBook} />
+                                <PriceCard
+                                  key={it.id}
+                                  itinerary={it}
+                                  onBook={handleBook}
+                                  active={it.outbound.id === selectedOutboundId}
+                                />
                               ))
                           : selectedOutboundId
                           ? visibleReturnItineraries.map(it => (
-                              <PriceCard key={it.id} itinerary={it} onBook={handleBook} />
+                              <PriceCard
+                                key={it.id}
+                                itinerary={it}
+                                onBook={handleBook}
+                                active={it.id === selectedReturnId}
+                              />
                             ))
                           : null}
                       </div>
                     </div>
                   </div>
+                  </div>
 
-                  {selectedItinerary ? (
-                    <BookingBar itinerary={selectedItinerary} onBook={handleBook} />
-                  ) : null}
                 </>
               )
             )}
           </div>
         </div>
       </div>
+      {detailFlight ? (
+        <FlightDetailsPopup flight={detailFlight} onClose={() => setDetailFlight(null)} />
+      ) : null}
     </section>
   );
 }
@@ -890,15 +974,15 @@ function TimeIntervalFilter({
       </label>
       <div
         className={styles.rangeSlider}
-        style={{ "--start": `${(value.departStartHour / 23) * 100}%`, "--end": `${(value.departEndHour / 23) * 100}%` } as React.CSSProperties}
+        style={{ "--start": `${(value.departStartHour / 24) * 100}%`, "--end": `${(value.departEndHour / 24) * 100}%` } as React.CSSProperties}
       >
         <input
-          type="range" min={0} max={23} step={1} value={value.departStartHour}
+          type="range" min={0} max={24} step={1} value={value.departStartHour}
           onChange={e => onChange({ departStartHour: Math.min(Number(e.target.value), value.departEndHour - 1) })}
           className={styles.rangeThumb}
         />
         <input
-          type="range" min={0} max={23} step={1} value={value.departEndHour}
+          type="range" min={0} max={24} step={1} value={value.departEndHour}
           onChange={e => onChange({ departEndHour: Math.max(Number(e.target.value), value.departStartHour + 1) })}
           className={styles.rangeThumb}
         />
@@ -908,9 +992,10 @@ function TimeIntervalFilter({
 }
 
 function MultiSelectDropdown({
-  label, items, selected, onToggle,
+  label, items, selected, onToggle, labelMap,
 }: {
   label: string; items: string[]; selected: string[]; onToggle: (v: string) => void;
+  labelMap?: Map<string, string>;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -930,6 +1015,7 @@ function MultiSelectDropdown({
     };
   }, []);
 
+  const labelFor = (v: string) => labelMap?.get(v) ?? v;
   const allSelected = selected.length === items.length;
   const display = !items.length
     ? "—"
@@ -938,7 +1024,7 @@ function MultiSelectDropdown({
     : selected.length === 0
     ? "None"
     : selected.length <= 2
-    ? selected.join(", ")
+    ? selected.map(labelFor).join(", ")
     : `${selected.length} selected`;
 
   return (
@@ -957,8 +1043,8 @@ function MultiSelectDropdown({
         </svg>
       </button>
       {open ? (
-        <div className={`oltra-dropdown-panel ${styles.multiSelectPanel}`}>
-          <div className="oltra-dropdown-list">
+        <div className={`oltra-popup-panel oltra-popup-panel--up ${styles.multiSelectPanel}`}>
+          <div className="oltra-dropdown-list" style={{ maxHeight: "260px" }}>
             {items.map(item => {
               const active = selected.includes(item);
               return (
@@ -966,14 +1052,14 @@ function MultiSelectDropdown({
                   key={item}
                   type="button"
                   onClick={() => onToggle(item)}
-                  className={`oltra-dropdown-item ${styles.multiSelectItem} ${active ? styles.multiSelectItemActive : ""}`}
+                  className={`oltra-dropdown-item flex items-center gap-2 ${active ? "bg-white/10 text-white" : ""}`}
                   role="option"
                   aria-selected={active}
                 >
-                  <span className={styles.multiSelectCheck} aria-hidden="true">
+                  <span className="w-4 shrink-0 text-white/72">
                     {active ? "✓" : ""}
                   </span>
-                  <span>{item}</span>
+                  <span>{labelFor(item)}</span>
                 </button>
               );
             })}
@@ -1020,7 +1106,7 @@ function MultipleResults({ columns }: { columns: { leg: MultiCityLeg; options: F
           <div className={styles.cardStack}>
             <div className={styles.priceCard}>
               <span className={styles.priceCardAmount}>—</span>
-              <span className={styles.priceCardLabel}>BOOK</span>
+              <button type="button" className={styles.bookButtonInactive} disabled>BOOK</button>
             </div>
           </div>
         </div>
@@ -1049,81 +1135,103 @@ function MultiPinnedRow({ label, flights }: { label: string; flights: FlightLeg[
   );
 }
 
-function PinnedRow({ label, itinerary, oneWay, onBook }: { label: string; itinerary: Itinerary; oneWay: boolean; onBook: (id: string) => void }) {
+function PinnedRow({ label, itinerary, oneWay, onBook, onInfo }: { label: string; itinerary: Itinerary; oneWay: boolean; onBook: (id: string) => void; onInfo: (flight: FlightLeg) => void }) {
+  const tier = !oneWay && itinerary.inbound
+    ? getReturnMatchTier(itinerary.outbound, itinerary.inbound)
+    : null;
   return (
     <div className={styles.pinnedRow}>
       <span className={styles.pinnedLegend}>{label}</span>
       <div className={oneWay ? styles.pinnedGridOneWay : styles.pinnedGrid}>
-        <div className={styles.staticCard}><FlightCardContent flight={itinerary.outbound} /></div>
+        <div className={styles.staticCard}><FlightCardContent flight={itinerary.outbound} onInfo={onInfo} /></div>
         {!oneWay && itinerary.inbound ? (
-          <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} /></div>
+          <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} /></div>
         ) : null}
-        <PriceCard itinerary={itinerary} onBook={onBook} />
+        <PriceCard itinerary={itinerary} onBook={onBook} active />
       </div>
     </div>
   );
 }
 
-function BookingBar({ itinerary, onBook }: { itinerary: Itinerary; onBook: (id: string) => void }) {
+
+function PriceCard({
+  itinerary,
+  onBook,
+  active = false,
+}: {
+  itinerary: Itinerary;
+  onBook: (id: string) => void;
+  active?: boolean;
+}) {
   const { currency, format } = useCurrency();
   return (
-    <div className={styles.bookingBar}>
-      <div className={styles.bookingBarInfo}>
-        <span className={styles.bookingBarCurrency}>{currency}</span>
-        <span className={styles.bookingBarAmount}>{format(itinerary.priceEur, itinerary.currency)}</span>
-      </div>
+    <div className={styles.priceCard}>
+      <span className={styles.priceCardAmount}>
+        {currency} {format(itinerary.priceEur, itinerary.currency)}
+      </span>
       <button
         type="button"
-        className="oltra-button-primary"
-        onClick={() => onBook(itinerary.offerId)}
+        className={active ? styles.bookButtonActive : styles.bookButtonInactive}
+        onClick={() => active && onBook(itinerary.offerId)}
+        disabled={!active}
       >
-        Book
+        BOOK
       </button>
     </div>
   );
 }
 
-function PriceCard({
-  itinerary,
-  onBook,
-}: {
-  itinerary: Itinerary;
-  onBook: (id: string) => void;
-}) {
-  const { currency, format } = useCurrency();
-  return (
-    <button
-      type="button"
-      className={styles.priceCard}
-      onClick={() => onBook(itinerary.offerId)}
-    >
-      <span className={styles.priceCardAmount}>
-        {currency} {format(itinerary.priceEur, itinerary.currency)}
-      </span>
-      <span className={styles.priceCardLabel}>BOOK</span>
-    </button>
-  );
+function matchTierLabel(tier: ReturnMatchTier): string {
+  if (tier === "long-haul") return "Same airline";
+  if (tier === "alliance") return "Alliance partner";
+  return "";
 }
 
-function FlightCardContent({ flight }: { flight: FlightLeg }) {
-  const stopsLabel = flight.stops === 0 ? "Direct" : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`;
+function FlightCardContent({
+  flight,
+  matchTier,
+  onInfo,
+}: {
+  flight: FlightLeg;
+  matchTier?: ReturnMatchTier;
+  onInfo?: (flight: FlightLeg) => void;
+}) {
+  const airlineLabel = flight.airlines.length
+    ? flight.airlines.map(a => a.name).join(" + ")
+    : flight.airline;
+  const label = matchTierLabel(matchTier ?? null);
   return (
     <div className={styles.flightCardInner}>
       <div className={styles.flightTimesRow}>
         <span className={styles.flightDepart}>{flight.departTime}</span>
         <span className={styles.flightArrow}>→</span>
         <span className={styles.flightArrive}>{flight.arriveTime}</span>
-        <span className={styles.flightDurStop}>{formatDuration(flight.durationMinutes)} · {stopsLabel}</span>
-      </div>
-      <div className={styles.flightMetaRow}>
-        <span className={styles.flightMetaText}>{flight.airline}</span>
-        {flight.stopSummary ? (
-          <>
-            <span className={styles.flightMetaDot}>·</span>
-            <span className={styles.flightMetaText}>{flight.stopSummary}</span>
-          </>
+        <span className={styles.flightDurStop}>Duration: {formatDuration(flight.durationMinutes)}</span>
+        {onInfo ? (
+          <button
+            type="button"
+            className={styles.infoButton}
+            onClick={e => { e.stopPropagation(); onInfo(flight); }}
+            aria-label="Flight details"
+            title="Flight details"
+          >
+            i
+          </button>
         ) : null}
       </div>
+      <div className={styles.flightMetaRow}>
+        <span className={styles.flightMetaText}>{airlineLabel}</span>
+        {label ? (
+          <span className={matchTier === "long-haul" ? styles.matchBadgeStrong : styles.matchBadgeWeak}>
+            {label}
+          </span>
+        ) : null}
+      </div>
+      {flight.stopSummary ? (
+        <div className={styles.flightStopsRow}>
+          <span className={styles.flightMetaText}>{flight.stopSummary}</span>
+        </div>
+      ) : null}
     </div>
   );
 }
