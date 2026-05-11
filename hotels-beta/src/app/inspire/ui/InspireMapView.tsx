@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
-import type { InspireCityMatch } from "@/lib/inspire/types";
+import type {
+  InspireCityMatch,
+  InspireMonth,
+} from "@/lib/inspire/types";
+import { INSPIRE_CITY_METADATA } from "@/lib/inspire/cityMetadata";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+type TempUnit = "C" | "F";
 
 type Origin = {
   label: string;
@@ -14,76 +20,133 @@ type Origin = {
 type Props = {
   matches: InspireCityMatch[];
   origin: Origin;
+  month: InspireMonth;
   maxFlightHours: number;
   activeCityId: string | null;
   onSelectCity: (match: InspireCityMatch) => void;
 };
 
-const DEFAULT_FALLBACK_CENTER: [number, number] = [12.5683, 55.6761];
+const DEFAULT_WORLD_ZOOM = 1.5;
 const HOTEL_MARKER_ZOOM = 8.2;
-const FLIGHT_SPEED_KMH = 850;
-const FLIGHT_RADIUS_SOURCE_ID = "inspire-flight-radius-shadow";
-const FLIGHT_RADIUS_LAYER_ID = "inspire-flight-radius-shadow-layer";
+const TEMP_BAND_SOURCE_ID = "inspire-temp-bands";
+const TEMP_BAND_LAYER_ID = "inspire-temp-band";
+const TEMP_LABEL_SOURCE_ID = "inspire-temp-labels";
+const TEMP_LABEL_LAYER_ID = "inspire-temp-label";
+const FLIGHT_KM_PER_HOUR = 750;
 
-function buildFlightRadiusShadow(
-  origin: Origin,
-  maxFlightHours: number
-): GeoJSON.FeatureCollection<GeoJSON.Polygon> {
-  const radiusKm = maxFlightHours * FLIGHT_SPEED_KMH;
-  const earthRadiusKm = 6371;
-  const points = 128;
+const BAND_STEP_LAT = 6;
+const BAND_STEP_LNG = 10;
+const IDW_POWER = 2;
+const MAX_CITY_DISTANCE_KM = 2500;
 
-  const lat = (origin.lat * Math.PI) / 180;
-  const lng = (origin.lng * Math.PI) / 180;
-  const angularDistance = radiusKm / earthRadiusKm;
+function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371;
+  const toRad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toRad;
+  const dLng = (lng2 - lng1) * toRad;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * toRad) *
+      Math.cos(lat2 * toRad) *
+      Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
 
-  const circle: number[][] = [];
+function idwSample(
+  lat: number,
+  lng: number,
+  month: InspireMonth
+): { temp: number; nearest: number } {
+  let weightedSum = 0;
+  let weightTotal = 0;
+  let nearest = Infinity;
 
-  for (let i = 0; i <= points; i += 1) {
-    const bearing = (2 * Math.PI * i) / points;
-
-    const pointLat = Math.asin(
-      Math.sin(lat) * Math.cos(angularDistance) +
-        Math.cos(lat) * Math.sin(angularDistance) * Math.cos(bearing)
-    );
-
-    const pointLng =
-      lng +
-      Math.atan2(
-        Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat),
-        Math.cos(angularDistance) - Math.sin(lat) * Math.sin(pointLat)
-      );
-
-    circle.push([(pointLng * 180) / Math.PI, (pointLat * 180) / Math.PI]);
+  for (const city of INSPIRE_CITY_METADATA) {
+    const d = haversineKm(lat, lng, city.lat, city.lng);
+    if (d < nearest) nearest = d;
+    if (d < 1) return { temp: city.monthlyAvgTempC[month], nearest: 0 };
+    const w = 1 / Math.pow(d, IDW_POWER);
+    weightedSum += w * city.monthlyAvgTempC[month];
+    weightTotal += w;
   }
 
-  return {
-    type: "FeatureCollection",
-    features: [
-      {
+  return { temp: weightedSum / weightTotal, nearest };
+}
+
+function buildTempBandsGeoJSON(
+  month: InspireMonth
+): GeoJSON.FeatureCollection<GeoJSON.Polygon> {
+  const features: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
+
+  for (let lat = -78; lat < 78; lat += BAND_STEP_LAT) {
+    for (let lng = -180; lng < 180; lng += BAND_STEP_LNG) {
+      const midLat = lat + BAND_STEP_LAT / 2;
+      const midLng = lng + BAND_STEP_LNG / 2;
+      const { temp, nearest } = idwSample(midLat, midLng, month);
+      if (nearest > MAX_CITY_DISTANCE_KM) continue;
+
+      features.push({
         type: "Feature",
-        properties: {},
+        properties: { temp },
         geometry: {
           type: "Polygon",
           coordinates: [
             [
-              [-180, -85],
-              [180, -85],
-              [180, 85],
-              [-180, 85],
-              [-180, -85],
+              [lng, lat],
+              [lng + BAND_STEP_LNG, lat],
+              [lng + BAND_STEP_LNG, lat + BAND_STEP_LAT],
+              [lng, lat + BAND_STEP_LAT],
+              [lng, lat],
             ],
-            circle.reverse(),
           ],
         },
-      },
-    ],
-  };
+      });
+    }
+  }
+
+  return { type: "FeatureCollection", features };
+}
+
+function buildTempLabelsGeoJSON(
+  month: InspireMonth,
+  unit: TempUnit
+): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+
+  for (let lat = -78; lat < 78; lat += BAND_STEP_LAT) {
+    for (let lng = -180; lng < 180; lng += BAND_STEP_LNG) {
+      const midLat = lat + BAND_STEP_LAT / 2;
+      const midLng = lng + BAND_STEP_LNG / 2;
+      const { temp, nearest } = idwSample(midLat, midLng, month);
+      if (nearest > MAX_CITY_DISTANCE_KM) continue;
+
+      const value =
+        unit === "C"
+          ? `${Math.round(temp)}°C`
+          : `${Math.round((temp * 9) / 5 + 32)}°F`;
+      features.push({
+        type: "Feature",
+        properties: { tempLabel: value },
+        geometry: {
+          type: "Point",
+          coordinates: [midLng, midLat],
+        },
+      });
+    }
+  }
+
+  return { type: "FeatureCollection", features };
 }
 
 export default function InspireMapView({
   matches,
   origin,
+  month,
   maxFlightHours,
   activeCityId,
   onSelectCity,
@@ -95,10 +158,23 @@ export default function InspireMapView({
   const originMarkerRef = useRef<maplibregl.Marker | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const onSelectCityRef = useRef(onSelectCity);
+  const monthRef = useRef(month);
+
+  const [tempUnit, setTempUnit] = useState<TempUnit>("C");
+  const [tempsVisible, setTempsVisible] = useState<boolean>(true);
+  const tempUnitRef = useRef(tempUnit);
 
   useEffect(() => {
     onSelectCityRef.current = onSelectCity;
   }, [onSelectCity]);
+
+  useEffect(() => {
+    monthRef.current = month;
+  }, [month]);
+
+  useEffect(() => {
+    tempUnitRef.current = tempUnit;
+  }, [tempUnit]);
 
   function syncMarkerVisibility() {
     const map = mapInstanceRef.current;
@@ -137,25 +213,76 @@ export default function InspireMapView({
     const map = new maplibregl.Map({
       container: mapRef.current,
       style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
-      center: DEFAULT_FALLBACK_CENTER,
-      zoom: 4,
+      center: [origin.lng, origin.lat],
+      zoom: DEFAULT_WORLD_ZOOM,
+      renderWorldCopies: false,
     });
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
     map.on("load", () => {
-      map.addSource(FLIGHT_RADIUS_SOURCE_ID, {
+      map.addSource(TEMP_BAND_SOURCE_ID, {
         type: "geojson",
-        data: buildFlightRadiusShadow(origin, maxFlightHours),
+        data: buildTempBandsGeoJSON(monthRef.current),
       });
 
+      map.addSource(TEMP_LABEL_SOURCE_ID, {
+        type: "geojson",
+        data: buildTempLabelsGeoJSON(monthRef.current, tempUnitRef.current),
+      });
+
+      const firstSymbolLayer = map
+        .getStyle()
+        .layers.find((layer) => layer.type === "symbol");
+
+      map.addLayer(
+        {
+          id: TEMP_BAND_LAYER_ID,
+          type: "fill",
+          source: TEMP_BAND_SOURCE_ID,
+          paint: {
+            "fill-color": [
+              "step",
+              ["get", "temp"],
+              "#1e3a8a",
+              0, "#1d4ed8",
+              5, "#3b82f6",
+              10, "#06b6d4",
+              15, "#14b8a6",
+              20, "#84cc16",
+              25, "#f59e0b",
+              30, "#ea580c",
+              35, "#b91c1c",
+            ],
+            "fill-opacity": 0.42,
+            "fill-outline-color": "rgba(255, 255, 255, 0.35)",
+          },
+        },
+        firstSymbolLayer?.id
+      );
+
       map.addLayer({
-        id: FLIGHT_RADIUS_LAYER_ID,
-        type: "fill",
-        source: FLIGHT_RADIUS_SOURCE_ID,
+        id: TEMP_LABEL_LAYER_ID,
+        type: "symbol",
+        source: TEMP_LABEL_SOURCE_ID,
+        layout: {
+          "text-field": ["get", "tempLabel"],
+          "text-font": ["Open Sans Bold", "Noto Sans Bold"],
+          "text-size": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            0, 11,
+            4, 13,
+            8, 15,
+          ],
+          "text-allow-overlap": false,
+          "text-padding": 4,
+        },
         paint: {
-          "fill-color": "rgba(8, 14, 20, 0.34)",
-          "fill-opacity": 1,
+          "text-color": "#ffffff",
+          "text-halo-color": "rgba(0, 0, 0, 0.55)",
+          "text-halo-width": 1.2,
         },
       });
 
@@ -190,18 +317,55 @@ export default function InspireMapView({
 
       mapInstanceRef.current = null;
     };
-  }, [origin, maxFlightHours]);
+  }, [origin]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
 
-    const source = map.getSource(
-      FLIGHT_RADIUS_SOURCE_ID
-    ) as maplibregl.GeoJSONSource | undefined;
+    function applyData() {
+      const bandSource = map!.getSource(TEMP_BAND_SOURCE_ID) as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      if (bandSource) {
+        bandSource.setData(buildTempBandsGeoJSON(month));
+      }
+      const labelSource = map!.getSource(TEMP_LABEL_SOURCE_ID) as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      if (labelSource) {
+        labelSource.setData(buildTempLabelsGeoJSON(month, tempUnit));
+      }
+    }
 
-    source?.setData(buildFlightRadiusShadow(origin, maxFlightHours));
-  }, [origin, maxFlightHours]);
+    if (map.isStyleLoaded() && map.getSource(TEMP_LABEL_SOURCE_ID)) {
+      applyData();
+    } else {
+      map.once("load", applyData);
+    }
+  }, [month, tempUnit]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    function applyVisibility() {
+      if (!map) return;
+      const visibility = tempsVisible ? "visible" : "none";
+      if (map.getLayer(TEMP_LABEL_LAYER_ID)) {
+        map.setLayoutProperty(TEMP_LABEL_LAYER_ID, "visibility", visibility);
+      }
+      if (map.getLayer(TEMP_BAND_LAYER_ID)) {
+        map.setLayoutProperty(TEMP_BAND_LAYER_ID, "visibility", visibility);
+      }
+    }
+
+    if (map.isStyleLoaded() && map.getLayer(TEMP_LABEL_LAYER_ID)) {
+      applyVisibility();
+    } else {
+      map.once("load", applyVisibility);
+    }
+  }, [tempsVisible]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -329,29 +493,29 @@ export default function InspireMapView({
       }
     }
 
+    const clampLat = (lat: number) => Math.max(-85, Math.min(85, lat));
     const bounds = new maplibregl.LngLatBounds();
-    bounds.extend([origin.lng, origin.lat]);
+    const radiusKm = Math.max(1, maxFlightHours) * FLIGHT_KM_PER_HOUR;
+    const latDelta = radiusKm / 111;
+    const lngDelta =
+      radiusKm /
+      (111 * Math.max(0.15, Math.cos((origin.lat * Math.PI) / 180)));
+
+    bounds.extend([origin.lng - lngDelta, clampLat(origin.lat - latDelta)]);
+    bounds.extend([origin.lng + lngDelta, clampLat(origin.lat + latDelta)]);
 
     for (const match of matches) {
-      bounds.extend([match.city.lng, match.city.lat]);
+      bounds.extend([match.city.lng, clampLat(match.city.lat)]);
     }
 
-    if (matches.length) {
-      map.fitBounds(bounds, {
-        padding: { top: 72, right: 72, bottom: 72, left: 72 },
-        maxZoom: 5.8,
-        duration: 650,
-      });
-    } else {
-      map.easeTo({
-        center: [origin.lng, origin.lat],
-        zoom: 5,
-        duration: 500,
-      });
-    }
+    map.fitBounds(bounds, {
+      padding: { top: 72, right: 72, bottom: 72, left: 72 },
+      maxZoom: 5.8,
+      duration: 650,
+    });
 
     syncMarkerVisibility();
-  }, [matches, origin, activeCityId]);
+  }, [matches, origin, maxFlightHours, activeCityId]);
 
   useEffect(() => {
     cityMarkersRef.current.forEach((marker) => {
@@ -365,5 +529,50 @@ export default function InspireMapView({
     });
   }, [activeCityId]);
 
-  return <div ref={mapRef} className="oltra-map-canvas" />;
+  return (
+    <div className="relative h-full w-full">
+      <div ref={mapRef} className="oltra-map-canvas" />
+      <div className="oltra-temp-controls">
+        <div className="oltra-temp-controls__row">
+          <button
+            type="button"
+            className={`oltra-temp-controls__toggle ${
+              tempsVisible ? "is-on" : ""
+            }`}
+            aria-pressed={tempsVisible}
+            onClick={() => setTempsVisible((v) => !v)}
+          >
+            <span className="oltra-temp-controls__toggle-track" aria-hidden="true">
+              <span className="oltra-temp-controls__toggle-knob" />
+            </span>
+            <span>{tempsVisible ? "On" : "Off"}</span>
+          </button>
+          <div
+            className={`oltra-temp-controls__unit ${
+              tempsVisible ? "" : "is-disabled"
+            }`}
+            role="group"
+            aria-label="Temperature unit"
+          >
+            <button
+              type="button"
+              className={tempUnit === "C" ? "is-active" : ""}
+              onClick={() => setTempUnit("C")}
+              disabled={!tempsVisible}
+            >
+              °C
+            </button>
+            <button
+              type="button"
+              className={tempUnit === "F" ? "is-active" : ""}
+              onClick={() => setTempUnit("F")}
+              disabled={!tempsVisible}
+            >
+              °F
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -36,7 +36,7 @@ const PURPOSES: Array<{ value: InspirePurpose | ""; label: string }> = [
   { value: "mountains", label: "Mountains" },
 ];
 
-const FLIGHT_HOURS = Array.from({ length: 18 }, (_, i) => i + 1);
+const FLIGHT_HOURS = Array.from({ length: 20 }, (_, i) => i + 1);
 
 const ORIGIN_CITIES = [
   { label: "Dubai", lat: 25.2048, lng: 55.2708 },
@@ -269,7 +269,7 @@ export default function InspireView({ cities }: Props) {
           <div className={styles.filters}>
             <div className={styles.filtersHeader}>
               <p className={styles.intro}>
-                Explore possible destinations by weather, purpose and max flight time
+                What are you looking for and when?
               </p>
             </div>
 
@@ -447,6 +447,7 @@ export default function InspireView({ cities }: Props) {
           <InspireMapView
             matches={matches}
             origin={origin}
+            month={month}
             maxFlightHours={maxFlightHours}
             activeCityId={activeCityId}
             onSelectCity={(match) => {

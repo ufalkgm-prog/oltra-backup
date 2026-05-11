@@ -472,32 +472,30 @@ export default function RestaurantsMapView({
       el.appendChild(inner);
 
       const firstAward = buildAwardsLabel(restaurant).split(" · ")[0] || "";
+      const locationLine = restaurant.local_area || restaurant.city || "";
 
       const popup = new maplibregl.Popup({
         closeButton: false,
         closeOnClick: true,
         closeOnMove: false,
         offset: 14,
+        className: "oltra-map-popup",
       }).setHTML(`
-        <div class="oltra-glass oltra-output restaurant-map-popup">
-          <div class="restaurant-map-popup__title">
-            ${restaurant.restaurant_name}
-          </div>
+        <div class="oltra-map-popup__box">
+          <div class="oltra-map-popup__title">${restaurant.restaurant_name}</div>
           ${
             restaurant.cuisine
-              ? `<div class="restaurant-map-popup__meta">${restaurant.cuisine}</div>`
+              ? `<div class="oltra-map-popup__meta">${restaurant.cuisine}</div>`
               : ""
           }
           ${
-            restaurant.local_area || restaurant.city
-              ? `<div class="restaurant-map-popup__location">${
-                  restaurant.local_area ?? restaurant.city ?? ""
-                }</div>`
+            locationLine
+              ? `<div class="oltra-map-popup__meta">${locationLine}</div>`
               : ""
           }
           ${
             firstAward
-              ? `<div class="restaurant-map-popup__award">${firstAward}</div>`
+              ? `<div class="oltra-map-popup__meta">${firstAward}</div>`
               : ""
           }
         </div>
@@ -704,6 +702,34 @@ export default function RestaurantsMapView({
                 {selectedRestaurant.restaurant_name}
               </h2>
 
+              {(selectedRestaurant.www || selectedRestaurant.insta) && (
+                <div className="restaurant-detail-card__links">
+                  {selectedRestaurant.www && (
+                    <a
+                      href={selectedRestaurant.www}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="restaurant-detail-card__link-text"
+                    >
+                      Website
+                    </a>
+                  )}
+                  {selectedRestaurant.www && selectedRestaurant.insta && (
+                    <span className="restaurant-detail-card__link-sep">·</span>
+                  )}
+                  {selectedRestaurant.insta && (
+                    <a
+                      href={selectedRestaurant.insta}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="restaurant-detail-card__link-text"
+                    >
+                      Instagram
+                    </a>
+                  )}
+                </div>
+              )}
+
               <div className="restaurant-detail-card__meta">
                 {[
                   selectedRestaurant.cuisine,
@@ -740,7 +766,7 @@ export default function RestaurantsMapView({
 
               {selectedRestaurant.hotel_name_hint && (
                 <div className="restaurant-detail-card__hotel-context">
-                  Hotel context: {selectedRestaurant.hotel_name_hint}
+                  Hotel: {selectedRestaurant.hotel_name_hint}
                 </div>
               )}
 
@@ -849,32 +875,6 @@ export default function RestaurantsMapView({
               {(memberActionError || memberActionMessage) ? (
                 <div className="pt-2 text-[12px] text-white/65">
                   {memberActionError || memberActionMessage}
-                </div>
-              ) : null}
-
-              {selectedRestaurant.www ? (
-                <div className="pt-2">
-                  <a
-                    href={selectedRestaurant.www}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="oltra-button-primary w-full rounded-full"
-                  >
-                    WEBSITE
-                  </a>
-                </div>
-              ) : null}
-
-              {selectedRestaurant.insta ? (
-                <div className="pt-2">
-                  <a
-                    href={selectedRestaurant.insta}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="oltra-button-primary w-full rounded-full"
-                  >
-                    INSTAGRAM
-                  </a>
                 </div>
               ) : null}
             </article>

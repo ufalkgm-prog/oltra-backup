@@ -113,9 +113,7 @@ function extractRelLabels(items: any[]): string[] {
 
 async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
   // 1) Try hotelid match (preferred)
-  const byHotelid = await directusFetchJson<{
-    data: Hotel[];
-  }>(
+  const byHotelid = await directusFetchJson<Hotel[]>(
     `/items/hotels?` +
       [
         `limit=1`,
@@ -173,12 +171,12 @@ async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
       ].join("&")
   );
 
-  if (toArray(byHotelid?.data).length > 0) return byHotelid.data[0];
+  if (toArray(byHotelid).length > 0) return byHotelid[0];
 
   // 2) Fallback: treat param as Directus internal id
   // Try /items/hotels/{id} first (often simplest if id is numeric)
   try {
-    const byId = await directusFetchJson<{ data: Hotel }>(
+    const byId = await directusFetchJson<Hotel>(
       `/items/hotels/${encodeURIComponent(param)}?` +
         [
           `fields=` +
@@ -230,13 +228,13 @@ async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
             ),
         ].join("&")
     );
-    if (byId?.data?.id != null) return byId.data;
+    if (byId?.id != null) return byId;
   } catch {
     // ignore and try filter fallback below
   }
 
   // 3) Fallback: filter by id eq (works even if Directus rejects /{id} for some reason)
-  const byIdFilter = await directusFetchJson<{ data: Hotel[] }>(
+  const byIdFilter = await directusFetchJson<Hotel[]>(
     `/items/hotels?` +
       [
         `limit=1`,
@@ -291,7 +289,7 @@ async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
       ].join("&")
   );
 
-  if (toArray(byIdFilter?.data).length > 0) return byIdFilter.data[0];
+  if (toArray(byIdFilter).length > 0) return byIdFilter[0];
 
   return null;
 }

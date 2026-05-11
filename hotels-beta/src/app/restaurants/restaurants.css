@@ -283,48 +283,30 @@
   }
 }
 
-.restaurant-map-popup {
-  min-width: 200px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(14, 26, 34, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 14px 36px rgba(8, 18, 28, 0.35);
+.restaurant-detail-card__links {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
-.restaurant-map-popup__title {
-  font-size: 15px;
-  font-weight: 600;
+.restaurant-detail-card__link-text {
   color: var(--oltra-text-primary);
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 160ms ease, color 160ms ease;
 }
 
-.restaurant-map-popup__meta {
-  margin-top: 4px;
-  font-size: 13px;
-  color: var(--oltra-text-secondary);
+.restaurant-detail-card__link-text:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.85);
 }
 
-.restaurant-map-popup__location {
-  margin-top: 2px;
-  font-size: 13px;
+.restaurant-detail-card__link-sep {
   color: var(--oltra-text-muted);
-}
-
-.restaurant-map-popup__award {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--oltra-text-secondary);
-}
-
-.maplibregl-popup-content {
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-
-.maplibregl-popup-tip {
-  display: none;
 }
 
 

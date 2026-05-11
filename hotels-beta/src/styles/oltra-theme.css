@@ -1301,3 +1301,108 @@ details > summary::-webkit-details-marker {
   margin-bottom: 10px;
 }
 
+.oltra-temp-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(14, 26, 34, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 12px 28px rgba(8, 18, 28, 0.32);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--oltra-font-sans);
+}
+
+.oltra-temp-controls__title {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.oltra-temp-controls__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.oltra-temp-controls__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+}
+
+.oltra-temp-controls__toggle-track {
+  position: relative;
+  width: 30px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  transition: background 160ms ease;
+}
+
+.oltra-temp-controls__toggle.is-on .oltra-temp-controls__toggle-track {
+  background: rgba(120, 180, 140, 0.8);
+}
+
+.oltra-temp-controls__toggle-knob {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform 160ms ease;
+}
+
+.oltra-temp-controls__toggle.is-on .oltra-temp-controls__toggle-knob {
+  transform: translateX(14px);
+}
+
+.oltra-temp-controls__unit {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.oltra-temp-controls__unit.is-disabled {
+  opacity: 0.45;
+}
+
+.oltra-temp-controls__unit button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 3px 10px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.oltra-temp-controls__unit button.is-active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.oltra-temp-controls__unit button:disabled {
+  cursor: not-allowed;
+}
+
