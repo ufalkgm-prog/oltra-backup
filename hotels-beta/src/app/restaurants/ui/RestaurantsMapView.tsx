@@ -11,9 +11,11 @@ import {
   getMemberActionButtonClass,
   getMemberActionLoginMessage,
 } from "@/lib/members/memberActionUi";
+import { fetchMemberProfileBrowser } from "@/lib/members/db";
+import { readHotelFlightSearch } from "@/lib/searchSession";
 
 import type { RestaurantRecord } from "../types";
-import { buildAwardsLabel, buildLocationLabel } from "../utils";
+import { buildAwardsLabel, buildLocationLabel, buildAddressLabel } from "../utils";
 import {
   addFavoriteRestaurantBrowser,
   addRestaurantToTripBrowser,
@@ -74,6 +76,60 @@ export default function RestaurantsMapView({
     setCityInput(city);
     setShowCityOptions(false);
   }, [city]);
+
+  // If the user landed on /restaurants without an explicit ?city= param,
+  // try saved hotel/flight search → member home airport → leave default (Paris).
+  useEffect(() => {
+    if (searchParams.get("city")) return;
+
+    const matchOption = (candidate: string): string => {
+      const target = candidate.trim().toLowerCase();
+      if (!target) return "";
+      return (
+        cityOptions.find((option) => option.toLowerCase() === target) ?? ""
+      );
+    };
+
+    let cancelled = false;
+
+    async function resolveDefault() {
+      const saved = readHotelFlightSearch();
+      const fromSaved = matchOption(saved?.city ?? "");
+      if (fromSaved && fromSaved.toLowerCase() !== city.toLowerCase()) {
+        if (!cancelled) {
+          router.replace(
+            `${pathname}?city=${encodeURIComponent(fromSaved)}`,
+            { scroll: false }
+          );
+        }
+        return;
+      }
+
+      try {
+        const profile = await fetchMemberProfileBrowser();
+        if (cancelled) return;
+        const raw = profile?.homeAirport ?? "";
+        // homeAirport looks like "Copenhagen (CPH)" — take the part before "("
+        const cityName = raw.split("(")[0]?.trim() ?? "";
+        const fromMember = matchOption(cityName);
+        if (fromMember && fromMember.toLowerCase() !== city.toLowerCase()) {
+          router.replace(
+            `${pathname}?city=${encodeURIComponent(fromMember)}`,
+            { scroll: false }
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    resolveDefault();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!restaurants.length) {
@@ -767,6 +823,12 @@ export default function RestaurantsMapView({
               {selectedRestaurant.hotel_name_hint && (
                 <div className="restaurant-detail-card__hotel-context">
                   Hotel: {selectedRestaurant.hotel_name_hint}
+                </div>
+              )}
+
+              {buildAddressLabel(selectedRestaurant) && (
+                <div className="restaurant-detail-card__address">
+                  {buildAddressLabel(selectedRestaurant)}
                 </div>
               )}
 

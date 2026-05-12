@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import InspireMapView from "./InspireMapView";
 import styles from "./InspireView.module.css";
 import { filterInspireCities } from "@/lib/inspire/filterCities";
+import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import type {
   InspireCity,
   InspireCityMatch,
@@ -197,6 +198,28 @@ export default function InspireView({ cities }: Props) {
     null | "month" | "purpose" | "flight" | "origin"
   >(null);
   const [activeCityId, setActiveCityId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMemberProfileBrowser()
+      .then((profile) => {
+        if (cancelled) return;
+        const raw = profile?.homeAirport ?? "";
+        // homeAirport looks like "Copenhagen (CPH)" — take the part before "("
+        const cityName = raw.split("(")[0]?.trim() ?? "";
+        if (!cityName) return;
+        const match = ORIGIN_CITIES.find(
+          (item) => item.label.toLowerCase() === cityName.toLowerCase()
+        );
+        if (match) setOrigin(match);
+      })
+      .catch(() => {
+        /* ignore */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     function handleOutside(event: MouseEvent) {

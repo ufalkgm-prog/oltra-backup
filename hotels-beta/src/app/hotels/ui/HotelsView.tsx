@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import maplibregl from "maplibre-gl";
@@ -526,8 +527,6 @@ function AccoladeBadge({ hotel }: { hotel: HotelRecord }) {
   const tier = accoladeTier(hotel);
   if (!tier) return null;
 
-  const totalPoints = getTotalPoints(hotel);
-
   return (
     <div
       className={[
@@ -535,9 +534,7 @@ function AccoladeBadge({ hotel }: { hotel: HotelRecord }) {
         tier === "gold" ? "oltra-status-badge--gold" : "oltra-status-badge--silver",
       ].join(" ")}
     >
-      {tier === "gold"
-        ? `Top Accolades ${totalPoints}`
-        : `Highly Accredited ${totalPoints}`}
+      {tier === "gold" ? "Top Accolades" : "Highly Accredited"}
     </div>
   );
 }
@@ -613,6 +610,18 @@ export default function HotelsView(props: {
     [shouldShowResults, hotels]
   );
   const shouldShowFeatured = !shouldShowResults;
+
+  const [pinnedHotelId, setPinnedHotelId] = useState<string>("");
+
+  const orderedVisibleHotels = useMemo(() => {
+    if (!pinnedHotelId) return visibleHotels;
+    const idx = visibleHotels.findIndex((h) => String(h.id) === pinnedHotelId);
+    if (idx <= 0) return visibleHotels;
+    const reordered = [...visibleHotels];
+    const [picked] = reordered.splice(idx, 1);
+    reordered.unshift(picked);
+    return reordered;
+  }, [visibleHotels, pinnedHotelId]);
 
   const showNarrowFurtherMessage =
     hasMeaningfulFilters &&
@@ -1186,56 +1195,31 @@ export default function HotelsView(props: {
       el.dataset.selected = String(String(hotel.id) === selectedHotelId);
       el.setAttribute("aria-label", hotel.hotel_name ?? "Hotel");
 
-      const inner = document.createElement("span");
-      inner.className = "hotel-marker__inner";
-      inner.textContent = "✦";
-      el.appendChild(inner);
+      el.innerHTML = `
+        <span class="hotel-marker__inner" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path d="M4 11.2 12 4l8 7.2v8.3a.5.5 0 0 1-.5.5h-5v-5.4h-5V20h-5a.5.5 0 0 1-.5-.5v-8.3Z" fill="currentColor"/>
+          </svg>
+        </span>
+      `;
 
       const popupImage = getHotelImageSet(hotel)[0] ?? PLACEHOLDERS[0];
-
-      const popupRoot = document.createElement("div");
-      popupRoot.className = "oltra-glass oltra-output hotel-map-popup";
-      popupRoot.style.minWidth = "260px";
-
-      const imageWrap = document.createElement("div");
-      imageWrap.style.marginBottom = "12px";
-      imageWrap.style.overflow = "hidden";
-      imageWrap.style.borderRadius = "12px";
-
-      const imageEl = document.createElement("img");
-      imageEl.src = popupImage;
-      imageEl.alt = "";
-      imageEl.style.display = "block";
-      imageEl.style.width = "100%";
-      imageEl.style.height = "120px";
-      imageEl.style.objectFit = "cover";
-
-      imageWrap.appendChild(imageEl);
-      popupRoot.appendChild(imageWrap);
-
-      const titleEl = document.createElement("div");
-      titleEl.className = "hotel-map-popup__title";
-      titleEl.textContent = hotel.hotel_name ?? "Untitled hotel";
-      popupRoot.appendChild(titleEl);
-
-      const metaEl = document.createElement("div");
-      metaEl.className = "hotel-map-popup__meta";
-      metaEl.textContent = locationLine(hotel) || "—";
-      popupRoot.appendChild(metaEl);
-
-      if (hotel.highlights?.trim()) {
-        const descEl = document.createElement("div");
-        descEl.className = "hotel-map-popup__desc";
-        descEl.textContent = clampText(hotel.highlights, 120);
-        popupRoot.appendChild(descEl);
-      }
+      const popupTitle = (hotel.hotel_name ?? "Untitled hotel").replace(/</g, "&lt;");
+      const popupMeta = (locationLine(hotel) || "—").replace(/</g, "&lt;");
 
       const popup = new maplibregl.Popup({
         closeButton: false,
         closeOnClick: false,
         closeOnMove: false,
         offset: 14,
-      }).setDOMContent(popupRoot);
+        className: "oltra-map-popup",
+      }).setHTML(`
+        <div class="oltra-map-popup__box">
+          ${popupImage ? `<img class="oltra-map-popup__image" src="${popupImage}" alt="" />` : ""}
+          <div class="oltra-map-popup__title">${popupTitle}</div>
+          <div class="oltra-map-popup__meta">${popupMeta}</div>
+        </div>
+      `);
 
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([lng, lat])
@@ -1263,7 +1247,9 @@ export default function HotelsView(props: {
       el.addEventListener("click", (event) => {
         event.stopPropagation();
         selectionFromMapRef.current = true;
-        setSelectedHotelId(String(hotel.id));
+        const id = String(hotel.id);
+        setSelectedHotelId(id);
+        setPinnedHotelId(id);
       });
 
       markersRef.current.push(marker);
@@ -1977,7 +1963,7 @@ async function handleCreateTripAndAddHotel() {
 
               <StructuredDestinationField
                 label="Destination / purpose"
-                placeholder="Input hotel name, city, country, and/or purpose of trip"
+                placeholder="Type first 2 letters of hotel, city, country, or purpose"
                 searchParams={searchParams}
                 dataset={props.suggestions}
                 wrapperClassName="md:col-span-12 pt-[2px]"
@@ -2246,7 +2232,7 @@ async function handleCreateTripAndAddHotel() {
               </div>
 
               <div className="oltra-scrollbar mt-3.5 flex-1 min-h-0 space-y-3 overflow-y-auto pr-2">
-                {visibleHotels.map((h) => {
+                {orderedVisibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
                   const agodaCardAvailability = agodaResultAvailability[String(h.id)];
@@ -2257,7 +2243,11 @@ async function handleCreateTripAndAddHotel() {
                     <button
                       key={String(h.id)}
                       type="button"
-                      onClick={() => setSelectedHotelId(String(h.id))}
+                      onClick={() => {
+                        const id = String(h.id);
+                        setSelectedHotelId(id);
+                        setPinnedHotelId(id);
+                      }}
                       className={[
                         "oltra-output w-full text-left transition",
                         active
@@ -2407,7 +2397,7 @@ async function handleCreateTripAndAddHotel() {
 
                   <StructuredDestinationField
                     label="Destination / purpose"
-                    placeholder="Input hotel name, city, country, and/or purpose of trip"
+                    placeholder="Type first 2 letters of hotel, city, country, or purpose"
                     searchParams={searchParams}
                     dataset={props.suggestions}
                   />
@@ -2559,9 +2549,9 @@ async function handleCreateTripAndAddHotel() {
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-12 gap-3">
-                {/* col-span-8: Description + price/Agoda + links/member buttons */}
-                <div className="col-span-12 lg:col-span-8 space-y-4">
+              <div className="mt-4 grid grid-cols-12 items-stretch gap-3">
+                {/* col-span-8: Description + bottom-aligned action buttons */}
+                <div className="col-span-12 flex flex-col gap-4 lg:col-span-8">
                   <div>
                     <div className="oltra-subheader">Description</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
@@ -2571,10 +2561,9 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   </div>
 
-                  {/* 2-col grid: left=price+links, right=buttons. Explicit placement keeps rows aligned. */}
-                  <div className="grid grid-cols-2 items-center gap-x-6 gap-y-2">
+                  {/* Bottom action row inside left pane: Agoda (+price) left, Trip + Favourites right */}
+                  <div className="mt-auto grid grid-cols-2 items-end gap-x-6 gap-y-2">
 
-                    {/* Left col row 1: price box when available, unavailable notice, or nothing */}
                     {selectedHotelAgodaResult ? (
                       <div className="col-start-1 row-start-1 flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 text-sm text-white/78">
                         <span className="text-[12px] text-white/55">From</span>
@@ -2586,13 +2575,12 @@ async function handleCreateTripAndAddHotel() {
                       </div>
                     ) : null}
 
-                    {/* Right col row 1: Agoda button */}
                     {selectedHotelAgodaResult?.landingURL ? (
                       <a
                         href={selectedHotelAgodaResult.landingURL}
                         target="_blank"
                         rel="noreferrer"
-                        className="col-start-2 row-start-1 oltra-button-primary w-full rounded-full"
+                        className="col-start-1 row-start-2 oltra-button-primary w-full rounded-full"
                       >
                         BOOK WITH AGODA
                       </a>
@@ -2614,7 +2602,7 @@ async function handleCreateTripAndAddHotel() {
                               : undefined
                         }
                         className={[
-                          "col-start-2 row-start-1 w-full rounded-full",
+                          "col-start-1 row-start-2 w-full rounded-full",
                           selectedHotelCanCheckAgoda &&
                           !selectedHotelHasBatchAvailability &&
                           agodaAvailability.status !== "loading" &&
@@ -2633,8 +2621,7 @@ async function handleCreateTripAndAddHotel() {
                       </button>
                     )}
 
-                    {/* Right col row 2: ADD TO TRIP */}
-                    <div ref={tripPickerRef} className="col-start-2 row-start-2 relative">
+                    <div ref={tripPickerRef} className="col-start-2 row-start-1 relative">
                       {showTripPicker && (
                         <div
                           className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"
@@ -2718,7 +2705,6 @@ async function handleCreateTripAndAddHotel() {
                       </button>
                     </div>
 
-                    {/* Right col row 3: ADD TO FAVOURITES */}
                     <button
                       type="button"
                       onClick={() => {
@@ -2735,7 +2721,7 @@ async function handleCreateTripAndAddHotel() {
                         void handleAddHotelToFavorites();
                       }}
                       disabled={memberActionLoading !== null || isFavorited}
-                      className={`col-start-2 row-start-3 ${getMemberActionButtonClass(
+                      className={`col-start-2 row-start-2 ${getMemberActionButtonClass(
                         isMemberLoggedIn && !isFavorited
                       )} w-full`}
                       aria-disabled={!isMemberLoggedIn || isFavorited}
@@ -2823,56 +2809,72 @@ async function handleCreateTripAndAddHotel() {
                 </div>
               </div>
 
-              {lightboxOpen ? (
-                <div className="absolute left-0 right-0 top-[108px] z-[500] bg-[rgba(10,18,26,0.58)] py-3">
-                  <div className="relative mx-auto w-[calc(100%-24px)] max-w-none rounded-[var(--oltra-radius-xl)] border border-white/12 bg-[rgba(20,32,42,0.94)] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-[18px]">
-                    <button
-                      type="button"
+              {lightboxOpen && typeof document !== "undefined"
+                ? createPortal(
+                    <div
+                      className="fixed inset-0 z-[1000] flex justify-center bg-[rgba(10,18,26,0.78)] px-6"
                       onClick={() => setLightboxOpen(false)}
-                      className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
                     >
-                      ×
-                    </button>
-
-                    <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedImageIndex((prev) =>
-                            prev === 0 ? selectedHotelImages.length - 1 : prev - 1
-                          )
-                        }
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                      <div
+                        className="relative mt-[110px] h-fit w-full max-w-[1100px] rounded-[var(--oltra-radius-xl)] border border-white/12 bg-[rgba(20,32,42,0.94)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        ‹
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => setLightboxOpen(false)}
+                          className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                          aria-label="Close"
+                        >
+                          ×
+                        </button>
 
-                      <div className="flex h-[700px] min-w-0 flex-1 items-center justify-center overflow-hidden">
-                        <img
-                          src={
-                            selectedHotelImages[selectedImageIndex] ??
-                            selectedHotelImages[0]
-                          }
-                          alt=""
-                          className="max-h-full max-w-full object-contain"
-                        />
+                        <div className="flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedImageIndex((prev) =>
+                                prev === 0
+                                  ? selectedHotelImages.length - 1
+                                  : prev - 1
+                              )
+                            }
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                            aria-label="Previous image"
+                          >
+                            ‹
+                          </button>
+
+                          <div className="flex h-[min(72vh,720px)] min-w-0 flex-1 items-center justify-center overflow-hidden">
+                            <img
+                              src={
+                                selectedHotelImages[selectedImageIndex] ??
+                                selectedHotelImages[0]
+                              }
+                              alt=""
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedImageIndex((prev) =>
+                                prev === selectedHotelImages.length - 1
+                                  ? 0
+                                  : prev + 1
+                              )
+                            }
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                            aria-label="Next image"
+                          >
+                            ›
+                          </button>
+                        </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedImageIndex((prev) =>
-                            prev === selectedHotelImages.length - 1 ? 0 : prev + 1
-                          )
-                        }
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
-                      >
-                        ›
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
+                    </div>,
+                    document.body
+                  )
+                : null}
             </div>
           ) : (
             <div className="p-10 text-white/60">Select a hotel to view details.</div>

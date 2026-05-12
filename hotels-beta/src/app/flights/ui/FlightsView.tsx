@@ -692,30 +692,35 @@ export default function FlightsView({ searchParams }: Props) {
                 ))
               ) : (
                 <div className={styles.legFilterTimeGroup}>
-                  <DurationFilter
-                    label="Departure max duration"
-                    value={filters.outbound.maxDurationHours}
-                    onChange={v => updateLegFilter("outbound", { maxDurationHours: v })}
-                  />
-                  {isReturnTrip ? (
+                  <div className={styles.legFilterSubGroup}>
                     <DurationFilter
-                      label="Return max duration"
-                      value={filters.inbound.maxDurationHours}
-                      onChange={v => updateLegFilter("inbound", { maxDurationHours: v })}
+                      label="Departure max duration"
+                      value={filters.outbound.maxDurationHours}
+                      onChange={v => updateLegFilter("outbound", { maxDurationHours: v })}
                     />
-                  ) : null}
-                  <TimeIntervalFilter
-                    label="Departure time"
-                    value={filters.outbound}
-                    onChange={patch => updateLegFilter("outbound", patch)}
-                  />
-                  {isReturnTrip ? (
+                    {isReturnTrip ? (
+                      <DurationFilter
+                        label="Return max duration"
+                        value={filters.inbound.maxDurationHours}
+                        onChange={v => updateLegFilter("inbound", { maxDurationHours: v })}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className={styles.legFilterSubGroup}>
                     <TimeIntervalFilter
-                      label="Return time"
-                      value={filters.inbound}
-                      onChange={patch => updateLegFilter("inbound", patch)}
+                      label="Departure time"
+                      value={filters.outbound}
+                      onChange={patch => updateLegFilter("outbound", patch)}
                     />
-                  ) : null}
+                    {isReturnTrip ? (
+                      <TimeIntervalFilter
+                        label="Return time"
+                        value={filters.inbound}
+                        onChange={patch => updateLegFilter("inbound", patch)}
+                      />
+                    ) : null}
+                  </div>
                 </div>
               )}
 
@@ -773,8 +778,18 @@ export default function FlightsView({ searchParams }: Props) {
               ) : (
                 <>
                   <div className={`${isOneWay ? styles.columnHeadersOneWay : styles.columnHeaders} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
-                    <div className={styles.columnLabel}>Departure</div>
-                    {!isOneWay ? <div className={styles.columnLabel}>Return</div> : null}
+                    <div className={styles.columnLabel}>
+                      Departure
+                      {!isOneWay ? (
+                        <span aria-hidden="true" style={{ marginLeft: 6 }}>→</span>
+                      ) : null}
+                    </div>
+                    {!isOneWay ? (
+                      <div className={styles.columnLabel}>
+                        <span aria-hidden="true" style={{ marginRight: 6 }}>←</span>
+                        Return
+                      </div>
+                    ) : null}
                     <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Price</div>
                   </div>
 
@@ -854,7 +869,7 @@ export default function FlightsView({ searchParams }: Props) {
                                   key={it.id}
                                   itinerary={it}
                                   onBook={handleBook}
-                                  active={it.outbound.id === selectedOutboundId}
+                                  active
                                 />
                               ))
                           : selectedOutboundId
@@ -1071,47 +1086,129 @@ function MultiSelectDropdown({
 }
 
 function MultipleResults({ columns }: { columns: { leg: MultiCityLeg; options: FlightLeg[] }[] }) {
-  const recommendedFlights = columns.map(c => c.options[0]).filter(Boolean) as FlightLeg[];
-  const fastestFlights = columns.map(c => c.options[1] ?? c.options[0]).filter(Boolean) as FlightLeg[];
+  const [selections, setSelections] = useState<Record<string, string>>({});
+
+  let activeIndex = columns.findIndex((col) => !selections[col.leg.id]);
+  if (activeIndex === -1) activeIndex = columns.length;
+
+  function pickFlight(legId: string, flightId: string) {
+    setSelections((prev) => ({ ...prev, [legId]: flightId }));
+  }
+
+  function clearFlight(legId: string) {
+    setSelections((prev) => {
+      const next = { ...prev };
+      delete next[legId];
+      // Also clear any later selections, since the chain restarts here.
+      const idx = columns.findIndex((c) => c.leg.id === legId);
+      if (idx >= 0) {
+        for (let i = idx + 1; i < columns.length; i += 1) {
+          delete next[columns[i].leg.id];
+        }
+      }
+      return next;
+    });
+  }
 
   return (
-    <>
-      <div className={styles.multiResultsHeader}>
-        {columns.map((col, i) => (
-          <div key={col.leg.id} className={styles.columnHeader}>
-            Flight {i + 1} · {col.leg.from || "From"} → {col.leg.to || "To"}
-          </div>
-        ))}
-        <div className={`${styles.columnHeader} ${styles.columnHeaderRight}`}>Price</div>
-      </div>
-      <div className={styles.pinnedStack}>
-        <MultiPinnedRow label="Recommended" flights={recommendedFlights} />
-        <MultiPinnedRow label="Fastest" flights={fastestFlights} />
-      </div>
-      <div className={styles.multiResultsGridFixed}>
-        {columns.map(col => (
-          <div key={col.leg.id} className={styles.columnBox}>
-            <div className={styles.cardStack}>
-              {col.options.length ? (
-                col.options.map(f => (
-                  <div key={f.id} className="oltra-output"><FlightCardContent flight={f} /></div>
-                ))
-              ) : (
-                <div className="oltra-output">No flights match the selected filters.</div>
-              )}
+    <div className={styles.multiSequentialStack}>
+      {columns.map((col, i) => {
+        if (i > activeIndex) return null;
+        const isActive = i === activeIndex;
+        const selectedId = selections[col.leg.id];
+        const selectedFlight = selectedId
+          ? col.options.find((o) => o.id === selectedId) ?? null
+          : null;
+
+        const recommended = col.options[0] ?? null;
+        const fastest =
+          col.options[1] && col.options[1].id !== recommended?.id
+            ? col.options[1]
+            : null;
+
+        return (
+          <div key={col.leg.id} className={styles.multiLegBlock}>
+            <div className={styles.multiLegHeader}>
+              <span className={styles.columnHeader}>
+                Flight {i + 1} · {col.leg.from || "From"} → {col.leg.to || "To"}
+              </span>
+              {selectedFlight ? (
+                <button
+                  type="button"
+                  className={styles.multiLegChange}
+                  onClick={() => clearFlight(col.leg.id)}
+                >
+                  Change
+                </button>
+              ) : null}
             </div>
+
+            {selectedFlight && !isActive ? (
+              <div className={`${styles.staticCard} ${styles.selectCardActive}`}>
+                <FlightCardContent flight={selectedFlight} />
+              </div>
+            ) : isActive ? (
+              <>
+                {(recommended || fastest) && (
+                  <div className={styles.pinnedStack}>
+                    {recommended ? (
+                      <button
+                        type="button"
+                        className={styles.multiPinnedSelectable}
+                        onClick={() => pickFlight(col.leg.id, recommended.id)}
+                      >
+                        <span className={styles.pinnedLegend}>Recommended</span>
+                        <div className={styles.staticCard}>
+                          <FlightCardContent flight={recommended} />
+                        </div>
+                      </button>
+                    ) : null}
+                    {fastest ? (
+                      <button
+                        type="button"
+                        className={styles.multiPinnedSelectable}
+                        onClick={() => pickFlight(col.leg.id, fastest.id)}
+                      >
+                        <span className={styles.pinnedLegend}>Fastest</span>
+                        <div className={styles.staticCard}>
+                          <FlightCardContent flight={fastest} />
+                        </div>
+                      </button>
+                    ) : null}
+                  </div>
+                )}
+
+                <div className={styles.cardStack}>
+                  {col.options.length ? (
+                    col.options.map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => pickFlight(col.leg.id, f.id)}
+                        className={styles.selectCard}
+                      >
+                        <FlightCardContent flight={f} />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="oltra-output">
+                      No flights match the selected filters.
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : null}
           </div>
-        ))}
-        <div className={styles.priceColumn}>
-          <div className={styles.cardStack}>
-            <div className={styles.priceCard}>
-              <span className={styles.priceCardAmount}>—</span>
-              <button type="button" className={styles.bookButtonInactive} disabled>BOOK</button>
-            </div>
-          </div>
+        );
+      })}
+
+      {activeIndex >= columns.length ? (
+        <div className={styles.multiAllSelected}>
+          All flight legs selected. Use BOOK to proceed with each carrier
+          separately (multi-city booking not yet wired through Duffel).
         </div>
-      </div>
-    </>
+      ) : null}
+    </div>
   );
 }
 
@@ -1165,7 +1262,7 @@ function PriceCard({
 }) {
   const { currency, format } = useCurrency();
   return (
-    <div className={styles.priceCard}>
+    <div className={`${styles.priceCard} ${active ? styles.priceCardActive : ""}`}>
       <span className={styles.priceCardAmount}>
         {currency} {format(itinerary.priceEur, itinerary.currency)}
       </span>
@@ -1176,6 +1273,15 @@ function PriceCard({
         disabled={!active}
       >
         BOOK
+      </button>
+      <button
+        type="button"
+        className={styles.savePillButton}
+        onClick={() => {
+          /* Save-to-trip placeholder: hook up when flight trip-save endpoint is wired. */
+        }}
+      >
+        SAVE TO TRIP
       </button>
     </div>
   );

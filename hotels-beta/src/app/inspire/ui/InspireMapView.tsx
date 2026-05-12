@@ -215,6 +215,7 @@ export default function InspireMapView({
       style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
       center: [origin.lng, origin.lat],
       zoom: DEFAULT_WORLD_ZOOM,
+      minZoom: 1.3,
       renderWorldCopies: false,
     });
 
@@ -286,19 +287,28 @@ export default function InspireMapView({
         },
       });
 
-      map.resize();
-      window.setTimeout(() => map.resize(), 100);
-      window.setTimeout(() => map.resize(), 350);
+      safeResize();
+      window.setTimeout(safeResize, 100);
+      window.setTimeout(safeResize, 350);
     });
+
+    function safeResize() {
+      if (mapInstanceRef.current !== map) return;
+      try {
+        map.resize();
+      } catch {
+        /* map was removed mid-callback */
+      }
+    }
 
     map.on("zoom", syncMarkerVisibility);
     map.on("moveend", syncMarkerVisibility);
 
-    const onWindowResize = () => map.resize();
+    const onWindowResize = safeResize;
     window.addEventListener("resize", onWindowResize);
 
     if (typeof ResizeObserver !== "undefined" && mapRef.current) {
-      const observer = new ResizeObserver(() => map.resize());
+      const observer = new ResizeObserver(safeResize);
       observer.observe(mapRef.current);
       resizeObserverRef.current = observer;
     }
@@ -495,27 +505,51 @@ export default function InspireMapView({
 
     const clampLat = (lat: number) => Math.max(-85, Math.min(85, lat));
     const bounds = new maplibregl.LngLatBounds();
-    const radiusKm = Math.max(1, maxFlightHours) * FLIGHT_KM_PER_HOUR;
-    const latDelta = radiusKm / 111;
-    const lngDelta =
-      radiusKm /
-      (111 * Math.max(0.15, Math.cos((origin.lat * Math.PI) / 180)));
+    const safeExtend = (lng: unknown, lat: unknown) => {
+      const lngN = Number(lng);
+      const latN = Number(lat);
+      if (!Number.isFinite(lngN) || !Number.isFinite(latN)) return;
+      bounds.extend([lngN, clampLat(latN)]);
+    };
 
-    bounds.extend([origin.lng - lngDelta, clampLat(origin.lat - latDelta)]);
-    bounds.extend([origin.lng + lngDelta, clampLat(origin.lat + latDelta)]);
-
+    // Include origin + every matched city/hotel marker, so the viewport fits
+    // exactly the points the user is looking at — no extra flight-radius padding.
+    safeExtend(origin.lng, origin.lat);
     for (const match of matches) {
-      bounds.extend([match.city.lng, clampLat(match.city.lat)]);
+      safeExtend(match.city.lng, match.city.lat);
+      for (const hotel of match.city.hotels) {
+        safeExtend(hotel.lng, hotel.lat);
+      }
     }
 
-    map.fitBounds(bounds, {
-      padding: { top: 72, right: 72, bottom: 72, left: 72 },
-      maxZoom: 5.8,
-      duration: 650,
-    });
+    if (!bounds.isEmpty()) {
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      const valid =
+        sw &&
+        ne &&
+        Number.isFinite(sw.lng) &&
+        Number.isFinite(sw.lat) &&
+        Number.isFinite(ne.lng) &&
+        Number.isFinite(ne.lat);
+      if (valid) {
+        try {
+          map.fitBounds(bounds, {
+            padding: { top: 72, right: 72, bottom: 72, left: 72 },
+            maxZoom: 6.5,
+            duration: 650,
+          });
+        } catch {
+          /* skip on transient invalid bounds */
+        }
+      }
+    }
 
     syncMarkerVisibility();
-  }, [matches, origin, maxFlightHours, activeCityId]);
+    // activeCityId intentionally NOT in deps — clicking a marker should not
+    // re-trigger a fitBounds and override the user's manual zoom level.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, origin, maxFlightHours]);
 
   useEffect(() => {
     cityMarkersRef.current.forEach((marker) => {
@@ -533,6 +567,7 @@ export default function InspireMapView({
     <div className="relative h-full w-full">
       <div ref={mapRef} className="oltra-map-canvas" />
       <div className="oltra-temp-controls">
+        <div className="oltra-temp-controls__heading">Temperature map</div>
         <div className="oltra-temp-controls__row">
           <button
             type="button"

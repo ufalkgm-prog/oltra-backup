@@ -27,13 +27,12 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setText(labelForCode(value))
         setOpen(false)
       }
     }
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [value])
+  }, [])
 
   const query = text.toLowerCase().trim()
   const matches = query.length >= 2
@@ -48,10 +47,6 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
     setOpen(false)
   }
 
-  function handleBlur() {
-    if (!text.trim()) setText(labelForCode(value))
-  }
-
   return (
     <div ref={containerRef} style={{ position: 'relative' }} data-oltra-control="true">
       <label className="oltra-label">{label}</label>
@@ -62,7 +57,6 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
         placeholder="Type 2+ letters…"
         onChange={e => { setText(e.target.value); setOpen(e.target.value.trim().length >= 2) }}
         onFocus={handleFocus}
-        onBlur={handleBlur}
         autoComplete="off"
         spellCheck={false}
       />

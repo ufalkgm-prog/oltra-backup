@@ -103,7 +103,16 @@
 
 .legFilterTimeGroup {
   display: grid;
+  gap: 14px;
+}
+
+.legFilterSubGroup {
+  display: grid;
   gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--oltra-radius-md);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .range {
@@ -403,6 +412,60 @@
   align-items: start;
 }
 
+.multiSequentialStack {
+  display: grid;
+  gap: 16px;
+}
+
+.multiLegBlock {
+  display: grid;
+  gap: 10px;
+}
+
+.multiLegHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.multiLegChange {
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--oltra-radius-sm, 6px);
+  color: rgba(255, 255, 255, 0.78);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.multiLegChange:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.multiPinnedSelectable {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.multiAllSelected {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(20, 32, 48, 0.45);
+  border-radius: var(--oltra-radius-md);
+  padding: 12px 14px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .multiResultsHeader {
   display: grid;
   grid-template-columns: repeat(var(--multi-columns, 3), minmax(0, 1fr)) 112px;
@@ -454,7 +517,7 @@
   text-align: left;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease;
-  height: 96px;
+  height: 120px;
   display: grid;
   align-content: center;
 }
@@ -769,16 +832,22 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 10px;
+  gap: 6px;
   align-self: stretch;
   width: 100%;
-  height: 96px;
-  padding: 14px 12px 12px;
+  height: 120px;
+  padding: 10px 10px 10px;
   border: 1px solid var(--oltra-field-border);
   border-radius: var(--oltra-radius-md);
   background: var(--oltra-field-bg);
   color: var(--oltra-text-primary);
   font: inherit;
+}
+
+.priceCardActive {
+  background: rgba(20, 32, 48, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  padding: 9px 9px;
 }
 
 .priceCardAmount {
@@ -792,12 +861,31 @@
 .bookButtonInactive {
   width: 100%;
   border-radius: var(--oltra-radius-sm, 6px);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.18em;
-  padding: 7px 0;
+  padding: 5px 0;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.savePillButton {
+  width: 100%;
+  border-radius: var(--oltra-radius-sm, 6px);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  padding: 5px 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.savePillButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .bookButtonActive {
@@ -897,7 +985,7 @@
   background: var(--oltra-field-bg);
   color: var(--oltra-text-primary);
   padding: 10px 14px;
-  height: 96px;
+  height: 120px;
   display: grid;
   align-content: center;
 }

@@ -170,6 +170,16 @@
   color: var(--oltra-text-muted);
 }
 
+.restaurant-detail-card__address {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--oltra-text-secondary);
+}
+
 .restaurant-detail-card__highlights {
   margin-top: 16px;
   font-size: 14px;

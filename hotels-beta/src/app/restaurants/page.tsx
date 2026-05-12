@@ -20,7 +20,9 @@ export default async function RestaurantsPage({
   const requestedCity = normalizeParam(params.city).trim();
 
   const cityOptions = await getRestaurantCities();
-  const fallbackCity = cityOptions[0] ?? "";
+  const parisMatch =
+    cityOptions.find((option) => option.toLowerCase() === "paris") ?? "";
+  const fallbackCity = parisMatch || cityOptions[0] || "";
 
   const requestedCityMatch =
     cityOptions.find(

@@ -1,9 +1,12 @@
 "use client";
 
 import OltraSelect from "@/components/site/OltraSelect";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import GuestSelector from "@/components/site/GuestSelector";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
+import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
+import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
 import {
   normalizeParam,
   readGuestSelection,
@@ -14,6 +17,20 @@ import type {
   SuggestionType,
 } from "@/lib/hotelSearchSuggestions";
 import styles from "./page.module.css";
+
+const HOME_AIRPORT_STORAGE_KEY = "oltra_home_airport";
+
+const SINGLE_AIRPORT_COUNTRIES = new Set(
+  ["Maldives", "Bhutan", "Brunei"].map((c) => c.toLowerCase())
+);
+
+function cityForAirportCode(code: string): string {
+  if (!code) return "";
+  const opt = AIRPORT_OPTIONS.find((o) => o.value === code);
+  if (!opt) return code;
+  const after = opt.label.split("·")[1]?.trim() ?? "";
+  return after.split(/\s+/)[0] || after || code;
+}
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -59,6 +76,8 @@ export default function LandingSearchPanel({
   initialSearchParams,
   dataset,
 }: Props) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const [fromValue, setFromValue] = useState(
     normalizeParam(initialSearchParams.from)
@@ -72,14 +91,26 @@ export default function LandingSearchPanel({
     readGuestSelection(initialSearchParams)
   );
 
+  const [includeFlights, setIncludeFlights] = useState(
+    normalizeParam(initialSearchParams.include_flights) === "1" ||
+      normalizeParam(initialSearchParams.origin) !== ""
+  );
+  const [homeAirport, setHomeAirport] = useState(
+    normalizeParam(initialSearchParams.origin)
+  );
+  const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
+  const flightsWrapRef = useRef<HTMLDivElement | null>(null);
+
   const [destinationState, setDestinationState] = useState<{
     activeHotelCount: number;
     hasSelection: boolean;
     selectedTypes: SuggestionType[];
+    selectedValues: Partial<Record<SuggestionType, string[]>>;
   }>({
     activeHotelCount: dataset.hotels.length,
     hasSelection: false,
     selectedTypes: [],
+    selectedValues: {},
   });
 
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -90,14 +121,44 @@ export default function LandingSearchPanel({
     buildComparableSearchKey(initialSearchParams)
   );
 
-  const hasSubmittedOnce =
-    normalizeParam(initialSearchParams.submitted) === "1";
-
   useEffect(() => {
     setFromValue(normalizeParam(initialSearchParams.from));
     setToValue(normalizeParam(initialSearchParams.to));
     setGuestSelection(readGuestSelection(initialSearchParams));
+
+    const nextOrigin = normalizeParam(initialSearchParams.origin);
+    setHomeAirport(nextOrigin);
+    setIncludeFlights(
+      normalizeParam(initialSearchParams.include_flights) === "1" ||
+        nextOrigin !== ""
+    );
   }, [initialSearchParams]);
+
+  useEffect(() => {
+    if (homeAirport) return;
+    const stored = window.localStorage.getItem(HOME_AIRPORT_STORAGE_KEY);
+    if (stored) setHomeAirport(stored);
+  }, [homeAirport]);
+
+  useEffect(() => {
+    if (homeAirport) {
+      window.localStorage.setItem(HOME_AIRPORT_STORAGE_KEY, homeAirport);
+    }
+  }, [homeAirport]);
+
+  useEffect(() => {
+    if (!airportPopoverOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (
+        flightsWrapRef.current &&
+        !flightsWrapRef.current.contains(e.target as Node)
+      ) {
+        setAirportPopoverOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [airportPopoverOpen]);
 
   useEffect(() => {
     lastSubmittedKeyRef.current = buildComparableSearchKey(initialSearchParams);
@@ -148,6 +209,39 @@ export default function LandingSearchPanel({
     destinationState.hasSelection &&
     destinationState.activeHotelCount > 50;
 
+  const flightsCanActivate = useMemo(() => {
+    const types = destinationState.selectedTypes;
+    const values = destinationState.selectedValues;
+
+    const hasHotelOrCity = types.includes("hotel") || types.includes("city");
+
+    const hasSingleAirportCountry =
+      types.includes("country") &&
+      (values.country ?? []).some((c) =>
+        SINGLE_AIRPORT_COUNTRIES.has(c.trim().toLowerCase())
+      );
+
+    const destinationOk = hasHotelOrCity || hasSingleAirportCountry;
+    const datesOk = Boolean(fromValue) && Boolean(toValue);
+    const guestsOk = guestSelection.adults > 0;
+
+    return destinationOk && datesOk && guestsOk;
+  }, [
+    destinationState.selectedTypes,
+    destinationState.selectedValues,
+    fromValue,
+    toValue,
+    guestSelection.adults,
+  ]);
+
+  const effectiveIncludeFlights = flightsCanActivate && includeFlights;
+
+  useEffect(() => {
+    if (!flightsCanActivate && airportPopoverOpen) {
+      setAirportPopoverOpen(false);
+    }
+  }, [flightsCanActivate, airportPopoverOpen]);
+
   const allowedTypes = useMemo<SuggestionType[]>(
     () => ["hotel", "city", "country", "region", "purpose", "setting"],
     []
@@ -159,7 +253,7 @@ export default function LandingSearchPanel({
     }
 
     if (!hasRequiredStayDetails || !datesAreValid) {
-      return "PLEASE SELECT DATES AND GUEST DETAILS";
+      return "FOR AVAILABILITY PLEASE SELECT DATES AND GUEST DETAILS";
     }
 
     if (!destinationState.hasSelection) {
@@ -181,8 +275,37 @@ export default function LandingSearchPanel({
     ref.current?.showPicker?.();
   }
 
+  function buildUrlFromForm(form: HTMLFormElement, submitted: boolean): string {
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+
+    for (const [key, value] of formData.entries()) {
+      if (key === "submitted") continue;
+      const stringValue = String(value);
+      if (stringValue) params.append(key, stringValue);
+    }
+
+    if (submitted) params.set("submitted", "1");
+
+    const qs = params.toString();
+    return qs ? `/?${qs}` : "/";
+  }
+
+  function navigateWithParams(submitted: boolean) {
+    if (!formRef.current) return;
+    const url = buildUrlFromForm(formRef.current, submitted);
+    startTransition(() => {
+      router.push(url, { scroll: false });
+    });
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!searchIsActive) return;
+    navigateWithParams(true);
+  }
+
   function scheduleAutoSubmit() {
-    if (!hasSubmittedOnce) return;
     if (!formRef.current) return;
 
     if (autoSubmitTimerRef.current) {
@@ -197,19 +320,15 @@ export default function LandingSearchPanel({
 
       for (const [key, value] of formData.entries()) {
         if (key === "submitted") continue;
-
         const stringValue = String(value);
         if (stringValue) params.append(key, stringValue);
       }
 
       const nextKey = params.toString();
-
-      if (!nextKey || nextKey === lastSubmittedKeyRef.current) {
-        return;
-      }
+      if (!nextKey || nextKey === lastSubmittedKeyRef.current) return;
 
       lastSubmittedKeyRef.current = nextKey;
-      formRef.current.requestSubmit();
+      navigateWithParams(true);
     }, 220);
   }
 
@@ -219,19 +338,23 @@ export default function LandingSearchPanel({
         ref={formRef}
         action="/"
         method="GET"
+        onSubmit={handleSubmit}
         className={styles.searchForm}
       >
-        <input type="hidden" name="submitted" value="1" />
 
         <div className={styles.searchGrid}>
           <StructuredDestinationField
             label="Destination / purpose"
-            placeholder="Input hotel name, city, country, and/or purpose of trip"
+            placeholder="Type first 2 letters of hotel, city, country, or purpose"
             searchParams={initialSearchParams}
             dataset={dataset}
             allowedTypes={allowedTypes}
-            onStateChange={setDestinationState}
+            onStateChange={(state) => {
+              setDestinationState(state);
+              scheduleAutoSubmit();
+            }}
             wrapperClassName={`${styles.landingField} ${styles.destinationField}`}
+            busy={isPending}
           />
 
           <div className={styles.landingField}>
@@ -324,24 +447,80 @@ export default function LandingSearchPanel({
         </div>
 
         <div className={styles.includeRow}>
-          <div className={styles.includeSearchButtonWrap}>
-            <button
-              type="submit"
-              className={[
-                styles.searchButton,
-                searchIsActive
-                  ? "oltra-button-primary"
-                  : styles.searchButtonPassive,
-              ].join(" ")}
-              disabled={!searchIsActive}
-              title={searchDisabledReason || undefined}
-            >
-              {searchIsActive
-                ? "CHECK AVAILABILITY"
-                : searchDisabledReason.charAt(0) +
-                  searchDisabledReason.slice(1).toLowerCase()}
-            </button>
+          <div className={styles.includeLeft}>
+            <input type="hidden" name="include_hotels" value="1" />
+            <input
+              type="hidden"
+              name="include_flights"
+              value={effectiveIncludeFlights ? "1" : "0"}
+            />
+            {effectiveIncludeFlights ? (
+              <input type="hidden" name="origin" value={homeAirport} />
+            ) : null}
+
+            <div className={styles.flightsCheckWrap} ref={flightsWrapRef}>
+              <label
+                className={[
+                  styles.includeChecksItem,
+                  !flightsCanActivate ? styles.includeChecksItemDisabled : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <input
+                  type="checkbox"
+                  checked={effectiveIncludeFlights}
+                  disabled={!flightsCanActivate}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIncludeFlights(checked);
+                    if (checked && !homeAirport) {
+                      setAirportPopoverOpen(true);
+                    } else if (!checked) {
+                      setAirportPopoverOpen(false);
+                    }
+                    scheduleAutoSubmit();
+                  }}
+                />
+                <span>
+                  Add Flights
+                  {!flightsCanActivate ? (
+                    <> - To activate please fill in city or hotel, dates and guests</>
+                  ) : effectiveIncludeFlights && homeAirport ? (
+                    <>
+                      {" from "}
+                      <button
+                        type="button"
+                        className={styles.airportNameButton}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setAirportPopoverOpen((v) => !v);
+                        }}
+                      >
+                        {cityForAirportCode(homeAirport)}
+                      </button>
+                    </>
+                  ) : null}
+                </span>
+              </label>
+
+              {flightsCanActivate && effectiveIncludeFlights && airportPopoverOpen ? (
+                <div className={styles.airportPopover}>
+                  <AirportAutocomplete
+                    label="Home airport"
+                    value={homeAirport}
+                    onChange={(code) => {
+                      setHomeAirport(code);
+                      setAirportPopoverOpen(false);
+                      scheduleAutoSubmit();
+                    }}
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
+
         </div>
       </form>
     </div>

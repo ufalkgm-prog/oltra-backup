@@ -27,6 +27,15 @@ export function buildLocationLabel(r: RestaurantRecord) {
   ].filter(Boolean).join(" · ");
 }
 
+export function buildAddressLabel(r: RestaurantRecord) {
+  return [
+    r.local_area,
+    r.state_province__county__island,
+    r.city,
+    r.country,
+  ].filter(Boolean).join(", ");
+}
+
 export function buildAwardsLabel(r: RestaurantRecord) {
   return (r.awards ?? [])
     .map((code) => AWARD_LABELS[code] ?? code)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import OltraSpinner from "./OltraSpinner";
 import type {
   HotelSuggestionDataset,
   SuggestionType,
@@ -27,6 +28,7 @@ type StructuredDestinationState = {
   activeHotelCount: number;
   hasSelection: boolean;
   selectedTypes: SuggestionType[];
+  selectedValues: Partial<Record<SuggestionType, string[]>>;
 };
 
 type Props = {
@@ -37,6 +39,7 @@ type Props = {
   wrapperClassName?: string;
   allowedTypes?: SuggestionType[];
   onStateChange?: (state: StructuredDestinationState) => void;
+  busy?: boolean;
 };
 
 function normalizeParam(v: string | string[] | undefined): string {
@@ -222,6 +225,7 @@ export default function StructuredDestinationField({
   wrapperClassName = "",
   allowedTypes = ALL_TYPES,
   onStateChange,
+  busy = false,
 }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -353,10 +357,18 @@ export default function StructuredDestinationField({
   useEffect(() => {
     if (!onStateChange) return;
 
+    const selectedValues: Partial<Record<SuggestionType, string[]>> = {};
+    tokens.forEach((t) => {
+      const bucket = selectedValues[t.type] ?? [];
+      if (!bucket.includes(t.value)) bucket.push(t.value);
+      selectedValues[t.type] = bucket;
+    });
+
     const nextState = {
       activeHotelCount: activeHotels.length,
       hasSelection: tokens.length > 0,
       selectedTypes: Array.from(new Set(tokens.map((t) => t.type))),
+      selectedValues,
     };
 
     const nextKey = JSON.stringify(nextState);
@@ -519,8 +531,13 @@ export default function StructuredDestinationField({
   const purposeTokens = tokens.filter((token) => token.type === "purpose");
   const settingTokens = tokens.filter((token) => token.type === "setting");
 
-  const inputPlaceholder =
-    tokens.length > 0 ? helperPrompt(tokens) || placeholder : placeholder;
+  const isSingleHotel = tokens.length === 1 && tokens[0].type === "hotel";
+
+  const inputPlaceholder = isSingleHotel
+    ? ""
+    : tokens.length > 0
+    ? helperPrompt(tokens) || placeholder
+    : placeholder;
 
   function submitParentForm() {
     const form = rootRef.current?.closest("form");
@@ -603,6 +620,20 @@ export default function StructuredDestinationField({
       <div className="oltra-label">{label}</div>
 
       <div className={styles.inputWrap}>
+        {isSingleHotel && hotelToken ? (
+          <div className={`oltra-input w-full ${styles.inlineHotelChipWrap}`}>
+            <button
+              type="button"
+              onClick={() => removeToken(hotelToken)}
+              className={styles.tokenPill}
+              title={`Hotel: ${hotelToken.label}`}
+            >
+              <span className={styles.tokenPillLabel}>{hotelToken.label}</span>
+              <span className={styles.tokenPillClose}>×</span>
+            </button>
+          </div>
+        ) : null}
+
         <input
           ref={inputRef}
           value={typedValue}
@@ -640,7 +671,28 @@ export default function StructuredDestinationField({
           className="oltra-input w-full"
           autoComplete="off"
           spellCheck={false}
+          style={{
+            ...(busy ? { paddingRight: 36 } : null),
+            ...(isSingleHotel ? { display: "none" } : null),
+          }}
         />
+
+        {busy ? (
+          <span
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              right: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              display: "inline-flex",
+              alignItems: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <OltraSpinner size={14} />
+          </span>
+        ) : null}
 
         {open && minimumCharsReached && groupedSuggestions.length > 0 ? (
           <div
@@ -680,7 +732,7 @@ export default function StructuredDestinationField({
         ) : null}
       </div>
 
-      {tokens.length > 0 ? (
+      {tokens.length > 0 && !isSingleHotel ? (
         <div className={styles.tokenRow}>
           {tokens.map((token) => (
             <button

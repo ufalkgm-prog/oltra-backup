@@ -1,10 +1,11 @@
-import Link from "next/link";
 import PageShell from "@/components/site/PageShell";
 import LandingBackground from "@/components/site/LandingBackground";
 import { getHotels } from "@/lib/directus";
 import { buildHotelsDirectusFilter } from "@/lib/hotelFilters";
 import { getHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
+import { readGuestSelection } from "@/lib/guests";
 import LandingSearchPanel from "./LandingSearchPanel";
+import LandingSummary from "./LandingSummary";
 import styles from "./page.module.css";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -12,11 +13,6 @@ type SearchParams = Record<string, string | string[] | undefined>;
 function normalizeParam(v: string | string[] | undefined): string {
   if (!v) return "";
   return Array.isArray(v) ? v[0] ?? "" : v;
-}
-
-function listFromParam(v: string | string[] | undefined): string[] {
-  if (!v) return [];
-  return Array.isArray(v) ? v.filter(Boolean) : [v].filter(Boolean);
 }
 
 function buildQueryString(params: SearchParams): string {
@@ -62,6 +58,19 @@ function pickHotelGeographyLabel(
   return q || "selected destination";
 }
 
+function pickDestinationCity(
+  q: string,
+  hotels: Array<{ city?: string | null }>,
+  cityParam: string
+): string {
+  if (cityParam) return cityParam;
+
+  const cities = new Set(hotels.map((h) => cleanLabel(h.city)).filter(Boolean));
+  if (cities.size === 1) return [...cities][0];
+
+  return q;
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -70,40 +79,82 @@ export default async function HomePage({
   const resolvedSearchParams = await searchParams;
   const submitted = normalizeParam(resolvedSearchParams.submitted) === "1";
 
-  const includes = ["hotels"];
+  const includeHotels = normalizeParam(resolvedSearchParams.include_hotels) !== "0";
+  const includeFlights = normalizeParam(resolvedSearchParams.include_flights) === "1";
 
   const q = normalizeParam(resolvedSearchParams.q).trim();
+  const cityParam = normalizeParam(resolvedSearchParams.city).trim();
+  const origin = normalizeParam(resolvedSearchParams.origin).trim();
+  const fromDate = normalizeParam(resolvedSearchParams.from).trim();
+  const toDate = normalizeParam(resolvedSearchParams.to).trim();
+  const bedrooms = normalizeParam(resolvedSearchParams.bedrooms).trim();
+
+  const destinationKeys = [
+    "q",
+    "city",
+    "country",
+    "region",
+    "local_area",
+    "affiliation",
+    "activities",
+    "settings",
+    "styles",
+  ];
+  const hasDestination = destinationKeys.some((key) =>
+    Boolean(normalizeParam(resolvedSearchParams[key]).trim())
+  );
+
+  const guests = readGuestSelection(resolvedSearchParams);
+
+  const hasFullStayDetails =
+    Boolean(fromDate) && Boolean(toDate) && guests.adults > 0 && Boolean(bedrooms);
 
   const dataset = await getHotelSuggestionDataset();
 
-  let hotelCount: number | null = null;
-  let hotelLine: string | null = null;
+  let hotelSummary: {
+    count: number;
+    geography: string;
+    names: string[];
+    hotels: Awaited<ReturnType<typeof getHotels>>;
+  } | null = null;
+  let destinationCity = cityParam || q;
 
-  if (submitted && includes.includes("hotels")) {
+  if (submitted && includeHotels) {
     const filter = buildHotelsDirectusFilter(resolvedSearchParams);
 
     const hotels = await getHotels({
-      fields: ["id", "hotelid", "hotel_name", "city", "country", "region"],
+      fields: [
+        "id",
+        "hotelid",
+        "hotel_name",
+        "city",
+        "country",
+        "region",
+        "highlights",
+        "ext_points",
+        "editor_rank_13",
+        "agoda_photo1",
+        "agoda_photo2",
+        "agoda_photo3",
+        "agoda_photo4",
+        "agoda_photo5",
+        "agoda_hotel_id",
+      ],
       filter,
       sort: ["-editor_rank_13", "-ext_points", "hotel_name"],
     });
 
-    hotelCount = hotels.length;
-
     const geography = pickHotelGeographyLabel(q, hotels);
+    const names = hotels.map((h: any) => h.hotel_name ?? "").filter(Boolean);
 
-    const hotelNames = hotels
-      .slice(0, 10)
-      .map((item: any) => item.hotel_name ?? "")
-      .filter(Boolean);
+    hotelSummary = {
+      count: hotels.length,
+      geography,
+      names,
+      hotels: hotels.slice(0, 20),
+    };
 
-    if (hotelCount === 0) {
-      hotelLine = `0 hotels identified in ${geography}`;
-    } else if (hotelCount > 25) {
-      hotelLine = `More than 25 hotels match your criteria including ${hotelNames.join(", ")}`;
-    } else {
-      hotelLine = `${hotelCount} hotels match your criteria: ${hotelNames.join(", ")}`;
-    }
+    destinationCity = pickDestinationCity(q, hotels, cityParam);
   }
 
   const sharedQuery = buildQueryString({
@@ -112,6 +163,15 @@ export default async function HomePage({
   });
 
   const hotelsHref = `/hotels${sharedQuery ? `?${sharedQuery}` : ""}`;
+  const flightsHref = `/flights${sharedQuery ? `?${sharedQuery}` : ""}`;
+
+  const citySet = normalizeParam(resolvedSearchParams.city).trim();
+  const activitiesSet = normalizeParam(resolvedSearchParams.activities).trim();
+  const narrowSuggestion: "city" | "purpose" | null = !citySet
+    ? "city"
+    : !activitiesSet
+    ? "purpose"
+    : null;
 
   return (
     <PageShell current="" disableBackground>
@@ -124,30 +184,22 @@ export default async function HomePage({
             dataset={dataset}
           />
 
-          {submitted ? (
-            <div className={`oltra-glass oltra-panel ${styles.summaryPanel}`}>
-              <div className={styles.summaryHeader}>
-                <div className="oltra-label">Search overview</div>
-              </div>
-
-              <div className={styles.summaryLines}>
-                {includes.includes("hotels") && hotelLine ? (
-                  <div className={styles.summaryLine}>{hotelLine}</div>
-                ) : null}
-              </div>
-
-              <div className={styles.summaryActions}>
-                {includes.includes("hotels") ? (
-                  <Link
-                    href={hotelsHref}
-                    className={`oltra-button-primary ${styles.summaryButton}`}
-                    prefetch={false}
-                  >
-                    Hotels
-                  </Link>
-                ) : null}
-              </div>
-            </div>
+          {submitted && hasDestination ? (
+            <LandingSummary
+              hotelSummary={hotelSummary}
+              includeHotels={includeHotels}
+              includeFlights={includeFlights}
+              origin={origin}
+              destinationCity={destinationCity}
+              fromDate={fromDate}
+              toDate={toDate}
+              adults={guests.adults}
+              kids={guests.kids}
+              hasFullStayDetails={hasFullStayDetails}
+              hotelsHref={hotelsHref}
+              flightsHref={flightsHref}
+              narrowSuggestion={narrowSuggestion}
+            />
           ) : null}
         </section>
       </main>

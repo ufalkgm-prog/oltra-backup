@@ -12,7 +12,23 @@ type SiteHeaderProps = {
   currentCurrency?: string;
 };
 
-const currencies = ["EUR", "USD", "GBP", "CHF", "AED"];
+const currencies = [
+  "EUR",
+  "USD",
+  "GBP",
+  "CHF",
+  "AED",
+  "DKK",
+  "SEK",
+  "NOK",
+  "CAD",
+  "AUD",
+  "NZD",
+  "JPY",
+  "SGD",
+  "HKD",
+  "CNY",
+];
 const CURRENCY_STORAGE_KEY = "oltra_currency";
 
 function ChevronDown() {

@@ -105,6 +105,23 @@ body {
 }
 
 /* Shared fixed background */
+.oltra-spinner {
+  display: inline-block;
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.22);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  animation: oltra-spin 0.85s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes oltra-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .oltra-page {
   position: relative;
   min-height: 100vh;
@@ -598,7 +615,7 @@ textarea::-webkit-scrollbar-thumb,
 .oltra-site-header__beta-badge {
   position: absolute;
   top: 2px;
-  left: calc(100% - 16px);
+  left: calc(100% - 14px);
   display: inline-flex;
   align-items: center;
   padding: 0.12rem 0.4rem 0.1rem;
@@ -779,7 +796,7 @@ textarea::-webkit-scrollbar-thumb,
   }
 
   .oltra-site-header__beta-badge {
-    left: calc(100% - 10px);
+    left: calc(100% - 8px);
   }
 }
 
@@ -1325,6 +1342,14 @@ details > summary::-webkit-details-marker {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.oltra-temp-controls__heading {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 2px;
 }
 
 .oltra-temp-controls__row {

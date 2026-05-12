@@ -9,6 +9,13 @@
   z-index: 60;
 }
 
+.inlineHotelChipWrap {
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
 .tokenRow {
   margin-top: 4px;
   display: flex;
