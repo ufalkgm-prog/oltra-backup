@@ -126,7 +126,7 @@ const [options, hotelsRaw, tax, suggestions] = await Promise.all([
     fields: hotelFields as unknown as string[],
     filter: hasMeaningfulFilters ? filter : undefined,
     sort: ["-editor_rank_13", "-ext_points", "hotel_name"],
-    limit: hasMeaningfulFilters ? -1 : 60,
+    limit: -1,
   }),
   fetchAllHotelTaxonomies(),
   getHotelSuggestionDataset(),
@@ -134,11 +134,7 @@ const [options, hotelsRaw, tax, suggestions] = await Promise.all([
 
 const hotelsPublished = hotelsRaw.filter((hotel) => hotel.published === true);
 
-const hotels = hasMeaningfulFilters
-  ? hotelsPublished
-  : hotelsPublished
-      .filter((hotel) => Number(hotel.ext_points ?? 0) > 15)
-      .slice(0, 12);
+const hotels = hotelsPublished;
 
   return (
     <PageShell current="Hotels">

@@ -251,8 +251,8 @@ const effectiveView
 
 ### Featured Mode — hotel cycling
 
-* Pool: all hotels with `ext_points > 10` AND at least one image (`featuredPool` useMemo)
-* Cycle: random shuffle of the pool indices, with ≥40 positions between any repeat across cycle boundaries — same gap-guarantee algorithm as `LandingBackground.buildCycle`
+* Pool: all hotels with at least one real agoda photo (`agoda_photo1`–`agoda_photo5` any truthy) — no ext_points restriction
+* Cycle: random shuffle of the pool indices, with ≥30 positions between any repeat across cycle boundaries — same gap-guarantee algorithm as `LandingBackground.buildCycle`
 * Implemented with `featuredCycleRef` (remaining indices queue) and `featuredTailRef` (last N shown) refs; `setSelectedImageIndex` advances the display every 5 s via `setInterval`
 * Hotels without images are excluded regardless of points
 

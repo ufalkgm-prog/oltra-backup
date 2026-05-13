@@ -24,6 +24,11 @@ function randomMotion(): MotionMode {
   return MOTIONS[Math.floor(Math.random() * MOTIONS.length)];
 }
 
+function randomMotionExcluding(exclude: MotionMode): MotionMode {
+  const opts = MOTIONS.filter((m) => m !== exclude);
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+
 function shuffleAll(n: number): number[] {
   const a = Array.from({ length: n }, (_, i) => i);
   for (let i = a.length - 1; i > 0; i -= 1) {
@@ -100,6 +105,7 @@ export default function LandingBackground() {
 
   const queueRef = useRef<number[]>([]);
   const tailRef = useRef<number[]>([]);
+  const slotMotionRef = useRef<{ A: MotionMode; B: MotionMode }>({ A: "zoom-in", B: "zoom-out" });
 
   function takeNextIndex(): number {
     if (queueRef.current.length === 0) {
@@ -115,6 +121,7 @@ export default function LandingBackground() {
     IMAGES.forEach((src) => {
       const img = new Image();
       img.src = src;
+      img.decode().catch(() => {});
     });
   }, []);
 
@@ -141,19 +148,23 @@ export default function LandingBackground() {
     queueRef.current = buildCycle([]);
     tailRef.current = [];
 
-    // First two images: slot A (visible) and slot B (preset, hidden)
+    // First two images: slot A (visible) and slot B (preset, hidden).
+    // B's motion must differ from A's so no two consecutive slides share a motion.
     const idx0 = takeNextIndex();
     const idx1 = takeNextIndex();
+    const mot0 = randomMotion();
+    const mot1 = randomMotionExcluding(mot0);
+    slotMotionRef.current = { A: mot0, B: mot1 };
     setSlotA({
       index: idx0,
-      motion: randomMotion(),
+      motion: mot0,
       end: false,
       visible: true,
       animateTransform: false,
     });
     setSlotB({
       index: idx1,
-      motion: randomMotion(),
+      motion: mot1,
       end: false,
       visible: false,
       animateTransform: false,
@@ -188,11 +199,13 @@ export default function LandingBackground() {
       });
 
       // Once the outgoing slot is fully hidden, reset it with the next image.
-      // Because animateTransform=false, the transform value snaps to the new
-      // motion's start position with no visible animation.
-      after(FADE_MS, () => {
+      // Extra 150 ms beyond FADE_MS ensures opacity has fully settled before the
+      // transform/image snap (avoids a visible flash on slow paint frames).
+      // New motion is guaranteed ≠ the incoming slot's motion.
+      after(FADE_MS + 150, () => {
         const nextIdx = takeNextIndex();
-        const nextMot = randomMotion();
+        const nextMot = randomMotionExcluding(slotMotionRef.current[incoming]);
+        slotMotionRef.current[outgoing] = nextMot;
         setOutgoing({
           index: nextIdx,
           motion: nextMot,
@@ -266,7 +279,14 @@ export default function LandingBackground() {
           }}
         />
       ))}
-
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgba(0,0,0,0.10)",
+          pointerEvents: "none",
+        }}
+      />
     </div>
   );
 }

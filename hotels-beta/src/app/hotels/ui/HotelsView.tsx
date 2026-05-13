@@ -1304,11 +1304,10 @@ export default function HotelsView(props: {
   
   const featuredHotels = useMemo(() => {
     if (!hotels.length) return [];
-    return hotels.filter((hotel) => {
-      const pts = typeof hotel.ext_points === "number" ? hotel.ext_points : 0;
-      if (pts <= 10) return false;
-      return getHotelImageSet(hotel).length > 0;
-    });
+    return hotels.filter((hotel) =>
+      [hotel.agoda_photo1, hotel.agoda_photo2, hotel.agoda_photo3, hotel.agoda_photo4, hotel.agoda_photo5]
+        .some((p) => Boolean(p))
+    );
   }, [hotels]);
 
   const featuredCycleRef = useRef<number[]>([]);
@@ -1319,7 +1318,7 @@ export default function HotelsView(props: {
     if (featuredHotels.length <= 1) return;
 
     const n = featuredHotels.length;
-    const GAP = Math.min(40, n);
+    const GAP = Math.min(30, n);
 
     function shuffle(): number[] {
       const a = Array.from({ length: n }, (_, i) => i);
@@ -2451,7 +2450,10 @@ async function handleCreateTripAndAddHotel() {
                 </form>
               </div>
 
-              <div className="absolute right-5 top-5 z-10 w-[min(360px,calc(100%-40px))] rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(24,34,42,0.22)] px-4 py-3 backdrop-blur-[14px]">
+              <a
+                href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
+                className="absolute right-5 top-5 z-10 block w-[min(360px,calc(100%-40px))] cursor-pointer rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(24,34,42,0.22)] px-4 py-3 backdrop-blur-[14px] transition-colors hover:border-white/22 hover:bg-[rgba(24,34,42,0.32)]"
+              >
                 <div className="text-[11px] uppercase tracking-[0.16em] text-white/72">
                   Featured hotel
                 </div>
@@ -2466,7 +2468,7 @@ async function handleCreateTripAndAddHotel() {
                     .map((award) => award.label)
                     .join(" · ") || "Curated featured selection"}
                 </div>
-              </div>
+              </a>
             </div>
           ) : effectiveView === "map" ? (
             <div className="relative">
