@@ -249,6 +249,15 @@ const effectiveView
 
 ---
 
+### Featured Mode — hotel cycling
+
+* Pool: all hotels with `ext_points > 10` AND at least one image (`featuredPool` useMemo)
+* Cycle: random shuffle of the pool indices, with ≥40 positions between any repeat across cycle boundaries — same gap-guarantee algorithm as `LandingBackground.buildCycle`
+* Implemented with `featuredCycleRef` (remaining indices queue) and `featuredTailRef` (last N shown) refs; `setSelectedImageIndex` advances the display every 5 s via `setInterval`
+* Hotels without images are excluded regardless of points
+
+---
+
 ## 7. RESTAURANTS PAGE LOGIC
 
 ### Flow
@@ -343,6 +352,10 @@ Two-tier match between the selected outbound's leg and each return candidate (`g
 * `AIRPORT_OPTIONS` has **no coordinates** — great-circle calculations require expanding it. Avoided so far.
 * Airline logos: not currently used. If added, public sources are Daisycon (`https://daisycon.io/images/airline/?iata=XX`) and Google flights static (`https://www.gstatic.com/flights/airline_logos/70px/XX.png`).
 
+### Deep-link from Saved Trips
+
+* `buildInitialSearch` in `FlightsView.tsx` reads `cabin` and `tripType` from URL params so that the Saved Trips "Book" button can land the user on the flights page with the correct cabin class and trip type pre-selected. Valid cabin values: `"Economy" | "Premium Economy" | "Business" | "First"`. Valid tripType values: `"oneway" | "return" | "multiple"`. Falls back to `INITIAL_SEARCH` defaults if param is absent or invalid.
+
 ---
 
 ## 8. FILTERING PRINCIPLES
@@ -426,13 +439,73 @@ All handled via:
 
 ---
 
-## 15. CURRENT STATE SUMMARY
+## 15. LANDING PAGE LOGIC
 
-* Hotels UI: complete and stable
+Key files:
+
+* `/src/components/site/LandingBackground.tsx` — full-screen image slideshow
+* `/src/app/LandingSearchPanel.tsx` — floating search panel (destination, dates, guests, flights toggle)
+* `/src/app/LandingSummary.tsx` — results panel showing hotel cards + flight previews
+
+### LandingBackground
+
+* 49 images in `/public/images/landing/landing-01.jpg … -49.jpg`
+* Cycles with cross-fade + Ken Burns motion (zoom-in / zoom-out / pan-left / pan-right / fly-over)
+* Shuffle algorithm (`buildCycle`) guarantees ≥20 positions between any repeat across cycle boundaries
+* **No dark overlay** — the `rgba(0,0,0,0.34)` overlay was removed; images display at full brightness
+
+### LandingSummary — hotel card links
+
+* Each hotel card links to `/hotels?q=<hotel_name>&from=<date>&to=<date>&adults=N&submitted=1`
+* This lands on the main Hotels page with that hotel filtered/selected — **not** the standalone `/hotels/[hotelid]` page (which exists but is not part of the intended UX flow)
+
+### LandingSearchPanel
+
+* "Add flights" checkbox (lowercase f) — activates flight search when destination, dates and guests are filled
+* When active, shows home airport selector; origin IATA resolved from `AIRPORT_OPTIONS`
+
+---
+
+## 16. AUTH & MEMBERS
+
+### Login page (`/src/app/login/LoginView.tsx`)
+
+Three views rendered in the same panel:
+
+* **login** — email + password; LOG IN button is `oltra-button-primary` only when email is valid (has `@`, `.`, letters before/between/after) AND password non-empty; CREATE NEW ACCOUNT and CONTINUE WITH GOOGLE always primary; no Facebook
+* **signup** — email, password (≥7 chars, must contain letters and numbers), confirm password; Supabase `signUp` handles duplicate-email detection natively
+* **forgot** — email field; email sending deferred until Vercel deployment (Vercel server function); shows placeholder message for now
+
+### SiteHeader greeting
+
+* Uses `supabase.auth.onAuthStateChange` only (no separate `getUser()` call — removed to fix race condition where `getUser()` could overwrite state with null during token refresh)
+* Name resolution order: `memberName` from DB profile → `user.user_metadata.full_name` → `user.user_metadata.name` → shows "Hello" without name
+* Shows "Members" when logged out, "Hello [FirstName]" when logged in
+
+### Member profile name for OAuth users
+
+* `fetchMemberProfileBrowser` in `/src/lib/members/db.ts` falls back to `user.user_metadata.full_name ?? user.user_metadata.name` when `member_profiles.member_name` is null
+* This means Google OAuth users see their name pre-filled in Personal Information and in the header immediately after first login, before they have saved a profile
+
+### OAuth redirect URLs (Supabase config required)
+
+* Code uses `window.location.origin` dynamically for the `redirectTo` URL
+* Both the Vercel production URL and `http://localhost:3000` must be in Supabase Dashboard → Authentication → URL Configuration → Redirect URLs, and in Google Cloud Console → Authorized redirect URIs
+* Site URL in Supabase should be set to the production Vercel URL after deployment
+
+---
+
+## 17. CURRENT STATE SUMMARY
+
+* Hotels UI: complete and stable; featured mode cycles all hotels with ext_points > 10 in random order with ≥40-position repeat gap
 * Restaurants UI: functional and aligned
-* Flights UI: Duffel-backed search, return-trip airline matching (same airline / alliance), per-segment detail popup, smart max-duration defaults, scrollbar-aware column alignment
-* Shared dropdown behavior implemented
+* Flights UI: Duffel-backed search, return-trip airline matching (same airline / alliance), per-segment detail popup, smart max-duration defaults, scrollbar-aware column alignment, cabin + tripType URL params for deep-linking from Saved Trips
+* Landing page: no dark overlay, hotel cards link to main /hotels page, "Add flights" label correct
+* Members UI: Personal Information, Saved Trips (with localStorage trip notes + Book redirect URLs), Favorites — complete
+* Login: three-view panel (login / signup / forgot), Google OAuth only, active button state validation
+* Auth header: race-condition-free, OAuth name fallback, instant greeting on login
 * Location alias system implemented (Saint Tropez ↔ Ramatuelle)
+* Build: passes `npm run build` and `npx tsc --noEmit` clean (warnings only, no errors)
 
 ---
 
