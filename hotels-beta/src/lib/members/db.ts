@@ -139,8 +139,13 @@ export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null>
 
   const profile = profileRes.data;
 
+  const oauthName =
+    (user.user_metadata?.full_name as string | undefined) ??
+    (user.user_metadata?.name as string | undefined) ??
+    "";
+
   return {
-    memberName: profile?.member_name ?? "",
+    memberName: profile?.member_name ?? oauthName,
     email: profile?.email ?? user.email ?? "",
     phone: profile?.phone ?? "",
     homeAirport: profile?.home_airport ?? "",
@@ -399,6 +404,8 @@ function mapSavedTrips(
         name: item.hotel_name ?? "",
         location: item.location ?? "",
         stay: item.stay_label ?? "",
+        checkIn: item.check_in ?? undefined,
+        checkOut: item.check_out ?? undefined,
         status: (item.status as "confirmed" | "pending" | "saved") ?? "saved",
         thumbnail: item.thumbnail ?? "/images/hero-lp.jpg",
         hasOverlapWarning: item.has_overlap_warning ?? false,
@@ -421,6 +428,7 @@ function mapSavedTrips(
         route: item.route ?? "",
         timing: item.timing ?? "",
         cabin: item.cabin ?? "",
+        departAt: item.depart_at ?? undefined,
         status: (item.status as "confirmed" | "pending" | "saved") ?? "saved",
         thumbnail: item.thumbnail ?? "/images/hero-lp.jpg",
         hasOverlapWarning: item.has_overlap_warning ?? false,

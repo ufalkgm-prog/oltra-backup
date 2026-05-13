@@ -53,7 +53,12 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
 
   const supabase = createClient();
 
-  const memberFirstName = memberName.trim().split(/\s+/)[0] ?? "";
+  const oauthName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    (user?.user_metadata?.name as string | undefined) ??
+    "";
+  const effectiveName = memberName || oauthName;
+  const memberFirstName = effectiveName.trim().split(/\s+/)[0] ?? "";
   const truncatedFirstName =
     memberFirstName.length > 12 ? `${memberFirstName.slice(0, 12)}...` : memberFirstName;
   const membersLabel = user
@@ -72,10 +77,6 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
 
   useEffect(() => {
     let mounted = true;
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (mounted) setUser(data.user);
-    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {

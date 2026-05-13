@@ -48,6 +48,88 @@ const PREFERRED_AIRLINE_OPTIONS: Option[] = [
   { value: "Virgin Atlantic", label: "Virgin Atlantic" },
 ];
 
+const COUNTRY_CODE_OPTIONS: Option[] = [
+  { value: "+1", label: "+1 · US / CA" },
+  { value: "+7", label: "+7 · RU" },
+  { value: "+20", label: "+20 · EG" },
+  { value: "+27", label: "+27 · ZA" },
+  { value: "+30", label: "+30 · GR" },
+  { value: "+31", label: "+31 · NL" },
+  { value: "+32", label: "+32 · BE" },
+  { value: "+33", label: "+33 · FR" },
+  { value: "+34", label: "+34 · ES" },
+  { value: "+36", label: "+36 · HU" },
+  { value: "+39", label: "+39 · IT" },
+  { value: "+40", label: "+40 · RO" },
+  { value: "+41", label: "+41 · CH" },
+  { value: "+43", label: "+43 · AT" },
+  { value: "+44", label: "+44 · GB" },
+  { value: "+45", label: "+45 · DK" },
+  { value: "+46", label: "+46 · SE" },
+  { value: "+47", label: "+47 · NO" },
+  { value: "+48", label: "+48 · PL" },
+  { value: "+49", label: "+49 · DE" },
+  { value: "+51", label: "+51 · PE" },
+  { value: "+52", label: "+52 · MX" },
+  { value: "+54", label: "+54 · AR" },
+  { value: "+55", label: "+55 · BR" },
+  { value: "+56", label: "+56 · CL" },
+  { value: "+57", label: "+57 · CO" },
+  { value: "+60", label: "+60 · MY" },
+  { value: "+61", label: "+61 · AU" },
+  { value: "+62", label: "+62 · ID" },
+  { value: "+63", label: "+63 · PH" },
+  { value: "+64", label: "+64 · NZ" },
+  { value: "+65", label: "+65 · SG" },
+  { value: "+66", label: "+66 · TH" },
+  { value: "+81", label: "+81 · JP" },
+  { value: "+82", label: "+82 · KR" },
+  { value: "+84", label: "+84 · VN" },
+  { value: "+86", label: "+86 · CN" },
+  { value: "+90", label: "+90 · TR" },
+  { value: "+91", label: "+91 · IN" },
+  { value: "+92", label: "+92 · PK" },
+  { value: "+94", label: "+94 · LK" },
+  { value: "+212", label: "+212 · MA" },
+  { value: "+213", label: "+213 · DZ" },
+  { value: "+216", label: "+216 · TN" },
+  { value: "+230", label: "+230 · MU" },
+  { value: "+234", label: "+234 · NG" },
+  { value: "+254", label: "+254 · KE" },
+  { value: "+255", label: "+255 · TZ" },
+  { value: "+351", label: "+351 · PT" },
+  { value: "+352", label: "+352 · LU" },
+  { value: "+353", label: "+353 · IE" },
+  { value: "+354", label: "+354 · IS" },
+  { value: "+358", label: "+358 · FI" },
+  { value: "+359", label: "+359 · BG" },
+  { value: "+370", label: "+370 · LT" },
+  { value: "+371", label: "+371 · LV" },
+  { value: "+372", label: "+372 · EE" },
+  { value: "+380", label: "+380 · UA" },
+  { value: "+385", label: "+385 · HR" },
+  { value: "+386", label: "+386 · SI" },
+  { value: "+420", label: "+420 · CZ" },
+  { value: "+421", label: "+421 · SK" },
+  { value: "+852", label: "+852 · HK" },
+  { value: "+855", label: "+855 · KH" },
+  { value: "+880", label: "+880 · BD" },
+  { value: "+886", label: "+886 · TW" },
+  { value: "+960", label: "+960 · MV" },
+  { value: "+961", label: "+961 · LB" },
+  { value: "+962", label: "+962 · JO" },
+  { value: "+966", label: "+966 · SA" },
+  { value: "+971", label: "+971 · AE" },
+  { value: "+972", label: "+972 · IL" },
+  { value: "+973", label: "+973 · BH" },
+  { value: "+974", label: "+974 · QA" },
+  { value: "+975", label: "+975 · BT" },
+  { value: "+977", label: "+977 · NP" },
+  { value: "+994", label: "+994 · AZ" },
+  { value: "+995", label: "+995 · GE" },
+  { value: "+998", label: "+998 · UZ" },
+];
+
 const DAY_OPTIONS: Option[] = Array.from({ length: 31 }, (_, index) => {
   const value = String(index + 1);
   return { value, label: value };
@@ -84,6 +166,18 @@ function normalizeAirportValue(value: string): string {
   );
 
   return labelMatch?.value ?? raw;
+}
+
+function parsePhone(phone: string): { code: string; number: string } {
+  const raw = phone.trim();
+  if (raw.startsWith("+")) {
+    const spaceIdx = raw.indexOf(" ");
+    if (spaceIdx > 0) {
+      return { code: raw.slice(0, spaceIdx), number: raw.slice(spaceIdx + 1) };
+    }
+    return { code: raw, number: "" };
+  }
+  return { code: "", number: raw };
 }
 
 function normalizeMemberProfile(profile: MemberProfile): MemberProfile {
@@ -141,12 +235,18 @@ export default function PersonalInformationView() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showLeavePrompt, setShowLeavePrompt] = useState(false);
   const [showTerminatePrompt, setShowTerminatePrompt] = useState(false);
   const pendingHrefRef = useRef<string | null>(null);
+  const allowLeaveRef = useRef(false);
   const supabase = useMemo(() => createClient(), []);
+
+  const { code: phoneCode, number: phoneNum } = useMemo(
+    () => parsePhone(profile.phone),
+    [profile.phone]
+  );
 
   const isDirty = useMemo(
     () => !profilesEqual(profile, savedProfile),
@@ -206,7 +306,7 @@ export default function PersonalInformationView() {
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!isDirty) return;
+      if (!isDirty || allowLeaveRef.current) return;
 
       event.preventDefault();
       event.returnValue = "";
@@ -251,7 +351,7 @@ export default function PersonalInformationView() {
   }, [isDirty, showLeavePrompt]);
 
   function clearMessages() {
-    setStatusMessage("");
+    setJustSaved(false);
     setErrorMessage("");
   }
 
@@ -261,6 +361,11 @@ export default function PersonalInformationView() {
   ) {
     setProfile((prev) => ({ ...prev, [key]: value }));
     clearMessages();
+  }
+
+  function updatePhone(code: string, number: string) {
+    const combined = code && number ? `${code} ${number}` : code || number;
+    updateField("phone", combined);
   }
 
   function updateBirthday(key: keyof MemberBirthday, value: string) {
@@ -336,12 +441,12 @@ export default function PersonalInformationView() {
 
     try {
       setIsSaving(true);
-      setStatusMessage("");
+      setErrorMessage("");
       setErrorMessage("");
 
       await saveMemberProfileBrowser(profile);
       setSavedProfile(profile);
-      setStatusMessage("Personal information saved.");
+      setJustSaved(true);
     } catch {
       setErrorMessage("Could not save personal information.");
     } finally {
@@ -352,7 +457,7 @@ export default function PersonalInformationView() {
   async function handleLogout() {
     try {
       setErrorMessage("");
-      setStatusMessage("");
+      setErrorMessage("");
       await supabase.auth.signOut();
       window.location.href = "/login";
     } catch {
@@ -362,10 +467,7 @@ export default function PersonalInformationView() {
 
   function handleTerminateMembership() {
     setShowTerminatePrompt(false);
-    setStatusMessage("");
-    setErrorMessage(
-      "Membership termination will be connected in the next phase."
-    );
+    setErrorMessage("Membership termination will be connected in the next phase.");
   }
 
   async function handleLeaveDecision(shouldSave: boolean) {
@@ -375,12 +477,11 @@ export default function PersonalInformationView() {
     if (shouldSave) {
       try {
         setIsSaving(true);
-        setStatusMessage("");
+        setErrorMessage("");
         setErrorMessage("");
 
         await saveMemberProfileBrowser(profile);
         setSavedProfile(profile);
-        setStatusMessage("Personal information saved.");
       } catch {
         setErrorMessage("Could not save personal information.");
         setIsSaving(false);
@@ -394,6 +495,7 @@ export default function PersonalInformationView() {
     setShowLeavePrompt(false);
 
     if (href) {
+      allowLeaveRef.current = true;
       window.location.href = href;
     }
   }
@@ -412,149 +514,142 @@ export default function PersonalInformationView() {
     <>
       <div className="members-stack">
         <section className="oltra-glass members-section">
-          <div className="members-profile-grid">
-            <div className="members-form-stack">
-              <div className="members-form-field">
-                <label className="oltra-label">MEMBER NAME</label>
+          <div className="members-profile-form-grid">
+            <div className="members-form-field">
+              <label className="oltra-label">MEMBER NAME</label>
+              <input
+                className="oltra-input"
+                value={profile.memberName}
+                onChange={(event) =>
+                  updateField("memberName", event.target.value)
+                }
+              />
+            </div>
+
+            <div className="members-form-field">
+              <label className="oltra-label">E-MAIL</label>
+              <input
+                className="oltra-input"
+                value={profile.email}
+                onChange={(event) => updateField("email", event.target.value)}
+              />
+            </div>
+
+            <div className="members-form-field">
+              <label className="oltra-label">HOME AIRPORT</label>
+              <OltraSelect
+                name="homeAirport"
+                value={profile.homeAirport}
+                placeholder="Home airport"
+                options={homeAirportOptions}
+                align="left"
+                onValueChange={(value) => updateField("homeAirport", value)}
+              />
+            </div>
+
+            <div className="members-form-field">
+              <label className="oltra-label">PHONE</label>
+              <div className="members-phone-grid">
+                <CountryCodeSelect
+                  value={phoneCode}
+                  onChange={(code) => updatePhone(code, phoneNum)}
+                />
                 <input
                   className="oltra-input"
-                  value={profile.memberName}
-                  onChange={(event) =>
-                    updateField("memberName", event.target.value)
-                  }
+                  placeholder="Number"
+                  value={phoneNum}
+                  onChange={(e) => updatePhone(phoneCode, e.target.value)}
                 />
-              </div>
-
-              <div className="members-form-field">
-                <label className="oltra-label">E-MAIL</label>
-                <input
-                  className="oltra-input"
-                  value={profile.email}
-                  onChange={(event) => updateField("email", event.target.value)}
-                />
-              </div>
-
-              <div className="members-form-field">
-                <label className="oltra-label">PHONE</label>
-                <input
-                  className="oltra-input"
-                  value={profile.phone}
-                  onChange={(event) => updateField("phone", event.target.value)}
-                />
-              </div>
-
-              <div className="members-form-field">
-                <label className="oltra-label">BIRTHDAY</label>
-                <div className="members-birthday-grid">
-                  <OltraSelect
-                    name="birthdayDay"
-                    value={profile.birthday.day}
-                    placeholder="Day"
-                    options={DAY_OPTIONS}
-                    align="left"
-                    onValueChange={(value) => updateBirthday("day", value)}
-                  />
-
-                  <OltraSelect
-                    name="birthdayMonth"
-                    value={profile.birthday.month}
-                    placeholder="Month"
-                    options={MONTH_OPTIONS}
-                    align="left"
-                    onValueChange={(value) => updateBirthday("month", value)}
-                  />
-
-                  <input
-                    className="oltra-input"
-                    placeholder="Year"
-                    value={profile.birthday.year}
-                    onChange={(event) =>
-                      updateBirthday("year", event.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="members-profile-note">
-                <div className="members-note">
-                  Only for use in booking context - OLTRA will not send
-                  advertising information or pass on contact details to third
-                  parties.
-                </div>
               </div>
             </div>
 
-            <div className="members-profile-side">
-              <div className="members-form-stack">
-                <div className="members-form-field">
-                  <label className="oltra-label">HOME AIRPORT</label>
-                  <OltraSelect
-                    name="homeAirport"
-                    value={profile.homeAirport}
-                    placeholder="Home airport"
-                    options={homeAirportOptions}
-                    align="left"
-                    onValueChange={(value) =>
-                      updateField("homeAirport", value)
-                    }
-                  />
-                </div>
+            <div className="members-form-field">
+              <label className="oltra-label">BIRTHDAY</label>
+              <div className="members-birthday-grid">
+                <OltraSelect
+                  name="birthdayDay"
+                  value={profile.birthday.day}
+                  placeholder="Day"
+                  options={DAY_OPTIONS}
+                  align="left"
+                  onValueChange={(value) => updateBirthday("day", value)}
+                />
 
-                <div className="members-form-field">
-                  <label className="oltra-label">PREFERRED AIRLINES</label>
-                  <MultiSelectDropdown
-                    value={parseMultiValue(profile.preferredAirline)}
-                    placeholder="Preferred airlines"
-                    options={PREFERRED_AIRLINE_OPTIONS}
-                    onChange={(values) =>
-                      updateField(
-                        "preferredAirline",
-                        stringifyMultiValue(values)
-                      )
-                    }
-                  />
-                </div>
+                <OltraSelect
+                  name="birthdayMonth"
+                  value={profile.birthday.month}
+                  placeholder="Month"
+                  options={MONTH_OPTIONS}
+                  align="left"
+                  onValueChange={(value) => updateBirthday("month", value)}
+                />
+
+                <input
+                  className="oltra-input"
+                  placeholder="Year"
+                  value={profile.birthday.year}
+                  onChange={(event) =>
+                    updateBirthday("year", event.target.value)
+                  }
+                />
               </div>
+            </div>
 
-              <div className="members-profile-actions">
-                <div className="members-profile-status">
-                  {errorMessage ? (
-                    <div className="members-note">{errorMessage}</div>
-                  ) : statusMessage ? (
-                    <div className="members-note">{statusMessage}</div>
-                  ) : null}
+            <div className="members-form-field">
+              <label className="oltra-label">PREFERRED AIRLINES</label>
+              <MultiSelectDropdown
+                value={parseMultiValue(profile.preferredAirline)}
+                placeholder="Preferred airlines"
+                options={PREFERRED_AIRLINE_OPTIONS}
+                onChange={(values) =>
+                  updateField("preferredAirline", stringifyMultiValue(values))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="members-profile-actions-row">
+            <div className="members-note" style={{ maxWidth: 360 }}>
+              Only for use in booking context — OLTRA will not send advertising
+              information or pass on contact details to third parties.
+            </div>
+
+            <div className="members-profile-buttons">
+              {errorMessage ? (
+                <div className="members-note" style={{ textAlign: "right" }}>
+                  {errorMessage}
                 </div>
+              ) : null}
 
-                <div className="members-membership-buttons">
-                  <button
-                    type="button"
-                    className={[
-                      isDirty ? "oltra-button-primary" : "oltra-button-secondary",
-                      "members-action-button",
-                    ].join(" ")}
-                    onClick={handleSave}
-                    disabled={!isDirty || isSaving}
-                  >
-                    {isSaving ? "Saving..." : "Save"}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="oltra-button-secondary members-action-button"
-                    onClick={handleLogout}
-                  >
-                    Log out
-                  </button>
-                </div>
+              <div className="members-profile-save-row">
+                <button
+                  type="button"
+                  className={[
+                    isDirty ? "oltra-button-primary" : "oltra-button-secondary",
+                    "members-action-button",
+                  ].join(" ")}
+                  onClick={handleSave}
+                  disabled={!isDirty || isSaving}
+                >
+                  {isSaving ? "Saving..." : justSaved ? "Saved" : "Save"}
+                </button>
 
                 <button
                   type="button"
-                  className="members-text-danger-action members-terminate-link"
-                  onClick={() => setShowTerminatePrompt(true)}
+                  className="oltra-button-secondary members-action-button"
+                  onClick={handleLogout}
                 >
-                  Terminate membership
+                  Log out
                 </button>
               </div>
+
+              <button
+                type="button"
+                className="members-text-danger-action"
+                onClick={() => setShowTerminatePrompt(true)}
+              >
+                Terminate membership
+              </button>
             </div>
           </div>
         </section>
@@ -705,6 +800,93 @@ export default function PersonalInformationView() {
   );
 }
 
+function CountryCodeSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  const filteredOptions = useMemo(() => {
+    const q = query.trim().toLowerCase().replace(/^\+/, "");
+    if (!q) return COUNTRY_CODE_OPTIONS;
+    return COUNTRY_CODE_OPTIONS.filter((opt) => {
+      const code = opt.value.toLowerCase().replace(/^\+/, "");
+      const label = opt.label.toLowerCase();
+      return code.startsWith(q) || label.includes(q);
+    });
+  }, [query]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onMouseDown(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open]);
+
+  function handleFocus() {
+    setQuery("");
+    setOpen(true);
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setQuery(e.target.value);
+    setOpen(true);
+  }
+
+  function selectOption(code: string) {
+    onChange(code);
+    setQuery("");
+    setOpen(false);
+  }
+
+  return (
+    <div ref={rootRef} className="members-country-code-select" data-oltra-control="true">
+      <input
+        type="text"
+        className="oltra-input"
+        placeholder="+XX"
+        value={open ? query : value}
+        onFocus={handleFocus}
+        onChange={handleChange}
+        autoComplete="off"
+        spellCheck={false}
+      />
+      {open && filteredOptions.length > 0 ? (
+        <div className="oltra-dropdown-panel members-country-code-panel">
+          <div className="oltra-dropdown-list members-country-code-list">
+            {filteredOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={[
+                  "oltra-dropdown-item",
+                  opt.value === value ? "bg-white/10 text-white" : "",
+                ].join(" ")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  selectOption(opt.value);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function MultiSelectDropdown({
   value,
   placeholder,
@@ -751,6 +933,12 @@ function MultiSelectDropdown({
   const displayLabel =
     selectedLabels.length > 0 ? selectedLabels.join(", ") : placeholder;
 
+  const sortedOptions = useMemo(() => {
+    const selected = options.filter((opt) => value.includes(opt.value));
+    const rest = options.filter((opt) => !value.includes(opt.value));
+    return [...selected, ...rest];
+  }, [options, value]);
+
   function toggleValue(nextValue: string) {
     if (value.includes(nextValue)) {
       onChange(value.filter((item) => item !== nextValue));
@@ -778,28 +966,28 @@ function MultiSelectDropdown({
         aria-expanded={open}
       >
         <span className="members-multiselect__text">{displayLabel}</span>
-        <span className="members-multiselect__chevron">⌄</span>
+        <span className="members-multiselect__chevron">
+          <svg viewBox="0 0 20 20" aria-hidden="true" style={{ width: 12, height: 12, display: "block" }}>
+            <path d="M5.5 7.5 10 12l4.5-4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </button>
 
       {open ? (
         <div className="oltra-dropdown-panel members-multiselect__panel">
           <div className="oltra-dropdown-list members-multiselect__list">
-            {options.map((item: Option) => {
+            {sortedOptions.map((item: Option) => {
               const selected = value.includes(item.value);
 
               return (
                 <button
                   key={item.value}
                   type="button"
-                  className={[
-                    "oltra-dropdown-item",
-                    "members-multiselect__option",
-                    selected ? "members-multiselect__option--active" : "",
-                  ].join(" ")}
+                  className="oltra-dropdown-item members-multiselect__option"
                   onClick={() => toggleValue(item.value)}
                 >
+                  <span className="members-multiselect__check">{selected ? "✓" : ""}</span>
                   <span>{item.label}</span>
-                  <span>{selected ? "✓" : ""}</span>
                 </button>
               );
             })}

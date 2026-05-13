@@ -51,6 +51,7 @@ export type FlightLeg = {
 export type Itinerary = {
   id: string
   offerId: string
+  slices: FlightLeg[]
   outbound: FlightLeg
   inbound?: FlightLeg
   priceEur: number
@@ -205,10 +206,18 @@ function normalizeSlice(slice: OfferSlice): FlightLeg {
   }
 }
 
+function totalDuration(item: Omit<Itinerary, 'score'>): number {
+  return item.slices.reduce((s, l) => s + l.durationMinutes, 0)
+}
+
+function totalStops(item: Omit<Itinerary, 'score'>): number {
+  return item.slices.reduce((s, l) => s + l.stops, 0)
+}
+
 function computeScores(items: Omit<Itinerary, 'score'>[]): Itinerary[] {
   if (!items.length) return []
   const prices = items.map(i => i.priceEur)
-  const durations = items.map(i => i.outbound.durationMinutes + (i.inbound?.durationMinutes ?? 0))
+  const durations = items.map(totalDuration)
   const minP = Math.min(...prices), maxP = Math.max(...prices)
   const minD = Math.min(...durations), maxD = Math.max(...durations)
   const pRange = maxP - minP || 1
@@ -216,9 +225,8 @@ function computeScores(items: Omit<Itinerary, 'score'>[]): Itinerary[] {
 
   return items.map(item => {
     const pNorm = (item.priceEur - minP) / pRange
-    const dur = item.outbound.durationMinutes + (item.inbound?.durationMinutes ?? 0)
-    const dNorm = (dur - minD) / dRange
-    const stops = item.outbound.stops + (item.inbound?.stops ?? 0)
+    const dNorm = (totalDuration(item) - minD) / dRange
+    const stops = totalStops(item)
     const score = Math.max(0, Math.min(100, Math.round(100 - pNorm * 35 - dNorm * 30 - stops * 5)))
     return { ...item, score }
   })
@@ -228,14 +236,18 @@ export function normalizeOffers(offers: OfferWithoutServices[], tripType: TripTy
   void tripType
   const raw: Omit<Itinerary, 'score'>[] = offers
     .filter(o => o.slices.length > 0)
-    .map(offer => ({
-      id: offer.id,
-      offerId: offer.id,
-      outbound: normalizeSlice(offer.slices[0]!),
-      inbound: offer.slices[1] ? normalizeSlice(offer.slices[1]) : undefined,
-      priceEur: parseFloat(offer.total_amount),
-      currency: offer.total_currency,
-      tags: undefined,
-    }))
+    .map(offer => {
+      const slices = offer.slices.map(normalizeSlice)
+      return {
+        id: offer.id,
+        offerId: offer.id,
+        slices,
+        outbound: slices[0]!,
+        inbound: slices[1],
+        priceEur: parseFloat(offer.total_amount),
+        currency: offer.total_currency,
+        tags: undefined,
+      }
+    })
   return computeScores(raw)
 }

@@ -483,7 +483,7 @@ export default function LandingSearchPanel({
                   }}
                 />
                 <span>
-                  Add Flights
+                  Add flights
                   {!flightsCanActivate ? (
                     <> - To activate please fill in city or hotel, dates and guests</>
                   ) : effectiveIncludeFlights && homeAirport ? (

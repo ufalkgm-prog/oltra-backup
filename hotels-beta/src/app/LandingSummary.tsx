@@ -360,18 +360,28 @@ export default function LandingSummary({
 
           {showCards ? (
             <div className={styles.smallCardsList}>
-              {visibleHotels.map((h) => (
+              {visibleHotels.map((h) => {
+                const hotelParams = new URLSearchParams();
+                hotelParams.set("q", h.hotel_name ?? "");
+                if (fromDate) hotelParams.set("from", fromDate);
+                if (toDate) hotelParams.set("to", toDate);
+                if (adults > 0) hotelParams.set("adults", String(adults));
+                if (kids > 0) hotelParams.set("kids", String(kids));
+                hotelParams.set("submitted", "1");
+                const hotelHref = `/hotels?${hotelParams.toString()}`;
+                return (
                 <HotelSmallCard
                   key={String(h.id)}
                   hotel={h}
-                  href={`/hotels/${h.hotelid ?? h.id}`}
+                  href={hotelHref}
                   availability={
                     hasFullStayDetails
                       ? availabilityById[String(h.id)] ?? { status: "loading" }
                       : { status: "idle" }
                   }
                 />
-              ))}
+                );
+              })}
             </div>
           ) : null}
         </div>

@@ -24,6 +24,8 @@ export type SavedHotel = {
   name: string;
   location: string;
   stay: string;
+  checkIn?: string;
+  checkOut?: string;
   status: "confirmed" | "pending" | "saved";
   thumbnail: string;
   hasOverlapWarning?: boolean;
@@ -44,6 +46,7 @@ export type SavedFlight = {
   route: string;
   timing: string;
   cabin: string;
+  departAt?: string;
   status: "confirmed" | "pending" | "saved";
   thumbnail: string;
   hasOverlapWarning?: boolean;

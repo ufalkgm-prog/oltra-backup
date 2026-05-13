@@ -1304,26 +1304,67 @@ export default function HotelsView(props: {
   
   const featuredHotels = useMemo(() => {
     if (!hotels.length) return [];
-
-    return [...hotels]
-      .sort((a, b) => getTotalPoints(b) - getTotalPoints(a))
-      .filter((hotel) => {
-        const images = getHotelImageSet(hotel);
-        return images.length > 0;
-      })
-      .slice(0, 12);
+    return hotels.filter((hotel) => {
+      const pts = typeof hotel.ext_points === "number" ? hotel.ext_points : 0;
+      if (pts <= 10) return false;
+      return getHotelImageSet(hotel).length > 0;
+    });
   }, [hotels]);
+
+  const featuredCycleRef = useRef<number[]>([]);
+  const featuredTailRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (effectiveView !== "featured") return;
     if (featuredHotels.length <= 1) return;
 
+    const n = featuredHotels.length;
+    const GAP = Math.min(40, n);
+
+    function shuffle(): number[] {
+      const a = Array.from({ length: n }, (_, i) => i);
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildCycle(prevTail: number[]): number[] {
+      const all = shuffle();
+      const tail = new Set(prevTail);
+      const block = Math.min(GAP, all.length);
+      for (let i = 0; i < block; i++) {
+        if (tail.has(all[i])) {
+          for (let j = block; j < all.length; j++) {
+            if (!tail.has(all[j])) {
+              [all[i], all[j]] = [all[j], all[i]];
+              break;
+            }
+          }
+        }
+      }
+      return all;
+    }
+
+    const initial = buildCycle([]);
+    featuredTailRef.current = [];
+    const first = initial.shift() ?? 0;
+    featuredCycleRef.current = initial;
+    featuredTailRef.current = [first];
+    setSelectedImageIndex(first);
+
     const timer = window.setInterval(() => {
-      setSelectedImageIndex((prev) => (prev + 1) % featuredHotels.length);
+      if (featuredCycleRef.current.length === 0) {
+        featuredCycleRef.current = buildCycle(featuredTailRef.current);
+      }
+      const next = featuredCycleRef.current.shift()!;
+      featuredTailRef.current = [...featuredTailRef.current, next].slice(-GAP);
+      setSelectedImageIndex(next);
     }, 5000);
 
     return () => window.clearInterval(timer);
-  }, [effectiveView, featuredHotels.length]);
+  }, [effectiveView, featuredHotels]);
 
   const featuredHotel =
     featuredHotels[selectedImageIndex % Math.max(featuredHotels.length, 1)] ??

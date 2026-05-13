@@ -40,9 +40,9 @@
 }
 
 .segmentButtonActive {
-  background: rgba(255, 255, 255, 0.96) !important;
-  color: var(--oltra-text-dark) !important;
-  border-color: rgba(255, 255, 255, 0.96) !important;
+  background: rgba(20, 32, 48, 0.55) !important;
+  color: var(--oltra-text-primary) !important;
+  border: 2px solid rgba(255, 255, 255, 0.95) !important;
 }
 
 .fieldGrid {
@@ -73,6 +73,12 @@
 .multiCityStack {
   display: grid;
   gap: var(--oltra-gap-md);
+}
+
+.multiCityButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .multiCityRow {
@@ -484,7 +490,7 @@
 .multiPinnedGrid {
   display: grid;
   gap: var(--oltra-gap-md);
-  align-items: start;
+  align-items: stretch;
 }
 
 .multiResultsScoped {
@@ -558,9 +564,9 @@
 }
 
 .infoButton {
-  margin-left: 4px;
-  margin-top: -4px;
-  flex-shrink: 0;
+  position: absolute;
+  top: 8px;
+  right: 10px;
   width: 16px;
   height: 16px;
   display: inline-flex;
@@ -850,11 +856,74 @@
   padding: 9px 9px;
 }
 
+.priceCardFrom {
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .priceCardAmount {
   font-size: 1.05rem;
   letter-spacing: -0.02em;
   line-height: 1;
   text-align: center;
+}
+
+.multiSelectedLegsStack {
+  display: grid;
+  gap: 6px;
+  padding: 10px 13px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--oltra-radius-md);
+}
+
+.multiSelectedLegRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.multiSelectedLegLabel {
+  font-size: 0.62rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--oltra-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.multiSelectedLegInfo {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: var(--oltra-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multiChangeLegButton {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--oltra-radius-sm, 6px);
+  color: var(--oltra-text-secondary);
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.multiChangeLegButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--oltra-text-primary);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .bookButtonActive,
@@ -988,6 +1057,12 @@
   height: 120px;
   display: grid;
   align-content: center;
+}
+
+.selectCardCompact,
+.staticCardCompact {
+  height: 108px;
+  padding: 8px 10px;
 }
 
 .columnLabel {

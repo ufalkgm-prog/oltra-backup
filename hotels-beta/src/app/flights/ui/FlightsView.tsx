@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { readHotelFlightSearch, saveHotelFlightSearch } from "@/lib/searchSession";
+import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { type Itinerary, type FlightLeg, normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
@@ -45,7 +46,6 @@ type FilterState = {
   maxStops: "any" | "direct" | "1";
   airlines: string[];
   layoverAirports: string[];
-  flexDays: "none" | "+/- 1 day" | "+/- 2 days";
   outbound: LegFilter;
   inbound: LegFilter;
   multi: LegFilter[];
@@ -56,24 +56,24 @@ type Props = {
 };
 
 const DEFAULT_LEG_FILTER: LegFilter = {
-  maxDurationHours: 20,
+  maxDurationHours: 24,
   departStartHour: 8,
   departEndHour: 24,
 };
 
 const INITIAL_SEARCH: SearchState = {
   tripType: "return",
-  from: "CPH",
-  to: "HKT",
-  departDate: "2026-07-04",
-  returnDate: "2026-07-15",
+  from: "",
+  to: "",
+  departDate: "",
+  returnDate: "",
   adults: 2,
   children: 0,
   cabin: "Economy",
   multiCity: [
-    { id: "multi-1", from: "CPH", to: "BKK", date: "2026-07-04" },
-    { id: "multi-2", from: "BKK", to: "HKT", date: "2026-07-07" },
-    { id: "multi-3", from: "HKT", to: "CPH", date: "2026-07-15" },
+    { id: "multi-1", from: "", to: "", date: "" },
+    { id: "multi-2", from: "", to: "", date: "" },
+    { id: "multi-3", from: "", to: "", date: "" },
   ],
 };
 
@@ -81,7 +81,6 @@ const INITIAL_FILTERS: FilterState = {
   maxStops: "any",
   airlines: [],
   layoverAirports: [],
-  flexDays: "none",
   outbound: DEFAULT_LEG_FILTER,
   inbound: DEFAULT_LEG_FILTER,
   multi: [DEFAULT_LEG_FILTER, DEFAULT_LEG_FILTER, DEFAULT_LEG_FILTER],
@@ -141,16 +140,35 @@ function buildInitialSearch(searchParams: PageSearchParams): SearchState {
 
   const source = saved ?? searchParams;
 
+  const originParam = normalizeParam(searchParams.origin);
   const cityHandover = normalizeParam(source.city) || normalizeParam(source.q);
-  const resolvedTo = cityHandover ? resolveAirportCode(cityHandover) : INITIAL_SEARCH.to;
+  const resolvedTo = cityHandover ? resolveAirportCode(cityHandover) : "";
+
+  const cabinParam = normalizeParam(searchParams.cabin);
+  const validCabins = ["Economy", "Premium Economy", "Business", "First"] as const;
+  type Cabin = typeof validCabins[number];
+  const cabin: Cabin = validCabins.includes(cabinParam as Cabin)
+    ? (cabinParam as Cabin)
+    : INITIAL_SEARCH.cabin;
+
+  const tripTypeParam = normalizeParam(searchParams.tripType);
+  const tripType = (["oneway", "return", "multiple"].includes(tripTypeParam)
+    ? tripTypeParam
+    : INITIAL_SEARCH.tripType) as TripType;
 
   return {
     ...INITIAL_SEARCH,
-    to: cityHandover ? resolvedTo : INITIAL_SEARCH.to,
-    departDate: normalizeParam(source.from) || INITIAL_SEARCH.departDate,
-    returnDate: normalizeParam(source.to) || INITIAL_SEARCH.returnDate,
+    tripType,
+    from: originParam || "",
+    to: resolvedTo,
+    departDate: normalizeParam(source.from) || "",
+    returnDate: normalizeParam(source.to) || "",
     adults: Number(normalizeParam(source.adults)) || INITIAL_SEARCH.adults,
     children: Number(normalizeParam(source.kids)) || INITIAL_SEARCH.children,
+    cabin,
+    multiCity: INITIAL_SEARCH.multiCity.map((leg, i) =>
+      i === 0 ? { ...leg, from: originParam || "" } : leg
+    ),
   };
 }
 
@@ -178,6 +196,11 @@ function legMatchesFilters(leg: FlightLeg, filters: FilterState, legFilter: LegF
   return true;
 }
 
+function sortTopFirst<T extends { id: string }>(items: T[], topId: string): T[] {
+  if (!topId) return items;
+  return [...items].sort((a, b) => (a.id === topId ? -1 : b.id === topId ? 1 : 0));
+}
+
 function dedupeById<T extends { id: string }>(items: T[]): T[] {
   const seen = new Set<string>();
   return items.filter(item => {
@@ -203,17 +226,17 @@ function getReturnMatchTier(outbound: FlightLeg, inbound: FlightLeg): ReturnMatc
   return null;
 }
 
+function itineraryTotalDuration(item: Itinerary, tripType: TripType): number {
+  if (tripType === "one-way") return item.outbound.durationMinutes;
+  if (tripType === "multiple") return item.slices.reduce((s, l) => s + l.durationMinutes, 0);
+  return item.outbound.durationMinutes + (item.inbound?.durationMinutes ?? 0);
+}
+
 function getPinnedItineraries(itineraries: Itinerary[], tripType: TripType) {
   const byScore = [...itineraries].sort((a, b) => b.score - a.score);
-  const byDuration = [...itineraries].sort((a, b) => {
-    const aDur = tripType === "one-way"
-      ? a.outbound.durationMinutes
-      : a.outbound.durationMinutes + (a.inbound?.durationMinutes ?? 0);
-    const bDur = tripType === "one-way"
-      ? b.outbound.durationMinutes
-      : b.outbound.durationMinutes + (b.inbound?.durationMinutes ?? 0);
-    return aDur - bDur;
-  });
+  const byDuration = [...itineraries].sort(
+    (a, b) => itineraryTotalDuration(a, tripType) - itineraryTotalDuration(b, tripType)
+  );
   const recommended = byScore[0] ?? null;
   const fastest = byDuration[0]?.id !== recommended?.id ? byDuration[0] ?? null : byDuration[1] ?? null;
   return { recommended, fastest };
@@ -224,6 +247,7 @@ export default function FlightsView({ searchParams }: Props) {
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [selectedOutboundId, setSelectedOutboundId] = useState("");
   const [selectedReturnId, setSelectedReturnId] = useState("");
+  const [selectedMultiLegIds, setSelectedMultiLegIds] = useState<string[]>([]);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(true);
@@ -241,24 +265,67 @@ export default function FlightsView({ searchParams }: Props) {
 
   function markDirty() {
     setIsDirty(true);
+    setItineraries([]);
+    setSelectedOutboundId("");
+    setSelectedReturnId("");
+    setSelectedMultiLegIds([]);
+    setSearchError(null);
   }
 
   useEffect(() => {
+    const originParam = normalizeParam(searchParams.origin);
     const cityHandover = normalizeParam(searchParams.city) || normalizeParam(searchParams.q);
     setSearch(current => ({
       ...current,
+      from: originParam || current.from,
       to: cityHandover ? resolveAirportCode(cityHandover) : current.to,
       departDate: normalizeParam(searchParams.from) || current.departDate,
       returnDate: normalizeParam(searchParams.to) || current.returnDate,
       adults: Number(normalizeParam(searchParams.adults)) || current.adults,
       children: Number(normalizeParam(searchParams.kids)) || current.children,
+      multiCity: current.multiCity.map((leg, i) =>
+        i === 0 ? { ...leg, from: originParam || leg.from } : leg
+      ),
     }));
   }, [searchParams]);
+
+  const autoSearchedRef = useRef(false);
+
+  useEffect(() => {
+    const supabase = createSupabaseClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from("member_profiles")
+        .select("home_airport")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          const airport = (data as { home_airport?: string } | null)?.home_airport;
+          if (!airport) return;
+          setSearch(current => ({
+            ...current,
+            from: current.from || airport,
+            multiCity: current.multiCity.map((leg, i) =>
+              i === 0 ? { ...leg, from: leg.from || airport } : leg
+            ),
+          }));
+        });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (autoSearchedRef.current) return;
+    if (normalizeParam(searchParams.include_flights) !== "1") return;
+    autoSearchedRef.current = true;
+    handleSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     saveHotelFlightSearch({
       q: normalizeParam(searchParams.q),
-      city: normalizeParam(searchParams.city) || search.to,
+      city: normalizeParam(searchParams.city),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
       from: search.departDate,
@@ -269,15 +336,16 @@ export default function FlightsView({ searchParams }: Props) {
   }, [search, searchParams, isReturnTrip]);
 
   const allAirlines = useMemo(
-    () => [...new Set(itineraries.map(item => item.outbound.airline))].sort(),
+    () => [...new Set(itineraries.flatMap(item => item.slices.map(l => l.airline)))].sort(),
     [itineraries]
   );
 
   const layoverAirportMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const it of itineraries) {
-      for (const lay of it.outbound.layovers) if (lay.code) map.set(lay.code, lay.name || lay.code);
-      if (it.inbound) for (const lay of it.inbound.layovers) if (lay.code) map.set(lay.code, lay.name || lay.code);
+      for (const leg of it.slices) {
+        for (const lay of leg.layovers) if (lay.code) map.set(lay.code, lay.name || lay.code);
+      }
     }
     return map;
   }, [itineraries]);
@@ -297,31 +365,17 @@ export default function FlightsView({ searchParams }: Props) {
     });
   }, [allAirlines, layoverAirports]);
 
-  const autoDurationKeyRef = useRef("");
-  useEffect(() => {
-    if (!itineraries.length) return;
-    const key = itineraries.map(i => i.id).join("|");
-    if (autoDurationKeyRef.current === key) return;
-    autoDurationKeyRef.current = key;
-
-    const minOut = Math.min(...itineraries.map(i => i.outbound.durationMinutes));
-    const minIn = itineraries.some(i => i.inbound)
-      ? Math.min(...itineraries.flatMap(i => (i.inbound ? [i.inbound.durationMinutes] : [])))
-      : 0;
-    const cap = (mins: number) => Math.min(24, Math.max(6, Math.ceil((mins / 60) * 1.5)));
-
-    setFilters(current => ({
-      ...current,
-      outbound: { ...current.outbound, maxDurationHours: cap(minOut) },
-      inbound: minIn ? { ...current.inbound, maxDurationHours: cap(minIn) } : current.inbound,
-    }));
-  }, [itineraries]);
 
   const filteredItineraries = useMemo(() => {
     return itineraries
       .filter(item => {
+        if (isMultiple) {
+          return item.slices.every((leg, i) =>
+            legMatchesFilters(leg, filters, filters.multi[i] ?? DEFAULT_LEG_FILTER)
+          );
+        }
         const outOk = legMatchesFilters(item.outbound, filters, filters.outbound);
-        if (isOneWay || isMultiple || !item.inbound) return outOk;
+        if (isOneWay || !item.inbound) return outOk;
         return outOk && legMatchesFilters(item.inbound, filters, filters.inbound);
       })
       .sort((a, b) => b.score - a.score);
@@ -389,6 +443,15 @@ export default function FlightsView({ searchParams }: Props) {
     return () => ro.disconnect();
   }, [filteredItineraries, selectedOutboundId, visibleReturnItineraries]);
 
+  const canSearch = useMemo(() => {
+    if (isMultiple) {
+      return search.multiCity.every(l => l.from && l.to && l.date) && search.adults > 0;
+    }
+    if (!search.from || !search.to || !search.departDate || search.adults < 1) return false;
+    if (isReturnTrip && !search.returnDate) return false;
+    return true;
+  }, [isMultiple, isReturnTrip, search]);
+
   const handleSearch = useCallback(async () => {
     if (isMultiple) {
       const valid = search.multiCity.every(l => l.from && l.to && l.date);
@@ -401,6 +464,7 @@ export default function FlightsView({ searchParams }: Props) {
     setSearchError(null);
     setSelectedOutboundId("");
     setSelectedReturnId("");
+    setSelectedMultiLegIds([]);
     setItineraries([]);
     setFilters(f => ({ ...f, airlines: [], layoverAirports: [] }));
     try {
@@ -489,29 +553,55 @@ export default function FlightsView({ searchParams }: Props) {
   }
 
   function setTripType(tripType: TripType) {
-    setSearch(current => ({ ...current, tripType }));
+    setSearch(current => {
+      if (tripType === "multiple") {
+        const fromCity = current.from;
+        return {
+          ...current,
+          tripType,
+          multiCity: [
+            { id: "multi-1", from: fromCity, to: "", date: "" },
+            { id: "multi-2", from: "", to: "", date: "" },
+            { id: "multi-3", from: "", to: "", date: "" },
+          ],
+        };
+      }
+      return { ...current, tripType };
+    });
     markDirty();
-    setFilters(current => ({
-      ...current,
-      multi: current.multi.length
-        ? current.multi
-        : Array.from({ length: search.multiCity.length }, () => DEFAULT_LEG_FILTER),
-    }));
+    if (tripType === "multiple") {
+      setFilters(current => ({
+        ...current,
+        multi: [DEFAULT_LEG_FILTER, DEFAULT_LEG_FILTER, DEFAULT_LEG_FILTER],
+      }));
+    }
   }
 
   function updateMultiCityLeg(id: string, patch: Partial<MultiCityLeg>) {
-    setSearch(current => ({
-      ...current,
-      multiCity: current.multiCity.map(leg => (leg.id === id ? { ...leg, ...patch } : leg)),
-    }));
+    setSearch(current => {
+      const index = current.multiCity.findIndex(leg => leg.id === id);
+      if (index === -1) return current;
+      let newLegs = current.multiCity.map((leg, i) => {
+        if (i === index) return { ...leg, ...patch };
+        if (i === index + 1 && "to" in patch && !leg.from) return { ...leg, from: patch.to ?? "" };
+        return leg;
+      });
+      if ("date" in patch && patch.date) {
+        newLegs = newLegs.map((leg, i) =>
+          i > index && leg.date && leg.date < patch.date! ? { ...leg, date: "" } : leg
+        );
+      }
+      return { ...current, multiCity: newLegs };
+    });
     markDirty();
   }
 
   function addMultiCityLeg() {
     if (search.multiCity.length >= 5) return;
+    const lastLeg = search.multiCity[search.multiCity.length - 1];
     setSearch(current => ({
       ...current,
-      multiCity: [...current.multiCity, { id: `multi-${Date.now()}`, from: "", to: "", date: "" }],
+      multiCity: [...current.multiCity, { id: `multi-${Date.now()}`, from: lastLeg?.to ?? "", to: "", date: "" }],
     }));
     setFilters(current => ({
       ...current,
@@ -520,20 +610,69 @@ export default function FlightsView({ searchParams }: Props) {
     markDirty();
   }
 
-  const multiColumns = useMemo(() => {
-    return search.multiCity.map((leg, index) => ({
-      leg,
-      options: itineraries.map(item => {
-        const base = index % 2 === 0 ? item.outbound : (item.inbound ?? item.outbound);
-        return {
-          ...base,
-          id: `${base.id}-multi-${index}`,
-          originCode: leg.from.slice(0, 3).toUpperCase() || base.originCode,
-          destinationCode: leg.to.slice(0, 3).toUpperCase() || base.destinationCode,
-        };
-      }).filter(flight => legMatchesFilters(flight, filters, filters.multi[index] ?? DEFAULT_LEG_FILTER)),
-    }));
-  }, [search.multiCity, itineraries, filters]);
+  function deleteLastMultiCityLeg() {
+    setSearch(current => {
+      const newLegs = current.multiCity.slice(0, -1);
+      if (!newLegs.length) return current;
+      const newTripType: TripType = newLegs.length <= 1 ? "one-way" : "multiple";
+      return { ...current, multiCity: newLegs, tripType: newTripType };
+    });
+    setFilters(current => ({ ...current, multi: current.multi.slice(0, -1) }));
+    markDirty();
+  }
+
+  const multiActiveLegIndex = isMultiple ? selectedMultiLegIds.length : 0;
+
+  // Per-column options: column k shows unique slices[k] from itineraries matching selections 0..k-1
+  const multiAllLegOptions = useMemo(() => {
+    if (!isMultiple) return [];
+    return search.multiCity.map((_, k) => {
+      if (k > selectedMultiLegIds.length) return [];
+      const prevSelections = selectedMultiLegIds.slice(0, k);
+      const matching = filteredItineraries.filter(it =>
+        prevSelections.every((legId, i) => it.slices[i]?.id === legId)
+      );
+      return dedupeById(matching.map(it => it.slices[k]).filter((l): l is FlightLeg => Boolean(l)));
+    });
+  }, [filteredItineraries, selectedMultiLegIds, isMultiple, search.multiCity]);
+
+  // Price map for the currently active column (cheapest full itinerary per option)
+  const multiOptionPriceMap = useMemo(() => {
+    const activeOptions = multiAllLegOptions[multiActiveLegIndex] ?? [];
+    const map = new Map<string, { priceEur: number; currency: string }>();
+    for (const option of activeOptions) {
+      const candidates = filteredItineraries.filter(it => {
+        return (
+          selectedMultiLegIds.every((legId, i) => it.slices[i]?.id === legId) &&
+          it.slices[multiActiveLegIndex]?.id === option.id
+        );
+      });
+      if (!candidates.length) continue;
+      const best = candidates.reduce((a, b) => (a.priceEur < b.priceEur ? a : b));
+      map.set(option.id, { priceEur: best.priceEur, currency: best.currency });
+    }
+    return map;
+  }, [multiAllLegOptions, multiActiveLegIndex, filteredItineraries, selectedMultiLegIds]);
+
+  // Final itinerary when all legs are selected
+  const multiSelectedItinerary = useMemo(() => {
+    if (!isMultiple || multiActiveLegIndex < search.multiCity.length) return null;
+    return filteredItineraries.find(it =>
+      selectedMultiLegIds.every((legId, i) => it.slices[i]?.id === legId)
+    ) ?? null;
+  }, [isMultiple, multiActiveLegIndex, search.multiCity.length, filteredItineraries, selectedMultiLegIds]);
+
+  useEffect(() => {
+    if (!isMultiple) return;
+    setSelectedMultiLegIds(current => {
+      if (!current.length) return current;
+      if (!filteredItineraries.length) return [];
+      const isValid = filteredItineraries.some(it =>
+        current.every((legId, i) => it.slices[i]?.id === legId)
+      );
+      return isValid ? current : [];
+    });
+  }, [filteredItineraries, isMultiple]);
 
   return (
     <section className={styles.page}>
@@ -561,33 +700,48 @@ export default function FlightsView({ searchParams }: Props) {
 
               {isMultiple ? (
                 <div className={styles.multiCityStack}>
-                  {search.multiCity.map((leg, index) => (
-                    <div key={leg.id} className={styles.multiCityRow}>
-                      <AirportAutocomplete
-                        label={`From ${index + 1}`}
-                        value={leg.from}
-                        onChange={v => updateMultiCityLeg(leg.id, { from: v })}
-                      />
-                      <AirportAutocomplete
-                        label="To"
-                        value={leg.to}
-                        onChange={v => updateMultiCityLeg(leg.id, { to: v })}
-                      />
-                      <DateField
-                        label="Date"
-                        value={leg.date}
-                        onChange={v => updateMultiCityLeg(leg.id, { date: v })}
-                      />
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className="oltra-button-secondary"
-                    onClick={addMultiCityLeg}
-                    disabled={search.multiCity.length >= 5}
-                  >
-                    Add flight
-                  </button>
+                  {search.multiCity.map((leg, index) => {
+                    const prevDate = index > 0 ? search.multiCity[index - 1]?.date : undefined;
+                    const minLegDate = prevDate ?? todayIso;
+                    return (
+                      <div key={leg.id} className={styles.multiCityRow}>
+                        <AirportAutocomplete
+                          label={`From ${index + 1}`}
+                          value={leg.from}
+                          onChange={v => updateMultiCityLeg(leg.id, { from: v })}
+                        />
+                        <AirportAutocomplete
+                          label="To"
+                          value={leg.to}
+                          onChange={v => updateMultiCityLeg(leg.id, { to: v })}
+                        />
+                        <DateField
+                          label="Date"
+                          value={leg.date}
+                          min={minLegDate}
+                          onChange={v => updateMultiCityLeg(leg.id, { date: v })}
+                        />
+                      </div>
+                    );
+                  })}
+                  <div className={styles.multiCityButtons}>
+                    <button
+                      type="button"
+                      className={search.multiCity.length < 5 ? "oltra-button-primary" : "oltra-button-secondary"}
+                      onClick={addMultiCityLeg}
+                      disabled={search.multiCity.length >= 5}
+                    >
+                      Add flight
+                    </button>
+                    <button
+                      type="button"
+                      className={search.multiCity.length > 1 ? "oltra-button-primary" : "oltra-button-secondary"}
+                      onClick={deleteLastMultiCityLeg}
+                      disabled={search.multiCity.length <= 1}
+                    >
+                      Delete flight
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className={styles.fieldGrid}>
@@ -644,9 +798,9 @@ export default function FlightsView({ searchParams }: Props) {
 
               <button
                 type="button"
-                className={isDirty ? "oltra-button-primary" : "oltra-button-secondary"}
+                className={isDirty && canSearch ? "oltra-button-primary" : "oltra-button-secondary"}
                 onClick={handleSearch}
-                disabled={isLoading}
+                disabled={isLoading || !canSearch}
               >
                 {isLoading ? "Searching…" : "Search"}
               </button>
@@ -655,22 +809,13 @@ export default function FlightsView({ searchParams }: Props) {
 
           <div className="oltra-glass oltra-panel">
             <div className={styles.sectionStack}>
-              <div className={styles.filterGrid}>
-                <SelectField
-                  label="Stops"
-                  value={filters.maxStops}
-                  onChange={v => setFilters(c => ({ ...c, maxStops: v as FilterState["maxStops"] }))}
-                  options={["any", "direct", "1"]}
-                  labels={{ any: "Any", direct: "Direct only", "1": "Max 1 stop" }}
-                />
-                <SelectField
-                  label="Flex dates"
-                  value={filters.flexDays}
-                  onChange={v => setFilters(c => ({ ...c, flexDays: v as FilterState["flexDays"] }))}
-                  options={["none", "+/- 1 day", "+/- 2 days"]}
-                  labels={{ none: "None", "+/- 1 day": "+/- 1 day", "+/- 2 days": "+/- 2 days" }}
-                />
-              </div>
+              <SelectField
+                label="Stops"
+                value={filters.maxStops}
+                onChange={v => setFilters(c => ({ ...c, maxStops: v as FilterState["maxStops"] }))}
+                options={["any", "direct", "1"]}
+                labels={{ any: "Any", direct: "Direct only", "1": "Max 1 stop" }}
+              />
 
               {isMultiple ? (
                 search.multiCity.map((leg, index) => (
@@ -750,7 +895,29 @@ export default function FlightsView({ searchParams }: Props) {
           <div className={styles.resultsStack}>
             <div className={styles.resultsMeta}>
               <div className={styles.route}>
-                {isMultiple ? "Multi-city itinerary" : `${cityForCode(search.from) || search.from} → ${cityForCode(search.to) || search.to}`}
+                {isMultiple ? (
+                  "Multi-city itinerary"
+                ) : (() => {
+                  const fromCity = cityForCode(search.from) || search.from;
+                  const toCity = cityForCode(search.to) || search.to;
+                  const hasFrom = Boolean(search.from);
+                  const hasTo = Boolean(search.to);
+                  if (!hasFrom && !hasTo) return isReturnTrip ? "Return trip" : "One-way trip";
+                  const showOutbound = hasFrom;
+                  const showInbound = isReturnTrip && hasTo;
+                  return (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3em" }}>
+                      <span>{fromCity}</span>
+                      {(showOutbound || showInbound) ? (
+                        <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 0.75, fontSize: "0.62em", opacity: 0.85, margin: "0 0.05em", fontWeight: 900 }}>
+                          {showInbound && <span>←</span>}
+                          {showOutbound && <span>→</span>}
+                        </span>
+                      ) : null}
+                      <span>{toCity}</span>
+                    </span>
+                  );
+                })()}
               </div>
               <div className={styles.metaText}>
                 {isLoading
@@ -769,11 +936,22 @@ export default function FlightsView({ searchParams }: Props) {
 
             {!isLoading && itineraries.length > 0 && (
               isMultiple ? (
-                <div
-                  className={styles.multiResultsScoped}
-                  style={{ "--multi-columns": multiColumns.length } as React.CSSProperties}
-                >
-                  <MultipleResults columns={multiColumns} />
+                <div className={styles.multiResultsScoped}>
+                  <MultipleResults
+                    searchLegs={search.multiCity}
+                    activeLegIndex={multiActiveLegIndex}
+                    allLegOptions={multiAllLegOptions}
+                    selectedLegIds={selectedMultiLegIds}
+                    optionPriceMap={multiOptionPriceMap}
+                    selectedItinerary={multiSelectedItinerary}
+                    recommended={recommended}
+                    fastest={fastest}
+                    onSelectLeg={(col, legId) => setSelectedMultiLegIds(prev => [...prev.slice(0, col), legId])}
+                    onBook={handleBook}
+                    onInfo={setDetailFlight}
+                    resultsScrollRef={resultsScrollRef}
+                    hasScrollGutter={hasScrollGutter}
+                  />
                 </div>
               ) : (
                 <>
@@ -804,86 +982,98 @@ export default function FlightsView({ searchParams }: Props) {
 
                   <div className={styles.resultsScroll} ref={resultsScrollRef}>
                   <div className={isOneWay ? styles.resultsGridOneWay : styles.resultsGrid}>
-                    <div className={styles.columnBox}>
-                      <div className={styles.cardStack}>
-                        {outboundOptions.length ? (
-                          outboundOptions.map(flight => (
-                            <button
-                              key={flight.id}
-                              type="button"
-                              onClick={() => setSelectedOutboundId(flight.id)}
-                              className={`${styles.selectCard} ${flight.id === selectedOutboundId ? styles.selectCardActive : ""}`}
-                            >
-                              <FlightCardContent flight={flight} onInfo={setDetailFlight} />
-                            </button>
-                          ))
-                        ) : (
-                          <div className={styles.emptyHint}>No departure flights match the selected filters.</div>
-                        )}
-                      </div>
-                    </div>
+                    {(() => {
+                      const sortedOutbound = sortTopFirst(outboundOptions, selectedOutboundId);
+                      const sortedReturn = sortTopFirst(visibleReturnItineraries, selectedReturnId);
+                      return (
+                        <>
+                          <div className={styles.columnBox}>
+                            <div className={styles.cardStack}>
+                              {sortedOutbound.length ? (
+                                sortedOutbound.map(flight => (
+                                  <div
+                                    key={flight.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => setSelectedOutboundId(flight.id)}
+                                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
+                                    className={`${styles.selectCard} ${flight.id === selectedOutboundId ? styles.selectCardActive : ""}`}
+                                  >
+                                    <FlightCardContent flight={flight} onInfo={setDetailFlight} />
+                                  </div>
+                                ))
+                              ) : (
+                                <div className={styles.emptyHint}>No departure flights match the selected filters.</div>
+                              )}
+                            </div>
+                          </div>
 
-                    {!isOneWay ? (
-                      <div className={styles.columnBox}>
-                        <div className={styles.cardStack}>
-                          {!selectedOutboundId ? (
-                            <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
-                          ) : visibleReturnItineraries.length ? (
-                            visibleReturnItineraries.map(item => {
-                              const tier = item.inbound && selectedOutboundLeg
-                                ? getReturnMatchTier(selectedOutboundLeg, item.inbound)
-                                : null;
-                              const matchClass = item.id === selectedReturnId
-                                ? styles.selectCardActive
-                                : tier === "long-haul"
-                                ? styles.selectCardMatchStrong
-                                : tier === "alliance"
-                                ? styles.selectCardMatchWeak
-                                : "";
-                              return (
-                                <button
-                                  key={item.id}
-                                  type="button"
-                                  onClick={() => setSelectedReturnId(item.id)}
-                                  className={`${styles.selectCard} ${matchClass}`}
-                                >
-                                  {item.inbound ? <FlightCardContent flight={item.inbound} matchTier={tier} onInfo={setDetailFlight} /> : null}
-                                </button>
-                              );
-                            })
-                          ) : (
-                            <div className={styles.emptyHint}>No compatible return flights found.</div>
-                          )}
-                        </div>
-                      </div>
-                    ) : null}
+                          {!isOneWay ? (
+                            <div className={styles.columnBox}>
+                              <div className={styles.cardStack}>
+                                {!selectedOutboundId ? (
+                                  <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
+                                ) : sortedReturn.length ? (
+                                  sortedReturn.map(item => {
+                                    const tier = item.inbound && selectedOutboundLeg
+                                      ? getReturnMatchTier(selectedOutboundLeg, item.inbound)
+                                      : null;
+                                    const matchClass = item.id === selectedReturnId
+                                      ? styles.selectCardActive
+                                      : tier === "long-haul"
+                                      ? styles.selectCardMatchStrong
+                                      : tier === "alliance"
+                                      ? styles.selectCardMatchWeak
+                                      : "";
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setSelectedReturnId(item.id)}
+                                        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedReturnId(item.id); }}
+                                        className={`${styles.selectCard} ${matchClass}`}
+                                      >
+                                        {item.inbound ? <FlightCardContent flight={item.inbound} matchTier={tier} onInfo={setDetailFlight} /> : null}
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  <div className={styles.emptyHint}>No compatible return flights found.</div>
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
 
-                    <div className={styles.priceColumn}>
-                      <div className={styles.cardStack}>
-                        {isOneWay
-                          ? outboundOptions
-                              .map(flight => itineraryByOutboundId.get(flight.id))
-                              .filter((it): it is Itinerary => Boolean(it))
-                              .map(it => (
-                                <PriceCard
-                                  key={it.id}
-                                  itinerary={it}
-                                  onBook={handleBook}
-                                  active
-                                />
-                              ))
-                          : selectedOutboundId
-                          ? visibleReturnItineraries.map(it => (
-                              <PriceCard
-                                key={it.id}
-                                itinerary={it}
-                                onBook={handleBook}
-                                active={it.id === selectedReturnId}
-                              />
-                            ))
-                          : null}
-                      </div>
-                    </div>
+                          <div className={styles.priceColumn}>
+                            <div className={styles.cardStack}>
+                              {isOneWay
+                                ? sortedOutbound
+                                    .map(flight => itineraryByOutboundId.get(flight.id))
+                                    .filter((it): it is Itinerary => Boolean(it))
+                                    .map(it => (
+                                      <PriceCard
+                                        key={it.id}
+                                        itinerary={it}
+                                        onBook={handleBook}
+                                        active={it.outbound.id === selectedOutboundId}
+                                      />
+                                    ))
+                                : selectedOutboundId
+                                ? sortedReturn.map(it => (
+                                    <PriceCard
+                                      key={it.id}
+                                      itinerary={it}
+                                      onBook={handleBook}
+                                      active={it.id === selectedReturnId}
+                                    />
+                                  ))
+                                : null}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                   </div>
 
@@ -934,10 +1124,10 @@ function DateField({ label, value, onChange, min }: { label: string; value: stri
           data-has-value={value ? "true" : "false"}
         />
         <span
-          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
+          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] overflow-hidden"
           data-has-value={value ? "true" : "false"}
         >
-          {formatDisplayDate(value) || "date"}
+          <span className="truncate">{formatDisplayDate(value) || "date"}</span>
         </span>
       </div>
     </div>
@@ -1085,149 +1275,165 @@ function MultiSelectDropdown({
   );
 }
 
-function MultipleResults({ columns }: { columns: { leg: MultiCityLeg; options: FlightLeg[] }[] }) {
-  const [selections, setSelections] = useState<Record<string, string>>({});
-
-  let activeIndex = columns.findIndex((col) => !selections[col.leg.id]);
-  if (activeIndex === -1) activeIndex = columns.length;
-
-  function pickFlight(legId: string, flightId: string) {
-    setSelections((prev) => ({ ...prev, [legId]: flightId }));
-  }
-
-  function clearFlight(legId: string) {
-    setSelections((prev) => {
-      const next = { ...prev };
-      delete next[legId];
-      // Also clear any later selections, since the chain restarts here.
-      const idx = columns.findIndex((c) => c.leg.id === legId);
-      if (idx >= 0) {
-        for (let i = idx + 1; i < columns.length; i += 1) {
-          delete next[columns[i].leg.id];
-        }
-      }
-      return next;
-    });
-  }
+function MultipleResults({
+  searchLegs,
+  activeLegIndex,
+  allLegOptions,
+  selectedLegIds,
+  optionPriceMap,
+  selectedItinerary,
+  recommended,
+  fastest,
+  onSelectLeg,
+  onBook,
+  onInfo,
+  resultsScrollRef,
+  hasScrollGutter,
+}: {
+  searchLegs: MultiCityLeg[];
+  activeLegIndex: number;
+  allLegOptions: FlightLeg[][];
+  selectedLegIds: string[];
+  optionPriceMap: Map<string, { priceEur: number; currency: string }>;
+  selectedItinerary: Itinerary | null;
+  recommended: Itinerary | null;
+  fastest: Itinerary | null;
+  onSelectLeg: (colIndex: number, legId: string) => void;
+  onBook: (offerId: string) => void;
+  onInfo: (flight: FlightLeg) => void;
+  resultsScrollRef: { current: HTMLDivElement | null };
+  hasScrollGutter: boolean;
+}) {
+  const N = searchLegs.length;
+  const compact = N >= 4;
+  const allSelected = activeLegIndex >= N;
+  const isLastStep = activeLegIndex === N - 1;
+  const gridCols = `repeat(${N}, minmax(0, 1fr)) 140px`;
+  const activeOptions = allLegOptions[activeLegIndex] ?? [];
 
   return (
-    <div className={styles.multiSequentialStack}>
-      {columns.map((col, i) => {
-        if (i > activeIndex) return null;
-        const isActive = i === activeIndex;
-        const selectedId = selections[col.leg.id];
-        const selectedFlight = selectedId
-          ? col.options.find((o) => o.id === selectedId) ?? null
-          : null;
+    <>
+      {/* Column headers — same format as Return page, span all legs */}
+      <div
+        className={hasScrollGutter ? styles.withScrollGutter : ""}
+        style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", alignItems: "end", padding: "0 13px", marginBottom: "-4px" }}
+      >
+        {searchLegs.map((leg, i) => (
+          <div key={i} className={styles.columnLabel}>
+            {`Flight ${i + 1}${leg.from ? ` · ${leg.from} → ${leg.to || "?"}` : ""}`}
+          </div>
+        ))}
+        <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Price</div>
+      </div>
 
-        const recommended = col.options[0] ?? null;
-        const fastest =
-          col.options[1] && col.options[1].id !== recommended?.id
-            ? col.options[1]
-            : null;
+      {/* Pinned rows — same visual style as Return page */}
+      <div className={`${styles.pinnedStack} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
+        {recommended ? (
+          <MultiPinnedRow label="Top pick" itinerary={recommended} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} />
+        ) : null}
+        {fastest ? (
+          <MultiPinnedRow label="Fastest" itinerary={fastest} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} />
+        ) : null}
+      </div>
 
-        return (
-          <div key={col.leg.id} className={styles.multiLegBlock}>
-            <div className={styles.multiLegHeader}>
-              <span className={styles.columnHeader}>
-                Flight {i + 1} · {col.leg.from || "From"} → {col.leg.to || "To"}
-              </span>
-              {selectedFlight ? (
-                <button
-                  type="button"
-                  className={styles.multiLegChange}
-                  onClick={() => clearFlight(col.leg.id)}
-                >
-                  Change
-                </button>
-              ) : null}
-            </div>
-
-            {selectedFlight && !isActive ? (
-              <div className={`${styles.staticCard} ${styles.selectCardActive}`}>
-                <FlightCardContent flight={selectedFlight} />
-              </div>
-            ) : isActive ? (
-              <>
-                {(recommended || fastest) && (
-                  <div className={styles.pinnedStack}>
-                    {recommended ? (
-                      <button
-                        type="button"
-                        className={styles.multiPinnedSelectable}
-                        onClick={() => pickFlight(col.leg.id, recommended.id)}
-                      >
-                        <span className={styles.pinnedLegend}>Recommended</span>
-                        <div className={styles.staticCard}>
-                          <FlightCardContent flight={recommended} />
-                        </div>
-                      </button>
-                    ) : null}
-                    {fastest ? (
-                      <button
-                        type="button"
-                        className={styles.multiPinnedSelectable}
-                        onClick={() => pickFlight(col.leg.id, fastest.id)}
-                      >
-                        <span className={styles.pinnedLegend}>Fastest</span>
-                        <div className={styles.staticCard}>
-                          <FlightCardContent flight={fastest} />
-                        </div>
-                      </button>
-                    ) : null}
-                  </div>
-                )}
-
+      {/* Standard results — N column stacks + price, same pattern as Return page */}
+      <div className={styles.resultsScroll} ref={resultsScrollRef as React.RefObject<HTMLDivElement>}>
+        <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", padding: "0 13px", alignItems: "start" }}>
+          {searchLegs.map((_, k) => {
+            const colOptions = allLegOptions[k] ?? [];
+            const colSelected = selectedLegIds[k] ?? "";
+            const displayOptions = k <= activeLegIndex ? sortTopFirst(colOptions, colSelected) : colOptions;
+            return (
+              <div key={k} className={styles.columnBox}>
                 <div className={styles.cardStack}>
-                  {col.options.length ? (
-                    col.options.map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => pickFlight(col.leg.id, f.id)}
-                        className={styles.selectCard}
+                  {k > activeLegIndex ? (
+                    k === activeLegIndex + 1 ? (
+                      <div className={styles.emptyHint}>Select flight {activeLegIndex + 1} to see options.</div>
+                    ) : null
+                  ) : displayOptions.length ? (
+                    displayOptions.map(legOpt => (
+                      <div
+                        key={legOpt.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => onSelectLeg(k, legOpt.id)}
+                        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectLeg(k, legOpt.id); }}
+                        className={`${styles.selectCard} ${compact ? styles.selectCardCompact : ""} ${colSelected === legOpt.id ? styles.selectCardActive : ""}`}
                       >
-                        <FlightCardContent flight={f} />
-                      </button>
+                        <FlightCardContent flight={legOpt} onInfo={onInfo} compact={compact} />
+                      </div>
                     ))
                   ) : (
-                    <div className="oltra-output">
-                      No flights match the selected filters.
-                    </div>
+                    <div className={styles.emptyHint}>No flights match the filters.</div>
                   )}
                 </div>
-              </>
-            ) : null}
-          </div>
-        );
-      })}
+              </div>
+            );
+          })}
 
-      {activeIndex >= columns.length ? (
-        <div className={styles.multiAllSelected}>
-          All flight legs selected. Use BOOK to proceed with each carrier
-          separately (multi-city booking not yet wired through Duffel).
+          {/* Price column — aligned with active column's options */}
+          <div className={styles.priceColumn}>
+            <div className={styles.cardStack}>
+              {allSelected && selectedItinerary ? (
+                <PriceCard itinerary={selectedItinerary} onBook={onBook} active compact={compact} />
+              ) : (
+                sortTopFirst(activeOptions, selectedLegIds[activeLegIndex] ?? "").map(legOpt => {
+                  const p = optionPriceMap.get(legOpt.id);
+                  return p ? (
+                    <MultiOptionPriceCard key={legOpt.id} priceEur={p.priceEur} currency={p.currency} showFrom={!isLastStep} compact={compact} />
+                  ) : null;
+                })
+              )}
+            </div>
+          </div>
         </div>
-      ) : null}
-    </div>
+      </div>
+    </>
   );
 }
 
-function MultiPinnedRow({ label, flights }: { label: string; flights: FlightLeg[] }) {
+function MultiPinnedRow({
+  label,
+  itinerary,
+  columnCount,
+  compact,
+  onBook,
+  onInfo,
+}: {
+  label: string;
+  itinerary: Itinerary;
+  columnCount: number;
+  compact?: boolean;
+  onBook: (id: string) => void;
+  onInfo: (flight: FlightLeg) => void;
+}) {
   return (
     <div className={styles.pinnedRow}>
       <span className={styles.pinnedLegend}>{label}</span>
       <div
         className={styles.multiPinnedGrid}
-        style={{ gridTemplateColumns: `repeat(${flights.length}, minmax(0, 1fr)) 140px` }}
+        style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr)) 140px` }}
       >
-        {flights.map(f => (
-          <div key={f.id} className={styles.staticCard}><FlightCardContent flight={f} /></div>
-        ))}
-        <div className={styles.priceCard}>
-          <span className={styles.priceCardAmount}>—</span>
-          <span className={styles.priceCardLabel}>BOOK</span>
-        </div>
+        {itinerary.slices.slice(0, columnCount).map((leg, i) => {
+          const tier = i === 0 ? null : getReturnMatchTier(itinerary.slices[0]!, leg);
+          return (
+            <div key={i} className={`${styles.staticCard} ${compact ? styles.staticCardCompact : ""}`}>
+              <FlightCardContent flight={leg} matchTier={tier} onInfo={onInfo} compact={compact} />
+            </div>
+          );
+        })}
+        <PriceCard itinerary={itinerary} onBook={onBook} active compact={compact} />
       </div>
+    </div>
+  );
+}
+
+function MultiOptionPriceCard({ priceEur, currency, showFrom, compact }: { priceEur: number; currency: string; showFrom: boolean; compact?: boolean }) {
+  const { format } = useCurrency();
+  return (
+    <div className={`${styles.priceCard} ${compact ? styles.selectCardCompact : ""}`}>
+      {showFrom ? <span className={styles.priceCardFrom}>from</span> : null}
+      <span className={styles.priceCardAmount}>{currency} {format(priceEur, currency)}</span>
     </div>
   );
 }
@@ -1255,14 +1461,16 @@ function PriceCard({
   itinerary,
   onBook,
   active = false,
+  compact,
 }: {
   itinerary: Itinerary;
   onBook: (id: string) => void;
   active?: boolean;
+  compact?: boolean;
 }) {
   const { currency, format } = useCurrency();
   return (
-    <div className={`${styles.priceCard} ${active ? styles.priceCardActive : ""}`}>
+    <div className={`${styles.priceCard} ${active ? styles.priceCardActive : ""} ${compact ? styles.selectCardCompact : ""}`}>
       <span className={styles.priceCardAmount}>
         {currency} {format(itinerary.priceEur, itinerary.currency)}
       </span>
@@ -1276,10 +1484,8 @@ function PriceCard({
       </button>
       <button
         type="button"
-        className={styles.savePillButton}
-        onClick={() => {
-          /* Save-to-trip placeholder: hook up when flight trip-save endpoint is wired. */
-        }}
+        className={active ? styles.savePillButton : styles.bookButtonInactive}
+        disabled={!active}
       >
         SAVE TO TRIP
       </button>
@@ -1297,47 +1503,54 @@ function FlightCardContent({
   flight,
   matchTier,
   onInfo,
+  compact,
 }: {
   flight: FlightLeg;
   matchTier?: ReturnMatchTier;
   onInfo?: (flight: FlightLeg) => void;
+  compact?: boolean;
 }) {
   const airlineLabel = flight.airlines.length
     ? flight.airlines.map(a => a.name).join(" + ")
     : flight.airline;
   const label = matchTierLabel(matchTier ?? null);
+  const timeStyle = compact ? { fontSize: "0.82rem" } : undefined;
   return (
-    <div className={styles.flightCardInner}>
-      <div className={styles.flightTimesRow}>
-        <span className={styles.flightDepart}>{flight.departTime}</span>
-        <span className={styles.flightArrow}>→</span>
-        <span className={styles.flightArrive}>{flight.arriveTime}</span>
-        <span className={styles.flightDurStop}>Duration: {formatDuration(flight.durationMinutes)}</span>
-        {onInfo ? (
-          <button
-            type="button"
-            className={styles.infoButton}
-            onClick={e => { e.stopPropagation(); onInfo(flight); }}
-            aria-label="Flight details"
-            title="Flight details"
-          >
-            i
-          </button>
-        ) : null}
-      </div>
-      <div className={styles.flightMetaRow}>
-        <span className={styles.flightMetaText}>{airlineLabel}</span>
-        {label ? (
-          <span className={matchTier === "long-haul" ? styles.matchBadgeStrong : styles.matchBadgeWeak}>
-            {label}
-          </span>
-        ) : null}
-      </div>
-      {flight.stopSummary ? (
-        <div className={styles.flightStopsRow}>
-          <span className={styles.flightMetaText}>{flight.stopSummary}</span>
-        </div>
+    <>
+      {onInfo ? (
+        <button
+          type="button"
+          className={styles.infoButton}
+          onClick={e => { e.stopPropagation(); onInfo(flight); }}
+          aria-label="Flight details"
+          title="Flight details"
+        >
+          i
+        </button>
       ) : null}
-    </div>
+      <div className={styles.flightCardInner}>
+        <div className={styles.flightTimesRow}>
+          <span className={styles.flightDepart} style={timeStyle}>{flight.departTime}</span>
+          <span className={styles.flightArrow}>→</span>
+          <span className={styles.flightArrive} style={timeStyle}>{flight.arriveTime}</span>
+        </div>
+        <div className={styles.flightStopsRow}>
+          <span className={styles.flightMetaText}>{formatDuration(flight.durationMinutes)}</span>
+        </div>
+        <div className={styles.flightMetaRow}>
+          <span className={styles.flightMetaText}>{airlineLabel}</span>
+          {label ? (
+            <span className={matchTier === "long-haul" ? styles.matchBadgeStrong : styles.matchBadgeWeak}>
+              {label}
+            </span>
+          ) : null}
+        </div>
+        {flight.stopSummary ? (
+          <div className={styles.flightStopsRow}>
+            <span className={styles.flightMetaText}>{flight.stopSummary}</span>
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 }

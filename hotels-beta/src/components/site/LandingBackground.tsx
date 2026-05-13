@@ -230,13 +230,6 @@ export default function LandingBackground() {
           backgroundColor: "#0b1118",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.34)",
-          }}
-        />
       </div>
     );
   }
@@ -274,13 +267,6 @@ export default function LandingBackground() {
         />
       ))}
 
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "rgba(0, 0, 0, 0.34)",
-        }}
-      />
     </div>
   );
 }
