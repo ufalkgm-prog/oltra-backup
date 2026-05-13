@@ -63,7 +63,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--oltra-text-primary);
   font-size: 0.95rem;
   cursor: pointer;
   user-select: none;
