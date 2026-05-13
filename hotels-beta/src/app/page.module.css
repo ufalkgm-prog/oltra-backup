@@ -580,6 +580,10 @@
   overflow: visible;
 }
 
+.landingGlass {
+  background: rgba(34, 56, 72, 0.41);
+}
+
 @media (max-width: 1280px) {
   .heroPanel {
     width: min(1120px, calc(100vw - 2.5rem));

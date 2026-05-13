@@ -333,7 +333,7 @@ export default function LandingSearchPanel({
   }
 
   return (
-    <div className={`oltra-glass oltra-panel ${styles.searchPanel}`}>
+    <div className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}>
       <form
         ref={formRef}
         action="/"

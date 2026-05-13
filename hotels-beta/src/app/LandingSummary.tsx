@@ -342,7 +342,7 @@ export default function LandingSummary({
   return (
     <div className={styles.summaryGrid}>
       {showHotels ? (
-        <div className={`oltra-glass oltra-panel ${styles.summaryColumn}`}>
+        <div className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}>
           <div className={styles.summaryHeaderRow}>
             <div className="oltra-label">Hotels</div>
             <Link
@@ -388,7 +388,7 @@ export default function LandingSummary({
       ) : null}
 
       {showFlights ? (
-        <div className={`oltra-glass oltra-panel ${styles.summaryColumn}`}>
+        <div className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}>
           <div className={styles.summaryHeaderRow}>
             <div className="oltra-label">Flights</div>
             <Link

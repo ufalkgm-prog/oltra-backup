@@ -35,15 +35,16 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
       return (
         <div className="flex w-[100px] shrink-0 flex-col items-end gap-1">
           {availability.landingURL ? (
-            <a
-              href={availability.landingURL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(availability.landingURL, "_blank", "noopener,noreferrer");
+              }}
               className="oltra-button-primary inline-flex h-7 w-full items-center justify-center px-3 text-[10px] tracking-[0.14em]"
             >
               BOOK
-            </a>
+            </button>
           ) : null}
           <div className="w-full text-right">
             <div className="text-[13px] font-light leading-tight tracking-wide text-white">
