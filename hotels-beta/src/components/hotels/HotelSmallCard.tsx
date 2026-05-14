@@ -41,7 +41,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
                 e.stopPropagation();
                 window.open(availability.landingURL, "_blank", "noopener,noreferrer");
               }}
-              className="oltra-button-primary inline-flex h-7 w-full items-center justify-center px-3 text-[10px] tracking-[0.14em]"
+              className="oltra-button-primary inline-flex h-[26px] w-full items-center justify-center px-3 text-[0.66rem] tracking-[0.18em]"
             >
               BOOK
             </button>
