@@ -1067,3 +1067,55 @@ export async function addRestaurantToTripBrowser(input: {
     overlapWarning: false,
   };
 }
+
+export async function addFlightToTripBrowser(input: {
+  tripId?: string | null;
+  route: string;
+  timing: string;
+  cabin: string;
+  departAt?: string | null;
+  arriveAt?: string | null;
+  externalFlightId?: string | null;
+  thumbnail?: string | null;
+}): Promise<{ status: "added" | "already_exists" }> {
+  const supabase = createBrowserClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) throw new Error("Not authenticated");
+
+  const tripId = input.tripId || (await getOrCreateDefaultTripIdBrowser());
+
+  if (input.externalFlightId) {
+    const { data: existing } = await supabase
+      .from("member_trip_flights")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("trip_id", tripId)
+      .eq("external_flight_id", input.externalFlightId)
+      .maybeSingle();
+    if (existing) return { status: "already_exists" };
+  }
+
+  const payload: TripFlightInsert = {
+    user_id: user.id,
+    trip_id: tripId,
+    route: input.route || null,
+    timing: input.timing || null,
+    cabin: input.cabin || null,
+    depart_at: input.departAt || null,
+    arrive_at: input.arriveAt || null,
+    external_flight_id: input.externalFlightId || null,
+    status: "saved",
+    thumbnail: input.thumbnail || null,
+    has_overlap_warning: false,
+  };
+
+  const { error } = await supabase.from("member_trip_flights").insert(payload);
+  if (error) throw error;
+
+  return { status: "added" };
+}

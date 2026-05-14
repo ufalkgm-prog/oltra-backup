@@ -5,6 +5,7 @@ import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { readHotelFlightSearch, saveHotelFlightSearch } from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
+import { addFlightToTripBrowser, getMemberActionAccessBrowser } from "@/lib/members/db";
 import { type Itinerary, type FlightLeg, normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
@@ -253,6 +254,8 @@ export default function FlightsView({ searchParams }: Props) {
   const [isDirty, setIsDirty] = useState(true);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [detailFlight, setDetailFlight] = useState<FlightLeg | null>(null);
+  const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
+  const [saveStateByOffer, setSaveStateByOffer] = useState<Record<string, string>>({});
 
   const isReturnTrip = search.tripType === "return";
   const isOneWay = search.tripType === "one-way";
@@ -271,6 +274,53 @@ export default function FlightsView({ searchParams }: Props) {
     setSelectedMultiLegIds([]);
     setSearchError(null);
   }
+
+  useEffect(() => {
+    let active = true;
+    getMemberActionAccessBrowser()
+      .then(r => { if (active) setIsMemberLoggedIn(r.isLoggedIn); })
+      .catch(() => { if (active) setIsMemberLoggedIn(false); });
+    return () => { active = false; };
+  }, []);
+
+  const getSaveLabel = useCallback((offerId: string): string => {
+    const s = saveStateByOffer[offerId];
+    if (s === 'saving') return 'SAVING...';
+    if (s === 'saved') return 'SAVED';
+    if (s === 'duplicate') return 'IN TRIP';
+    if (s === 'error') return 'TRY AGAIN';
+    if (s === 'login') return 'LOG IN FIRST';
+    return 'SAVE TO TRIP';
+  }, [saveStateByOffer]);
+
+  const handleSaveToTrip = useCallback(async (offerId: string) => {
+    const clearAfter = (state: string) => {
+      setSaveStateByOffer(prev => ({ ...prev, [offerId]: state }));
+      setTimeout(() => setSaveStateByOffer(prev => { const n = { ...prev }; delete n[offerId]; return n; }), 3000);
+    };
+    if (!isMemberLoggedIn) { clearAfter('login'); return; }
+    const itinerary = itineraries.find(it => it.offerId === offerId);
+    if (!itinerary) return;
+    setSaveStateByOffer(prev => ({ ...prev, [offerId]: 'saving' }));
+    try {
+      const outSeg0 = itinerary.outbound.segments[0];
+      const outLastSeg = itinerary.outbound.segments[itinerary.outbound.segments.length - 1];
+      const inLastSeg = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
+      const route = `${itinerary.outbound.originCode} → ${outLastSeg?.destinationName || itinerary.outbound.destinationCode}`;
+      const timing = `${outSeg0?.departIso?.slice(0, 10) ?? ''} · ${itinerary.outbound.departTime} → ${itinerary.outbound.arriveTime}`;
+      const result = await addFlightToTripBrowser({
+        route,
+        timing,
+        cabin: search.cabin,
+        departAt: outSeg0?.departIso ?? null,
+        arriveAt: (inLastSeg ?? outLastSeg)?.arriveIso ?? null,
+        externalFlightId: offerId,
+      });
+      clearAfter(result.status === 'already_exists' ? 'duplicate' : 'saved');
+    } catch {
+      clearAfter('error');
+    }
+  }, [isMemberLoggedIn, itineraries, search.cabin]);
 
   useEffect(() => {
     const originParam = normalizeParam(searchParams.origin);
@@ -949,6 +999,8 @@ export default function FlightsView({ searchParams }: Props) {
                     onSelectLeg={(col, legId) => setSelectedMultiLegIds(prev => [...prev.slice(0, col), legId])}
                     onBook={handleBook}
                     onInfo={setDetailFlight}
+                    onSave={handleSaveToTrip}
+                    getSaveLabel={getSaveLabel}
                     resultsScrollRef={resultsScrollRef}
                     hasScrollGutter={hasScrollGutter}
                   />
@@ -973,10 +1025,10 @@ export default function FlightsView({ searchParams }: Props) {
 
                   <div className={`${styles.pinnedStack} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
                     {recommended ? (
-                      <PinnedRow label="Top pick" itinerary={recommended} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} />
+                      <PinnedRow label="Top pick" itinerary={recommended} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} onSave={handleSaveToTrip} getSaveLabel={getSaveLabel} />
                     ) : null}
                     {fastest ? (
-                      <PinnedRow label="Fastest" itinerary={fastest} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} />
+                      <PinnedRow label="Fastest" itinerary={fastest} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} onSave={handleSaveToTrip} getSaveLabel={getSaveLabel} />
                     ) : null}
                   </div>
 
@@ -1056,6 +1108,8 @@ export default function FlightsView({ searchParams }: Props) {
                                         key={it.id}
                                         itinerary={it}
                                         onBook={handleBook}
+                                        onSave={handleSaveToTrip}
+                                        getSaveLabel={getSaveLabel}
                                         active={it.outbound.id === selectedOutboundId}
                                       />
                                     ))
@@ -1065,6 +1119,8 @@ export default function FlightsView({ searchParams }: Props) {
                                       key={it.id}
                                       itinerary={it}
                                       onBook={handleBook}
+                                      onSave={handleSaveToTrip}
+                                      getSaveLabel={getSaveLabel}
                                       active={it.id === selectedReturnId}
                                     />
                                   ))
@@ -1287,6 +1343,8 @@ function MultipleResults({
   onSelectLeg,
   onBook,
   onInfo,
+  onSave,
+  getSaveLabel,
   resultsScrollRef,
   hasScrollGutter,
 }: {
@@ -1301,6 +1359,8 @@ function MultipleResults({
   onSelectLeg: (colIndex: number, legId: string) => void;
   onBook: (offerId: string) => void;
   onInfo: (flight: FlightLeg) => void;
+  onSave?: (id: string) => void;
+  getSaveLabel?: (id: string) => string;
   resultsScrollRef: { current: HTMLDivElement | null };
   hasScrollGutter: boolean;
 }) {
@@ -1329,10 +1389,10 @@ function MultipleResults({
       {/* Pinned rows — same visual style as Return page */}
       <div className={`${styles.pinnedStack} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
         {recommended ? (
-          <MultiPinnedRow label="Top pick" itinerary={recommended} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} />
+          <MultiPinnedRow label="Top pick" itinerary={recommended} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} onSave={onSave} getSaveLabel={getSaveLabel} />
         ) : null}
         {fastest ? (
-          <MultiPinnedRow label="Fastest" itinerary={fastest} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} />
+          <MultiPinnedRow label="Fastest" itinerary={fastest} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} onSave={onSave} getSaveLabel={getSaveLabel} />
         ) : null}
       </div>
 
@@ -1375,7 +1435,7 @@ function MultipleResults({
           <div className={styles.priceColumn}>
             <div className={styles.cardStack}>
               {allSelected && selectedItinerary ? (
-                <PriceCard itinerary={selectedItinerary} onBook={onBook} active compact={compact} />
+                <PriceCard itinerary={selectedItinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active compact={compact} />
               ) : (
                 sortTopFirst(activeOptions, selectedLegIds[activeLegIndex] ?? "").map(legOpt => {
                   const p = optionPriceMap.get(legOpt.id);
@@ -1399,6 +1459,8 @@ function MultiPinnedRow({
   compact,
   onBook,
   onInfo,
+  onSave,
+  getSaveLabel,
 }: {
   label: string;
   itinerary: Itinerary;
@@ -1406,6 +1468,8 @@ function MultiPinnedRow({
   compact?: boolean;
   onBook: (id: string) => void;
   onInfo: (flight: FlightLeg) => void;
+  onSave?: (id: string) => void;
+  getSaveLabel?: (id: string) => string;
 }) {
   return (
     <div className={styles.pinnedRow}>
@@ -1422,7 +1486,7 @@ function MultiPinnedRow({
             </div>
           );
         })}
-        <PriceCard itinerary={itinerary} onBook={onBook} active compact={compact} />
+        <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active compact={compact} />
       </div>
     </div>
   );
@@ -1438,7 +1502,7 @@ function MultiOptionPriceCard({ priceEur, currency, showFrom, compact }: { price
   );
 }
 
-function PinnedRow({ label, itinerary, oneWay, onBook, onInfo }: { label: string; itinerary: Itinerary; oneWay: boolean; onBook: (id: string) => void; onInfo: (flight: FlightLeg) => void }) {
+function PinnedRow({ label, itinerary, oneWay, onBook, onInfo, onSave, getSaveLabel }: { label: string; itinerary: Itinerary; oneWay: boolean; onBook: (id: string) => void; onInfo: (flight: FlightLeg) => void; onSave?: (id: string) => void; getSaveLabel?: (id: string) => string }) {
   const tier = !oneWay && itinerary.inbound
     ? getReturnMatchTier(itinerary.outbound, itinerary.inbound)
     : null;
@@ -1450,7 +1514,7 @@ function PinnedRow({ label, itinerary, oneWay, onBook, onInfo }: { label: string
         {!oneWay && itinerary.inbound ? (
           <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} /></div>
         ) : null}
-        <PriceCard itinerary={itinerary} onBook={onBook} active />
+        <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
       </div>
     </div>
   );
@@ -1460,11 +1524,15 @@ function PinnedRow({ label, itinerary, oneWay, onBook, onInfo }: { label: string
 function PriceCard({
   itinerary,
   onBook,
+  onSave,
+  getSaveLabel,
   active = false,
   compact,
 }: {
   itinerary: Itinerary;
   onBook: (id: string) => void;
+  onSave?: (id: string) => void;
+  getSaveLabel?: (id: string) => string;
   active?: boolean;
   compact?: boolean;
 }) {
@@ -1486,8 +1554,9 @@ function PriceCard({
         type="button"
         className={active ? styles.savePillButton : styles.bookButtonInactive}
         disabled={!active}
+        onClick={() => active && onSave?.(itinerary.offerId)}
       >
-        SAVE TO TRIP
+        {getSaveLabel?.(itinerary.offerId) ?? 'SAVE TO TRIP'}
       </button>
     </div>
   );
