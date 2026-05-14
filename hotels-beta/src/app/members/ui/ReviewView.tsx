@@ -370,11 +370,6 @@ export default function ReviewView({
           />
         </div>
 
-        <div className="members-note">
-          Review is now stored in Supabase. Stay / visit verification and e-mail
-          forwarding to info@algoville.com can be added next.
-        </div>
-
         {errorMessage || statusMessage ? (
           <div className="members-note">{errorMessage || statusMessage}</div>
         ) : null}

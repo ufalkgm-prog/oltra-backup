@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
-import { submitFeedbackSuggestionBrowser } from "@/lib/members/db";
 
 const TOPIC_OPTIONS = [
   { value: "suggest-hotel", label: "Suggest hotel" },
@@ -25,11 +24,13 @@ export default function FeedbackSuggestView() {
       setStatusMessage("");
       setErrorMessage("");
 
-      await submitFeedbackSuggestionBrowser({
-        topic,
-        senderEmail: "",
-        message,
+      const res = await fetch("/api/email/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, message }),
       });
+
+      if (!res.ok) throw new Error("send failed");
 
       setMessage("");
       setStatusMessage("Feedback / suggestion submitted.");
@@ -64,11 +65,6 @@ export default function FeedbackSuggestView() {
             placeholder="Write your suggestion or feedback here"
             required
           />
-        </div>
-
-        <div className="members-note">
-          This form is stored in Supabase now. E-mail sending to
-          info@algoville.com can be added in the next phase.
         </div>
 
         {errorMessage || statusMessage ? (

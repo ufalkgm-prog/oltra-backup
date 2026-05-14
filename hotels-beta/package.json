@@ -15,12 +15,14 @@
     "dotenv": "^17.3.1",
     "maplibre-gl": "^5.19.0",
     "next": "^15.2.0",
+    "nodemailer": "^8.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^20.19.39",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.24",
