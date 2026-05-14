@@ -491,7 +491,7 @@ export default function InspireMapView({
         });
 
         hotelEl.addEventListener("click", () => {
-          window.location.href = `/hotels/${encodeURIComponent(hotel.hotelid)}`;
+          window.location.href = `/hotels?q=${encodeURIComponent(hotel.hotel_name)}&submitted=1`;
         });
 
         hotelMarkersRef.current.push(
