@@ -16,6 +16,7 @@ jobs:
         env:
           BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
         run: |
+          git config --local --unset-all "http.https://github.com/.extraheader" || true
           ENCODED=$(echo -n "x-access-token:${BACKUP_TOKEN}" | base64 --wrap=0)
           git remote add backup https://github.com/ufalkgm-prog/oltra-backup.git
           git config --local "http.https://github.com/ufalkgm-prog/oltra-backup.git/.extraheader" "AUTHORIZATION: basic ${ENCODED}"
