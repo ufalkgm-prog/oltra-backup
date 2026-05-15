@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import InspireMapView from "./InspireMapView";
+import OltraSpinner from "@/components/site/OltraSpinner";
 import styles from "./InspireView.module.css";
 import { filterInspireCities } from "@/lib/inspire/filterCities";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
@@ -183,6 +184,8 @@ function purposeToQueryLabel(purpose: InspirePurpose | ""): string {
 }
 
 export default function InspireView({ cities }: Props) {
+  const [isPending, startTransition] = useTransition();
+  const [pendingCityId, setPendingCityId] = useState<string | null>(null);
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement | null>(null);
 
@@ -280,9 +283,21 @@ export default function InspireView({ cities }: Props) {
         params.set("q", q);
       }
 
-      router.push(`/hotels?${params.toString()}`);
+      setPendingCityId(match.city.id);
+      startTransition(() => {
+        router.push(`/hotels?${params.toString()}`);
+      });
     },
-    [router, purpose]
+    [router, purpose, startTransition]
+  );
+
+  const goToHotel = useCallback(
+    (hotelName: string) => {
+      startTransition(() => {
+        router.push(`/hotels?q=${encodeURIComponent(hotelName)}&submitted=1`);
+      });
+    },
+    [router, startTransition]
   );
 
   return (
@@ -450,6 +465,11 @@ export default function InspireView({ cities }: Props) {
                     >
                       <div className={styles.destinationTitle}>
                         {match.city.city}, {match.city.country}
+                        {isPending && pendingCityId === match.city.id ? (
+                          <span style={{ float: "right", opacity: 0.6 }}>
+                            <OltraSpinner size={13} />
+                          </span>
+                        ) : null}
                       </div>
                       <div className={styles.destinationMeta}>
                         {match.city.region} · {match.city.hotelCount} hotels
@@ -477,6 +497,7 @@ export default function InspireView({ cities }: Props) {
               setActiveCityId(match.city.id);
               goToHotels(match);
             }}
+            onSelectHotel={goToHotel}
           />
         </section>
       </section>

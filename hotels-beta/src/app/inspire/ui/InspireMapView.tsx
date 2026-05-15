@@ -24,6 +24,7 @@ type Props = {
   maxFlightHours: number;
   activeCityId: string | null;
   onSelectCity: (match: InspireCityMatch) => void;
+  onSelectHotel?: (hotelName: string) => void;
 };
 
 const DEFAULT_WORLD_ZOOM = 1.5;
@@ -150,6 +151,7 @@ export default function InspireMapView({
   maxFlightHours,
   activeCityId,
   onSelectCity,
+  onSelectHotel,
 }: Props) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
@@ -158,6 +160,7 @@ export default function InspireMapView({
   const originMarkerRef = useRef<maplibregl.Marker | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const onSelectCityRef = useRef(onSelectCity);
+  const onSelectHotelRef = useRef(onSelectHotel);
   const monthRef = useRef(month);
 
   const [tempUnit, setTempUnit] = useState<TempUnit>("C");
@@ -167,6 +170,10 @@ export default function InspireMapView({
   useEffect(() => {
     onSelectCityRef.current = onSelectCity;
   }, [onSelectCity]);
+
+  useEffect(() => {
+    onSelectHotelRef.current = onSelectHotel;
+  }, [onSelectHotel]);
 
   useEffect(() => {
     monthRef.current = month;
@@ -491,7 +498,11 @@ export default function InspireMapView({
         });
 
         hotelEl.addEventListener("click", () => {
-          window.location.href = `/hotels?q=${encodeURIComponent(hotel.hotel_name)}&submitted=1`;
+          if (onSelectHotelRef.current) {
+            onSelectHotelRef.current(hotel.hotel_name);
+          } else {
+            window.location.href = `/hotels?q=${encodeURIComponent(hotel.hotel_name)}&submitted=1`;
+          }
         });
 
         hotelMarkersRef.current.push(
