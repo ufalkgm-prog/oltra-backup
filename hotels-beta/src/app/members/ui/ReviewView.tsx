@@ -98,13 +98,17 @@ function buildTargetLabel(option: ReviewTargetOption): string {
   );
 }
 
-function formatDateLabel(value: string): string {
-  if (!value) return "date";
+function formatDisplayDate(value: string): string {
+  if (!value) return "";
 
-  const [year, month, day] = value.split("-");
+  const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) return value;
 
-  return `${day}.${month}.${year}`;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(year, month - 1, day));
 }
 
 export default function ReviewView({
@@ -160,7 +164,7 @@ export default function ReviewView({
 
   const canChooseTarget = Boolean(reviewType);
   const canCompleteReview = Boolean(reviewType && selectedItemId);
-  const canSubmit = canCompleteReview && !isSubmitting;
+  const canSubmit = canCompleteReview && Boolean(dateVisited) && !isSubmitting;
 
   function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
     ref.current?.focus();
@@ -294,7 +298,8 @@ export default function ReviewView({
             >
               <label className="oltra-label">DATE VISITED</label>
               <div
-                className="members-date-field-wrap"
+                className="hotel-date-field relative cursor-pointer"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (canCompleteReview) openDatePicker(dateVisitedRef);
                 }}
@@ -315,16 +320,14 @@ export default function ReviewView({
                   }}
                   onKeyDown={(e) => e.preventDefault()}
                   onBeforeInput={(e) => e.preventDefault()}
-                  className="members-date-native-input"
+                  className="oltra-input hotel-date-field__input w-full cursor-pointer"
+                  data-has-value={dateVisited ? "true" : "false"}
                 />
-
                 <span
-                  className={[
-                    "members-date-display",
-                    dateVisited ? "members-date-display--selected" : "",
-                  ].join(" ")}
+                  className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
+                  data-has-value={dateVisited ? "true" : "false"}
                 >
-                  {formatDateLabel(dateVisited)}
+                  {formatDisplayDate(dateVisited) || "date"}
                 </span>
               </div>
             </div>
