@@ -125,6 +125,15 @@ export default function ReviewView({
 
   const dateVisitedRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    if (!errorMessage && !statusMessage) return;
+    const t = setTimeout(() => {
+      setErrorMessage("");
+      setStatusMessage("");
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [errorMessage, statusMessage]);
+
   const todayIso = new Date().toISOString().slice(0, 10);
 
   const minDateVisitedIso = new Date(
