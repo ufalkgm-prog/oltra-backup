@@ -69,14 +69,14 @@ export default function BetaLoginPage() {
 
         <input
           ref={inputRef}
-          type="password"
+          type="text"
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
             setError(false);
           }}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          placeholder=""
+          autoComplete="off"
           style={{
             background: "transparent",
             border: "none",
@@ -90,7 +90,6 @@ export default function BetaLoginPage() {
             outline: "none",
             caretColor: "rgba(255,255,255,0.6)",
           }}
-          autoComplete="current-password"
         />
 
         {error && (
@@ -106,6 +105,26 @@ export default function BetaLoginPage() {
             Incorrect password
           </p>
         )}
+
+        <button
+          onClick={handleSubmit}
+          disabled={!password || loading}
+          style={{
+            marginTop: 8,
+            background: "transparent",
+            border: "1px solid rgba(255,255,255,0.25)",
+            color: "rgba(255,255,255,0.6)",
+            fontSize: 11,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            padding: "8px 28px",
+            cursor: password && !loading ? "pointer" : "default",
+            opacity: password && !loading ? 1 : 0.35,
+            transition: "opacity 0.2s",
+          }}
+        >
+          {loading ? "…" : "Enter"}
+        </button>
       </div>
     </div>
   );
