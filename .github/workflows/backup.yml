@@ -13,6 +13,8 @@ jobs:
           fetch-depth: 0
 
       - name: Push to oltra-backup
+        env:
+          GH_TOKEN: ${{ secrets.BACKUP_TOKEN }}
         run: |
-          git remote add backup https://x-access-token:${{ secrets.BACKUP_TOKEN }}@github.com/ufalkgm-prog/oltra-backup.git
-          git push backup main --force
+          git remote add backup https://github.com/ufalkgm-prog/oltra-backup.git
+          git -c http.extraheader="Authorization: Bearer ${GH_TOKEN}" push backup main --force
