@@ -509,4 +509,16 @@ Three views rendered in the same panel:
 
 ---
 
+## 18. BACKUP WORKFLOW
+
+* Primary repo: `ufalkgm-prog/oltra-beta` (this repo)
+* Backup repo: `ufalkgm-prog/oltra-backup`
+* Workflow file: `.github/workflows/backup.yml`
+* Trigger: every push to `main` — fully automatic, no manual steps needed
+* Auth: GitHub Actions secret `BACKUP_TOKEN` (classic PAT with `repo` + `workflow` scopes, owned by `ufalkgm-prog`)
+* **Token expiry: approximately 90 days from 2026-05-15** — when it expires the workflow will fail; the user needs to regenerate the classic PAT at GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic), then update the `BACKUP_TOKEN` secret in oltra-beta → Settings → Secrets → Actions
+* To verify backup is current: compare latest commit SHA on both repos via `gh api repos/ufalkgm-prog/oltra-beta/commits/main --jq '.sha'` and the same for `oltra-backup`
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
