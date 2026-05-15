@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -629,6 +629,7 @@ export default function HotelsView(props: {
     !hasCountrySelected &&
     hotels.length > 50;
 
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const pathname = usePathname();
   const tripPickerRef = useRef<HTMLDivElement | null>(null);
@@ -1963,6 +1964,16 @@ async function handleCreateTripAndAddHotel() {
                 setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
                 setAgodaSearchDirty(true);
               }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const params = new URLSearchParams();
+                new FormData(e.currentTarget).forEach((value, key) => {
+                  if (typeof value === "string" && value) params.append(key, value);
+                });
+                startTransition(() => {
+                  router.replace(`/hotels?${params.toString()}`, { scroll: false });
+                });
+              }}
             >
               <HiddenPreserveParams
                 searchParams={searchParams}
@@ -2007,6 +2018,7 @@ async function handleCreateTripAndAddHotel() {
                 searchParams={searchParams}
                 dataset={props.suggestions}
                 wrapperClassName="md:col-span-12 pt-[2px]"
+                busy={isPending}
               />
 
               {!compactTopMode ? (
@@ -2398,6 +2410,16 @@ async function handleCreateTripAndAddHotel() {
                     setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
                     setAgodaSearchDirty(true);
                   }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const params = new URLSearchParams();
+                    new FormData(e.currentTarget).forEach((value, key) => {
+                      if (typeof value === "string" && value) params.append(key, value);
+                    });
+                    startTransition(() => {
+                      router.replace(`/hotels?${params.toString()}`, { scroll: false });
+                    });
+                  }}
                 >
                   <HiddenPreserveParams
                     searchParams={searchParams}
@@ -2440,6 +2462,7 @@ async function handleCreateTripAndAddHotel() {
                     placeholder="Type first 2 letters of hotel, city, country, or purpose"
                     searchParams={searchParams}
                     dataset={props.suggestions}
+                    busy={isPending}
                   />
 
                   {showNarrowFurtherMessage ? (
