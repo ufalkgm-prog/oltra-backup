@@ -2200,7 +2200,7 @@ async function handleCreateTripAndAddHotel() {
               ) : null}
 
               {!compactTopMode && filtersOpen ? (
-                <div className="md:col-span-12 border-t border-white/10 pt-3">
+                <div className="md:col-span-12 pt-3">
                   <div className="border-t border-white/10 py-2">
                     <button
                       type="button"
