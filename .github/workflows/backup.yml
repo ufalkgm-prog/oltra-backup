@@ -8,14 +8,8 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Push to oltra-backup
+      - name: Sync to oltra-backup
         env:
-          BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
+          GH_TOKEN: ${{ secrets.BACKUP_TOKEN }}
         run: |
-          git config --global --unset-all "http.https://github.com/.extraheader" || true
-          git remote add backup https://ufalkgm-prog:${BACKUP_TOKEN}@github.com/ufalkgm-prog/oltra-backup.git
-          git push backup main --force
+          gh repo sync ufalkgm-prog/oltra-backup --source ufalkgm-prog/oltra-beta --branch main --force
