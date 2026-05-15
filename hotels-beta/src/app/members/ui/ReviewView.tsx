@@ -151,8 +151,7 @@ export default function ReviewView({
 
   const canChooseTarget = Boolean(reviewType);
   const canCompleteReview = Boolean(reviewType && selectedItemId);
-  const canSubmit =
-    canCompleteReview && hasAtLeastOneNumericRating(ratings) && !isSubmitting;
+  const canSubmit = canCompleteReview && !isSubmitting;
 
   function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
     ref.current?.focus();
@@ -191,12 +190,6 @@ export default function ReviewView({
 
     if (!reviewType || !selectedItemId) {
       setErrorMessage("Please select type and hotel or restaurant.");
-      setStatusMessage("");
-      return;
-    }
-
-    if (!hasAtLeastOneNumericRating(ratings)) {
-      setErrorMessage("Please complete at least one rating.");
       setStatusMessage("");
       return;
     }
