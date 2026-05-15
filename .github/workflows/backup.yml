@@ -1,0 +1,18 @@
+name: Backup to oltra-backup
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to oltra-backup
+        run: |
+          git remote add backup https://x-access-token:${{ secrets.BACKUP_TOKEN }}@github.com/ufalkgm-prog/oltra-backup.git
+          git push backup main --force
