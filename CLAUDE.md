@@ -519,13 +519,57 @@ Three views rendered in the same panel:
 
 ## 18. BACKUP WORKFLOW
 
+### How it works
+
 * Primary repo: `ufalkgm-prog/oltra-beta` (this repo)
 * Backup repo: `ufalkgm-prog/oltra-backup`
 * Workflow file: `.github/workflows/backup.yml`
 * Trigger: every push to `main` — fully automatic, no manual steps needed
 * Auth: GitHub Actions secret `BACKUP_TOKEN` (classic PAT with `repo` + `workflow` scopes, owned by `ufalkgm-prog`)
-* **Token expiry: approximately 90 days from 2026-05-15** — when it expires the workflow will fail; the user needs to regenerate the classic PAT at GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic), then update the `BACKUP_TOKEN` secret in oltra-beta → Settings → Secrets → Actions
-* To verify backup is current: compare latest commit SHA on both repos via `gh api repos/ufalkgm-prog/oltra-beta/commits/main --jq '.sha'` and the same for `oltra-backup`
+* **Token expiry: approximately 90 days from 2026-05-15** — renew before this date
+
+### Viewing workflow status and errors
+
+1. Go to **github.com/ufalkgm-prog/oltra-beta → Actions tab**
+2. Find the latest "Backup to oltra-backup" run
+3. Click it to expand, then click the "backup" job to see the full log
+4. Non-fatal lines (e.g. `warning: unset-all failed`) are expected and harmless — the step has `|| true` to suppress them
+5. A red ✗ next to the job means the push actually failed
+
+### Common errors and fixes
+
+**"Authentication failed" or "invalid credentials"**
+→ The `BACKUP_TOKEN` has expired or been revoked.
+Fix:
+1. Go to github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Regenerate the token (keep `repo` + `workflow` scopes)
+3. Copy the new token value
+4. Go to oltra-beta → Settings → Secrets and variables → Actions → `BACKUP_TOKEN` → Update
+
+**"Repository not found" or "remote: Repository not found"**
+→ The `oltra-backup` repo was deleted or renamed.
+Fix: re-create it at github.com/ufalkgm-prog/oltra-backup (private, empty), then re-run the workflow.
+
+**Re-running a failed workflow**
+1. Actions tab → find the failed run → click "Re-run all jobs" (top right)
+
+### Manual backup push (if workflow keeps failing)
+
+```bash
+git remote add backup https://github.com/ufalkgm-prog/oltra-backup.git  # skip if already added
+git push backup main --force
+```
+
+If prompted for credentials, use `x-access-token` as username and the PAT as password.
+
+### Verify backup is current
+
+```bash
+gh api repos/ufalkgm-prog/oltra-beta/commits/main --jq '.sha'
+gh api repos/ufalkgm-prog/oltra-backup/commits/main --jq '.sha'
+```
+
+Both SHAs should match.
 
 ---
 
