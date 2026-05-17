@@ -840,8 +840,8 @@
   align-items: stretch;
   justify-content: center;
   gap: 5px;
-  align-self: stretch;
   width: 100%;
+  min-height: 90px;
   height: 90px;
   padding: 7px 10px 8px;
   border: 1px solid var(--oltra-field-border);
