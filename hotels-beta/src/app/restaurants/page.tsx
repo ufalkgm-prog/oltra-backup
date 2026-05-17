@@ -56,6 +56,8 @@ export default async function RestaurantsPage({
         .flat()
         .map((restaurant) => [String(restaurant.id), restaurant])
     ).values()
+  ).sort((a, b) =>
+    (a.restaurant_name ?? "").localeCompare(b.restaurant_name ?? "")
   );
 
   return (

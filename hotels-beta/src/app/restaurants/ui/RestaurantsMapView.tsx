@@ -45,7 +45,6 @@ export default function RestaurantsMapView({
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
-  const selectionFromMapRef = useRef(false);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const cityInputRef = useRef<HTMLInputElement | null>(null);
   const tripPickerRef = useRef<HTMLDivElement | null>(null);
@@ -573,7 +572,6 @@ export default function RestaurantsMapView({
 
       el.addEventListener("click", (event) => {
         event.stopPropagation();
-        selectionFromMapRef.current = true;
         setSelectedId(restaurant.id);
       });
 
@@ -614,24 +612,6 @@ export default function RestaurantsMapView({
   }, [selectedRestaurant]);
 
     useEffect(() => {
-    if (selectionFromMapRef.current) {
-      selectionFromMapRef.current = false;
-      return;
-    }
-
-    const map = mapInstanceRef.current;
-    if (!map || !selectedRestaurant) return;
-    if (selectedRestaurant.lng === null || selectedRestaurant.lat === null) return;
-
-    map.easeTo({
-      center: [selectedRestaurant.lng, selectedRestaurant.lat],
-      zoom: map.getZoom(),
-      duration: 500,
-      essential: true,
-    });
-  }, [selectedRestaurant]);
-  
-  useEffect(() => {
     let active = true;
 
     async function loadMemberAccess() {
@@ -729,10 +709,7 @@ export default function RestaurantsMapView({
                 <button
                   key={restaurant.id}
                   type="button"
-                  onClick={() => {
-                    selectionFromMapRef.current = false;
-                    setSelectedId(restaurant.id);
-                  }}
+                  onClick={() => setSelectedId(restaurant.id)}
                   className={`oltra-output restaurant-row${active ? " is-active" : ""}`}
                 >
                   <div className="restaurant-row__title">
