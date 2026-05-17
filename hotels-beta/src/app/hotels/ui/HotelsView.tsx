@@ -427,16 +427,31 @@ const BADGE_SILVER = "rgba(148, 162, 174, 0.80)";
 function getHotelBadges(hotel: HotelRecord): { key: string; title: string; bg: string }[] {
   const hotelAwardIds = new Set(relationIds(hotel.awards, "awards_id"));
   const badges: { key: string; title: string; bg: string }[] = [];
+
+  // Fixed front order: M3, 50
+  const FRONT_CODES = ["michelin3keys", "best50"] as const;
+  for (const code of FRONT_CODES) {
+    const award = FEATURED_AWARDS.find((a) => a.code === code);
+    if (award && hotelAwardIds.has(award.id)) {
+      badges.push({ key: award.badge, title: award.label, bg: BADGE_GOLD });
+    }
+  }
+
+  // Editor rank: only 2 or 3
+  const rank = Number(hotel.editor_rank_13 ?? 0);
+  if (Number.isFinite(rank) && rank >= 2 && rank <= 3) {
+    badges.push({ key: `E${rank}`, title: `Editor's Rank ${rank}`, bg: rank === 3 ? BADGE_GOLD : BADGE_SILVER });
+  }
+
+  // Remaining awards in FEATURED_AWARDS order
+  const frontCodeSet = new Set<string>(FRONT_CODES);
   for (const award of FEATURED_AWARDS) {
-    if (hotelAwardIds.has(award.id)) {
+    if (!frontCodeSet.has(award.code) && hotelAwardIds.has(award.id)) {
       badges.push({ key: award.badge, title: award.label, bg: (award as any).gold ? BADGE_GOLD : BADGE_SILVER });
     }
   }
-  const rank = Number(hotel.editor_rank_13 ?? 0);
-  if (Number.isFinite(rank) && rank >= 1 && rank <= 3) {
-    badges.push({ key: `E${rank}`, title: `Editor's Rank ${rank}`, bg: rank === 3 ? BADGE_GOLD : rank === 2 ? BADGE_SILVER : BADGE_SILVER });
-  }
-  return badges.sort((a, b) => (a.bg === BADGE_GOLD ? 0 : 1) - (b.bg === BADGE_GOLD ? 0 : 1));
+
+  return badges;
 }
 
 
