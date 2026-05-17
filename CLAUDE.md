@@ -533,8 +533,7 @@ Three views rendered in the same panel:
 1. Go to **github.com/ufalkgm-prog/oltra-beta → Actions tab**
 2. Find the latest "Backup to oltra-backup" run
 3. Click it to expand, then click the "backup" job to see the full log
-4. Non-fatal lines (e.g. `warning: unset-all failed`) are expected and harmless — the step has `|| true` to suppress them
-5. A red ✗ next to the job means the push actually failed
+4. A red ✗ next to the job means the push actually failed
 
 ### Common errors and fixes
 
