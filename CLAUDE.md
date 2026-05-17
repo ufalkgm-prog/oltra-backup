@@ -1,5 +1,13 @@
 # OLTRA — AI CONTEXT (UPDATED)
 
+## 0. REPOSITORY STRUCTURE
+
+All application code lives in the `/workspaces/oltra-beta/hotels-beta/` subdirectory. The repo root (`/workspaces/oltra-beta/`) contains only top-level config (CLAUDE.md, GitHub workflows, etc.).
+
+**Git paths must be relative to the repo root**, so always use `hotels-beta/src/...` when staging files — e.g. `git add hotels-beta/src/app/hotels/ui/HotelsView.tsx`.
+
+---
+
 ## 1. PROJECT OVERVIEW
 
 OLTRA is a curated luxury travel platform focused on high-end hotels and restaurants, designed for an affluent, design-conscious, international audience.
