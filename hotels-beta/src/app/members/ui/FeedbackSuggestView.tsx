@@ -72,13 +72,18 @@ export default function FeedbackSuggestView() {
         ) : null}
 
         <div className="members-form-actions">
-          <button
-            type="submit"
-            className="oltra-button-primary members-action-button"
-            disabled={isSubmitting || !topic}
-          >
-            {isSubmitting ? "Sending..." : "Send"}
-          </button>
+          {(() => {
+            const canSend = !isSubmitting && !!topic && message.trim().length >= 20;
+            return (
+              <button
+                type="submit"
+                className={`${canSend ? "oltra-button-primary" : "oltra-button-secondary"} members-action-button`}
+                disabled={!canSend}
+              >
+                {isSubmitting ? "Sending..." : "Send"}
+              </button>
+            );
+          })()}
         </div>
       </form>
     </section>
