@@ -1,5 +1,4 @@
 import type { HotelRecord } from "@/lib/directus";
-import AccoladeBadge from "./AccoladeBadge";
 import {
   getHotelImageSet,
   HOTEL_CARD_PLACEHOLDERS,
@@ -109,9 +108,6 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
           </div>
           <div className="mt-0.5 text-xs text-white/55">
             {nameAndLocation || "—"}
-          </div>
-          <div className="mt-1.5">
-            <AccoladeBadge hotel={hotel} />
           </div>
         </div>
 

@@ -101,36 +101,43 @@ const FEATURED_AWARDS = [
     code: "forbes5",
     id: "cb4f80af-963d-4f09-a8aa-213718e399fb",
     label: "Forbes 5 Star (2026)",
+    badge: "F5",
   },
   {
     code: "michelin3keys",
     id: "fd18110a-9764-4c20-90f4-fd149d890ead",
     label: "Michelin 3 Keys (2026)",
+    badge: "M3",
   },
   {
     code: "best50",
     id: "74a666bf-f7fb-4fff-b550-52eccfa98c4b",
     label: "The World's 50 Best (2025)",
+    badge: "50",
   },
   {
     code: "cn",
     id: "902c14cc-50a7-4be9-a4ee-b582afb9112e",
     label: "Condé Nast Gold List (2025)",
+    badge: "CN",
   },
   {
     code: "tl100",
     id: "f8ac8e9c-397e-4e44-ba71-b1f9224e7c3f",
     label: "T+L 100 (2025)",
+    badge: "TL",
   },
   {
     code: "telegraph",
     id: "d292cfb3-a88f-44dd-b052-2980cfd3bac8",
     label: "The Telegraph Top 50 (2024)",
+    badge: "T",
   },
   {
     code: "aaa",
     id: "32f0e878-e188-4ed1-98f8-6b22914f8f22",
     label: "AAA Five Diamond Award (2025)",
+    badge: "5D",
   },
 ] as const;
 
@@ -412,15 +419,21 @@ function getFeaturedAwardsForHotel(hotel: HotelRecord) {
   return FEATURED_AWARDS.filter((award) => hotelAwardIds.has(award.id));
 }
 
-function getTotalPoints(hotel: HotelRecord): number {
-  const extPoints = Number(hotel.ext_points ?? 0);
-  const editorRank = Number(hotel.editor_rank_13 ?? 0);
-
-  const safeExtPoints = Number.isFinite(extPoints) ? extPoints : 0;
-  const safeEditorRank = Number.isFinite(editorRank) ? editorRank : 0;
-
-  return safeExtPoints + safeEditorRank * 3;
+function getHotelBadges(hotel: HotelRecord): { key: string; title: string }[] {
+  const hotelAwardIds = new Set(relationIds(hotel.awards, "awards_id"));
+  const badges: { key: string; title: string }[] = [];
+  for (const award of FEATURED_AWARDS) {
+    if (hotelAwardIds.has(award.id)) {
+      badges.push({ key: award.badge, title: award.label });
+    }
+  }
+  const rank = Number(hotel.editor_rank_13 ?? 0);
+  if (Number.isFinite(rank) && rank >= 1 && rank <= 3) {
+    badges.push({ key: `E${rank}`, title: `Editor's Rank ${rank}` });
+  }
+  return badges;
 }
+
 
 function getFeaturedAwardsFilterMap(): Map<string, string> {
   return new Map(FEATURED_AWARDS.map((award) => [award.id, award.label]));
@@ -516,28 +529,6 @@ function formatDisplayDate(value: string): string {
   }).format(new Date(year, month - 1, day));
 }
 
-function accoladeTier(hotel: HotelRecord): "gold" | "silver" | null {
-  const totalPoints = getTotalPoints(hotel);
-  if (totalPoints > 25) return "gold";
-  if (totalPoints >= 10) return "silver";
-  return null;
-}
-
-function AccoladeBadge({ hotel }: { hotel: HotelRecord }) {
-  const tier = accoladeTier(hotel);
-  if (!tier) return null;
-
-  return (
-    <div
-      className={[
-        "oltra-status-badge",
-        tier === "gold" ? "oltra-status-badge--gold" : "oltra-status-badge--silver",
-      ].join(" ")}
-    >
-      {tier === "gold" ? "Top Accolades" : "Highly Accredited"}
-    </div>
-  );
-}
 
 export default function HotelsView(props: {
   hotels: HotelRecord[];
@@ -745,7 +736,7 @@ export default function HotelsView(props: {
   const searchDisabledReason = resultCountTooLarge
     ? "Please limit no of results"
     : !hasRequiredStayDetails || !datesAreValid
-      ? "Please select dates and guest details"
+      ? "Please select dates and guest details to check availability"
       : "";
 
   const searchIsActive = searchDisabledReason === "";
@@ -2289,6 +2280,7 @@ async function handleCreateTripAndAddHotel() {
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
                   const agodaCardAvailability = agodaResultAvailability[String(h.id)];
                   const featuredAwards = getFeaturedAwardsForHotel(h);
+                  const hotelBadges = getHotelBadges(h);
                   const nameAndLocation = [h.city, h.country].filter(Boolean).join(" · ");
 
                   return (
@@ -2301,7 +2293,7 @@ async function handleCreateTripAndAddHotel() {
                         setPinnedHotelId(id);
                       }}
                       className={[
-                        "oltra-output w-full text-left transition",
+                        "oltra-output w-full cursor-pointer text-left transition",
                         active
                           ? "bg-[var(--oltra-field-bg-strong)] hotel-result-card--active"
                           : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
@@ -2354,16 +2346,29 @@ async function handleCreateTripAndAddHotel() {
                         </div>
 
                         <div className="flex min-h-[80px] min-w-0 flex-col">
-                          <div className="min-w-0">
-                            <div className="truncate text-base font-light tracking-wide text-white">
-                              {h.hotel_name ?? "Untitled hotel"}
+                          <div className="flex items-start gap-1.5">
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-base font-light tracking-wide text-white">
+                                {h.hotel_name ?? "Untitled hotel"}
+                              </div>
+                              <div className="mt-0.5 text-xs text-white/55">
+                                {nameAndLocation || "—"}
+                              </div>
                             </div>
-                            <div className="mt-0.5 text-xs text-white/55">
-                              {nameAndLocation || "—"}
-                            </div>
-                            <div className="mt-1.5">
-                              <AccoladeBadge hotel={h} />
-                            </div>
+                            {hotelBadges.length > 0 ? (
+                              <div className="flex shrink-0 flex-wrap justify-end gap-0.5" style={{ maxWidth: "62px" }}>
+                                {hotelBadges.map(({ key, title }) => (
+                                  <span
+                                    key={key}
+                                    title={title}
+                                    className="inline-flex items-center justify-center rounded-full text-white"
+                                    style={{ width: "18px", height: "18px", background: "rgba(196, 158, 72, 0.85)", fontSize: "0.46rem", fontWeight: 700, flexShrink: 0, lineHeight: 1 }}
+                                  >
+                                    {key}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
 
                           {h.highlights ? (

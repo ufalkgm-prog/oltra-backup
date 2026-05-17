@@ -929,11 +929,12 @@
 .bookButtonActive,
 .bookButtonInactive {
   width: 100%;
-  border-radius: var(--oltra-radius-sm, 6px);
-  font-size: 0.68rem;
-  font-weight: 600;
+  height: 26px;
+  border-radius: var(--oltra-radius-md);
+  font-size: 0.66rem;
+  font-weight: 400;
   letter-spacing: 0.18em;
-  padding: 5px 0;
+  padding: 0 12px;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
@@ -959,7 +960,7 @@
 
 .bookButtonActive {
   background: var(--oltra-button-active-bg);
-  border: 1px solid var(--oltra-button-active-bg);
+  border: 1px solid transparent;
   color: var(--oltra-button-active-text);
 }
 
