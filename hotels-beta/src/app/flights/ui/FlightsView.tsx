@@ -985,13 +985,6 @@ export default function FlightsView({ searchParams }: Props) {
                   );
                 })()}
               </div>
-              <div className={styles.metaText}>
-                {isLoading
-                  ? "Searching for flights…"
-                  : itineraries.length
-                  ? `${filteredItineraries.length} itineraries · ${search.adults} adults${search.children > 0 ? `, ${search.children} children` : ""} · ${search.cabin}`
-                  : "Enter your route and press Search"}
-              </div>
             </div>
 
             {searchError && (
