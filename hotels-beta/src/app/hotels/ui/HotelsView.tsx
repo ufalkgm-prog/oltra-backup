@@ -108,12 +108,14 @@ const FEATURED_AWARDS = [
     id: "fd18110a-9764-4c20-90f4-fd149d890ead",
     label: "Michelin 3 Keys (2026)",
     badge: "M3",
+    gold: true,
   },
   {
     code: "best50",
     id: "74a666bf-f7fb-4fff-b550-52eccfa98c4b",
     label: "The World's 50 Best (2025)",
     badge: "50",
+    gold: true,
   },
   {
     code: "cn",
@@ -419,17 +421,20 @@ function getFeaturedAwardsForHotel(hotel: HotelRecord) {
   return FEATURED_AWARDS.filter((award) => hotelAwardIds.has(award.id));
 }
 
-function getHotelBadges(hotel: HotelRecord): { key: string; title: string }[] {
+const BADGE_GOLD = "rgba(196, 158, 72, 0.88)";
+const BADGE_SILVER = "rgba(148, 162, 174, 0.80)";
+
+function getHotelBadges(hotel: HotelRecord): { key: string; title: string; bg: string }[] {
   const hotelAwardIds = new Set(relationIds(hotel.awards, "awards_id"));
-  const badges: { key: string; title: string }[] = [];
+  const badges: { key: string; title: string; bg: string }[] = [];
   for (const award of FEATURED_AWARDS) {
     if (hotelAwardIds.has(award.id)) {
-      badges.push({ key: award.badge, title: award.label });
+      badges.push({ key: award.badge, title: award.label, bg: (award as any).gold ? BADGE_GOLD : BADGE_SILVER });
     }
   }
   const rank = Number(hotel.editor_rank_13 ?? 0);
   if (Number.isFinite(rank) && rank >= 1 && rank <= 3) {
-    badges.push({ key: `E${rank}`, title: `Editor's Rank ${rank}` });
+    badges.push({ key: `E${rank}`, title: `Editor's Rank ${rank}`, bg: rank === 3 ? BADGE_GOLD : rank === 2 ? BADGE_SILVER : BADGE_SILVER });
   }
   return badges;
 }
@@ -2357,12 +2362,12 @@ async function handleCreateTripAndAddHotel() {
                             </div>
                             {hotelBadges.length > 0 ? (
                               <div className="flex shrink-0 flex-wrap justify-end gap-0.5" style={{ maxWidth: "62px" }}>
-                                {hotelBadges.map(({ key, title }) => (
+                                {hotelBadges.map(({ key, title, bg }) => (
                                   <span
                                     key={key}
                                     title={title}
                                     className="inline-flex items-center justify-center rounded-full text-white"
-                                    style={{ width: "18px", height: "18px", background: "rgba(196, 158, 72, 0.85)", fontSize: "0.46rem", fontWeight: 700, flexShrink: 0, lineHeight: 1 }}
+                                    style={{ width: "18px", height: "18px", background: bg, fontSize: "0.46rem", fontWeight: 700, flexShrink: 0, lineHeight: 1 }}
                                   >
                                     {key}
                                   </span>
