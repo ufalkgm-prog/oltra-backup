@@ -1110,9 +1110,9 @@ export default function FlightsView({ searchParams }: Props) {
                                       </div>
                                     );
                                   })
-                                ) : (
+                                ) : !visibleReturnItineraries.length ? (
                                   <div className={styles.emptyHint}>No compatible return flights found.</div>
-                                )}
+                                ) : null}
                               </div>
                             </div>
                           ) : null}
