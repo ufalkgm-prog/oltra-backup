@@ -1057,19 +1057,21 @@ export default function FlightsView({ searchParams }: Props) {
                     {(() => {
                       const sortedOutbound = sortTopFirst(outboundOptions, selectedOutboundId);
                       const sortedReturn = sortTopFirst(visibleReturnItineraries, selectedReturnId);
+                      const displayedOutbound = sortedOutbound.filter(f => f.id !== selectedOutboundId);
+                      const displayedReturn = sortedReturn.filter(it => it.id !== selectedReturnId);
                       return (
                         <>
                           <div className={styles.columnBox}>
                             <div className={styles.cardStack}>
-                              {sortedOutbound.length ? (
-                                sortedOutbound.map(flight => (
+                              {displayedOutbound.length ? (
+                                displayedOutbound.map(flight => (
                                   <div
                                     key={flight.id}
                                     role="button"
                                     tabIndex={0}
                                     onClick={() => setSelectedOutboundId(flight.id)}
                                     onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
-                                    className={`${styles.selectCard} ${flight.id === selectedOutboundId ? styles.selectCardActive : ""}`}
+                                    className={styles.selectCard}
                                   >
                                     <FlightCardContent flight={flight} onInfo={setDetailFlight} />
                                   </div>
@@ -1085,14 +1087,12 @@ export default function FlightsView({ searchParams }: Props) {
                               <div className={styles.cardStack}>
                                 {!selectedOutboundId ? (
                                   <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
-                                ) : sortedReturn.length ? (
-                                  sortedReturn.map(item => {
+                                ) : displayedReturn.length ? (
+                                  displayedReturn.map(item => {
                                     const tier = item.inbound && selectedOutboundLeg
                                       ? getReturnMatchTier(selectedOutboundLeg, item.inbound)
                                       : null;
-                                    const matchClass = item.id === selectedReturnId
-                                      ? styles.selectCardActive
-                                      : tier === "long-haul"
+                                    const matchClass = tier === "long-haul"
                                       ? styles.selectCardMatchStrong
                                       : tier === "alliance"
                                       ? styles.selectCardMatchWeak
@@ -1120,7 +1120,7 @@ export default function FlightsView({ searchParams }: Props) {
                           <div className={styles.priceColumn}>
                             <div className={styles.cardStack}>
                               {isOneWay
-                                ? sortedOutbound
+                                ? displayedOutbound
                                     .map(flight => itineraryByOutboundId.get(flight.id))
                                     .filter((it): it is Itinerary => Boolean(it))
                                     .map(it => (
@@ -1128,20 +1128,16 @@ export default function FlightsView({ searchParams }: Props) {
                                         key={it.id}
                                         itinerary={it}
                                         onBook={handleBook}
-                                        onSave={handleSaveToTrip}
-                                        getSaveLabel={getSaveLabel}
-                                        active={it.outbound.id === selectedOutboundId}
+                                        priceOnly
                                       />
                                     ))
                                 : selectedOutboundId
-                                ? sortedReturn.map(it => (
+                                ? displayedReturn.map(it => (
                                     <PriceCard
                                       key={it.id}
                                       itinerary={it}
                                       onBook={handleBook}
-                                      onSave={handleSaveToTrip}
-                                      getSaveLabel={getSaveLabel}
-                                      active={it.id === selectedReturnId}
+                                      priceOnly
                                     />
                                   ))
                                 : null}
@@ -1590,6 +1586,7 @@ function PriceCard({
   getSaveLabel,
   active = false,
   compact,
+  priceOnly = false,
 }: {
   itinerary: Itinerary;
   onBook: (id: string) => void;
@@ -1597,6 +1594,7 @@ function PriceCard({
   getSaveLabel?: (id: string) => string;
   active?: boolean;
   compact?: boolean;
+  priceOnly?: boolean;
 }) {
   const { currency, format } = useCurrency();
   return (
@@ -1604,22 +1602,27 @@ function PriceCard({
       <span className={styles.priceCardAmount}>
         {currency} {format(itinerary.priceEur, itinerary.currency)}
       </span>
-      <button
-        type="button"
-        className={active ? styles.bookButtonActive : styles.bookButtonInactive}
-        onClick={() => active && onBook(itinerary.offerId)}
-        disabled={!active}
-      >
-        BOOK
-      </button>
-      <button
-        type="button"
-        className={active ? styles.savePillButton : styles.bookButtonInactive}
-        disabled={!active}
-        onClick={() => active && onSave?.(itinerary.offerId)}
-      >
-        {getSaveLabel?.(itinerary.offerId) ?? 'SAVE TO TRIP'}
-      </button>
+      <span className={styles.priceCardFrom}>Total</span>
+      {!priceOnly && (
+        <>
+          <button
+            type="button"
+            className={active ? styles.bookButtonActive : styles.bookButtonInactive}
+            onClick={() => active && onBook(itinerary.offerId)}
+            disabled={!active}
+          >
+            BOOK
+          </button>
+          <button
+            type="button"
+            className={active ? styles.savePillButton : styles.bookButtonInactive}
+            disabled={!active}
+            onClick={() => active && onSave?.(itinerary.offerId)}
+          >
+            {getSaveLabel?.(itinerary.offerId) ?? 'SAVE TO TRIP'}
+          </button>
+        </>
+      )}
     </div>
   );
 }
