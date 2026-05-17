@@ -94,14 +94,14 @@
 /* Base page behavior */
 html {
   font-family: var(--oltra-font-sans);
-  background: var(--oltra-bg-color);
+  background: transparent;
   overflow-y: scroll;
   scrollbar-gutter: stable;
 }
 
 body {
   font-family: var(--oltra-font-sans);
-  background: var(--oltra-bg-color);
+  background: transparent;
 }
 
 /* Shared fixed background */
@@ -129,7 +129,7 @@ body {
   overflow-x: hidden;
   overflow-y: visible;
   color: var(--oltra-text-primary);
-  background: var(--oltra-bg-color);
+  background: transparent;
 }
 
 .oltra-page__bg {

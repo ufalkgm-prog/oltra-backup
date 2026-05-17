@@ -33,7 +33,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     if (!availability) return null;
     if (availability.status === "available") {
       return (
-        <div className="flex w-[100px] shrink-0 flex-col items-end gap-1">
+        <div className="flex w-[100px] shrink-0 flex-col items-center gap-1">
           {availability.landingURL ? (
             <button
               type="button"
@@ -41,12 +41,13 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
                 e.stopPropagation();
                 window.open(availability.landingURL, "_blank", "noopener,noreferrer");
               }}
-              className="oltra-button-primary inline-flex h-[26px] w-full items-center justify-center px-3 text-[0.66rem] tracking-[0.18em]"
+              className="oltra-button-primary w-full"
+              style={{ height: "26px", minHeight: "26px", fontSize: "0.66rem", letterSpacing: "0.18em", padding: "0 12px" }}
             >
               BOOK
             </button>
           ) : null}
-          <div className="w-full text-right">
+          <div className="w-full text-center">
             <div className="text-[13px] font-light leading-tight tracking-wide text-white">
               {availability.currency}{" "}
               {Math.round(availability.dailyRate).toLocaleString()}
