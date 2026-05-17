@@ -436,7 +436,7 @@ function getHotelBadges(hotel: HotelRecord): { key: string; title: string; bg: s
   if (Number.isFinite(rank) && rank >= 1 && rank <= 3) {
     badges.push({ key: `E${rank}`, title: `Editor's Rank ${rank}`, bg: rank === 3 ? BADGE_GOLD : rank === 2 ? BADGE_SILVER : BADGE_SILVER });
   }
-  return badges;
+  return badges.sort((a, b) => (a.bg === BADGE_GOLD ? 0 : 1) - (b.bg === BADGE_GOLD ? 0 : 1));
 }
 
 
