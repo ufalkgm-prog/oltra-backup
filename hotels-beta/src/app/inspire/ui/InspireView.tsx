@@ -252,9 +252,11 @@ export default function InspireView({ cities }: Props) {
       month,
       maxFlightHours,
       purpose,
-    }).filter(
-      (match) => match.city.city.toLowerCase() !== origin.label.toLowerCase()
-    );
+    })
+      .filter(
+        (match) => match.city.city.toLowerCase() !== origin.label.toLowerCase()
+      )
+      .sort((a, b) => a.city.city.localeCompare(b.city.city));
   }, [cities, month, purpose, maxFlightHours, origin]);
 
   useEffect(() => {
