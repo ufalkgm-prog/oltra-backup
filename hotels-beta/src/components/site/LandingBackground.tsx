@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const IMAGES = Array.from({ length: 49 }, (_, i) =>
+const ALL_IMAGES = Array.from({ length: 49 }, (_, i) =>
   `/images/landing/landing-${String(i + 1).padStart(2, "0")}.jpg`
 );
 
@@ -41,8 +41,8 @@ function shuffleAll(n: number): number[] {
 // Build a full shuffle of all 49 indices, ensuring the first GAP positions
 // don't repeat any of the previous cycle's last GAP images. Guarantees at
 // least GAP unique images between any repeat across the cycle boundary.
-function buildCycle(prevTail: number[]): number[] {
-  const all = shuffleAll(IMAGES.length);
+function buildCycle(prevTail: number[], count: number): number[] {
+  const all = shuffleAll(count);
   if (prevTail.length === 0) return all;
   const tail = new Set(prevTail);
   const block = Math.min(GAP, all.length);
@@ -100,6 +100,8 @@ const blankSlot: Slot = {
 
 export default function LandingBackground() {
   const [mounted, setMounted] = useState(false);
+  const [validImages, setValidImages] = useState<string[]>([]);
+  const validImagesRef = useRef<string[]>([]);
   const [slotA, setSlotA] = useState<Slot>(blankSlot);
   const [slotB, setSlotB] = useState<Slot>({ ...blankSlot, motion: "zoom-out" });
 
@@ -109,7 +111,7 @@ export default function LandingBackground() {
 
   function takeNextIndex(): number {
     if (queueRef.current.length === 0) {
-      queueRef.current = buildCycle(tailRef.current);
+      queueRef.current = buildCycle(tailRef.current, validImagesRef.current.length);
     }
     const idx = queueRef.current.shift()!;
     tailRef.current = [...tailRef.current, idx].slice(-GAP);
@@ -118,15 +120,21 @@ export default function LandingBackground() {
 
   useEffect(() => {
     setMounted(true);
-    IMAGES.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-      img.decode().catch(() => {});
+    Promise.all(
+      ALL_IMAGES.map((src) => {
+        const img = new Image();
+        img.src = src;
+        return img.decode().then(() => src).catch(() => null);
+      })
+    ).then((results) => {
+      const valid = results.filter((s): s is string => s !== null);
+      validImagesRef.current = valid;
+      setValidImages(valid);
     });
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (validImages.length === 0) return;
 
     let cancelled = false;
     const timeouts: number[] = [];
@@ -145,7 +153,7 @@ export default function LandingBackground() {
       rafs.push(r);
     };
 
-    queueRef.current = buildCycle([]);
+    queueRef.current = buildCycle([], validImages.length);
     tailRef.current = [];
 
     // First two images: slot A (visible) and slot B (preset, hidden).
@@ -228,7 +236,7 @@ export default function LandingBackground() {
       timeouts.forEach((t) => window.clearTimeout(t));
       rafs.forEach((r) => window.cancelAnimationFrame(r));
     };
-  }, [mounted]);
+  }, [validImages]);
 
   if (!mounted) {
     return (
@@ -265,7 +273,7 @@ export default function LandingBackground() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: `url(${IMAGES[slot.index]})`,
+            backgroundImage: `url(${validImages[slot.index] ?? ""})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",

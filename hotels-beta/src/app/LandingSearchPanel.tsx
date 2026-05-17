@@ -19,6 +19,7 @@ import type {
 import styles from "./page.module.css";
 
 const HOME_AIRPORT_STORAGE_KEY = "oltra_home_airport";
+const SEARCH_STATE_KEY = "oltra_landing_search";
 
 const SINGLE_AIRPORT_COUNTRIES = new Set(
   ["Maldives", "Bhutan", "Brunei"].map((c) => c.toLowerCase())
@@ -79,6 +80,9 @@ export default function LandingSearchPanel({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const [effectiveSearchParams, setEffectiveSearchParams] =
+    useState<PageSearchParams>(initialSearchParams);
+
   const [fromValue, setFromValue] = useState(
     normalizeParam(initialSearchParams.from)
   );
@@ -122,6 +126,13 @@ export default function LandingSearchPanel({
   );
 
   useEffect(() => {
+    const key = buildComparableSearchKey(initialSearchParams);
+    if (key) {
+      try {
+        sessionStorage.setItem(SEARCH_STATE_KEY, JSON.stringify(initialSearchParams));
+      } catch {}
+    }
+    setEffectiveSearchParams(initialSearchParams);
     setFromValue(normalizeParam(initialSearchParams.from));
     setToValue(normalizeParam(initialSearchParams.to));
     setGuestSelection(readGuestSelection(initialSearchParams));
@@ -133,6 +144,28 @@ export default function LandingSearchPanel({
         nextOrigin !== ""
     );
   }, [initialSearchParams]);
+
+  // On mount: if the URL has no params, restore the last search from sessionStorage
+  // so navigating away and back doesn't clear the form.
+  useEffect(() => {
+    if (buildComparableSearchKey(initialSearchParams)) return;
+    try {
+      const raw = sessionStorage.getItem(SEARCH_STATE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as PageSearchParams;
+      if (!buildComparableSearchKey(saved)) return;
+      setEffectiveSearchParams(saved);
+      setFromValue(normalizeParam(saved.from));
+      setToValue(normalizeParam(saved.to));
+      setGuestSelection(readGuestSelection(saved));
+      const savedOrigin = normalizeParam(saved.origin);
+      setHomeAirport(savedOrigin);
+      setIncludeFlights(
+        normalizeParam(saved.include_flights) === "1" || savedOrigin !== ""
+      );
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (homeAirport) return;
@@ -172,7 +205,7 @@ export default function LandingSearchPanel({
     };
   }, []);
 
-  const bedroomsValue = normalizeParam(initialSearchParams.bedrooms) || "1";
+  const bedroomsValue = normalizeParam(effectiveSearchParams.bedrooms) || "1";
 
   const hasGuestDetails = guestSelection.adults > 0;
   const hasRequiredStayDetails =
@@ -346,7 +379,7 @@ export default function LandingSearchPanel({
           <StructuredDestinationField
             label="Destination / purpose"
             placeholder="Type first 2 letters of hotel, city, country, or purpose"
-            searchParams={initialSearchParams}
+            searchParams={effectiveSearchParams}
             dataset={dataset}
             allowedTypes={allowedTypes}
             onStateChange={(state) => {
