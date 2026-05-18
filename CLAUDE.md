@@ -526,7 +526,7 @@ Three views rendered in the same panel:
 * Workflow file: `.github/workflows/backup.yml`
 * Trigger: every push to `main` — fully automatic, no manual steps needed
 * Auth: GitHub Actions secret `BACKUP_TOKEN` (classic PAT with `repo` + `workflow` scopes, owned by `ufalkgm-prog`)
-* **Token expiry: approximately 90 days from 2026-05-15** — renew before this date
+* **Token expiry: approximately 90 days from 2026-05-18** — renew before this date
 
 ### Viewing workflow status and errors
 
