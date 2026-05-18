@@ -37,4 +37,4 @@ yarn-error.log*
 next-env.d.ts
 
 backups/*.sql
-backups/*.sql.gz
+backups/*.sql.gzhotels-beta/oltra-beta/
