@@ -13,11 +13,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Push to oltra-backup
         env:
           BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
         run: |
-          git config --global credential.helper ""
           git remote add backup https://x-access-token:${BACKUP_TOKEN}@github.com/ufalkgm-prog/oltra-backup.git
           git push backup main --force
