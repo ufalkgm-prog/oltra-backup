@@ -525,8 +525,9 @@ Three views rendered in the same panel:
 * Backup repo: `ufalkgm-prog/oltra-backup`
 * Workflow file: `.github/workflows/backup.yml`
 * Trigger: every push to `main` — fully automatic, no manual steps needed
-* Auth: GitHub Actions secret `BACKUP_TOKEN` (classic PAT with `repo` + `workflow` scopes, owned by `ufalkgm-prog`)
-* **Token expiry: approximately 90 days from 2026-05-18** — renew before this date
+* Auth: SSH deploy key — **does not expire**
+  * Public key added to `oltra-backup` → Settings → Deploy keys (write access)
+  * Private key stored (base64-encoded) as secret `BACKUP_SSH_KEY` in `oltra-beta`
 
 ### Viewing workflow status and errors
 
@@ -537,17 +538,17 @@ Three views rendered in the same panel:
 
 ### Common errors and fixes
 
-**"Authentication failed" or "invalid credentials"**
-→ The `BACKUP_TOKEN` has expired or been revoked.
-Fix:
-1. Go to github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)
-2. Regenerate the token (keep `repo` + `workflow` scopes)
-3. Copy the new token value
-4. Go to oltra-beta → Settings → Secrets and variables → Actions → `BACKUP_TOKEN` → Update
+**"error in libcrypto" or "Permission denied (publickey)"**
+→ The `BACKUP_SSH_KEY` secret is corrupted. Regenerate and re-set it:
+1. In the codespace terminal: `ssh-keygen -t ed25519 -C "oltra-backup-deploy-key" -f /tmp/backup-deploy-key -N ""`
+2. Add the new public key to oltra-backup → Settings → Deploy keys (write access): `cat /tmp/backup-deploy-key.pub`
+3. Get the base64 private key from the terminal (not from chat): `cat /tmp/backup-deploy-key | base64 -w 0`
+4. Copy that output from your terminal and paste into oltra-beta → Settings → Secrets → `BACKUP_SSH_KEY` → Update
+5. **IMPORTANT**: always copy the base64 string from your raw terminal, never from chat (markdown rendering corrupts it)
 
-**"Repository not found" or "remote: Repository not found"**
+**"Repository not found"**
 → The `oltra-backup` repo was deleted or renamed.
-Fix: re-create it at github.com/ufalkgm-prog/oltra-backup (private, empty), then re-run the workflow.
+Fix: re-create it at github.com/ufalkgm-prog/oltra-backup (private, empty), re-add the deploy key, then re-run the workflow.
 
 **Re-running a failed workflow**
 1. Actions tab → find the failed run → click "Re-run all jobs" (top right)
@@ -555,11 +556,10 @@ Fix: re-create it at github.com/ufalkgm-prog/oltra-backup (private, empty), then
 ### Manual backup push (if workflow keeps failing)
 
 ```bash
-git remote add backup https://github.com/ufalkgm-prog/oltra-backup.git  # skip if already added
-git push backup main --force
+eval $(ssh-agent -s)
+cat /tmp/backup-deploy-key | ssh-add -
+git push git@github.com:ufalkgm-prog/oltra-backup.git main --force
 ```
-
-If prompted for credentials, use `x-access-token` as username and the PAT as password.
 
 ### Verify backup is current
 
