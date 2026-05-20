@@ -19,7 +19,7 @@ jobs:
           BACKUP_SSH_KEY: ${{ secrets.BACKUP_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "$BACKUP_SSH_KEY" > ~/.ssh/backup-deploy-key
+          echo "$BACKUP_SSH_KEY" | base64 -d > ~/.ssh/backup-deploy-key
           chmod 600 ~/.ssh/backup-deploy-key
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
           GIT_SSH_COMMAND="ssh -i ~/.ssh/backup-deploy-key" \
