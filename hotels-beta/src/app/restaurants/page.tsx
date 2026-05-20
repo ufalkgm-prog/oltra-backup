@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import PageShell from "@/components/site/PageShell";
 import RestaurantsMapView from "./ui/RestaurantsMapView";
+import { getRestaurantCities, getRestaurantsByCity } from "@/lib/restaurants";
+import { expandCityAliases } from "@/lib/locationAliases";
+import "./restaurants.css";
 
 export const metadata: Metadata = {
   title: "Restaurants",
   description: "Curated luxury restaurants worldwide.",
 };
-import { getRestaurantCities, getRestaurantsByCity } from "@/lib/restaurants";
-import { expandCityAliases } from "@/lib/locationAliases";
-import "./restaurants.css";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
