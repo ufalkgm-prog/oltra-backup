@@ -18,9 +18,9 @@ jobs:
         env:
           BACKUP_SSH_KEY: ${{ secrets.BACKUP_SSH_KEY }}
         run: |
+          # Strip any stray whitespace from the base64 string, then decode into ssh-add
+          eval $(ssh-agent -s)
+          echo "$BACKUP_SSH_KEY" | tr -d '[:space:]' | base64 -d | ssh-add -
           mkdir -p ~/.ssh
-          echo "$BACKUP_SSH_KEY" | base64 -d > ~/.ssh/backup-deploy-key
-          chmod 600 ~/.ssh/backup-deploy-key
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/backup-deploy-key" \
-            git push git@github.com:ufalkgm-prog/oltra-backup.git HEAD:main --force
+          git push git@github.com:ufalkgm-prog/oltra-backup.git HEAD:main --force
