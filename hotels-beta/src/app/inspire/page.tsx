@@ -4,7 +4,7 @@ import InspireView from "./ui/InspireView";
 import { buildInspireCities } from "@/lib/inspire/buildInspireCities";
 
 export const metadata: Metadata = {
-  title: "Inspire — OLTRA",
+  title: "Inspire",
   description: "Discover where to go based on season, purpose, and travel radius.",
 };
 

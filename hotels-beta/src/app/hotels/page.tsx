@@ -9,7 +9,7 @@ import { expandCityAliases } from "@/lib/locationAliases";
 import HotelsView from "./ui/HotelsView";
 
 export const metadata: Metadata = {
-  title: "Hotels — OLTRA",
+  title: "Hotels",
   description: "Curated luxury hotels, editorial-first.",
 };
 
