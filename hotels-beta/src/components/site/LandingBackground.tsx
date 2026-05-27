@@ -120,17 +120,8 @@ export default function LandingBackground() {
 
   useEffect(() => {
     setMounted(true);
-    Promise.all(
-      ALL_IMAGES.map((src) => {
-        const img = new Image();
-        img.src = src;
-        return img.decode().then(() => src).catch(() => null);
-      })
-    ).then((results) => {
-      const valid = results.filter((s): s is string => s !== null);
-      validImagesRef.current = valid;
-      setValidImages(valid);
-    });
+    validImagesRef.current = ALL_IMAGES;
+    setValidImages(ALL_IMAGES);
   }, []);
 
   useEffect(() => {

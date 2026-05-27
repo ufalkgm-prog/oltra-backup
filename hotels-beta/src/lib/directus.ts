@@ -91,7 +91,7 @@ async function directusRequest<T>(
   const res = await fetch(url, {
     ...init,
     headers,
-    cache: "no-store",
+    next: { revalidate: 3600 },
   });
 
   if (!res.ok) {
