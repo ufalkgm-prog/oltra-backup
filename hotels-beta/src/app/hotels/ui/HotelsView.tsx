@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import maplibregl from "maplibre-gl";
+import type maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
@@ -551,6 +551,12 @@ function formatDisplayDate(value: string): string {
 }
 
 
+let _ml: typeof maplibregl | null = null;
+async function loadMaplibre(): Promise<typeof maplibregl> {
+  if (!_ml) _ml = (await import("maplibre-gl")).default;
+  return _ml;
+}
+
 export default function HotelsView(props: {
   hotels: HotelRecord[];
   options: Options;
@@ -650,6 +656,7 @@ export default function HotelsView(props: {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const [mapReady, setMapReady] = useState(false);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const selectionFromMapRef = useRef(false);
 
@@ -1128,39 +1135,50 @@ export default function HotelsView(props: {
       return;
     }
 
-    const map = new maplibregl.Map({
-      container: mapRef.current,
-      style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
-      center: MAP_FALLBACK_CENTER,
-      zoom: 11,
-    });
+    let cancelled = false;
+    let map: maplibregl.Map | null = null;
 
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
+    loadMaplibre().then((ml) => {
+      if (cancelled || !mapRef.current) return;
 
-    map.on("load", () => {
-      map.resize();
-      window.setTimeout(() => map.resize(), 100);
-      window.setTimeout(() => map.resize(), 350);
-    });
-
-    mapInstanceRef.current = map;
-
-    const onWindowResize = () => {
-      map.resize();
-    };
-
-    window.addEventListener("resize", onWindowResize);
-
-    if (typeof ResizeObserver !== "undefined" && mapRef.current) {
-      const observer = new ResizeObserver(() => {
-        map.resize();
+      map = new ml.Map({
+        container: mapRef.current,
+        style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+        center: MAP_FALLBACK_CENTER,
+        zoom: 11,
       });
-      observer.observe(mapRef.current);
-      resizeObserverRef.current = observer;
-    }
+
+      map.addControl(new ml.NavigationControl(), "top-right");
+
+      map.on("load", () => {
+        map!.resize();
+        window.setTimeout(() => map!.resize(), 100);
+        window.setTimeout(() => map!.resize(), 350);
+      });
+
+      mapInstanceRef.current = map;
+
+      const onWindowResize = () => {
+        map!.resize();
+      };
+
+      window.addEventListener("resize", onWindowResize);
+
+      if (typeof ResizeObserver !== "undefined" && mapRef.current) {
+        const observer = new ResizeObserver(() => {
+          map!.resize();
+        });
+        observer.observe(mapRef.current);
+        resizeObserverRef.current = observer;
+      }
+
+      setMapReady(true);
+    });
 
     return () => {
-      window.removeEventListener("resize", onWindowResize);
+      cancelled = true;
+
+      window.removeEventListener("resize", () => map?.resize());
 
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
@@ -1174,17 +1192,21 @@ export default function HotelsView(props: {
       });
       markersRef.current = [];
 
-      try {
-        map.remove();
-      } catch {}
+      if (map) {
+        try {
+          map.remove();
+        } catch {}
+      }
 
       mapInstanceRef.current = null;
+      setMapReady(false);
     };
   }, [effectiveView]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || effectiveView !== "map") return;
+    const ml = _ml;
+    if (!map || !ml || effectiveView !== "map") return;
 
     markersRef.current.forEach((marker) => {
       try {
@@ -1193,7 +1215,7 @@ export default function HotelsView(props: {
     });
     markersRef.current = [];
 
-    const bounds = new maplibregl.LngLatBounds();
+    const bounds = new ml.LngLatBounds();
     let hasBounds = false;
 
     for (const hotel of visibleHotels) {
@@ -1220,7 +1242,7 @@ export default function HotelsView(props: {
       const popupTitle = (hotel.hotel_name ?? "Untitled hotel").replace(/</g, "&lt;");
       const popupMeta = (locationLine(hotel) || "—").replace(/</g, "&lt;");
 
-      const popup = new maplibregl.Popup({
+      const popup = new ml.Popup({
         closeButton: false,
         closeOnClick: false,
         closeOnMove: false,
@@ -1234,7 +1256,7 @@ export default function HotelsView(props: {
         </div>
       `);
 
-      const marker = new maplibregl.Marker({ element: el })
+      const marker = new ml.Marker({ element: el })
         .setLngLat([lng, lat])
         .setPopup(popup)
         .addTo(map);
@@ -1284,7 +1306,7 @@ export default function HotelsView(props: {
     }
 
     map.resize();
-  }, [effectiveView, visibleHotels]);
+  }, [effectiveView, visibleHotels, mapReady]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {

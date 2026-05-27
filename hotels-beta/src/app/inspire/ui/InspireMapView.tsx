@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import type maplibregl from "maplibre-gl";
 import type {
   InspireCityMatch,
   InspireMonth,
@@ -26,6 +26,12 @@ type Props = {
   onSelectCity: (match: InspireCityMatch) => void;
   onSelectHotel?: (hotelName: string) => void;
 };
+
+let _ml: typeof maplibregl | null = null;
+async function loadMaplibre(): Promise<typeof maplibregl> {
+  if (!_ml) _ml = (await import("maplibre-gl")).default;
+  return _ml;
+}
 
 const DEFAULT_WORLD_ZOOM = 1.5;
 const HOTEL_MARKER_ZOOM = 8.2;
@@ -163,6 +169,7 @@ export default function InspireMapView({
   const onSelectHotelRef = useRef(onSelectHotel);
   const monthRef = useRef(month);
 
+  const [mapReady, setMapReady] = useState(false);
   const [tempUnit, setTempUnit] = useState<TempUnit>("C");
   const [tempsVisible, setTempsVisible] = useState<boolean>(true);
   const tempUnitRef = useRef(tempUnit);
@@ -217,122 +224,134 @@ export default function InspireMapView({
       return;
     }
 
-    const map = new maplibregl.Map({
-      container: mapRef.current,
-      style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
-      center: [origin.lng, origin.lat],
-      zoom: DEFAULT_WORLD_ZOOM,
-      minZoom: 1.3,
-      renderWorldCopies: false,
-    });
+    let cancelled = false;
+    let map: maplibregl.Map | null = null;
 
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
+    loadMaplibre().then((ml) => {
+      if (cancelled || !mapRef.current) return;
 
-    map.on("load", () => {
-      map.addSource(TEMP_BAND_SOURCE_ID, {
-        type: "geojson",
-        data: buildTempBandsGeoJSON(monthRef.current),
+      map = new ml.Map({
+        container: mapRef.current,
+        style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+        center: [origin.lng, origin.lat],
+        zoom: DEFAULT_WORLD_ZOOM,
+        minZoom: 1.3,
+        renderWorldCopies: false,
       });
 
-      map.addSource(TEMP_LABEL_SOURCE_ID, {
-        type: "geojson",
-        data: buildTempLabelsGeoJSON(monthRef.current, tempUnitRef.current),
-      });
+      map.addControl(new ml.NavigationControl(), "top-right");
 
-      const firstSymbolLayer = map
-        .getStyle()
-        .layers.find((layer) => layer.type === "symbol");
+      const mapLocal = map;
 
-      map.addLayer(
-        {
-          id: TEMP_BAND_LAYER_ID,
-          type: "fill",
-          source: TEMP_BAND_SOURCE_ID,
-          paint: {
-            "fill-color": [
-              "step",
-              ["get", "temp"],
-              "#1e3a8a",
-              0, "#1d4ed8",
-              5, "#3b82f6",
-              10, "#06b6d4",
-              15, "#14b8a6",
-              20, "#84cc16",
-              25, "#f59e0b",
-              30, "#ea580c",
-              35, "#b91c1c",
-            ],
-            "fill-opacity": 0.42,
-            "fill-outline-color": "rgba(255, 255, 255, 0.35)",
+      mapLocal.on("load", () => {
+        mapLocal.addSource(TEMP_BAND_SOURCE_ID, {
+          type: "geojson",
+          data: buildTempBandsGeoJSON(monthRef.current),
+        });
+
+        mapLocal.addSource(TEMP_LABEL_SOURCE_ID, {
+          type: "geojson",
+          data: buildTempLabelsGeoJSON(monthRef.current, tempUnitRef.current),
+        });
+
+        const firstSymbolLayer = mapLocal
+          .getStyle()
+          .layers.find((layer) => layer.type === "symbol");
+
+        mapLocal.addLayer(
+          {
+            id: TEMP_BAND_LAYER_ID,
+            type: "fill",
+            source: TEMP_BAND_SOURCE_ID,
+            paint: {
+              "fill-color": [
+                "step",
+                ["get", "temp"],
+                "#1e3a8a",
+                0, "#1d4ed8",
+                5, "#3b82f6",
+                10, "#06b6d4",
+                15, "#14b8a6",
+                20, "#84cc16",
+                25, "#f59e0b",
+                30, "#ea580c",
+                35, "#b91c1c",
+              ],
+              "fill-opacity": 0.42,
+              "fill-outline-color": "rgba(255, 255, 255, 0.35)",
+            },
           },
-        },
-        firstSymbolLayer?.id
-      );
+          firstSymbolLayer?.id
+        );
 
-      map.addLayer({
-        id: TEMP_LABEL_LAYER_ID,
-        type: "symbol",
-        source: TEMP_LABEL_SOURCE_ID,
-        layout: {
-          "text-field": ["get", "tempLabel"],
-          "text-font": ["Open Sans Bold", "Noto Sans Bold"],
-          "text-size": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            0, 11,
-            4, 13,
-            8, 15,
-          ],
-          "text-allow-overlap": false,
-          "text-padding": 4,
-        },
-        paint: {
-          "text-color": "#ffffff",
-          "text-halo-color": "rgba(0, 0, 0, 0.55)",
-          "text-halo-width": 1.2,
-        },
+        mapLocal.addLayer({
+          id: TEMP_LABEL_LAYER_ID,
+          type: "symbol",
+          source: TEMP_LABEL_SOURCE_ID,
+          layout: {
+            "text-field": ["get", "tempLabel"],
+            "text-font": ["Open Sans Bold", "Noto Sans Bold"],
+            "text-size": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              0, 11,
+              4, 13,
+              8, 15,
+            ],
+            "text-allow-overlap": false,
+            "text-padding": 4,
+          },
+          paint: {
+            "text-color": "#ffffff",
+            "text-halo-color": "rgba(0, 0, 0, 0.55)",
+            "text-halo-width": 1.2,
+          },
+        });
+
+        safeResize();
+        window.setTimeout(safeResize, 100);
+        window.setTimeout(safeResize, 350);
       });
 
-      safeResize();
-      window.setTimeout(safeResize, 100);
-      window.setTimeout(safeResize, 350);
-    });
-
-    function safeResize() {
-      if (mapInstanceRef.current !== map) return;
-      try {
-        map.resize();
-      } catch {
-        /* map was removed mid-callback */
+      function safeResize() {
+        if (mapInstanceRef.current !== mapLocal) return;
+        try {
+          mapLocal.resize();
+        } catch {
+          /* map was removed mid-callback */
+        }
       }
-    }
 
-    map.on("zoom", syncMarkerVisibility);
-    map.on("moveend", syncMarkerVisibility);
+      mapLocal.on("zoom", syncMarkerVisibility);
+      mapLocal.on("moveend", syncMarkerVisibility);
 
-    const onWindowResize = safeResize;
-    window.addEventListener("resize", onWindowResize);
+      window.addEventListener("resize", safeResize);
 
-    if (typeof ResizeObserver !== "undefined" && mapRef.current) {
-      const observer = new ResizeObserver(safeResize);
-      observer.observe(mapRef.current);
-      resizeObserverRef.current = observer;
-    }
+      if (typeof ResizeObserver !== "undefined" && mapRef.current) {
+        const observer = new ResizeObserver(safeResize);
+        observer.observe(mapRef.current);
+        resizeObserverRef.current = observer;
+      }
 
-    mapInstanceRef.current = map;
+      mapInstanceRef.current = mapLocal;
+      setMapReady(true);
+    });
 
     return () => {
-      window.removeEventListener("resize", onWindowResize);
+      cancelled = true;
       resizeObserverRef.current?.disconnect();
       resizeObserverRef.current = null;
       clearMarkers();
 
-      try {
-        map.remove();
-      } catch {}
+      if (map) {
+        try {
+          map.remove();
+        } catch {}
+      }
 
       mapInstanceRef.current = null;
+      setMapReady(false);
     };
   }, [origin]);
 
@@ -386,7 +405,7 @@ export default function InspireMapView({
 
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !_ml) return;
 
     clearMarkers();
 
@@ -402,7 +421,8 @@ export default function InspireMapView({
       </span>
     `;
 
-    originMarkerRef.current = new maplibregl.Marker({ element: originEl })
+    const ml = _ml!;
+    originMarkerRef.current = new ml.Marker({ element: originEl })
       .setLngLat([origin.lng, origin.lat])
       .addTo(map);
 
@@ -422,7 +442,7 @@ export default function InspireMapView({
       const avgDay = Math.round(match.selectedMonthTempC + 4);
       const avgNight = Math.round(match.selectedMonthTempC - 4);
 
-      const popup = new maplibregl.Popup({
+      const popup = new ml.Popup({
         closeButton: false,
         closeOnClick: false,
         closeOnMove: false,
@@ -450,7 +470,7 @@ export default function InspireMapView({
       });
 
       cityMarkersRef.current.push(
-        new maplibregl.Marker({ element: cityEl })
+        new ml.Marker({ element: cityEl })
           .setLngLat([match.city.lng, match.city.lat])
           .setPopup(popup)
           .addTo(map)
@@ -471,7 +491,7 @@ export default function InspireMapView({
           </span>
         `;
 
-        const hotelPopup = new maplibregl.Popup({
+        const hotelPopup = new ml.Popup({
           closeButton: false,
           closeOnClick: false,
           closeOnMove: false,
@@ -506,7 +526,7 @@ export default function InspireMapView({
         });
 
         hotelMarkersRef.current.push(
-          new maplibregl.Marker({ element: hotelEl })
+          new ml.Marker({ element: hotelEl })
             .setLngLat([hotel.lng, hotel.lat])
             .setPopup(hotelPopup)
             .addTo(map)
@@ -515,7 +535,7 @@ export default function InspireMapView({
     }
 
     const clampLat = (lat: number) => Math.max(-85, Math.min(85, lat));
-    const bounds = new maplibregl.LngLatBounds();
+    const bounds = new ml.LngLatBounds();
     const safeExtend = (lng: unknown, lat: unknown) => {
       const lngN = Number(lng);
       const latN = Number(lat);
@@ -560,7 +580,7 @@ export default function InspireMapView({
     // activeCityId intentionally NOT in deps — clicking a marker should not
     // re-trigger a fitBounds and override the user's manual zoom level.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matches, origin, maxFlightHours]);
+  }, [matches, origin, maxFlightHours, mapReady]);
 
   useEffect(() => {
     cityMarkersRef.current.forEach((marker) => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import maplibregl from "maplibre-gl";
+import type maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   getMemberActionAccessBrowser,
@@ -32,6 +32,12 @@ type Props = {
 
 const DEFAULT_FALLBACK_CENTER: [number, number] = [103.8198, 1.3521];
 
+let _ml: typeof maplibregl | null = null;
+async function loadMaplibre(): Promise<typeof maplibregl> {
+  if (!_ml) _ml = (await import("maplibre-gl")).default;
+  return _ml;
+}
+
 export default function RestaurantsMapView({
   city,
   cityOptions,
@@ -46,6 +52,7 @@ export default function RestaurantsMapView({
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const cityInputRef = useRef<HTMLInputElement | null>(null);
   const tripPickerRef = useRef<HTMLDivElement | null>(null);
 
@@ -412,50 +419,59 @@ export default function RestaurantsMapView({
       return;
     }
 
-    const map = new maplibregl.Map({
-      container: mapRef.current,
-      style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
-      center: DEFAULT_FALLBACK_CENTER,
-      zoom: 12,
-    });
+    let cancelled = false;
+    let map: maplibregl.Map | null = null;
 
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
+    loadMaplibre().then((ml) => {
+      if (cancelled || !mapRef.current) return;
 
-    map.on("load", () => {
-      map.resize();
-      window.setTimeout(() => map.resize(), 100);
-      window.setTimeout(() => map.resize(), 350);
-    });
-
-    map.on("click", () => {
-      markersRef.current.forEach((marker: any) => {
-        const popup = marker.getPopup?.();
-        if (popup?.isOpen()) {
-          try {
-            popup.remove();
-          } catch {}
-        }
+      map = new ml.Map({
+        container: mapRef.current,
+        style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+        center: DEFAULT_FALLBACK_CENTER,
+        zoom: 12,
       });
-    });
 
-    mapInstanceRef.current = map;
+      map.addControl(new ml.NavigationControl(), "top-right");
 
-    const onWindowResize = () => {
-      map.resize();
-    };
-
-    window.addEventListener("resize", onWindowResize);
-
-    if (typeof ResizeObserver !== "undefined" && mapRef.current) {
-      const observer = new ResizeObserver(() => {
-        map.resize();
+      map.on("load", () => {
+        map!.resize();
+        window.setTimeout(() => map!.resize(), 100);
+        window.setTimeout(() => map!.resize(), 350);
       });
-      observer.observe(mapRef.current);
-      resizeObserverRef.current = observer;
-    }
+
+      map.on("click", () => {
+        markersRef.current.forEach((marker: any) => {
+          const popup = marker.getPopup?.();
+          if (popup?.isOpen()) {
+            try {
+              popup.remove();
+            } catch {}
+          }
+        });
+      });
+
+      mapInstanceRef.current = map;
+
+      const onWindowResize = () => {
+        map!.resize();
+      };
+
+      window.addEventListener("resize", onWindowResize);
+
+      if (typeof ResizeObserver !== "undefined" && mapRef.current) {
+        const observer = new ResizeObserver(() => {
+          map!.resize();
+        });
+        observer.observe(mapRef.current);
+        resizeObserverRef.current = observer;
+      }
+
+      setMapReady(true);
+    });
 
     return () => {
-      window.removeEventListener("resize", onWindowResize);
+      cancelled = true;
 
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
@@ -476,17 +492,21 @@ export default function RestaurantsMapView({
       });
       markersRef.current = [];
 
-      try {
-        map.remove();
-      } catch {}
+      if (map) {
+        try {
+          map.remove();
+        } catch {}
+      }
 
       mapInstanceRef.current = null;
+      setMapReady(false);
     };
   }, []);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    const ml = _ml;
+    if (!map || !ml) return;
 
     markersRef.current.forEach((marker: any) => {
       const popup = marker.getPopup?.();
@@ -502,7 +522,7 @@ export default function RestaurantsMapView({
     });
     markersRef.current = [];
 
-    const bounds = new maplibregl.LngLatBounds();
+    const bounds = new ml.LngLatBounds();
     let hasBounds = false;
 
     for (const restaurant of mapRestaurants) {
@@ -529,7 +549,7 @@ export default function RestaurantsMapView({
       const firstAward = buildAwardsLabel(restaurant).split(" · ")[0] || "";
       const locationLine = restaurant.local_area || restaurant.city || "";
 
-      const popup = new maplibregl.Popup({
+      const popup = new ml.Popup({
         closeButton: false,
         closeOnClick: true,
         closeOnMove: false,
@@ -575,7 +595,7 @@ export default function RestaurantsMapView({
         setSelectedId(restaurant.id);
       });
 
-      const marker = new maplibregl.Marker({ element: el })
+      const marker = new ml.Marker({ element: el })
         .setLngLat([restaurant.lng, restaurant.lat])
         .setPopup(popup)
         .addTo(map);
@@ -599,7 +619,7 @@ export default function RestaurantsMapView({
     }
 
     map.resize();
-  }, [city, mapRestaurants]);
+  }, [city, mapRestaurants, mapReady]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {
