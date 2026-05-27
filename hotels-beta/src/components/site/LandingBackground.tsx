@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const ALL_IMAGES = Array.from({ length: 49 }, (_, i) =>
-  `/images/landing/landing-${String(i + 1).padStart(2, "0")}.jpg`
+  `/images/landing/landing-${String(i + 1).padStart(2, "0")}.webp`
 );
 
 const SLIDE_MS = 5000;
