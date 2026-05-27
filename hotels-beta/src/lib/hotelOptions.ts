@@ -1,17 +1,5 @@
 // src/lib/hotelOptions.ts
 import "server-only";
-import { getHotels } from "@/lib/directus";
-
-/**
- * Minimal “options” provider for filters:
- * - Pulls distinct values for key scalar fields from published hotels.
- * - For relational fields (activities/settings/styles/awards), returns ID-based options.
- *
- * Note: Your Directus API currently returns relations as arrays of IDs
- * (e.g. "activities":[1159]), so options are derived from those IDs.
- * We can later upgrade labels by fetching taxonomy collections once we expose
- * a generic Directus fetch helper from src/lib/directus.ts.
- */
 
 export type RelOption = { id: string; label: string };
 
@@ -52,64 +40,43 @@ function sortRelOptions(opts: RelOption[]): RelOption[] {
   return opts.slice().sort((a, b) => a.label.localeCompare(b.label));
 }
 
-export async function getHotelFilterOptions(): Promise<HotelFilterOptions> {
-  const rows = await getHotels({
-    fields: [
-      "affiliation",
-      "region",
-      "country",
-      "state_province__county__island",
-      "city",
-      "local_area",
-      "published",
-
-      // relations (currently returned as arrays of IDs)
-      "activities",
-      "awards",
-      "settings",
-      "styles",
-    ],
-    filter: { published: { _eq: true } },
-    limit: 5000, // tune later
-    sort: ["country", "city", "hotel_name"],
-  });
-
-  const collectRelIds = (
-    key: "activities" | "awards" | "settings" | "styles"
-  ): string[] => {
-    const all: Array<string | number> = [];
-    for (const r of rows as any[]) {
-      const v = r?.[key];
-      if (Array.isArray(v)) {
-        for (const id of v) {
-          if (id !== null && id !== undefined) all.push(id);
-        }
-      }
+// Extracts taxonomy IDs from nested M2M relation format:
+// rows[n].activities = [{ activities_id: { id, name } }, ...]
+function collectNestedIds(rows: any[], key: string, nestedKey: string): string[] {
+  const all: Array<string | number> = [];
+  for (const r of rows) {
+    const v = r?.[key];
+    if (!Array.isArray(v)) continue;
+    for (const item of v) {
+      const id = item?.[nestedKey]?.id;
+      if (id != null) all.push(id);
     }
-    return distinctIds(all);
-  };
+  }
+  return distinctIds(all);
+}
 
-  const toIdOptions = (ids: string[]): RelOption[] =>
-    sortRelOptions(ids.map((id) => ({ id, label: id })));
+function toIdOptions(ids: string[]): RelOption[] {
+  return sortRelOptions(ids.map((id) => ({ id, label: id })));
+}
 
-  const activities = toIdOptions(collectRelIds("activities"));
-  const awards = toIdOptions(collectRelIds("awards"));
-  const settings = toIdOptions(collectRelIds("settings"));
-  const styles = toIdOptions(collectRelIds("styles"));
-
+// Sync builder — accepts rows already fetched by the caller (no Directus call).
+// Rows must include the nested M2M fields:
+//   activities.activities_id.id, awards.awards_id.id,
+//   settings.settings_id.id, styles.styles_id.id
+export function buildHotelFilterOptions(rows: any[]): HotelFilterOptions {
   return {
-    affiliation: distinctSorted(rows.map((r: any) => r.affiliation)),
-    region: distinctSorted(rows.map((r: any) => r.region)),
-    country: distinctSorted(rows.map((r: any) => r.country)),
+    affiliation: distinctSorted(rows.map((r) => r.affiliation)),
+    region: distinctSorted(rows.map((r) => r.region)),
+    country: distinctSorted(rows.map((r) => r.country)),
     state_province__county__island: distinctSorted(
-      rows.map((r: any) => r.state_province__county__island)
+      rows.map((r) => r.state_province__county__island)
     ),
-    city: distinctSorted(rows.map((r: any) => r.city)),
-    local_area: distinctSorted(rows.map((r: any) => r.local_area)),
+    city: distinctSorted(rows.map((r) => r.city)),
+    local_area: distinctSorted(rows.map((r) => r.local_area)),
 
-    activities,
-    awards,
-    settings,
-    styles,
+    activities: toIdOptions(collectNestedIds(rows, "activities", "activities_id")),
+    awards: toIdOptions(collectNestedIds(rows, "awards", "awards_id")),
+    settings: toIdOptions(collectNestedIds(rows, "settings", "settings_id")),
+    styles: toIdOptions(collectNestedIds(rows, "styles", "styles_id")),
   };
 }

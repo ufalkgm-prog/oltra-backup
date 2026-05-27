@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import PageShell from "@/components/site/PageShell";
 import { getHotels } from "@/lib/directus";
 import { buildHotelsDirectusFilter } from "@/lib/hotelFilters";
-import { getHotelFilterOptions } from "@/lib/hotelOptions";
+import { buildHotelFilterOptions } from "@/lib/hotelOptions";
 import { fetchAllHotelTaxonomies } from "@/lib/directus/taxonomy";
-import { getHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
+import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { expandCityAliases } from "@/lib/locationAliases";
 import HotelsView from "./ui/HotelsView";
 
@@ -120,8 +120,30 @@ const hotelFields = [
   "styles.styles_id.name",
 ] as const;
 
-const [options, hotelsRaw, tax, suggestions] = await Promise.all([
-  getHotelFilterOptions(),
+// Lightweight fetch of all published hotels for filter dropdowns and search
+// suggestions. Fetched once and passed to sync builders — no separate calls.
+const metaFields = [
+  "hotel_name",
+  "affiliation",
+  "region",
+  "country",
+  "state_province__county__island",
+  "city",
+  "local_area",
+  "activities.activities_id.id",
+  "activities.activities_id.name",
+  "awards.awards_id.id",
+  "settings.settings_id.id",
+  "settings.settings_id.name",
+  "styles.styles_id.id",
+] as const;
+
+const [metaHotels, hotelsRaw, tax] = await Promise.all([
+  getHotels({
+    fields: metaFields as unknown as string[],
+    filter: { published: { _eq: true } },
+    limit: -1,
+  }),
   getHotels({
     fields: hotelFields as unknown as string[],
     filter: hasMeaningfulFilters ? filter : undefined,
@@ -129,8 +151,10 @@ const [options, hotelsRaw, tax, suggestions] = await Promise.all([
     limit: -1,
   }),
   fetchAllHotelTaxonomies(),
-  getHotelSuggestionDataset(),
 ]);
+
+const options = buildHotelFilterOptions(metaHotels);
+const suggestions = buildHotelSuggestionDataset(metaHotels, tax);
 
 const hotelsPublished = hotelsRaw.filter((hotel) => hotel.published === true);
 

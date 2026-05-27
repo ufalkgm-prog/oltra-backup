@@ -1,6 +1,4 @@
 import "server-only";
-import { getHotels } from "@/lib/directus";
-import { fetchAllHotelTaxonomies } from "@/lib/directus/taxonomy";
 
 export type SuggestionType =
   | "hotel"
@@ -49,28 +47,21 @@ function extractNestedIds(
   );
 }
 
-export async function getHotelSuggestionDataset(): Promise<HotelSuggestionDataset> {
-  const [rows, tax] = await Promise.all([
-    getHotels({
-      fields: [
-        "hotel_name",
-        "city",
-        "country",
-        "region",
-        "activities.activities_id.id",
-        "activities.activities_id.name",
-        "settings.settings_id.id",
-        "settings.settings_id.name",
-      ],
-      filter: { published: { _eq: true } },
-      sort: ["hotel_name"],
-      limit: 1000,
-    }),
-    fetchAllHotelTaxonomies(),
-  ]);
+type TaxMaps = {
+  activities: Map<string, string>;
+  settings: Map<string, string>;
+};
 
+// Sync builder — accepts rows and taxonomy maps already fetched by the caller.
+// Rows must include: hotel_name, city, country, region,
+//   activities.activities_id.id, activities.activities_id.name,
+//   settings.settings_id.id, settings.settings_id.name
+export function buildHotelSuggestionDataset(
+  rows: any[],
+  tax: TaxMaps
+): HotelSuggestionDataset {
   const hotels: SuggestionHotelRow[] = rows
-    .map((row: any) => ({
+    .map((row) => ({
       hotel_name: (row.hotel_name ?? "").trim(),
       city: (row.city ?? "").trim(),
       country: (row.country ?? "").trim(),

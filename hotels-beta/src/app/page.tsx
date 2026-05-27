@@ -2,7 +2,8 @@ import PageShell from "@/components/site/PageShell";
 import LandingBackground from "@/components/site/LandingBackground";
 import { getHotels } from "@/lib/directus";
 import { buildHotelsDirectusFilter } from "@/lib/hotelFilters";
-import { getHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
+import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
+import { fetchAllHotelTaxonomies } from "@/lib/directus/taxonomy";
 import { readGuestSelection } from "@/lib/guests";
 import LandingSearchPanel from "./LandingSearchPanel";
 import LandingSummary from "./LandingSummary";
@@ -109,7 +110,24 @@ export default async function HomePage({
   const hasFullStayDetails =
     Boolean(fromDate) && Boolean(toDate) && guests.adults > 0 && Boolean(bedrooms);
 
-  const dataset = await getHotelSuggestionDataset();
+  const [metaHotels, tax] = await Promise.all([
+    getHotels({
+      fields: [
+        "hotel_name",
+        "city",
+        "country",
+        "region",
+        "activities.activities_id.id",
+        "activities.activities_id.name",
+        "settings.settings_id.id",
+        "settings.settings_id.name",
+      ],
+      filter: { published: { _eq: true } },
+      limit: -1,
+    }),
+    fetchAllHotelTaxonomies(),
+  ]);
+  const dataset = buildHotelSuggestionDataset(metaHotels, tax);
 
   let hotelSummary: {
     count: number;
