@@ -1,0 +1,18 @@
+[
+  { "id": "1825", "hotel_name": "Atlantis The Royal",                       "new_awards": ["best50","forbes5","michelin3keys"], "ext_points": "14" },
+  { "id": "1826", "hotel_name": "Chablé Yucatán",                           "new_awards": ["best50","cn"],                     "ext_points": "9"  },
+  { "id": "1827", "hotel_name": "Upper House Hong Kong",                    "new_awards": ["best50"],                          "ext_points": "6"  },
+  { "id": "1828", "hotel_name": "Belmond Copacabana Palace",                "new_awards": ["best50"],                          "ext_points": "6"  },
+  { "id": "1829", "hotel_name": "Mandarin Oriental Qianmen, Beijing",       "new_awards": ["best50","forbes5"],                "ext_points": "9"  },
+  { "id": "1830", "hotel_name": "Jumeirah Marsa Al Arab",                   "new_awards": ["best50"],                          "ext_points": "6"  },
+  { "id": "1831", "hotel_name": "Hotel Il Pellicano",                       "new_awards": ["best50","forbes5"],                "ext_points": "9"  },
+  { "id": "1832", "hotel_name": "The Emory",                                "new_awards": [],                                  "ext_points": "1"  },
+  { "id": "1833", "hotel_name": "Maroma, A Belmond Hotel",                  "new_awards": ["best50"],                          "ext_points": "6"  },
+  { "id": "1834", "hotel_name": "The Lana",                                 "new_awards": ["best50"],                          "ext_points": "6"  },
+  { "id": "1835", "hotel_name": "Janu Tokyo",                               "new_awards": ["best50"],                          "ext_points": "6"  },
+  { "id": "1836", "hotel_name": "One&Only Mandarina",                       "new_awards": ["best50","cn","michelin3keys"],      "ext_points": "14" },
+  { "id": "1837", "hotel_name": "Las Ventanas al Paraíso, A Rosewood Resort","new_awards": ["best50","tl100","forbes5","aaa"], "ext_points": "15" },
+  { "id": "1838", "hotel_name": "Estelle Manor",                            "new_awards": ["best50","telegraph"],              "ext_points": "9"  },
+  { "id": "1839", "hotel_name": "Grand Park Hotel Rovinj",                  "new_awards": ["best50"],                          "ext_points": "6"  },
+  { "id": "1840", "hotel_name": "Mandapa, a Ritz-Carlton Reserve",          "new_awards": ["best50","forbes5","michelin3keys"], "ext_points": "14" }
+]
