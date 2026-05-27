@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { HotelRecord } from "@/lib/directus";
 import {
   getHotelImageSet,
@@ -97,7 +98,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     <div className="grid grid-cols-[132px_1fr_auto] gap-3.5">
       <div>
         <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
-          <img src={img} alt="" className="h-20 w-full object-cover" />
+          <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
         </div>
       </div>
 

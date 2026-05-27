@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import GuestSelector from "@/components/site/GuestSelector";
@@ -2331,7 +2332,7 @@ async function handleCreateTripAndAddHotel() {
                       <div className="grid grid-cols-[132px_1fr] gap-3.5">
                         <div>
                           <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
-                            <img src={img} alt="" className="h-20 w-full object-cover" />
+                            <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
                           </div>
 
                           <div className="mt-2">
