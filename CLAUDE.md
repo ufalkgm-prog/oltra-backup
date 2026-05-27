@@ -572,4 +572,71 @@ Both SHAs should match.
 
 ---
 
+## 19. HOTEL DATA BACKFILL — IN PROGRESS (started 2026-05-22)
+
+### Background
+
+16 new hotels were inserted into Directus on 2026-05-22 (IDs 1825–1840, all `published: false`). The following fields are already populated for all 16: `hotel_name`, `affiliation`, `country`, `city`, `local_area`, `region`, `primary_setting`, `secondary_setting`, `primary_style`, `secondary_style`, `highlights`, `www`, `activities_1`–`activities_7`, and M2M relations for `settings`, `styles`, `activities`.
+
+### Still to do for each hotel
+
+- [ ] `description` — 2–4 sentence editorial description (next task)
+- [ ] `lat` / `lng` — coordinates for map mode
+- [ ] Agoda matching — `agoda_hotel_id`, `agoda_hotel_name`, photos, booking URL
+- [ ] Scoring — `ext_points`, `editor_rank_13`
+- [ ] Awards — boolean flag columns + M2M `awards` junction records
+- [ ] `published: true` — only after all above are complete and reviewed
+
+### The 16 hotels (Directus IDs)
+
+| ID | hotel_name | country | city |
+|---|---|---|---|
+| 1825 | Atlantis The Royal | United Arab Emirates | Dubai |
+| 1826 | Chablé Yucatán | Mexico | Mérida |
+| 1827 | Upper House Hong Kong | China | Hong Kong |
+| 1828 | Belmond Copacabana Palace | Brazil | Rio de Janeiro |
+| 1829 | Mandarin Oriental Qianmen, Beijing | China | Beijing |
+| 1830 | Jumeirah Marsa Al Arab | United Arab Emirates | Dubai |
+| 1831 | Hotel Il Pellicano | Italy | Porto Ercole |
+| 1832 | The Emory | England | London |
+| 1833 | Maroma, A Belmond Hotel | Mexico | Riviera Maya |
+| 1834 | The Lana | United Arab Emirates | Dubai |
+| 1835 | Janu Tokyo | Japan | Tokyo |
+| 1836 | One&Only Mandarina | Mexico | Puerto Vallarta |
+| 1837 | Las Ventanas al Paraíso, A Rosewood Resort | Mexico | San José del Cabo |
+| 1838 | Estelle Manor | England | Oxford |
+| 1839 | Grand Park Hotel Rovinj | Croatia | Rovinj |
+| 1840 | Mandapa, a Ritz-Carlton Reserve | Indonesia | Ubud |
+
+### Description guidelines
+
+* 2–4 sentences, editorial tone, first-person-plural avoided
+* Focus on what makes the property distinctive — setting, architecture, USP
+* No marketing superlatives ("world's best", "unparalleled")
+* Cross-reference `highlights` field (max 15 words) — description expands on it, does not repeat it verbatim
+* Target length: 60–100 words
+
+### Website URLs (for fetching description content)
+
+| ID | URL |
+|---|---|
+| 1825 | https://www.atlantis.com/atlantis-the-royal |
+| 1826 | https://yucatan.chablehotels.com/ |
+| 1827 | https://www.upperhouse.com/en/hongkong/ |
+| 1828 | https://www.belmond.com/hotels/south-america/brazil/rio-de-janeiro/belmond-copacabana-palace/ |
+| 1829 | https://www.mandarinoriental.com/en/beijing/qianmen |
+| 1830 | https://www.jumeirah.com/en/stay/dubai/jumeirah-marsa-al-arab |
+| 1831 | https://www.pellicanohotels.com/en/hotels/hotel-il-pellicano/ |
+| 1832 | https://www.maybourne.com/en/hotels/the-emory |
+| 1833 | https://www.belmond.com/hotels/north-america/mexico/riviera-maya/belmond-maroma-resort-and-spa/ |
+| 1834 | https://www.dorchestercollection.com/dubai/the-lana |
+| 1835 | https://www.janu.com/janu-tokyo/ |
+| 1836 | https://www.oneandonlyresorts.com/mandarina |
+| 1837 | https://www.rosewoodhotels.com/en/las-ventanas-los-cabos |
+| 1838 | https://estellemanor.com/ |
+| 1839 | https://www.maistra.com/properties/grand-park-hotel-rovinj/ |
+| 1840 | https://www.ritzcarlton.com/en/hotels/dpsub-mandapa-a-ritz-carlton-reserve/overview/ |
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
