@@ -1,6 +1,7 @@
 // src/lib/hotelFilters.ts
 import "server-only";
 import type { DirectusFilter } from "@/lib/directus";
+import { AWARD_CODES } from "@/lib/hotels/awardCodes";
 
 export type HotelsSearchParams = Record<string, string | string[] | undefined>;
 
@@ -11,14 +12,9 @@ export const HOTEL_FILTER_FIELDS = {
   affiliation: "affiliation",
   region: "region",
   country: "country",
-  state: "state_province__county__island",
+  state: "state_province_county_island",
   city: "city",
   local_area: "local_area",
-
-  activities: "activities",
-  awards: "awards",
-  settings: "settings",
-  styles: "styles",
 } as const;
 
 export type HotelFilterKey = keyof typeof HOTEL_FILTER_FIELDS;
@@ -41,10 +37,12 @@ function parseList(v: string | string[] | undefined): string[] {
  * Builds a Directus filter object for /items/hotels.
  * - Always enforces: published = true
  * - For scalar fields: uses `_in`
- * - For relational fields: uses `_some` with a best-effort match on `name` or `title`
+ * - For the award boolean columns: uses `_or` of `_eq: true` checks
  *
- * Note: relational schemas differ (e.g., junction tables vs direct m2m).
- * This keeps structure small and safe; adjust once your Directus relational shape is confirmed.
+ * Note: `activities`/`awards`/`setting`/`style` are native Postgres text[]
+ * columns. Directus's `_contains`/`_in` operators error against them
+ * (confirmed live), so activities/setting/style filtering happens as a
+ * JS-side pass on the fetched rows instead — see app/hotels/page.tsx.
  */
 export function buildHotelsDirectusFilter(
   searchParams: HotelsSearchParams
@@ -67,27 +65,14 @@ export function buildHotelsDirectusFilter(
     }
   }
 
-const relationalMappings: Array<[HotelFilterKey, string, string]> = [
-  ["activities", HOTEL_FILTER_FIELDS.activities, "activities_id"],
-  ["awards", HOTEL_FILTER_FIELDS.awards, "awards_id"],
-  ["settings", HOTEL_FILTER_FIELDS.settings, "settings_id"],
-  ["styles", HOTEL_FILTER_FIELDS.styles, "styles_id"],
-];
-
-for (const [key, field, relationIdField] of relationalMappings) {
-  const values = parseList(searchParams[key]);
-  if (!values.length) continue;
-
-  and.push({
-    [field]: {
-      _some: {
-        [relationIdField]: {
-          _in: values,
-        },
-      },
-    },
-  });
-}
+  const awardCodes = parseList(searchParams.awards).filter((code): code is string =>
+    (AWARD_CODES as readonly string[]).includes(code)
+  );
+  if (awardCodes.length) {
+    and.push({
+      _or: awardCodes.map((code) => ({ [code]: { _eq: true } })),
+    });
+  }
 
   const q = (searchParams.q ?? "").toString().trim();
   if (q) {
@@ -109,4 +94,35 @@ for (const [key, field, relationIdField] of relationalMappings) {
 
 export function serializeList(values: string[]): string {
   return values.join(LIST_DELIM);
+}
+
+/**
+ * JS-side filter for the activities/setting/style multiselect tag fields.
+ * Directus can't filter these natively (see note above), so this runs on
+ * the already-fetched rows. A hotel matches a field if its tag array
+ * overlaps at least one selected value (OR within a field, AND across the
+ * three fields) — the same semantics the old M2M `_some`/`_in` filter intended.
+ */
+export function filterHotelsByTags<
+  T extends { activities?: string[] | null; setting?: string[] | null; style?: string[] | null }
+>(
+  hotels: T[],
+  selected: { activities: string[]; settings: string[]; styles: string[] }
+): T[] {
+  const overlaps = (values: string[] | null | undefined, selectedValues: string[]): boolean => {
+    if (!selectedValues.length) return true;
+    const set = new Set(values ?? []);
+    return selectedValues.some((v) => set.has(v));
+  };
+
+  if (!selected.activities.length && !selected.settings.length && !selected.styles.length) {
+    return hotels;
+  }
+
+  return hotels.filter(
+    (hotel) =>
+      overlaps(hotel.activities, selected.activities) &&
+      overlaps(hotel.setting, selected.settings) &&
+      overlaps(hotel.style, selected.styles)
+  );
 }

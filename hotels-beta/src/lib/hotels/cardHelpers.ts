@@ -37,7 +37,7 @@ export function getHotelImageSet(hotel: HotelRecord): string[] {
 
 export function getHotelTotalPoints(hotel: HotelRecord): number {
   const extPoints = Number(hotel.ext_points ?? 0);
-  const editorRank = Number(hotel.editor_rank_13 ?? 0);
+  const editorRank = Number(hotel.editor_rank ?? 0);
   const safeExtPoints = Number.isFinite(extPoints) ? extPoints : 0;
   const safeEditorRank = Number.isFinite(editorRank) ? editorRank : 0;
   return safeExtPoints + safeEditorRank * 3;

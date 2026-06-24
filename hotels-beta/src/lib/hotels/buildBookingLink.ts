@@ -2,12 +2,11 @@ export type BookingProvider = "booking" | "cj_booking" | "official" | "none" | n
 
 export type BookableHotel = {
   booking_provider?: BookingProvider;
-  booking_url?: string | null;
+  booking_URL?: string | null;
   booking_hotel_ref?: string | null;
   booking_enabled?: boolean | null;
   booking_label?: string | null;
   booking_notes?: string | null;
-  official_website_booking_url?: string | null;
   www?: string | null;
 };
 
@@ -100,8 +99,7 @@ export function buildBookingLink(
   if (provider === "none") return null;
 
   if (provider === "official") {
-    const raw =
-      hotel.official_website_booking_url ?? hotel.booking_url ?? hotel.www ?? null;
+    const raw = hotel.booking_URL ?? hotel.www ?? null;
 
     if (!raw) return null;
 
@@ -111,11 +109,11 @@ export function buildBookingLink(
     return applyBookingOccupancyParams(url, params).toString();
   }
 
-  if (!hotel.booking_url) return null;
+  if (!hotel.booking_URL) return null;
 
   if (provider === "booking") {
-    const url = tryParseUrl(hotel.booking_url);
-    if (!url) return hotel.booking_url;
+    const url = tryParseUrl(hotel.booking_URL);
+    if (!url) return hotel.booking_URL;
 
     applyBookingOccupancyParams(url, params);
 
@@ -132,10 +130,10 @@ export function buildBookingLink(
   }
 
   if (provider === "cj_booking") {
-    const baseUrl = tryParseUrl(hotel.booking_url);
+    const baseUrl = tryParseUrl(hotel.booking_URL);
     const finalTarget = baseUrl
       ? applyBookingOccupancyParams(baseUrl, params).toString()
-      : hotel.booking_url;
+      : hotel.booking_URL;
 
     const cjPid = process.env.NEXT_PUBLIC_CJ_PID;
     const cjLinkId = process.env.NEXT_PUBLIC_CJ_LINK_ID;

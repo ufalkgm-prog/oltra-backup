@@ -158,32 +158,34 @@ export type HotelRecord = {
   id: string | number;
 
   hotel_name: string;
-  hotelid: string | null;
   published: boolean;
 
   affiliation?: string | null;
   region?: string | null;
   country?: string | null;
-  state_province__county__island?: string | null;
+  state_province_county_island?: string | null;
   city?: string | null;
   local_area?: string | null;
 
-  activities?: unknown[] | null;
-  awards?: unknown[] | null;
-  settings?: unknown[] | null;
-  styles?: unknown[] | null;
+  activities?: string[] | null;
+  awards?: string[] | null;
+  setting?: string[] | null;
+  style?: string[] | null;
+
+  best50?: boolean | null;
+  cn?: boolean | null;
+  forbes5?: boolean | null;
+  michelin3keys?: boolean | null;
+  telegraph?: boolean | null;
+  tl100?: boolean | null;
+  aaa5d?: boolean | null;
 
   highlights?: string | null;
   description?: string | null;
 
   ext_points?: number | null;
-  editor_rank_13?: number | null;
+  editor_rank?: number | null;
   total_rooms_suites_villas?: number | null;
-  rooms_suites?: number | null;
-  villas?: number | null;
-  high_season?: string | null;
-  low_season?: string | null;
-  rain_season?: string | null;
 
   www?: string | null;
   insta?: string | null;
@@ -195,12 +197,11 @@ export type HotelRecord = {
   agoda_photo5?: string | null;
 
   booking_provider?: "booking" | "cj_booking" | "official" | "none" | null;
-  booking_url?: string | null;
+  booking_URL?: string | null;
   booking_hotel_ref?: string | null;
   booking_enabled?: boolean | null;
   booking_label?: string | null;
   booking_notes?: string | null;
-  official_website_booking_url?: string | null;
   agoda_hotel_id?: string | number | null;
 };
 

@@ -10,22 +10,21 @@ import { getAgodaPhotos } from "@/lib/agoda/content";
 
 type Hotel = {
   id: string | number;
-  hotelid?: string | number | null;
   hotel_name?: string | null;
 
   // Location
   affiliation?: string | null;
   region?: string | null;
   country?: string | null;
-  state_province__county__island?: string | null;
+  state_province_county_island?: string | null;
   city?: string | null;
   local_area?: string | null;
 
-  // Relational (shape may vary; keep flexible)
-  activities?: any[] | null;
-  awards?: any[] | null;
-  settings?: any[] | null;
-  styles?: any[] | null;
+  // Multiselect tag fields — flat string arrays, value === label.
+  activities?: string[] | null;
+  awards?: string[] | null;
+  setting?: string[] | null;
+  style?: string[] | null;
 
   // Descriptions
   highlights?: string | null;
@@ -33,13 +32,8 @@ type Hotel = {
 
   // Stats/info
   ext_points?: number | string | null;
-  editor_rank_13?: number | string | null;
+  editor_rank?: number | string | null;
   total_rooms_suites_villas?: number | string | null;
-  rooms_suites?: number | string | null;
-  villas?: number | string | null;
-  high_season?: string | null;
-  low_season?: string | null;
-  rain_season?: string | null;
 
   // Links
   www?: string | null;
@@ -47,12 +41,11 @@ type Hotel = {
 
   // Booking
   booking_provider?: "booking" | "cj_booking" | "official" | "none" | null;
-  booking_url?: string | null;
+  booking_URL?: string | null;
   booking_hotel_ref?: string | null;
   booking_enabled?: boolean | null;
   booking_label?: string | null;
   booking_notes?: string | null;
-  official_website_booking_url?: string | null;
 
   // Agoda
   agoda_hotel_id?: string | null;
@@ -60,7 +53,7 @@ type Hotel = {
   agoda_photo2?: string | null;
   agoda_photo3?: string | null;
   agoda_photo4?: string | null;
-  agoda_photo5?: string | null;  
+  agoda_photo5?: string | null;
 };
 
 function toArray<T>(v: T[] | null | undefined): T[] {
@@ -68,224 +61,63 @@ function toArray<T>(v: T[] | null | undefined): T[] {
 }
 
 function locationLine(h: Hotel): string {
-  return [h.local_area, h.city, h.state_province__county__island, h.region, h.country]
+  return [h.local_area, h.city, h.state_province_county_island, h.region, h.country]
     .filter(Boolean)
     .join(" · ");
 }
 
+const HOTEL_DETAIL_FIELDS = [
+  "id",
+  "hotel_name",
+  "affiliation",
+  "region",
+  "country",
+  "state_province_county_island",
+  "city",
+  "local_area",
+  "highlights",
+  "description",
+  "ext_points",
+  "editor_rank",
+  "total_rooms_suites_villas",
+  "www",
+  "insta",
+  "booking_provider",
+  "booking_URL",
+  "booking_hotel_ref",
+  "booking_enabled",
+  "booking_label",
+  "booking_notes",
+  "activities",
+  "awards",
+  "setting",
+  "style",
+  "agoda_hotel_id",
+  "agoda_photo1",
+  "agoda_photo2",
+  "agoda_photo3",
+  "agoda_photo4",
+  "agoda_photo5",
+].join(",");
 
-
-/**
- * Best-effort extractor for relational item labels across likely Directus shapes:
- * - [{ activities_id: { name } }]
- * - [{ settings_id: { name } }]
- * - [{ name }]
- * - [{ title }]
- */
-function extractRelLabels(items: any[]): string[] {
-  const labels = items
-    .map((x) => {
-      if (!x) return null;
-
-      // Common junction patterns
-      const nested =
-        x.activities_id ?? x.settings_id ?? x.styles_id ?? x.awards_id ?? x.item ?? x.related ?? null;
-
-      const candidate = nested ?? x;
-
-      return (
-        candidate?.name ??
-        candidate?.title ??
-        candidate?.label ??
-        candidate?.slug ??
-        x?.name ??
-        x?.title ??
-        x?.label ??
-        null
-      );
-    })
-    .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
-    .map((s) => s.trim());
-
-  // Unique, stable display
-  return Array.from(new Set(labels));
-}
-
-async function fetchHotelByHotelidOrId(param: string): Promise<Hotel | null> {
-  // 1) Try hotelid match (preferred)
-  const byHotelid = await directusFetchJson<Hotel[]>(
-    `/items/hotels?` +
-      [
-        `limit=1`,
-        `filter[hotelid][_eq]=${encodeURIComponent(param)}`,
-        // Keep fields broad but not insane; relations included as best effort.
-        `fields=` +
-          encodeURIComponent(
-            [
-              "id",
-              "hotelid",
-              "hotel_name",
-              "affiliation",
-              "region",
-              "country",
-              "state_province__county__island",
-              "city",
-              "local_area",
-              "highlights",
-              "description",
-              "ext_points",
-              "editor_rank_13",
-              "total_rooms_suites_villas",
-              "rooms_suites",
-              "villas",
-              "high_season",
-              "low_season",
-              "rain_season",
-              "www",
-              "insta",
-              "booking_provider",
-              "booking_url",
-              "booking_hotel_ref",
-              "booking_enabled",
-              "booking_label",
-              "booking_notes",
-              "official_website_booking_url",
-              // relations (shape confirmation comes in step 2)
-              "activities.*",
-              "awards.*",
-              "settings.*",
-              "styles.*",
-              // also try common nested keys (won't break if absent)
-              "activities.activities_id.*",
-              "settings.settings_id.*",
-              "styles.styles_id.*",
-              "awards.awards_id.*",
-              "agoda_hotel_id",
-              "agoda_photo1",
-              "agoda_photo2",
-              "agoda_photo3",
-              "agoda_photo4",
-              "agoda_photo5",
-            ].join(",")
-          ),
-      ].join("&")
-  );
-
-  if (toArray(byHotelid).length > 0) return byHotelid[0];
-
-  // 2) Fallback: treat param as Directus internal id
-  // Try /items/hotels/{id} first (often simplest if id is numeric)
+async function fetchHotelById(param: string): Promise<Hotel | null> {
+  // Try /items/hotels/{id} first (simplest, works when param is the numeric id).
   try {
     const byId = await directusFetchJson<Hotel>(
-      `/items/hotels/${encodeURIComponent(param)}?` +
-        [
-          `fields=` +
-            encodeURIComponent(
-              [
-                "id",
-                "hotelid",
-                "hotel_name",
-                "affiliation",
-                "region",
-                "country",
-                "state_province__county__island",
-                "city",
-                "local_area",
-                "highlights",
-                "description",
-                "ext_points",
-                "editor_rank_13",
-                "total_rooms_suites_villas",
-                "rooms_suites",
-                "villas",
-                "high_season",
-                "low_season",
-                "rain_season",
-                "www",
-                "insta",
-                "booking_provider",
-                "booking_url",
-                "booking_hotel_ref",
-                "booking_enabled",
-                "booking_label",
-                "booking_notes",
-                "official_website_booking_url",
-                "activities.*",
-                "awards.*",
-                "settings.*",
-                "styles.*",
-                "activities.activities_id.*",
-                "settings.settings_id.*",
-                "styles.styles_id.*",
-                "awards.awards_id.*",
-                "agoda_hotel_id",
-                "agoda_photo1",
-                "agoda_photo2",
-                "agoda_photo3",
-                "agoda_photo4",
-                "agoda_photo5",
-              ].join(",")
-            ),
-        ].join("&")
+      `/items/hotels/${encodeURIComponent(param)}?fields=${encodeURIComponent(HOTEL_DETAIL_FIELDS)}`
     );
     if (byId?.id != null) return byId;
   } catch {
     // ignore and try filter fallback below
   }
 
-  // 3) Fallback: filter by id eq (works even if Directus rejects /{id} for some reason)
+  // Fallback: filter by id eq (works even if Directus rejects /{id} for some reason)
   const byIdFilter = await directusFetchJson<Hotel[]>(
     `/items/hotels?` +
       [
         `limit=1`,
         `filter[id][_eq]=${encodeURIComponent(param)}`,
-        `fields=` +
-          encodeURIComponent(
-            [
-              "id",
-              "hotelid",
-              "hotel_name",
-              "affiliation",
-              "region",
-              "country",
-              "state_province__county__island",
-              "city",
-              "local_area",
-              "highlights",
-              "description",
-              "ext_points",
-              "editor_rank_13",
-              "total_rooms_suites_villas",
-              "rooms_suites",
-              "villas",
-              "high_season",
-              "low_season",
-              "rain_season",
-              "www",
-              "insta",
-              "booking_provider",
-              "booking_url",
-              "booking_hotel_ref",
-              "booking_enabled",
-              "booking_label",
-              "booking_notes",
-              "official_website_booking_url",
-              "activities.*",
-              "awards.*",
-              "settings.*",
-              "styles.*",
-              "activities.activities_id.*",
-              "settings.settings_id.*",
-              "styles.styles_id.*",
-              "awards.awards_id.*",
-              "agoda_hotel_id",
-              "agoda_photo1",
-              "agoda_photo2",
-              "agoda_photo3",
-              "agoda_photo4",
-              "agoda_photo5",
-            ].join(",")
-          ),
+        `fields=${encodeURIComponent(HOTEL_DETAIL_FIELDS)}`,
       ].join("&")
   );
 
@@ -303,7 +135,7 @@ export default async function HotelDetailPage({
 }) {
   const { hotelid } = await params;
   const resolvedSearchParams = await searchParams;
-  const hotel = await fetchHotelByHotelidOrId(hotelid);
+  const hotel = await fetchHotelById(hotelid);
 
   if (!hotel) notFound();
 
@@ -311,10 +143,10 @@ export default async function HotelDetailPage({
 
   const loc = locationLine(hotel);
 
-  const activities = extractRelLabels(toArray(hotel.activities));
-  const settings = extractRelLabels(toArray(hotel.settings));
-  const styles = extractRelLabels(toArray(hotel.styles));
-  const awards = extractRelLabels(toArray(hotel.awards));
+  const activities = toArray(hotel.activities);
+  const settings = toArray(hotel.setting);
+  const styles = toArray(hotel.style);
+  const awards = toArray(hotel.awards);
   const bookingSearchParams: BookingSearchParams = {
     from:
       typeof resolvedSearchParams.from === "string"
@@ -460,24 +292,10 @@ export default async function HotelDetailPage({
                 </div>
               ) : null}
 
-              {hotel.rooms_suites != null ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">Rooms & suites</dt>
-                  <dd className="text-zinc-900">{String(hotel.rooms_suites)}</dd>
-                </div>
-              ) : null}
-
-              {hotel.villas != null ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">Villas</dt>
-                  <dd className="text-zinc-900">{String(hotel.villas)}</dd>
-                </div>
-              ) : null}
-
-              {hotel.editor_rank_13 != null ? (
+              {hotel.editor_rank != null ? (
                 <div className="flex items-baseline justify-between gap-4">
                   <dt className="text-zinc-600">Editor rank</dt>
-                  <dd className="text-zinc-900">{String(hotel.editor_rank_13)}</dd>
+                  <dd className="text-zinc-900">{String(hotel.editor_rank)}</dd>
                 </div>
               ) : null}
 
@@ -485,27 +303,6 @@ export default async function HotelDetailPage({
                 <div className="flex items-baseline justify-between gap-4">
                   <dt className="text-zinc-600">External points</dt>
                   <dd className="text-zinc-900">{String(hotel.ext_points)}</dd>
-                </div>
-              ) : null}
-
-              {hotel.high_season ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">High season</dt>
-                  <dd className="text-zinc-900">{hotel.high_season}</dd>
-                </div>
-              ) : null}
-
-              {hotel.low_season ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">Low season</dt>
-                  <dd className="text-zinc-900">{hotel.low_season}</dd>
-                </div>
-              ) : null}
-
-              {hotel.rain_season ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">Rain season</dt>
-                  <dd className="text-zinc-900">{hotel.rain_season}</dd>
                 </div>
               ) : null}
             </dl>

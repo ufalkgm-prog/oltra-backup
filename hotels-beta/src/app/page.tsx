@@ -1,9 +1,8 @@
 import PageShell from "@/components/site/PageShell";
 import LandingBackground from "@/components/site/LandingBackground";
 import { getHotels } from "@/lib/directus";
-import { buildHotelsDirectusFilter } from "@/lib/hotelFilters";
+import { buildHotelsDirectusFilter, filterHotelsByTags } from "@/lib/hotelFilters";
 import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
-import { fetchAllHotelTaxonomies } from "@/lib/directus/taxonomy";
 import { readGuestSelection } from "@/lib/guests";
 import LandingSearchPanel from "./LandingSearchPanel";
 import LandingSummary from "./LandingSummary";
@@ -110,24 +109,12 @@ export default async function HomePage({
   const hasFullStayDetails =
     Boolean(fromDate) && Boolean(toDate) && guests.adults > 0 && Boolean(bedrooms);
 
-  const [metaHotels, tax] = await Promise.all([
-    getHotels({
-      fields: [
-        "hotel_name",
-        "city",
-        "country",
-        "region",
-        "activities.activities_id.id",
-        "activities.activities_id.name",
-        "settings.settings_id.id",
-        "settings.settings_id.name",
-      ],
-      filter: { published: { _eq: true } },
-      limit: -1,
-    }),
-    fetchAllHotelTaxonomies(),
-  ]);
-  const dataset = buildHotelSuggestionDataset(metaHotels, tax);
+  const metaHotels = await getHotels({
+    fields: ["hotel_name", "city", "country", "region", "activities", "setting"],
+    filter: { published: { _eq: true } },
+    limit: -1,
+  });
+  const dataset = buildHotelSuggestionDataset(metaHotels);
 
   let hotelSummary: {
     count: number;
@@ -140,26 +127,34 @@ export default async function HomePage({
   if (submitted && includeHotels) {
     const filter = buildHotelsDirectusFilter(resolvedSearchParams);
 
-    const hotels = await getHotels({
+    const hotelsAll = await getHotels({
       fields: [
         "id",
-        "hotelid",
         "hotel_name",
         "city",
         "country",
         "region",
         "highlights",
         "ext_points",
-        "editor_rank_13",
+        "editor_rank",
         "agoda_photo1",
         "agoda_photo2",
         "agoda_photo3",
         "agoda_photo4",
         "agoda_photo5",
         "agoda_hotel_id",
+        "activities",
+        "setting",
+        "style",
       ],
       filter,
-      sort: ["-editor_rank_13", "-ext_points", "hotel_name"],
+      sort: ["-editor_rank", "-ext_points", "hotel_name"],
+    });
+
+    const hotels = filterHotelsByTags(hotelsAll, {
+      activities: normalizeParam(resolvedSearchParams.activities).split(",").map((s) => s.trim()).filter(Boolean),
+      settings: normalizeParam(resolvedSearchParams.settings).split(",").map((s) => s.trim()).filter(Boolean),
+      styles: normalizeParam(resolvedSearchParams.styles).split(",").map((s) => s.trim()).filter(Boolean),
     });
 
     const geography = pickHotelGeographyLabel(q, hotels);

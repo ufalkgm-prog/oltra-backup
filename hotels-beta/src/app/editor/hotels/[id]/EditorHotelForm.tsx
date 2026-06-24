@@ -5,7 +5,6 @@ import { useState } from "react";
 type RelationOption = {
   id: string;
   name: string;
-  slug?: string | null;
 };
 
 type EditorHotel = {
@@ -15,24 +14,19 @@ type EditorHotel = {
   insta?: string | null;
   region?: string | null;
   country?: string | null;
-  state_province__county__island?: string | null;
+  state_province_county_island?: string | null;
   city?: string | null;
   local_area?: string | null;
   highlights?: string | null;
   description?: string | null;
-  high_season?: string | null;
-  low_season?: string | null;
-  rain_season?: string | null;
   ext_points?: number | string | null;
-  editor_rank_13?: number | string | null;
+  editor_rank?: number | string | null;
   total_rooms_suites_villas?: number | string | null;
-  rooms_suites?: number | string | null;
-  villas?: number | string | null;
   published?: boolean | null;
-  selectedActivityIds?: string[];
-  selectedAwardIds?: string[];
-  selectedSettingIds?: string[];
-  selectedStyleIds?: string[];
+  activities?: string[] | null;
+  awards?: string[] | null;
+  setting?: string[] | null;
+  style?: string[] | null;
 };
 
 function Field({
@@ -141,8 +135,8 @@ export default function EditorHotelForm({
   taxonomies: {
     awards: RelationOption[];
     activities: RelationOption[];
-    settings: RelationOption[];
-    styles: RelationOption[];
+    setting: RelationOption[];
+    style: RelationOption[];
   };
 }) {
   const [saving, setSaving] = useState(false);
@@ -161,24 +155,19 @@ export default function EditorHotelForm({
       insta: formData.get("insta"),
       region: formData.get("region"),
       country: formData.get("country"),
-      state_province__county__island: formData.get("state_province__county__island"),
+      state_province_county_island: formData.get("state_province_county_island"),
       city: formData.get("city"),
       local_area: formData.get("local_area"),
       highlights: formData.get("highlights"),
       description: formData.get("description"),
-      high_season: formData.get("high_season"),
-      low_season: formData.get("low_season"),
-      rain_season: formData.get("rain_season"),
       ext_points: formData.get("ext_points"),
-      editor_rank_13: formData.get("editor_rank_13"),
+      editor_rank: formData.get("editor_rank"),
       total_rooms_suites_villas: formData.get("total_rooms_suites_villas"),
-      rooms_suites: formData.get("rooms_suites"),
-      villas: formData.get("villas"),
       published: formData.get("published") === "on",
       awards: formData.getAll("awards"),
       activities: formData.getAll("activities"),
-      settings: formData.getAll("settings"),
-      styles: formData.getAll("styles"),
+      setting: formData.getAll("setting"),
+      style: formData.getAll("style"),
     };
 
     const res = await fetch(`/api/editor/hotels/${id}`, {
@@ -231,8 +220,8 @@ export default function EditorHotelForm({
           <Field label="Country" name="country" defaultValue={hotel.country} />
           <Field
             label="State / County / Island"
-            name="state_province__county__island"
-            defaultValue={hotel.state_province__county__island}
+            name="state_province_county_island"
+            defaultValue={hotel.state_province_county_island}
           />
           <Field label="City" name="city" defaultValue={hotel.city} />
           <Field label="Local area" name="local_area" defaultValue={hotel.local_area} />
@@ -244,12 +233,6 @@ export default function EditorHotelForm({
         <div className="space-y-4">
           <TextArea label="Highlights" name="highlights" defaultValue={hotel.highlights} rows={3} />
           <TextArea label="Description" name="description" defaultValue={hotel.description} rows={8} />
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Field label="High season" name="high_season" defaultValue={hotel.high_season} />
-            <Field label="Low season" name="low_season" defaultValue={hotel.low_season} />
-            <Field label="Rain season" name="rain_season" defaultValue={hotel.rain_season} />
-          </div>
         </div>
       </section>
 
@@ -257,15 +240,13 @@ export default function EditorHotelForm({
         <h2 className="mb-6 text-lg font-light">Stats</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Field label="External points" name="ext_points" defaultValue={hotel.ext_points} type="number" />
-          <Field label="Editor rank" name="editor_rank_13" defaultValue={hotel.editor_rank_13} type="number" />
+          <Field label="Editor rank" name="editor_rank" defaultValue={hotel.editor_rank} type="number" />
           <Field
             label="Total rooms / suites / villas"
             name="total_rooms_suites_villas"
             defaultValue={hotel.total_rooms_suites_villas}
             type="number"
           />
-          <Field label="Rooms / suites" name="rooms_suites" defaultValue={hotel.rooms_suites} type="number" />
-          <Field label="Villas" name="villas" defaultValue={hotel.villas} type="number" />
         </div>
       </section>
 
@@ -277,25 +258,25 @@ export default function EditorHotelForm({
             label="Awards"
             name="awards"
             options={taxonomies.awards}
-            selectedValues={hotel.selectedAwardIds || []}
+            selectedValues={hotel.awards ?? []}
           />
           <CheckboxGroup
             label="Activities"
             name="activities"
             options={taxonomies.activities}
-            selectedValues={hotel.selectedActivityIds || []}
+            selectedValues={hotel.activities ?? []}
           />
           <CheckboxGroup
             label="Settings"
-            name="settings"
-            options={taxonomies.settings}
-            selectedValues={hotel.selectedSettingIds || []}
+            name="setting"
+            options={taxonomies.setting}
+            selectedValues={hotel.setting ?? []}
           />
           <CheckboxGroup
             label="Styles"
-            name="styles"
-            options={taxonomies.styles}
-            selectedValues={hotel.selectedStyleIds || []}
+            name="style"
+            options={taxonomies.style}
+            selectedValues={hotel.style ?? []}
           />
         </div>
       </section>

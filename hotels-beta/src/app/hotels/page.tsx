@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import PageShell from "@/components/site/PageShell";
 import { getHotels } from "@/lib/directus";
-import { buildHotelsDirectusFilter } from "@/lib/hotelFilters";
+import { buildHotelsDirectusFilter, filterHotelsByTags } from "@/lib/hotelFilters";
 import { buildHotelFilterOptions } from "@/lib/hotelOptions";
-import { fetchAllHotelTaxonomies } from "@/lib/directus/taxonomy";
 import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { expandCityAliases } from "@/lib/locationAliases";
 import HotelsView from "./ui/HotelsView";
+
+function toIdentityMap(values: string[]): Map<string, string> {
+  return new Map(values.map((v) => [v, v]));
+}
 
 export const metadata: Metadata = {
   title: "Hotels",
@@ -82,7 +85,6 @@ const hasMeaningfulFilters = Boolean(
 const hotelFields = [
   "id",
   "hotel_name",
-  "hotelid",
   "published",
   "country",
   "region",
@@ -93,7 +95,7 @@ const hotelFields = [
   "highlights",
   "www",
   "insta",
-  "editor_rank_13",
+  "editor_rank",
   "ext_points",
   "description",
   "affiliation",
@@ -103,21 +105,23 @@ const hotelFields = [
   "agoda_photo4",
   "agoda_photo5",
   "booking_provider",
-  "booking_url",
+  "booking_URL",
   "booking_hotel_ref",
   "booking_enabled",
   "booking_label",
   "booking_notes",
-  "official_website_booking_url",
   "agoda_hotel_id",
-  "activities.activities_id.id",
-  "activities.activities_id.name",
-  "settings.settings_id.id",
-  "settings.settings_id.name",
-  "awards.awards_id.id",
-  "awards.awards_id.name",
-  "styles.styles_id.id",
-  "styles.styles_id.name",
+  "activities",
+  "awards",
+  "setting",
+  "style",
+  "best50",
+  "cn",
+  "forbes5",
+  "michelin3keys",
+  "telegraph",
+  "tl100",
+  "aaa5d",
 ] as const;
 
 // Lightweight fetch of all published hotels for filter dropdowns and search
@@ -127,18 +131,16 @@ const metaFields = [
   "affiliation",
   "region",
   "country",
-  "state_province__county__island",
+  "state_province_county_island",
   "city",
   "local_area",
-  "activities.activities_id.id",
-  "activities.activities_id.name",
-  "awards.awards_id.id",
-  "settings.settings_id.id",
-  "settings.settings_id.name",
-  "styles.styles_id.id",
+  "activities",
+  "awards",
+  "setting",
+  "style",
 ] as const;
 
-const [metaHotels, hotelsRaw, tax] = await Promise.all([
+const [metaHotels, hotelsRawAll] = await Promise.all([
   getHotels({
     fields: metaFields as unknown as string[],
     filter: { published: { _eq: true } },
@@ -147,21 +149,25 @@ const [metaHotels, hotelsRaw, tax] = await Promise.all([
   getHotels({
     fields: hotelFields as unknown as string[],
     filter: hasMeaningfulFilters ? filter : undefined,
-    sort: ["-editor_rank_13", "-ext_points", "hotel_name"],
+    sort: ["-editor_rank", "-ext_points", "hotel_name"],
     limit: -1,
   }),
-  fetchAllHotelTaxonomies(),
 ]);
 
 const options = buildHotelFilterOptions(metaHotels);
-const suggestions = buildHotelSuggestionDataset(metaHotels, tax);
+const tax = {
+  activities: toIdentityMap(options.activities),
+  settings: toIdentityMap(options.settings),
+};
+const suggestions = buildHotelSuggestionDataset(metaHotels);
 
+const hotelsRaw = filterHotelsByTags(hotelsRawAll, { activities, settings, styles });
 const hotelsPublished = hotelsRaw.filter((hotel) => hotel.published === true);
 
 const hotels = hotelsPublished;
 
   return (
-    <PageShell current="Hotels">
+    <PageShell current="Hotels" background="/images/background2.jpg">
       <HotelsView
         hotels={hotels}
         options={options}

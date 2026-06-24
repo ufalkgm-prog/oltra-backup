@@ -29,6 +29,7 @@ import {
   getMemberActionAccessBrowser,
 } from "@/lib/members/db";
 import type { HotelRecord } from "@/lib/directus";
+import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
   getMemberActionButtonClass,
   getMemberActionLoginMessage,
@@ -50,9 +51,7 @@ type Options = {
 
 type TaxMaps = {
   activities: Map<string, string>;
-  awards: Map<string, string>;
   settings: Map<string, string>;
-  styles: Map<string, string>;
 };
 
 type ViewMode = "details" | "map" | "featured";
@@ -97,52 +96,50 @@ const PLACEHOLDERS = [
   "/images/hotel-placeholder-4.jpg",
 ];
 
-const FEATURED_AWARDS = [
+const FEATURED_AWARDS: Array<{
+  code: AwardCode;
+  label: string;
+  badge: string;
+  gold?: boolean;
+}> = [
   {
     code: "forbes5",
-    id: "cb4f80af-963d-4f09-a8aa-213718e399fb",
     label: "Forbes 5 Star (2026)",
     badge: "F5",
   },
   {
     code: "michelin3keys",
-    id: "fd18110a-9764-4c20-90f4-fd149d890ead",
     label: "Michelin 3 Keys (2026)",
     badge: "M3",
     gold: true,
   },
   {
     code: "best50",
-    id: "74a666bf-f7fb-4fff-b550-52eccfa98c4b",
     label: "The World's 50 Best (2025)",
     badge: "50",
     gold: true,
   },
   {
     code: "cn",
-    id: "902c14cc-50a7-4be9-a4ee-b582afb9112e",
     label: "Condé Nast Gold List (2025)",
     badge: "CN",
   },
   {
     code: "tl100",
-    id: "f8ac8e9c-397e-4e44-ba71-b1f9224e7c3f",
     label: "T+L 100 (2025)",
     badge: "TL",
   },
   {
     code: "telegraph",
-    id: "d292cfb3-a88f-44dd-b052-2980cfd3bac8",
     label: "The Telegraph Top 50 (2024)",
     badge: "T",
   },
   {
-    code: "aaa",
-    id: "32f0e878-e188-4ed1-98f8-6b22914f8f22",
+    code: "aaa5d",
     label: "AAA Five Diamond Award (2025)",
     badge: "5D",
   },
-] as const;
+];
 
 function ChevronDown({
   className = "",
@@ -393,53 +390,27 @@ function locationLine(h: HotelRecord): string {
   return [h.local_area, h.city, h.region, h.country].filter(Boolean).join(" · ");
 }
 
-function relationIds(items: unknown[] | null | undefined, key: string): string[] {
-  if (!Array.isArray(items)) return [];
-
-  return items
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const rel = (item as Record<string, unknown>)[key];
-      if (!rel || typeof rel !== "object") return null;
-      const id = (rel as Record<string, unknown>).id;
-      return id == null ? null : String(id);
-    })
-    .filter((value): value is string => Boolean(value));
-}
-
-function relationLabels(
-  items: unknown[] | null | undefined,
-  key: string,
-  taxMap: Map<string, string>
-): string[] {
-  return relationIds(items, key)
-    .map((id) => taxMap.get(id) ?? id)
-    .filter(Boolean);
-}
-
 function getFeaturedAwardsForHotel(hotel: HotelRecord) {
-  const hotelAwardIds = new Set(relationIds(hotel.awards, "awards_id"));
-  return FEATURED_AWARDS.filter((award) => hotelAwardIds.has(award.id));
+  return FEATURED_AWARDS.filter((award) => Boolean(hotel[award.code]));
 }
 
 const BADGE_GOLD = "rgba(196, 158, 72, 0.88)";
 const BADGE_SILVER = "rgba(148, 162, 174, 0.80)";
 
 function getHotelBadges(hotel: HotelRecord): { key: string; title: string; bg: string }[] {
-  const hotelAwardIds = new Set(relationIds(hotel.awards, "awards_id"));
   const badges: { key: string; title: string; bg: string }[] = [];
 
   // Fixed front order: M3, 50
   const FRONT_CODES = ["michelin3keys", "best50"] as const;
   for (const code of FRONT_CODES) {
     const award = FEATURED_AWARDS.find((a) => a.code === code);
-    if (award && hotelAwardIds.has(award.id)) {
+    if (award && hotel[award.code]) {
       badges.push({ key: award.badge, title: award.label, bg: BADGE_GOLD });
     }
   }
 
   // Editor rank: only 2 or 3
-  const rank = Number(hotel.editor_rank_13 ?? 0);
+  const rank = Number(hotel.editor_rank ?? 0);
   if (Number.isFinite(rank) && rank >= 2 && rank <= 3) {
     badges.push({ key: `E${rank}`, title: `Editor's Rank ${rank}`, bg: rank === 3 ? BADGE_GOLD : BADGE_SILVER });
   }
@@ -447,8 +418,8 @@ function getHotelBadges(hotel: HotelRecord): { key: string; title: string; bg: s
   // Remaining awards in FEATURED_AWARDS order
   const frontCodeSet = new Set<string>(FRONT_CODES);
   for (const award of FEATURED_AWARDS) {
-    if (!frontCodeSet.has(award.code) && hotelAwardIds.has(award.id)) {
-      badges.push({ key: award.badge, title: award.label, bg: (award as any).gold ? BADGE_GOLD : BADGE_SILVER });
+    if (!frontCodeSet.has(award.code) && hotel[award.code]) {
+      badges.push({ key: award.badge, title: award.label, bg: award.gold ? BADGE_GOLD : BADGE_SILVER });
     }
   }
 
@@ -457,7 +428,7 @@ function getHotelBadges(hotel: HotelRecord): { key: string; title: string; bg: s
 
 
 function getFeaturedAwardsFilterMap(): Map<string, string> {
-  return new Map(FEATURED_AWARDS.map((award) => [award.id, award.label]));
+  return new Map(FEATURED_AWARDS.map((award) => [award.code, award.label]));
 }
 
 function getAwardLabelById(id: string, map: Map<string, string>): string {
@@ -1410,7 +1381,7 @@ export default function HotelsView(props: {
       highlights: "",
       awards: [],
       ext_points: 0,
-      editor_rank_13: 0,
+      editor_rank: 0,
     };
 
   const featuredHeroImage =
@@ -1424,13 +1395,13 @@ export default function HotelsView(props: {
   const resultsCount = visibleHotels.length;
 
   const selectedHotelSettings = useMemo(
-    () => relationLabels(selectedHotel?.settings, "settings_id", tax.settings),
-    [selectedHotel, tax.settings]
+    () => selectedHotel?.setting ?? [],
+    [selectedHotel]
   );
 
   const selectedHotelActivities = useMemo(
-    () => relationLabels(selectedHotel?.activities, "activities_id", tax.activities),
-    [selectedHotel, tax.activities]
+    () => selectedHotel?.activities ?? [],
+    [selectedHotel]
   );
 
   const selectedHotelAwards = useMemo(
@@ -1442,8 +1413,8 @@ export default function HotelsView(props: {
   );
 
   const selectedHotelStyles = useMemo(
-    () => relationLabels(selectedHotel?.styles, "styles_id", tax.styles),
-    [selectedHotel, tax.styles]
+    () => selectedHotel?.style ?? [],
+    [selectedHotel]
   );
 
   const selectedHotelBookingHref = useMemo(

@@ -63,7 +63,6 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
   const hotels = (await getHotels({
     fields: [
       "id",
-      "hotelid",
       "hotel_name",
       "published",
       "city",
@@ -80,7 +79,6 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
     sort: ["city", "country"],
   })) as Array<{
     id: string | number;
-    hotelid?: string | number | null;
     hotel_name?: string | null;
     city?: string | null;
     country?: string | null;
@@ -138,7 +136,7 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       group.hotels.push({
         id: String(hotel.id),
-        hotelid: String(hotel.hotelid ?? hotel.id),
+        hotelid: String(hotel.id),
         hotel_name: String(hotel.hotel_name ?? "Untitled hotel"),
         lat,
         lng,
