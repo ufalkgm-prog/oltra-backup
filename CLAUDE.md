@@ -56,14 +56,17 @@ Strict rules:
 
 ### Hotels
 
+> Schema migrated 2026-06: `hotelid` was removed (use `id`), `editor_rank_13` → `editor_rank`, the old double-underscore state field → single underscore, and `activities`/`awards`/`settings`/`styles` went from M2M relations to flat multiselect tag fields (`setting`/`style` are now **singular**). See section 4 for the taxonomy details.
+
 Key fields:
 
+* id (bigint, primary key)
 * hotel_name
-* hotelid
 * country
 * region
 * city
 * local_area
+* state_province_county_island
 * affiliation
 
 Editorial:
@@ -73,15 +76,25 @@ Editorial:
 
 Stats:
 
-* editor_rank_13
+* editor_rank
 * ext_points
+* total_rooms_suites_villas
 
-Relational fields:
+Taxonomy — flat multiselect tags, not relational (see section 4):
 
 * activities
 * awards
-* settings
-* styles
+* setting
+* style
+
+Editorial single-select companions (not yet wired into app code):
+
+* primary_setting / secondary_setting
+* primary_style / secondary_style
+
+Award boolean flags (one column per accolade):
+
+* best50, cn, forbes5, michelin3keys, telegraph, tl100, aaa5d
 
 Links:
 
@@ -91,9 +104,20 @@ Links:
 Booking:
 
 * booking_provider
-* booking_url
+* booking_URL (capital URL — `official_website_booking_url` does not exist)
 * booking_enabled
 * booking_label
+* booking_hotel_ref
+* booking_notes
+
+Agoda:
+
+* agoda_hotel_id
+* agoda_photo1 – agoda_photo5
+
+Geo:
+
+* lat / lng
 
 ---
 
@@ -112,25 +136,23 @@ Filtering is primarily city-based.
 
 ## 4. TAXONOMY SYSTEM
 
-All major filters are relational and resolved via taxonomy maps:
+**As of 2026-06, `activities`/`awards`/`setting`/`style` are flat multiselect tag fields directly on `hotels`** (native Postgres `text[]` columns) — not relational M2M fields. The old `activities`/`awards`/`settings`/`styles` Directus collections (M2M join targets) no longer exist; `GET /collections` returns only `hotels`.
 
-* activities
-* awards
-* settings
-* styles
+* Each field's stored value **is** the display label (e.g. `["Hiking", "Diving"]`) — no id → name resolution needed.
+* The allowed/canonical choices for each field are configured directly on the field in Directus: `meta.interface = "select-multiple-dropdown"`, `meta.options.choices = [{text, value}, ...]`, `meta.options.allowOther = false` (locked to the defined list — editors can't introduce new typos).
+* Field names are **singular**: `setting`, `style` (not `settings`/`styles`). `activities`/`awards` keep their plural names.
 
-Each consists of:
+### Filtering mechanics
 
-* id (UUID)
-* name (label)
+Directus's `_contains`/`_in` filter operators throw `500` errors against these native array columns (confirmed by live testing) — they cannot be used for server-side filtering.
 
-Frontend uses:
+* `activities` / `setting` / `style` filtering happens as a **JS-side post-fetch pass**: `filterHotelsByTags()` in `/src/lib/hotelFilters.ts`. Fetch hotels filtered on the other (scalar) criteria, then narrow in application code — a hotel matches if its tag array overlaps at least one selected value per field (OR within a field, AND across fields).
+* `awards` filtering (the "Accolades" UI facet) instead uses the **7 boolean flag columns** (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`), which Directus *can* filter natively (`_eq: true`, OR'd together). The allow-list of valid codes lives in `/src/lib/hotels/awardCodes.ts`, shared between the server filter builder and the client award-badge UI so they can't drift apart.
+* The general `awards` multiselect tag field (separate from the 7 curated booleans) has its own choices in Directus but isn't wired into any UI yet — hotel-card award badges and the Accolades filter both key off the boolean columns + `FEATURED_AWARDS` in `HotelsView.tsx`.
 
-```ts
-Map<string, string>
-```
+### Editor tool
 
-for id → label mapping.
+The internal `/editor/hotels/[id]` tool sources its taxonomy checkbox options live from each field's `meta.options.choices` (`GET /fields/hotels/{field}`) rather than a separate collection — see `getEditorTaxonomies()` in `/src/lib/editorHotels.ts`.
 
 ---
 
@@ -149,9 +171,13 @@ Main UI:
 Helpers:
 
 * `/src/lib/directus`
-* `/src/lib/hotelFilters`
+* `/src/lib/hotelFilters` — Directus filter builder + `filterHotelsByTags` (JS-side activities/setting/style filter)
 * `/src/lib/hotelOptions`
 * `/src/lib/hotelSearchSuggestions`
+* `/src/lib/hotels/awardCodes` — shared allow-list of the 7 award boolean-column codes
+* `/src/lib/hotels/buildBookingLink`
+* `/src/lib/hotels/cardHelpers`
+* `/src/lib/editorHotels` — data layer for the internal `/editor/hotels` tool
 
 ---
 
@@ -506,6 +532,7 @@ Three views rendered in the same panel:
 ## 17. CURRENT STATE SUMMARY
 
 * Hotels UI: complete and stable; featured mode cycles all hotels with ext_points > 10 in random order with ≥40-position repeat gap
+* Hotels data model: app code fixed (2026-06-24) to match the migrated Directus schema — taxonomy fields are flat multiselect tags now (not M2M), field renames applied across hotels/landing/inspire/editor code (`hotelid`→`id`, `editor_rank_13`→`editor_rank`, state field underscore fix, `booking_URL` casing). Verified via `tsc --noEmit`, live Directus queries, and a dev-server smoke test. Restaurants collection has **not** been migrated yet — its schema/code is untouched and still uses the old field names.
 * Restaurants UI: functional and aligned
 * Flights UI: Duffel-backed search, return-trip airline matching (same airline / alliance), per-segment detail popup, smart max-duration defaults, scrollbar-aware column alignment, cabin + tripType URL params for deep-linking from Saved Trips
 * Landing page: no dark overlay, hotel cards link to main /hotels page, "Add flights" label correct
@@ -576,15 +603,15 @@ Both SHAs should match.
 
 ### Background
 
-16 new hotels were inserted into Directus on 2026-05-22 (IDs 1825–1840, all `published: false`). The following fields are already populated for all 16: `hotel_name`, `affiliation`, `country`, `city`, `local_area`, `region`, `primary_setting`, `secondary_setting`, `primary_style`, `secondary_style`, `highlights`, `www`, `activities_1`–`activities_7`, and M2M relations for `settings`, `styles`, `activities`.
+16 new hotels were inserted into Directus on 2026-05-22 (IDs 1825–1840, all `published: false`). The following fields are already populated for all 16: `hotel_name`, `affiliation`, `country`, `city`, `local_area`, `region`, `primary_setting`, `secondary_setting`, `primary_style`, `secondary_style`, `highlights`, `www`, `activities1`–`activities7` (raw input fields, no underscore), and the `setting`/`style`/`activities` multiselect tags (these are now flat fields, not M2M relations — see section 4).
 
 ### Still to do for each hotel
 
 - [ ] `description` — 2–4 sentence editorial description (next task)
 - [ ] `lat` / `lng` — coordinates for map mode
 - [ ] Agoda matching — `agoda_hotel_id`, `agoda_hotel_name`, photos, booking URL
-- [ ] Scoring — `ext_points`, `editor_rank_13`
-- [ ] Awards — boolean flag columns + M2M `awards` junction records
+- [ ] Scoring — `ext_points`, `editor_rank`
+- [ ] Awards — boolean flag columns (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`)
 - [ ] `published: true` — only after all above are complete and reviewed
 
 ### The 16 hotels (Directus IDs)
