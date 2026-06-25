@@ -12,7 +12,7 @@ export default async function InspirePage() {
   const cities = await buildInspireCities();
 
   return (
-    <PageShell current="Inspire">
+    <PageShell current="Inspire" background="/images/background5.jpg">
       <InspireView cities={cities} />
     </PageShell>
   );

@@ -67,7 +67,7 @@ export default async function RestaurantsPage({
   );
 
   return (
-    <PageShell current="Restaurants">
+    <PageShell current="Restaurants" background="/images/background4.jpg">
       <RestaurantsMapView
         city={activeCity}
         cityOptions={cityOptions}
