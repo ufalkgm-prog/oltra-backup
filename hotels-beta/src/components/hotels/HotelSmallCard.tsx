@@ -3,6 +3,7 @@ import type { HotelRecord } from "@/lib/directus";
 import {
   getHotelImageSet,
   HOTEL_CARD_PLACEHOLDERS,
+  hasAgodaPhotos,
   clampHotelText,
 } from "@/lib/hotels/cardHelpers";
 
@@ -27,6 +28,7 @@ type Props = {
 
 export default function HotelSmallCard({ hotel, href, availability }: Props) {
   const img = getHotelImageSet(hotel)[0] ?? HOTEL_CARD_PLACEHOLDERS[0];
+  const hasPhoto = hasAgodaPhotos(hotel);
   const nameAndLocation = [hotel.city, hotel.country].filter(Boolean).join(" · ");
 
   const rightBlock = (() => {
@@ -98,7 +100,11 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     <div className="grid grid-cols-[132px_1fr_auto] gap-3.5">
       <div>
         <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
-          <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
+          {hasPhoto ? (
+            <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
+          ) : (
+            <div className="oltra-photo-placeholder h-20 w-full">Photos coming soon</div>
+          )}
         </div>
       </div>
 

@@ -502,7 +502,7 @@ export default function InspireMapView({
               ${
                 hotel.thumbnail
                   ? `<img class="oltra-map-popup__image" src="${hotel.thumbnail}" alt="" />`
-                  : ""
+                  : `<div class="oltra-map-popup__placeholder">Photos coming soon</div>`
               }
               <div class="oltra-map-popup__title">${hotel.hotel_name}</div>
               <div class="oltra-map-popup__meta">${match.city.city}, ${match.city.country}</div>

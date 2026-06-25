@@ -19,6 +19,16 @@ export function normalizeAgodaImage(url: string | null | undefined): string | nu
   }
 }
 
+export function hasAgodaPhotos(hotel: HotelRecord): boolean {
+  return [
+    hotel.agoda_photo1,
+    hotel.agoda_photo2,
+    hotel.agoda_photo3,
+    hotel.agoda_photo4,
+    hotel.agoda_photo5,
+  ].some((value) => Boolean(value));
+}
+
 export function getHotelImageSet(hotel: HotelRecord): string[] {
   const agodaImages = [
     hotel.agoda_photo1,

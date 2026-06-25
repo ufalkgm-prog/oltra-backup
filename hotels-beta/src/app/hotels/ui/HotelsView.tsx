@@ -31,6 +31,11 @@ import {
 import type { HotelRecord } from "@/lib/directus";
 import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
+  getHotelImageSet,
+  HOTEL_CARD_PLACEHOLDERS as PLACEHOLDERS,
+  hasAgodaPhotos,
+} from "@/lib/hotels/cardHelpers";
+import {
   getMemberActionButtonClass,
   getMemberActionLoginMessage,
 } from "@/lib/members/memberActionUi";
@@ -88,13 +93,6 @@ type AgodaResultCardAvailability = {
 
 const CURRENCY_STORAGE_KEY = "oltra_currency";
 const MAP_FALLBACK_CENTER: [number, number] = [103.8198, 1.3521];
-
-const PLACEHOLDERS = [
-  "/images/hotel-placeholder-1.jpg",
-  "/images/hotel-placeholder-2.jpg",
-  "/images/hotel-placeholder-3.jpg",
-  "/images/hotel-placeholder-4.jpg",
-];
 
 const FEATURED_AWARDS: Array<{
   code: AwardCode;
@@ -442,43 +440,6 @@ function getPriceSummary(searchParams: PageSearchParams, currency: string): stri
   if (min && max) return [`Price / total stay: ${min}–${max} ${currency}`];
   if (min) return [`Price / total stay: from ${min} ${currency}`];
   return [`Price / total stay: up to ${max} ${currency}`];
-}
-
-function normalizeAgodaImage(url: string | null | undefined): string | null {
-  if (!url) return null;
-
-  try {
-    const u = new URL(url);
-
-    // remove ALL query params (Agoda uses them for resizing/compression)
-    u.search = "";
-
-    // force https
-    u.protocol = "https:";
-
-    return u.toString();
-  } catch {
-    return url;
-  }
-}
-
-function getHotelImageSet(hotel: HotelRecord): string[] {
-  const agodaImages = [
-    hotel.agoda_photo1,
-    hotel.agoda_photo2,
-    hotel.agoda_photo3,
-    hotel.agoda_photo4,
-    hotel.agoda_photo5,
-  ]
-    .map((value) => normalizeAgodaImage(value))
-    .filter((value): value is string => Boolean(value))
-    .filter((value, index, array) => array.indexOf(value) === index);
-
-  if (agodaImages.length > 0) {
-    return agodaImages;
-  }
-
-  return PLACEHOLDERS;
 }
 
 function formHasMeaningfulSearchInput(form: HTMLFormElement): boolean {
@@ -1210,6 +1171,7 @@ export default function HotelsView(props: {
       `;
 
       const popupImage = getHotelImageSet(hotel)[0] ?? PLACEHOLDERS[0];
+      const popupHasPhoto = hasAgodaPhotos(hotel);
       const popupTitle = (hotel.hotel_name ?? "Untitled hotel").replace(/</g, "&lt;");
       const popupMeta = (locationLine(hotel) || "—").replace(/</g, "&lt;");
 
@@ -1221,7 +1183,11 @@ export default function HotelsView(props: {
         className: "oltra-map-popup",
       }).setHTML(`
         <div class="oltra-map-popup__box">
-          ${popupImage ? `<img class="oltra-map-popup__image" src="${popupImage}" alt="" />` : ""}
+          ${
+            popupHasPhoto
+              ? `<img class="oltra-map-popup__image" src="${popupImage}" alt="" />`
+              : `<div class="oltra-map-popup__placeholder">Photos coming soon</div>`
+          }
           <div class="oltra-map-popup__title">${popupTitle}</div>
           <div class="oltra-map-popup__meta">${popupMeta}</div>
         </div>
@@ -1802,7 +1768,7 @@ export default function HotelsView(props: {
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
         stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-        thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
+        thumbnail: selectedHotel && hasAgodaPhotos(selectedHotel) ? selectedHotelImages[0] : null,
         checkIn: fromValue || null,
         checkOut: toValue || null,
       });
@@ -1871,7 +1837,7 @@ async function handleCreateTripAndAddHotel() {
       name: selectedHotel.hotel_name ?? "Untitled hotel",
       location: locationLine(selectedHotel),
       stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-      thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
+      thumbnail: selectedHotel && hasAgodaPhotos(selectedHotel) ? selectedHotelImages[0] : null,
       checkIn: fromValue || null,
       checkOut: toValue || null,
     });
@@ -1921,7 +1887,7 @@ async function handleCreateTripAndAddHotel() {
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
         meta: selectedHotel.affiliation?.trim() || "",
-        thumbnail: selectedHotelImages[0] ?? PLACEHOLDERS[0],
+        thumbnail: selectedHotel && hasAgodaPhotos(selectedHotel) ? selectedHotelImages[0] : null,
       });
 
       if (result.status !== "already_exists") {
@@ -2292,6 +2258,7 @@ async function handleCreateTripAndAddHotel() {
                 {orderedVisibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
+                  const hasPhoto = hasAgodaPhotos(h);
                   const agodaCardAvailability = agodaResultAvailability[String(h.id)];
                   const featuredAwards = getFeaturedAwardsForHotel(h);
                   const hotelBadges = getHotelBadges(h);
@@ -2325,7 +2292,11 @@ async function handleCreateTripAndAddHotel() {
                       <div className="grid grid-cols-[132px_1fr] gap-3.5">
                         <div>
                           <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
-                            <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
+                            {hasPhoto ? (
+                              <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
+                            ) : (
+                              <div className="oltra-photo-placeholder h-20 w-full">Photos coming soon</div>
+                            )}
                           </div>
 
                           <div className="mt-2">
@@ -2592,46 +2563,57 @@ async function handleCreateTripAndAddHotel() {
               </div>
 
               <div className="mt-4 grid grid-cols-12 gap-3">
-                <div className="col-span-12 overflow-hidden rounded-[var(--oltra-radius-lg)] lg:col-span-8">
-                  <button
-                    type="button"
-                    onClick={() => setLightboxOpen(true)}
-                    className="block w-full overflow-hidden rounded-[var(--oltra-radius-lg)]"
-                  >
-                    <img
-                      src={
-                        selectedHotelImages[selectedImageIndex] ??
-                        selectedHotelImages[0]
-                      }
-                      alt=""
-                      className="h-[340px] w-full object-cover"
-                    />
-                  </button>
+                <div
+                  className={[
+                    "col-span-12 overflow-hidden rounded-[var(--oltra-radius-lg)]",
+                    selectedHotel && hasAgodaPhotos(selectedHotel) ? "lg:col-span-8" : "",
+                  ].join(" ")}
+                >
+                  {selectedHotel && hasAgodaPhotos(selectedHotel) ? (
+                    <button
+                      type="button"
+                      onClick={() => setLightboxOpen(true)}
+                      className="block w-full overflow-hidden rounded-[var(--oltra-radius-lg)]"
+                    >
+                      <img
+                        src={
+                          selectedHotelImages[selectedImageIndex] ??
+                          selectedHotelImages[0]
+                        }
+                        alt=""
+                        className="h-[340px] w-full object-cover"
+                      />
+                    </button>
+                  ) : (
+                    <div className="oltra-photo-placeholder h-[340px] w-full">Photos coming soon</div>
+                  )}
                 </div>
 
-                <div className="col-span-12 lg:col-span-4">
-                  <div className="oltra-scrollbar grid max-h-[340px] grid-cols-2 gap-2 overflow-y-auto pr-2 content-start">
-                    {selectedHotelImages.map((src, index) => (
-                      <button
-                        key={src}
-                        type="button"
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={[
-                          "overflow-hidden rounded-[var(--oltra-radius-md)] text-left transition",
-                          selectedImageIndex === index
-                            ? "bg-[var(--oltra-field-bg-strong)]"
-                            : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
-                        ].join(" ")}
-                      >
-                        <img
-                          src={src}
-                          alt=""
-                          className="aspect-[4/3] w-full object-cover"
-                        />
-                      </button>
-                    ))}
+                {selectedHotel && hasAgodaPhotos(selectedHotel) ? (
+                  <div className="col-span-12 lg:col-span-4">
+                    <div className="oltra-scrollbar grid max-h-[340px] grid-cols-2 gap-2 overflow-y-auto pr-2 content-start">
+                      {selectedHotelImages.map((src, index) => (
+                        <button
+                          key={src}
+                          type="button"
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={[
+                            "overflow-hidden rounded-[var(--oltra-radius-md)] text-left transition",
+                            selectedImageIndex === index
+                              ? "bg-[var(--oltra-field-bg-strong)]"
+                              : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
+                          ].join(" ")}
+                        >
+                          <img
+                            src={src}
+                            alt=""
+                            className="aspect-[4/3] w-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : null}
               </div>
 
               <div className="mt-4 grid grid-cols-12 items-stretch gap-3">

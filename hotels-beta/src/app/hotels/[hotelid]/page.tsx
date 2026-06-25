@@ -188,7 +188,7 @@ export default async function HotelDetailPage({
       {/* Hero */}
       <header className="mb-10">
 
-        {agodaPhotos.length > 0 && (
+        {agodaPhotos.length > 0 ? (
           <div className="mb-8 grid gap-3 sm:grid-cols-2">
             {agodaPhotos.slice(0, 5).map((src, i) => (
               <img
@@ -197,6 +197,10 @@ export default async function HotelDetailPage({
                 className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
               />
             ))}
+          </div>
+        ) : (
+          <div className="mb-8 flex h-[320px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-xs font-medium uppercase tracking-[0.14em] text-zinc-400">
+            Photos coming soon
           </div>
         )}
         

@@ -20,6 +20,7 @@ type TripItemCard = {
   travelers: string;
   status: string;
   thumbnail: string;
+  hasPhoto?: boolean;
   hasOverlapWarning?: boolean;
   bookUrl?: string;
 };
@@ -260,6 +261,7 @@ export default function SavedTripsView() {
     travelers,
     status: statusLabel(item.status),
     thumbnail: item.thumbnail,
+    hasPhoto: Boolean(item.thumbnail) && item.thumbnail !== "/images/hero-lp.jpg",
     hasOverlapWarning: item.hasOverlapWarning,
     bookUrl: buildHotelBookUrl(item.name, item.checkIn, item.checkOut, travelers),
   }));
@@ -434,10 +436,16 @@ function TripSection({
           items.map((item) => (
             <article key={item.id} className="members-item members-trip-item">
               <div className="members-item__layout">
-                <div
-                  className="members-item__thumb"
-                  style={{ backgroundImage: `url(${item.thumbnail})` }}
-                />
+                {item.hasPhoto === false ? (
+                  <div className="members-item__thumb members-item__thumb--placeholder">
+                    Photos coming soon
+                  </div>
+                ) : (
+                  <div
+                    className="members-item__thumb"
+                    style={{ backgroundImage: `url(${item.thumbnail})` }}
+                  />
+                )}
 
                 <div className="members-item__content">
                   <div className="members-item__top">

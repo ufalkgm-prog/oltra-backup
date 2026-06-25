@@ -11,11 +11,11 @@ import {
 
 const FALLBACK_HOTEL_IMAGE = "/images/hero-lp.jpg";
 
-function getHotelImage(item: FavoriteHotel): string {
+function getHotelImage(item: FavoriteHotel): string | null {
   const thumbnail = item.thumbnail?.trim();
 
   if (!thumbnail || thumbnail === FALLBACK_HOTEL_IMAGE) {
-    return FALLBACK_HOTEL_IMAGE;
+    return null;
   }
 
   return thumbnail;
@@ -92,10 +92,16 @@ export default function FavoriteHotelsView() {
             return (
               <article key={item.id} className="members-item">
                 <div className="members-item__layout">
-                  <div
-                    className="members-item__thumb"
-                    style={{ backgroundImage: `url(${imageUrl})` }}
-                  />
+                  {imageUrl ? (
+                    <div
+                      className="members-item__thumb"
+                      style={{ backgroundImage: `url(${imageUrl})` }}
+                    />
+                  ) : (
+                    <div className="members-item__thumb members-item__thumb--placeholder">
+                      Photos coming soon
+                    </div>
+                  )}
 
                   <div className="members-item__content">
                     <div className="members-item__title">{item.name}</div>

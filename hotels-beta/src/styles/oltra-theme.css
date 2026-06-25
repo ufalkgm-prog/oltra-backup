@@ -1364,6 +1364,41 @@ details > summary::-webkit-details-marker {
   margin-bottom: 10px;
 }
 
+.oltra-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--oltra-glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.oltra-map-popup__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 124px;
+  border-radius: var(--oltra-radius-sm);
+  margin-bottom: 10px;
+  background: var(--oltra-glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
 .oltra-temp-controls {
   position: absolute;
   left: 16px;
