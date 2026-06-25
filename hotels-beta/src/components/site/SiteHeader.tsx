@@ -67,10 +67,10 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       : "Hello"
     : "Members";
 
-  const navItems: { label: string; href: string; match: string; badge?: string }[] = [
+  const navItems: { label: string; href: string; match: string; badge?: string; disabledMessage?: string }[] = [
     { label: "Hotels", href: hotelsHref, match: "/hotels" },
     { label: "Flights", href: flightsHref, match: "/flights" /* , badge: "WIP" */ },
-    { label: "Restaurants", href: restaurantsHref, match: "/restaurants" },
+    { label: "Restaurants", href: restaurantsHref, match: "/restaurants", disabledMessage: "Restaurant database update in progress" },
     { label: "Inspire", href: "/inspire", match: "/inspire" },
     { label: membersLabel, href: user ? "/members" : "/login", match: user ? "/members" : "/login" },
   ];
@@ -213,6 +213,22 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
         <nav className="oltra-site-header__nav" aria-label="Primary">
           {navItems.map((item) => {
             const isActive = pathname === item.match || pathname.startsWith(`${item.match}/`);
+
+            if (item.disabledMessage) {
+              return (
+                <span
+                  key={item.label}
+                  className="oltra-site-header__nav-link oltra-site-header__nav-link--disabled"
+                  tabIndex={0}
+                  aria-disabled="true"
+                >
+                  <span>{item.label}</span>
+                  <span className="oltra-site-header__nav-popover" role="tooltip">
+                    {item.disabledMessage}
+                  </span>
+                </span>
+              );
+            }
 
             return (
               <Link
