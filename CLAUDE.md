@@ -666,4 +666,48 @@ Both SHAs should match.
 
 ---
 
+## 20. HOTEL LAT/LNG GEOCODING — PAUSED, BLOCKED ON API KEY (as of 2026-06-25)
+
+### Goal
+
+Backfill `lat`/`lng` for hotels in Directus using the Google Maps Platform, via `GOOGLE_MAPS_API_KEY` in `.env.local`. **0 of 806 hotels currently have `lat`/`lng` populated** — this is a from-scratch backfill, not a fix to existing data, so there is nothing to corrupt by waiting.
+
+### Blocker — fix this first before resuming
+
+`GOOGLE_MAPS_API_KEY` is currently **invalid**. Tested read-only (no Directus involved) against three separate Google Maps Platform endpoints — Geocoding API, Places API (Find Place from Text), and even the plain Static Maps API — all three returned the same rejection:
+
+```
+"error_message": "The provided API key is invalid.",
+"status": "REQUEST_DENIED"
+```
+
+The key is 36 characters and does **not** start with `AIza`, which is atypical for a real Google Maps Platform key (those are normally 39 chars, `AIza...`) — it may be a stale/placeholder value rather than a live key. Rejection across multiple unrelated APIs points to the key itself being bad, not just "Geocoding API not enabled" on an otherwise-valid key.
+
+**Before resuming:** get a working key (generate/fix in Google Cloud Console — ensure billing is attached and the relevant API(s) are enabled), update `.env.local`, then re-test with the snippet above before doing any bulk work.
+
+### Second issue found — verify before bulk-writing coordinates
+
+In Directus, `hotels.lat` and `hotels.lng` are typed `integer` at the **Directus metadata layer** (`meta.type`), but the underlying Postgres column (`schema.data_type`) is actually `numeric` with no precision/scale constraint — so the real column *can* store decimals, but Directus's own field-type casting might still truncate decimal values to whole numbers on write because it thinks the field is an integer (unconfirmed — a test write was correctly blocked mid-session for lacking plan approval, so this still needs to be verified).
+
+**Before the bulk run:** test-write a decimal value (e.g. `48.856613`) to one hotel via the Directus API and read it back. If it round-trips exactly, no fix needed. If it gets truncated/rounded, change the field's Directus metadata `type` from `integer` to `decimal`/`float` (via `PATCH /fields/hotels/lat` and `/fields/hotels/lng`) before writing real data — otherwise every pin would be off by up to ~100km (whole-degree rounding).
+
+### Open decision — not yet made
+
+Which Google API to use for the lookup, once the key works:
+
+* **Geocoding API** (~$5/1000 requests) — address-string based; cheaper, but may fall back to a city-centroid point for remote lodges/resorts that don't parse well as a postal address.
+* **Places API — Find Place from Text** (~$17/1000 requests) — searches by business/POI name, more likely to land on the actual property pin rather than the city center. Better fit for a luxury-property map (CLAUDE.md §12: "Markers built from hotel coordinates") but costs more.
+
+Address/name fields available per hotel to build the lookup query: `hotel_name`, `local_area`, `city`, `region`, `state_province_county_island`, `country` (see §3).
+
+### Resume plan (once key + decision are sorted)
+
+1. Re-test the API key (snippet above) — confirm `status: OK`.
+2. Test-write a decimal lat/lng to one hotel, read back, fix the Directus field type if truncated (see above).
+3. Decide Geocoding vs Places API for the lookup (cost/accuracy tradeoff above).
+4. **EnterPlanMode** before the actual bulk write (806 hotels, ~$4–14 in API cost depending on choice) — per the standing rule to plan before any Directus data change, even though this collection has zero existing data to lose.
+5. Run the geocode + write pass, spot-check a sample of results on the map, then update this section to reflect completion.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
