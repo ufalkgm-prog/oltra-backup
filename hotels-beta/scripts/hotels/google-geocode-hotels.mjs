@@ -55,7 +55,7 @@ function buildQueries(item) {
     item.affiliation,
     item.local_area,
     item.city,
-    item.state_province__county__island,
+    item.state_province_county_island,
     item.region,
     item.country,
   ]).join(", ");
@@ -63,7 +63,7 @@ function buildQueries(item) {
   const q2 = nonEmpty([
     item.hotel_name,
     item.city,
-    item.state_province__county__island,
+    item.state_province_county_island,
     item.region,
     item.country,
   ]).join(", ");
@@ -106,12 +106,11 @@ async function directusFetch(path, options = {}) {
 async function fetchHotels({ countries = [], cities = [], limit, ids = [] }) {
   const fields = [
     "id",
-    "hotelid",
     "hotel_name",
     "affiliation",
     "region",
     "country",
-    "state_province__county__island",
+    "state_province_county_island",
     "city",
     "local_area",
     "www",
@@ -153,13 +152,16 @@ async function fetchHotels({ countries = [], cities = [], limit, ids = [] }) {
   return data?.data || [];
 }
 
-async function geocodeAddress(address) {
-  const params = new URLSearchParams();
-  params.set("address", address);
-  params.set("key", GOOGLE_MAPS_API_KEY);
+async function geocodePlaces(input) {
+  const params = new URLSearchParams({
+    input,
+    inputtype: "textquery",
+    fields: "geometry,name,formatted_address,place_id",
+    key: GOOGLE_MAPS_API_KEY,
+  });
 
   const res = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`
+    `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?${params.toString()}`
   );
 
   let data = null;
@@ -170,115 +172,49 @@ async function geocodeAddress(address) {
   }
 
   if (!res.ok) {
-    throw new Error(`Google Geocoding request failed: HTTP ${res.status}`);
+    throw new Error(`Google Places request failed: HTTP ${res.status}`);
   }
 
   return data;
 }
 
-function extractAddressParts(result) {
-  const out = {
-    country: [],
-    region: [],
-    state: [],
-    city: [],
-    local_area: [],
-  };
-
-  for (const comp of result?.address_components || []) {
-    const longName = normalizeLoose(comp.long_name);
-    const shortName = normalizeLoose(comp.short_name);
-
-    if (comp.types?.includes("country")) {
-      out.country.push(longName, shortName);
-    }
-    if (
-      comp.types?.includes("administrative_area_level_1") ||
-      comp.types?.includes("administrative_area_level_2")
-    ) {
-      out.region.push(longName, shortName);
-      out.state.push(longName, shortName);
-    }
-    if (
-      comp.types?.includes("locality") ||
-      comp.types?.includes("postal_town") ||
-      comp.types?.includes("administrative_area_level_3")
-    ) {
-      out.city.push(longName, shortName);
-    }
-    if (
-      comp.types?.includes("sublocality") ||
-      comp.types?.includes("sublocality_level_1") ||
-      comp.types?.includes("neighborhood")
-    ) {
-      out.local_area.push(longName, shortName);
-    }
-  }
-
-  for (const key of Object.keys(out)) {
-    out[key] = Array.from(new Set(out[key].filter(Boolean)));
-  }
-
-  return out;
-}
-
-function scoreResult(item, result) {
-  const location = result?.geometry?.location;
+function scorePlaceCandidate(item, candidate) {
+  const location = candidate?.geometry?.location;
   if (!location || typeof location.lat !== "number" || typeof location.lng !== "number") {
     return null;
   }
 
-  const parts = extractAddressParts(result);
-
+  const addr = normalizeLoose(candidate.formatted_address || "");
   const expectedCountry = normalizeLoose(item.country);
   const expectedCity = normalizeLoose(item.city);
-  const expectedRegion = normalizeLoose(item.region);
-  const expectedState = normalizeLoose(item.state_province__county__island);
-  const expectedLocalArea = normalizeLoose(item.local_area);
 
-  const countryScore = expectedCountry ? overlapScore(expectedCountry, parts.country) : 0;
-  const cityScore = expectedCity ? overlapScore(expectedCity, [...parts.city, ...parts.local_area]) : 0;
-  const areaScore = overlapScore(
-    [expectedLocalArea, expectedState, expectedRegion].filter(Boolean),
-    [...parts.city, ...parts.local_area, ...parts.state, ...parts.region]
-  );
-
-  const locationType = result?.geometry?.location_type || "";
-  const typeBonus =
-    locationType === "ROOFTOP" ? 3 :
-    locationType === "GEOMETRIC_CENTER" ? 2 :
-    locationType === "RANGE_INTERPOLATED" ? 1 : 0;
-
-  const score = (countryScore * 3) + (cityScore * 4) + (areaScore * 2) + typeBonus;
+  const countryMatch = expectedCountry && addr.includes(expectedCountry) ? 3 : 0;
+  const cityMatch = expectedCity && addr.includes(expectedCity) ? 4 : 0;
 
   return {
-    score,
+    score: countryMatch + cityMatch,
+    mismatchCountry: !!expectedCountry && countryMatch === 0,
+    mismatchCity: !!expectedCity && cityMatch === 0,
     cityBlank: !expectedCity,
-    mismatchCity: !!expectedCity && cityScore === 0,
-    mismatchCountry: !!expectedCountry && countryScore === 0,
-    parts,
     lat: Number(location.lat.toFixed(6)),
     lng: Number(location.lng.toFixed(6)),
-    formatted_address: result.formatted_address || "",
-    location_type: locationType,
-    place_id: result.place_id || "",
-    types: Array.isArray(result.types) ? result.types : [],
+    formatted_address: candidate.formatted_address || "",
+    place_id: candidate.place_id || "",
+    candidate_name: candidate.name || "",
   };
 }
 
-function selectBestResult(data, item) {
-  if (!data || data.status !== "OK" || !Array.isArray(data.results) || data.results.length === 0) {
+function selectBestCandidate(data, item) {
+  if (!data || data.status !== "OK" || !Array.isArray(data.candidates) || data.candidates.length === 0) {
     return null;
   }
 
-  const scored = data.results
-    .map((result) => scoreResult(item, result))
+  const scored = data.candidates
+    .map((c) => scorePlaceCandidate(item, c))
     .filter(Boolean)
     .sort((a, b) => b.score - a.score);
 
-  if (!scored.length) return null;
-
-  return scored[0];
+  return scored[0] ?? null;
 }
 
 async function updateHotel(id, payload) {
@@ -401,9 +337,9 @@ async function main() {
         console.log(`Geocoding "${item.hotel_name}" with query: ${query}`);
       }
 
-      const data = await geocodeAddress(query);
+      const data = await geocodePlaces(query);
       lastStatus = data?.status || "";
-      const result = selectBestResult(data, item);
+      const result = selectBestCandidate(data, item);
 
       if (debug) {
         console.log(`Google status: ${data?.status}`);
@@ -428,7 +364,6 @@ async function main() {
       console.error(`Failed: no Google result for ${item.hotel_name} (${item.country})`);
       report.push({
         id: item.id,
-        hotelid: item.hotelid ?? null,
         hotel_name: item.hotel_name,
         country: item.country,
         city: item.city,
@@ -469,7 +404,7 @@ async function main() {
       console.log(`Proposed:  lat=${best.lat} lng=${best.lng}`);
       console.log(`Query:     ${usedQuery}`);
       console.log(`Address:   ${best.formatted_address}`);
-      console.log(`Type:      ${best.location_type}`);
+      console.log(`Match:     ${best.candidate_name}`);
       console.log(`Place ID:  ${best.place_id}`);
       if (hasMismatch) {
         console.log(`FLAG:      ${flags.join(", ")}`);
@@ -486,7 +421,6 @@ async function main() {
 
       report.push({
         id: item.id,
-        hotelid: item.hotelid ?? null,
         hotel_name: item.hotel_name,
         country: item.country,
         city: item.city,
@@ -497,7 +431,7 @@ async function main() {
         proposed_lng: best.lng,
         query: usedQuery,
         formatted_address: best.formatted_address,
-        location_type: best.location_type,
+        candidate_name: best.candidate_name,
         place_id: best.place_id,
         flags,
       });
@@ -512,7 +446,6 @@ async function main() {
       console.error(`Update failed for ${item.hotel_name}: ${JSON.stringify(result.data)}`);
       report.push({
         id: item.id,
-        hotelid: item.hotelid ?? null,
         hotel_name: item.hotel_name,
         country: item.country,
         city: item.city,
@@ -523,7 +456,7 @@ async function main() {
         proposed_lng: best.lng,
         query: usedQuery,
         formatted_address: best.formatted_address,
-        location_type: best.location_type,
+        candidate_name: best.candidate_name,
         place_id: best.place_id,
         flags,
       });
@@ -557,7 +490,6 @@ async function main() {
 
     report.push({
       id: item.id,
-      hotelid: item.hotelid ?? null,
       hotel_name: item.hotel_name,
       country: item.country,
       city: item.city,
@@ -568,7 +500,7 @@ async function main() {
       proposed_lng: best.lng,
       query: usedQuery,
       formatted_address: best.formatted_address,
-      location_type: best.location_type,
+      candidate_name: best.candidate_name,
       place_id: best.place_id,
       flags,
     });
