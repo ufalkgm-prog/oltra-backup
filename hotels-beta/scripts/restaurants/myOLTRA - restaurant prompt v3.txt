@@ -407,10 +407,7 @@ restaurant_type
 
 Use exactly one of these four Directus filter values:
 
-Fine dining
-High-end casual
-Informal local favorite
-Beach club
+c
 
 Do not use any other restaurant_type values. Do not use award status, cuisine, opening hours, setting, or ambience as restaurant_type. For example, do not use "Michelin", "Seafood", "Luxury hotel restaurant", "Grand brasserie", "Rooftop", "Japanese", "Waterfront", "Terrace", "Dinner only", or "Lunch only" as restaurant_type.
 
