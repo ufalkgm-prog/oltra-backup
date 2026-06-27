@@ -26,7 +26,6 @@ type DirectusRestaurantRow = {
   awards?: unknown;
   hotel_name_hint?: string | null;
   sources?: string | null;
-  hotels?: unknown[] | null;
 };
 
 function toNumber(value: unknown): number | null {
@@ -88,6 +87,7 @@ function buildRestaurantFields() {
     "restaurant_name",
     "slug",
     "description",
+    "restaurant_type",
     "highlights",
     "cuisine",
     "country",
@@ -104,7 +104,6 @@ function buildRestaurantFields() {
     "awards",
     "hotel_name_hint",
     "sources",
-    "hotels",
   ].join(",");
 }
 
