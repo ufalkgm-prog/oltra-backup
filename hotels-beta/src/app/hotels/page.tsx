@@ -167,7 +167,7 @@ const hotelsPublished = hotelsRaw.filter((hotel) => hotel.published === true);
 const hotels = hotelsPublished;
 
   return (
-    <PageShell current="Hotels" background="/images/background5.jpg">
+    <PageShell current="Hotels">
       <HotelsView
         hotels={hotels}
         options={options}
