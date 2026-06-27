@@ -26,7 +26,7 @@ export default async function MembersLayout({
   }
 
   return (
-    <PageShell current="members">
+    <PageShell current="members" background="/images/background5.jpg">
       <MembersDataProvider>{children}</MembersDataProvider>
     </PageShell>
   );

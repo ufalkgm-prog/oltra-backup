@@ -17,7 +17,7 @@ export default async function FlightsPage({
   const resolvedSearchParams = await searchParams;
 
   return (
-    <PageShell current="Flights" background="/images/background3.jpg">
+    <PageShell current="Flights" background="/images/background5.jpg">
       <FlightsView searchParams={resolvedSearchParams} />
     </PageShell>
   );
