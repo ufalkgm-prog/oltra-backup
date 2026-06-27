@@ -30,7 +30,7 @@ export function buildLocationLabel(r: RestaurantRecord) {
 export function buildAddressLabel(r: RestaurantRecord) {
   return [
     r.local_area,
-    r.state_province__county__island,
+    r.state_province_county_island,
     r.city,
     r.country,
   ].filter(Boolean).join(", ");

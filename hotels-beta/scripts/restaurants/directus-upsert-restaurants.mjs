@@ -91,6 +91,7 @@ function validateItem(item) {
     "restaurant_name",
     "slug",
     "description",
+    "restaurant_type",
     "highlights",
     "cuisine",
     "country",
@@ -119,7 +120,7 @@ function validateItem(item) {
       if (
         field !== "hotel_name_hint" &&
         field !== "local_area" &&
-        field !== "state_province__county__island"
+        field !== "state_province_county_island"
       ) {
         missing.push(field);
       }

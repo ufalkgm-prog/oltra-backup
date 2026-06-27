@@ -94,7 +94,7 @@ function sanitizeItem(item) {
       if (trimmed !== "") {
         payload[key] = trimmed;
       } else if (
-        key === "state_province__county__island" ||
+        key === "state_province_county_island" ||
         key === "www" ||
         key === "insta" ||
         key === "hotel_name_hint"
@@ -128,6 +128,7 @@ function validateItem(item) {
     "restaurant_name",
     "slug",
     "description",
+    "restaurant_type",
     "highlights",
     "cuisine",
     "country",
@@ -156,7 +157,7 @@ function validateItem(item) {
       if (
         field !== "hotel_name_hint" &&
         field !== "local_area" &&
-        field !== "state_province__county__island"
+        field !== "state_province_county_island"
       ) {
         missing.push(field);
       }

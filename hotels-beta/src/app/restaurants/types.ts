@@ -8,6 +8,7 @@ export type RestaurantRecord = {
   slug?: string | null;
 
   description?: string | null;
+  restaurant_type?: string | null;
   highlights?: string | null;
   cuisine?: string | null;
 
@@ -15,7 +16,7 @@ export type RestaurantRecord = {
   region?: string | null;
   city?: string | null;
   local_area?: string | null;
-  state_province__county__island?: string | null;
+  state_province_county_island?: string | null;
 
   lat: number | null;
   lng: number | null;

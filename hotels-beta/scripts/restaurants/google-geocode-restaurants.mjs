@@ -105,13 +105,16 @@ async function fetchRestaurants({ cities = [], limit, ids = [] }) {
   return data?.data || [];
 }
 
-async function geocodeAddress(address) {
-  const params = new URLSearchParams();
-  params.set("address", address);
-  params.set("key", GOOGLE_MAPS_API_KEY);
+async function geocodePlaces(input) {
+  const params = new URLSearchParams({
+    input,
+    inputtype: "textquery",
+    fields: "geometry,name,formatted_address,place_id",
+    key: GOOGLE_MAPS_API_KEY,
+  });
 
   const res = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?${params.toString()}`
+    `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?${params.toString()}`
   );
 
   let data = null;
@@ -122,18 +125,18 @@ async function geocodeAddress(address) {
   }
 
   if (!res.ok) {
-    throw new Error(`Google Geocoding request failed: HTTP ${res.status}`);
+    throw new Error(`Google Places request failed: HTTP ${res.status}`);
   }
 
   return data;
 }
 
-function extractBestResult(data) {
-  if (!data || data.status !== "OK" || !Array.isArray(data.results) || data.results.length === 0) {
+function selectBestCandidate(data) {
+  if (!data || data.status !== "OK" || !Array.isArray(data.candidates) || data.candidates.length === 0) {
     return null;
   }
 
-  const first = data.results[0];
+  const first = data.candidates[0];
   const location = first?.geometry?.location;
   if (!location || typeof location.lat !== "number" || typeof location.lng !== "number") {
     return null;
@@ -143,9 +146,8 @@ function extractBestResult(data) {
     lat: Number(location.lat.toFixed(6)),
     lng: Number(location.lng.toFixed(6)),
     formatted_address: first.formatted_address || "",
-    location_type: first?.geometry?.location_type || "",
+    candidate_name: first.name || "",
     place_id: first.place_id || "",
-    types: Array.isArray(first.types) ? first.types : [],
   };
 }
 
@@ -266,8 +268,8 @@ async function main() {
         console.log(`Geocoding "${item.restaurant_name}" with query: ${query}`);
       }
 
-      const data = await geocodeAddress(query);
-      const result = extractBestResult(data);
+      const data = await geocodePlaces(query);
+      const result = selectBestCandidate(data);
 
       if (debug) {
         console.log(`Google status: ${data?.status}`);
@@ -317,7 +319,7 @@ async function main() {
       console.log(`Proposed: lat=${best.lat} lng=${best.lng}`);
       console.log(`Query:    ${usedQuery}`);
       console.log(`Address:  ${best.formatted_address}`);
-      console.log(`Type:     ${best.location_type}`);
+      console.log(`Match:    ${best.candidate_name}`);
       console.log(`Place ID: ${best.place_id}`);
 
       report.push({
@@ -332,7 +334,7 @@ async function main() {
         proposed_lng: best.lng,
         query: usedQuery,
         formatted_address: best.formatted_address,
-        location_type: best.location_type,
+        candidate_name: best.candidate_name,
         place_id: best.place_id,
       });
 
@@ -356,7 +358,7 @@ async function main() {
         proposed_lng: best.lng,
         query: usedQuery,
         formatted_address: best.formatted_address,
-        location_type: best.location_type,
+        candidate_name: best.candidate_name,
         place_id: best.place_id,
       });
       failed += 1;
@@ -387,7 +389,7 @@ async function main() {
       proposed_lng: best.lng,
       query: usedQuery,
       formatted_address: best.formatted_address,
-      location_type: best.location_type,
+      candidate_name: best.candidate_name,
       place_id: best.place_id,
     });
 

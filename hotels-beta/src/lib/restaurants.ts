@@ -9,13 +9,14 @@ type DirectusRestaurantRow = {
   restaurant_name?: string | null;
   slug?: string | null;
   description?: string | null;
+  restaurant_type?: string | null;
   highlights?: string | null;
   cuisine?: string | null;
   country?: string | null;
   region?: string | null;
   city?: string | null;
   local_area?: string | null;
-  state_province__county__island?: string | null;
+  state_province_county_island?: string | null;
   lat?: number | string | null;
   lng?: number | string | null;
   www?: string | null;
@@ -58,13 +59,14 @@ export function normalizeRestaurant(row: DirectusRestaurantRow): RestaurantRecor
     restaurant_name: row.restaurant_name?.trim() || "Untitled restaurant",
     slug: row.slug ?? null,
     description: row.description ?? null,
+    restaurant_type: row.restaurant_type ?? null,
     highlights: row.highlights ?? null,
     cuisine: row.cuisine ?? null,
     country: row.country ?? null,
     region: row.region ?? null,
     city: row.city ?? null,
     local_area: row.local_area ?? null,
-    state_province__county__island: row.state_province__county__island ?? null,
+    state_province_county_island: row.state_province_county_island ?? null,
     lat: toNumber(row.lat),
     lng: toNumber(row.lng),
     www: row.www ?? null,
@@ -92,7 +94,7 @@ function buildRestaurantFields() {
     "region",
     "city",
     "local_area",
-    "state_province__county__island",
+    "state_province_county_island",
     "lat",
     "lng",
     "www",
@@ -174,7 +176,7 @@ export async function getRestaurantsByCity(city: string): Promise<RestaurantReco
       r.local_area,
       r.region,
       r.country,
-      r.state_province__county__island,
+      r.state_province_county_island,
     ]
       .filter(Boolean)
       .join(" ")
