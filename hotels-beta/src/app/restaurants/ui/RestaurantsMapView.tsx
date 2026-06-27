@@ -30,6 +30,16 @@ type Props = {
   mapRestaurants: RestaurantRecord[];
 };
 
+const RESTAURANT_TYPES = [
+  "All",
+  "Fine dining",
+  "High-end casual",
+  "Informal local favorite",
+  "Beach club",
+] as const;
+
+type RestaurantType = (typeof RESTAURANT_TYPES)[number];
+
 const DEFAULT_FALLBACK_CENTER: [number, number] = [103.8198, 1.3521];
 
 let _ml: typeof maplibregl | null = null;
@@ -61,6 +71,12 @@ export default function RestaurantsMapView({
   );
   const [cityInput, setCityInput] = useState(city);
   const [showCityOptions, setShowCityOptions] = useState(false);
+  const [selectedType, setSelectedType] = useState<RestaurantType>("All");
+
+  const filteredRestaurants = useMemo(() => {
+    if (selectedType === "All") return restaurants;
+    return restaurants.filter((r) => r.restaurant_type === selectedType);
+  }, [restaurants, selectedType]);
 
   const [memberActionMessage, setMemberActionMessage] = useState("");
   const [memberActionError, setMemberActionError] = useState("");
@@ -81,6 +97,7 @@ export default function RestaurantsMapView({
   useEffect(() => {
     setCityInput(city);
     setShowCityOptions(false);
+    setSelectedType("All");
   }, [city]);
 
   // If the user landed on /restaurants without an explicit ?city= param,
@@ -138,20 +155,20 @@ export default function RestaurantsMapView({
   }, []);
 
   useEffect(() => {
-    if (!restaurants.length) {
+    if (!filteredRestaurants.length) {
       setSelectedId(null);
       return;
     }
 
-    if (!restaurants.some((r) => r.id === selectedId)) {
-      setSelectedId(restaurants[0].id);
+    if (!filteredRestaurants.some((r) => r.id === selectedId)) {
+      setSelectedId(filteredRestaurants[0].id);
     }
-  }, [restaurants, selectedId]);
+  }, [filteredRestaurants, selectedId]);
 
   const selectedRestaurant = useMemo(() => {
-    if (!restaurants.length) return null;
-    return restaurants.find((r) => r.id === selectedId) ?? restaurants[0];
-  }, [restaurants, selectedId]);
+    if (!filteredRestaurants.length) return null;
+    return filteredRestaurants.find((r) => r.id === selectedId) ?? filteredRestaurants[0];
+  }, [filteredRestaurants, selectedId]);
 
   async function handleAddRestaurantToTrip(tripId?: string) {
     if (!selectedRestaurant) return;
@@ -525,7 +542,7 @@ export default function RestaurantsMapView({
     const bounds = new ml.LngLatBounds();
     let hasBounds = false;
 
-    for (const restaurant of mapRestaurants) {
+    for (const restaurant of filteredRestaurants) {
       if (restaurant.lng === null || restaurant.lat === null) continue;
 
       const el = document.createElement("button");
@@ -619,7 +636,7 @@ export default function RestaurantsMapView({
     }
 
     map.resize();
-  }, [city, mapRestaurants, mapReady]);
+  }, [city, filteredRestaurants, mapReady]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {
@@ -717,12 +734,30 @@ export default function RestaurantsMapView({
             )}
           </div>
 
-          <p className="restaurants-sidebar__count">TOP RESTAURANTS</p>
+          <div className="restaurants-sidebar__type-filter">
+            <div className="oltra-label restaurants-sidebar__label">RESTAURANT TYPE</div>
+            <div className="restaurants-type-pills">
+              {RESTAURANT_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setSelectedType(type)}
+                  className={`restaurants-type-pill${selectedType === type ? " is-active" : ""}`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="restaurants-sidebar__count">
+            {filteredRestaurants.length} RESTAURANT{filteredRestaurants.length !== 1 ? "S" : ""}
+          </p>
         </div>
 
         <div className="restaurants-sidebar__list">
           <div className="restaurants-sidebar__list-inner">
-            {restaurants.map((restaurant) => {
+            {filteredRestaurants.map((restaurant) => {
               const active = restaurant.id === selectedRestaurant?.id;
 
               return (

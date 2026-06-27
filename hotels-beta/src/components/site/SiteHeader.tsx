@@ -70,7 +70,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const navItems: { label: string; href: string; match: string; badge?: string; disabledMessage?: string }[] = [
     { label: "Hotels", href: hotelsHref, match: "/hotels" },
     { label: "Flights", href: flightsHref, match: "/flights" /* , badge: "WIP" */ },
-    { label: "Restaurants", href: restaurantsHref, match: "/restaurants", disabledMessage: "Restaurant database update in progress" },
+    { label: "Restaurants", href: restaurantsHref, match: "/restaurants" },
     { label: "Inspire", href: "/inspire", match: "/inspire" },
     { label: membersLabel, href: user ? "/members" : "/login", match: user ? "/members" : "/login" },
   ];
