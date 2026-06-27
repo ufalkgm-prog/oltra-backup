@@ -8,6 +8,7 @@ const DEFAULT_DIR = "scripts/restaurants";
 
 const FILE_CITY_ALIASES = {
   "rest_saint_tropez.json": ["Saint Tropez", "Saint-Tropez", "Ramatuelle", "Gassin", "Grimaud"],
+  "saint_tropez_restaurants.json": ["Saint Tropez", "Saint-Tropez", "Ramatuelle", "Gassin", "Grimaud"],
 };
 
 function hasFlag(args, flag) {
@@ -224,18 +225,27 @@ async function verifyItem(id) {
   );
 }
 
+function isRestaurantDataFile(name) {
+  if (name.startsWith("geocode-")) return false;
+  return name.startsWith("rest_") || name.endsWith("_restaurants.json");
+}
+
 async function listJsonFiles(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+    .filter((entry) => entry.isFile() && isRestaurantDataFile(entry.name))
     .map((entry) => entry.name)
     .sort((a, b) => a.localeCompare(b));
 }
 
 function extractCityFromFilename(file) {
-  return normalizeCityForCompare(
-    file.replace(/^rest_/, "").replace(/\.json$/i, "").replace(/_/g, " ")
-  );
+  let name = file.replace(/\.json$/i, "");
+  if (name.startsWith("rest_")) {
+    name = name.replace(/^rest_/, "");
+  } else if (name.endsWith("_restaurants")) {
+    name = name.replace(/_restaurants$/, "");
+  }
+  return normalizeCityForCompare(name.replace(/_/g, " "));
 }
 
 function getAllowedCitiesForFile(file) {
