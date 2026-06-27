@@ -744,6 +744,7 @@ export default function HotelsView(props: {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("featured");
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const [hasPendingSearchInputLocal, setHasPendingSearchInputLocal] = useState(
     hasPendingSearchInput
@@ -1055,6 +1056,10 @@ export default function HotelsView(props: {
 
     return visibleHotels[0] ?? null;
   }, [shouldShowResults, visibleHotels, selectedHotelId]);
+
+  useEffect(() => {
+    setDescExpanded(false);
+  }, [selectedHotel?.id]);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current || effectiveView !== "map") {
@@ -2622,9 +2627,37 @@ async function handleCreateTripAndAddHotel() {
                   <div>
                     <div className="oltra-subheader">Description</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-white/75">
-                      {selectedHotel.description?.trim()
-                        ? clampText(selectedHotel.description, 520)
-                        : "—"}
+                      {selectedHotel.description?.trim() ? (
+                        descExpanded ? (
+                          <>
+                            {selectedHotel.description.trim()}
+                            {" "}
+                            <button
+                              type="button"
+                              onClick={() => setDescExpanded(false)}
+                              className="text-white/45 hover:text-white/75 transition-colors"
+                            >
+                              less
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {clampText(selectedHotel.description, 520)}
+                            {selectedHotel.description.trim().length > 520 && (
+                              <>
+                                {" "}
+                                <button
+                                  type="button"
+                                  onClick={() => setDescExpanded(true)}
+                                  className="text-white/45 hover:text-white/75 transition-colors"
+                                >
+                                  more
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )
+                      ) : "—"}
                     </div>
                   </div>
 

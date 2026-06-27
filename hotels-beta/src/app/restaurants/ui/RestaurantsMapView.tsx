@@ -78,6 +78,11 @@ export default function RestaurantsMapView({
     return restaurants.filter((r) => r.restaurant_type === selectedType);
   }, [restaurants, selectedType]);
 
+  const availableTypes = useMemo(() => {
+    const set = new Set(restaurants.map((r) => r.restaurant_type).filter(Boolean));
+    return set as Set<string>;
+  }, [restaurants]);
+
   const [memberActionMessage, setMemberActionMessage] = useState("");
   const [memberActionError, setMemberActionError] = useState("");
   const [memberActionLoading, setMemberActionLoading] = useState<
@@ -628,15 +633,16 @@ export default function RestaurantsMapView({
         maxZoom: 15,
         duration: 0,
       });
-    } else {
+    } else if (restaurants.length === 0) {
       map.jumpTo({
         center: DEFAULT_FALLBACK_CENTER,
         zoom: 11,
       });
     }
+    // filtered to empty — leave map where it is
 
     map.resize();
-  }, [city, filteredRestaurants, mapReady]);
+  }, [city, restaurants, filteredRestaurants, mapReady]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {
@@ -737,7 +743,9 @@ export default function RestaurantsMapView({
           <div className="restaurants-sidebar__type-filter">
             <div className="oltra-label restaurants-sidebar__label">RESTAURANT TYPE</div>
             <div className="restaurants-type-pills">
-              {RESTAURANT_TYPES.map((type) => (
+              {RESTAURANT_TYPES.filter(
+                (type) => type === "All" || availableTypes.has(type)
+              ).map((type) => (
                 <button
                   key={type}
                   type="button"
