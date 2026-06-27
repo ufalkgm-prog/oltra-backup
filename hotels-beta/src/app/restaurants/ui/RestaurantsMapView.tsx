@@ -855,9 +855,11 @@ export default function RestaurantsMapView({
               )}
 
               {selectedRestaurant.description && (
-                <p className="restaurant-detail-card__description" style={{ whiteSpace: "pre-wrap" }}>
-                  {selectedRestaurant.description}
-                </p>
+                <div className="restaurant-detail-card__description">
+                  {selectedRestaurant.description.split(/\n+/).filter(Boolean).map((para, i) => (
+                    <p key={i} className={i > 0 ? "mt-2" : ""}>{para}</p>
+                  ))}
+                </div>
               )}
 
               {selectedRestaurant.hotel_name_hint && (

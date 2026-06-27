@@ -2626,38 +2626,36 @@ async function handleCreateTripAndAddHotel() {
                 <div className="col-span-12 flex flex-col gap-4 lg:col-span-8">
                   <div>
                     <div className="oltra-subheader">Description</div>
-                    <div className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-white/75">
-                      {selectedHotel.description?.trim() ? (
-                        descExpanded ? (
+                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                      {selectedHotel.description?.trim() ? (() => {
+                        const full = selectedHotel.description.trim();
+                        const needsExpand = full.length > 520;
+                        const displayText = descExpanded || !needsExpand
+                          ? full
+                          : clampText(full, 520);
+                        const paras = displayText.split(/\n+/).filter(Boolean);
+                        return (
                           <>
-                            {selectedHotel.description.trim()}
-                            {" "}
-                            <button
-                              type="button"
-                              onClick={() => setDescExpanded(false)}
-                              className="text-white/45 hover:text-white/75 transition-colors"
-                            >
-                              less
-                            </button>
+                            {paras.map((para, i) => (
+                              <p key={i} className={i > 0 ? "mt-2.5" : ""}>
+                                {para}
+                                {i === paras.length - 1 && needsExpand && (
+                                  <>
+                                    {" "}
+                                    <button
+                                      type="button"
+                                      onClick={() => setDescExpanded(!descExpanded)}
+                                      className="text-white/45 hover:text-white/75 transition-colors"
+                                    >
+                                      {descExpanded ? "less" : "more"}
+                                    </button>
+                                  </>
+                                )}
+                              </p>
+                            ))}
                           </>
-                        ) : (
-                          <>
-                            {clampText(selectedHotel.description, 520)}
-                            {selectedHotel.description.trim().length > 520 && (
-                              <>
-                                {" "}
-                                <button
-                                  type="button"
-                                  onClick={() => setDescExpanded(true)}
-                                  className="text-white/45 hover:text-white/75 transition-colors"
-                                >
-                                  more
-                                </button>
-                              </>
-                            )}
-                          </>
-                        )
-                      ) : "—"}
+                        );
+                      })() : "—"}
                     </div>
                   </div>
 
