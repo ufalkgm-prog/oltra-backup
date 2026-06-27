@@ -123,14 +123,48 @@ Geo:
 
 ### Restaurants
 
-Structure mirrors hotels conceptually but is simpler:
+Separate Directus collection (`restaurants`). Key fields:
 
-* name
-* city
-* country
-* category / cuisine (if used)
+* id (bigint, primary key)
+* status (`published` / `draft`)
+* rank (integer — display order within city)
+* restaurant_name
+* slug (kebab-case, unique — used as upsert key by the import script)
+* description, highlights
+* restaurant_type (`Fine dining` | `High-end casual` | `Informal local favorite` | `Beach club`)
+* cuisine, restaurant_setting, restaurant_style
+* country, region, city, local_area, state_province_county_island
+* lat / lng
+* www, insta
+* awards (JSON array — values: `michelin_3`, `michelin_2`, `michelin_1`, `worlds_50`, `laliste100`)
+* sources, hotel_name_hint
 
-Filtering is primarily city-based.
+### Restaurant data files (v3 format)
+
+Source JSON files live in `hotels-beta/scripts/restaurants/[city]_restaurants.json` (e.g. `amsterdam_restaurants.json`). Old v2 files (`rest_[city].json`) are archived in `olddata/`.
+
+**Current coverage (2026-06-27): 23 cities, 804 records loaded into Directus.**
+
+Cities loaded: Amsterdam, Bangkok, Barcelona, Copenhagen, Florence, Geneva, Hong Kong, Lisbon, London, Los Angeles, Madrid, Miami, Milan, Paris, Rome, Seoul, Singapore, Stockholm, Sydney, Tokyo, Venice, Vienna, Zurich.
+
+### Still to add
+
+* More cities — produce new `[city]_restaurants.json` files matching the v3 schema (see prompt template: `scripts/restaurants/myOLTRA - restaurant prompt v3.txt`), then run the upsert script
+* Geocoding — `lat`/`lng` are populated for some records but many are `null`; map markers only appear for records with coordinates
+* Saint Tropez — no v3 file yet; when added, filename must be `saint_tropez_restaurants.json` (alias already registered in the upsert script)
+
+### Upsert script
+
+`hotels-beta/scripts/restaurants/directus-upsert-restaurants-batch.mjs` — slug-based upsert, safe to re-run. Handles both old `rest_[city].json` and new `[city]_restaurants.json` naming. Excludes `geocode-*.json` files automatically.
+
+```bash
+# from hotels-beta/
+DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/restaurants/directus-upsert-restaurants-batch.mjs --dir scripts/restaurants
+# dry run first:
+... --dry-run
+# single city:
+... --only amsterdam_restaurants.json
+```
 
 ---
 
@@ -296,14 +330,23 @@ const effectiveView
 
 ### Flow
 
-1. Read `city` from URL
-2. Resolve against available city options
-3. Fetch restaurants by city
+1. Read `city` from URL (defaults to Paris if absent)
+2. Resolve against available city options (with alias expansion)
+3. Fetch all restaurants for the city from Directus
 4. Render map + list via `RestaurantsMapView`
+
+### Restaurant type filter
+
+Client-side filter in `RestaurantsMapView`. State: `selectedType` (default `"All"`). Options: All / Fine dining / High-end casual / Informal local favorite / Beach club — match the `restaurant_type` field values exactly.
+
+* Filters both the sidebar list and the map markers
+* Map refits bounds to the filtered set on each change
+* Resets to "All" when the city changes
+* Count label is dynamic (`N RESTAURANTS`)
 
 ---
 
-### City Alias Logic (NEW)
+### City Alias Logic
 
 Saint Tropez and Ramatuelle are treated as a shared cluster.
 
@@ -532,8 +575,9 @@ Three views rendered in the same panel:
 ## 17. CURRENT STATE SUMMARY
 
 * Hotels UI: complete and stable; featured mode cycles all hotels with ext_points > 10 in random order with ≥40-position repeat gap
-* Hotels data model: app code fixed (2026-06-24) to match the migrated Directus schema — taxonomy fields are flat multiselect tags now (not M2M), field renames applied across hotels/landing/inspire/editor code (`hotelid`→`id`, `editor_rank_13`→`editor_rank`, state field underscore fix, `booking_URL` casing). Verified via `tsc --noEmit`, live Directus queries, and a dev-server smoke test. Restaurants collection has **not** been migrated yet — its schema/code is untouched and still uses the old field names.
-* Restaurants UI: functional and aligned
+* Hotels data model: app code fixed (2026-06-24) to match the migrated Directus schema — taxonomy fields are flat multiselect tags now (not M2M), field renames applied across hotels/landing/inspire/editor code (`hotelid`→`id`, `editor_rank_13`→`editor_rank`, state field underscore fix, `booking_URL` casing). Verified via `tsc --noEmit`, live Directus queries, and a dev-server smoke test.
+* Restaurants data: v3 database loaded 2026-06-27 — 23 cities, 804 records, all with `restaurant_type` field. Source files at `scripts/restaurants/[city]_restaurants.json`. See §3 for full schema and upsert instructions.
+* Restaurants UI: enabled (was temporarily disabled during data migration); city filter + restaurant-type pill filter (All / Fine dining / High-end casual / Informal local favorite / Beach club); map + list both respond to type filter
 * Flights UI: Duffel-backed search, return-trip airline matching (same airline / alliance), per-segment detail popup, smart max-duration defaults, scrollbar-aware column alignment, cabin + tripType URL params for deep-linking from Saved Trips
 * Landing page: no dark overlay, hotel cards link to main /hotels page, "Add flights" label correct
 * Members UI: Personal Information, Saved Trips (with localStorage trip notes + Book redirect URLs), Favorites — complete
