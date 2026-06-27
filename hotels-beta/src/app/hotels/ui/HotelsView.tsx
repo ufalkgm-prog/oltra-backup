@@ -2626,7 +2626,7 @@ async function handleCreateTripAndAddHotel() {
                 <div className="col-span-12 flex flex-col gap-4 lg:col-span-8">
                   <div>
                     <div className="oltra-subheader">Description</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                    <div className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-white/75">
                       {selectedHotel.description?.trim() ? (
                         descExpanded ? (
                           <>

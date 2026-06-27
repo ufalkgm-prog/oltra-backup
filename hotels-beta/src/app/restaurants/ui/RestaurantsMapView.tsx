@@ -855,7 +855,7 @@ export default function RestaurantsMapView({
               )}
 
               {selectedRestaurant.description && (
-                <p className="restaurant-detail-card__description">
+                <p className="restaurant-detail-card__description" style={{ whiteSpace: "pre-wrap" }}>
                   {selectedRestaurant.description}
                 </p>
               )}
