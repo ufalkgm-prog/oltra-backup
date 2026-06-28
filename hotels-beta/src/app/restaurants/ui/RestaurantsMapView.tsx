@@ -770,7 +770,15 @@ export default function RestaurantsMapView({
                 <button
                   key={restaurant.id}
                   type="button"
-                  onClick={() => setSelectedId(restaurant.id)}
+                  onClick={() => {
+                    setSelectedId(restaurant.id);
+                    const map = mapInstanceRef.current;
+                    if (map && restaurant.lat != null && restaurant.lng != null) {
+                      if (!map.getBounds().contains([restaurant.lng, restaurant.lat])) {
+                        map.easeTo({ center: [restaurant.lng, restaurant.lat], duration: 400 });
+                      }
+                    }
+                  }}
                   className={`oltra-output restaurant-row${active ? " is-active" : ""}`}
                 >
                   <div className="restaurant-row__title">
