@@ -141,17 +141,16 @@ Separate Directus collection (`restaurants`). Key fields:
 
 ### Restaurant data files (v3 format)
 
-Source JSON files live in `hotels-beta/scripts/restaurants/[city]_restaurants.json` (e.g. `amsterdam_restaurants.json`). Old v2 files (`rest_[city].json`) are archived in `olddata/`.
+Source JSON files are organised in two folders:
 
-**Current coverage (2026-06-27): 23 cities, 804 records loaded into Directus.**
+* `hotels-beta/scripts/restaurants/updated_restaurants/` — the original 23 cities, re-geocoded 2026-06-28
+* `hotels-beta/scripts/restaurants/newrestaurants/` — all cities added from 2026-06-28 onwards
 
-Cities loaded: Amsterdam, Bangkok, Barcelona, Copenhagen, Florence, Geneva, Hong Kong, Lisbon, London, Los Angeles, Madrid, Miami, Milan, Paris, Rome, Seoul, Singapore, Stockholm, Sydney, Tokyo, Venice, Vienna, Zurich.
+Old v2 files (`rest_[city].json`) are archived in `olddata/`.
 
-### Still to add
+**Current coverage (2026-06-28): 63 cities, 2,192 records loaded into Directus. All records have Google Maps–geocoded `lat`/`lng` coordinates.**
 
-* More cities — produce new `[city]_restaurants.json` files matching the v3 schema (see prompt template: `scripts/restaurants/myOLTRA - restaurant prompt v3.txt`), then run the upsert script
-* Geocoding — `lat`/`lng` are populated for some records but many are `null`; map markers only appear for records with coordinates
-* Saint Tropez — no v3 file yet; when added, filename must be `saint_tropez_restaurants.json` (alias already registered in the upsert script)
+Cities: Abu Dhabi, Amsterdam, Athens, Auckland, Bangkok, Barcelona, Berlin, Brussels, Budapest, Buenos Aires, Cannes, Cape Town, Chicago, Copenhagen, Doha, Dubai, Edinburgh, Florence, Forte dei Marmi, Frankfurt, Geneva, Hamburg, Helsinki, Hong Kong, Istanbul, Jakarta, Kuala Lumpur, Kyoto, Las Vegas, Lima, Lisbon, London, Los Angeles, Madrid, Marrakech, Marseille, Melbourne, Mexico City, Miami, Milan, Monaco, Munich, New York, Nice, Osaka, Oslo, Paris, Rio de Janeiro, Rome, Saint-Tropez – Ramatuelle, San Francisco, Santiago, Seoul, Singapore, Stockholm, Sydney, São Paulo, Tokyo, Toronto, Vancouver, Venice, Vienna, Zurich.
 
 ### Upsert script
 
@@ -179,9 +178,14 @@ DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/restaurants/directus-upsert-res
 3. Run Geocoding API (`maps.googleapis.com/maps/api/geocode/json`) with query `restaurant_name + city + country` for each restaurant in the specified cities where `lat`/`lng` is null or incorrect.
 4. Patch corrected coordinates back to Directus via `PATCH /items/restaurants/:id`.
 
-**Scope per run:** user-specified cities only — never bulk-geocode all cities in one pass without explicit instruction.
+**Workflow for new cities:**
 
-**Cost:** ~$5/1000 requests (Geocoding API). A typical city (30–50 restaurants) costs < $0.25.
+1. Add geocoded JSON file to `scripts/restaurants/newrestaurants/` (file can have `oltra_` prefix — upsert script handles it).
+2. Run geocoding script: `GOOGLE_MAPS_API_KEY=... node scripts/restaurants/geocode-new-restaurants.mjs --only "City Name"` — updates lat/lng in the JSON file in place.
+3. Upsert: `DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/restaurants/directus-upsert-restaurants-batch.mjs --dir scripts/restaurants/newrestaurants --only [filename]`
+4. Add the new city to the CITIES array in `geocode-new-restaurants.mjs` so future re-runs cover it.
+
+**Cost:** ~$5/1000 requests (Geocoding API). A city of 35 restaurants costs ~$0.18.
 
 ---
 
@@ -593,7 +597,7 @@ Three views rendered in the same panel:
 
 * Hotels UI: complete and stable; featured mode cycles all hotels with ext_points > 10 in random order with ≥40-position repeat gap
 * Hotels data model: app code fixed (2026-06-24) to match the migrated Directus schema — taxonomy fields are flat multiselect tags now (not M2M), field renames applied across hotels/landing/inspire/editor code (`hotelid`→`id`, `editor_rank_13`→`editor_rank`, state field underscore fix, `booking_URL` casing). Verified via `tsc --noEmit`, live Directus queries, and a dev-server smoke test.
-* Restaurants data: v3 database loaded 2026-06-27 — 23 cities, 804 records, all with `restaurant_type` field. Source files at `scripts/restaurants/[city]_restaurants.json`. See §3 for full schema and upsert instructions.
+* Restaurants data: 63 cities, 2,192 records as of 2026-06-28 — all with `restaurant_type` field and Google Maps–geocoded coordinates. Source files in `scripts/restaurants/updated_restaurants/` (original 23 cities) and `scripts/restaurants/newrestaurants/` (40 new cities). See §3 for full schema, upsert, and geocoding instructions.
 * Restaurants UI: enabled (was temporarily disabled during data migration); city filter + restaurant-type pill filter (All / Fine dining / High-end casual / Informal local favorite / Beach club); map + list both respond to type filter
 * Flights UI: Duffel-backed search, return-trip airline matching (same airline / alliance), per-segment detail popup, smart max-duration defaults, scrollbar-aware column alignment, cabin + tripType URL params for deep-linking from Saved Trips
 * Landing page: no dark overlay, hotel cards link to main /hotels page, "Add flights" label correct
@@ -824,6 +828,22 @@ Rules:
 3. `--apply --only <id>` on one hotel → verify Directus patched and dev server renders correctly
 4. `--dry-run --limit 10` → review sample before bulk
 5. `--apply` full run (762 hotels)
+
+---
+
+---
+
+## 22. NEXT SESSION — HOTEL DESCRIPTION PARAGRAPH SPACING (planned 2026-06-29)
+
+Add natural paragraph breaks to hotel descriptions in Directus. Full background and script spec are in §21 above. The only blocker is the `ANTHROPIC_API_KEY` — add it to `hotels-beta/.env.local` before starting:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Get from console.anthropic.com → API Keys (account: ufalkgm@gmail.com).
+
+Once the key is in place, follow the run order in §21 exactly: dry-run one hotel, verify output, apply to one hotel, check the dev server renders correctly, then bulk run.
 
 ---
 
