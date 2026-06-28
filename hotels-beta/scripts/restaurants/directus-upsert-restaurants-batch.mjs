@@ -9,6 +9,10 @@ const DEFAULT_DIR = "scripts/restaurants";
 const FILE_CITY_ALIASES = {
   "rest_saint_tropez.json": ["Saint Tropez", "Saint-Tropez", "Ramatuelle", "Gassin", "Grimaud"],
   "saint_tropez_restaurants.json": ["Saint Tropez", "Saint-Tropez", "Ramatuelle", "Gassin", "Grimaud"],
+  "oltra_saint_tropez_ramatuelle_restaurants.json": [
+    "Saint Tropez", "Saint-Tropez", "Ramatuelle", "Gassin", "Grimaud",
+    "Saint-Tropez-Ramatuelle", "Saint-Tropez – Ramatuelle",
+  ],
 };
 
 function hasFlag(args, flag) {
@@ -240,11 +244,14 @@ async function listJsonFiles(dir) {
 
 function extractCityFromFilename(file) {
   let name = file.replace(/\.json$/i, "");
-  if (name.startsWith("rest_")) {
+  // Strip known prefixes
+  if (name.startsWith("oltra_")) {
+    name = name.replace(/^oltra_/, "");
+  } else if (name.startsWith("rest_")) {
     name = name.replace(/^rest_/, "");
-  } else if (name.endsWith("_restaurants")) {
-    name = name.replace(/_restaurants$/, "");
   }
+  // Strip _restaurants and optional trailing suffixes like _final
+  name = name.replace(/_restaurants(_\w+)?$/, "");
   return normalizeCityForCompare(name.replace(/_/g, " "));
 }
 

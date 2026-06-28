@@ -166,6 +166,23 @@ DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/restaurants/directus-upsert-res
 ... --only amsterdam_restaurants.json
 ```
 
+### Geocoding restaurants (lat/lng)
+
+`GOOGLE_MAPS_API_KEY` is present in `hotels-beta/.env.local` and confirmed working (tested 2026-06-28).
+
+**Field types confirmed safe** (checked 2026-06-28): `restaurants.lat` and `restaurants.lng` are `numeric(10,5)` in Postgres with no Directus integer-cast override (`meta.type: null`) — decimal coordinates round-trip correctly to 5 d.p. (~1 m precision). No field-type fix needed before writing.
+
+**Workflow:**
+
+1. User downloads current restaurant data and reviews lat/lng correctness.
+2. User specifies which cities need geocoding/correction.
+3. Run Geocoding API (`maps.googleapis.com/maps/api/geocode/json`) with query `restaurant_name + city + country` for each restaurant in the specified cities where `lat`/`lng` is null or incorrect.
+4. Patch corrected coordinates back to Directus via `PATCH /items/restaurants/:id`.
+
+**Scope per run:** user-specified cities only — never bulk-geocode all cities in one pass without explicit instruction.
+
+**Cost:** ~$5/1000 requests (Geocoding API). A typical city (30–50 restaurants) costs < $0.25.
+
 ---
 
 ## 4. TAXONOMY SYSTEM
