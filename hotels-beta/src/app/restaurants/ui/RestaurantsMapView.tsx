@@ -14,6 +14,7 @@ import {
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { readHotelFlightSearch } from "@/lib/searchSession";
 
+import OltraSelect from "@/components/site/OltraSelect";
 import type { RestaurantRecord } from "../types";
 import { buildAwardsLabel, buildLocationLabel, buildAddressLabel } from "../utils";
 import {
@@ -742,20 +743,17 @@ export default function RestaurantsMapView({
 
           <div className="restaurants-sidebar__type-filter">
             <div className="oltra-label restaurants-sidebar__label">RESTAURANT TYPE</div>
-            <div className="restaurants-type-pills">
-              {RESTAURANT_TYPES.filter(
+            <OltraSelect
+              name="restaurant_type"
+              value={selectedType}
+              placeholder="All"
+              align="left"
+              closeOnHoverOutside={false}
+              options={RESTAURANT_TYPES.filter(
                 (type) => type === "All" || availableTypes.has(type)
-              ).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setSelectedType(type)}
-                  className={`restaurants-type-pill${selectedType === type ? " is-active" : ""}`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
+              ).map((type) => ({ value: type, label: type }))}
+              onValueChange={(v) => setSelectedType(v as RestaurantType)}
+            />
           </div>
 
           <p className="restaurants-sidebar__count">

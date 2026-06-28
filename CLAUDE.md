@@ -754,4 +754,60 @@ Address/name fields available per hotel to build the lookup query: `hotel_name`,
 
 ---
 
+## 21. HOTEL DESCRIPTION PARAGRAPH REFORMATTER — PENDING API KEY
+
+### Goal
+
+Add natural paragraph breaks to hotel descriptions in Directus using Claude's API. Current state (2026-06-27):
+
+| Paragraphs | Hotels | Status |
+|---|---|---|
+| 1 (single block) | 39 | Needs splitting |
+| 2 paragraphs | 219 | Needs splitting |
+| 3 paragraphs | 504 | Probably fine |
+| 4 paragraphs | 42 | Fine |
+
+Target: 3–4 paragraphs per description, split at natural topic transitions (setting/location → architecture/rooms → dining/activities → atmosphere).
+
+### Blocker
+
+`ANTHROPIC_API_KEY` is not present in `hotels-beta/.env.local`. Add it before starting:
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+Get the key from console.anthropic.com → API Keys (account: ufalkgm@gmail.com).
+
+### Script to build
+
+`hotels-beta/scripts/hotels/reformat-descriptions.mjs`
+
+- Zero new npm dependencies — raw `fetch` only
+- Model: `claude-haiku-4-5-20251001` (fast, cheap — estimated < $0.10 for all 762 hotels)
+- Flags: `--dry-run` (default) / `--apply` / `--only <id>` / `--limit N` / `--min-paras N` (default 4)
+- Separator convention: `\n\n` between paragraphs (matches existing data)
+- Validates response: same word count ±5% to catch rewriting
+
+### System prompt for Claude
+
+```
+You are an editorial assistant for a luxury travel platform. Your job is to add paragraph breaks to hotel descriptions.
+
+Rules:
+- Split the text into paragraphs at natural topic transitions (e.g. location/setting → architecture/rooms → dining/activities → atmosphere).
+- Aim for 3–4 paragraphs.
+- Do NOT rewrite, rephrase, or change any words. Preserve the exact wording.
+- Separate paragraphs with a single blank line (\n\n).
+- Return ONLY the reformatted description text — no commentary, no labels, no extra whitespace.
+```
+
+### Run order (once key is available)
+
+1. `--dry-run --only <id>` on one 0-newline hotel → confirm 3–4 paragraphs with natural breaks
+2. `--dry-run --only <id>` on a 3-paragraph hotel → confirm it is skipped
+3. `--apply --only <id>` on one hotel → verify Directus patched and dev server renders correctly
+4. `--dry-run --limit 10` → review sample before bulk
+5. `--apply` full run (762 hotels)
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
