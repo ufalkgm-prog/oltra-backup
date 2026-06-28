@@ -6,6 +6,7 @@ on:
 
 jobs:
   backup:
+    if: github.repository == 'ufalkgm-prog/oltra-beta'
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
