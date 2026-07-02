@@ -17,7 +17,7 @@ Core principles:
 * Editorial-first (not OTA-first)
 * Luxury UX with minimal clutter
 * Highly structured taxonomy-driven filtering
-* Server-driven data (Directus as canonical source)
+* Server-driven data (Supabase as canonical store, accessed via Directus CMS layer)
 * Clean, scalable architecture with minimal technical debt
 
 ---
@@ -33,12 +33,12 @@ Frontend:
 
 Backend / Data:
 
-* Directus (hosted on Railway) — canonical CMS
-* REST API via `/src/lib/directus`
+* Supabase (OLTRA account, "Hotel database") — canonical data store for all hotel and restaurant records
+* Directus (hosted on Railway) — CMS layer on top of Supabase; all content reads/writes go via Directus REST API (`/src/lib/directus`), never directly to Supabase for content
 
 Auth / Members:
 
-* Supabase (auth + user-specific data only)
+* Supabase (OLTRA account, separate from the Hotel database) — auth + user-specific data only
 
 AI:
 
@@ -52,7 +52,9 @@ Strict rules:
 
 ---
 
-## 3. CORE DATA MODEL (DIRECTUS)
+## 3. CORE DATA MODEL (SUPABASE / DIRECTUS)
+
+> **Architecture note:** All hotel and restaurant data lives in Supabase (OLTRA account, "Hotel database"). Directus is a CMS layer running on top of that Supabase instance — it adds structured field definitions, permissions, and the REST API that the app uses. Never write directly to Supabase for content; always go via the Directus API.
 
 ### Hotels
 
