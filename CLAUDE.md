@@ -866,6 +866,14 @@ Scripts (all in `hotels-beta/scripts/hotels/new-hotels-2026/`):
 
 * `match-hotel-awards.mjs` — **read-only**. Loads `awards-2026/*.json`, fetches the target hotels from Directus, matches by name/location, writes a plain-text report (`award-review-<date>.txt`) with three sections: **A** confirmed exact matches (safe to auto-apply), **B** hotels with a boolean already `true` but no matching source entry (needs a human call — keep or remove), **C** fuzzy/uncertain candidates (needs a human MATCH / NOT A MATCH call). Safe to re-run anytime; currently scoped to hotel IDs 2001–2067 via a hardcoded Directus filter — change that filter to reuse it for a different batch.
 * `apply-award-review-2026-07-07.mjs` — **writes** to Directus. Dry-run by default; `--confirm` to actually patch. Takes hardcoded lists of exactly what to change (`CONFIRMED` additions, `RENAMES` to the award list's official naming, `REMOVALS` for flags that couldn't be confirmed) — this is a one-time record of a specific reviewed session, not a general tool. Copy this file's pattern (Directus fetch/patch helpers + `toPgArrayLiteral`) as the starting point for the next award-review round rather than editing this one's hardcoded lists.
+* `recalc-ext-points-2026-07-07.mjs` — **writes** to Directus. Run this *after* any award-flag change (from `apply-award-review-*.mjs` or a manual edit) — `ext_points` is not auto-derived, so a stale value silently lingers until recomputed. Dry-run by default; `--confirm` to write. General-purpose as-is (reusable — no hardcoded per-hotel data, just the formula and the hardcoded ID range filter): `ext_points = editor_rank + sum of award points`, where `editor_rank` is a stored field (not recomputed) and award points are `michelin3keys`=5, `best50`=5, `cn`=3, `tl100`=3, `forbes5`=3, `aaa5d`=3, `telegraph`=3. Only patches hotels where the computed value differs from the current one.
+
+### Workflow order
+
+1. Run `match-hotel-awards.mjs` (read-only) to get the review report.
+2. Resolve Section C uncertain candidates (web research) and Section B unconfirmed-existing flags (human call) with the user.
+3. Write/run an apply script (`apply-award-review-<date>.mjs` pattern) to patch the confirmed award flags + `awards` tag array.
+4. **Run `recalc-ext-points-2026-07-07.mjs` (or its successor) — award flags changed in step 3 make `ext_points` stale until this runs.** Easy to forget since it's a separate field from `awards`/the boolean columns.
 
 ### Award source files (`awards-2026/*.json`)
 
