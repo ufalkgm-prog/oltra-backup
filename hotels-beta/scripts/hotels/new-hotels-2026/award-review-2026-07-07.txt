@@ -1,0 +1,163 @@
+HOTEL AWARDS AUDIT — new hotels 2001-2067 vs awards-2026/ source lists
+Generated: 2026-07-07 by match-hotel-awards.mjs
+
+==============================================================================
+SUMMARY
+==============================================================================
+Hotels checked: 67
+Award source entries: michelin3keys=134, aaa5d=146, cn=73, best50=100, forbes5=343, tl100=100, telegraph=50
+Hotels with >=1 confirmed award match: 26
+Hotels with >=1 uncertain candidate (needs your review): 4
+Existing DB awards with no source-list candidate at all: 0
+
+==============================================================================
+SECTION A — CONFIRMED MATCHES (exact name match, no country conflict)
+==============================================================================
+These will be applied (boolean = true AND added to the `awards` tag array)
+when you approve running the apply step.
+
+[id 2004] Aman Kyoto (Japan / Kyoto)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Aman Kyoto" — Kyoto, Japan [michelin3keys.json]
+  BEST50         already true in DB — confirmed correct, no change
+      source: "Aman Kyoto" — Kyoto [best50.json]
+
+[id 2005] Amanemu (Japan / Ise-Shima)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Amanemu" — Shima, Mie, Japan [michelin3keys.json]
+
+[id 2006] Aman Nai Lert (Thailand / Bangkok)
+  BEST50         already true in DB — confirmed correct, no change
+      source: "Aman Nai Lert" — Bangkok [best50.json]
+
+[id 2018] Mandarin Oriental Shenzhen (China / Shenzhen)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Mandarin Oriental, Shenzhen" — Shenzhen, China [forbes5.json]
+
+[id 2021] Mandarin Oriental Bosphorus, Istanbul (Turkey / Istanbul)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Mandarin Oriental Bosphorus, Istanbul" — Istanbul, Turkey [forbes5.json]
+
+[id 2025] Mandarin Oriental, Costa Navarino (Greece / Pylos)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Mandarin Oriental, Costa Navarino" — Messenia, Greece [forbes5.json]
+
+[id 2027] Mandarin Oriental Savoy, Zurich (Switzerland / Zurich)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Mandarin Oriental Savoy, Zurich" — Zurich, Switzerland [forbes5.json]
+
+[id 2028] Mandarin Oriental, Doha (Qatar / Doha)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Mandarin Oriental, Doha" — Doha, Qatar [forbes5.json]
+
+[id 2032] Four Seasons Resort Maui at Wailea (USA / Maui)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Four Seasons Resort Maui at Wailea" — Wailea, Hawaii, USA [michelin3keys.json]
+  AAA5D          already true in DB — confirmed correct, no change
+      source: "Four Seasons Resort Maui at Wailea" — Wailea (Maui), Hawaii, United States [aaa5d.json]
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Four Seasons Resort Maui at Wailea" — Wailea, Hawaii, United States [forbes5.json]
+
+[id 2033] Naviva, A Four Seasons Resort (Mexico / Punta Mita)
+  CN             already true in DB — confirmed correct, no change
+      source: "Naviva, A Four Seasons Resort" — Punta Mita, Nayarit, Mexico [cn.json]
+
+[id 2034] Four Seasons Tamarindo (Mexico / La Manzanilla)
+  BEST50         already true in DB — confirmed correct, no change
+      source: "Four Seasons Tamarindo" — La Manzanilla [best50.json]
+
+[id 2035] Four Seasons Hotel Ritz Lisbon (Portugal / Lisbon)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Four Seasons Hotel Ritz Lisbon" — Lisbon, Portugal [forbes5.json]
+
+[id 2036] Four Seasons Hotel Baku (Azerbaijan / Baku)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Four Seasons Hotel Baku" — Baku, Azerbaijan [forbes5.json]
+
+[id 2037] Four Seasons Hotel Kyoto (Japan / Kyoto)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Four Seasons Hotel Kyoto" — Kyoto, Japan [michelin3keys.json]
+
+[id 2038] Four Seasons Hotel Doha (Qatar / Doha)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Four Seasons Hotel Doha" — Doha, Qatar [forbes5.json]
+
+[id 2039] Four Seasons Hotel Dubai International Financial Centre (UAE / Dubai)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Four Seasons Hotel Dubai International Financial Centre" — Dubai, United Arab Emirates [forbes5.json]
+
+[id 2043] Four Seasons Resort Bali at Sayan (Indonesia / Ubud)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Four Seasons Resort Bali at Sayan" — Ubud, Indonesia [michelin3keys.json]
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Four Seasons Resort Bali at Sayan" — Bali, Indonesia [forbes5.json]
+
+[id 2045] Four Seasons Hotel Seoul (South Korea / Seoul)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Four Seasons Hotel Seoul" — Seoul, South Korea [forbes5.json]
+
+[id 2046] Kona Village, a Rosewood Resort (USA / Kailua-Kona)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Kona Village, A Rosewood Resort" — Hawaii, United States [michelin3keys.json]
+  AAA5D          already true in DB — confirmed correct, no change
+      source: "Kona Village, A Rosewood Resort" — Kailua-Kona (Hawaii - Big Island), Hawaii, United States [aaa5d.json]
+  CN             already true in DB — confirmed correct, no change
+      source: "Kona Village, a Rosewood Resort" — Hawaii, United States [cn.json]
+
+[id 2048] Rosewood Sand Hill (USA / Menlo Park)
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Rosewood Sand Hill" — Menlo Park, California, United States [forbes5.json]
+
+[id 2052] Rosewood Castiglion del Bosco (Italy / Montalcino)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Rosewood Castiglion del Bosco" — Montalcino, Italy [michelin3keys.json]
+  FORBES5        already true in DB — confirmed correct, no change
+      source: "Castiglion del Bosco, A Rosewood Hotel" — Tuscany, Italy [forbes5.json]
+
+[id 2054] Rosewood Schloss Fuschl (Austria / Salzburg)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Rosewood Schloss Fuschl" — Hof bei Salzburg, Austria [michelin3keys.json]
+
+[id 2057] Rosewood Phnom Penh (Cambodia / Phnom Penh)
+  TL100          already true in DB — confirmed correct, no change
+      source: "Rosewood Phnom Penh" — Phnom Penh, Cambodia [tl100.json]
+
+[id 2058] Rosewood Luang Prabang (Laos / Luang Prabang)
+  MICHELIN3KEYS  already true in DB — confirmed correct, no change
+      source: "Rosewood Luang Prabang" — Luang Prabang, Laos [michelin3keys.json]
+
+[id 2063] Hôtel du Couvent (France / Nice)
+  BEST50         already true in DB — confirmed correct, no change
+      source: "Hôtel du Couvent" — Nice [best50.json]
+
+[id 2067] Soneva Secret (Maldives / Maldives)
+  BEST50         already true in DB — confirmed correct, no change
+      source: "Soneva Secret" — Maldives [best50.json]
+
+==============================================================================
+SECTION B — EXISTING DB AWARDS WITH NO MATCHING SOURCE ENTRY (review)
+==============================================================================
+These hotels currently have a boolean award flag set to true (from the
+original hotel-creation data), but no entry in the corresponding award-2026
+source list matched them at all. Confirm whether to keep or remove.
+
+(none)
+
+==============================================================================
+SECTION C — UNCERTAIN MATCHES: NEEDS YOUR CONFIRMATION (id included)
+==============================================================================
+Reply with the hotel id + award code for each one telling me MATCH or NOT A MATCH.
+
+[id 2016] Mandarin Oriental Wangfujing (China / Beijing) — currently: forbes5
+  BEST50         candidate: "Mandarin Oriental Qianmen" — Beijing  [score 0.67, country unknown, city match, reason: similar brand name]
+  FORBES5        candidate: "Mandarin Oriental Qianmen, Beijing" — Beijing, China  [score 0.67, country match, city match, reason: similar brand name]
+
+[id 2029] Mandarin Oriental, Dubai Downtown (UAE / Dubai) — currently: no awards set
+  MICHELIN3KEYS  candidate: "Mandarin Oriental Jumeira" — Dubai, UAE  [score 0.67, country match, city match, reason: similar brand name]
+  FORBES5        candidate: "Mandarin Oriental Jumeira, Dubai" — Dubai, United Arab Emirates  [score 0.67, country match, city match, reason: similar brand name]
+
+[id 2033] Naviva, A Four Seasons Resort (Mexico / Punta Mita) — currently: cn
+  MICHELIN3KEYS  candidate: "Four Seasons Resort Punta Mita" — Punta Mita, Nayarit, Mexico  [score 0.67, country match, city match, reason: similar brand name]
+
+[id 2043] Four Seasons Resort Bali at Sayan (Indonesia / Ubud) — currently: michelin3keys, forbes5
+  TL100          candidate: "Four Seasons Resort Bali at Jimbaran Bay" — Bali, Indonesia  [score 0.60, country match, city match, reason: similar brand name]

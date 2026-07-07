@@ -1,0 +1,452 @@
+[
+  {
+    "ranking": "1",
+    "hotel_name": "Mandarin Oriental, Bangkok",
+    "city": "Bangkok",
+    "state_region": null,
+    "country": "Thailand",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "2",
+    "hotel_name": "Ballyfin",
+    "city": "Ballyfin",
+    "state_region": "County Laois",
+    "country": "Ireland",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "3",
+    "hotel_name": "Ellerman House",
+    "city": "Cape Town",
+    "state_region": null,
+    "country": "South Africa",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "4",
+    "hotel_name": "The Peninsula Hong Kong",
+    "city": "Hong Kong",
+    "state_region": null,
+    "country": "China",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "5",
+    "hotel_name": "Les Prés d’Eugénie",
+    "city": "Eugénie-les-Bains",
+    "state_region": "Nouvelle-Aquitaine",
+    "country": "France",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "6",
+    "hotel_name": "Awasi Patagonia",
+    "city": "Torres del Paine",
+    "state_region": "Patagonia",
+    "country": "Chile",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "7",
+    "hotel_name": "Hotel Santa Caterina",
+    "city": "Amalfi",
+    "state_region": "Campania",
+    "country": "Italy",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "8",
+    "hotel_name": "Southern Ocean Lodge",
+    "city": "Kangaroo Island",
+    "state_region": "South Australia",
+    "country": "Australia",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "9",
+    "hotel_name": "The Maybourne Riviera",
+    "city": "Roquebrune-Cap-Martin",
+    "state_region": "Provence-Alpes-Côte d’Azur",
+    "country": "France",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "10",
+    "hotel_name": "Palace Hotel Tokyo",
+    "city": "Tokyo",
+    "state_region": null,
+    "country": "Japan",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "11",
+    "hotel_name": "Sterrekopje",
+    "city": "Franschhoek",
+    "state_region": "Western Cape",
+    "country": "South Africa",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "12",
+    "hotel_name": "Belmond Hotel Cipriani",
+    "city": "Venice",
+    "state_region": "Veneto",
+    "country": "Italy",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "13",
+    "hotel_name": "Son Blanc Farmhouse",
+    "city": "Menorca",
+    "state_region": "Balearic Islands",
+    "country": "Spain",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "14",
+    "hotel_name": "Al Moudira Hotel",
+    "city": "Luxor",
+    "state_region": null,
+    "country": "Egypt",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "15",
+    "hotel_name": "Nay Palad Hideaway",
+    "city": "Siargao",
+    "state_region": null,
+    "country": "Philippines",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "16",
+    "hotel_name": "Borgo Santo Pietro",
+    "city": "Chiusdino",
+    "state_region": "Tuscany",
+    "country": "Italy",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "17",
+    "hotel_name": "Estelle Manor",
+    "city": "Eynsham",
+    "state_region": "Oxfordshire",
+    "country": "United Kingdom",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "18",
+    "hotel_name": "La Casa del Califa",
+    "city": "Vejer de la Frontera",
+    "state_region": "Cadiz",
+    "country": "Spain",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "19",
+    "hotel_name": "Banyan Tree Buahan",
+    "city": "Buahan",
+    "state_region": "Bali",
+    "country": "Indonesia",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "20",
+    "hotel_name": "Kisawa Sanctuary",
+    "city": "Benguerra Island",
+    "state_region": null,
+    "country": "Mozambique",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "21",
+    "hotel_name": "Six Senses Yao Noi",
+    "city": "Ko Yao Noi",
+    "state_region": "Phang Nga",
+    "country": "Thailand",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "22",
+    "hotel_name": "Lundies House",
+    "city": "Tongue",
+    "state_region": "Highlands",
+    "country": "United Kingdom",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "23",
+    "hotel_name": "The Hotel Britomart",
+    "city": "Auckland",
+    "state_region": null,
+    "country": "New Zealand",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "24",
+    "hotel_name": "Asaba",
+    "city": "Izu Peninsula",
+    "state_region": "Shizuoka",
+    "country": "Japan",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "25",
+    "hotel_name": "Soneva Fushi",
+    "city": "Baa Atoll",
+    "state_region": null,
+    "country": "Maldives",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "26",
+    "hotel_name": "Singita Kruger National Park",
+    "city": "Kruger National Park",
+    "state_region": null,
+    "country": "South Africa",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "27",
+    "hotel_name": "Amangalla",
+    "city": "Galle",
+    "state_region": null,
+    "country": "Sri Lanka",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "28",
+    "hotel_name": "Four Seasons Astir Palace Hotel Athens",
+    "city": "Athens",
+    "state_region": null,
+    "country": "Greece",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "29",
+    "hotel_name": "Hampton Manor",
+    "city": "Hampton-in-Arden",
+    "state_region": "West Midlands",
+    "country": "United Kingdom",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "30",
+    "hotel_name": "Riad Mena",
+    "city": "Marrakech",
+    "state_region": null,
+    "country": "Morocco",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "31",
+    "hotel_name": "Hotel Endsleigh",
+    "city": "Milton Abbot",
+    "state_region": "Devon",
+    "country": "United Kingdom",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "32",
+    "hotel_name": "Palácio Príncipe Real",
+    "city": "Lisbon",
+    "state_region": null,
+    "country": "Portugal",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "33",
+    "hotel_name": "Susafa",
+    "city": "Polizzi Generosa",
+    "state_region": "Sicily",
+    "country": "Italy",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "34",
+    "hotel_name": "Hotel Esencia",
+    "city": "Xpu Há",
+    "state_region": "Quintana Roo",
+    "country": "Mexico",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "35",
+    "hotel_name": "The Goring",
+    "city": "London",
+    "state_region": "England",
+    "country": "United Kingdom",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "36",
+    "hotel_name": "Post Ranch Inn",
+    "city": "Big Sur",
+    "state_region": "California",
+    "country": "USA",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "37",
+    "hotel_name": "Shinta Mani Wild",
+    "city": "Cardamom National Park",
+    "state_region": null,
+    "country": "Cambodia",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "38",
+    "hotel_name": "Castle Hot Springs",
+    "city": "Morristown",
+    "state_region": "Arizona",
+    "country": "USA",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "39",
+    "hotel_name": "The Calile Hotel",
+    "city": "Brisbane",
+    "state_region": "Queensland",
+    "country": "Australia",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "40",
+    "hotel_name": "The Brando",
+    "city": "Tetiaroa",
+    "state_region": null,
+    "country": "French Polynesia",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "41",
+    "hotel_name": "Qualia",
+    "city": "Hamilton Island",
+    "state_region": "Queensland",
+    "country": "Australia",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "42",
+    "hotel_name": "Chicago Athletic Association",
+    "city": "Chicago",
+    "state_region": "Illinois",
+    "country": "USA",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "43",
+    "hotel_name": "Nooishof",
+    "city": "Sinclair Nature Reserve",
+    "state_region": null,
+    "country": "Namibia",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "44",
+    "hotel_name": "Zannier Bãi San Hô",
+    "city": "Phu Yen",
+    "state_region": null,
+    "country": "Vietnam",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "45",
+    "hotel_name": "Hôtel Grand Powers",
+    "city": "Paris",
+    "state_region": null,
+    "country": "France",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "46",
+    "hotel_name": "Hotel César Lanzarote",
+    "city": "Lanzarote",
+    "state_region": "Canary Islands",
+    "country": "Spain",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "47",
+    "hotel_name": "The Shinmonzen",
+    "city": "Kyoto",
+    "state_region": null,
+    "country": "Japan",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "48",
+    "hotel_name": "Jamaica Inn",
+    "city": "Ocho Rios",
+    "state_region": null,
+    "country": "Jamaica",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "49",
+    "hotel_name": "Kahani Paradise",
+    "city": "Gokarna",
+    "state_region": "Karnataka",
+    "country": "India",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  },
+  {
+    "ranking": "50",
+    "hotel_name": "Fogo Island Inn",
+    "city": "Joe Batt's Arm",
+    "state_region": "Newfoundland and Labrador",
+    "country": "Canada",
+    "source_code": "telegraph",
+    "source_year": "2024"
+  }
+]

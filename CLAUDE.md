@@ -211,6 +211,12 @@ Directus's `_contains`/`_in` filter operators throw `500` errors against these n
 
 The internal `/editor/hotels/[id]` tool sources its taxonomy checkbox options live from each field's `meta.options.choices` (`GET /fields/hotels/{field}`) rather than a separate collection — see `getEditorTaxonomies()` in `/src/lib/editorHotels.ts`.
 
+### Writing these fields via the Directus API (confirmed 2026-07-07, corrected 2026-07-07)
+
+`GET /fields/hotels/activities` shows Directus's own schema introspector tags these columns `type: "unknown"` (it has no first-class concept of a native Postgres array column, even though `schema.data_type` is correctly `text[]`). This is harmless for **reads** — Postgres's wire protocol returns proper arrays regardless of Directus's type metadata.
+
+It breaks on **both create (`POST /items/hotels`) and update (`PATCH /items/hotels/:id`)**: sending a plain JS array (e.g. `["Spa","Fitness"]`) gets JSON-stringified by Directus and Postgres rejects it — `malformed array literal: "[\"Spa\",\"Fitness\"]"`. (An earlier version of this note claimed PATCH was fine with a plain JS array — that was wrong; confirmed failing live during the 2026-07-07 award-review apply step, see `hotels-beta/scripts/hotels/new-hotels-2026/apply-award-review-2026-07-07.mjs`.) The fix works the same for both verbs: send a **Postgres array-literal string** instead, e.g. `'{"Spa","Fitness"}'`. Reusable helper (`toPgArrayLiteral`) is in `hotels-beta/scripts/hotels/new-hotels-2026/create-hotels-batch.mjs` (also duplicated in the apply-award-review script above) — any future script that *creates or updates* hotel rows with `activities`/`awards`/`setting`/`style` needs this conversion.
+
 ---
 
 ## 5. KEY ARCHITECTURE FILES
@@ -733,47 +739,30 @@ Both SHAs should match.
 
 ---
 
-## 20. HOTEL LAT/LNG GEOCODING — PAUSED, BLOCKED ON API KEY (as of 2026-06-25)
+## 20. HOTEL LAT/LNG GEOCODING
 
-### Goal
+### Status (updated 2026-07-07)
 
-Backfill `lat`/`lng` for hotels in Directus using the Google Maps Platform, via `GOOGLE_MAPS_API_KEY` in `.env.local`. **0 of 806 hotels currently have `lat`/`lng` populated** — this is a from-scratch backfill, not a fix to existing data, so there is nothing to corrupt by waiting.
+Both blockers below are **resolved**: `GOOGLE_MAPS_API_KEY` in `.env.local` is now a valid 39-char `AIza...` key (confirmed `status: OK` against the Geocoding API), and lat/lng round-trip through Directus as exact decimals (e.g. `46.571428`) with no integer truncation — no field-type fix was needed.
 
-### Blocker — fix this first before resuming
+The script is `hotels-beta/scripts/hotels/new-hotels-2026/google-geocode-hotels.mjs` (uses the **Places API — Find Place from Text**, per the cost/accuracy tradeoff below). It builds fallback query variants (name+area+city+region+country down to name+country), scores candidates by country/city string-match against the returned address, and flags mismatches for manual review. Supports `--ids`, `--countries`, `--cities`, `--dry-run`, `--force` (re-geocode hotels that already have coordinates), `--verify`, `--out <report.json>`. Safe to re-run — skips any hotel that already has `lat`/`lng` unless `--force` is passed.
 
-`GOOGLE_MAPS_API_KEY` is currently **invalid**. Tested read-only (no Directus involved) against three separate Google Maps Platform endpoints — Geocoding API, Places API (Find Place from Text), and even the plain Static Maps API — all three returned the same rejection:
+**Known false-positive noise in the mismatch flags:** the country/city string-match is naive (plain substring check after accent-stripping), so it routinely flags correct results as mismatches when Google's formatted address uses a different name for the same place — country abbreviations (`UK`/`USA`/`UAE` vs the DB's full name), transliterations (`Wien`/`München`/`Bakı`/`Lisboa`/`Krung Thep Maha Nakhon`), post-2022 renames (`Türkiye` vs `Turkey`), or the DB's `city` field being a broader area/resort name than the specific town Google returns (`Alta Badia`→`San Cassiano`, `Ise-Shima`→`Shima`, `Maui`→`Kihei`). Always spot-check flagged results against the coordinates and formatted address before treating a mismatch as a real error — don't assume the flag means the geocode is wrong.
 
-```
-"error_message": "The provided API key is invalid.",
-"status": "REQUEST_DENIED"
-```
+**2026-07-07 run:** geocoded the 67 new hotels from §23 (IDs 2001–2067) — see that section for results.
 
-The key is 36 characters and does **not** start with `AIza`, which is atypical for a real Google Maps Platform key (those are normally 39 chars, `AIza...`) — it may be a stale/placeholder value rather than a live key. Rejection across multiple unrelated APIs points to the key itself being bad, not just "Geocoding API not enabled" on an otherwise-valid key.
+### Remaining scope — legacy hotels (~800, pre-dating §23's batch)
 
-**Before resuming:** get a working key (generate/fix in Google Cloud Console — ensure billing is attached and the relevant API(s) are enabled), update `.env.local`, then re-test with the snippet above before doing any bulk work.
+The original goal of this section was a from-scratch backfill across the whole `hotels` collection (0 of 806 hotels had `lat`/`lng` as of 2026-06-25, before the §23 batch existed). That larger backfill has **not** been run yet — only the 67 new hotels have been geocoded so far. To resume for the rest:
 
-### Second issue found — verify before bulk-writing coordinates
+1. Confirm current count still missing `lat`/`lng` (may have changed since 2026-06-25).
+2. **EnterPlanMode** before the bulk write (hundreds of hotels, real API cost) — per the standing rule to plan before any Directus data change.
+3. Run `google-geocode-hotels.mjs` (no `--ids` scope, or `--countries`/`--cities` in batches) using the same Places API approach, spot-check results (esp. flagged mismatches per the note above), then update this section.
 
-In Directus, `hotels.lat` and `hotels.lng` are typed `integer` at the **Directus metadata layer** (`meta.type`), but the underlying Postgres column (`schema.data_type`) is actually `numeric` with no precision/scale constraint — so the real column *can* store decimals, but Directus's own field-type casting might still truncate decimal values to whole numbers on write because it thinks the field is an integer (unconfirmed — a test write was correctly blocked mid-session for lacking plan approval, so this still needs to be verified).
-
-**Before the bulk run:** test-write a decimal value (e.g. `48.856613`) to one hotel via the Directus API and read it back. If it round-trips exactly, no fix needed. If it gets truncated/rounded, change the field's Directus metadata `type` from `integer` to `decimal`/`float` (via `PATCH /fields/hotels/lat` and `/fields/hotels/lng`) before writing real data — otherwise every pin would be off by up to ~100km (whole-degree rounding).
-
-### Open decision — not yet made
-
-Which Google API to use for the lookup, once the key works:
+### Cost reference
 
 * **Geocoding API** (~$5/1000 requests) — address-string based; cheaper, but may fall back to a city-centroid point for remote lodges/resorts that don't parse well as a postal address.
-* **Places API — Find Place from Text** (~$17/1000 requests) — searches by business/POI name, more likely to land on the actual property pin rather than the city center. Better fit for a luxury-property map (CLAUDE.md §12: "Markers built from hotel coordinates") but costs more.
-
-Address/name fields available per hotel to build the lookup query: `hotel_name`, `local_area`, `city`, `region`, `state_province_county_island`, `country` (see §3).
-
-### Resume plan (once key + decision are sorted)
-
-1. Re-test the API key (snippet above) — confirm `status: OK`.
-2. Test-write a decimal lat/lng to one hotel, read back, fix the Directus field type if truncated (see above).
-3. Decide Geocoding vs Places API for the lookup (cost/accuracy tradeoff above).
-4. **EnterPlanMode** before the actual bulk write (806 hotels, ~$4–14 in API cost depending on choice) — per the standing rule to plan before any Directus data change, even though this collection has zero existing data to lose.
-5. Run the geocode + write pass, spot-check a sample of results on the map, then update this section to reflect completion.
+* **Places API — Find Place from Text** (~$17/1000 requests, the one this script uses) — searches by business/POI name, more likely to land on the actual property pin rather than the city center. Better fit for a luxury-property map (§12: "Markers built from hotel coordinates").
 
 ---
 
@@ -846,6 +835,58 @@ ANTHROPIC_API_KEY=sk-ant-...
 Get from console.anthropic.com → API Keys (account: ufalkgm@gmail.com).
 
 Once the key is in place, follow the run order in §21 exactly: dry-run one hotel, verify output, apply to one hotel, check the dev server renders correctly, then bulk run.
+
+---
+
+## 23. NEW HOTEL BATCH — 67 HOTELS ADDED (2026-07-07)
+
+67 new hotels were created in Directus, **IDs 2001–2067**, all `published: false`. Source files and scripts live in `hotels-beta/scripts/hotels/new-hotels-2026/`: `new_hotels_batch1.json`–`new_hotels_batch14.json`, `create-hotels-batch.mjs` (creation, safe to re-run — skips any ID that already exists, doubles as the reference implementation for the array-field write fix in §4), and `google-geocode-hotels.mjs` (lat/lng geocoding, relocated here 2026-07-07 — see §20 for how it works).
+
+### Fields already populated for all 67
+
+`hotel_name`, `published`, `country`, `region`, `state_province_county_island`, `city`, `local_area`, `affiliation`, `highlights`, `description`, `editor_rank`, `ext_points`, `total_rooms_suites_villas`, `activities`, `awards` (tag field), `setting`, `style`, the 7 award boolean flags (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`), `www`, `insta`, and (as of 2026-07-07) `lat`/`lng` via the Places API — see §20.
+
+### Still to do for each hotel (same pattern as §19)
+
+- [x] `lat` / `lng` — geocoded 2026-07-07 via `google-geocode-hotels.mjs`, all 67 populated
+- [x] Awards — audited and applied 2026-07-07, see §24
+- [x] `published: true` — applied 2026-07-07 via `publish-new-hotels-2026-07-07.mjs` to 66 of the 67 (all except **id 2020, Mandarin Oriental Cortina**, which stays `published: false` per explicit instruction). Note this was done *ahead of* Agoda/booking fields below, out of the original planned order.
+- [ ] Agoda matching — `agoda_hotel_id`, photos, booking URL. **Explicitly aborted 2026-07-07** — the existing pipeline (`scripts/agoda/match-agoda-hotels.mjs`) needs a bulk Agoda hotel-list export to fuzzy-match against, which isn't available for this batch, and Agoda's affiliate API has no name-search endpoint (ID-lookup only — see `GetHotelInformation` in `test-agoda-content.mjs`). GIATA's ID-mapping API (which could bridge this) returns 403, needs a special agreement. Revisit only when a fresh bulk export is available, or with an explicit decision to do manual per-hotel lookups.
+- [ ] Booking fields (`booking_provider`, `booking_URL`, etc.) or explicitly set `booking_provider: "none"` — not started.
+
+---
+
+## 24. HOTEL AWARDS REVIEW WORKFLOW (2026-07-07)
+
+### What this is
+
+The 7 award boolean flags (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`) on `hotels` are set at hotel-creation time from whatever source the editor had, and can drift out of sync with the real award lists (wrong, stale, or simply unverified). This workflow cross-checks a batch of hotels against curated source lists and corrects the flags + the `awards` tag array.
+
+Scripts (all in `hotels-beta/scripts/hotels/new-hotels-2026/`):
+
+* `match-hotel-awards.mjs` — **read-only**. Loads `awards-2026/*.json`, fetches the target hotels from Directus, matches by name/location, writes a plain-text report (`award-review-<date>.txt`) with three sections: **A** confirmed exact matches (safe to auto-apply), **B** hotels with a boolean already `true` but no matching source entry (needs a human call — keep or remove), **C** fuzzy/uncertain candidates (needs a human MATCH / NOT A MATCH call). Safe to re-run anytime; currently scoped to hotel IDs 2001–2067 via a hardcoded Directus filter — change that filter to reuse it for a different batch.
+* `apply-award-review-2026-07-07.mjs` — **writes** to Directus. Dry-run by default; `--confirm` to actually patch. Takes hardcoded lists of exactly what to change (`CONFIRMED` additions, `RENAMES` to the award list's official naming, `REMOVALS` for flags that couldn't be confirmed) — this is a one-time record of a specific reviewed session, not a general tool. Copy this file's pattern (Directus fetch/patch helpers + `toPgArrayLiteral`) as the starting point for the next award-review round rather than editing this one's hardcoded lists.
+
+### Award source files (`awards-2026/*.json`)
+
+One file per award code, each a flat JSON array of source entries (`hotel_name`, `city`/`location`, `state_region`, `country`, plus source-specific fields). **These files can be stale or incomplete** — always sanity-check the entry count against the award org's own published total before trusting a file. In this session: Forbes had only 109 of the real 343 five-star hotels, Travel+Leisure had 89 of 100, Condé Nast's Gold List was a full year stale (2025 file vs. the already-published 2026 list), and Michelin Keys had 130 of the true 143 (never fully resolved — see below).
+
+**How to find a full/current list when the org's website only exposes a search widget:**
+* Check the page's JS for an `ajax`/`fetch` call to a `.json` endpoint — Forbes Travel Guide's entire dataset is at `forbestravelguide.com/award-winners.json` (2,414 properties, filter by `propertyType`/`ratingDisplay`). Condé Nast Traveler's gallery/article pages embed a `window.__PRELOADED_STATE__` JSON blob containing the full `gallery.items` array (or the full article `body` as a hyperscript-like `["h3", "text"]` tree) — no need to scrape rendered HTML.
+* If the site blocks direct `curl`/fetch (AWS WAF JS challenge on Michelin's `guide.michelin.com`; a 402/bot-block on `travelandleisure.com`), check the **Wayback Machine** for a snapshot of the specific article URL (`archive.org/wayback/available?url=...`) — this recovered the full Travel+Leisure Top 100 and World's 50 Best 51-100 list when the live site wouldn't serve either script or WebFetch.
+* Some "full list" secondary sources (SEO blogs, affiliate sites) can be internally inconsistent (their own stated totals don't add up) — cross-check any secondary source's math before trusting it. When a user-supplied "new" source file doesn't reconcile with the current file (e.g. two supposedly-complete Michelin Keys lists sharing only ~1/3 of entries), that's a sign one of them is a different tier or year, not a data-quality bug to merge away — ask before incorporating.
+
+### Matching-algorithm gotchas (already fixed in `match-hotel-awards.mjs`, keep in mind if extending it)
+
+* Strip generic hospitality words (`hotel`, `resort`, `spa`, plurals) before the **exact**-match check, not just the fuzzy-scoring path — otherwise "Four Seasons Resort Tamarindo" never lines up with a source's "Four Seasons Tamarindo".
+* Compare stripped tokens as a **sorted set**, not an ordered string — sources reorder the same words (our DB's "Rosewood Castiglion del Bosco" vs. Forbes's "Castiglion del Bosco, A Rosewood Hotel").
+* A location-string mismatch should not hard-exclude a candidate whose core name matches exactly — surface it for human review instead (caught a real same-property case: DB city "Tamarindo" vs. source's "La Manzanilla", the specific coastal town name for the same resort).
+* Chain brands (Mandarin Oriental, Four Seasons, Rosewood, ...) often have multiple distinct properties in the same city/region — a fuzzy brand-name match with country+city corroboration is still not proof of identity. Always verify uncertain chain-brand candidates against real-world facts (a web search) before treating them as the same hotel. This session found 4 genuinely different properties this way: Mandarin Oriental Wangfujing ≠ Qianmen (Beijing), Mandarin Oriental Dubai Downtown ≠ Jumeira, Naviva ≠ Four Seasons Resort Punta Mita (adjacent but separate resorts), Four Seasons Bali at Sayan ≠ at Jimbaran Bay.
+* Once a fuzzy candidate is confirmed as a genuine match, the award list's name is often the *more complete/official* one — consider updating the DB's `hotel_name` (and `city`, if the source's location is more specific) to match, not just flipping the boolean.
+
+### Directus write gotcha
+
+Writing to `activities`/`awards`/`setting`/`style` (native Postgres `text[]` columns) requires the Postgres array-literal string (`toPgArrayLiteral`, see §4) on **both** `POST` and `PATCH` — an earlier version of §4 claimed PATCH was safe with a plain JS array; that was wrong and is now corrected.
 
 ---
 

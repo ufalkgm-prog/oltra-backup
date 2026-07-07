@@ -1,0 +1,86 @@
+[
+  {
+    "id": "2066",
+    "hotel_name": "Hotel Principe di Savoia",
+    "published": false,
+    "country": "Italy",
+    "region": "Europe",
+    "state_province_county_island": "Lombardy",
+    "city": "Milan",
+    "local_area": "Piazza della Repubblica / Porta Nuova",
+    "affiliation": "Dorchester Collection",
+    "highlights": "Neoclassical Milanese grandeur with garden-view dining and skyline wellness above Porta Nuova",
+    "description": "Hotel Principe di Savoia stands on Piazza della Repubblica, a neoclassical Milan landmark whose history reaches back to its 1927 opening as Principe e Savoia. Its position places the hotel between Stazione Centrale, the business rhythm of Porta Nuova and the fashion and design heart of the city, with La Scala, the Duomo, the Brera district and Leonardo da Vinci's The Last Supper all within easy reach by car or a dedicated city-centre shuttle.\n\nThe scale is grand rather than boutique: 257 rooms and 44 suites, dressed in a richly Milanese vocabulary of marble, polished wood, damask, chandeliers and classical detailing, with modern comforts folded into a deliberately old-world atmosphere. Higher floors look toward the Porta Nuova skyline, while the Presidential Suite and Club 10 wellness spaces give the building a penthouse dimension above the avenues below.\n\nAcanto Restaurant is the main dining room, where chef Matteo Gabrielli brings a contemporary perspective to Lombard and Italian traditions beside large windows looking onto the hotel's Italian garden and fountain. Within Acanto, Tavolo Cristallo creates a private six-seat stage behind Swarovski crystal curtains with bespoke menus and wine pairings. Il Salotto, the recently refurbished lobby lounge, carries the day from breakfast and afternoon tea to all-day plates and art displays, while Principe Bar channels Milanese glamour under its statement chandelier.\n\nClub 10 Fitness & Beauty Center crowns the hotel with a spa, Technogym fitness area, heated pool, hydro-massage pool, steam room, sauna, five treatment rooms and an outdoor terrace for views toward Porta Nuova. Eleven event spaces and a long association with fashion-week society, opera-goers, royalty and international travellers keep the hotel firmly in Milan's grand-hotel tradition.",
+    "editor_rank": 1,
+    "ext_points": 1,
+    "total_rooms_suites_villas": 301,
+    "activities": [
+      "Spa",
+      "Fitness",
+      "Shopping",
+      "Sightseeing"
+    ],
+    "awards": [],
+    "setting": [
+      "City"
+    ],
+    "style": [
+      "Grand",
+      "Historical"
+    ],
+    "best50": false,
+    "cn": false,
+    "forbes5": false,
+    "michelin3keys": false,
+    "telegraph": false,
+    "tl100": false,
+    "aaa5d": false,
+    "www": "https://www.dorchestercollection.com/milan/hotel-principe-di-savoia",
+    "insta": "https://www.instagram.com/principesavoia/"
+  },
+  {
+    "id": "2067",
+    "hotel_name": "Soneva Secret",
+    "published": false,
+    "country": "Maldives",
+    "region": "Asia",
+    "state_province_county_island": "Haa Dhaalu Atoll",
+    "city": "Maldives",
+    "local_area": "Makunudhoo Atoll",
+    "affiliation": "Soneva",
+    "highlights": "Ultra-private Maldivian castaway with water villas, observatory dining and manta-rich reefs",
+    "description": "Soneva Secret sits in the remote waters of the Maldives' Makunudhoo Atoll, within Haa Dhaalu, where the brand's barefoot philosophy is pared down to a still more private register. The setting is deliberately far from resort density: ocean, sky and coral-rich wilderness define the sense of arrival, with manta rays, dolphins, turtles and reefs forming part of the surrounding marine world rather than a distant excursion.\n\nThe resort is officially described as a hideaway of just 13 villas, arranged across beach, overwater and Sea Loft categories, with world-first water villas reached only by boat. The tone is tropical and contemporary rather than showy, built around open-air living, private pools, decks, direct water or beach access, and a rhythm of service shaped by each villa's Barefoot Butler and private pace. Its size makes the property feel closer to a private island residence than a conventional Maldivian resort.\n\nDining is intensely bespoke. Menus are guided by mood and moment, from in-villa meals and castaway sandbank picnics to Primitive, where fire-led cooking unfolds beside the shoreline. Out of This World is the signature spectacle: an overwater observatory where rare wines and dinner sit beneath the night sky, with the journey sometimes framed by ocean zipline. Wine tastings, floating breakfasts and Drift and Dine picnics add to the sense of food as theatre rather than routine.\n\nWellbeing begins inside the privacy of the villa, supported by dedicated wellness pavilions, personalised treatments, meditation, yoga and signature rituals such as So Secret and The Six Doors. Days can move gently or adventurously: guided snorkelling, diving with Soleni Dive Centre, reef, wreck and freediving trips, manta encounters, sea-toy explorations, fishing, private cinema, The Den for younger travellers, and voyages aboard the two-cabin Soneva in Aqua yacht.",
+    "editor_rank": 2,
+    "ext_points": 7,
+    "total_rooms_suites_villas": 13,
+    "activities": [
+      "Spa",
+      "Beach",
+      "Snorkeling",
+      "Diving",
+      "Watersports",
+      "Fishing",
+      "Family"
+    ],
+    "awards": [
+      "The World's 50 Best Hotels"
+    ],
+    "setting": [
+      "Private Island",
+      "Oceanfront"
+    ],
+    "style": [
+      "Tropical",
+      "Intimate"
+    ],
+    "best50": true,
+    "cn": false,
+    "forbes5": false,
+    "michelin3keys": false,
+    "telegraph": false,
+    "tl100": false,
+    "aaa5d": false,
+    "www": "https://soneva.com/resorts/soneva-secret/",
+    "insta": null
+  }
+]

@@ -1,0 +1,586 @@
+[
+  {
+    "hotel_name": "Akelarre",
+    "city": null,
+    "state_region": null,
+    "country": "Spain",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Al Moudira Hotel",
+    "city": null,
+    "state_region": null,
+    "country": "Egypt",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Amangiri",
+    "city": null,
+    "state_region": "Utah",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Badrutt's Palace",
+    "city": null,
+    "state_region": null,
+    "country": "Switzerland",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Beaverbrook",
+    "city": null,
+    "state_region": null,
+    "country": "United Kingdom",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Buahan, A Banyan Tree Escape",
+    "city": null,
+    "state_region": null,
+    "country": "Indonesia",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Bvlgari Resort Dubai",
+    "city": "Dubai",
+    "state_region": null,
+    "country": "United Arab Emirates",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Cape Weligama",
+    "city": null,
+    "state_region": null,
+    "country": "Sri Lanka",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Capella Singapore",
+    "city": "Singapore",
+    "state_region": null,
+    "country": "Singapore",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Castelfalfi",
+    "city": null,
+    "state_region": null,
+    "country": "Italy",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Cempedak Private Island",
+    "city": null,
+    "state_region": null,
+    "country": "Indonesia",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Chiva-Som",
+    "city": null,
+    "state_region": null,
+    "country": "Thailand",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Claridge's",
+    "city": null,
+    "state_region": null,
+    "country": "United Kingdom",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Coral Sands Inn & Cottages",
+    "city": null,
+    "state_region": null,
+    "country": "Bahamas",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Coworth Park, Dorchester Collection",
+    "city": null,
+    "state_region": null,
+    "country": "United Kingdom",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "El Questro Homestead",
+    "city": null,
+    "state_region": null,
+    "country": "Australia",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Forestis",
+    "city": null,
+    "state_region": null,
+    "country": "Italy",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Four Seasons Astir Palace Hotel Athens",
+    "city": null,
+    "state_region": null,
+    "country": "Greece",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Grand Hotel Excelsior Vittoria",
+    "city": null,
+    "state_region": null,
+    "country": "Italy",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Grand Hotel Son Net",
+    "city": null,
+    "state_region": null,
+    "country": "Spain",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Grand Hôtel",
+    "city": null,
+    "state_region": null,
+    "country": "Sweden",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Hermitage Bay",
+    "city": null,
+    "state_region": null,
+    "country": "Antigua",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Hotel Il Pellicano",
+    "city": null,
+    "state_region": null,
+    "country": "Italy",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Hotel Le Toiny",
+    "city": null,
+    "state_region": null,
+    "country": "St. Barts",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Huka Lodge",
+    "city": null,
+    "state_region": null,
+    "country": "New Zealand",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Il Salviatino",
+    "city": null,
+    "state_region": null,
+    "country": "Italy",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Inkaterra La Casona",
+    "city": null,
+    "state_region": null,
+    "country": "Peru",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Island Shangri-La, Hong Kong",
+    "city": "Hong Kong",
+    "state_region": null,
+    "country": "Hong Kong",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Kinondo Kwetu",
+    "city": null,
+    "state_region": null,
+    "country": "Kenya",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Kona Village, a Rosewood Resort",
+    "city": null,
+    "state_region": "Hawaii",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "La Réserve Paris - Hotel and Spa",
+    "city": null,
+    "state_region": null,
+    "country": "France",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Lily of the Valley",
+    "city": null,
+    "state_region": null,
+    "country": "France",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Mayfair House Hotel & Garden",
+    "city": null,
+    "state_region": "Florida",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Maçakizi",
+    "city": null,
+    "state_region": null,
+    "country": "Türkiye",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Mount Gahinga Lodge",
+    "city": null,
+    "state_region": null,
+    "country": "Uganda",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Naviva, A Four Seasons Resort",
+    "city": "Punta Mita",
+    "state_region": "Nayarit",
+    "country": "Mexico",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Nay Palad Hideaway",
+    "city": null,
+    "state_region": null,
+    "country": "Philippines",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Our Habitas AlUla",
+    "city": null,
+    "state_region": null,
+    "country": "Saudi Arabia",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Park Hyatt Sydney",
+    "city": "Sydney",
+    "state_region": null,
+    "country": "Australia",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Passalacqua",
+    "city": null,
+    "state_region": null,
+    "country": "Italy",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Posada Ayana",
+    "city": null,
+    "state_region": null,
+    "country": "Uruguay",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Raffles Doha",
+    "city": "Doha",
+    "state_region": null,
+    "country": "Qatar",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Raya Heritage",
+    "city": null,
+    "state_region": null,
+    "country": "Thailand",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Refugia Chiloé",
+    "city": null,
+    "state_region": null,
+    "country": "Chile",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Samode Palace",
+    "city": null,
+    "state_region": null,
+    "country": "India",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Ser Casasandra",
+    "city": null,
+    "state_region": null,
+    "country": "Mexico",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Sheldon Chalet",
+    "city": null,
+    "state_region": "Alaska",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Six Senses Douro Valley",
+    "city": null,
+    "state_region": null,
+    "country": "Portugal",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Somalisa Camp",
+    "city": null,
+    "state_region": null,
+    "country": "Zimbabwe",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Sterrekopje Farm",
+    "city": null,
+    "state_region": null,
+    "country": "South Africa",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "SUJÁN Sher Bagh",
+    "city": null,
+    "state_region": null,
+    "country": "India",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Sussurro",
+    "city": null,
+    "state_region": null,
+    "country": "Mozambique",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Beverly Hills Hotel, Dorchester Collection",
+    "city": "Beverly Hills",
+    "state_region": "California",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Gasparilla Inn & Club",
+    "city": null,
+    "state_region": "Florida",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Happy House",
+    "city": null,
+    "state_region": null,
+    "country": "Nepal",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Inn on Biltmore Estate",
+    "city": null,
+    "state_region": "North Carolina",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Lodge at Primland, Auberge Collection",
+    "city": null,
+    "state_region": "Virginia",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Lowell",
+    "city": null,
+    "state_region": "New York",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Nautilus Maldives",
+    "city": "Maldives",
+    "state_region": null,
+    "country": "Maldives",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Oberoi, Mumbai",
+    "city": "Mumbai",
+    "state_region": null,
+    "country": "India",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Peninsula Manila",
+    "city": "Manila",
+    "state_region": null,
+    "country": "Philippines",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Point",
+    "city": null,
+    "state_region": "New York",
+    "country": "United States",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Ritz-Carlton Ras Al Khaimah, Al Wadi Desert",
+    "city": null,
+    "state_region": null,
+    "country": "United Arab Emirates",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Ritz-Carlton, Kyoto",
+    "city": "Kyoto",
+    "state_region": null,
+    "country": "Japan",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The St. Regis Saadiyat Island Resort, Abu Dhabi",
+    "city": "Abu Dhabi",
+    "state_region": null,
+    "country": "United Arab Emirates",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "The Venice Venice Hotel",
+    "city": null,
+    "state_region": null,
+    "country": "Italy",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Uxua Casa Hotel & Spa",
+    "city": null,
+    "state_region": null,
+    "country": "Brazil",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Verina Astra",
+    "city": null,
+    "state_region": null,
+    "country": "Greece",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Weissenhaus Private Nature Luxury Resort",
+    "city": null,
+    "state_region": null,
+    "country": "Germany",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Welcomhotel By ITC Hotels, Pine N Peak, Pahalgam",
+    "city": null,
+    "state_region": null,
+    "country": "India",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Wickaninnish Inn",
+    "city": null,
+    "state_region": "British Columbia",
+    "country": "Canada",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Wilderness Bisate Lodge",
+    "city": null,
+    "state_region": null,
+    "country": "Rwanda",
+    "source_code": "cn",
+    "source_year": "2026"
+  },
+  {
+    "hotel_name": "Zannier Hotels Bãi San Hô",
+    "city": null,
+    "state_region": null,
+    "country": "Vietnam",
+    "source_code": "cn",
+    "source_year": "2026"
+  }
+]

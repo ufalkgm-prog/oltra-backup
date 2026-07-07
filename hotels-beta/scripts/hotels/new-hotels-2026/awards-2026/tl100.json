@@ -1,0 +1,902 @@
+[
+  {
+    "hotel_name": "andBeyond Bateleur Camp",
+    "location": "Maasai Mara National Reserve",
+    "state_region": null,
+    "country": "Kenya",
+    "rank": 1,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Raffles Istanbul",
+    "location": "Istanbul",
+    "state_region": null,
+    "country": "Turkey",
+    "rank": 2,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Mfuwe Lodge, the Bushcamp Company",
+    "location": "South Luangwa National Park",
+    "state_region": null,
+    "country": "Zambia",
+    "rank": 3,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Fauchon L’Hôtel",
+    "location": "Paris",
+    "state_region": null,
+    "country": "France",
+    "rank": 4,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Kilindi Zanzibar",
+    "location": "Zanzibar",
+    "state_region": null,
+    "country": "Tanzania",
+    "rank": 5,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Vines Resort & Spa",
+    "location": "Mendoza",
+    "state_region": null,
+    "country": "Argentina",
+    "rank": 6,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Joali Maldives",
+    "location": "Raa Atoll",
+    "state_region": null,
+    "country": "Maldives",
+    "rank": 7,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "La Casa de la Playa",
+    "location": "Playa del Carmen",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 8,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Primland Resort, Auberge Resorts Collection",
+    "location": "Meadows of Dan",
+    "state_region": "Virginia",
+    "country": "United States",
+    "rank": 9,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Nay Palad Hideaway",
+    "location": "Siargao Island",
+    "state_region": null,
+    "country": "Philippines",
+    "rank": 10,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Susurros del Corazón, Auberge Resorts Collection",
+    "location": "Punta de Mita",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 11,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Inn at Mattei's Tavern, Auberge Resorts Collection",
+    "location": "Los Olivos",
+    "state_region": "California",
+    "country": "United States",
+    "rank": 12,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Mandapa, a Ritz-Carlton Reserve",
+    "location": "Bali",
+    "state_region": null,
+    "country": "Indonesia",
+    "rank": 13,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Regent Hong Kong",
+    "location": "Hong Kong",
+    "state_region": null,
+    "country": "China",
+    "rank": 14,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Shangri-La Bosphorus",
+    "location": "Istanbul",
+    "state_region": null,
+    "country": "Turkey",
+    "rank": 15,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Grace Hotel, Auberge Resorts Collection",
+    "location": "Imerovigli",
+    "state_region": null,
+    "country": "Greece",
+    "rank": 16,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Castelfalfi",
+    "location": "Montaione",
+    "state_region": null,
+    "country": "Italy",
+    "rank": 17,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hacienda AltaGracia, Auberge Resorts Collection",
+    "location": "Pérez Zeledón",
+    "state_region": null,
+    "country": "Costa Rica",
+    "rank": 18,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Oberoi Amarvilas, Agra",
+    "location": "Agra",
+    "state_region": null,
+    "country": "India",
+    "rank": 19,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Shangri-La Boracay",
+    "location": "Boracay",
+    "state_region": null,
+    "country": "Philippines",
+    "rank": 20,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "San Ysidro Ranch",
+    "location": "Montecito",
+    "state_region": "California",
+    "country": "United States",
+    "rank": 21,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "EQ Kuala Lumpur",
+    "location": "Kuala Lumpur",
+    "state_region": null,
+    "country": "Malaysia",
+    "rank": 22,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Cape, a Thompson Hotel",
+    "location": "Cabo San Lucas",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 23,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Mulia",
+    "location": "Bali",
+    "state_region": null,
+    "country": "Indonesia",
+    "rank": 24,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Baoase Luxury Resort Curaçao",
+    "location": "Willemstad",
+    "state_region": null,
+    "country": "Curaçao",
+    "rank": 25,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Anantara The Palm Dubai Resort",
+    "location": "Dubai",
+    "state_region": null,
+    "country": "United Arab Emirates",
+    "rank": 26,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Langham, Shanghai, Xintiandi",
+    "location": "Shanghai",
+    "state_region": null,
+    "country": "China",
+    "rank": 27,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Ritz-Carlton, Bali",
+    "location": "Bali",
+    "state_region": null,
+    "country": "Indonesia",
+    "rank": 28,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Meliá Ho Tram Beach Resort",
+    "location": "Ho Chi Minh City",
+    "state_region": null,
+    "country": "Vietnam",
+    "rank": 29,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Taj Mahal, New Delhi",
+    "location": "New Delhi",
+    "state_region": null,
+    "country": "India",
+    "rank": 30,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Waldorf Astoria Maldives Ithaafushi",
+    "location": "South Malé Atoll",
+    "state_region": null,
+    "country": "Maldives",
+    "rank": 31,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hôtel Crillon le Brave",
+    "location": "Crillon Le Brave",
+    "state_region": null,
+    "country": "France",
+    "rank": 32,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hôtel de Crillon, a Rosewood Hotel",
+    "location": "Paris",
+    "state_region": null,
+    "country": "France",
+    "rank": 33,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Rosewood Bangkok",
+    "location": "Bangkok",
+    "state_region": null,
+    "country": "Thailand",
+    "rank": 34,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Regent Beijing",
+    "location": "Beijing",
+    "state_region": null,
+    "country": "China",
+    "rank": 35,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Four Seasons Resort Bali at Jimbaran Bay",
+    "location": "Bali",
+    "state_region": null,
+    "country": "Indonesia",
+    "rank": 36,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Norumbega",
+    "location": "Camden",
+    "state_region": "Maine",
+    "country": "United States",
+    "rank": 37,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Mandarin Oriental",
+    "location": "Bangkok",
+    "state_region": null,
+    "country": "Thailand",
+    "rank": 38,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Quisisana Resort",
+    "location": "Center Lovell",
+    "state_region": "Maine",
+    "country": "United States",
+    "rank": 39,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Villa Mara Carmel",
+    "location": "Carmel-by-the-Sea",
+    "state_region": "California",
+    "country": "United States",
+    "rank": 40,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The St. Regis Istanbul",
+    "location": "Istanbul",
+    "state_region": null,
+    "country": "Turkey",
+    "rank": 41,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Triple Creek Ranch",
+    "location": "Darby",
+    "state_region": null,
+    "country": "Montana",
+    "rank": 42,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Montage Kapalua Bay",
+    "location": "Maui",
+    "state_region": "Hawaii",
+    "country": "United States",
+    "rank": 43,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Solio Lodge",
+    "location": "Laikipia",
+    "state_region": null,
+    "country": "Kenya",
+    "rank": 44,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Royal Champagne Hotel & Spa",
+    "location": "Champagne",
+    "state_region": null,
+    "country": "France",
+    "rank": 45,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Oberoi Rajvilas, Jaipur",
+    "location": "Jaipur",
+    "state_region": null,
+    "country": "India",
+    "rank": 46,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Fairmont Kea Lani, Maui",
+    "location": "Maui",
+    "state_region": "Hawaii",
+    "country": "United States",
+    "rank": 47,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Etéreo, Auberge Resorts Collection",
+    "location": "Punta Maroma",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 48,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Xcaret Mexico",
+    "location": "Playa del Carmen",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 49,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Mandarin Oriental Pudong, Shanghai",
+    "location": "Shanghai",
+    "state_region": null,
+    "country": "China",
+    "rank": 50,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Middle House",
+    "location": "Shanghai",
+    "state_region": null,
+    "country": "China",
+    "rank": 51,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Waldorf Astoria Las Vegas",
+    "location": "Las Vegas",
+    "state_region": "Nevada",
+    "country": "United States",
+    "rank": 52,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Jefferson, Washington DC",
+    "location": "Washington",
+    "state_region": "Washington DC",
+    "country": "United States",
+    "rank": 53,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Wildflower Farms, Auberge Resorts Collection",
+    "location": "Gardiner",
+    "state_region": "New York",
+    "country": "United States",
+    "rank": 54,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Taj Lands End, Mumbai",
+    "location": "Mumbai",
+    "state_region": null,
+    "country": "India",
+    "rank": 55,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Rosewood Phnom Penh",
+    "location": "Phnom Penh",
+    "state_region": null,
+    "country": "Cambodia",
+    "rank": 56,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Dunlin, Auberge Resorts Collection",
+    "location": "Johns Island",
+    "state_region": "South Carolina",
+    "country": "United States",
+    "rank": 57,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Nayara Tented Camp",
+    "location": "Arenal Volcano National Park",
+    "state_region": null,
+    "country": "Costa Rica",
+    "rank": 58,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Rosewood San Miguel de Allende",
+    "location": "San Miguel de Allende",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 59,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Capella Hanoi",
+    "location": "Hanoi",
+    "state_region": null,
+    "country": "Vietnam",
+    "rank": 60,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Le Bristol",
+    "location": "Paris",
+    "state_region": null,
+    "country": "France",
+    "rank": 61,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Villa Le Corail, a Gran Meliá Hotel",
+    "location": "Nha Trang",
+    "state_region": null,
+    "country": "Vietnam",
+    "rank": 62,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Las Ventanas al Paraíso, a Rosewood Resort",
+    "location": "San José del Cabo",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 63,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Madeline Hotel & Residences, Auberge Resorts Collection",
+    "location": "Telluride",
+    "state_region": "Colorado",
+    "country": "United States",
+    "rank": 64,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Solage, Auberge Resorts Collection",
+    "location": "Calistoga",
+    "state_region": "California",
+    "country": "United States",
+    "rank": 65,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Sofitel Legend Casco Viejo",
+    "location": "Panama City",
+    "state_region": null,
+    "country": "Panama",
+    "rank": 66,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "W Santiago",
+    "location": "Santiago",
+    "state_region": null,
+    "country": "Chile",
+    "rank": 67,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Oberoi Vanyavilas Wildlife Resort, Ranthambhore",
+    "location": "Ranthambhore",
+    "state_region": null,
+    "country": "India",
+    "rank": 68,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The St. Regis Bali Resort",
+    "location": "Bali",
+    "state_region": null,
+    "country": "Indonesia",
+    "rank": 69,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Belmar",
+    "location": "Monteverde",
+    "state_region": null,
+    "country": "Costa Rica",
+    "rank": 70,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Palace Hotel Tokyo",
+    "location": "Tokyo",
+    "state_region": null,
+    "country": "Japan",
+    "rank": 71,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Lebua at State Tower",
+    "location": "Bangkok",
+    "state_region": null,
+    "country": "Thailand",
+    "rank": 72,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Secret Bay",
+    "location": "Dominica",
+    "state_region": null,
+    "country": "Caribbean",
+    "rank": 73,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Four Seasons Resort & Residences Whistler",
+    "location": "Whistler",
+    "state_region": null,
+    "country": "Canada",
+    "rank": 74,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Anantara Quy Nhon Villas",
+    "location": "Quy Nhon",
+    "state_region": null,
+    "country": "Vietnam",
+    "rank": 75,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Matetsi Victoria Falls",
+    "location": "Matetsi Private Game Reserve",
+    "state_region": null,
+    "country": "Zimbabwe",
+    "rank": 76,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Wentworth Mansion",
+    "location": "Charleston",
+    "state_region": "South Carolina",
+    "country": "United States",
+    "rank": 77,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Capella Bangkok",
+    "location": "Bangkok",
+    "state_region": null,
+    "country": "Thailand",
+    "rank": 78,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "andBeyond Phinda Private Game Reserve Lodges",
+    "location": "Phinda Private Game Reserve",
+    "state_region": null,
+    "country": "South Africa",
+    "rank": 79,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Leela Palace New Delhi",
+    "location": "New Delhi",
+    "state_region": null,
+    "country": "India",
+    "rank": 80,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Rancho Santana",
+    "location": "Rivas",
+    "state_region": null,
+    "country": "Nicaragua",
+    "rank": 81,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Capella Shanghai",
+    "location": "Shanghai",
+    "state_region": null,
+    "country": "China",
+    "rank": 82,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Oberoi Udaivilas, Udaipur",
+    "location": "Udaipur",
+    "state_region": null,
+    "country": "India",
+    "rank": 83,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Giraffe Manor",
+    "location": "Nairobi",
+    "state_region": null,
+    "country": "Kenya",
+    "rank": 84,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Du Cap-Eden-Roc",
+    "location": "Cap d'Antibes",
+    "state_region": null,
+    "country": "France",
+    "rank": 85,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hyatt Regency Danang Resort & Spa",
+    "location": "Danang",
+    "state_region": null,
+    "country": "Vietnam",
+    "rank": 86,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Grand Hotel du Palais Royal",
+    "location": "Paris",
+    "state_region": null,
+    "country": "France",
+    "rank": 87,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Raffles Grand Hotel D'Angkor",
+    "location": "Siem Reap",
+    "state_region": null,
+    "country": "Cambodia",
+    "rank": 88,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Hartness",
+    "location": "Greenville",
+    "state_region": "South Carolina",
+    "country": "United States",
+    "rank": 89,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Villa d'Este",
+    "location": "Lake Como",
+    "state_region": null,
+    "country": "Italy",
+    "rank": 90,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Atlantis The Royal Dubai",
+    "location": "Dubai",
+    "state_region": null,
+    "country": "United Arab Emirates",
+    "rank": 91,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Calimala",
+    "location": "Florence",
+    "state_region": null,
+    "country": "Italy",
+    "rank": 92,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "The Ranch at Laguna Beach",
+    "location": "Laguna Beach",
+    "state_region": "California",
+    "country": "United States",
+    "rank": 93,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Jade Mountain",
+    "location": "St. Lucia",
+    "state_region": null,
+    "country": "Caribbean",
+    "rank": 94,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Waldorf Astoria Los Cabos Pedregal",
+    "location": "Cabo San Lucas",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 95,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "La Residencia, a Belmond Hotel, Mallorca",
+    "location": "Mallorca",
+    "state_region": null,
+    "country": "Spain",
+    "rank": 96,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Santa Marina, a Luxury Collection Resort",
+    "location": "Mykonos",
+    "state_region": null,
+    "country": "Greece",
+    "rank": 97,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Esperanza, Auberge Resorts Collection",
+    "location": "Cabo San Lucas",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 98,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Xcaret Arte",
+    "location": "Playa del Carmen",
+    "state_region": null,
+    "country": "Mexico",
+    "rank": 99,
+    "source_code": "tl100",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Shangri-La The Shard",
+    "location": "London",
+    "state_region": null,
+    "country": "England",
+    "rank": 100,
+    "source_code": "tl100",
+    "source_year": "2025"
+  }
+]

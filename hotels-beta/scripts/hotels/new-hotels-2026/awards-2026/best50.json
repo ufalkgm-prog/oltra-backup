@@ -1,0 +1,402 @@
+[
+  {
+    "hotel_name": "Rosewood Hong Kong",
+    "location": "Hong Kong"
+  },
+  {
+    "hotel_name": "Four Seasons Bangkok at Chao Phraya River",
+    "location": "Bangkok"
+  },
+  {
+    "hotel_name": "Capella Bangkok",
+    "location": "Bangkok"
+  },
+  {
+    "hotel_name": "Passalacqua",
+    "location": "Lake Como"
+  },
+  {
+    "hotel_name": "Raffles Singapore",
+    "location": "Singapore"
+  },
+  {
+    "hotel_name": "Atlantis The Royal",
+    "location": "Dubai"
+  },
+  {
+    "hotel_name": "Mandarin Oriental Bangkok",
+    "location": "Bangkok"
+  },
+  {
+    "hotel_name": "Chablé Yucatán",
+    "location": "Chocholá"
+  },
+  {
+    "hotel_name": "Four Seasons Firenze",
+    "location": "Florence"
+  },
+  {
+    "hotel_name": "Upper House Hong Kong",
+    "location": "Hong Kong"
+  },
+  {
+    "hotel_name": "Copacabana Palace",
+    "location": "Rio de Janeiro"
+  },
+  {
+    "hotel_name": "Capella Sydney",
+    "location": "Sydney"
+  },
+  {
+    "hotel_name": "Royal Mansour",
+    "location": "Marrakech"
+  },
+  {
+    "hotel_name": "Mandarin Oriental Qianmen",
+    "location": "Beijing"
+  },
+  {
+    "hotel_name": "Bulgari Tokyo",
+    "location": "Tokyo"
+  },
+  {
+    "hotel_name": "Claridge's",
+    "location": "London"
+  },
+  {
+    "hotel_name": "Four Seasons Astir Palace",
+    "location": "Athens"
+  },
+  {
+    "hotel_name": "Desa Potato Head",
+    "location": "Bali"
+  },
+  {
+    "hotel_name": "Le Bristol",
+    "location": "Paris"
+  },
+  {
+    "hotel_name": "Jumeirah Marsa Al Arab",
+    "location": "Dubai"
+  },
+  {
+    "hotel_name": "Cheval Blanc Paris",
+    "location": "Paris"
+  },
+  {
+    "hotel_name": "Bulgari Roma",
+    "location": "Rome"
+  },
+  {
+    "hotel_name": "Hôtel de Crillon",
+    "location": "Paris"
+  },
+  {
+    "hotel_name": "Rosewood São Paulo",
+    "location": "São Paulo"
+  },
+  {
+    "hotel_name": "Aman Tokyo",
+    "location": "Tokyo"
+  },
+  {
+    "hotel_name": "Hotel Il Pellicano",
+    "location": "Porto Ercole"
+  },
+  {
+    "hotel_name": "Hôtel du Couvent",
+    "location": "Nice"
+  },
+  {
+    "hotel_name": "Soneva Fushi",
+    "location": "Maldives"
+  },
+  {
+    "hotel_name": "The Connaught",
+    "location": "London"
+  },
+  {
+    "hotel_name": "La Mamounia",
+    "location": "Marrakech"
+  },
+  {
+    "hotel_name": "Raffles London at The OWO",
+    "location": "London"
+  },
+  {
+    "hotel_name": "The Emory",
+    "location": "London"
+  },
+  {
+    "hotel_name": "Maroma",
+    "location": "Riviera Maya"
+  },
+  {
+    "hotel_name": "The Calile",
+    "location": "Brisbane"
+  },
+  {
+    "hotel_name": "The Lana",
+    "location": "Dubai"
+  },
+  {
+    "hotel_name": "Hôtel de Paris Monte-Carlo",
+    "location": "Monaco"
+  },
+  {
+    "hotel_name": "Janu Tokyo",
+    "location": "Tokyo"
+  },
+  {
+    "hotel_name": "The Taj Mahal Palace",
+    "location": "Mumbai"
+  },
+  {
+    "hotel_name": "One&Only Mandarina",
+    "location": "Riviera Nayarit"
+  },
+  {
+    "hotel_name": "Singita – Kruger National Park",
+    "location": "Kruger National Park"
+  },
+  {
+    "hotel_name": "Mandarin Oriental Hong Kong",
+    "location": "Hong Kong"
+  },
+  {
+    "hotel_name": "Hotel Bel-Air",
+    "location": "Los Angeles"
+  },
+  {
+    "hotel_name": "The Mark",
+    "location": "New York"
+  },
+  {
+    "hotel_name": "Las Ventanas al Paraíso",
+    "location": "Los Cabos"
+  },
+  {
+    "hotel_name": "The Tokyo Edition Toranomon",
+    "location": "Tokyo"
+  },
+  {
+    "hotel_name": "Hotel The Mitsui",
+    "location": "Kyoto"
+  },
+  {
+    "hotel_name": "Estelle Manor",
+    "location": "Witney"
+  },
+  {
+    "hotel_name": "Grand Park Hotel Rovinj",
+    "location": "Rovinj"
+  },
+  {
+    "hotel_name": "Hotel Sacher Vienna",
+    "location": "Vienna"
+  },
+  {
+    "hotel_name": "Mandapa",
+    "location": "Bali"
+  },
+  {
+    "hotel_name": "Aman Nai Lert",
+    "location": "Bangkok"
+  },
+  {
+    "hotel_name": "Badrutt's Palace",
+    "location": "St. Moritz"
+  },
+  {
+    "hotel_name": "Borgo Santandrea",
+    "location": "Amalfi"
+  },
+  {
+    "hotel_name": "The Peninsula Hong Kong",
+    "location": "Hong Kong"
+  },
+  {
+    "hotel_name": "Four Seasons Tamarindo",
+    "location": "La Manzanilla"
+  },
+  {
+    "hotel_name": "Nihi Sumba",
+    "location": "Sumba Island"
+  },
+  {
+    "hotel_name": "Hotel du Cap-Eden-Roc",
+    "location": "Antibes"
+  },
+  {
+    "hotel_name": "Four Seasons at The Surf Club",
+    "location": "Surfside"
+  },
+  {
+    "hotel_name": "Park Hyatt Kyoto",
+    "location": "Kyoto"
+  },
+  {
+    "hotel_name": "Dusit Thani Bangkok",
+    "location": "Bangkok"
+  },
+  {
+    "hotel_name": "Aman New York",
+    "location": "New York"
+  },
+  {
+    "hotel_name": "Rosewood Bangkok",
+    "location": "Bangkok"
+  },
+  {
+    "hotel_name": "Borgo Egnazia",
+    "location": "Savelletri"
+  },
+  {
+    "hotel_name": "The Carlyle",
+    "location": "New York"
+  },
+  {
+    "hotel_name": "The Beverly Hills Hotel",
+    "location": "Los Angeles"
+  },
+  {
+    "hotel_name": "Four Seasons Madrid",
+    "location": "Madrid"
+  },
+  {
+    "hotel_name": "Montage Los Cabos",
+    "location": "Cabo San Lucas"
+  },
+  {
+    "hotel_name": "San Ysidro Ranch",
+    "location": "Santa Barbara"
+  },
+  {
+    "hotel_name": "Southern Ocean Lodge",
+    "location": "Kangaroo Island"
+  },
+  {
+    "hotel_name": "The Siam",
+    "location": "Bangkok"
+  },
+  {
+    "hotel_name": "Mandarin Oriental Ritz Madrid",
+    "location": "Madrid"
+  },
+  {
+    "hotel_name": "Hotel Cipriani",
+    "location": "Venice"
+  },
+  {
+    "hotel_name": "Mount Nelson",
+    "location": "Cape Town"
+  },
+  {
+    "hotel_name": "Aman Kyoto",
+    "location": "Kyoto"
+  },
+  {
+    "hotel_name": "The Fifth Avenue Hotel",
+    "location": "New York"
+  },
+  {
+    "hotel_name": "Hotel das Cataratas",
+    "location": "Iguassu Falls"
+  },
+  {
+    "hotel_name": "The Greenwich Hotel",
+    "location": "New York"
+  },
+  {
+    "hotel_name": "Gleneagles",
+    "location": "Auchterarder"
+  },
+  {
+    "hotel_name": "Aman Venice",
+    "location": "Venice"
+  },
+  {
+    "hotel_name": "Plaza Athénée",
+    "location": "Paris"
+  },
+  {
+    "hotel_name": "Reschio",
+    "location": "Lisciano Niccone"
+  },
+  {
+    "hotel_name": "Casa Maria Luigia",
+    "location": "Modena"
+  },
+  {
+    "hotel_name": "Splendido",
+    "location": "Portofino"
+  },
+  {
+    "hotel_name": "Six Senses Zighy Bay",
+    "location": "Zaghi"
+  },
+  {
+    "hotel_name": "The Datai",
+    "location": "Langkawi"
+  },
+  {
+    "hotel_name": "Four Seasons Hong Kong",
+    "location": "Hong Kong"
+  },
+  {
+    "hotel_name": "Palacio Nazarenas",
+    "location": "Cusco"
+  },
+  {
+    "hotel_name": "Huka Lodge",
+    "location": "Taupō"
+  },
+  {
+    "hotel_name": "Ett Hem",
+    "location": "Stockholm"
+  },
+  {
+    "hotel_name": "Eden Rock",
+    "location": "St. Barths"
+  },
+  {
+    "hotel_name": "Suján Jawai",
+    "location": "Jawai"
+  },
+  {
+    "hotel_name": "Soneva Secret",
+    "location": "Maldives"
+  },
+  {
+    "hotel_name": "The Johri",
+    "location": "Jaipur"
+  },
+  {
+    "hotel_name": "Le Sirenuse",
+    "location": "Positano"
+  },
+  {
+    "hotel_name": "Rosewood Mayakoba",
+    "location": "Playa del Carmen"
+  },
+  {
+    "hotel_name": "Maçakızı",
+    "location": "Bodrum"
+  },
+  {
+    "hotel_name": "Amangalla",
+    "location": "Galle"
+  },
+  {
+    "hotel_name": "Amangiri",
+    "location": "Canyon Point"
+  },
+  {
+    "hotel_name": "Portrait Milano",
+    "location": "Milan"
+  },
+  {
+    "hotel_name": "Amanbagh",
+    "location": "Ajabgarh"
+  }
+]
