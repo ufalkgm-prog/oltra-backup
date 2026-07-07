@@ -1,0 +1,90 @@
+#!/usr/bin/env node
+/**
+ * Recompute ext_points for the 67 new hotels (2001-2067, see CLAUDE.md §23)
+ * after the 2026-07-07 awards audit changed award flags on some of them.
+ *
+ * ext_points = editor_rank + sum of award points (editor_rank is a stored
+ * Directus field, not recomputed here).
+ *
+ * Usage (from hotels-beta/):
+ *   DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/hotels/new-hotels-2026/recalc-ext-points-2026-07-07.mjs
+ *   ... --confirm   (actually writes; omit for a dry run)
+ */
+
+const DIRECTUS_URL = process.env.DIRECTUS_URL?.replace(/\/+$/, "");
+const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN;
+
+if (!DIRECTUS_URL) throw new Error("Missing env DIRECTUS_URL");
+if (!DIRECTUS_TOKEN) throw new Error("Missing env DIRECTUS_TOKEN");
+
+const AWARD_POINTS = {
+  michelin3keys: 5,
+  best50: 5,
+  cn: 3,
+  tl100: 3,
+  forbes5: 3,
+  aaa5d: 3,
+  telegraph: 3,
+};
+
+const AWARD_CODES = Object.keys(AWARD_POINTS);
+const confirm = process.argv.includes("--confirm");
+
+async function directusFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: { Authorization: `Bearer ${DIRECTUS_TOKEN}`, "Content-Type": "application/json", ...options.headers },
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(`Directus request failed: ${JSON.stringify(json)}`);
+  return json.data;
+}
+
+async function main() {
+  const fields = ["id", "hotel_name", "editor_rank", "ext_points", ...AWARD_CODES].join(",");
+  const hotels = await directusFetch(
+    `${DIRECTUS_URL}/items/hotels?filter[id][_between]=2001,2067&fields=${fields}&limit=-1&sort=id`
+  );
+
+  console.log(`Loaded ${hotels.length} hotels (expected 67).`);
+  console.log(confirm ? "\nAPPLYING changes to Directus...\n" : "\nDRY RUN — no writes will be made (pass --confirm to apply)\n");
+
+  const toUpdate = [];
+  for (const hotel of hotels) {
+    const editorRank = Number(hotel.editor_rank) || 0;
+    const awardPoints = AWARD_CODES.filter((code) => hotel[code]).reduce((sum, code) => sum + AWARD_POINTS[code], 0);
+    const newExtPoints = editorRank + awardPoints;
+    const oldExtPoints = Number(hotel.ext_points) || 0;
+
+    if (newExtPoints !== oldExtPoints) {
+      const heldAwards = AWARD_CODES.filter((code) => hotel[code]);
+      console.log(
+        `[id ${hotel.id}] ${hotel.hotel_name} — ext_points: ${oldExtPoints} -> ${newExtPoints} ` +
+          `(editor_rank ${editorRank} + ${awardPoints} pts from [${heldAwards.join(", ") || "none"}])`
+      );
+      toUpdate.push({ id: hotel.id, ext_points: newExtPoints });
+    }
+  }
+
+  console.log(`\n${toUpdate.length} hotels need an ext_points update.`);
+
+  if (!confirm) {
+    console.log("\nDry run complete. Re-run with --confirm to apply.");
+    return;
+  }
+
+  for (const { id, ext_points } of toUpdate) {
+    await directusFetch(`${DIRECTUS_URL}/items/hotels/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ ext_points }),
+    });
+    console.log(`  -> patched id ${id} to ext_points=${ext_points}`);
+  }
+
+  console.log("\nDone.");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
