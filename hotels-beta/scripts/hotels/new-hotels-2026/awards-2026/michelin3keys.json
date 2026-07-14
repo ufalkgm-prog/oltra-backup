@@ -1,15 +1,24 @@
 [
   {
-    "hotel_name": "Acqualina Resort & Residences",
-    "city": "Sunny Isles Beach",
-    "state_region": "Florida",
-    "country": "USA",
+    "hotel_name": "Abadía Retuerta LeDomaine",
+    "city": "Valladolid",
+    "state_region": null,
+    "country": "Spain",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Airelles Chateau de Versailles",
+    "hotel_name": "Adare Manor",
+    "city": "Adare",
+    "state_region": null,
+    "country": "Ireland",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Airelles Château de Versailles, Le Grand Contrôle",
     "city": "Versailles",
     "state_region": null,
     "country": "France",
@@ -18,7 +27,7 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Airelles Gordes",
+    "hotel_name": "Airelles Gordes, La Bastide",
     "city": "Gordes",
     "state_region": null,
     "country": "France",
@@ -27,28 +36,19 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Aman Kyoto",
-    "city": "Kyoto",
+    "hotel_name": "Althoff Seehotel Überfahrt",
+    "city": "Rottach-Egern",
     "state_region": null,
-    "country": "Japan",
+    "country": "Germany",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
     "hotel_name": "Aman New York",
-    "city": "New York",
+    "city": "New York City",
     "state_region": "New York",
     "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Aman Tokyo",
-    "city": "Tokyo",
-    "state_region": null,
-    "country": "Japan",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -65,7 +65,7 @@
   {
     "hotel_name": "Amanemu",
     "city": "Shima",
-    "state_region": "Mie",
+    "state_region": null,
     "country": "Japan",
     "first_award_year": null,
     "source_code": "michelinkeys",
@@ -73,7 +73,7 @@
   },
   {
     "hotel_name": "Amangiri",
-    "city": "Canyon Point",
+    "city": "Lake Powell",
     "state_region": "Utah",
     "country": "USA",
     "first_award_year": null,
@@ -81,8 +81,17 @@
     "source_year": "2025"
   },
   {
+    "hotel_name": "Amanjiwo",
+    "city": "Yogyakarta",
+    "state_region": null,
+    "country": "Indonesia",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
     "hotel_name": "Amanoi",
-    "city": "Vinh Hy Bay",
+    "city": "Vinh Hy Village",
     "state_region": null,
     "country": "Vietnam",
     "first_award_year": null,
@@ -91,7 +100,7 @@
   },
   {
     "hotel_name": "Amanpuri",
-    "city": "Phuket",
+    "city": "Phuket Area",
     "state_region": null,
     "country": "Thailand",
     "first_award_year": null,
@@ -99,8 +108,17 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Atlantis The Royal",
-    "city": "Dubai",
+    "hotel_name": "Asaba",
+    "city": "Izu",
+    "state_region": null,
+    "country": "Japan",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Atlantis The Royal, Dubai",
+    "city": "Palm Jumeirah",
     "state_region": null,
     "country": "UAE",
     "first_award_year": null,
@@ -108,8 +126,26 @@
     "source_year": "2025"
   },
   {
+    "hotel_name": "Atrio Restaurante Hotel",
+    "city": "Cáceres",
+    "state_region": null,
+    "country": "Spain",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Auberge du Soleil, Auberge Collection",
+    "city": "Napa / Sonoma Valleys",
+    "state_region": "California",
+    "country": "USA",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
     "hotel_name": "Awasi Patagonia",
-    "city": "Torres del Paine",
+    "city": "Torres del Paine National Park",
     "state_region": null,
     "country": "Chile",
     "first_award_year": null,
@@ -117,7 +153,7 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Badrutt’s Palace Hotel",
+    "hotel_name": "Badrutt's Palace Hotel",
     "city": "St. Moritz",
     "state_region": null,
     "country": "Switzerland",
@@ -126,19 +162,37 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Banyan Tree Mayakoba",
-    "city": "Playa del Carmen",
-    "state_region": "Quintana Roo",
-    "country": "Mexico",
+    "hotel_name": "Ballyfin Demesne",
+    "city": "Ballyfin",
+    "state_region": null,
+    "country": "Ireland",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Belmond Hotel Cipriani",
-    "city": "Venice",
+    "hotel_name": "Baumanière",
+    "city": "Les Baux de Provence",
     "state_region": null,
-    "country": "Italy",
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Baur au Lac",
+    "city": "Zurich",
+    "state_region": null,
+    "country": "Switzerland",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Beau-Rivage Geneva",
+    "city": "Geneva",
+    "state_region": null,
+    "country": "Switzerland",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -153,28 +207,19 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Bulgari Resort Bali",
-    "city": "Uluwatu",
+    "hotel_name": "Bürgenstock Hotel & Alpine Spa",
+    "city": "Burgenstock",
     "state_region": null,
-    "country": "Indonesia",
+    "country": "Switzerland",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Bulgari Resort Dubai",
-    "city": "Dubai",
+    "hotel_name": "Bvlgari Hotel London",
+    "city": "London",
     "state_region": null,
-    "country": "UAE",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Burj Al Arab Jumeirah",
-    "city": "Dubai",
-    "state_region": null,
-    "country": "UAE",
+    "country": "United Kingdom",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -189,19 +234,19 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Bürgenstock Hotel & Alpine Spa",
-    "city": "Bürgenstock",
+    "hotel_name": "Bvlgari Hotel Tokyo",
+    "city": "Tokyo",
     "state_region": null,
-    "country": "Switzerland",
+    "country": "Japan",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Capella Bangkok",
-    "city": "Bangkok",
-    "state_region": null,
-    "country": "Thailand",
+    "hotel_name": "Canyon Ranch Tucson",
+    "city": "Tucson",
+    "state_region": "Arizona",
+    "country": "USA",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -216,19 +261,46 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Capella Singapore",
-    "city": "Singapore",
+    "hotel_name": "Carlton Hotel St. Moritz",
+    "city": "St. Moritz",
     "state_region": null,
-    "country": "Singapore",
+    "country": "Switzerland",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Capella Ubud",
-    "city": "Ubud",
+    "hotel_name": "Casa Cipriani New York",
+    "city": "New York City",
+    "state_region": "New York",
+    "country": "USA",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Casa Maria Luigia",
+    "city": "Modena",
     "state_region": null,
-    "country": "Indonesia",
+    "country": "Italy",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Castiglion del Bosco, A Rosewood Hotel",
+    "city": "Montalcino",
+    "state_region": null,
+    "country": "Italy",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Ceylon Tea Trails",
+    "city": "Interior",
+    "state_region": null,
+    "country": "Sri Lanka",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -253,7 +325,7 @@
   },
   {
     "hotel_name": "Cheval Blanc Randheli",
-    "city": "Noonu Atoll",
+    "city": "Randheli Island",
     "state_region": null,
     "country": "Maldives",
     "first_award_year": null,
@@ -261,19 +333,46 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Cheval Blanc St-Barth Isle de France",
-    "city": "Flamands",
+    "hotel_name": "Cheval Blanc St. Barth Isle De France",
+    "city": "St Barthelemy",
     "state_region": null,
-    "country": "Saint Barthélemy",
+    "country": "French West Indies",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Claridge’s",
+    "hotel_name": "Claridge's",
     "city": "London",
     "state_region": null,
     "country": "United Kingdom",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Clayoquot Wilderness Lodge",
+    "city": "Vancouver Island",
+    "state_region": null,
+    "country": "Canada",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Corte della Maestà",
+    "city": "Civita di Bagnoregio",
+    "state_region": null,
+    "country": "Italy",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Crosby Street Hotel, Firmdale Hotels",
+    "city": "New York City",
+    "state_region": "New York",
+    "country": "USA",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -288,79 +387,34 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Emirates Palace Mandarin Oriental",
-    "city": "Abu Dhabi",
+    "hotel_name": "Domaine Les Crayères",
+    "city": "Reims",
     "state_region": null,
-    "country": "UAE",
+    "country": "France",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Fairmont Grand Del Mar",
-    "city": "San Diego",
-    "state_region": "California",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Fairmont Pacific Rim",
-    "city": "Vancouver",
-    "state_region": "British Columbia",
+    "hotel_name": "Fogo Island Inn",
+    "city": "Joe Batt's Arm",
+    "state_region": null,
     "country": "Canada",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Four Seasons Hotel at The Surf Club",
-    "city": "Surfside",
-    "state_region": "Florida",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel Bangkok at Chao Phraya River",
-    "city": "Bangkok",
+    "hotel_name": "Four Seasons Astir Palace",
+    "city": "Athens",
     "state_region": null,
-    "country": "Thailand",
+    "country": "Greece",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Four Seasons Hotel Boston",
-    "city": "Boston",
-    "state_region": "Massachusetts",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel Firenze",
-    "city": "Florence",
-    "state_region": null,
-    "country": "Italy",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel Firenze",
-    "city": "Florence",
-    "state_region": null,
-    "country": "Italy",
-    "first_award_year": "2025",
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel George V",
+    "hotel_name": "Four Seasons George V",
     "city": "Paris",
     "state_region": null,
     "country": "France",
@@ -369,107 +423,8 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Four Seasons Hotel Hong Kong",
-    "city": "Hong Kong",
-    "state_region": null,
-    "country": "China",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel Kyoto",
-    "city": "Kyoto",
-    "state_region": null,
-    "country": "Japan",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel New York Downtown",
-    "city": "New York",
-    "state_region": "New York",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel Toronto",
-    "city": "Toronto",
-    "state_region": "Ontario",
-    "country": "Canada",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Hotel Washington, D.C.",
-    "city": "Washington",
-    "state_region": "DC",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Resort Bali at Jimbaran Bay",
-    "city": "Jimbaran",
-    "state_region": null,
-    "country": "Indonesia",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Resort Bali at Sayan",
-    "city": "Ubud",
-    "state_region": null,
-    "country": "Indonesia",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Resort Dubai at Jumeirah Beach",
-    "city": "Dubai",
-    "state_region": null,
-    "country": "UAE",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Resort Hualalai",
-    "city": "Kaupulehu",
-    "state_region": "Hawaii",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Resort Maui at Wailea",
-    "city": "Wailea",
-    "state_region": "Hawaii",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Four Seasons Resort Punta Mita",
-    "city": "Punta Mita",
-    "state_region": "Nayarit",
-    "country": "Mexico",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Grand Hotel Tremezzo",
-    "city": "Lake Como",
+    "hotel_name": "Four Seasons Hotel Firenze",
+    "city": "Florence",
     "state_region": null,
     "country": "Italy",
     "first_award_year": null,
@@ -477,25 +432,70 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Grand Velas Los Cabos",
-    "city": "San Jose del Cabo",
-    "state_region": "Baja California Sur",
-    "country": "Mexico",
+    "hotel_name": "Four Seasons Hotel Istanbul at Sultanahmet",
+    "city": "Istanbul",
+    "state_region": null,
+    "country": "Turkey",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Grand Velas Riviera Maya",
-    "city": "Playa del Carmen",
-    "state_region": "Quintana Roo",
-    "country": "Mexico",
+    "hotel_name": "Four Seasons Hotel London at Park Lane",
+    "city": "London",
+    "state_region": null,
+    "country": "United Kingdom",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Grand-Hôtel du Cap-Ferrat",
+    "hotel_name": "Four Seasons Hotel Tokyo at Otemachi",
+    "city": "Tokyo",
+    "state_region": null,
+    "country": "Japan",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Four Seasons Resort Chiang Mai",
+    "city": "Chiang Mai",
+    "state_region": null,
+    "country": "Thailand",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Four Seasons Resort Megève",
+    "city": "Megève",
+    "state_region": null,
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Giraffe Manor",
+    "city": "Nairobi",
+    "state_region": null,
+    "country": "Kenya",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Gora Kadan",
+    "city": "Hakonemachi, Ashigarashimo-gun",
+    "state_region": null,
+    "country": "Japan",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Grand Hôtel du Cap-Ferrat, A Four Seasons Hotel",
     "city": "Saint-Jean-Cap-Ferrat",
     "state_region": null,
     "country": "France",
@@ -504,8 +504,8 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Gstaad Palace",
-    "city": "Gstaad",
+    "hotel_name": "Grand Resort Bad Ragaz",
+    "city": "Bad Ragaz",
     "state_region": null,
     "country": "Switzerland",
     "first_award_year": null,
@@ -513,17 +513,17 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Hassler Roma",
-    "city": "Rome",
+    "hotel_name": "Hotel Bareiss",
+    "city": "Baiersbronn",
     "state_region": null,
-    "country": "Italy",
+    "country": "Germany",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Hotel Bel-Air",
-    "city": "Los Angeles",
+    "hotel_name": "Hotel Bel-Air, Dorchester Collection",
+    "city": "Los Angeles Area",
     "state_region": "California",
     "country": "USA",
     "first_award_year": null,
@@ -531,8 +531,8 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Hotel de Russie",
-    "city": "Rome",
+    "hotel_name": "Hotel Cipriani, A Belmond Hotel, Venice",
+    "city": "Venice",
     "state_region": null,
     "country": "Italy",
     "first_award_year": null,
@@ -540,10 +540,19 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Hotel Eden",
-    "city": "Rome",
+    "hotel_name": "Hotel das Cataratas, A Belmond Hotel, Iguassu Falls",
+    "city": "Iguazu Falls",
     "state_region": null,
-    "country": "Italy",
+    "country": "Brazil",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hôtel de Paris Monte-Carlo",
+    "city": "Monte Carlo",
+    "state_region": null,
+    "country": "Monaco",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -558,6 +567,87 @@
     "source_year": "2025"
   },
   {
+    "hotel_name": "Hôtel du Castellet",
+    "city": "Le Castellet",
+    "state_region": null,
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Esencia",
+    "city": "Playa del Carmen",
+    "state_region": null,
+    "country": "Mexico",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Les Trois Rois",
+    "city": "Basel",
+    "state_region": null,
+    "country": "Switzerland",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Sacher Wien",
+    "city": "Vienna",
+    "state_region": null,
+    "country": "Austria",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "HOTEL THE MITSUI KYOTO",
+    "city": "Kyoto Prefecture",
+    "state_region": null,
+    "country": "Japan",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel the Mitsui Kyoto, a Luxury Collection Hotel",
+    "city": "Kyoto",
+    "state_region": null,
+    "country": "Japan",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Traube Tonbach",
+    "city": "Baiersbronn",
+    "state_region": null,
+    "country": "Germany",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Hotel Vier Jahreszeiten",
+    "city": "Hamburg",
+    "state_region": null,
+    "country": "Germany",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Il San Pietro di Positano",
+    "city": "Positano",
+    "state_region": null,
+    "country": "Italy",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
     "hotel_name": "J.K. Place Capri",
     "city": "Capri",
     "state_region": null,
@@ -567,25 +657,34 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Jumby Bay Island",
-    "city": "Jumby Bay",
+    "hotel_name": "Kasbah Tamadot",
+    "city": "Asni",
     "state_region": null,
-    "country": "Antigua and Barbuda",
+    "country": "Morocco",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
     "hotel_name": "Kona Village, A Rosewood Resort",
-    "city": null,
-    "state_region": "Hawaii",
-    "country": "United States",
+    "city": "Island of Hawaii",
+    "state_region": null,
+    "country": "USA",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "La Réserve Paris Hotel and Spa",
+    "hotel_name": "La Mamounia",
+    "city": "Marrakech",
+    "state_region": null,
+    "country": "Morocco",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "La Réserve Paris",
     "city": "Paris",
     "state_region": null,
     "country": "France",
@@ -594,10 +693,19 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Las Ventanas al Paraiso",
-    "city": "San Jose del Cabo",
-    "state_region": "Baja California Sur",
-    "country": "Mexico",
+    "hotel_name": "La Réserve Ramatuelle",
+    "city": "Saint-Tropez",
+    "state_region": null,
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Las Casitas, A Belmond Hotel",
+    "city": "Arequipa",
+    "state_region": null,
+    "country": "Peru",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -621,8 +729,80 @@
     "source_year": "2025"
   },
   {
+    "hotel_name": "Le Manoir aux Quat'Saisons, A Belmond Hotel",
+    "city": "Great Milton",
+    "state_region": null,
+    "country": "United Kingdom",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Le Meurice, Dorchester Collection",
+    "city": "Paris",
+    "state_region": null,
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Le Plaza Athénée",
+    "city": "Paris",
+    "state_region": null,
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
     "hotel_name": "Les Sources de Caudalie",
     "city": "Bordeaux",
+    "state_region": null,
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Little Palm Island Resort & Spa",
+    "city": "Florida Keys",
+    "state_region": null,
+    "country": "USA",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Lizard Island Resort",
+    "city": "Lizard Island",
+    "state_region": null,
+    "country": "Australia",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Londolozi Game Reserve",
+    "city": "Kruger National Park",
+    "state_region": null,
+    "country": "South Africa",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Lucknam Park, Emblems Collection",
+    "city": "Colerne",
+    "state_region": null,
+    "country": "United Kingdom",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Maison Villeroy",
+    "city": "Paris",
     "state_region": null,
     "country": "France",
     "first_award_year": null,
@@ -639,16 +819,7 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Mandarin Oriental Jumeira",
-    "city": "Dubai",
-    "state_region": null,
-    "country": "UAE",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Mandarin Oriental, Bangkok",
+    "hotel_name": "Mandarin Oriental Bangkok",
     "city": "Bangkok",
     "state_region": null,
     "country": "Thailand",
@@ -657,53 +828,26 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Mandarin Oriental, Hong Kong",
-    "city": "Hong Kong",
+    "hotel_name": "Mandarin Oriental Hyde Park",
+    "city": "London",
     "state_region": null,
-    "country": "China",
+    "country": "United Kingdom",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Mandarin Oriental, Lago di Como",
-    "city": "Lake Como",
+    "hotel_name": "Mandarin Oriental Ritz, Madrid",
+    "city": "Madrid",
     "state_region": null,
-    "country": "Italy",
+    "country": "Spain",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Mandarin Oriental, New York",
-    "city": "New York",
-    "state_region": "New York",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Mandarin Oriental, Singapore",
-    "city": "Singapore",
-    "state_region": null,
-    "country": "Singapore",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Mandarin Oriental, Tokyo",
-    "city": "Tokyo",
-    "state_region": null,
-    "country": "Japan",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Montage Laguna Beach",
-    "city": "Laguna Beach",
+    "hotel_name": "Meadowood Napa Valley",
+    "city": "Napa / Sonoma Valleys",
     "state_region": "California",
     "country": "USA",
     "first_award_year": null,
@@ -711,28 +855,37 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Montage Los Cabos",
-    "city": "Cabo San Lucas",
-    "state_region": "Baja California Sur",
+    "hotel_name": "Nayara Springs",
+    "city": "La Fortuna de San Carlos",
+    "state_region": null,
+    "country": "Costa Rica",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Nihi Sumba",
+    "city": "Sumba",
+    "state_region": null,
+    "country": "Indonesia",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "One&Only Mandarina",
+    "city": "Lo de Marcos",
+    "state_region": "Nayarit",
     "country": "Mexico",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "One&Only Palmilla",
-    "city": "San Jose del Cabo",
-    "state_region": "Baja California Sur",
-    "country": "Mexico",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Park Hyatt New York",
-    "city": "New York",
-    "state_region": "New York",
-    "country": "USA",
+    "hotel_name": "Palace Hotel Tokyo",
+    "city": "Tokyo",
+    "state_region": null,
+    "country": "Japan",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -747,25 +900,34 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Plaza Athénée",
-    "city": "Paris",
+    "hotel_name": "Penha Longa Resort",
+    "city": "Sintra",
     "state_region": null,
-    "country": "France",
+    "country": "Portugal",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Qasr Al Sarab Desert Resort by Anantara",
-    "city": "Abu Dhabi",
+    "hotel_name": "Phulay Bay, A Ritz-Carlton Reserve",
+    "city": "Krabi",
     "state_region": null,
-    "country": "UAE",
+    "country": "Thailand",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Raffles Singapore",
+    "hotel_name": "Post Ranch Inn",
+    "city": "Big Sur",
+    "state_region": "California",
+    "country": "USA",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Raffles Hotel, Singapore",
     "city": "Singapore",
     "state_region": null,
     "country": "Singapore",
@@ -774,8 +936,17 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Rosewood Castiglion del Bosco",
-    "city": "Montalcino",
+    "hotel_name": "Raffles London at The OWO",
+    "city": "London",
+    "state_region": null,
+    "country": "United Kingdom",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Reschio Hotel",
+    "city": "Lisciano Niccone",
     "state_region": null,
     "country": "Italy",
     "first_award_year": null,
@@ -783,8 +954,8 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Rosewood Hong Kong",
-    "city": "Hong Kong",
+    "hotel_name": "Rissai Valley, a Ritz-Carlton Reserve",
+    "city": "Jiuzhaigou",
     "state_region": null,
     "country": "China",
     "first_award_year": null,
@@ -792,10 +963,19 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Rosewood London",
-    "city": "London",
+    "hotel_name": "Ritz Paris",
+    "city": "Paris",
     "state_region": null,
-    "country": "United Kingdom",
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Rosewood Hong Kong",
+    "city": "Kowloon",
+    "state_region": null,
+    "country": "Hong Kong",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -810,19 +990,10 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Rosewood Mayakoba",
-    "city": "Playa del Carmen",
-    "state_region": "Quintana Roo",
-    "country": "Mexico",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Rosewood Phuket",
-    "city": "Phuket",
+    "hotel_name": "Rosewood Sao Paulo",
+    "city": "Sao Paulo",
     "state_region": null,
-    "country": "Thailand",
+    "country": "Brazil",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -838,9 +1009,45 @@
   },
   {
     "hotel_name": "Royal Champagne Hotel & Spa",
-    "city": "Champillon",
+    "city": "Épernay",
     "state_region": null,
     "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Royal Malewane",
+    "city": "Kruger National Park",
+    "state_region": null,
+    "country": "South Africa",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Sage Lodge",
+    "city": "Yellowstone National Park",
+    "state_region": "Montana",
+    "country": "USA",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Saint James Paris",
+    "city": "Paris",
+    "state_region": null,
+    "country": "France",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Samujana Villas",
+    "city": "Surat Thani",
+    "state_region": null,
+    "country": "Thailand",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -855,16 +1062,7 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Sandy Lane Hotel",
-    "city": "Holetown",
-    "state_region": null,
-    "country": "Barbados",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "Schloss Elmau Luxury Spa Retreat",
+    "hotel_name": "Schloss Elmau Luxury Spa Retreat & Cultural Hideaway",
     "city": "Elmau",
     "state_region": null,
     "country": "Germany",
@@ -873,19 +1071,46 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Sofitel Legend Metropole Hanoi",
-    "city": "Hanoi",
-    "state_region": null,
-    "country": "Vietnam",
+    "hotel_name": "SingleThread Inn",
+    "city": "Napa / Sonoma Valleys",
+    "state_region": "California",
+    "country": "USA",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
     "hotel_name": "Soneva Fushi",
-    "city": "Baa Atoll",
+    "city": "Kunfunadhoo Island",
     "state_region": null,
     "country": "Maldives",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Taj Falaknuma Palace",
+    "city": "Hyderabad",
+    "state_region": null,
+    "country": "India",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Taj Lake Palace",
+    "city": "Udaipur",
+    "state_region": null,
+    "country": "India",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Terra Dominicata - Hotel & Winery",
+    "city": "Tarragona",
+    "state_region": null,
+    "country": "Spain",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -900,8 +1125,8 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "The Beverly Hills Hotel",
-    "city": "Beverly Hills",
+    "hotel_name": "The Beverly Hills Hotel, Dorchester Collection",
+    "city": "Los Angeles Area",
     "state_region": "California",
     "country": "USA",
     "first_award_year": null,
@@ -918,24 +1143,6 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "The Broadmoor",
-    "city": "Colorado Springs",
-    "state_region": "Colorado",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Cloister at Sea Island",
-    "city": "Sea Island",
-    "state_region": "Georgia",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
     "hotel_name": "The Connaught",
     "city": "London",
     "state_region": null,
@@ -945,17 +1152,17 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "The Dolder Grand",
-    "city": "Zurich",
+    "hotel_name": "The Fontenay",
+    "city": "Hamburg",
     "state_region": null,
-    "country": "Switzerland",
+    "country": "Germany",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "The Dorchester",
-    "city": "London",
+    "hotel_name": "The Gleneagles Hotel",
+    "city": "Auchterarder",
     "state_region": null,
     "country": "United Kingdom",
     "first_award_year": null,
@@ -963,136 +1170,19 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "The Fullerton Bay Hotel",
-    "city": "Singapore",
+    "hotel_name": "The Newt in Somerset",
+    "city": "Bruton",
     "state_region": null,
-    "country": "Singapore",
+    "country": "United Kingdom",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "The Little Nell",
-    "city": "Aspen",
-    "state_region": "Colorado",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Lodge at Torrey Pines",
-    "city": "La Jolla",
-    "state_region": "California",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Mulia Bali",
-    "city": "Nusa Dua",
+    "hotel_name": "The Peninsula London",
+    "city": "London",
     "state_region": null,
-    "country": "Indonesia",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Peninsula Beverly Hills",
-    "city": "Beverly Hills",
-    "state_region": "California",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Peninsula Chicago",
-    "city": "Chicago",
-    "state_region": "Illinois",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Peninsula Hong Kong",
-    "city": "Hong Kong",
-    "state_region": null,
-    "country": "China",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Peninsula New York",
-    "city": "New York",
-    "state_region": "New York",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Peninsula Tokyo",
-    "city": "Tokyo",
-    "state_region": null,
-    "country": "Japan",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Resort at Pelican Hill",
-    "city": "Newport Beach",
-    "state_region": "California",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Reverie Saigon",
-    "city": "Ho Chi Minh City",
-    "state_region": null,
-    "country": "Vietnam",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Ritz-Carlton New York, Central Park",
-    "city": "New York",
-    "state_region": "New York",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Ritz-Carlton, Grand Cayman",
-    "city": "Seven Mile Beach",
-    "state_region": null,
-    "country": "Cayman Islands",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Ritz-Carlton, Kyoto",
-    "city": "Kyoto",
-    "state_region": null,
-    "country": "Japan",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The Ritz-Carlton, Naples",
-    "city": "Naples",
-    "state_region": "Florida",
-    "country": "USA",
+    "country": "United Kingdom",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
@@ -1107,15 +1197,6 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "The Setai, Miami Beach",
-    "city": "Miami Beach",
-    "state_region": "Florida",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
     "hotel_name": "The Siam",
     "city": "Bangkok",
     "state_region": null,
@@ -1125,44 +1206,8 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "The St. Regis Abu Dhabi",
-    "city": "Abu Dhabi",
-    "state_region": null,
-    "country": "UAE",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The St. Regis Bal Harbour Resort",
-    "city": "Bal Harbour",
-    "state_region": "Florida",
-    "country": "USA",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The St. Regis Bali Resort",
-    "city": "Nusa Dua",
-    "state_region": null,
-    "country": "Indonesia",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The St. Regis Florence",
-    "city": "Florence",
-    "state_region": null,
-    "country": "Italy",
-    "first_award_year": null,
-    "source_code": "michelinkeys",
-    "source_year": "2025"
-  },
-  {
-    "hotel_name": "The St. Regis New York",
-    "city": "New York",
+    "hotel_name": "The Whitby Hotel, Firmdale Hotels",
+    "city": "New York City",
     "state_region": "New York",
     "country": "USA",
     "first_award_year": null,
@@ -1170,17 +1215,44 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "The St. Regis Punta Mita Resort",
-    "city": "Punta Mita",
-    "state_region": "Nayarit",
-    "country": "Mexico",
+    "hotel_name": "The Woodward, Auberge Collection",
+    "city": "Geneva",
+    "state_region": null,
+    "country": "Switzerland",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Tierra Patagonia Hotel & Spa",
+    "city": "Torres del Paine National Park",
+    "state_region": null,
+    "country": "Chile",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Torre del Marqués Hotel Spa & Winery",
+    "city": "Teruel",
+    "state_region": null,
+    "country": "Spain",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Vila Vita Parc Resort & Spa",
+    "city": "Alporchinhos",
+    "state_region": null,
+    "country": "Portugal",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
     "hotel_name": "Villa La Coste",
-    "city": "Le Puy-Sainte-Réparade",
+    "city": "Aix-en-Provence",
     "state_region": null,
     "country": "France",
     "first_award_year": null,
@@ -1188,19 +1260,28 @@
     "source_year": "2025"
   },
   {
-    "hotel_name": "Waldorf Astoria Beverly Hills",
-    "city": "Beverly Hills",
-    "state_region": "California",
-    "country": "USA",
+    "hotel_name": "Villa Nai 3.3",
+    "city": "Dugi Otok",
+    "state_region": null,
+    "country": "Croatia",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
   },
   {
-    "hotel_name": "Waldorf Astoria Los Cabos Pedregal",
-    "city": "Cabo San Lucas",
-    "state_region": "Baja California Sur",
+    "hotel_name": "Xinalani",
+    "city": "Puerto Vallarta",
+    "state_region": "Jalisco",
     "country": "Mexico",
+    "first_award_year": null,
+    "source_code": "michelinkeys",
+    "source_year": "2025"
+  },
+  {
+    "hotel_name": "Zannier Sonop",
+    "city": "Namib Desert",
+    "state_region": null,
+    "country": "Namibia",
     "first_award_year": null,
     "source_code": "michelinkeys",
     "source_year": "2025"
