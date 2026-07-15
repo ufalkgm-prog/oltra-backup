@@ -1,0 +1,95 @@
+HOTEL AWARDS AUDIT — aaa5d (AAA/CAA Five Diamond Hotels) — full-collection review
+Generated: 2026-07-15 by match-hotel-awards.mjs
+Scope: full collection
+
+==============================================================================
+SUMMARY
+==============================================================================
+Hotels checked: 873
+Source entries (aaa5d.json): 151
+Confirmed matches: 47
+Near matches (brand-prefix-agnostic): 9
+Uncertain matches: 3
+Removal candidates (flag/tag set, no source match): 0
+Boolean/tag drift (pre-existing inconsistency): 0
+
+==============================================================================
+SECTION A — CONFIRMED MATCHES (exact core-name match, no location conflict)
+==============================================================================
+[id 1236] Sandy Lane  (Barbados / St. James) — currently TRUE — source: "Sandy Lane Hotel" (Holetown (St. James Parish), Barbados)
+[id 1244] The Ritz-Carlton, Grand Cayman  (Cayman Islands / Seven Mile Beach) — currently TRUE — source: "The Ritz-Carlton, Grand Cayman" (Seven Mile Beach, Cayman Islands)
+[id 1267] Dorado Beach, a Ritz-Carlton Reserve (Puerto Rico / Dorado) — currently TRUE — source: "Dorado Beach, A Ritz-Carlton Reserve" (Dorado, Puerto Rico)
+[id 1623] The Ritz-Carlton, Montréal (Canada / Montreal) — currently TRUE — source: "The Ritz-Carlton Montréal" (Montréal, Québec, Canada)
+[id 1632] Four Seasons Resort and Residences Los Cabos at Costa Palmas (Mexico / Los Cabos) — currently TRUE — source: "Four Seasons Resort & Residences Los Cabos at Costa Palmas" (La Ribera, Baja California Sur, Mexico)
+[id 1639] NIZUC Resort & Spa (Mexico / Cancun) — currently TRUE — source: "NIZUC Resort & Spa" (Cancún, Quintana Roo, Mexico)
+[id 1643] Waldorf Astoria Los Cabos Pedregal (Mexico / Cabo San Lucas) — currently TRUE — source: "Waldorf Astoria Los Cabos Pedregal" (Cabo San Lucas, Baja California Sur, Mexico)
+[id 1644] Rosewood Mayakoba (Mexico / Playa del Carmen) — currently TRUE — source: "Rosewood Mayakoba" (Playa del Carmen, Quintana Roo, Mexico)
+[id 1645] Rosewood San Miguel de Allende (Mexico / San Miguel de Allende) — currently TRUE — source: "Rosewood San Miguel de Allende" (San Miguel de Allende, Guanajuato, Mexico)
+[id 1648] The St. Regis Mexico City (Mexico / Mexico City) — currently TRUE — source: "The St. Regis Mexico City" (Mexico City, Distrito Federal, Mexico)
+[id 1649] Waldorf Astoria Los Cabos Pedregal (Mexico / Los Cabos) — currently TRUE — source: "Waldorf Astoria Los Cabos Pedregal" (Cabo San Lucas, Baja California Sur, Mexico)
+[id 1654] Aman New York (USA / New York) — currently TRUE — source: "Aman New York" (New York, New York, United States)
+[id 1660] Baccarat Hotel New York  (USA / New York) — currently TRUE — source: "Baccarat Hotel New York" (New York, New York, United States)
+[id 1669] Four Seasons Hotel at The Surf Club (USA / Surfside) — currently TRUE — source: "Four Seasons Hotel at The Surf Club" (Surfside, Florida, United States)
+[id 1670] Four Seasons Hotel Boston  (USA / Boston) — currently TRUE — source: "Four Seasons Hotel Boston" (Boston, Massachusetts, United States)
+[id 1672] Four Seasons Hotel Las Vegas  (USA / Las Vegas) — currently TRUE — source: "Four Seasons Hotel Las Vegas" (Las Vegas, Nevada, United States)
+[id 1674] Four Seasons Hotel Philadelphia at Comcast Center (USA / Philadelphia) — currently TRUE — source: "Four Seasons Hotel Philadelphia at Comcast Center" (Philadelphia, Pennsylvania, United States)
+[id 1677] Four Seasons Resort Hualalai (USA / Big Island, Ka`Upulehu-Kona HI) — currently TRUE — source: "Four Seasons Resort Hualalai" (Kaupulehu (Hawaii - Big Island), Hawaii, United States)
+[id 1678] Four Seasons Resort and Residences Jackson Hole (USA / Teton Village) — currently TRUE — source: "Four Seasons Resort & Residences Jackson Hole" (Teton Village, Wyoming, United States)
+[id 1680] Four Seasons Resort Lanai (USA / Lanai City) — currently TRUE — source: "Four Seasons Resort Lanai" (Lanai City (Lanai), Hawaii, United States)
+[id 1686] Hotel Bel-Air  (USA / Los Angeles) — currently TRUE — source: "Hotel Bel-Air" (Los Angeles, California, United States)
+[id 1691] Mandarin Oriental, New York  (USA / New York) — currently TRUE — source: "Mandarin Oriental, New York" (New York, New York, United States)
+[id 1695] Montage Laguna Beach (USA / Laguna Beach) — currently TRUE — source: "Montage Laguna Beach" (Laguna Beach, California, United States)
+[id 1696] Montage Palmetto Bluff (USA / Palmetto Bluff) — currently TRUE — source: "Montage Palmetto Bluff" (Bluffton, South Carolina, United States)
+[id 1700] Ocean House (USA / Watch Hill) — currently TRUE — source: "Ocean House" (Watch Hill, Rhode Island, United States)
+[id 1703] Park Hyatt New York (USA / New York) — currently TRUE — source: "Park Hyatt New York" (New York, New York, United States)
+[id 1707] Rancho Valencia (USA / Rancho Santa Fe) — currently TRUE — source: "Rancho Valencia Resort & Spa" (Rancho Santa Fe, California, United States)
+[id 1716] The Broadmoor (USA / Colorado Springs) — currently TRUE — source: "The Broadmoor" (Colorado Springs, Colorado, United States)
+[id 1725] The Inn at Little Washington (USA / Washington) — currently TRUE — source: "The Inn at Little Washington" (Washington, Virginia, United States)
+[id 1728] The Langham Chicago (USA / Chicago) — currently TRUE — source: "The Langham, Chicago" (Chicago, Illinois, United States)
+[id 1731] The Little Nell  (USA / Aspen) — currently TRUE — source: "The Little Nell" (Aspen, Colorado, United States)
+[id 1733] The Lodge at Torrey Pines  (USA / La Jolla) — currently TRUE — source: "The Lodge at Torrey Pines" (La Jolla, California, United States)
+[id 1738] The Peninsula Beverly Hills  (USA / Beverly Hills) — currently TRUE — source: "The Peninsula Beverly Hills" (Beverly Hills, California, United States)
+[id 1739] The Peninsula Chicago  (USA / Chicago) — currently TRUE — source: "The Peninsula Chicago" (Chicago, Illinois, United States)
+[id 1740] The Peninsula New York  (USA / New York) — currently TRUE — source: "The Peninsula New York" (New York, New York, United States)
+[id 1742] The Post Oak Hotel at Uptown Houston (USA / Houston) — currently TRUE — source: "The Post Oak Hotel at Uptown Houston" (Houston, Texas, United States)
+[id 1744] The Resort at Pelican Hill (USA / Newport Coast) — currently TRUE — source: "The Resort at Pelican Hill" (Newport Beach, California, United States)
+[id 1748] The Ritz-Carlton, Dove Mountain (USA / Marana) — currently TRUE — source: "The Ritz-Carlton, Dove Mountain" (Marana, Arizona, United States)
+[id 1749] The Ritz-Carlton, Fort Lauderdale  (USA / Fort Lauderdale) — currently TRUE — source: "The Ritz-Carlton, Fort Lauderdale" (Fort Lauderdale, Florida, United States)
+[id 1752] The Ritz-Carlton, Lake Tahoe (USA / Truckee) — currently TRUE — source: "The Ritz-Carlton, Lake Tahoe" (Truckee, California, United States)
+[id 1754] The Ritz-Carlton Reynolds, Lake Oconee (USA / Greensboro) — currently TRUE — source: "The Ritz-Carlton Reynolds, Lake Oconee" (Greensboro, Georgia, United States)
+[id 1755] The Ritz-Carlton, San Francisco  (USA / San Francisco) — currently TRUE — source: "The Ritz-Carlton, San Francisco" (San Francisco, California, United States)
+[id 1757] The Setai, Miami Beach (USA / Miami Beach) — currently TRUE — source: "The Setai, Miami Beach" (Miami Beach, Florida, United States)
+[id 1760] The St. Regis New York  (USA / New York) — currently TRUE — source: "The St. Regis New York" (New York, New York, United States)
+[id 1762] The Umstead Hotel and Spa (USA / Cary) — currently TRUE — source: "The Umstead Hotel & Spa" (Cary, North Carolina, United States)
+[id 1768] Waldorf Astoria Las Vegas (USA / Las Vegas) — currently TRUE — source: "Waldorf Astoria Las Vegas" (Las Vegas, Nevada, United States)
+[id 2032] Four Seasons Resort Maui at Wailea (USA / Maui) — currently TRUE — source: "Four Seasons Resort Maui at Wailea" (Wailea (Maui), Hawaii, United States)
+
+==============================================================================
+SECTION B — NEAR MATCHES (brand-prefix-agnostic containment, needs review)
+==============================================================================
+[id 1633] Four Seasons Resort Punta Mita (Mexico / Punta Mita) — currently TRUE — source: "Four Seasons Resort Punta Mita, Mexico" (Punta Mita, Nayarit, Mexico) [score 0.80]
+[id 1636] Las Ventanas al Paraiso  (Mexico / San Jose del Cabo) — currently TRUE — source: "Las Ventanas al Paraiso, A Rosewood Resort, A Ty Warner Property" (San Jose del Cabo, Baja California Sur, Mexico) [score 0.50]
+[id 1642] One&Only Palmilla, Los Cabos (Mexico / San Jose del Cabo) — currently TRUE — source: "One&Only Palmilla" (San Jose del Cabo, Baja California Sur, Mexico) [score 0.50]
+[id 1650] Zadun Los Cabos, a Ritz-Carlton Reserve (Mexico / San Jose del Cabo) — currently TRUE — source: "Zadún, a Ritz-Carlton Reserve" (San Jose del Cabo, Baja California Sur, Mexico) [score 0.67]
+[id 1681] Four Seasons Resort Scottsdale  (USA / Scottsdale) — currently TRUE — source: "Four Seasons Resort Scottsdale at Troon North" (Scottsdale, Arizona, United States) [score 0.50]
+[id 1712] The Beverly Hills Hotel  (USA / Beverly Hills) — currently TRUE — source: "The Beverly Hills Hotel and Bungalows" (Beverly Hills, California, United States) [score 0.67]
+[id 1721] The Fifth Avenue Hotel (USA / New York) — currently false — source: "The Langham, New York, Fifth Avenue" (New York, New York, United States) [score 0.40]
+[id 1729] The Langham New York (USA / New York) — currently TRUE — source: "The Langham, New York, Fifth Avenue" (New York, New York, United States) [score 0.60]
+[id 1769] Waldorf Astoria Monarch Beach (USA / Dana Point) — currently TRUE — source: "Waldorf Astoria Monarch Beach & Club" (Dana Point, California, United States) [score 0.80]
+
+==============================================================================
+SECTION C — UNCERTAIN MATCHES (needs your confirmation)
+==============================================================================
+[id 1255] Mandarin Oriental, Canouan (St. Vincent and the Grenadines / Carenage Bay) — currently TRUE — candidate: "Mandarin Oriental, Canouan" (Canouan (St. Vincent), St. Vincent and the Grenadines) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1261] Jumby Bay Island (Antigua & Barbuda / Long Island) — currently TRUE — candidate: "Jumby Bay Island" (Jumby Bay, Antigua and Barbuda) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1626] Banyan Tree Mayakoba (Mexico / Riviera Maya) — currently TRUE — candidate: "Banyan Tree Mayakoba" (Playa del Carmen, Quintana Roo, Mexico) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+
+==============================================================================
+SECTION D — REMOVAL CANDIDATES (flag and/or tag set, no source-list match found)
+==============================================================================
+(none)
+
+==============================================================================
+SECTION E — BOOLEAN/TAG DRIFT (pre-existing inconsistency, independent of source match)
+==============================================================================
+(none)

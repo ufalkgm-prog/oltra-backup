@@ -1,0 +1,124 @@
+HOTEL AWARDS AUDIT — michelin3keys (Michelin 3 Keys) — full-collection review
+Generated: 2026-07-15 by match-hotel-awards.mjs
+Scope: full collection
+
+==============================================================================
+SUMMARY
+==============================================================================
+Hotels checked: 873
+Source entries (michelin3keys.json): 143
+Confirmed matches: 59
+Near matches (brand-prefix-agnostic): 10
+Uncertain matches: 19
+Removal candidates (flag/tag set, no source match): 0
+Boolean/tag drift (pre-existing inconsistency): 0
+
+==============================================================================
+SECTION A — CONFIRMED MATCHES (exact core-name match, no location conflict)
+==============================================================================
+[id 1020] Kasbah Tamadot (Morocco / Asni) — currently TRUE — source: "Kasbah Tamadot" (Asni, Morocco)
+[id 1021] La Mamounia (Morocco / Marrakech) — currently TRUE — source: "La Mamounia" (Marrakech, Morocco)
+[id 1052] Royal Malewane  (South Africa / Hoedspruit) — currently TRUE — source: "Royal Malewane" (Kruger National Park, South Africa)
+[id 1127] Nihi Sumba (Indonesia / Nihiwatu Beach) — currently TRUE — source: "Nihi Sumba" (Sumba, Indonesia)
+[id 1138] Four Seasons Hotel Tokyo at Otemachi (Japan / Tokyo) — currently TRUE — source: "Four Seasons Hotel Tokyo at Otemachi" (Tokyo, Japan)
+[id 1140] Hotel The Mitsui Kyoto (Japan / Kyoto) — currently TRUE — source: "HOTEL THE MITSUI KYOTO" (Kyoto Prefecture, Japan)
+[id 1157] Cheval Blanc Randheli (Maldives / Randheli) — currently TRUE — source: "Cheval Blanc Randheli" (Randheli Island, Maldives)
+[id 1176] Soneva Fushi (Maldives / Kunfunadhoo Island) — currently TRUE — source: "Soneva Fushi" (Kunfunadhoo Island, Maldives)
+[id 1189] Raffles Singapore (Singapore / Singapore) — currently TRUE — source: "Raffles Hotel, Singapore" (Singapore, Singapore)
+[id 1193] Amanpuri  (Thailand / Pansea Beach) — currently TRUE — source: "Amanpuri" (Phuket Area, Thailand)
+[id 1205] Four Seasons Resort Chiang Mai (Thailand / Chiang Mai) — currently TRUE — source: "Four Seasons Resort Chiang Mai" (Chiang Mai, Thailand)
+[id 1210] Mandarin Oriental, Bangkok   (Thailand / Bangkok) — currently TRUE — source: "Mandarin Oriental Bangkok" (Bangkok, Thailand)
+[id 1211] Phulay Bay, A Ritz-Carlton Reserve (Thailand / Muang Muang Krabi) — currently TRUE — source: "Phulay Bay, A Ritz-Carlton Reserve" (Krabi, Thailand)
+[id 1223] The Siam (Thailand / Bangkok) — currently TRUE — source: "The Siam" (Bangkok, Thailand)
+[id 1226] Amanoi (Vietnam / Vinh Hy Village) — currently TRUE — source: "Amanoi" (Vinh Hy Village, Vietnam)
+[id 1228] Capella Hanoi (Vietnam / Hanoi) — currently TRUE — source: "Capella Hanoi" (Hanoi, Vietnam)
+[id 1272] Hotel Sacher Wien  (Austria / Vienna) — currently TRUE — source: "Hotel Sacher Wien" (Vienna, Austria)
+[id 1285] Claridge's  (United Kingdom / London) — currently TRUE — source: "Claridge's" (London, United Kingdom)
+[id 1288] Four Seasons Hotel London at Park Lane (United Kingdom / London) — currently TRUE — source: "Four Seasons Hotel London at Park Lane" (London, United Kingdom)
+[id 1296] Raffles London at The OWO (United Kingdom / London) — currently TRUE — source: "Raffles London at The OWO" (London, United Kingdom)
+[id 1302] The Connaught (United Kingdom / London) — currently TRUE — source: "The Connaught" (London, United Kingdom)
+[id 1310] The Peninsula London (United Kingdom / London) — currently TRUE — source: "The Peninsula London" (London, United Kingdom)
+[id 1312] Airelles Château de Versailles - Le Grand Contrôle (France / Versailles) — currently TRUE — source: "Airelles Château de Versailles, Le Grand Contrôle" (Versailles, France)
+[id 1314] Airelles Gordes, La Bastide (France / Gordes) — currently TRUE — source: "Airelles Gordes, La Bastide" (Gordes, France)
+[id 1322] Cheval Blanc Courchevel (France / Courchevel 1850) — currently TRUE — source: "Cheval Blanc Courchevel" (Courchevel, France)
+[id 1323] Cheval Blanc Paris (France / Paris) — currently TRUE — source: "Cheval Blanc Paris" (Paris, France)
+[id 1329] Four Seasons Hotel George V (France / Paris) — currently TRUE — source: "Four Seasons George V" (Paris, France)
+[id 1340] Hôtel du Cap Eden-Roc (France / Antibes) — currently TRUE — source: "Hôtel du Cap-Eden-Roc" (Antibes, France)
+[id 1349] La Réserve Paris (France / Paris) — currently TRUE — source: "La Réserve Paris" (Paris, France)
+[id 1353] Le Bristol Paris (France / Paris) — currently TRUE — source: "Le Bristol Paris" (Paris, France)
+[id 1354] Le K2 Palace (France / Courchevel 1850) — currently TRUE — source: "Le K2 Palace" (Courchevel, France)
+[id 1364] Ritz Paris  (France / Paris) — currently TRUE — source: "Ritz Paris" (Paris, France)
+[id 1365] Saint James Paris (France / Paris) — currently TRUE — source: "Saint James Paris" (Paris, France)
+[id 1420] Ballyfin Demesne (Ireland / Ballyfin) — currently TRUE — source: "Ballyfin Demesne" (Ballyfin, Ireland)
+[id 1423] Aman Venice (Italy / Venice) — currently TRUE — source: "Aman Venice" (Venice, Italy)
+[id 1438] Four Seasons Hotel Firenze (Italy / Florence) — currently TRUE — source: "Four Seasons Hotel Firenze" (Florence, Italy)
+[id 1457] Il San Pietro di Positano (Italy / Positano) — currently TRUE — source: "Il San Pietro di Positano" (Positano, Italy)
+[id 1459] J.K. Place Capri (Italy / Capri) — currently TRUE — source: "J.K. Place Capri" (Capri, Italy)
+[id 1468] Passalacqua (Italy / Moltrasio) — currently TRUE — source: "Passalacqua" (Moltrasio, Italy)
+[id 1489] Hôtel de Paris Monte Carlo (Monaco / Monte Carlo) — currently TRUE — source: "Hôtel de Paris Monte-Carlo" (Monte Carlo, Monaco)
+[id 1495] De L’Europe Amsterdam (Netherlands / Amsterdam) — currently TRUE — source: "De L'Europe Amsterdam" (Amsterdam, Netherlands)
+[id 1529] Mandarin Oriental, Ritz Madrid (Spain / Madrid) — currently TRUE — source: "Mandarin Oriental Ritz, Madrid" (Madrid, Spain)
+[id 1541] Badrutt's Palace  (Switzerland / St. Moritz) — currently TRUE — source: "Badrutt's Palace Hotel" (St. Moritz, Switzerland)
+[id 1542] Baur au Lac (Switzerland / Zurich) — currently TRUE — source: "Baur au Lac" (Zurich, Switzerland)
+[id 1545] Carlton Hotel St. Moritz (Switzerland / St. Moritz) — currently TRUE — source: "Carlton Hotel St. Moritz" (St. Moritz, Switzerland)
+[id 1554] Grand Resort Bad Ragaz (Switzerland / Bad Ragaz) — currently TRUE — source: "Grand Resort Bad Ragaz" (Bad Ragaz, Switzerland)
+[id 1569] The Alpina Gstaad (Switzerland / Gstaad) — currently TRUE — source: "The Alpina Gstaad" (Gstaad, Switzerland)
+[id 1654] Aman New York (USA / New York) — currently TRUE — source: "Aman New York" (New York City, New York, USA)
+[id 1656] Amangiri (USA / Canyon Point) — currently TRUE — source: "Amangiri" (Lake Powell, Utah, USA)
+[id 1706] Post Ranch Inn  (USA / Big Sur) — currently TRUE — source: "Post Ranch Inn" (Big Sur, California, USA)
+[id 1784] Rosewood Sao Paulo (Brazil / Sao Paulo) — currently TRUE — source: "Rosewood Sao Paulo" (Sao Paulo, Brazil)
+[id 1785] Awasi Patagonia (Chile / null) — currently TRUE — source: "Awasi Patagonia" (Torres del Paine National Park, Chile)
+[id 1788] Tierra Patagonia Hotel & Spa (Chile / null) — currently TRUE — source: "Tierra Patagonia Hotel & Spa" (Torres del Paine National Park, Chile)
+[id 1824] Mandapa, a Ritz-Carlton Reserve (Indonesia / Ubud) — currently TRUE — source: "Mandapa, a Ritz-Carlton Reserve" (Ubud, Indonesia)
+[id 1839] Clayoquot Wilderness Lodge (Canada / null) — currently TRUE — source: "Clayoquot Wilderness Lodge" (Vancouver Island, Canada)
+[id 2005] Amanemu (Japan / Ise-Shima) — currently TRUE — source: "Amanemu" (Shima, Japan)
+[id 2052] Rosewood Castiglion del Bosco (Italy / Montalcino) — currently TRUE — source: "Castiglion del Bosco, A Rosewood Hotel" (Montalcino, Italy)
+[id 2054] Rosewood Schloss Fuschl (Austria / Salzburg) — currently TRUE — source: "Rosewood Schloss Fuschl" (Hof bei Salzburg, Austria)
+[id 2058] Rosewood Luang Prabang (Laos / Luang Prabang) — currently TRUE — source: "Rosewood Luang Prabang" (Luang Prabang, Laos)
+
+==============================================================================
+SECTION B — NEAR MATCHES (brand-prefix-agnostic containment, needs review)
+==============================================================================
+[id 1111] Taj Lake Palace, Udaipur (India / Udaipur) — currently TRUE — source: "Taj Lake Palace" (Udaipur, India) [score 0.75]
+[id 1292] Mandarin Oriental Hyde Park, London (United Kingdom / London) — currently TRUE — source: "Mandarin Oriental Hyde Park" (London, United Kingdom) [score 0.80]
+[id 1330] Grand Hôtel du Cap Ferrat (France / Cap Ferrat) — currently TRUE — source: "Grand Hôtel du Cap-Ferrat, A Four Seasons Hotel" (Saint-Jean-Cap-Ferrat, France) [score 0.60]
+[id 1345] Hôtel Plaza Athénée Paris  (France / Paris) — currently TRUE — source: "Le Plaza Athénée" (Paris, France) [score 0.67]
+[id 1376] Fairmont Hotel Vier Jahreszeiten (Germany / Hamburg) — currently TRUE — source: "Hotel Vier Jahreszeiten" (Hamburg, Germany) [score 0.67]
+[id 1378] Schloss Elmau (Germany / Elmau) — currently TRUE — source: "Schloss Elmau Luxury Spa Retreat & Cultural Hideaway" (Elmau, Germany) [score 0.33]
+[id 1418] Adare Manor Hotel & Golf Resort (Ireland / Adare) — currently TRUE — source: "Adare Manor" (Adare, Ireland) [score 0.67]
+[id 1475] San Domenico Palace (Italy / Taormina) — currently TRUE — source: "San Domenico Palace, Taormina, A Four Seasons Hotel" (Taormina, Italy) [score 0.50]
+[id 1550] Grand Hotel Les Trois Rois (Switzerland / Basel) — currently TRUE — source: "Hotel Les Trois Rois" (Basel, Switzerland) [score 0.75]
+[id 1686] Hotel Bel-Air  (USA / Los Angeles) — currently TRUE — source: "Hotel Bel-Air, Dorchester Collection" (Los Angeles Area, California, USA) [score 0.50]
+
+==============================================================================
+SECTION C — UNCERTAIN MATCHES (needs your confirmation)
+==============================================================================
+[id 1049] Londolozi Private Game Reserve (South Africa / Sabi Sand Reserve) — currently TRUE — candidate: "Londolozi Game Reserve" (Kruger National Park, South Africa) [score 0.75, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1087] Rosewood Hong Kong (China / Hong Kong) — currently TRUE — candidate: "Rosewood Hong Kong" (Kowloon, Hong Kong) [score 1.00, country conflict, city match, reason: core name exact match but country label differs — check same property]
+[id 1116] Amanjiwo  (Indonesia / Borobudur) — currently TRUE — candidate: "Amanjiwo" (Yogyakarta, Indonesia) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1248] Cheval Blanc St-Barth (St. Barthelemy / St. Barthelemy) — currently TRUE — candidate: "Cheval Blanc St. Barth Isle De France" (St Barthelemy, French West Indies) [score 0.67, country conflict, city match, reason: brand-prefix-agnostic containment match but country label differs — check same property]
+[id 1265] Nayara Springs (Costa Rica / Arenal) — currently TRUE — candidate: "Nayara Springs" (La Fortuna de San Carlos, Costa Rica) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1350] La Réserve Ramatuelle  (France / Ramatuelle) — currently TRUE — candidate: "La Réserve Ramatuelle" (Saint-Tropez, France) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1371] Villa La Coste (France / Le Puy-Sainte-Réparade) — currently TRUE — candidate: "Villa La Coste" (Aix-en-Provence, France) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1379] The Fontenay Hamburg (Germany / Hamburg) — currently TRUE — candidate: "The Fontenay" (Hamburg, Germany) [score 1.00, country match, city match, reason: similar brand name]
+[id 1396] Four Seasons Astir Palace Hotel Athens (Greece / Vouliagmeni ) — currently TRUE — candidate: "Four Seasons Astir Palace" (Athens, Greece) [score 0.80, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1507] Gleneagles (United Kingdom / Perthshire) — currently TRUE — candidate: "The Gleneagles Hotel" (Auchterarder, United Kingdom) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1544] Bürgenstock Hotel & Alpine Spa (Switzerland / Obbürgen) — currently TRUE — candidate: "Bürgenstock Hotel & Alpine Spa" (Burgenstock, Switzerland) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1581] Four Seasons Hotel Istanbul at the Bosphorus (Turkey / Istanbul) — currently false — candidate: "Four Seasons Hotel Istanbul at Sultanahmet" (Istanbul, Turkey) [score 0.60, country match, city match, reason: similar brand name]
+[id 1598] Atlantis The Royal Dubai (United Arab Emirates / Dubai) — currently TRUE — candidate: "Atlantis The Royal, Dubai" (Palm Jumeirah, UAE) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1634] Hotel Esencia (Mexico / Carretera) — currently TRUE — candidate: "Hotel Esencia" (Playa del Carmen, Mexico) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1641] One&Only Mandarina, Riviera Nayarit (Mexico / Tepic-Puerto Vallarta) — currently TRUE — candidate: "One&Only Mandarina" (Lo de Marcos, Nayarit, Mexico) [score 0.50, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1659] Auberge du Soleil  (USA / Rutherford) — currently TRUE — candidate: "Auberge du Soleil, Auberge Collection" (Napa / Sonoma Valleys, California, USA) [score 0.67, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1712] The Beverly Hills Hotel  (USA / Beverly Hills) — currently TRUE — candidate: "The Beverly Hills Hotel, Dorchester Collection" (Los Angeles Area, California, USA) [score 0.50, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1805] The Brando (French Polynesia / Arue Tahiti) — currently TRUE — candidate: "The Brando" (Tetiaroa, French Polynesia) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 2046] Kona Village, a Rosewood Resort (USA / Kailua-Kona) — currently TRUE — candidate: "Kona Village, A Rosewood Resort" (Island of Hawaii, USA) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+
+==============================================================================
+SECTION D — REMOVAL CANDIDATES (flag and/or tag set, no source-list match found)
+==============================================================================
+(none)
+
+==============================================================================
+SECTION E — BOOLEAN/TAG DRIFT (pre-existing inconsistency, independent of source match)
+==============================================================================
+(none)

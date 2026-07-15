@@ -1,0 +1,141 @@
+MICHELIN 3 KEYS — HOTELS NOT IN THE OLTRA DATABASE
+Generated: 2026-07-15 · 54 of 143 Michelin Three-Key hotels have no match (any tier) among the 873 hotels currently in Directus.
+These are candidates to add to the database, not a data-quality issue — the Michelin list includes many small independent properties OLTRA hasn''t catalogued yet.
+
+============================================================
+Australia (1)
+============================================================
+  Lizard Island Resort — Lizard Island
+
+============================================================
+Brazil (1)
+============================================================
+  Hotel das Cataratas, A Belmond Hotel, Iguassu Falls — Iguazu Falls
+
+============================================================
+Canada (1)
+============================================================
+  Fogo Island Inn — Joe Batt's Arm
+
+============================================================
+China (1)
+============================================================
+  Rissai Valley, a Ritz-Carlton Reserve — Jiuzhaigou
+
+============================================================
+Croatia (1)
+============================================================
+  Villa Nai 3.3 — Dugi Otok
+
+============================================================
+France (8)
+============================================================
+  Baumanière — Les Baux de Provence
+  Domaine Les Crayères — Reims
+  Four Seasons Resort Megève — Megève
+  Hôtel du Castellet — Le Castellet
+  Le Meurice, Dorchester Collection — Paris
+  Les Sources de Caudalie — Bordeaux
+  Maison Villeroy — Paris
+  Royal Champagne Hotel & Spa — Épernay
+
+============================================================
+Germany (3)
+============================================================
+  Althoff Seehotel Überfahrt — Rottach-Egern
+  Hotel Bareiss — Baiersbronn
+  Hotel Traube Tonbach — Baiersbronn
+
+============================================================
+India (1)
+============================================================
+  Taj Falaknuma Palace — Hyderabad
+
+============================================================
+Italy (6)
+============================================================
+  Borgo Santo Pietro — Chiusdino
+  Bvlgari Hotel Roma — Rome
+  Casa Maria Luigia — Modena
+  Corte della Maestà — Civita di Bagnoregio
+  Hotel Cipriani, A Belmond Hotel, Venice — Venice
+  Reschio Hotel — Lisciano Niccone
+
+============================================================
+Japan (4)
+============================================================
+  Asaba — Izu
+  Bvlgari Hotel Tokyo — Tokyo
+  Gora Kadan — Hakonemachi, Ashigarashimo-gun
+  Palace Hotel Tokyo — Tokyo
+
+============================================================
+Kenya (1)
+============================================================
+  Giraffe Manor — Nairobi
+
+============================================================
+Mexico (1)
+============================================================
+  Xinalani — Puerto Vallarta, Jalisco
+
+============================================================
+Namibia (1)
+============================================================
+  Zannier Sonop — Namib Desert
+
+============================================================
+Peru (1)
+============================================================
+  Las Casitas, A Belmond Hotel — Arequipa
+
+============================================================
+Portugal (2)
+============================================================
+  Penha Longa Resort — Sintra
+  Vila Vita Parc Resort & Spa — Alporchinhos
+
+============================================================
+Spain (4)
+============================================================
+  Abadía Retuerta LeDomaine — Valladolid
+  Atrio Restaurante Hotel — Cáceres
+  Terra Dominicata - Hotel & Winery — Tarragona
+  Torre del Marqués Hotel Spa & Winery — Teruel
+
+============================================================
+Sri Lanka (1)
+============================================================
+  Ceylon Tea Trails — Interior
+
+============================================================
+Switzerland (2)
+============================================================
+  Beau-Rivage Geneva — Geneva
+  The Woodward, Auberge Collection — Geneva
+
+============================================================
+Thailand (1)
+============================================================
+  Samujana Villas — Surat Thani
+
+============================================================
+USA (8)
+============================================================
+  Canyon Ranch Tucson — Tucson, Arizona
+  Casa Cipriani New York — New York City, New York
+  Crosby Street Hotel, Firmdale Hotels — New York City, New York
+  Little Palm Island Resort & Spa — Florida Keys
+  Meadowood Napa Valley — Napa / Sonoma Valleys, California
+  Sage Lodge — Yellowstone National Park, Montana
+  SingleThread Inn — Napa / Sonoma Valleys, California
+  The Whitby Hotel, Firmdale Hotels — New York City, New York
+
+============================================================
+United Kingdom (5)
+============================================================
+  Bvlgari Hotel London — London
+  Le Manoir aux Quat'Saisons, A Belmond Hotel — Great Milton
+  Lucknam Park, Emblems Collection — Colerne
+  The Newt in Somerset — Bruton
+  The Savoy — London

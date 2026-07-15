@@ -1,0 +1,54 @@
+HOTEL AWARDS AUDIT — telegraph (Telegraph Best Hotels in the World) — full-collection review
+Generated: 2026-07-15 by match-hotel-awards.mjs
+Scope: full collection
+
+==============================================================================
+SUMMARY
+==============================================================================
+Hotels checked: 871
+Source entries (telegraph.json): 50
+Confirmed matches: 14
+Near matches (brand-prefix-agnostic): 1
+Uncertain matches: 3
+Removal candidates (flag/tag set, no source match): 0
+Boolean/tag drift (pre-existing inconsistency): 0
+
+==============================================================================
+SECTION A — CONFIRMED MATCHES (exact core-name match, no location conflict)
+==============================================================================
+[id 1045] Ellerman House  (South Africa / Cape Town) — currently TRUE — source: "Ellerman House" (Cape Town, South Africa)
+[id 1094] The Peninsula Hong Kong  (China / Hong Kong) — currently TRUE — source: "The Peninsula Hong Kong" (Hong Kong, China)
+[id 1176] Soneva Fushi (Maldives / Kunfunadhoo Island) — currently TRUE — source: "Soneva Fushi" (Baa Atoll, Maldives)
+[id 1210] Mandarin Oriental, Bangkok   (Thailand / Bangkok) — currently TRUE — source: "Mandarin Oriental, Bangkok" (Bangkok, Thailand)
+[id 1217] Six Senses Yao Noi (Thailand / Yao Noi) — currently TRUE — source: "Six Senses Yao Noi" (Ko Yao Noi, Phang Nga, Thailand)
+[id 1227] Zannier Bãi San Hô (Vietnam / Hoa Thanh) — currently TRUE — source: "Zannier Bãi San Hô" (Phu Yen, Vietnam)
+[id 1306] The Goring (United Kingdom / London) — currently TRUE — source: "The Goring" (London, England, United Kingdom)
+[id 1368] The Maybourne Riviera (France / Roquebrune-Cap-Martin) — currently TRUE — source: "The Maybourne Riviera" (Roquebrune-Cap-Martin, Provence-Alpes-Côte d’Azur, France)
+[id 1396] Four Seasons Astir Palace Hotel Athens (Greece / Vouliagmeni ) — currently TRUE — source: "Four Seasons Astir Palace Hotel Athens" (Athens, Greece)
+[id 1454] Hotel Santa Caterina (Italy / Amalfi) — currently TRUE — source: "Hotel Santa Caterina" (Amalfi, Campania, Italy)
+[id 1706] Post Ranch Inn  (USA / Big Sur) — currently TRUE — source: "Post Ranch Inn" (Big Sur, California, USA)
+[id 1785] Awasi Patagonia (Chile / null) — currently TRUE — source: "Awasi Patagonia" (Torres del Paine, Patagonia, Chile)
+[id 1800] Southern Ocean Lodge (Australia / Kangaroo Island) — currently TRUE — source: "Southern Ocean Lodge" (Kangaroo Island, South Australia, Australia)
+[id 1822] Estelle Manor (United Kingdom / Eynsham Park) — currently TRUE — source: "Estelle Manor" (Eynsham, Oxfordshire, United Kingdom)
+
+==============================================================================
+SECTION B — NEAR MATCHES (brand-prefix-agnostic containment, needs review)
+==============================================================================
+[id 1119] Buahan, A Banyan Tree Escape (Indonesia / Buahan) — currently TRUE — source: "Banyan Tree Buahan" (Buahan, Bali, Indonesia) [score 0.75]
+
+==============================================================================
+SECTION C — UNCERTAIN MATCHES (needs your confirmation)
+==============================================================================
+[id 1359] Les Pres D'Eugenie (France / Eurgenie les Bains) — currently TRUE — candidate: "Les Prés d’Eugénie" (Eugénie-les-Bains, Nouvelle-Aquitaine, France) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1634] Hotel Esencia (Mexico / Carretera) — currently TRUE — candidate: "Hotel Esencia" (Xpu Há, Quintana Roo, Mexico) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1805] The Brando (French Polynesia / Arue Tahiti) — currently TRUE — candidate: "The Brando" (Tetiaroa, French Polynesia) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+
+==============================================================================
+SECTION D — REMOVAL CANDIDATES (flag and/or tag set, no source-list match found)
+==============================================================================
+(none)
+
+==============================================================================
+SECTION E — BOOLEAN/TAG DRIFT (pre-existing inconsistency, independent of source match)
+==============================================================================
+(none)

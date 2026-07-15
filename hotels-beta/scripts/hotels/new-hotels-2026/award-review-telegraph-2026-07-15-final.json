@@ -1,0 +1,228 @@
+{
+  "code": "telegraph",
+  "displayName": "Telegraph Best Hotels in the World",
+  "generatedAt": "2026-07-15",
+  "scope": "full-collection",
+  "hotelsChecked": 871,
+  "sourceEntries": 50,
+  "confirmed": [
+    {
+      "id": "1045",
+      "hotel_name": "Ellerman House ",
+      "country": "South Africa",
+      "city": "Cape Town",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Ellerman House",
+      "sourceLoc": "Cape Town, South Africa"
+    },
+    {
+      "id": "1094",
+      "hotel_name": "The Peninsula Hong Kong ",
+      "country": "China",
+      "city": "Hong Kong",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "The Peninsula Hong Kong",
+      "sourceLoc": "Hong Kong, China"
+    },
+    {
+      "id": "1176",
+      "hotel_name": "Soneva Fushi",
+      "country": "Maldives",
+      "city": "Kunfunadhoo Island",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Soneva Fushi",
+      "sourceLoc": "Baa Atoll, Maldives"
+    },
+    {
+      "id": "1210",
+      "hotel_name": "Mandarin Oriental, Bangkok  ",
+      "country": "Thailand",
+      "city": "Bangkok",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Mandarin Oriental, Bangkok",
+      "sourceLoc": "Bangkok, Thailand"
+    },
+    {
+      "id": "1217",
+      "hotel_name": "Six Senses Yao Noi",
+      "country": "Thailand",
+      "city": "Yao Noi",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Six Senses Yao Noi",
+      "sourceLoc": "Ko Yao Noi, Phang Nga, Thailand"
+    },
+    {
+      "id": "1227",
+      "hotel_name": "Zannier Bãi San Hô",
+      "country": "Vietnam",
+      "city": "Hoa Thanh",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Zannier Bãi San Hô",
+      "sourceLoc": "Phu Yen, Vietnam"
+    },
+    {
+      "id": "1306",
+      "hotel_name": "The Goring",
+      "country": "United Kingdom",
+      "city": "London",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "The Goring",
+      "sourceLoc": "London, England, United Kingdom"
+    },
+    {
+      "id": "1368",
+      "hotel_name": "The Maybourne Riviera",
+      "country": "France",
+      "city": "Roquebrune-Cap-Martin",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "The Maybourne Riviera",
+      "sourceLoc": "Roquebrune-Cap-Martin, Provence-Alpes-Côte d’Azur, France"
+    },
+    {
+      "id": "1396",
+      "hotel_name": "Four Seasons Astir Palace Hotel Athens",
+      "country": "Greece",
+      "city": "Vouliagmeni ",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Four Seasons Astir Palace Hotel Athens",
+      "sourceLoc": "Athens, Greece"
+    },
+    {
+      "id": "1454",
+      "hotel_name": "Hotel Santa Caterina",
+      "country": "Italy",
+      "city": "Amalfi",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Hotel Santa Caterina",
+      "sourceLoc": "Amalfi, Campania, Italy"
+    },
+    {
+      "id": "1706",
+      "hotel_name": "Post Ranch Inn ",
+      "country": "USA",
+      "city": "Big Sur",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Post Ranch Inn",
+      "sourceLoc": "Big Sur, California, USA"
+    },
+    {
+      "id": "1785",
+      "hotel_name": "Awasi Patagonia",
+      "country": "Chile",
+      "city": null,
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Awasi Patagonia",
+      "sourceLoc": "Torres del Paine, Patagonia, Chile"
+    },
+    {
+      "id": "1800",
+      "hotel_name": "Southern Ocean Lodge",
+      "country": "Australia",
+      "city": "Kangaroo Island",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Southern Ocean Lodge",
+      "sourceLoc": "Kangaroo Island, South Australia, Australia"
+    },
+    {
+      "id": "1822",
+      "hotel_name": "Estelle Manor",
+      "country": "United Kingdom",
+      "city": "Eynsham Park",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Estelle Manor",
+      "sourceLoc": "Eynsham, Oxfordshire, United Kingdom"
+    }
+  ],
+  "near": [
+    {
+      "id": "1119",
+      "hotel_name": "Buahan, A Banyan Tree Escape",
+      "country": "Indonesia",
+      "city": "Buahan",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Banyan Tree Buahan",
+      "sourceLoc": "Buahan, Bali, Indonesia",
+      "score": 0.75,
+      "reason": "brand-prefix-agnostic containment match"
+    }
+  ],
+  "uncertain": [
+    {
+      "id": "1359",
+      "hotel_name": "Les Pres D'Eugenie",
+      "country": "France",
+      "city": "Eurgenie les Bains",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Les Prés d’Eugénie",
+      "sourceLoc": "Eugénie-les-Bains, Nouvelle-Aquitaine, France",
+      "score": 1,
+      "cStatus": "match",
+      "cityStat": "conflict",
+      "reason": "core name exact match but location differs — check same property"
+    },
+    {
+      "id": "1634",
+      "hotel_name": "Hotel Esencia",
+      "country": "Mexico",
+      "city": "Carretera",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "Hotel Esencia",
+      "sourceLoc": "Xpu Há, Quintana Roo, Mexico",
+      "score": 1,
+      "cStatus": "match",
+      "cityStat": "conflict",
+      "reason": "core name exact match but location differs — check same property"
+    },
+    {
+      "id": "1805",
+      "hotel_name": "The Brando",
+      "country": "French Polynesia",
+      "city": "Arue Tahiti",
+      "published": true,
+      "booleanVal": true,
+      "tagPresent": true,
+      "source": "The Brando",
+      "sourceLoc": "Tetiaroa, French Polynesia",
+      "score": 1,
+      "cStatus": "match",
+      "cityStat": "conflict",
+      "reason": "core name exact match but location differs — check same property"
+    }
+  ],
+  "removalCandidates": [],
+  "drift": []
+}

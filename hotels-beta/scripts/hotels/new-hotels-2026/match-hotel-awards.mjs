@@ -1,23 +1,36 @@
 #!/usr/bin/env node
 /**
- * Match the 67 new hotels (IDs 2001-2067) against the 7 award source lists in
- * awards-2026/*.json, and produce a plain-text review report — no Directus writes.
+ * Match the FULL hotels collection against the 7 award source lists in
+ * awards-2026/*.json, and produce a review report — no Directus writes.
  *
- * Matching strategy:
- *   1. Normalize names (strip diacritics/punctuation/case) and compare full strings.
- *      An exact normalized match, with no country conflict, is CONFIRMED.
- *   2. Otherwise fall back to token-overlap (Jaccard) scoring. This is only trusted
- *      as a candidate ("uncertain", needs human review) when location corroborates
- *      it (country match, or country missing on the source side) — chain brands
- *      (Mandarin Oriental, Ritz-Carlton, Four Seasons, ...) repeat the same words
- *      across many cities, so name similarity alone is not trustworthy for them.
- *   3. Existing DB awards (boolean already true / awards tag already set) with no
- *      corresponding source-list entry at all are flagged separately for review —
- *      they may be correct from another source, or may need removing.
+ * This is the full-collection successor to the 2026-07-07 run, which was scoped to
+ * IDs 2001-2067 only. Per the 2026-07-15 audit request, run ONE award code at a time
+ * via --award <code>, review, apply, then move to the next code (see CLAUDE.md §25).
+ *
+ * Matching strategy (three tiers, all surfaced for human review — nothing here
+ * auto-applies):
+ *   1. CONFIRMED — exact core-name match (generic hospitality words stripped,
+ *      token order ignored), no location conflict.
+ *   2. NEAR — brand-prefix-agnostic containment match: one hotel's core token set is
+ *      fully contained in the other's (e.g. "Tamarindo" vs "Four Seasons Resort
+ *      Tamarindo", or "Castiglion del Bosco" vs "Rosewood Castiglion del Bosco").
+ *      Requires an actual city/area match (not just "no conflict") as corroboration,
+ *      plus >=2 tokens in the smaller set, to avoid one-word false positives.
+ *   3. UNCERTAIN — brand-token Jaccard overlap >=0.6 with no location conflict.
+ *      Chain brands (Mandarin Oriental, Four Seasons, ...) repeat words across many
+ *      cities, so this tier is the least trustworthy and always needs a human call.
+ *
+ * Also flags, for the target award code only:
+ *   - REMOVAL CANDIDATES — hotel has the boolean true and/or the tag in `awards`,
+ *     but no source-list entry matched it at all in this run.
+ *   - DRIFT — hotel's boolean flag and its `awards` tag-array entry disagree with
+ *     each other (independent of source-list matching) — a pre-existing data bug.
  *
  * Usage (from hotels-beta/):
- *   DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/hotels/new-hotels-2026/match-hotel-awards.mjs
- *   ... --out <path>            (defaults to award-review-2026-07-07.txt in this folder)
+ *   DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/hotels/new-hotels-2026/match-hotel-awards.mjs --award michelin3keys
+ *   ... --ids 2001,2067        (optional: restrict to an id range "from,to", default = full collection)
+ *   ... --out <path.txt>       (defaults to award-review-<code>-<date>.txt in this folder)
+ *   ... --json <path.json>     (defaults to award-review-<code>-<date>.json in this folder)
  */
 
 import fs from "fs";
@@ -27,14 +40,14 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const AWARDS_DIR = path.join(__dirname, "awards-2026");
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL?.replace(/\/+$/, "");
-const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN;
+export const DIRECTUS_URL = process.env.DIRECTUS_URL?.replace(/\/+$/, "");
+export const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN;
 
 if (!DIRECTUS_URL) throw new Error("Missing env DIRECTUS_URL");
 if (!DIRECTUS_TOKEN) throw new Error("Missing env DIRECTUS_TOKEN");
 
 // award code -> exact Directus `awards` tag-field display string (taxonomy-reference.md)
-const AWARD_DISPLAY = {
+export const AWARD_DISPLAY = {
   michelin3keys: "Michelin 3 Keys",
   aaa5d: "AAA/CAA Five Diamond Hotels",
   cn: "Conde Nast Gold List",
@@ -44,7 +57,7 @@ const AWARD_DISPLAY = {
   telegraph: "Telegraph Best Hotels in the World",
 };
 
-const AWARD_CODES = Object.keys(AWARD_DISPLAY);
+export const ALL_AWARD_CODES = Object.keys(AWARD_DISPLAY);
 
 const COUNTRY_ALIASES = {
   usa: "united states",
@@ -94,18 +107,32 @@ function brandTokens(value, locTokens) {
   return tokenize(value).filter((t) => !GENERIC_DESCRIPTORS.has(t) && !locSet.has(t));
 }
 
-// Core name = hotel name with generic hospitality words stripped, but location words KEPT.
-// Used for an exact-match check that's more lenient than raw full-string equality but still
-// strict enough that a match here is a strong signal (unlike the brand-token jaccard score,
-// which strips location words too and needs corroboration to be trustworthy).
+// Core name = hotel name with generic hospitality words stripped, but everything else
+// (brand + location words) KEPT. Used for an exact-match check that's more lenient than
+// raw full-string equality but still strict enough that a match here is a strong signal.
 // Sorted (order-insensitive) because some award lists reorder the same words, e.g. our DB's
 // "Rosewood Castiglion del Bosco" vs Forbes's "Castiglion del Bosco, A Rosewood Hotel" —
 // same token set, different order; treating that as a non-match would be a false negative.
 function coreNameKey(value) {
-  return tokenize(value)
-    .filter((t) => !GENERIC_DESCRIPTORS.has(t))
-    .sort()
-    .join(" ");
+  return coreTokenSet(value).sort().join(" ");
+}
+
+export function coreTokenSet(value) {
+  return tokenize(value).filter((t) => !GENERIC_DESCRIPTORS.has(t));
+}
+
+// Brand-prefix-agnostic containment check: true if the smaller token set is fully
+// contained within the larger one, e.g. {tamarindo} \subset {four,seasons,tamarindo}.
+// Requires the smaller set to have >=2 tokens to avoid one-word false positives
+// (a single shared word like "palace" or "grand" is not a reliable signal on its own).
+function containmentMatch(tokensA, tokensB) {
+  const a = new Set(tokensA);
+  const b = new Set(tokensB);
+  if (a.size === 0 || b.size === 0) return null;
+  const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a];
+  if (smaller.size < 2) return null;
+  for (const t of smaller) if (!larger.has(t)) return null;
+  return { smallerSize: smaller.size, largerSize: larger.size };
 }
 
 function jaccard(tokensA, tokensB) {
@@ -128,7 +155,7 @@ function locationFields(entry) {
   };
 }
 
-function hotelLocationFields(hotel) {
+export function hotelLocationFields(hotel) {
   return {
     city: normalizeLoose(hotel.city),
     localArea: normalizeLoose(hotel.local_area),
@@ -144,230 +171,324 @@ function countryStatus(hotelLoc, entryLoc) {
   return hotelLoc.country === entryLoc.country ? "match" : "conflict";
 }
 
+// Three-tier location signal: "match" (real city-level agreement) is trusted everywhere;
+// "state-only" (only the broader state/region/local-area level agrees) is trusted for a
+// strong name signal but NOT as sole corroboration for a weak one; "conflict" excludes.
+// The tiering exists because a flat "any field overlaps" check produces two opposite
+// failure modes depending on which fields overlap:
+//   - Trusting state alone is too loose in big, city-dense states/countries: "Four Seasons
+//     Resort The Biltmore Santa Barbara" vs "Four Seasons Hotel San Francisco" both being
+//     "California" must NOT read as a location match.
+//   - Requiring literal city-string overlap is too strict for remote resort properties,
+//     where our DB's `city` is a hyper-local place name (e.g. "Hoedspruit") but the source
+//     list (and our own `state_province_county_island` field) uses the broader named area
+//     ("Kruger National Park") — these must still count as corroborating, just one tier
+//     down from a direct city match.
 function cityStatus(hotelLoc, entryLoc) {
-  const candidates = [hotelLoc.city, hotelLoc.localArea, hotelLoc.state, hotelLoc.region].filter(Boolean);
-  const targets = [entryLoc.city, entryLoc.state].filter(Boolean);
-  if (targets.length === 0) return "unknown";
-  if (candidates.length === 0) return "unknown";
-  for (const c of candidates) {
-    for (const t of targets) {
-      if (c === t || c.includes(t) || t.includes(c)) return "match";
-    }
+  const overlaps = (a, b) => a.some((x) => b.some((y) => x === y || x.includes(y) || y.includes(x)));
+
+  const hotelCityTier = [hotelLoc.city, hotelLoc.localArea].filter(Boolean);
+  const entryTargets = [entryLoc.city, entryLoc.state].filter(Boolean);
+  if (hotelCityTier.length > 0 && entryTargets.length > 0 && overlaps(hotelCityTier, entryTargets)) {
+    return "match";
+  }
+
+  const hotelBroadTier = [hotelLoc.state, hotelLoc.region].filter(Boolean);
+  if (hotelBroadTier.length > 0 && entryTargets.length > 0 && overlaps(hotelBroadTier, entryTargets)) {
+    return "state-only";
+  }
+
+  if ((hotelCityTier.length === 0 && hotelBroadTier.length === 0) || entryTargets.length === 0) {
+    return "unknown";
   }
   return "conflict";
 }
 
-function loadAwardLists() {
-  const lists = {};
-  for (const code of AWARD_CODES) {
-    const filePath = path.join(AWARDS_DIR, `${code}.json`);
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Missing award source file: ${filePath}`);
-    }
-    lists[code] = JSON.parse(fs.readFileSync(filePath, "utf8"));
+export function loadAwardList(code) {
+  const filePath = path.join(AWARDS_DIR, `${code}.json`);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Missing award source file: ${filePath}`);
   }
-  return lists;
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-async function directusFetch(url) {
+export async function directusFetch(url) {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${DIRECTUS_TOKEN}` } });
   const json = await res.json();
   if (!res.ok) throw new Error(`Directus request failed: ${JSON.stringify(json)}`);
   return json.data;
 }
 
-async function loadHotels() {
+export async function loadHotels(code, idRange) {
   const fields = [
     "id", "hotel_name", "affiliation", "country", "region",
     "state_province_county_island", "city", "local_area",
+    "published",
     "awards", "best50", "cn", "forbes5", "michelin3keys", "telegraph", "tl100", "aaa5d",
   ].join(",");
-  const url = `${DIRECTUS_URL}/items/hotels?filter[id][_between]=2001,2067&fields=${fields}&limit=-1&sort=id`;
+  const filter = idRange ? `&filter[id][_between]=${idRange[0]},${idRange[1]}` : "";
+  const url = `${DIRECTUS_URL}/items/hotels?${filter ? filter.slice(1) + "&" : ""}fields=${fields}&limit=-1&sort=id`;
   return directusFetch(url);
 }
 
-function matchHotelToAward(hotel, hotelLoc, hotelTokens, hotelCoreKey, entry, code) {
+export function matchHotelToAward(hotel, hotelLoc, hotelCoreKey, hotelCoreSet, entry) {
   const entryLoc = locationFields(entry);
   const cStatus = countryStatus(hotelLoc, entryLoc);
   const cityStat = cityStatus(hotelLoc, entryLoc);
 
-  // A real country conflict is a hard fact — always exclude.
-  if (cStatus === "conflict") return null;
-
-  const entryCoreKey = coreNameKey(entry.hotel_name);
+  const entryCoreSet = coreTokenSet(entry.hotel_name);
+  const entryCoreKey = entryCoreSet.slice().sort().join(" ");
   const coreExact = hotelCoreKey === entryCoreKey;
 
+  // An exact core-name match is a strong enough signal that a country-label mismatch
+  // (our DB says "China", the source says "Hong Kong"; DB says "St. Barthelemy", source
+  // says "French West Indies" — same real place, different naming convention) must NOT
+  // hard-exclude it, and a "state-only" location match (broader-area agreement without a
+  // literal city-string match) is trusted just like a full city match — an exact,
+  // distinctive hotel name colliding by coincidence in the same state/region is very
+  // unlikely. Only a real city-level conflict (or country conflict) downgrades to
+  // "uncertain" instead of silently dropping the candidate.
   if (coreExact) {
-    if (cityStat === "conflict") {
-      // Core name matches exactly (after stripping "hotel"/"resort"/"spa" etc), but the
-      // city/area string differs — e.g. DB city "Tamarindo" vs source location
-      // "La Manzanilla" for the same physical property. Too strong a name signal to drop
-      // silently; surface for human review instead.
+    if (cStatus === "conflict" || cityStat === "conflict") {
       return {
-        tier: "uncertain", score: 1, cStatus, cityStat, entry, entryLoc, code,
-        reason: "core name exact match but location differs — check same property",
+        tier: "uncertain", score: 1, cStatus, cityStat, entry, entryLoc,
+        reason: cStatus === "conflict"
+          ? "core name exact match but country label differs — check same property"
+          : "core name exact match but location differs — check same property",
       };
     }
-    return { tier: "confirmed", score: 1, cStatus, cityStat, entry, entryLoc, code };
+    return { tier: "confirmed", score: 1, cStatus, cityStat, entry, entryLoc };
   }
 
-  // Below this point the name isn't an exact core match, so we lean on brand-token overlap.
-  // Chain brands (Mandarin Oriental, Four Seasons, ...) repeat the same words across many
-  // cities, so without location corroboration this scoring alone is not trustworthy —
-  // require the city not be in outright conflict here (unlike the exact-match branch above).
-  if (cityStat === "conflict") return null;
+  // Brand-prefix-agnostic containment: one side's core tokens fully contained in the
+  // other's (brand name present on only one side). A real city-level match is trusted
+  // enough to survive a country-label conflict too (DB "St. Barthelemy" vs source's
+  // umbrella "French West Indies" for the same island) — downgrade to "uncertain" rather
+  // than hard-excluding. A "state-only" match is a weaker signal than that (containment
+  // is already a looser name check than exact), so it downgrades to "uncertain" too
+  // rather than "near" — still surfaced for review, just not auto-treated as safe.
+  const containment = containmentMatch(hotelCoreSet, entryCoreSet);
+  if (containment && cityStat === "match") {
+    return {
+      tier: cStatus === "conflict" ? "uncertain" : "near",
+      score: containment.smallerSize / containment.largerSize, cStatus, cityStat,
+      entry, entryLoc,
+      reason: cStatus === "conflict"
+        ? "brand-prefix-agnostic containment match but country label differs — check same property"
+        : "brand-prefix-agnostic containment match",
+    };
+  }
+  if (containment && cityStat === "state-only" && cStatus !== "conflict") {
+    return {
+      tier: "uncertain", score: containment.smallerSize / containment.largerSize, cStatus, cityStat,
+      entry, entryLoc, reason: "brand-prefix-agnostic containment match but only broader-area location agrees — check same property",
+    };
+  }
+
+  // Below this point the signal is weaker than an exact or containment match, so it needs
+  // a real city-level match (not just state-level) as corroboration — state-only
+  // corroboration plus weak brand-token overlap is exactly the failure mode that produced
+  // false positives like "Four Seasons Resort The Biltmore Santa Barbara" matching
+  // "Four Seasons Hotel San Francisco" (same brand, same state, different city).
+  if (cStatus === "conflict" || cityStat !== "match") return null;
 
   const hotelLocTokens = [hotelLoc.city, hotelLoc.localArea, hotelLoc.state].filter(Boolean).flatMap((s) => s.split(" "));
   const entryLocTokens = [entryLoc.city, entryLoc.state].filter(Boolean).flatMap((s) => s.split(" "));
   const score = jaccard(brandTokens(hotel.hotel_name, hotelLocTokens), brandTokens(entry.hotel_name, entryLocTokens));
 
   if (score >= 0.6) {
-    return { tier: "uncertain", score, cStatus, cityStat, entry, entryLoc, code, reason: "similar brand name" };
+    return { tier: "uncertain", score, cStatus, cityStat, entry, entryLoc, reason: "similar brand name" };
   }
   return null;
 }
 
-function bestCandidateForCode(hotel, hotelLoc, hotelTokens, hotelCoreKey, entries, code) {
+export const TIER_RANK = { confirmed: 3, near: 2, uncertain: 1 };
+
+function bestCandidate(hotel, hotelLoc, hotelCoreKey, hotelCoreSet, entries) {
   let best = null;
   for (const entry of entries) {
-    const result = matchHotelToAward(hotel, hotelLoc, hotelTokens, hotelCoreKey, entry, code);
+    const result = matchHotelToAward(hotel, hotelLoc, hotelCoreKey, hotelCoreSet, entry);
     if (!result) continue;
-    if (!best || result.score > best.score || (result.tier === "confirmed" && best.tier !== "confirmed")) {
+    if (!best || TIER_RANK[result.tier] > TIER_RANK[best.tier] ||
+        (TIER_RANK[result.tier] === TIER_RANK[best.tier] && result.score > best.score)) {
       best = result;
     }
   }
   return best;
 }
 
-function formatEntryLoc(entry) {
+export function formatEntryLoc(entry) {
   const parts = [entry.city ?? entry.location, entry.state_region, entry.country].filter(Boolean);
   return parts.join(", ") || "(no location data)";
 }
 
+function parseArgs() {
+  const argv = process.argv.slice(2);
+  const get = (flag) => {
+    const i = argv.indexOf(flag);
+    return i !== -1 ? argv[i + 1] : undefined;
+  };
+  const award = get("--award");
+  const idsArg = get("--ids");
+  const idRange = idsArg ? idsArg.split(",").map((s) => s.trim()) : null;
+  const outArg = get("--out");
+  const jsonArg = get("--json");
+  return { award, idRange, outArg, jsonArg };
+}
+
 function main() {
   return (async () => {
-    const outArg = process.argv.indexOf("--out");
-    const outPath = outArg !== -1
-      ? path.resolve(process.argv[outArg + 1])
-      : path.join(__dirname, "award-review-2026-07-07.txt");
+    const { award, idRange, outArg, jsonArg } = parseArgs();
 
-    const awardLists = loadAwardLists();
-    const hotels = await loadHotels();
-
-    console.log(`Loaded ${hotels.length} hotels, ${AWARD_CODES.length} award lists.`);
-    for (const code of AWARD_CODES) {
-      console.log(`  ${code}: ${awardLists[code].length} entries`);
+    if (!award || !ALL_AWARD_CODES.includes(award)) {
+      throw new Error(`--award <code> is required, one of: ${ALL_AWARD_CODES.join(", ")}`);
     }
+    const code = award;
+    const displayName = AWARD_DISPLAY[code];
+    const today = new Date().toISOString().slice(0, 10);
 
-    const confirmedByHotel = new Map(); // id -> [{code, entry, ...}]
-    const uncertainByHotel = new Map();
-    const unconfirmedExisting = []; // db already has award true, no source candidate at all
+    const outPath = outArg
+      ? path.resolve(outArg)
+      : path.join(__dirname, `award-review-${code}-${today}.txt`);
+    const jsonPath = jsonArg
+      ? path.resolve(jsonArg)
+      : path.join(__dirname, `award-review-${code}-${today}.json`);
+
+    const awardList = loadAwardList(code);
+    const hotels = await loadHotels(code, idRange);
+
+    console.log(`Scope: ${idRange ? `ids ${idRange[0]}-${idRange[1]}` : "full collection"}`);
+    console.log(`Loaded ${hotels.length} hotels. Award: ${code} (${displayName}), ${awardList.length} source entries.`);
+
+    const confirmed = [];
+    const near = [];
+    const uncertain = [];
+    const removalCandidates = [];
+    const drift = [];
 
     for (const hotel of hotels) {
       const hotelLoc = hotelLocationFields(hotel);
-      const hotelTokens = tokenize(hotel.hotel_name);
-      const hotelCoreKey = coreNameKey(hotel.hotel_name);
+      const hotelCoreSet = coreTokenSet(hotel.hotel_name);
+      const hotelCoreKey = hotelCoreSet.slice().sort().join(" ");
 
-      for (const code of AWARD_CODES) {
-        const best = bestCandidateForCode(hotel, hotelLoc, hotelTokens, hotelCoreKey, awardLists[code], code);
-        const dbHasIt = !!hotel[code];
+      const booleanVal = !!hotel[code];
+      const tagArray = Array.isArray(hotel.awards) ? hotel.awards : [];
+      const tagPresent = tagArray.includes(displayName);
 
-        if (best?.tier === "confirmed") {
-          if (!confirmedByHotel.has(hotel.id)) confirmedByHotel.set(hotel.id, []);
-          confirmedByHotel.get(hotel.id).push({ ...best, dbHasIt });
-        } else if (best?.tier === "uncertain") {
-          if (!uncertainByHotel.has(hotel.id)) uncertainByHotel.set(hotel.id, []);
-          uncertainByHotel.get(hotel.id).push({ ...best, dbHasIt });
-        } else if (dbHasIt) {
-          unconfirmedExisting.push({ hotel, code });
-        }
+      if (booleanVal !== tagPresent) {
+        drift.push({
+          id: hotel.id, hotel_name: hotel.hotel_name, country: hotel.country, city: hotel.city,
+          booleanVal, tagPresent,
+        });
+      }
+
+      const best = bestCandidate(hotel, hotelLoc, hotelCoreKey, hotelCoreSet, awardList);
+
+      const record = {
+        id: hotel.id, hotel_name: hotel.hotel_name, country: hotel.country, city: hotel.city,
+        published: hotel.published, booleanVal, tagPresent,
+      };
+
+      if (best?.tier === "confirmed") {
+        confirmed.push({ ...record, source: best.entry.hotel_name, sourceLoc: formatEntryLoc(best.entry) });
+      } else if (best?.tier === "near") {
+        near.push({
+          ...record, source: best.entry.hotel_name, sourceLoc: formatEntryLoc(best.entry),
+          score: best.score, reason: best.reason,
+        });
+      } else if (best?.tier === "uncertain") {
+        uncertain.push({
+          ...record, source: best.entry.hotel_name, sourceLoc: formatEntryLoc(best.entry),
+          score: best.score, cStatus: best.cStatus, cityStat: best.cityStat, reason: best.reason,
+        });
+      } else if (booleanVal || tagPresent) {
+        removalCandidates.push(record);
       }
     }
 
+    // --- text report ---
     const lines = [];
     const push = (s = "") => lines.push(s);
 
-    push("HOTEL AWARDS AUDIT — new hotels 2001-2067 vs awards-2026/ source lists");
-    push(`Generated: 2026-07-07 by match-hotel-awards.mjs`);
+    push(`HOTEL AWARDS AUDIT — ${code} (${displayName}) — full-collection review`);
+    push(`Generated: ${today} by match-hotel-awards.mjs`);
+    push(`Scope: ${idRange ? `ids ${idRange[0]}-${idRange[1]}` : "full collection"}`);
     push("");
     push("=".repeat(78));
     push("SUMMARY");
     push("=".repeat(78));
     push(`Hotels checked: ${hotels.length}`);
-    push(`Award source entries: ${AWARD_CODES.map((c) => `${c}=${awardLists[c].length}`).join(", ")}`);
-    push(`Hotels with >=1 confirmed award match: ${confirmedByHotel.size}`);
-    push(`Hotels with >=1 uncertain candidate (needs your review): ${uncertainByHotel.size}`);
-    push(`Existing DB awards with no source-list candidate at all: ${unconfirmedExisting.length}`);
+    push(`Source entries (${code}.json): ${awardList.length}`);
+    push(`Confirmed matches: ${confirmed.length}`);
+    push(`Near matches (brand-prefix-agnostic): ${near.length}`);
+    push(`Uncertain matches: ${uncertain.length}`);
+    push(`Removal candidates (flag/tag set, no source match): ${removalCandidates.length}`);
+    push(`Boolean/tag drift (pre-existing inconsistency): ${drift.length}`);
     push("");
 
-    push("=".repeat(78));
-    push("SECTION A — CONFIRMED MATCHES (exact name match, no country conflict)");
-    push("=".repeat(78));
-    push("These will be applied (boolean = true AND added to the `awards` tag array)");
-    push("when you approve running the apply step.");
-    push("");
-
-    if (confirmedByHotel.size === 0) {
-      push("(none)");
-    } else {
-      for (const hotel of hotels) {
-        const matches = confirmedByHotel.get(hotel.id);
-        if (!matches) continue;
-        push(`[id ${hotel.id}] ${hotel.hotel_name} (${hotel.country} / ${hotel.city})`);
-        for (const m of matches) {
-          const status = m.dbHasIt ? "already true in DB — confirmed correct, no change" : "currently false in DB — WILL ADD";
-          push(`  ${m.code.toUpperCase().padEnd(14)} ${status}`);
-          push(`      source: "${m.entry.hotel_name}" — ${formatEntryLoc(m.entry)} [${m.code}.json]`);
-        }
-        push("");
+    const section = (title, list, fmt) => {
+      push("=".repeat(78));
+      push(title);
+      push("=".repeat(78));
+      if (list.length === 0) {
+        push("(none)");
+      } else {
+        for (const r of list) push(fmt(r));
       }
-    }
+      push("");
+    };
 
-    push("=".repeat(78));
-    push("SECTION B — EXISTING DB AWARDS WITH NO MATCHING SOURCE ENTRY (review)");
-    push("=".repeat(78));
-    push("These hotels currently have a boolean award flag set to true (from the");
-    push("original hotel-creation data), but no entry in the corresponding award-2026");
-    push("source list matched them at all. Confirm whether to keep or remove.");
-    push("");
+    section(
+      "SECTION A — CONFIRMED MATCHES (exact core-name match, no location conflict)",
+      confirmed,
+      (r) => `[id ${r.id}] ${r.hotel_name} (${r.country} / ${r.city}) — currently ${r.booleanVal ? "TRUE" : "false"} — source: "${r.source}" (${r.sourceLoc})`
+    );
 
-    if (unconfirmedExisting.length === 0) {
-      push("(none)");
-    } else {
-      for (const { hotel, code } of unconfirmedExisting) {
-        push(`[id ${hotel.id}] ${hotel.hotel_name} (${hotel.country} / ${hotel.city}) — ${code.toUpperCase()} is true in DB, no candidate found in ${code}.json`);
-      }
-    }
-    push("");
+    section(
+      "SECTION B — NEAR MATCHES (brand-prefix-agnostic containment, needs review)",
+      near,
+      (r) => `[id ${r.id}] ${r.hotel_name} (${r.country} / ${r.city}) — currently ${r.booleanVal ? "TRUE" : "false"} — source: "${r.source}" (${r.sourceLoc}) [score ${r.score.toFixed(2)}]`
+    );
 
-    push("=".repeat(78));
-    push("SECTION C — UNCERTAIN MATCHES: NEEDS YOUR CONFIRMATION (id included)");
-    push("=".repeat(78));
-    push("Reply with the hotel id + award code for each one telling me MATCH or NOT A MATCH.");
-    push("");
+    section(
+      "SECTION C — UNCERTAIN MATCHES (needs your confirmation)",
+      uncertain,
+      (r) => `[id ${r.id}] ${r.hotel_name} (${r.country} / ${r.city}) — currently ${r.booleanVal ? "TRUE" : "false"} — candidate: "${r.source}" (${r.sourceLoc}) [score ${r.score.toFixed(2)}, country ${r.cStatus}, city ${r.cityStat}, reason: ${r.reason}]`
+    );
 
-    if (uncertainByHotel.size === 0) {
-      push("(none)");
-    } else {
-      for (const hotel of hotels) {
-        const matches = uncertainByHotel.get(hotel.id);
-        if (!matches) continue;
-        push(`[id ${hotel.id}] ${hotel.hotel_name} (${hotel.country} / ${hotel.city}) — currently: ${AWARD_CODES.filter((c) => hotel[c]).join(", ") || "no awards set"}`);
-        for (const m of matches) {
-          push(`  ${m.code.toUpperCase().padEnd(14)} candidate: "${m.entry.hotel_name}" — ${formatEntryLoc(m.entry)}  [score ${m.score.toFixed(2)}, country ${m.cStatus}, city ${m.cityStat}, reason: ${m.reason}]`);
-        }
-        push("");
-      }
-    }
+    section(
+      "SECTION D — REMOVAL CANDIDATES (flag and/or tag set, no source-list match found)",
+      removalCandidates,
+      (r) => `[id ${r.id}] ${r.hotel_name} (${r.country} / ${r.city}) — boolean=${r.booleanVal}, tag=${r.tagPresent}`
+    );
+
+    section(
+      "SECTION E — BOOLEAN/TAG DRIFT (pre-existing inconsistency, independent of source match)",
+      drift,
+      (r) => `[id ${r.id}] ${r.hotel_name} (${r.country} / ${r.city}) — boolean=${r.booleanVal}, tag=${r.tagPresent}`
+    );
 
     fs.writeFileSync(outPath, lines.join("\n"), "utf8");
+
+    // --- structured JSON for the review artifact ---
+    const jsonOut = {
+      code, displayName, generatedAt: today,
+      scope: idRange ? { from: Number(idRange[0]), to: Number(idRange[1]) } : "full-collection",
+      hotelsChecked: hotels.length, sourceEntries: awardList.length,
+      confirmed, near, uncertain, removalCandidates, drift,
+    };
+    fs.writeFileSync(jsonPath, JSON.stringify(jsonOut, null, 2), "utf8");
+
     console.log("");
-    console.log(`Report written to ${outPath}`);
-    console.log(`Confirmed: ${confirmedByHotel.size} hotels | Uncertain: ${uncertainByHotel.size} hotels | Unconfirmed-existing: ${unconfirmedExisting.length}`);
+    console.log(`Text report: ${outPath}`);
+    console.log(`JSON data:   ${jsonPath}`);
+    console.log(`Confirmed: ${confirmed.length} | Near: ${near.length} | Uncertain: ${uncertain.length} | Removal candidates: ${removalCandidates.length} | Drift: ${drift.length}`);
   })();
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

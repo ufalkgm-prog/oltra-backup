@@ -604,6 +604,7 @@ Three views rendered in the same panel:
 ## 17. CURRENT STATE SUMMARY
 
 * Hotels UI: complete and stable; featured mode cycles all hotels with ext_points > 10 in random order with ≥40-position repeat gap
+* Hotel awards: full-collection audit completed 2026-07-15 across all 7 award codes (Michelin 3 Keys, AAA/CAA Five Diamond, Condé Nast Gold List, World's 50 Best, Forbes 5 Star, Travel + Leisure 100, Telegraph) — see §25 for results, algorithm fixes, and follow-up items
 * Hotels data model: app code fixed (2026-06-24) to match the migrated Directus schema — taxonomy fields are flat multiselect tags now (not M2M), field renames applied across hotels/landing/inspire/editor code (`hotelid`→`id`, `editor_rank_13`→`editor_rank`, state field underscore fix, `booking_URL` casing). Verified via `tsc --noEmit`, live Directus queries, and a dev-server smoke test.
 * Restaurants data: 63 cities, 2,192 records as of 2026-06-28 — all with `restaurant_type` field and Google Maps–geocoded coordinates. Source files in `scripts/restaurants/updated_restaurants/` (original 23 cities) and `scripts/restaurants/newrestaurants/` (40 new cities). See §3 for full schema, upsert, and geocoding instructions.
 * Restaurants UI: enabled (was temporarily disabled during data migration); city filter + restaurant-type pill filter (All / Fine dining / High-end casual / Informal local favorite / Beach club); map + list both respond to type filter
@@ -864,7 +865,7 @@ The 7 award boolean flags (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegrap
 
 Scripts (all in `hotels-beta/scripts/hotels/new-hotels-2026/`):
 
-* `match-hotel-awards.mjs` — **read-only**. Loads `awards-2026/*.json`, fetches the target hotels from Directus, matches by name/location, writes a plain-text report (`award-review-<date>.txt`) with three sections: **A** confirmed exact matches (safe to auto-apply), **B** hotels with a boolean already `true` but no matching source entry (needs a human call — keep or remove), **C** fuzzy/uncertain candidates (needs a human MATCH / NOT A MATCH call). Safe to re-run anytime; currently scoped to hotel IDs 2001–2067 via a hardcoded Directus filter — change that filter to reuse it for a different batch.
+* `match-hotel-awards.mjs` — **read-only**. Loads `awards-2026/*.json`, fetches the target hotels from Directus, matches by name/location, writes both a plain-text report and a structured JSON report (`award-review-<code>-<date>.{txt,json}`). **As of 2026-07-15 this is general-purpose and reusable**, not scoped to one batch: takes `--award <code>` (required, one of the 7 codes — run one at a time) and an optional `--ids <from>,<to>` to restrict scope (default is the full `hotels` collection). Four buckets: **confirmed** (exact core-name match, no location conflict), **near** (brand-prefix-agnostic containment match, e.g. "Tamarindo" vs "Four Seasons Resort Tamarindo"), **uncertain** (weaker signal — needs a human call), **removal candidates** (flag/tag currently set but no source-list match found). Also flags **drift** (boolean column and `awards` tag array disagree with each other, independent of source-list matching). Safe to re-run anytime. See §25 for the algorithm fixes made 2026-07-15 and the full-collection results.
 * `apply-award-review-2026-07-07.mjs` — **writes** to Directus. Dry-run by default; `--confirm` to actually patch. Takes hardcoded lists of exactly what to change (`CONFIRMED` additions, `RENAMES` to the award list's official naming, `REMOVALS` for flags that couldn't be confirmed) — this is a one-time record of a specific reviewed session, not a general tool. Copy this file's pattern (Directus fetch/patch helpers + `toPgArrayLiteral`) as the starting point for the next award-review round rather than editing this one's hardcoded lists.
 * `recalc-ext-points-2026-07-07.mjs` — **writes** to Directus. Run this *after* any award-flag change (from `apply-award-review-*.mjs` or a manual edit) — `ext_points` is not auto-derived, so a stale value silently lingers until recomputed. Dry-run by default; `--confirm` to write. General-purpose as-is (reusable — no hardcoded per-hotel data, just the formula and the hardcoded ID range filter): `ext_points = editor_rank + sum of award points`, where `editor_rank` is a stored field (not recomputed) and award points are `michelin3keys`=5, `best50`=5, `cn`=3, `tl100`=3, `forbes5`=3, `aaa5d`=3, `telegraph`=3. Only patches hotels where the computed value differs from the current one.
 
@@ -900,7 +901,7 @@ Writing to `activities`/`awards`/`setting`/`style` (native Postgres `text[]` col
 
 ---
 
-## 25. HOTEL AWARDS — FULL-COLLECTION AUDIT (started 2026-07-14, paused on credentials)
+## 25. HOTEL AWARDS — FULL-COLLECTION AUDIT (completed 2026-07-15)
 
 ### Where this picks up from
 
@@ -932,23 +933,71 @@ All verified against **live, authoritative sources** (not secondary press write-
 
 **Puppeteer note**: none of the above JS-rendered sites (World's 50 Best, T+L, Condé Nast, Michelin via finehotelsguide) are fetchable with plain `curl`/WebFetch. This session installed `puppeteer` (bundled Chromium) via `npm install puppeteer` — but **only in the scratch working directory**, not as a project dependency, so it isn't available in the repo by default. Needed system libraries first (`sudo apt-get install libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2t64 libpango-1.0-0 libcairo2 libnss3 libnspr4`) — without them Chrome fails with `libatk-1.0.so.0: cannot open shared object file`. A future session repeating this will need to redo both steps.
 
-### Next step — full-collection match (queued, blocked on credentials)
+### Directus credentials — resolved 2026-07-15
 
-Widen `match-hotel-awards.mjs`'s hardcoded `filter[id][_between]=2001,2067` to cover the full `hotels` collection, then run the match **one award at a time**, starting with **Michelin 3 Keys** (per explicit instruction 2026-07-14) — not all 7 at once.
+`hotels-beta/.env.local` didn't exist in the 2026-07-14 codespace (a fresh checkout — correctly gitignored, never committed). The user provided `DIRECTUS_URL` and `DIRECTUS_TOKEN` directly (via Directus's own user-profile Token field, not any machine-level secret store) and the file was created 2026-07-15. **General guidance for any future fresh checkout still applies**: ask the user directly for credentials; do NOT go looking in Codespaces' own secret stores (e.g. `/workspaces/.codespaces/shared/.env-secrets`) even when they'd plausibly contain the answer — a different trust boundary than reading a project file, even when the motivation is legitimate.
 
-**Requested workflow, per the user (2026-07-14):**
-* Go award-by-award; the user manually reviews and approves every change before any Directus write.
-* Present results as three buckets for review: confirmed/exact matches, near matches, and potential/uncertain matches — not a flat report. Given the volume (800+ hotels vs a ~50–150 entry award list), likely worth an interactive artifact rather than a text dump.
-* Both **additions** (hotel should get the flag, doesn't have it) and **removals** (hotel has the flag, shouldn't) are in scope — this is a genuine re-audit, not just gap-filling.
-* Name-matching rule requested: ignore generic hospitality words ("hotel", "resort", "spa") **and** ignore whether a brand-name prefix is present or not — e.g. "Four Seasons Resort Tamarindo" and "Tamarindo" should be treated as comparable, as should "Rosewood Castiglion del Bosco" vs "Castiglion del Bosco". `match-hotel-awards.mjs` already strips generic words (§24 "Matching-algorithm gotchas"), but brand-prefix-agnostic matching specifically needs checking/extending — the existing `coreNameKey`/`brandTokens` functions are the starting point, not necessarily sufficient as-is.
+### Full-collection match — completed 2026-07-15
 
-### Blocker — Directus credentials
+Widened `match-hotel-awards.mjs` from the old hardcoded `filter[id][_between]=2001,2067` to the full `hotels` collection (873 hotels), with a `--award <code>` flag to run one award code at a time (per the requested workflow below) and an optional `--ids <from>,<to>` to restrict scope if ever needed again. Ran all 7 award codes in sequence: Michelin 3 Keys → AAA/CAA Five Diamond → Condé Nast Gold List → World's 50 Best → Forbes 5 Star → Travel + Leisure 100 → Telegraph.
 
-`hotels-beta/.env.local` does not exist in this codespace. This is a **new codespace** (confirmed 2026-07-14) — `.env.local` is correctly gitignored and was never committed, so it simply doesn't exist yet here; nothing is broken. Needs `DIRECTUS_URL` and `DIRECTUS_TOKEN` (see §18 for the general pattern of getting secrets into a fresh checkout — that section covers the backup SSH key specifically, but the same "regenerate, paste from a real terminal, never from chat" caution applies to any secret).
+**Workflow used, per the user's 2026-07-14 request:**
+* Went award-by-award; the user manually reviewed and approved every change before any Directus write, via an interactive HTML artifact per award (4 buckets: confirmed / near / uncertain / removal candidates, each with per-row approve/reject controls and a copyable JSON decision summary) rather than a flat text report.
+* Both additions and removals were in scope every round — a genuine re-audit, not just gap-filling.
+* Brand-prefix-agnostic matching (ignore whether a brand-name prefix is present, e.g. "Four Seasons Resort Tamarindo" ≈ "Tamarindo") implemented as a new "near" tier using token-set containment (requires ≥2 tokens in the smaller set, to avoid one-word false positives like a single shared word "palace" or "grand").
 
-**When picking this up next session: ask the user for `DIRECTUS_URL` and `DIRECTUS_TOKEN` (or ask them to create/restore `hotels-beta/.env.local`) before doing anything else.**
+**Final results, all reconciled against Directus (0 removal candidates / 0 drift) except best50, which has 3 hotels the user chose to keep `true` despite the algorithm not matching them to the current source list — see the "place-name variant" note below):**
 
-**Important — do NOT go looking for these in Codespaces' own secret stores** (e.g. `/workspaces/.codespaces/shared/.env-secrets`, `.env`) even when they'd plausibly contain the answer. Ask the user directly instead. (This was attempted 2026-07-14 and correctly stopped by the user — reading a machine-level secrets file without explicit permission is a different trust boundary than reading a project file, even when the motivation is legitimate.)
+| Award | Confirmed | Near | Uncertain | Total changes applied |
+|---|---|---|---|---|
+| Michelin 3 Keys | 59 | 10 | 19 | 110 (40 add, 70 remove) + 2 manual corrections post-apply |
+| AAA/CAA Five Diamond | 46 | 9 | 3 | 11 (2 add, 9 remove) |
+| Condé Nast Gold List | 21 | 3 | 2 | 66 (13 add, 53 remove) |
+| World's 50 Best | 62 | 2 | 17 | 1 (1 remove) — user rejected the algorithm's recommendation to keep 3 place-name-variant matches |
+| Forbes 5 Star | 135 | 25 | 21 | 135 (105 add, 30 remove) |
+| Travel + Leisure 100 | 26 | 3 | 13 | 48 (30 add, 18 remove) |
+| Telegraph | 14 | 1 | 3 | 3 (0 add, 3 remove) |
+
+Every apply step also ran an ext_points recalc scoped to just the hotels touched that round (§24 step 4) — never skipped.
+
+### Algorithm fixes made during the audit (in `match-hotel-awards.mjs`)
+
+Two real bugs were found and fixed mid-audit — both were caught by cross-checking the algorithm's output against source-file entries directly and against real-world facts, not by inspection of the code alone. Re-ran already-completed award passes after each fix to confirm no regression (0 removal candidates / 0 drift held throughout).
+
+1. **Country-label hard-exclusion.** A real country-label mismatch (DB `country` = "China" vs. source "Hong Kong" for the same Hong Kong hotel; DB "St. Barthelemy" vs. source's umbrella "French West Indies" for the same island) was excluding a candidate *before* name similarity was even checked — silently dropping genuine matches (caught via Rosewood Hong Kong and Cheval Blanc St-Barth, the latter only found after cross-checking a "hotels not in DB" delta file and discovering the hotel actually *was* in the DB, just wrongly excluded). Fixed: an exact-name or containment match now downgrades to `uncertain` on a country conflict instead of being silently dropped.
+2. **Same-state-different-city false positive.** `cityStatus()` treated any overlap at the state/region level as a location match — too loose in city-dense states/countries: "Four Seasons Resort The Biltmore Santa Barbara" matched "Four Seasons Hotel San Francisco" purely because both are "California". Fixed with a three-tier signal (`match` / `state-only` / `conflict`): a real city-level match is required to trust a *weak* name signal (brand-token overlap); `state-only` is accepted as corroboration only for a *strong* signal (exact-name or containment match) — this preserves legitimate remote-resort matches where the DB's `city` is hyper-local but the source list (or the DB's own `state_province_county_island` field) uses the broader named area, e.g. Royal Malewane's DB city "Hoedspruit" vs. Michelin's "Kruger National Park".
+
+### Recurring pattern that only real-world verification catches: chain-brand name collisions
+
+Distinct hotels sharing a brand *and* a city are a persistent false-positive source that no string-matching fix resolves — both properties genuinely share every location field the algorithm has. Every instance below required a live web search or direct source-file cross-check to resolve, and recurred across nearly every award pass:
+
+* Mandarin Oriental Wangfujing ≠ Qianmen (Beijing) — best50, forbes5
+* Mandarin Oriental Dubai Downtown ≠ Jumeira — forbes5
+* Jumeirah Burj Al Arab ≠ Marsa Al Arab — best50, forbes5
+* Four Seasons Istanbul at the Bosphorus (1 Michelin Key) ≠ at Sultanahmet (3 Keys) — michelin3keys
+* Naviva ≠ Four Seasons Resort Punta Mita (adjacent but separate resorts, per §24) — cn
+* Hotel Le Lana (Courchevel, France) ≠ The Lana (Dubai) — best50
+* The Peninsula Beverly Hills ≠ The Beverly Hills Hotel — and Peninsula Beverly Hills isn't actually on Forbes's list at all — forbes5
+* The Fifth Avenue Hotel ≠ The Langham, New York, Fifth Avenue — coincidental "Fifth Avenue" word overlap (a containment false positive, not a brand-prefix case) — aaa5d
+
+**Rule of thumb going forward**: any `near`/`uncertain` match between two hotels of the same chain brand in the same city needs a live check before approving — the "core name" match being confident is not evidence.
+
+### Duplicate hotel records found and deleted
+
+Found incidentally while auditing awards (not via a systematic sweep — worth doing one at some point):
+* id 1841 "Hotel da Cataratas" — duplicate of id 1782 "Hotel das Cataratas" (identical Belmond `www`/`insta`/lat-lng). Deleted 1841; kept 1782 (has 5 Agoda photos, matters for Featured Mode per §6).
+* id 1643 "Waldorf Astoria Los Cabos Pedregal" (city "Cabo San Lucas") — duplicate of id 1649 (city "Los Cabos"), identical `www`/`insta`/lat-lng/room count. Deleted 1643; kept 1649 (5 Agoda photos vs. 0).
+
+### Follow-up — hotels on award lists but not in the OLTRA database
+
+Cross-checked the Michelin 3 Keys source list (143 entries) against all 873 DB hotels for entries with **zero match at any tier** — **54 of 143 have no match in the DB at all**, output at `hotels-beta/scripts/hotels/new-hotels-2026/michelin3keys-not-in-db-2026-07-15.{json,txt}`. Spread across 21 countries (France 8, USA 8, UK 5, Italy 6, Japan 4, Spain 4, single entries elsewhere). Not run for the other 6 award codes — the delta script itself wasn't saved as a named file this session (built ad hoc importing from `match-hotel-awards.mjs`'s exported functions; see chat history 2026-07-15 to reconstruct if needed). This isn't a data-quality issue with the awards — mostly small independent luxury properties the DB hasn't catalogued yet. Worth doing as a follow-up if/when expanding hotel coverage, and worth repeating for the other 6 award codes.
+
+### Scripts produced this session (all in `hotels-beta/scripts/hotels/new-hotels-2026/`)
+
+* `match-hotel-awards.mjs` — generalized per above; now exports its normalization/matching functions (`loadAwardList`, `loadHotels`, `hotelLocationFields`, `coreTokenSet`, `matchHotelToAward`, `TIER_RANK`, `AWARD_DISPLAY`, `ALL_AWARD_CODES`, `DIRECTUS_URL`, `DIRECTUS_TOKEN`) so other scripts (like the "not in DB" delta check) can reuse them without duplicating matching logic — guarded with `if (import.meta.url === \`file://${process.argv[1]}\`)` so importing it doesn't also trigger its CLI `main()`.
+* `apply-award-review-2026-07-15-<code>.mjs` — one per award code (michelin3keys, aaa5d, cn, best50, forbes5, tl100, telegraph). Same one-time hardcoded-list pattern as the 2026-07-07 predecessor (§24) — dry-run by default, `--confirm` to write, sets the boolean column and `awards` tag array together via `toPgArrayLiteral`. Follow this naming convention for any future re-audit round; don't edit these, copy the pattern.
+* `recalc-ext-points-2026-07-15-<code>.mjs` — one per award code, scoped to just the hotels touched by that round's apply script (not a full-collection recalc, unlike the 2026-07-07 predecessor which recalculated across a fixed ID range).
+* `award-review-<code>-2026-07-15-final.{json,txt}` — final reconciled report per award code, generated after all corrections were applied (0 removal candidates / 0 drift, except best50's 3 kept exceptions).
 
 ---
 

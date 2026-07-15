@@ -1,0 +1,62 @@
+HOTEL AWARDS AUDIT — cn (Conde Nast Gold List) — full-collection review
+Generated: 2026-07-15 by match-hotel-awards.mjs
+Scope: full collection
+
+==============================================================================
+SUMMARY
+==============================================================================
+Hotels checked: 873
+Source entries (cn.json): 73
+Confirmed matches: 21
+Near matches (brand-prefix-agnostic): 3
+Uncertain matches: 2
+Removal candidates (flag/tag set, no source match): 0
+Boolean/tag drift (pre-existing inconsistency): 0
+
+==============================================================================
+SECTION A — CONFIRMED MATCHES (exact core-name match, no location conflict)
+==============================================================================
+[id 1113] The Oberoi Mumbai (India / Mumbai) — currently TRUE — source: "The Oberoi, Mumbai" (Mumbai, India)
+[id 1119] Buahan, A Banyan Tree Escape (Indonesia / Buahan) — currently TRUE — source: "Buahan, A Banyan Tree Escape" (Indonesia)
+[id 1142] The Ritz-Carlton, Kyoto (Japan / Kyoto) — currently TRUE — source: "The Ritz-Carlton, Kyoto" (Kyoto, Japan)
+[id 1185] The Peninsula Manila (Philippines / Manila) — currently TRUE — source: "The Peninsula Manila" (Manila, Philippines)
+[id 1186] Capella Singapore (Singapore / Singapore) — currently TRUE — source: "Capella Singapore" (Singapore, Singapore)
+[id 1227] Zannier Bãi San Hô (Vietnam / Hoa Thanh) — currently TRUE — source: "Zannier Hotels Bãi San Hô" (Vietnam)
+[id 1285] Claridge's  (United Kingdom / London) — currently TRUE — source: "Claridge's" (United Kingdom)
+[id 1349] La Réserve Paris (France / Paris) — currently TRUE — source: "La Réserve Paris - Hotel and Spa" (France)
+[id 1361] Lily of the Valley (France / La Croix-Valmer) — currently TRUE — source: "Lily of the Valley" (France)
+[id 1396] Four Seasons Astir Palace Hotel Athens (Greece / Vouliagmeni ) — currently TRUE — source: "Four Seasons Astir Palace Hotel Athens" (Greece)
+[id 1437] Forestis (Italy / Brixen) — currently TRUE — source: "Forestis" (Italy)
+[id 1443] Grand Hotel Excelsior Vittoria  (Italy / Sorrento) — currently TRUE — source: "Grand Hotel Excelsior Vittoria" (Italy)
+[id 1468] Passalacqua (Italy / Moltrasio) — currently TRUE — source: "Passalacqua" (Italy)
+[id 1503] Six Senses Douro Valley (Portugal / Lamego) — currently TRUE — source: "Six Senses Douro Valley" (Portugal)
+[id 1541] Badrutt's Palace  (Switzerland / St. Moritz) — currently TRUE — source: "Badrutt's Palace" (Switzerland)
+[id 1595] Our Habitas AlUla (Saudi Arabia / Alula) — currently TRUE — source: "Our Habitas AlUla" (Saudi Arabia)
+[id 1614] The Ritz-Carlton, Ras Al Khaimah, Al Wadi Desert (United Arab Emirates / Dubai) — currently TRUE — source: "The Ritz-Carlton Ras Al Khaimah, Al Wadi Desert" (United Arab Emirates)
+[id 1656] Amangiri (USA / Canyon Point) — currently TRUE — source: "Amangiri" (Utah, United States)
+[id 1815] Hotel Il Pellicano (Italy / Porto Ercole) — currently TRUE — source: "Hotel Il Pellicano" (Italy)
+[id 2033] Naviva, A Four Seasons Resort (Mexico / Punta Mita) — currently TRUE — source: "Naviva, A Four Seasons Resort" (Punta Mita, Nayarit, Mexico)
+[id 2046] Kona Village, a Rosewood Resort (USA / Kailua-Kona) — currently TRUE — source: "Kona Village, a Rosewood Resort" (Hawaii, United States)
+
+==============================================================================
+SECTION B — NEAR MATCHES (brand-prefix-agnostic containment, needs review)
+==============================================================================
+[id 1615] The St. Regis Abu Dhabi (United Arab Emirates / Abu Dhabi) — currently TRUE — source: "The St. Regis Saadiyat Island Resort, Abu Dhabi" (Abu Dhabi, United Arab Emirates) [score 0.67]
+[id 1616] The St. Regis Saadiyat Island Resort (United Arab Emirates / Abu Dhabi) — currently TRUE — source: "The St. Regis Saadiyat Island Resort, Abu Dhabi" (Abu Dhabi, United Arab Emirates) [score 0.67]
+[id 1712] The Beverly Hills Hotel  (USA / Beverly Hills) — currently TRUE — source: "The Beverly Hills Hotel, Dorchester Collection" (Beverly Hills, California, United States) [score 0.50]
+
+==============================================================================
+SECTION C — UNCERTAIN MATCHES (needs your confirmation)
+==============================================================================
+[id 1179] The Nautilus Maldives (Maldives / Thiladhoo Island) — currently TRUE — candidate: "The Nautilus Maldives" (Maldives, Maldives) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1633] Four Seasons Resort Punta Mita (Mexico / Punta Mita) — currently false — candidate: "Naviva, A Four Seasons Resort" (Punta Mita, Nayarit, Mexico) [score 0.67, country match, city match, reason: similar brand name]
+
+==============================================================================
+SECTION D — REMOVAL CANDIDATES (flag and/or tag set, no source-list match found)
+==============================================================================
+(none)
+
+==============================================================================
+SECTION E — BOOLEAN/TAG DRIFT (pre-existing inconsistency, independent of source match)
+==============================================================================
+(none)

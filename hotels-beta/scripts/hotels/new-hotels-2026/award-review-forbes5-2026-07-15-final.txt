@@ -1,0 +1,218 @@
+HOTEL AWARDS AUDIT — forbes5 (Forbes 5 Star) — full-collection review
+Generated: 2026-07-15 by match-hotel-awards.mjs
+Scope: full collection
+
+==============================================================================
+SUMMARY
+==============================================================================
+Hotels checked: 872
+Source entries (forbes5.json): 343
+Confirmed matches: 136
+Near matches (brand-prefix-agnostic): 25
+Uncertain matches: 21
+Removal candidates (flag/tag set, no source match): 0
+Boolean/tag drift (pre-existing inconsistency): 0
+
+==============================================================================
+SECTION A — CONFIRMED MATCHES (exact core-name match, no location conflict)
+==============================================================================
+[id 1014] Royal Palm Beachcomber Luxury (Mauritius / Grand Baie) — currently TRUE — source: "Royal Palm Beachcomber Luxury" (Grand Baie, Mauritius)
+[id 1022] Mandarin Oriental, Marrakech (Morocco / Marrakech) — currently TRUE — source: "Mandarin Oriental, Marrakech" (Marrakech, Morocco)
+[id 1073] Altira Macau (China / Macau) — currently TRUE — source: "Altira Macau" (Macau, China)
+[id 1082] Mandarin Oriental, Hong Kong  (China / Hong Kong) — currently TRUE — source: "Mandarin Oriental, Hong Kong" (Hong Kong, China)
+[id 1086] Rosewood Guangzhou (China / Guangzhou) — currently TRUE — source: "Rosewood Guangzhou" (Guangzhou, China)
+[id 1093] The Peninsula Beijing (China / Beijing) — currently TRUE — source: "The Peninsula Beijing" (Beijing, China)
+[id 1094] The Peninsula Hong Kong  (China / Hong Kong) — currently TRUE — source: "The Peninsula Hong Kong" (Hong Kong, China)
+[id 1095] The Peninsula Shanghai (China / Shanghai) — currently TRUE — source: "The Peninsula Shanghai" (Shanghai, China)
+[id 1098] The Ritz-Carlton, Hong Kong (China / Hong Kong) — currently TRUE — source: "The Ritz-Carlton, Hong Kong" (Hong Kong, China)
+[id 1099] The Ritz-Carlton, Macau (China / Macau) — currently TRUE — source: "The Ritz-Carlton, Macau" (Macau, China)
+[id 1106] Four Seasons Hotel Hong Kong  (China  / Hong Kong) — currently TRUE — source: "Four Seasons Hotel Hong Kong" (Hong Kong, China)
+[id 1125] Four Seasons Resort Bali at Jimbaran Bay (Indonesia / Jimbaran Bay) — currently TRUE — source: "Four Seasons Resort Bali at Jimbaran Bay" (Bali, Indonesia)
+[id 1141] The Peninsula Tokyo  (Japan / Tokyo) — currently TRUE — source: "The Peninsula Tokyo" (Tokyo, Japan)
+[id 1142] The Ritz-Carlton, Kyoto (Japan / Kyoto) — currently TRUE — source: "The Ritz-Carlton, Kyoto" (Kyoto, Japan)
+[id 1143] The Ritz-Carlton, Nikko (Japan / Nikko) — currently TRUE — source: "The Ritz-Carlton, Nikko" (Nikko, Japan)
+[id 1144] The Ritz-Carlton, Tokyo (Japan / Tokyo) — currently TRUE — source: "The Ritz-Carlton, Tokyo" (Tokyo, Japan)
+[id 1148] Mandarin Oriental, Tokyo  (Japan  / Tokyo) — currently TRUE — source: "Mandarin Oriental, Tokyo" (Tokyo, Japan)
+[id 1157] Cheval Blanc Randheli (Maldives / Randheli) — currently TRUE — source: "Cheval Blanc Randheli" (Randheli Island , Maldives)
+[id 1169] Kudadoo Maldives Private Island (Maldives / Kudadoo Island) — currently TRUE — source: "Kudadoo Maldives Private Island" (Lhaviyani Atoll, Maldives)
+[id 1178] The St. Regis Maldives Vommuli Resort (Maldives / Vommuli Island) — currently TRUE — source: "The St. Regis Maldives Vommuli Resort" (Vommuli, Maldives)
+[id 1185] The Peninsula Manila (Philippines / Manila) — currently TRUE — source: "The Peninsula Manila" (Manila, Philippines)
+[id 1186] Capella Singapore (Singapore / Singapore) — currently TRUE — source: "Capella Singapore" (Singapore, Singapore)
+[id 1189] Raffles Singapore (Singapore / Singapore) — currently TRUE — source: "Raffles Hotel Singapore" (Singapore, Singapore)
+[id 1201] Capella Bangkok (Thailand / Bangkok) — currently TRUE — source: "Capella Bangkok" (Bangkok, Thailand)
+[id 1210] Mandarin Oriental, Bangkok   (Thailand / Bangkok) — currently TRUE — source: "Mandarin Oriental, Bangkok" (Bangkok, Thailand)
+[id 1222] The Peninsula Bangkok (Thailand / Bangkok) — currently TRUE — source: "The Peninsula Bangkok" (Bangkok, Thailand)
+[id 1228] Capella Hanoi (Vietnam / Hanoi) — currently TRUE — source: "Capella Hanoi" (Hanoi City, Vietnam)
+[id 1236] Sandy Lane  (Barbados / St. James) — currently TRUE — source: "Sandy Lane Hotel" (St. James, Barbados)
+[id 1267] Dorado Beach, a Ritz-Carlton Reserve (Puerto Rico / Dorado) — currently TRUE — source: "Dorado Beach, a Ritz-Carlton Reserve" (Dorado, Puerto Rico)
+[id 1278] Four Seasons Hotel Prague (Czech Republic / Prague) — currently TRUE — source: "Four Seasons Hotel Prague" (Prague, Czech Republic)
+[id 1285] Claridge's  (United Kingdom / London) — currently TRUE — source: "Claridge's" (London, United Kingdom)
+[id 1288] Four Seasons Hotel London at Park Lane (United Kingdom / London) — currently TRUE — source: "Four Seasons Hotel London at Park Lane" (London, United Kingdom)
+[id 1290] Hotel 41 (United Kingdom / London) — currently TRUE — source: "Hotel 41" (London, United Kingdom)
+[id 1292] Mandarin Oriental Hyde Park, London (United Kingdom / London) — currently TRUE — source: "Mandarin Oriental, Hyde Park, London" (London, United Kingdom)
+[id 1296] Raffles London at The OWO (United Kingdom / London) — currently TRUE — source: "Raffles London at The OWO" (London, United Kingdom)
+[id 1297] Rosewood London (United Kingdom / London) — currently TRUE — source: "Rosewood London" (London, United Kingdom)
+[id 1299] Shangri-La The Shard, London (United Kingdom / London) — currently TRUE — source: "Shangri-La The Shard, London" (London, United Kingdom)
+[id 1301] The Berkeley (United Kingdom / London) — currently TRUE — source: "The Berkeley" (London, United Kingdom)
+[id 1302] The Connaught (United Kingdom / London) — currently TRUE — source: "The Connaught" (London, United Kingdom)
+[id 1303] The Dorchester  (United Kingdom / London) — currently TRUE — source: "The Dorchester" (London, United Kingdom)
+[id 1306] The Goring (United Kingdom / London) — currently TRUE — source: "The Goring" (London, United Kingdom)
+[id 1314] Airelles Gordes, La Bastide (France / Gordes) — currently TRUE — source: "Airelles Gordes, La Bastide" (Gordes, France)
+[id 1323] Cheval Blanc Paris (France / Paris) — currently TRUE — source: "Cheval Blanc Paris" (Paris, France)
+[id 1340] Hôtel du Cap Eden-Roc (France / Antibes) — currently TRUE — source: "Hotel du Cap-Eden-Roc" (Antibes Cedex, France)
+[id 1345] Hôtel Plaza Athénée Paris  (France / Paris) — currently TRUE — source: "Hotel Plaza Athenee Paris" (Paris, France)
+[id 1349] La Réserve Paris (France / Paris) — currently TRUE — source: "La Reserve Paris" (Paris, France)
+[id 1353] Le Bristol Paris (France / Paris) — currently TRUE — source: "Le Bristol Paris" (Paris, France)
+[id 1363] Mandarin Oriental, Paris (France / Paris) — currently TRUE — source: "Mandarin Oriental, Paris" (Paris, France)
+[id 1364] Ritz Paris  (France / Paris) — currently TRUE — source: "Ritz Paris" (Paris, France)
+[id 1366] Shangri-La Paris (France / Paris) — currently TRUE — source: "Shangri-La Paris" (Paris, France)
+[id 1368] The Maybourne Riviera (France / Roquebrune-Cap-Martin) — currently TRUE — source: "The Maybourne Riviera" (Roquebrune-Cap-Martin, France)
+[id 1396] Four Seasons Astir Palace Hotel Athens (Greece / Vouliagmeni ) — currently TRUE — source: "Four Seasons Astir Palace Hotel Athens" (Vouliagmeni, Greece)
+[id 1415] Four Seasons Hotel Gresham Palace Budapest  (Hungary / Budapest) — currently TRUE — source: "Four Seasons Hotel Gresham Palace Budapest" (Budapest, Hungary)
+[id 1419] Ashford Castle (Ireland / Cong) — currently TRUE — source: "Ashford Castle" (Cong, Ireland)
+[id 1438] Four Seasons Hotel Firenze (Italy / Florence) — currently TRUE — source: "Four Seasons Hotel Firenze" (Florence, Italy)
+[id 1459] J.K. Place Capri (Italy / Capri) — currently TRUE — source: "J.K. Place Capri" (Capri, Italy)
+[id 1460] Le Sirenuse (Italy / Positano) — currently TRUE — source: "Le Sirenuse" (Positano, Italy)
+[id 1461] Mandarin Oriental, Lago di Como (Italy / Blevio) — currently TRUE — source: "Mandarin Oriental, Lago di Como" (Blevio, Italy)
+[id 1462] Mandarin Oriental, Milan (Italy / Milan) — currently TRUE — source: "Mandarin Oriental, Milan" (Milan, Italy)
+[id 1480] Hassler Roma (Italy / Rome) — currently TRUE — source: "Hassler Roma" (Rome, Italy)
+[id 1489] Hôtel de Paris Monte Carlo (Monaco / Monte Carlo) — currently TRUE — source: "Hotel de Paris Monte-Carlo" (Monte Carlo, Monaco)
+[id 1516] BLESS Ibiza Cala Nova (Spain / Es Canar) — currently TRUE — source: "BLESS Ibiza Cala Nova" (Ibiza, Spain)
+[id 1522] Four Seasons Hotel Madrid (Spain / Madrid) — currently TRUE — source: "Four Seasons Hotel Madrid" (Madrid, Spain)
+[id 1528] Mandarin Oriental, Barcelona (Spain / Barcelona) — currently TRUE — source: "Mandarin Oriental, Barcelona" (Barcelona, Spain)
+[id 1529] Mandarin Oriental, Ritz Madrid (Spain / Madrid) — currently TRUE — source: "Mandarin Oriental Ritz, Madrid" (Madrid, Spain)
+[id 1532] Rosewood Villa Magna (Spain / Madrid) — currently TRUE — source: "Rosewood Villa Magna" (Madrid, Spain)
+[id 1541] Badrutt's Palace  (Switzerland / St. Moritz) — currently TRUE — source: "Badrutt's Palace Hotel" (St. Moritz, Switzerland)
+[id 1545] Carlton Hotel St. Moritz (Switzerland / St. Moritz) — currently TRUE — source: "Carlton Hotel St. Moritz" (St. Moritz, Switzerland)
+[id 1563] Mandarin Oriental Palace, Luzern (Switzerland / Lucerne) — currently TRUE — source: "Mandarin Oriental Palace, Luzern" (Lucerne , Switzerland)
+[id 1565] Park Hotel Vitznau (Switzerland / Vitznau) — currently TRUE — source: "Park Hotel Vitznau" (Vitznau, Switzerland)
+[id 1570] The Chedi Andermatt (Switzerland / Andermatt) — currently TRUE — source: "The Chedi Andermatt" (Andermatt, Switzerland)
+[id 1571] The Dolder Grand (Switzerland / Zurich) — currently TRUE — source: "The Dolder Grand" (Zurich, Switzerland)
+[id 1581] Four Seasons Hotel Istanbul at the Bosphorus (Turkey / Istanbul) — currently TRUE — source: "Four Seasons Hotel Istanbul at the Bosphorus" (Istanbul, Turkey)
+[id 1582] Mandarin Oriental, Bodrum (Turkey / Bodrum) — currently TRUE — source: "Mandarin Oriental, Bodrum" (Bodrum, Turkey)
+[id 1593] Rosewood Doha (Qatar / Doha) — currently TRUE — source: "Rosewood Doha" (Doha, Qatar)
+[id 1600] Jumeirah Burj Al Arab (United Arab Emirates / Dubai) — currently TRUE — source: "Jumeirah Burj Al Arab" (Dubai, United Arab Emirates)
+[id 1601] Four Seasons Hotel Abu Dhabi at Al Maryah Island (United Arab Emirates / Abu Dhabi) — currently TRUE — source: "Four Seasons Hotel Abu Dhabi at Al Maryah Island" (Abu Dhabi, United Arab Emirates)
+[id 1602] Four Seasons Resort Dubai at Jumeirah Beach (United Arab Emirates / Dubai) — currently TRUE — source: "Four Seasons Resort Dubai at Jumeirah Beach" (Dubai, United Arab Emirates)
+[id 1603] Emirates Palace Mandarin Oriental Abu Dhabi (United Arab Emirates / Abu Dhabi) — currently TRUE — source: "Emirates Palace Mandarin Oriental, Abu Dhabi" (Abu Dhabi, United Arab Emirates)
+[id 1604] Mandarin Oriental, Jumeira Dubai (United Arab Emirates / Dubai) — currently TRUE — source: "Mandarin Oriental Jumeira, Dubai" (Dubai, United Arab Emirates)
+[id 1615] The St. Regis Abu Dhabi (United Arab Emirates / Abu Dhabi) — currently TRUE — source: "The St. Regis Abu Dhabi" (Abu Dhabi, United Arab Emirates)
+[id 1639] NIZUC Resort & Spa (Mexico / Cancun) — currently TRUE — source: "Nizuc Resort & Spa" (Cancun, Mexico)
+[id 1643] Waldorf Astoria Los Cabos Pedregal (Mexico / Cabo San Lucas) — currently TRUE — source: "Waldorf Astoria Los Cabos Pedregal" (Cabo San Lucas, Mexico)
+[id 1645] Rosewood San Miguel de Allende (Mexico / San Miguel de Allende) — currently TRUE — source: "Rosewood San Miguel de Allende" (San Miguel de Allende, Mexico)
+[id 1660] Baccarat Hotel New York  (USA / New York) — currently TRUE — source: "Baccarat Hotel New York" (New York, New York, United States)
+[id 1667] Faena Hotel Miami Beach (USA / Miami Beach) — currently TRUE — source: "Faena Hotel Miami Beach" (Miami Beach, Florida, United States)
+[id 1669] Four Seasons Hotel at The Surf Club (USA / Surfside) — currently TRUE — source: "Four Seasons Hotel at The Surf Club" (Surfside, Florida, United States)
+[id 1670] Four Seasons Hotel Boston  (USA / Boston) — currently TRUE — source: "Four Seasons Hotel Boston" (Boston, Massachusetts, United States)
+[id 1676] Four Seasons Resort and Residences Napa Valley (USA / Calistoga) — currently TRUE — source: "Four Seasons Resort and Residences Napa Valley" (Calistoga, California, United States)
+[id 1677] Four Seasons Resort Hualalai (USA / Big Island, Ka`Upulehu-Kona HI) — currently TRUE — source: "Four Seasons Resort Hualalai" (Kailua-Kona, Hawaii, United States)
+[id 1680] Four Seasons Resort Lanai (USA / Lanai City) — currently TRUE — source: "Four Seasons Resort Lanai" (Lana’i City, Hawaii, United States)
+[id 1691] Mandarin Oriental, New York  (USA / New York) — currently TRUE — source: "Mandarin Oriental, New York" (New York, New York, United States)
+[id 1694] Montage Big Sky (USA / Big Sky) — currently TRUE — source: "Montage Big Sky" (Big Sky, Montana, United States)
+[id 1695] Montage Laguna Beach (USA / Laguna Beach) — currently TRUE — source: "Montage Laguna Beach" (Laguna Beach, California, United States)
+[id 1696] Montage Palmetto Bluff (USA / Palmetto Bluff) — currently TRUE — source: "Montage Palmetto Bluff" (Bluffton, South Carolina, United States)
+[id 1700] Ocean House (USA / Watch Hill) — currently TRUE — source: "Ocean House" (Watch Hill, Rhode Island, United States)
+[id 1707] Rancho Valencia (USA / Rancho Santa Fe) — currently TRUE — source: "Rancho Valencia Resort & Spa" (Rancho Santa Fe, California, United States)
+[id 1708] Rosewood Miramar Beach (USA / Montecito) — currently TRUE — source: "Rosewood Miramar Beach" (Montecito, California, United States)
+[id 1712] The Beverly Hills Hotel  (USA / Beverly Hills) — currently TRUE — source: "The Beverly Hills Hotel" (Beverly Hills, California, United States)
+[id 1716] The Broadmoor (USA / Colorado Springs) — currently TRUE — source: "The Broadmoor" (Colorado Springs, Colorado, United States)
+[id 1719] The Cloister at Sea Island (USA / Sea Island) — currently TRUE — source: "The Cloister at Sea Island" (Sea Island, Georgia, United States)
+[id 1725] The Inn at Little Washington (USA / Washington) — currently TRUE — source: "The Inn at Little Washington" (Washington, Virginia, United States)
+[id 1728] The Langham Chicago (USA / Chicago) — currently TRUE — source: "The Langham, Chicago" (Chicago, Illinois, United States)
+[id 1731] The Little Nell  (USA / Aspen) — currently TRUE — source: "The Little Nell" (Aspen, Colorado, United States)
+[id 1739] The Peninsula Chicago  (USA / Chicago) — currently TRUE — source: "The Peninsula Chicago" (Chicago, Illinois, United States)
+[id 1740] The Peninsula New York  (USA / New York) — currently TRUE — source: "The Peninsula New York" (New York, New York, United States)
+[id 1742] The Post Oak Hotel at Uptown Houston (USA / Houston) — currently TRUE — source: "The Post Oak Hotel at Uptown Houston" (Houston, Texas, United States)
+[id 1743] The Ranch at Rock Creek (USA / Philipsburg) — currently TRUE — source: "The Ranch at Rock Creek" (Philipsburg, Montana, United States)
+[id 1744] The Resort at Pelican Hill (USA / Newport Coast) — currently TRUE — source: "The Resort at Pelican Hill" (Newport Coast, California, United States)
+[id 1747] The Ritz-Carlton, Dallas (USA / Dallas) — currently TRUE — source: "The Ritz-Carlton, Dallas" (Dallas, Texas, United States)
+[id 1748] The Ritz-Carlton, Dove Mountain (USA / Marana) — currently TRUE — source: "The Ritz-Carlton, Dove Mountain" (Marana, Arizona, United States)
+[id 1757] The Setai, Miami Beach (USA / Miami Beach) — currently TRUE — source: "The Setai, Miami Beach" (Miami, Florida, United States)
+[id 1758] The St. Regis Bal Harbour Resort (USA / Miami Beach) — currently TRUE — source: "The St. Regis Bal Harbour Resort" (Miami, Florida, United States)
+[id 1760] The St. Regis New York  (USA / New York) — currently TRUE — source: "The St. Regis New York" (New York, New York, United States)
+[id 1762] The Umstead Hotel and Spa (USA / Cary) — currently TRUE — source: "The Umstead Hotel and Spa" (Cary, North Carolina, United States)
+[id 1766] Trump International Hotel & Tower Chicago (USA / Chicago) — currently TRUE — source: "Trump International Hotel & Tower Chicago" (Chicago, Illinois, United States)
+[id 1767] Twin Farms (USA / Barnard) — currently TRUE — source: "Twin Farms" (Barnard, Vermont, United States)
+[id 1770] Wequassett Resort & Golf Club (USA / Chatham) — currently TRUE — source: "Wequassett Resort and Golf Club" (Chatham, Massachusetts, United States)
+[id 1805] The Brando (French Polynesia / Arue Tahiti) — currently TRUE — source: "The Brando" (Tahiti, French Polynesia)
+[id 1815] Hotel Il Pellicano (Italy / Porto Ercole) — currently TRUE — source: "Hotel Il Pellicano" (Porto Ercole , Italy)
+[id 1824] Mandapa, a Ritz-Carlton Reserve (Indonesia / Ubud) — currently TRUE — source: "Mandapa, a Ritz-Carlton Reserve" (Bali, Indonesia)
+[id 1834] Nujuma, a Ritz-Carlton Reserve (Saudi Arabia / Ummahat Islands) — currently TRUE — source: "Nujuma, a Ritz-Carlton Reserve" (Red Sea, Saudi Arabia)
+[id 2018] Mandarin Oriental Shenzhen (China / Shenzhen) — currently TRUE — source: "Mandarin Oriental, Shenzhen" (Shenzhen, China)
+[id 2021] Mandarin Oriental Bosphorus, Istanbul (Turkey / Istanbul) — currently TRUE — source: "Mandarin Oriental Bosphorus, Istanbul" (Istanbul, Turkey)
+[id 2025] Mandarin Oriental, Costa Navarino (Greece / Pylos) — currently TRUE — source: "Mandarin Oriental, Costa Navarino" (Messenia, Greece)
+[id 2027] Mandarin Oriental Savoy, Zurich (Switzerland / Zurich) — currently TRUE — source: "Mandarin Oriental Savoy, Zurich" (Zurich, Switzerland)
+[id 2028] Mandarin Oriental, Doha (Qatar / Doha) — currently TRUE — source: "Mandarin Oriental, Doha" (Doha, Qatar)
+[id 2032] Four Seasons Resort Maui at Wailea (USA / Maui) — currently TRUE — source: "Four Seasons Resort Maui at Wailea" (Wailea, Hawaii, United States)
+[id 2035] Four Seasons Hotel Ritz Lisbon (Portugal / Lisbon) — currently TRUE — source: "Four Seasons Hotel Ritz Lisbon" (Lisbon, Portugal)
+[id 2036] Four Seasons Hotel Baku (Azerbaijan / Baku) — currently TRUE — source: "Four Seasons Hotel Baku" (Baku, Azerbaijan)
+[id 2038] Four Seasons Hotel Doha (Qatar / Doha) — currently TRUE — source: "Four Seasons Hotel Doha" (Doha, Qatar)
+[id 2039] Four Seasons Hotel Dubai International Financial Centre (UAE / Dubai) — currently TRUE — source: "Four Seasons Hotel Dubai International Financial Centre" (Dubai, United Arab Emirates)
+[id 2043] Four Seasons Resort Bali at Sayan (Indonesia / Ubud) — currently TRUE — source: "Four Seasons Resort Bali at Sayan" (Bali, Indonesia)
+[id 2045] Four Seasons Hotel Seoul (South Korea / Seoul) — currently TRUE — source: "Four Seasons Hotel Seoul" (Seoul, South Korea)
+[id 2048] Rosewood Sand Hill (USA / Menlo Park) — currently TRUE — source: "Rosewood Sand Hill" (Menlo Park, California, United States)
+[id 2052] Rosewood Castiglion del Bosco (Italy / Montalcino) — currently TRUE — source: "Castiglion del Bosco, A Rosewood Hotel" (Tuscany, Italy)
+
+==============================================================================
+SECTION B — NEAR MATCHES (brand-prefix-agnostic containment, needs review)
+==============================================================================
+[id 1026] Royal Mansour (Morocco / Marrakech) — currently TRUE — source: "Royal Mansour Marrakech" (Marrakech, Morocco) [score 0.67]
+[id 1034] One&Only Nyungwe House, Rwanda (Rwanda / Gisakura) — currently TRUE — source: "One&Only Nyungwe House" (Gisakura, Rwanda) [score 0.75]
+[id 1089] Mandarin Oriental, The Landmark (China / Hong Kong) — currently TRUE — source: "Mandarin Oriental The Landmark, Hong Kong" (Hong Kong, China) [score 0.60]
+[id 1134] The Mulia, Bali (Indonesia / Nusa Dua) — currently TRUE — source: "The Mulia - Nusa Dua, Bali" (Nusa Dua, Indonesia) [score 0.50]
+[id 1140] Hotel The Mitsui Kyoto (Japan / Kyoto) — currently TRUE — source: "HOTEL THE MITSUI KYOTO, A Luxury Collection Hotel & Spa" (Kyoto, Japan) [score 0.50]
+[id 1184] Solaire Resort Entertainment City - Sky Tower (Philippines / Manila) — currently TRUE — source: "Sky Tower at Solaire Resort Entertainment City" (Manila, Philippines) [score 0.83]
+[id 1229] Four Seasons Resort the Nam Hai (Vietnam / Hoi An) — currently TRUE — source: "Four Seasons Resort The Nam Hai, Hoi An" (Hoi An, Vietnam) [score 0.80]
+[id 1262] Four Seasons Resort Papagayo, Costa Rica (Costa Rica / Guanacaste) — currently TRUE — source: "Four Seasons Resort Peninsula Papagayo, Costa Rica" (Guanacaste, Costa Rica) [score 0.83]
+[id 1313] Airelles Courchevel (France / Courchevel 1850) — currently TRUE — source: "Airelles Courchevel, Les Airelles" (Courchevel, France) [score 0.67]
+[id 1329] Four Seasons Hotel George V (France / Paris) — currently TRUE — source: "Four Seasons Hotel George V, Paris" (Paris, France) [score 0.80]
+[id 1344] Mandarin Oriental, Lutetia, Paris (France / Paris) — currently TRUE — source: "Mandarin Oriental, Paris" (Paris, France) [score 0.75]
+[id 1469] Portrait Firenze (Italy / Florence) — currently TRUE — source: "Portrait Firenze  — Lungarno Collection" (Florence, Italy) [score 0.50]
+[id 1547] Four Seasons Hotel des Bergues (Switzerland / Geneva) — currently TRUE — source: "Four Seasons Hotel des Bergues Geneva" (Geneva, Switzerland) [score 0.75]
+[id 1598] Atlantis The Royal Dubai (United Arab Emirates / Dubai) — currently TRUE — source: "Atlantis The Royal" (Dubai, United Arab Emirates) [score 0.67]
+[id 1616] The St. Regis Saadiyat Island Resort (United Arab Emirates / Abu Dhabi) — currently TRUE — source: "The St. Regis Saadiyat Island Resort, Abu Dhabi" (Abu Dhabi, United Arab Emirates) [score 0.67]
+[id 1633] Four Seasons Resort Punta Mita (Mexico / Punta Mita) — currently TRUE — source: "Four Seasons Resort Punta Mita, Mexico" (Punta Mita, Mexico) [score 0.80]
+[id 1636] Las Ventanas al Paraiso  (Mexico / San Jose del Cabo) — currently TRUE — source: "Las Ventanas al Paraiso, A Rosewood Resort" (San Jose del Cabo, Mexico) [score 0.80]
+[id 1650] Zadun Los Cabos, a Ritz-Carlton Reserve (Mexico / San Jose del Cabo) — currently TRUE — source: "Zadun, a Ritz-Carlton Reserve" (San José del Cabo, B.C.S., Mexico) [score 0.67]
+[id 1659] Auberge du Soleil  (USA / Rutherford) — currently TRUE — source: "Auberge du Soleil, Auberge Collection" (Rutherford, California, United States) [score 0.67]
+[id 1675] The Ritz-Carlton Dallas, Las Colinas (USA / Dallas) — currently TRUE — source: "The Ritz-Carlton, Dallas" (Dallas, Texas, United States) [score 0.60]
+[id 1714] The Boca Raton (USA / Boca Raton) — currently TRUE — source: "Beach Club at The Boca Raton" (Boca Raton, Florida, United States) [score 0.40]
+[id 1732] The Lodge at Blue Sky (USA / Wanship) — currently TRUE — source: "The Lodge at Blue Sky, Auberge Collection" (Wanship, Utah, United States) [score 0.67]
+[id 1738] The Peninsula Beverly Hills  (USA / Beverly Hills) — currently false — source: "The Beverly Hills Hotel" (Beverly Hills, California, United States) [score 0.67]
+[id 1813] Mandarin Oriental, Qianmen (China / Beijing) — currently TRUE — source: "Mandarin Oriental Qianmen, Beijing" (Beijing, China) [score 0.75]
+[id 2016] Mandarin Oriental Wangfujing (China / Beijing) — currently TRUE — source: "Mandarin Oriental Wangfujing, Beijing" (Beijing, China) [score 0.75]
+
+==============================================================================
+SECTION C — UNCERTAIN MATCHES (needs your confirmation)
+==============================================================================
+[id 1163] Four Seasons Resort Maldives at Kuda Huraa  (Maldives / Kuda Huraa Island) — currently TRUE — candidate: "Four Seasons Resort Maldives at Kuda Huraa" (Maldives, Maldives) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1168] JOALI Maldives (Maldives / Muravandhoo) — currently TRUE — candidate: "JOALI Maldives" (Raa Atoll, Maldives) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1171] One&Only Reethi Rah, Maldvies (Maldives / Reethi Rah Island) — currently TRUE — candidate: "One&Only Reethi Rah" (North Malé Atoll, Maldives) [score 0.75, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1172] Patina Maldives (Maldives / Fari Islands Archipelago) — currently TRUE — candidate: "Patina Maldives, Fari Islands" (North Malé Atoll, Maldives) [score 0.50, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1177] Soneva Jani (Maldives / Medhufaru Island) — currently TRUE — candidate: "Soneva Jani" (Manadhoo, Maldives) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1180] The Ritz-Carlton, Maldives, Fari Islands (Maldives / Fari Islands Archipelago) — currently TRUE — candidate: "The Ritz-Carlton Maldives, Fari Islands" (Male, Maldives) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1181] Velaa Private Island (Maldives / Velaa) — currently TRUE — candidate: "Velaa Private Island" (Noonu Atoll, Maldives) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1239] Four Seasons Resort and Residences Anguilla (British Virgin Islands / West End) — currently TRUE — candidate: "Four Seasons Resort and Residences Anguilla" (West End 2640, Anguilla) [score 1.00, country conflict, city match, reason: core name exact match but country label differs — check same property]
+[id 1244] The Ritz-Carlton, Grand Cayman  (Cayman Islands / Seven Mile Beach) — currently TRUE — candidate: "The Ritz-Carlton, Grand Cayman" (Grand Cayman, Cayman Islands) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1248] Cheval Blanc St-Barth (St. Barthelemy / St. Barthelemy) — currently TRUE — candidate: "Cheval Blanc St-Barth" (St. Barts, St Barts) [score 1.00, country conflict, city conflict, reason: core name exact match but country label differs — check same property]
+[id 1249] Eden Rock St Barths (St. Barthelemy / St. Barthelemy) — currently TRUE — candidate: "Eden Rock - St Barths" (St. Barts, St Barts) [score 1.00, country conflict, city conflict, reason: core name exact match but country label differs — check same property]
+[id 1255] Mandarin Oriental, Canouan (St. Vincent and the Grenadines / Carenage Bay) — currently TRUE — candidate: "Mandarin Oriental, Canouan" (Canouan Island, Saint Vincent and the Grenadines) [score 1.00, country conflict, city state-only, reason: core name exact match but country label differs — check same property]
+[id 1418] Adare Manor Hotel & Golf Resort (Ireland / Adare) — currently TRUE — candidate: "Adare Manor" (County Limerick, Ireland) [score 0.67, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1452] Hotel Eden Rome (Italy / Rome) — currently TRUE — candidate: "Hotel Eden" (Rome, Italy) [score 1.00, country match, city match, reason: similar brand name]
+[id 1605] One&Only Royal Mirage, Dubai (United Arab Emirates / Dubai) — currently TRUE — candidate: "One&Only Royal Mirage - The Residence" (Dubai, United Arab Emirates) [score 0.75, country match, city match, reason: similar brand name]
+[id 1634] Hotel Esencia (Mexico / Carretera) — currently TRUE — candidate: "Hotel Esencia" (Quintana Roo , Mexico) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1642] One&Only Palmilla, Los Cabos (Mexico / San Jose del Cabo) — currently TRUE — candidate: "One&Only Palmilla, Los Cabos Resort" (San Jos&eacute; Del Cabo, Mexico) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1644] Rosewood Mayakoba (Mexico / Playa del Carmen) — currently TRUE — candidate: "Rosewood Mayakoba" (Riviera Maya, Mexico) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1649] Waldorf Astoria Los Cabos Pedregal (Mexico / Los Cabos) — currently TRUE — candidate: "Waldorf Astoria Los Cabos Pedregal" (Cabo San Lucas, Mexico) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1814] Jumeirah Marsa Al Arab (United Arab Emirates / Dubai) — currently TRUE — candidate: "Jumeirah Burj Al Arab" (Dubai, United Arab Emirates) [score 0.60, country match, city match, reason: similar brand name]
+[id 2029] Mandarin Oriental, Dubai Downtown (UAE / Dubai) — currently false — candidate: "Mandarin Oriental Jumeira, Dubai" (Dubai, United Arab Emirates) [score 0.67, country match, city match, reason: similar brand name]
+
+==============================================================================
+SECTION D — REMOVAL CANDIDATES (flag and/or tag set, no source-list match found)
+==============================================================================
+(none)
+
+==============================================================================
+SECTION E — BOOLEAN/TAG DRIFT (pre-existing inconsistency, independent of source match)
+==============================================================================
+(none)

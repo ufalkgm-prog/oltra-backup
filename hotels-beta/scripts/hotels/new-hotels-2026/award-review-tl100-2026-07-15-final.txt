@@ -1,0 +1,78 @@
+HOTEL AWARDS AUDIT — tl100 (Travel + Leisure 100) — full-collection review
+Generated: 2026-07-15 by match-hotel-awards.mjs
+Scope: full collection
+
+==============================================================================
+SUMMARY
+==============================================================================
+Hotels checked: 872
+Source entries (tl100.json): 100
+Confirmed matches: 26
+Near matches (brand-prefix-agnostic): 3
+Uncertain matches: 13
+Removal candidates (flag/tag set, no source match): 0
+Boolean/tag drift (pre-existing inconsistency): 0
+
+==============================================================================
+SECTION A — CONFIRMED MATCHES (exact core-name match, no location conflict)
+==============================================================================
+[id 1113] The Oberoi Mumbai (India / Mumbai) — currently TRUE — source: "The Oberoi, Mumbai" (Mumbai, India)
+[id 1115] Alila Villas Uluwatu (Indonesia / Bukit Peninsula) — currently TRUE — source: "Alila Villas Uluwatu" (Bali, Indonesia)
+[id 1118] AYANA Bali Resort (Indonesia / Djimbaran) — currently TRUE — source: "Ayana Bali Resort" (Bali, Indonesia)
+[id 1128] Park Hyatt Jakarta (Indonesia / Jakarta) — currently TRUE — source: "Park Hyatt Jakarta" (Jakarta, Indonesia)
+[id 1129] Raffles Bali (Indonesia / Djimbaran) — currently TRUE — source: "Raffles Bali" (Bali, Indonesia)
+[id 1135] The St. Regis Bali Resort (Indonesia / Nusa Dua) — currently TRUE — source: "The St. Regis Bali Resort" (Bali, Indonesia)
+[id 1195] Anantara Golden Triangle Elephant Camp & Resort (Thailand / Chiang Rai) — currently TRUE — source: "Anantara Golden Triangle Elephant Camp & Resort" (Chiang Rai, Thailand)
+[id 1201] Capella Bangkok (Thailand / Bangkok) — currently TRUE — source: "Capella Bangkok" (Bangkok, Thailand)
+[id 1210] Mandarin Oriental, Bangkok   (Thailand / Bangkok) — currently TRUE — source: "Mandarin Oriental, Bangkok" (Bangkok, Thailand)
+[id 1214] Rosewood Bangkok (Thailand / Bangkok) — currently TRUE — source: "Rosewood Bangkok" (Bangkok, Thailand)
+[id 1217] Six Senses Yao Noi (Thailand / Yao Noi) — currently TRUE — source: "Six Senses Yao Noi" (Yao Noi, Thailand)
+[id 1232] Regent Phu Quoc (Vietnam / Bai Truong) — currently TRUE — source: "Regent Phu Quoc" (Phu Quoc, Vietnam)
+[id 1266] Nayara Tented Camp (Costa Rica / Arenal) — currently TRUE — source: "Nayara Tented Camp" (Arenal Volcano National Park, Costa Rica)
+[id 1353] Le Bristol Paris (France / Paris) — currently TRUE — source: "Le Bristol Paris" (Paris, France)
+[id 1363] Mandarin Oriental, Paris (France / Paris) — currently TRUE — source: "Mandarin Oriental, Paris" (Paris, France)
+[id 1443] Grand Hotel Excelsior Vittoria  (Italy / Sorrento) — currently TRUE — source: "Grand Hotel Excelsior Vittoria" (Sorrento, Italy)
+[id 1458] Il Sereno Lago di Como (Italy / Torno) — currently TRUE — source: "Il Sereno Lago di Como" (Torno, Italy)
+[id 1532] Rosewood Villa Magna (Spain / Madrid) — currently TRUE — source: "Rosewood Villa Magna" (Madrid, Spain)
+[id 1567] Six Senses Crans Montana (Switzerland / Crans-Montana) — currently TRUE — source: "Six Senses Crans-Montana" (Crans-Montana, Switzerland)
+[id 1650] Zadun Los Cabos, a Ritz-Carlton Reserve (Mexico / San Jose del Cabo) — currently TRUE — source: "Zadun Los Cabos, a Ritz-Carlton Reserve" (San José Del Cabo, Mexico)
+[id 1708] Rosewood Miramar Beach (USA / Montecito) — currently TRUE — source: "Rosewood Miramar Beach" (Montecito, California, USA)
+[id 1721] The Fifth Avenue Hotel (USA / New York) — currently TRUE — source: "The Fifth Avenue Hotel" (New York, New York, USA)
+[id 1824] Mandapa, a Ritz-Carlton Reserve (Indonesia / Ubud) — currently TRUE — source: "Mandapa, a Ritz-Carlton Reserve" (Bali, Indonesia)
+[id 2018] Mandarin Oriental Shenzhen (China / Shenzhen) — currently TRUE — source: "Mandarin Oriental, Shenzhen" (Shenzhen, China)
+[id 2052] Rosewood Castiglion del Bosco (Italy / Montalcino) — currently TRUE — source: "Castiglion del Bosco, a Rosewood Hotel" (Montalcino, Italy)
+[id 2057] Rosewood Phnom Penh (Cambodia / Phnom Penh) — currently TRUE — source: "Rosewood Phnom Penh" (Phnom Penh, Cambodia)
+
+==============================================================================
+SECTION B — NEAR MATCHES (brand-prefix-agnostic containment, needs review)
+==============================================================================
+[id 1112] The Oberoi Amarvilâs (India / Agra) — currently TRUE — source: "The Oberoi Amarvilas, Agra" (Agra, India) [score 0.67]
+[id 1344] Mandarin Oriental, Lutetia, Paris (France / Paris) — currently TRUE — source: "Mandarin Oriental, Paris" (Paris, France) [score 0.75]
+[id 1659] Auberge du Soleil  (USA / Rutherford) — currently TRUE — source: "Auberge du Soleil, Auberge Collection" (Napa Valley, California, USA) [score 0.67]
+
+==============================================================================
+SECTION C — UNCERTAIN MATCHES (needs your confirmation)
+==============================================================================
+[id 1006] &Beyond Bateleur Camp (Kenya / null) — currently TRUE — candidate: "andBeyond Bateleur Camp" (Maasai Mara National Reserve, Kenya) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1021] La Mamounia (Morocco / Marrakech) — currently TRUE — candidate: "La Mamounia" (Marrakesh, Morocco) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1121] Cap Karoso Sumba Indonesia (Indonesia / Karoso Beach) — currently TRUE — candidate: "Cap Karoso" (Sumba, Indonesia) [score 0.50, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1122] Capella Ubud (Indonesia / Banjar Triwangsa) — currently TRUE — candidate: "Capella Ubud, Bali" (Bali, Indonesia) [score 0.67, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1168] JOALI Maldives (Maldives / Muravandhoo) — currently TRUE — candidate: "Joali Maldives" (Raa Atoll, Maldives) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1250] Fouquet's Saint-Barth (St. Barthelemy / Gustavia) — currently TRUE — candidate: "Fouquet’s Saint-Barth" (Gustavia, St. Bart'S) [score 1.00, country conflict, city match, reason: core name exact match but country label differs — check same property]
+[id 1646] Susurros del Corazón (Mexico / Banderas Bay) — currently TRUE — candidate: "Susurros del Corazón, Auberge Collection" (Punta De Mita, Mexico) [score 0.60, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1732] The Lodge at Blue Sky (USA / Wanship) — currently TRUE — candidate: "The Lodge at Blue Sky, Auberge Collection" (Park City, Utah, USA) [score 0.67, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1771] Wildflower Farms (USA / Hudson Valley) — currently TRUE — candidate: "Wildflower Farms, Auberge Collection" (Gardiner, New York, USA) [score 0.50, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 1786] The Singular Patagonia (Chile / Natales) — currently TRUE — candidate: "The Singular Patagonia" (Puerto Bories, Chile) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+[id 1791] Mashpi Lodge (Equador / Mashpi) — currently TRUE — candidate: "Mashpi Lodge" (Mashpi, Ecuador) [score 1.00, country conflict, city match, reason: core name exact match but country label differs — check same property]
+[id 2034] Four Seasons Tamarindo (Mexico / La Manzanilla) — currently TRUE — candidate: "Four Seasons Resort Tamarindo, Mexico" (Jalisco, Mexico) [score 0.75, country match, city state-only, reason: brand-prefix-agnostic containment match but only broader-area location agrees — check same property]
+[id 2058] Rosewood Luang Prabang (Laos / Luang Prabang) — currently TRUE — candidate: "Rosewood Luang Prabang" (Nauea Village, Laos) [score 1.00, country match, city conflict, reason: core name exact match but location differs — check same property]
+
+==============================================================================
+SECTION D — REMOVAL CANDIDATES (flag and/or tag set, no source-list match found)
+==============================================================================
+(none)
+
+==============================================================================
+SECTION E — BOOLEAN/TAG DRIFT (pre-existing inconsistency, independent of source match)
+==============================================================================
+(none)
