@@ -6,6 +6,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
       // Agoda property image CDN — subdomains pix1–pix5.agoda.net
