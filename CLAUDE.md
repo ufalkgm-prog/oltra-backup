@@ -1001,4 +1001,70 @@ Cross-checked the Michelin 3 Keys source list (143 entries) against all 873 DB h
 
 ---
 
+## 26. RATEHAWK INTEGRATION — HOTEL MATCHING (in progress, started 2026-08-05)
+
+### Goal
+
+Add Ratehawk (Emerging Travel Group / ETG) as a booking data source, following the same shape as the existing Agoda integration (§23/§24): **hotel-matching comes first** — match Ratehawk's inventory against the OLTRA `hotels` Directus collection (~850 hotels) before building search/booking-link UI. No app code references Ratehawk yet; this section covers only the data-matching groundwork.
+
+### Credentials & API access
+
+* `hotels-beta/.env.local`: `RATEHAWK_KEY`, `RATEHAWK_KEY_ID`, `RATEHAWK_API_URL=https://api.ratehawk.com`.
+* **Auth**: HTTP Basic — `key_id` as username, `key` as password (`curl --user '<KEY_ID>:<KEY>'`).
+* **Host**: `https://api.ratehawk.com` is the current production host as of a 2026-07-14 partner email (moved from the legacy `https://api.worldota.net`, which still works identically — same paths, same credentials, just the old domain). Both hosts authenticate successfully with our key; `api.ratehawk.com` is the one to standardize on going forward.
+* **Important caveat — this is a "Sandbox Key" per ETG's onboarding email, but it authenticates against the live production host, not an isolated sandbox subdomain.** (A dedicated `api-sandbox.worldota.net` host exists per ETG's public docs, but our specific key returns `401 incorrect_credentials` there — it's simply not provisioned for that tier.) ETG's own email explicitly warns: test *bookings* are treated as real orders and must be manually cancelled. Read-only content endpoints (used so far) carry no such risk.
+* Confirmed working test call: `POST /api/b2b/v3/hotel/info/` with body `{"hid": 8473727, "language": "en"}` → returns ETG's fixture "Test Hotel (Do Not Book) test" in Tegucigalpa, Honduras. Use `hid` (integer), not `id` (string slug) — the numeric id from the onboarding email is a `hid`.
+* **Content API v1** (`/api/content/v1/hotel_ids_by_filter/`, `/api/content/v1/hotel_content_by_ids/` — filter-by-country/region, avoids downloading the full global dump) is **not enabled** for this key (`403 endpoint_not_found`, `is_active: false`). Would need to be requested from ETG support (`apisupport@ratehawk.com`) if we want it later — it's the documented alternative to the full dump approach.
+* Docs at `docs.emergingtravel.com` block direct fetch (403, same bot-protection pattern as other sites noted in §25) — use web search against the docs domain to extract specifics instead; a Wayback Machine fallback (used successfully for other blocked sites in §25) did **not** work here, this tool's WebFetch refuses `web.archive.org` outright.
+
+### Data pipeline built this session (all in `hotels-beta/scripts/ratehawk/`)
+
+Since Content API v1 isn't available, the working approach is ETG's **full hotel dump** endpoint:
+
+1. `POST /api/b2b/v3/hotel/info/dump/` with `{"inventory": "all", "language": "en"}` → returns a signed S3 URL (`partner_feed__en_v3.jsonl.zst`, ~1hr expiry) + `last_update` timestamp. This is ETG's **entire global partner inventory**, not scoped to us — confirmed size **2,797,718,014 bytes (~2.8GB) compressed**, reportedly 20GB+ decompressed. Updated weekly by ETG; there's also a documented incremental/daily-diff dump endpoint (`retrieve-hotel-incremental-dump`) not yet used.
+2. Downloaded to `scripts/ratehawk/partner_feed__en_v3.jsonl.zst` (gitignored — see below). Format: newline-delimited JSON, Zstandard-compressed. **Node 24's built-in `zlib` module has native Zstandard streaming support** (`createZstdDecompress`) — no new npm dependency needed, consistent with this project's scripts convention.
+3. `filter-dump-by-country.mjs` streams the file end-to-end (never holding the full decompressed feed in memory or on disk) and keeps only records whose `region.country_code` maps to one of the OLTRA `hotels` collection's countries, writing a slim record (`hid`, `id`, `name`, `country`, `country_code`, `city`, `region_id`, `latitude`, `longitude`, `star_rating`, `kind`, `address`) per line to `scripts/ratehawk/output/filtered-hotels.jsonl`.
+4. `country-map.mjs` — hand-built ISO 3166-1 alpha-2 → OLTRA-country-string lookup table, one entry per country in `oltra-countries.json` (the distinct-country snapshot pulled from Directus, kept in sync with the DB — see cleanup below). This is the join key between Ratehawk's `region.country_code` and our `hotels.country` field.
+5. **Full run result**: of 3,166,880 total hotels in the global dump, **2,944,537 matched** one of our then-87 countries, plus a **3,629-hotel Nepal append** (targeted single-country scan, not a full re-filter) after the DB fix below added Nepal as an 88th country — **final total: 2,948,166 hotels** in `scripts/ratehawk/output/filtered-hotels.jsonl`.
+
+`.gitignore` additions: `scripts/ratehawk/*.zst`, `scripts/ratehawk/*.jsonl`, `scripts/ratehawk/output/` — the raw dump and filtered output never get committed (multi-GB, regenerable, and the raw dump is ETG's proprietary global inventory, not ours to publish).
+
+### Country-mapping audit (prompted by a valid user concern about silent mismatches)
+
+Before trusting the country-level filter, cross-checked every one of the 87 target countries against the actual dump for zero-match cases (a real risk: a country whose Ratehawk `country_code` isn't in `country-map.mjs` would be silently dropped with no error). Findings:
+
+* **Hong Kong** — turned out to be a non-issue: Ratehawk itself files Hong Kong hotels under `country_code: "CN"` (with `region.name: "Hong Kong"`, `iata: "HKG"`), i.e. lumped into China — same as the OLTRA DB already does. No mismatch.
+* **Macau** — Ratehawk does give Macau its own `MO` code (confirmed 80+ real records), but `country-map.mjs` already maps `MO → "China"` to match the DB's existing grouping, so these aren't dropped.
+* **St. Martin** — the one OLTRA hotel here (La Samanna, Marigot) is genuinely on the French side of the island; `MF` is the correct code, no Sint Maarten/Dutch-side split issue in practice.
+* **Russia** — the only country with a genuine zero-match, and it's not a mapping bug: the full dump (all 3.16M records) contains **zero** `RU`-coded hotels at all, almost certainly ETG (a European company) excluding Russian inventory for sanctions reasons. The one OLTRA hotel in Russia (Barvikha Hotel & Spa, Moscow, id 1505) simply won't have a Ratehawk match available — expected, not broken.
+* **All other 85 countries** — real matches found, ranging from 413,826 (China) down to 35 (Monaco).
+
+**Takeaway for extending `country-map.mjs` later**: if a new OLTRA country is added, verify it against the dump the same way (grep the raw stream for the expected `country_code`, or check the filtered output's per-country counts) rather than assuming a code — don't trust ISO-standard assumptions blindly, since ETG's own classification has at least one real deviation (Hong Kong under `CN` rather than a separate `HK`).
+
+### Directus data cleanup done alongside this (2026-08-05)
+
+Found while auditing `hotels.country` for the country-map work — all normalized to the majority spelling already in use:
+
+| Hotel(s) | Was | Now |
+|---|---|---|
+| ids 1105, 1107 | `"China "` (trailing space) | `"China"` |
+| id 1106 (Four Seasons HK) | `"China "` + `hotel_name` `"Four Seasons Hotel Hong Kong "` (trailing space) | `"China"` + trimmed name |
+| id 1148 (Mandarin Oriental Tokyo) | `"Japan "` + trailing-space `hotel_name` | `"Japan"` + trimmed name |
+| id 1149 | `"Japan "` | `"Japan"` |
+| ids 2029, 2039 | `"UAE"` | `"United Arab Emirates"` (majority: 20 vs 2) |
+| id 1578 | `"The Netherlands"` | `"Netherlands"` (majority: 5 vs 1) |
+| id 1088 (Shinta Mani Mustang, city Jomsom — actually Mustang, **Nepal**) | `"China"` (pre-existing unrelated data error, unrelated to Ratehawk, just spotted during this audit) | `"Nepal"` |
+
+`oltra-countries.json` and `country-map.mjs` updated to include `"Nepal"` / `NP` after the last fix; a targeted append-only pass (scan the dump for `"NP"` only, not a full re-filter) backfilled Nepal into `filtered-hotels.jsonl` without re-running the ~10-minute full stream.
+
+### Status — where the next session picks up
+
+**Done**: credentials verified, full dump downloaded and filtered to our countries, country-mapping audited for silent gaps, related DB country-field cleanup applied.
+
+**Not started**: the actual name/city fuzzy-matching step — comparing our ~850 hotels against the ~2.95M filtered Ratehawk candidates (still large; will need city-level pre-filtering, not just country, before fuzzy name matching is computationally reasonable). Plan discussed but not yet built: mirror the tiering pattern from `match-hotel-awards.mjs` (§24/§25) — confirmed / near / uncertain / no-match — using name similarity plus city/country corroboration, with lat/lng distance as a possible additional tiebreaker (not yet decided). Output should go through the same user-reviewed-before-write pattern as the awards workflow, not an automatic bulk `hid` write.
+
+Before resuming: check whether the downloaded `.zst` file is still on disk (`scripts/ratehawk/partner_feed__en_v3.jsonl.zst`, gitignored) and whether `scripts/ratehawk/output/filtered-hotels.jsonl` is still current — if a lot of time has passed, ETG's weekly dump refresh may warrant re-downloading rather than trusting a stale filtered file.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.

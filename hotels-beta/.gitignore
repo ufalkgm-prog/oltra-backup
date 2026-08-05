@@ -47,3 +47,8 @@ backups/*.sql.gz
 # Agoda
 scripts/agoda/agoda.csv
 scripts/agoda/output/
+
+# Ratehawk
+scripts/ratehawk/*.zst
+scripts/ratehawk/*.jsonl
+scripts/ratehawk/output/
