@@ -38,3 +38,6 @@ next-env.d.ts
 
 backups/*.sql
 backups/*.sql.gzhotels-beta/oltra-beta/
+
+.vercel
+.env*

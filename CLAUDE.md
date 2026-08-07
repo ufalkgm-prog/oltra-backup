@@ -1001,7 +1001,7 @@ Cross-checked the Michelin 3 Keys source list (143 entries) against all 873 DB h
 
 ---
 
-## 26. RATEHAWK INTEGRATION — HOTEL MATCHING (in progress, started 2026-08-05)
+## 26. RATEHAWK INTEGRATION — HOTEL MATCHING (matching complete 2026-08-07; images + booking integration next)
 
 ### Goal
 
@@ -1057,13 +1057,76 @@ Found while auditing `hotels.country` for the country-map work — all normalize
 
 `oltra-countries.json` and `country-map.mjs` updated to include `"Nepal"` / `NP` after the last fix; a targeted append-only pass (scan the dump for `"NP"` only, not a full re-filter) backfilled Nepal into `filtered-hotels.jsonl` without re-running the ~10-minute full stream.
 
-### Status — where the next session picks up
+### Matching algorithm (`match-ratehawk-hotels.mjs`, built 2026-08-07)
 
-**Done**: credentials verified, full dump downloaded and filtered to our countries, country-mapping audited for silent gaps, related DB country-field cleanup applied.
+Mirrors `scripts/agoda/match-agoda-hotels.mjs` and the CONFIRMED/NEAR/UNCERTAIN tiering from `match-hotel-awards.mjs`, adapted for Ratehawk's scale:
 
-**Not started**: the actual name/city fuzzy-matching step — comparing our ~850 hotels against the ~2.95M filtered Ratehawk candidates (still large; will need city-level pre-filtering, not just country, before fuzzy name matching is computationally reasonable). Plan discussed but not yet built: mirror the tiering pattern from `match-hotel-awards.mjs` (§24/§25) — confirmed / near / uncertain / no-match — using name similarity plus city/country corroboration, with lat/lng distance as a possible additional tiebreaker (not yet decided). Output should go through the same user-reviewed-before-write pattern as the awards workflow, not an automatic bulk `hid` write.
+* **Country is a hard filter** and, unlike the Agoda script, needs no fuzzy normalization — `filtered-hotels.jsonl` already carries the exact OLTRA country string (via `country-map.mjs`), so grouping is an exact-string match.
+* **City is deliberately NOT a filter**, only a soft scoring bonus — Ratehawk's `city` field is actually `region.name`, which is sometimes a broader area than OLTRA's `city` (e.g. "Kruger National Park" vs "Sabi Sand Reserve") and occasionally just wrong (see Bateleur Camp below).
+* **Name matching**: strip generic hospitality words (hotel/resort/spa/villa/lodge/palace/suites/residence/collection/boutique/the/a/an/and/by), Jaccard token-overlap score, plus a brand-prefix-containment bonus (smaller token set ⊂ larger, ≥2 tokens, same idea as the awards script's "near" tier) and a rare-token (≥5 chars) bonus.
+* **Lat/lng haversine distance** added as a scoring signal not present in the Agoda script: ≤1km strong bonus, ≤5km smaller bonus, ≤25km tiny bonus, >100km penalty.
+* **Tiers**: `CONFIRMED` (score ≥85, ≥15 clear of runner-up) / `LIKELY` (≥60, ≥8 clear) / `QUESTIONABLE` / `NO_MATCH` (best <40 or no candidate scored ≥20). Keeps top 3 candidates per OLTRA hotel.
+* Run end-to-end against the full ~2.95M-row filtered dump in a few minutes (single readline stream, country-grouped candidates kept small in memory).
 
-Before resuming: check whether the downloaded `.zst` file is still on disk (`scripts/ratehawk/partner_feed__en_v3.jsonl.zst`, gitignored) and whether `scripts/ratehawk/output/filtered-hotels.jsonl` is still current — if a lot of time has passed, ETG's weekly dump refresh may warrant re-downloading rather than trusting a stale filtered file.
+### Review tooling (`build-review-tool.mjs` → `output/review-tool.html`)
+
+Self-contained offline HTML page (embeds the match results as a JS const, no server needed) for confirm/reject review at hotel scale:
+
+* Per hotel: shows top-3 candidates with score/notes/distance; **Confirm** / **Not this** / **None of these match** (→ rejected) / **Mark unsure** buttons.
+* Autosaves decisions to `localStorage` (`ratehawk_match_decisions_v1`, keyed by `oltra_id`); **Export decisions JSON** downloads them; **Import decisions** re-loads a JSON file.
+* Filters: status tier, reviewed/pending, text search. Default view is "All statuses" / "All (incl. reviewed)" so a full pass can scroll continuously rather than tier-by-tier.
+* **Gotcha**: hotels with zero candidates originally rendered with no action buttons at all (no way to mark "no match") — fixed by adding Confirm-no-match/Mark-unsure buttons to the empty-candidates branch too.
+* **Browser-automation gotcha**: the Claude-in-Chrome extension cannot navigate to `file://` URLs. Workaround used: `python -m http.server` from `scripts/ratehawk/output/` and open `http://localhost:<port>/review-tool.html` instead.
+* To bulk-inject decisions (e.g. after a re-match) without re-clicking everything: `fetch` the decisions JSON from the local server and write it into `localStorage` via the JS console/`javascript_tool`, then reload — far faster than re-driving the UI.
+
+### Manual-lookup verification (`test-manual-matches.mjs`)
+
+For hotels the algorithm couldn't confidently match, the user searched Ratehawk's public site by hand and supplied alternate names/addresses; this script tests those leads against `filtered-hotels.jsonl` (name+address token-overlap scoring, country-scoped) to find the real `hid`. Recovered 27 of 30 manually-supplied leads (3 were "Unpublish"/"duplicate" data-cleanup notes, not match leads).
+
+### Key bugs and lessons from this session (read before extending)
+
+* **Decisions-merge bug**: when bulk-writing the 27 manually-verified matches into the decisions file, the update script pulled `candidates[0]` from the *automatic* matcher's `ratehawk_match_results.json` instead of from `manual_match_test_results.json` — silently overwriting several correct manual matches with the automatic matcher's (wrong) top guess, e.g. `The Biltmore Hotel` (Miami) got replaced with "Biltmore Suites Hotel" in **Baltimore**. Caught by the Stage-1 distance QA check below, not by the matching logic itself. **Lesson: when merging match results from two different sources, double-check which source's candidate list you're actually reading — a matching `oltra_id` doesn't guarantee you grabbed the right hid.**
+* **Country misclassification isn't limited to the Hong-Kong/Macau case already documented above.** Found the same pattern for St. Barthélemy: Ratehawk splits genuine island properties inconsistently between `country_code: "BL"` and `"FR"` (e.g. Rosewood Le Guanahani is FR-coded despite being on the island). Fixed via a geographic bounding-box scan (`scan-st-barth.mjs`) rather than a country-code remap, since only ~6 of the many FR-coded records were genuinely on the island — most FR hits for "st barth"-like text were unrelated mainland-France false positives. **Lesson: when a country-hard-filtered match comes back NO_MATCH for a hotel you're confident should be in the dump, check for this pattern before concluding it's absent — scan the raw dump by name/geography across *all* country codes, not just the expected one.**
+* **Google Places re-geocoding is not independent verification** when the coordinate being checked was *originally sourced* the same way (per §20, OLTRA's lat/lng were populated via this same Places "Find Place from Text" method). Re-querying today can reproduce the exact same (wrong) answer Google gave originally, which looks like confirmation but isn't. Caught this for 2 of the largest distance-outliers (`Bulgari Hotel Shanghai` — Google matched an unrelated address in Qinhuangdao, ~1000km off, exactly reproducing OLTRA's stored error; `Casa Chablé` — Google matched a same-brand sibling property, "Chablé Yucatán", instead). Both resolved via plain web search for the hotel's real address instead. **Lesson: a "verification" that uses the same method/data source as the original data creation only proves consistency, not correctness — treat it as low-confidence when the two should be independent, and cross-check outliers via a genuinely different source.**
+* **Directus data-entry bugs surfaced along the way** (not Ratehawk-related, just found while cross-referencing): `hotel_name` fields with junk appended (`"One&Only Kéa Island, Greece"`, `"One&Only Reethi Rah, Maldvies"` — note the misspelling) and a plain typo (`"Senses Lanai"` → should be `"Sensei Lanai"`), plus a duplicate `Caruso` (Ravello) row (ids 1426/1449, both `published: true` simultaneously) and 4 hotels genuinely in Anguilla mistagged `country: "British Virgin Islands"` (ids 1237/1238/1239/1240) — `state_province_county_island` already correctly said "Anguilla" for all 4, only `country` was wrong.
+
+### Final results (2026-08-07)
+
+Of 871 OLTRA hotels: **829 confirmed matches** (630 automatic CONFIRMED-tier + 91 automatic LIKELY-tier with location corroboration, bulk-accepted after spot-check + 27 from manual lookup, 4 of which needed the St. Barth/Anguilla fixes above to even find a candidate), **31 marked unsure**, **11 confirmed no-match** (genuinely absent from Ratehawk's inventory — includes Russia per the sanctions exclusion above, and several ultra-exclusive independent brands like Cheval Blanc and Eden Rock St-Barths that don't appear anywhere in the 3.16M-row dump under any country code).
+
+**Pre-write-back QA** (`build-writeback-review.mjs` → `output/writeback_review.csv`) cross-checked all 829 confirmed matches on three axes before touching Directus:
+
+1. **Distance** (haversine, OLTRA vs Ratehawk lat/lng): 322 of 829 >50m apart, but 285 of those are <1km (GPS-pin precision, not investigated further). Of the 37 >1km outliers, independently verified via Google Places (`verify-distance-outliers.mjs`) + web search for the worst two — **9 confirmed as OLTRA coordinate errors**, fixed in Directus (see table search-worthy hotel names: Bulgari Hotel Shanghai, Casa Chablé, Excellence Oyster Bay, Four Seasons Hotel Boston, Nihi Sumba, Royal Malewane, Ritz-Carlton Ras Al Khaimah, Ritz-Carlton Shanghai, Upper House Chengdu). The other 28 outliers left as-is (see the Google-Places-circularity lesson above for why those verdicts are lower-confidence, not wrong).
+2. **Name**: 221 of 829 differ after normalization. Cross-checked each OLTRA `description` (sourced from official hotel websites) for which name it actually validates — **216 of 221 (98%) validated OLTRA's existing name** (Ratehawk's "difference" is almost always just a distribution-channel suffix like "- The Leading Hotels of the World" or "By Hyatt"). Only 3 pointed the other way, and all 3 turned out to be the Directus typos/junk listed above — fixed, no bulk renaming needed.
+3. **City**: 288 of 829 differ. 15 had a blank OLTRA `city` (14 backfilled from Ratehawk — 1 skipped, Ratehawk's value was garbled hotel-name text, not a real place). The other 273 (both sides non-blank) showed **no consistent direction** — sometimes OLTRA is more precise (ski-resort sub-villages, named reserves), sometimes Ratehawk is (the actual town vs. a broader named area) — left untouched as a blanket update would make roughly half of them worse, not better.
+
+**Directus schema change**: added `ratehawk_hid` (integer, nullable) to the `hotels` collection, same pattern as `agoda_hotel_id`. Backfilled for all 829 confirmed matches, 0 failures.
+
+**Files** (all in `hotels-beta/scripts/ratehawk/`): `export-oltra-hotels.mjs` (fresh OLTRA snapshot incl. `affiliation`/lat/lng), `match-ratehawk-hotels.mjs`, `build-review-tool.mjs`, `test-manual-matches.mjs`, `scan-st-barth.mjs`, `append-country-to-filtered.mjs` (generic targeted-country backfill, used for both Nepal and Anguilla), `fix-anguilla-country.mjs`, `build-writeback-review.mjs`, `verify-distance-outliers.mjs`, `export-non-confirmed-csv.mjs`, `apply-ratehawk-hid.mjs` (the only script here that writes `ratehawk_hid` — everything else is review/report-only). `.env.local` also now has `GOOGLE_MAPS_API_KEY` (re-added 2026-08-07; was present as of §20's 2026-07-07 note but had since been removed).
+
+---
+
+## 27. NEXT PHASES — RATEHAWK IMAGES & BOOKING INTEGRATION (not started, planned 2026-08-07)
+
+With hotel-matching done and `ratehawk_hid` populated for 829 hotels, the two next pieces of work:
+
+### 1. Hotel images from Ratehawk
+
+Not yet scoped. The slim records in `filtered-hotels.jsonl` (from the full dump) don't include image URLs — that field wasn't captured by `filter-dump-by-country.mjs`'s slim-record projection (see the field list in the pipeline section above). Before starting:
+
+* Check whether the full dump's raw JSONL rows (pre-slimming) actually contain an images field — if so, a targeted re-scan keyed by our 829 known `hid`s (same streaming pattern as `append-country-to-filtered.mjs`) can pull them without re-downloading.
+* If the dump doesn't carry images, the per-hotel `POST /api/b2b/v3/hotel/info/` endpoint (already confirmed working, see credentials section) is the fallback — 829 individual calls, so check for rate limits.
+* Existing precedent to follow: `scripts/agoda/backfill-agoda-lite-images.mjs` for how Agoda photos were pulled into `agoda_photo1`–`agoda_photo5`; decide whether Ratehawk images get parallel `ratehawk_photo*` fields or a different storage shape (array field, like the taxonomy tags?).
+
+### 2. Room selection, availability check, and booking integration
+
+Mirrors the existing Duffel flights integration architecture (§7B) in spirit — search/offer/book — but for hotel rooms:
+
+* Ratehawk/ETG's booking API endpoints haven't been explored yet this session (only the content/dump endpoints used for matching). Will need: availability search (dates + `hid` → room/rate options), rate/room selection, and a booking-confirmation flow.
+* **Careful**: per the credentials section above, this key is a "Sandbox Key" that hits the *live production* host — ETG's onboarding email explicitly warns that test bookings are treated as real orders and must be manually cancelled. Read-only search/availability calls are presumably safe; anything that creates a booking needs explicit care and probably a confirmation step before ever calling it, even in testing.
+* UI shape: likely a new `/hotels/[id]/book` flow or a booking panel on the existing hotel detail view, following the `FlightsView`/`PriceCard` pattern of showing options with a clear book action — but hotel booking has a different shape (room types, occupancy, cancellation policy) than flight offers, so don't force-fit the flights component structure.
+
+Before resuming either: re-verify `RATEHAWK_KEY`/`RATEHAWK_KEY_ID` are still valid (§26 credentials section) and check whether ETG's weekly dump refresh means `filtered-hotels.jsonl` should be re-pulled if picking this up much later.
 
 ---
 

@@ -2,6 +2,7 @@
 // to the exact country-name strings used in the OLTRA `hotels` collection.
 export const ISO2_TO_OLTRA_COUNTRY = {
   AG: "Antigua & Barbuda",
+  AI: "Anguilla",
   AR: "Argentina",
   AU: "Australia",
   AT: "Austria",
