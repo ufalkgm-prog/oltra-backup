@@ -1255,7 +1255,7 @@ New `.oltra-hotels-layout`/`.oltra-hotels-right-pane` classes in `oltra-theme.cs
 
 ### Save to Trip — `room_selection` column
 
-**Requires a manual Supabase migration** (no service-role key / linked CLI available to run it directly — the user runs it themselves via the Supabase Dashboard SQL Editor):
+**Migration applied (2026-08-08).** Ran via the Supabase Dashboard SQL Editor against the Members project (no service-role key / linked CLI available to run it directly from this session — see §31 for why "the Members project" wasn't obvious):
 ```sql
 alter table member_trip_hotels
   add column room_selection jsonb;
@@ -1265,11 +1265,38 @@ comment on column member_trip_hotels.room_selection is
 ```
 `src/lib/supabase/database.types.ts` hand-edited to add `room_selection: Json | null` (no CLI link to regenerate from). `addHotelToTripBrowser` (`src/lib/members/db.ts`) takes an optional `roomSelection` param; `SavedHotel`/`RoomSelectionEntry` types (`src/lib/members/types.ts`) and `mapSavedTrips` carry it through to the read side. `SavedTripsView.tsx` renders a `2× Deluxe Double room, 1× Executive Suite`-style summary line under the existing stay-date line when present — no card redesign.
 
+Column confirmed present via a direct read-only PostgREST call (`.../rest/v1/member_trip_hotels?select=id,room_selection` → 200, not the `column ... does not exist` error seen before the migration). **Full end-to-end verification (Add to Trip → Saved Trips) not yet done — deferred to next session**, since it requires a real member login, which this session couldn't perform (session automation doesn't authenticate as the user, even in their own dev environment).
+
 ### Explicitly out of scope
 
 * Any real booking/prebook/payment call — `book_hash` is fetched and stored on each grouped room but never sent anywhere. Next phase.
 * `LandingSummary.tsx` (homepage teaser) and `/hotels/[hotelid]` — untouched, same reasoning as §29.
 * Optimizing the redundant `hotel/info` call on every rate refetch.
+
+---
+
+---
+
+## 31. `.env.local` HAD THE WRONG SUPABASE PROJECT — FIXED (2026-08-08)
+
+### The bug
+
+Per §2, OLTRA uses **two separate Supabase accounts/projects**: one is the "Hotel database" (canonical hotel/restaurant store, sat under Directus — the app never talks to it directly, only via Directus's own REST API), the other is a separate project for **auth + member data only** (`member_trips`, `member_trip_hotels`, `member_favorite_hotels`, etc.).
+
+This session's `hotels-beta/.env.local` had `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` set to the **Hotel database** project (ref `slejwbswlzgoeogpxixc`) instead of the Members project. Confirmed by a direct read-only PostgREST call: `.../rest/v1/member_trip_hotels` on that ref returned `PGRST205 Could not find the table 'public.member_trip_hotels'... Perhaps you meant the table 'public.hotels'` — i.e. that project genuinely only has hotel-content tables, not the members schema.
+
+**Practical effect while broken**: every member-auth-dependent feature (login, Add to Trip, Favorites, Personal Information, the header's login greeting) was pointed at a Supabase project with no members schema at all — these would have failed outright in this local checkout, unrelated to any application code bug.
+
+### Why this was easy to miss
+
+* There is exactly **one** Supabase client code path in the app (`src/lib/supabase/client.ts`, `server.ts`, `middleware.ts`), all reading the same two `NEXT_PUBLIC_SUPABASE_*` variable names — there's no naming distinction in code between "the hotel one" and "the members one," so a value mix-up during `.env.local` setup produces no error until something tries to query a members table.
+* Supabase renamed the anon key to **"Publishable key"** in their dashboard UI (same purpose, same place in Project Settings → API) — worth knowing so a future session doesn't go looking for a field literally labeled "anon key" and conclude it's missing.
+
+### The fix
+
+Corrected `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` to the Members project (ref `hrlvtzcapsqkgrcawluf`). Verified via the same PostgREST probe — `member_trip_hotels` now resolves (200, empty result set — RLS-gated, expected with the publishable key and no session). Dev server needed a restart to pick up the change (same as any `.env.local`/`next.config.ts` edit — not hot-reloaded).
+
+**For any future fresh checkout**: don't assume "the Supabase URL/key" in a shared `.env.local` template is correct without checking — ask the user directly which of their two projects it should be (per the general fresh-checkout credential guidance in §25), or verify with the same read-only `member_trip_hotels` probe before trusting it.
 
 ---
 
