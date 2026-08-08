@@ -1197,7 +1197,7 @@ The Hotels page fetches all ~870 published hotels in one request (`limit: -1`) f
 
 ### Thumbnail strip and category badge
 
-The selected-hotel detail panel's thumbnail grid (`grid-cols-2`, `max-h-[340px]`, ~8 visible) kept its exact sizing — only the scroll affordance changed: a `thumbGridRef` + `canScrollThumbsUp`/`canScrollThumbsDown` state (derived from `scrollTop`/`scrollHeight`/`clientHeight`, recalculated on scroll and whenever the gallery changes) drive two flat chevron buttons (▲/▼, not the lightbox's round style) above/below the grid, each calling `scrollBy({top: ±60% of clientHeight, behavior: "smooth"})`. Both arrows are simply absent when everything fits (≤8 images) — every Agoda-only hotel looks unchanged. Thumbnails got `loading="lazy"` (up to 50 now, vs. Agoda's 5).
+The selected-hotel detail panel's thumbnail grid (`grid-cols-2`, ~8 visible) kept its exact thumbnail sizing. **Updated 2026-08-08**: the initial version added flat ▲/▼ scroll-arrow buttons above/below the grid, but the user asked for these to be removed in favor of the native scrollbar, and for the panel to be a fixed `h-[340px]` matching the large image's height exactly (was `max-h-[340px]`, which left a gap for hotels with few images). **Caught a real CSS Grid gotcha making that change**: switching to a definite `height` (from `max-height`) caused all thumbnail rows to compress to fit instead of scrolling — a known issue where `grid-auto-rows: auto` rows can shrink under a fixed-height scroll container. Fixed by adding `auto-rows-min` (forces rows to their natural min-content size regardless of container height). Thumbnails still use `loading="lazy"` (up to 50 now, vs. Agoda's 5).
 
 A small pill badge (`.oltra-status-badge` — existing CSS, previously unused anywhere in the app — combined with a dark glass background) shows the current image's category bottom-right, on both the detail-panel hero and the lightbox. Hidden when `category` is `null` (always true for Agoda) or the literal string `"unspecified"` (~17% of Ratehawk images, per §28's session data — not useful to show). Label formatting: `guest_rooms` → "Guest Rooms" (`formatImageCategory()` in `HotelsView.tsx`).
 
@@ -1211,6 +1211,65 @@ A small pill badge (`.oltra-status-badge` — existing CSS, previously unused an
 * No `SavedTripsView.tsx`/`FavoriteHotelsView.tsx` code changes — both only ever render a flat `thumbnail` string persisted to Supabase at add-time, sourced from the `hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null` calls in `HotelsView.tsx`. Once those prefer Ratehawk, new saves automatically do too. **Already-saved trips/favorites keep their old Agoda thumbnail — not retroactively backfilled.**
 * No Inspire category badge — the hover popup is a small, no-interaction card; only the thumbnail source changed there (`buildInspireCities.ts` now imports `normalizeAgodaImage`/`resolveRatehawkUrl` from `cardHelpers.ts` instead of a locally-duplicated copy, and prefers `ratehawk_image_1` at thumb size).
 * Room images: still not displayed anywhere — see §28's `rg_ext`-not-`room_group_id` note for the booking-integration phase.
+
+---
+
+## 30. RATEHAWK AVAILABILITY, PRICING & ROOM SELECTION (2026-08-08)
+
+### What was done
+
+Ratehawk now handles all availability/pricing/room-selection on the Hotels page — **Agoda's price-fetch and booking are fully disabled there** (Agoda is untouched everywhere else — the homepage teaser cards in `LandingSummary.tsx` still use it; `/hotels/[hotelid]` is still the separate Agoda-CSV system per §15/§29). This is data-and-selection only — **no real booking/payment call is made anywhere**, matching the sandbox-key-hits-production caution in §26. Booking integration is a distinct next phase.
+
+### API split: SERP (headline) vs. hotelpage (room list)
+
+Two ETG endpoints, mirroring how Agoda had a batch check (list-row price) and a single check (selected-hotel detail):
+* `POST /api/b2b/v3/search/serp/hotels/` — batch, one call for all visible results' `ratehawk_hid`s, returns a headline price per hotel. ETG's own docs say not to let users pick rates from this response directly.
+* `POST /api/b2b/v3/search/hp/` — detail, one call for the selected hotel only, returns the full list of selectable room rates. ETG's "Recommended Flow" call.
+* Both take `guests: [{adults, children}]` — **one array entry per room**, built by `buildGuestsArray()` in `src/lib/ratehawk/availability.ts`, which evenly splits the search form's `adults`/`kids`/bedroom count across that many room slots.
+* Auth is HTTP Basic (`key_id:key`), unlike Agoda's custom header.
+* `residency` has no UI to source it from — hardcoded to `"gb"` in `availability.ts`. A documented simplification, not a per-user value.
+* Added `ratehawk_hid?: number | null` to `HotelRecord` (`src/lib/directus.ts`) and `hotels/page.tsx`'s field list — this hid already existed in Directus per §26 but, like `ratehawk_image_1` before §29, had never been wired into the TS layer.
+
+### Headline price formula
+
+Cheapest available room whose `rg_ext.capacity` covers `ceil(totalGuests / bedroomsRequested)`, × `bedroomsRequested` — "book N copies of the cheapest room that fits." Not a true mixed-room-type bin-pack; a documented simplification (`computeHeadlinePrice()` in `availability.ts`). The room-selection UI lets the user override it room-by-room afterward. The API itself returns a **flat list of individual room rates**, confirmed via live testing — it does not pre-combine a multi-room booking, so this app does the aggregation.
+
+### Room images: a real deviation from ETG's own docs
+
+§28 flagged that room images would need `rg_ext` matching (ETG's documented approach) once this phase arrived. **Tested against live data — it doesn't work**: `rg_ext` values differ slightly between the `search/hp/` rate objects and the `hotel/info/` static-content `room_groups[]`, so exact-equality matching found 0/5 correct matches on a real hotel. **What actually works: matching by `room_name` containment** (`rate.room_name.includes(roomGroup.name)`, longest match wins) — 5/5 correct matches, each pulling real images. This is `matchRoomImages()` in `availability.ts`. `/api/ratehawk/availability` calls `search/hp/` (rates) and `hotel/info/` (room images) in parallel for every request — not cached separately, so dates-only changes re-fetch images unnecessarily; acceptable simplicity for this phase, not optimized.
+
+Room `size` (m²) exists in ETG's schema but is feature-gated — their docs say it needs a supplementary account-manager agreement; confirmed `null` in a live response for this account. `sizeSquareMeters` is always `null` today; the room card/popup render it conditionally so it'll pick up automatically if the feature is ever enabled.
+
+### `HotelsView.tsx` — what changed
+
+* All Agoda availability/booking state, effects, and JSX removed: `agodaAvailability`, `agodaResultAvailability(Status)`, `handleCheckAgodaAvailability`, `selectedAgodaHotelId`, `getAgodaHotelIdForHotel`, `selectedHotelBatchAvailability`/`HasBatchAvailability`/`AgodaResult`/`AgodaUnavailable`/`CanCheckAgoda`, the "CHECK AGODA AVAILABILITY"/"BOOK WITH AGODA" JSX, and the Agoda price pill/error block. `src/app/api/agoda/*` and `src/lib/agoda/*` are untouched (still used by `LandingSummary.tsx`).
+* `agodaSearchDirty` renamed to `availabilitySearchDirty` throughout (mechanical) — the "search inputs changed, refetch" concept is provider-agnostic, just happened to be named after Agoda.
+* New Ratehawk batch effect (results-row headline price) and a new **auto-fetching** detail effect (no manual button — rooms should just be displayed) keyed on `selectedHotel?.id, fromValue, toValue, guestSelection, bedroomsValue`. Pre-selects the headline combo (`roomSelection` state) whenever the room list reloads.
+* New "Rooms" section inserted between Description and the action-buttons row: one card per grouped room (thumbnail via `resolveRatehawkUrl(..., RATEHAWK_THUMB_SIZE)`, capacity, balcony, bed/layout line, price, a 0..N quantity stepper, an "(i)"-equivalent "More details" link). A running total (`roomSelectionTotal`) replaces the old Agoda price pill in the action row; the hotel's own fallback `booking_URL` link (unrelated to Agoda) now shows there instead, only when nothing is selected.
+* Room detail popup (mirrors the app's `createPortal`/fixed-inset lightbox pattern already used for photos, not the Flights page's separate CSS-module popup): full matched image gallery at `RATEHAWK_LARGE_SIZE`, occupancy, layout, meal, cancellation policy, amenities.
+* A real bug caught during testing: `rg_ext.capacity` can be `0` (not just missing) for some rates (e.g. suites) — `?? 1` doesn't catch that (nullish coalescing only replaces `null`/`undefined`), so it rendered "Sleeps 0". Fixed with `|| 1`.
+
+### Layout: left pane fixed, right pane scrolls independently
+
+New `.oltra-hotels-layout`/`.oltra-hotels-right-pane` classes in `oltra-theme.css`, mirroring the existing fixed-sidebar pattern in `restaurants.css`: the outer two-pane grid gets a bounded height (`calc(100vh - top/bottom page padding)`) + `overflow: hidden`; the right `<section>` becomes the one that scrolls. The left pane's results-list `flex-1 min-h-0 overflow-y-auto` classes were already present but inert (no ancestor had a bounded height) — they now work as originally intended once the ancestor is bounded. (Featured Mode, which has no left pane, keeps its original unbounded/full-page behavior — the new classes only apply in Results/Details mode.)
+
+### Save to Trip — `room_selection` column
+
+**Requires a manual Supabase migration** (no service-role key / linked CLI available to run it directly — the user runs it themselves via the Supabase Dashboard SQL Editor):
+```sql
+alter table member_trip_hotels
+  add column room_selection jsonb;
+
+comment on column member_trip_hotels.room_selection is
+  'Ratehawk room picks at save time: [{room_name, quantity, price_per_stay, currency}], null if no rooms were selected.';
+```
+`src/lib/supabase/database.types.ts` hand-edited to add `room_selection: Json | null` (no CLI link to regenerate from). `addHotelToTripBrowser` (`src/lib/members/db.ts`) takes an optional `roomSelection` param; `SavedHotel`/`RoomSelectionEntry` types (`src/lib/members/types.ts`) and `mapSavedTrips` carry it through to the read side. `SavedTripsView.tsx` renders a `2× Deluxe Double room, 1× Executive Suite`-style summary line under the existing stay-date line when present — no card redesign.
+
+### Explicitly out of scope
+
+* Any real booking/prebook/payment call — `book_hash` is fetched and stored on each grouped room but never sent anywhere. Next phase.
+* `LandingSummary.tsx` (homepage teaser) and `/hotels/[hotelid]` — untouched, same reasoning as §29.
+* Optimizing the redundant `hotel/info` call on every rate refetch.
 
 ---
 

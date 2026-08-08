@@ -5,6 +5,7 @@ import type {
   FavoriteRestaurant,
   MemberBirthday,
   MemberProfile,
+  RoomSelectionEntry,
   SavedTrip,
 } from "./types";
 
@@ -409,6 +410,7 @@ function mapSavedTrips(
         status: (item.status as "confirmed" | "pending" | "saved") ?? "saved",
         thumbnail: item.thumbnail ?? "/images/hero-lp.jpg",
         hasOverlapWarning: item.has_overlap_warning ?? false,
+        roomSelection: (item.room_selection as RoomSelectionEntry[] | null) ?? null,
       })),
     restaurants: restaurants
       .filter((item) => item.trip_id === trip.id)
@@ -943,6 +945,7 @@ export async function addHotelToTripBrowser(input: {
   thumbnail?: string | null;
   checkIn?: string | null;
   checkOut?: string | null;
+  roomSelection?: RoomSelectionEntry[] | null;
 }): Promise<AddHotelToTripUiResult> {
   const supabase = createBrowserClient();
 
@@ -992,6 +995,7 @@ export async function addHotelToTripBrowser(input: {
     check_in: input.checkIn || null,
     check_out: input.checkOut || null,
     has_overlap_warning: overlapWarning,
+    room_selection: input.roomSelection?.length ? input.roomSelection : null,
   };
 
   const { error } = await supabase.from("member_trip_hotels").insert(payload);

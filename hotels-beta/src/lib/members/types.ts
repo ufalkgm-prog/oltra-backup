@@ -19,6 +19,13 @@ export type MemberProfile = {
   }>;
 };
 
+export type RoomSelectionEntry = {
+  roomName: string;
+  quantity: number;
+  pricePerStay: number;
+  currency: string;
+};
+
 export type SavedHotel = {
   id: string;
   name: string;
@@ -29,6 +36,7 @@ export type SavedHotel = {
   status: "confirmed" | "pending" | "saved";
   thumbnail: string;
   hasOverlapWarning?: boolean;
+  roomSelection?: RoomSelectionEntry[] | null;
 };
 
 export type SavedRestaurant = {

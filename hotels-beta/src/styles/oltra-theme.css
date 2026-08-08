@@ -161,6 +161,20 @@ body {
   gap: var(--oltra-gap-lg);
 }
 
+/* Hotels page: left pane (filters + results) stays fixed to the viewport;
+   right pane (selected-hotel detail) scrolls independently. Mirrors the
+   fixed-sidebar/scrolling-detail pattern in restaurants.css. */
+.oltra-hotels-layout {
+  height: calc(100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding));
+  overflow: hidden;
+}
+
+.oltra-hotels-right-pane {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* Shared outer floating glass box */
 .oltra-glass {
   border-radius: var(--oltra-radius-xl);

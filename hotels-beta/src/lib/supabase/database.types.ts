@@ -302,6 +302,7 @@ export type Database = {
           hotel_name: string | null
           id: string
           location: string | null
+          room_selection: Json | null
           status: string | null
           stay_label: string | null
           thumbnail: string | null
@@ -318,6 +319,7 @@ export type Database = {
           hotel_name?: string | null
           id?: string
           location?: string | null
+          room_selection?: Json | null
           status?: string | null
           stay_label?: string | null
           thumbnail?: string | null
@@ -334,6 +336,7 @@ export type Database = {
           hotel_name?: string | null
           id?: string
           location?: string | null
+          room_selection?: Json | null
           status?: string | null
           stay_label?: string | null
           thumbnail?: string | null

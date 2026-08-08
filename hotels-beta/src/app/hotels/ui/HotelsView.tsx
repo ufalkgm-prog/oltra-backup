@@ -46,6 +46,7 @@ import {
   readHotelFlightSearch,
   saveHotelFlightSearch,
 } from "@/lib/searchSession";
+import type { RatehawkGroupedRoom, RatehawkHeadline } from "@/lib/ratehawk/types";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -64,34 +65,14 @@ type TaxMaps = {
 
 type ViewMode = "details" | "map" | "featured";
 
-type AgodaAvailabilityState =
-  | { status: "idle"; result: null; error: "" }
-  | { status: "loading"; result: null; error: "" }
-  | {
-      status: "available";
-      result: {
-        dailyRate: number;
-        crossedOutRate: number;
-        currency: string;
-        discountPercentage: number;
-        landingURL: string;
-        includeBreakfast: boolean;
-        freeWifi: boolean;
-      };
-      error: "";
-    }
-  | { status: "unavailable"; result: null; error: "" }
-  | { status: "error"; result: null; error: string };
+type RatehawkResultAvailability =
+  | { status: "available"; headline: RatehawkHeadline }
+  | { status: "unavailable" };
 
-type AgodaResultCardAvailability = {
-  status: "available" | "unavailable";
-  dailyRate?: number;
-  crossedOutRate?: number;
-  currency?: string;
-  discountPercentage?: number;
-  landingURL?: string;
-  includeBreakfast?: boolean;
-  freeWifi?: boolean;
+type RatehawkDetailState = {
+  status: "idle" | "loading" | "loaded" | "error";
+  rooms: RatehawkGroupedRoom[];
+  headline: RatehawkHeadline;
 };
 
 const CURRENCY_STORAGE_KEY = "oltra_currency";
@@ -391,6 +372,23 @@ function locationLine(h: HotelRecord): string {
   return [h.local_area, h.city, h.region, h.country].filter(Boolean).join(" · ");
 }
 
+function formatRoomCapacity(capacity: number): string {
+  return `Sleeps ${capacity}`;
+}
+
+function formatRoomLayout(room: RatehawkGroupedRoom): string {
+  const parts: string[] = [];
+  if (room.beds.length) {
+    parts.push(
+      room.beds.map((b) => `${b.count} ${b.bed} bed${b.count > 1 ? "s" : ""}`).join(", ")
+    );
+  } else if (room.bedding) {
+    parts.push(room.bedding);
+  }
+  if (room.miscRoomType) parts.push(room.miscRoomType);
+  return parts.join(" · ") || "—";
+}
+
 function getFeaturedAwardsForHotel(hotel: HotelRecord) {
   return FEATURED_AWARDS.filter((award) => Boolean(hotel[award.code]));
 }
@@ -620,24 +618,26 @@ export default function HotelsView(props: {
     "trip" | "favorite" | null
   >(null);
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
-  const [agodaAvailability, setAgodaAvailability] =
-    useState<AgodaAvailabilityState>({
-      status: "idle",
-      result: null,
-      error: "",
-    });
-
-  const [agodaResultAvailability, setAgodaResultAvailability] = useState<
-    Record<string, AgodaResultCardAvailability>
+  const [ratehawkResultAvailability, setRatehawkResultAvailability] = useState<
+    Record<string, RatehawkResultAvailability>
   >({});
 
-  const [agodaResultAvailabilityStatus, setAgodaResultAvailabilityStatus] =
+  const [ratehawkResultAvailabilityStatus, setRatehawkResultAvailabilityStatus] =
     useState<"idle" | "loading" | "loaded" | "error">("idle");
 
-  const agodaResultAvailabilityLoading =
-    agodaResultAvailabilityStatus === "loading";
+  const ratehawkResultAvailabilityLoading =
+    ratehawkResultAvailabilityStatus === "loading";
 
-  const [agodaSearchDirty, setAgodaSearchDirty] = useState(false);
+  const [ratehawkRooms, setRatehawkRooms] = useState<RatehawkDetailState>({
+    status: "idle",
+    rooms: [],
+    headline: null,
+  });
+
+  const [roomSelection, setRoomSelection] = useState<Record<string, number>>({});
+  const [openRoomDetailKey, setOpenRoomDetailKey] = useState<string | null>(null);
+
+  const [availabilitySearchDirty, setAvailabilitySearchDirty] = useState(false);
 
   const [tripChoices, setTripChoices] = useState<
     Array<{ id: string; name: string; label: string }>
@@ -704,13 +704,13 @@ export default function HotelsView(props: {
 
   const searchIsActive = searchDisabledReason === "";
 
-  const topAgodaAvailabilityChecked =
-    agodaResultAvailabilityStatus === "loaded" && !agodaSearchDirty;
+  const topAvailabilityChecked =
+    ratehawkResultAvailabilityStatus === "loaded" && !availabilitySearchDirty;
 
-  const topAgodaAvailabilityButtonDisabled =
+  const topAvailabilityButtonDisabled =
     !searchIsActive ||
-    agodaResultAvailabilityStatus === "loading" ||
-    topAgodaAvailabilityChecked;
+    ratehawkResultAvailabilityStatus === "loading" ||
+    topAvailabilityChecked;
 
   function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
     ref.current?.showPicker?.();
@@ -765,7 +765,7 @@ export default function HotelsView(props: {
     setIsSubmittingSearch(false);
     setHasPendingSearchInputLocal(hasPendingSearchInput);
     setSimpleSearchSubmitted("0");
-    setAgodaSearchDirty(false);
+    setAvailabilitySearchDirty(false);
   }, [searchParams, hasPendingSearchInput]);
 
   useEffect(() => {
@@ -1024,11 +1024,9 @@ export default function HotelsView(props: {
   }, [memberActionMessage, memberActionError]);
 
   useEffect(() => {
-    setAgodaAvailability({
-      status: "idle",
-      result: null,
-      error: "",
-    });
+    setRatehawkRooms({ status: "idle", rooms: [], headline: null });
+    setRoomSelection({});
+    setOpenRoomDetailKey(null);
   }, [
     selectedHotelId,
     fromValue,
@@ -1040,16 +1038,12 @@ export default function HotelsView(props: {
   ]);
 
   useEffect(() => {
-    if (!agodaSearchDirty) return;
+    if (!availabilitySearchDirty) return;
 
-    setAgodaResultAvailability({});
-    setAgodaResultAvailabilityStatus("idle");
-    setAgodaAvailability({
-      status: "idle",
-      result: null,
-      error: "",
-    });
-  }, [agodaSearchDirty]);
+    setRatehawkResultAvailability({});
+    setRatehawkResultAvailabilityStatus("idle");
+    setRatehawkRooms({ status: "idle", rooms: [], headline: null });
+  }, [availabilitySearchDirty]);
 
   const selectedHotel = useMemo(() => {
     if (!shouldShowResults) return null;
@@ -1402,45 +1396,45 @@ export default function HotelsView(props: {
     [selectedHotel]
   );
 
-  const selectedAgodaHotelId = useMemo(() => {
-    const raw = selectedHotel?.agoda_hotel_id;
+  const selectedRatehawkHid = useMemo(() => {
+    const raw = selectedHotel?.ratehawk_hid;
     if (!raw) return null;
 
     const parsed = Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }, [selectedHotel]);
 
-  function getAgodaHotelIdForHotel(hotel: HotelRecord): number | null {
-    const raw = hotel.agoda_hotel_id;
+  function getRatehawkHidForHotel(hotel: HotelRecord): number | null {
+    const raw = hotel.ratehawk_hid;
     if (!raw) return null;
 
     const parsed = Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
-  const selectedHotelBatchAvailability = selectedHotel
-    ? agodaResultAvailability[String(selectedHotel.id)]
-    : undefined;
+  const roomSelectionTotal = useMemo(() => {
+    return ratehawkRooms.rooms.reduce((sum, room) => {
+      const qty = roomSelection[room.roomKey] ?? 0;
+      return sum + qty * room.pricePerStay;
+    }, 0);
+  }, [ratehawkRooms.rooms, roomSelection]);
 
-  const selectedHotelHasBatchAvailability = Boolean(selectedHotelBatchAvailability);
+  const roomSelectionCurrency = ratehawkRooms.rooms[0]?.currency ?? activeCurrency;
 
-  const selectedHotelAgodaResult =
-    selectedHotelBatchAvailability?.status === "available"
-      ? selectedHotelBatchAvailability
-      : agodaAvailability.status === "available"
-        ? agodaAvailability.result
-        : null;
-
-  const selectedHotelAgodaUnavailable =
-    selectedHotelBatchAvailability?.status === "unavailable" ||
-    agodaAvailability.status === "unavailable";
-
-  const selectedHotelCanCheckAgoda =
-    !selectedHotelHasBatchAvailability &&
-    Boolean(selectedAgodaHotelId) &&
-    Boolean(fromValue) &&
-    Boolean(toValue) &&
-    datesAreValid;
+  const selectedRoomSelectionEntries = useMemo(() => {
+    return ratehawkRooms.rooms
+      .map((room) => {
+        const quantity = roomSelection[room.roomKey] ?? 0;
+        if (quantity <= 0) return null;
+        return {
+          roomName: room.roomName,
+          quantity,
+          pricePerStay: room.pricePerStay,
+          currency: room.currency,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  }, [ratehawkRooms.rooms, roomSelection]);
 
   useEffect(() => {
     if (!selectedHotel?.ratehawk_image_1) return;
@@ -1459,6 +1453,68 @@ export default function HotelsView(props: {
       cancelled = true;
     };
   }, [selectedHotel?.id, selectedHotel?.ratehawk_image_1]);
+
+  // Auto-fetches the selected hotel's room list (no button — rooms should
+  // just be displayed). Pre-selects the headline combo (N copies of the
+  // cheapest qualifying room) once loaded.
+  useEffect(() => {
+    if (!selectedRatehawkHid || !fromValue || !toValue || !datesAreValid) return;
+
+    let cancelled = false;
+    setRatehawkRooms({ status: "loading", rooms: [], headline: null });
+
+    const rooms = Math.max(1, Number(bedroomsValue) || 1);
+
+    fetch("/api/ratehawk/availability", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        hid: selectedRatehawkHid,
+        checkInDate: fromValue,
+        checkOutDate: toValue,
+        currency: activeCurrency,
+        adults: guestSelection.adults,
+        kids: guestSelection.kids,
+        childrenAges: getChildrenAgesFromSearchParams(),
+        rooms,
+      }),
+    })
+      .then((res) => res.json())
+      .then(
+        (data: {
+          ok?: boolean;
+          rooms?: RatehawkGroupedRoom[];
+          headline?: RatehawkHeadline;
+        }) => {
+          if (cancelled) return;
+          if (data?.ok) {
+            const loadedRooms = data.rooms ?? [];
+            setRatehawkRooms({ status: "loaded", rooms: loadedRooms, headline: data.headline ?? null });
+            if (data.headline) {
+              setRoomSelection({ [data.headline.roomKey]: data.headline.rooms });
+            }
+          } else {
+            setRatehawkRooms({ status: "error", rooms: [], headline: null });
+          }
+        }
+      )
+      .catch(() => {
+        if (!cancelled) setRatehawkRooms({ status: "error", rooms: [], headline: null });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    selectedRatehawkHid,
+    fromValue,
+    toValue,
+    datesAreValid,
+    activeCurrency,
+    guestSelection.adults,
+    guestSelection.kids,
+    bedroomsValue,
+  ]);
 
   // {url, category} pairs, url unresolved ({size} template intact for
   // Ratehawk, already-concrete for Agoda) — the shared source both the
@@ -1555,123 +1611,101 @@ export default function HotelsView(props: {
   }
 
   useEffect(() => {
-    if (agodaSearchDirty) {
-      setAgodaResultAvailability({});
-      setAgodaResultAvailabilityStatus("idle");
+    if (availabilitySearchDirty) {
+      setRatehawkResultAvailability({});
+      setRatehawkResultAvailabilityStatus("idle");
       return;
     }
 
     if (!shouldShowResults || !visibleHotels.length) {
-      setAgodaResultAvailability({});
-      setAgodaResultAvailabilityStatus("idle");
+      setRatehawkResultAvailability({});
+      setRatehawkResultAvailabilityStatus("idle");
       return;
     }
 
     if (!fromValue || !toValue || !datesAreValid) {
-      setAgodaResultAvailability({});
-      setAgodaResultAvailabilityStatus("idle");
+      setRatehawkResultAvailability({});
+      setRatehawkResultAvailabilityStatus("idle");
       return;
     }
 
-    const hotelsWithAgodaIds = visibleHotels
+    const hotelsWithRatehawkHids = visibleHotels
       .map((hotel) => ({
         directusId: String(hotel.id),
-        agodaHotelId: getAgodaHotelIdForHotel(hotel),
+        hid: getRatehawkHidForHotel(hotel),
       }))
-      .filter(
-        (item): item is { directusId: string; agodaHotelId: number } =>
-          item.agodaHotelId !== null
-      );
+      .filter((item): item is { directusId: string; hid: number } => item.hid !== null);
 
-      if (!hotelsWithAgodaIds.length) {
-        setAgodaResultAvailability({});
-        setAgodaResultAvailabilityStatus("loaded");
-        return;
-      }
+    if (!hotelsWithRatehawkHids.length) {
+      setRatehawkResultAvailability({});
+      setRatehawkResultAvailabilityStatus("loaded");
+      return;
+    }
 
     let cancelled = false;
+    const rooms = Math.max(1, Number(bedroomsValue) || 1);
 
     async function loadResultAvailability() {
       try {
-        setAgodaResultAvailabilityStatus("loading");
+        setRatehawkResultAvailabilityStatus("loading");
 
-        const response = await fetch("/api/agoda/availability/batch", {
+        const response = await fetch("/api/ratehawk/availability/batch", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            hotelIds: hotelsWithAgodaIds.map((item) => item.agodaHotelId),
+            hids: hotelsWithRatehawkHids.map((item) => item.hid),
             checkInDate: fromValue,
             checkOutDate: toValue,
             currency: activeCurrency,
             adults: guestSelection.adults,
             kids: guestSelection.kids,
             childrenAges: getChildrenAgesFromSearchParams(),
+            rooms,
           }),
         });
 
         const json = (await response.json()) as {
           ok?: boolean;
-          results?: Array<{
-            hotelId: number;
-            dailyRate: number;
-            crossedOutRate?: number;
-            currency: string;
-            discountPercentage?: number;
-            landingURL: string;
-            includeBreakfast?: boolean;
-            freeWifi?: boolean;
-          }>;
+          results?: Array<{ hid: number; headline: RatehawkHeadline }>;
         };
 
         if (cancelled) return;
 
         if (!response.ok || !json.ok) {
-          setAgodaResultAvailability({});
-          setAgodaResultAvailabilityStatus("error");
+          setRatehawkResultAvailability({});
+          setRatehawkResultAvailabilityStatus("error");
           return;
         }
 
-        const availabilityByDirectusId: Record<string, AgodaResultCardAvailability> =
-          {};
+        const availabilityByDirectusId: Record<string, RatehawkResultAvailability> = {};
 
-        const agodaToDirectus = new Map(
-          hotelsWithAgodaIds.map((item) => [
-            item.agodaHotelId,
-            item.directusId,
-          ])
+        const hidToDirectus = new Map(
+          hotelsWithRatehawkHids.map((item) => [item.hid, item.directusId])
         );
 
-        for (const item of hotelsWithAgodaIds) {
-          availabilityByDirectusId[item.directusId] = {
-            status: "unavailable",
-          };
+        for (const item of hotelsWithRatehawkHids) {
+          availabilityByDirectusId[item.directusId] = { status: "unavailable" };
         }
 
         for (const result of json.results ?? []) {
-          const directusId = agodaToDirectus.get(Number(result.hotelId));
-          if (!directusId) continue;
+          const directusId = hidToDirectus.get(Number(result.hid));
+          if (!directusId || !result.headline) continue;
 
           availabilityByDirectusId[directusId] = {
             status: "available",
-            dailyRate: result.dailyRate,
-            crossedOutRate: result.crossedOutRate,
-            currency: result.currency,
-            discountPercentage: result.discountPercentage,
-            landingURL: result.landingURL,
-            includeBreakfast: result.includeBreakfast,
-            freeWifi: result.freeWifi,
+            headline: result.headline,
           };
         }
 
-        setAgodaResultAvailability(availabilityByDirectusId);
-        setAgodaResultAvailabilityStatus("loaded");
-        setAgodaSearchDirty(false);
+        setRatehawkResultAvailability(availabilityByDirectusId);
+        setRatehawkResultAvailabilityStatus("loaded");
+        setAvailabilitySearchDirty(false);
       } catch {
         if (!cancelled) {
-          setAgodaResultAvailability({});
-          setAgodaResultAvailabilityStatus("error");
+          setRatehawkResultAvailability({});
+          setRatehawkResultAvailabilityStatus("error");
         }
       }
     }
@@ -1682,7 +1716,7 @@ export default function HotelsView(props: {
       cancelled = true;
     };
   }, [
-    agodaSearchDirty,
+    availabilitySearchDirty,
     shouldShowResults,
     visibleHotels,
     fromValue,
@@ -1691,6 +1725,7 @@ export default function HotelsView(props: {
     activeCurrency,
     guestSelection.adults,
     guestSelection.kids,
+    bedroomsValue,
     searchParams,
   ]);
 
@@ -1712,88 +1747,6 @@ export default function HotelsView(props: {
       kid_age_5: normalizeParam(searchParams.kid_age_5),
       kid_age_6: normalizeParam(searchParams.kid_age_6),
     });
-  }
-
-  async function handleCheckAgodaAvailability() {
-    if (!selectedHotel) return;
-
-    if (!selectedAgodaHotelId) {
-      setAgodaAvailability({
-        status: "error",
-        result: null,
-        error: "Missing Agoda hotel ID.",
-      });
-      return;
-    }
-
-    if (!fromValue || !toValue || !datesAreValid) {
-      setAgodaAvailability({
-        status: "error",
-        result: null,
-        error: "Select valid dates first.",
-      });
-      return;
-    }
-
-    try {
-      setAgodaAvailability({
-        status: "loading",
-        result: null,
-        error: "",
-      });
-
-      const response = await fetch("/api/agoda/availability", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          hotelId: selectedAgodaHotelId,
-          checkInDate: fromValue,
-          checkOutDate: toValue,
-          currency: activeCurrency,
-          adults: guestSelection.adults,
-          kids: guestSelection.kids,
-          childrenAges: getChildrenAgesFromSearchParams(),
-        }),
-      });
-
-      const json = (await response.json()) as {
-        ok?: boolean;
-        error?: string;
-        result?: AgodaAvailabilityState["result"];
-      };
-
-      if (!response.ok || !json.ok) {
-        setAgodaAvailability({
-          status: "error",
-          result: null,
-          error: json.error || "Could not check availability.",
-        });
-        return;
-      }
-
-      if (!json.result) {
-        setAgodaAvailability({
-          status: "unavailable",
-          result: null,
-          error: "",
-        });
-        return;
-      }
-
-      setAgodaAvailability({
-        status: "available",
-        result: json.result,
-        error: "",
-      });
-    } catch {
-      setAgodaAvailability({
-        status: "error",
-        result: null,
-        error: "Could not check availability.",
-      });
-    }
   }
 
   function updateFiltersOpen(nextOpen: boolean) {
@@ -1840,6 +1793,7 @@ export default function HotelsView(props: {
         thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
         checkIn: fromValue || null,
         checkOut: toValue || null,
+        roomSelection: selectedRoomSelectionEntries,
       });
 
       if (result.status === "already_exists") {
@@ -1909,6 +1863,7 @@ async function handleCreateTripAndAddHotel() {
       thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
       checkIn: fromValue || null,
       checkOut: toValue || null,
+      roomSelection: selectedRoomSelectionEntries,
     });
 
     setNewTripName("");
@@ -1989,11 +1944,11 @@ async function handleCreateTripAndAddHotel() {
           "grid gap-4",
           shouldShowFeatured
             ? "grid-cols-1"
-            : "lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]",
+            : "oltra-hotels-layout lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]",
         ].join(" ")}
       >
         {!shouldShowFeatured ? (
-          <section className="flex min-w-0 flex-col gap-4 [contain:size]">
+          <section className="flex min-h-0 min-w-0 flex-col gap-4 [contain:size]">
           <div className="relative z-30 oltra-glass oltra-panel !p-4 flex-none">
             <form
               action="/hotels"
@@ -2002,7 +1957,7 @@ async function handleCreateTripAndAddHotel() {
               onChange={(e) => {
                 const form = e.currentTarget;
                 setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
-                setAgodaSearchDirty(true);
+                setAvailabilitySearchDirty(true);
               }}
               onSubmit={(e) => {
                 e.preventDefault();
@@ -2109,7 +2064,7 @@ async function handleCreateTripAndAddHotel() {
                           tabIndex={-1}
                           onChange={(e) => {
                             setFromValue(e.target.value);
-                            setAgodaSearchDirty(true);
+                            setAvailabilitySearchDirty(true);
                           }}
                           onKeyDown={(e) => e.preventDefault()}
                           onBeforeInput={(e) => e.preventDefault()}
@@ -2141,7 +2096,7 @@ async function handleCreateTripAndAddHotel() {
                           tabIndex={-1}
                           onChange={(e) => {
                             setToValue(e.target.value);
-                            setAgodaSearchDirty(true);
+                            setAvailabilitySearchDirty(true);
                           }}
                           onKeyDown={(e) => e.preventDefault()}
                           onBeforeInput={(e) => e.preventDefault()}
@@ -2163,7 +2118,7 @@ async function handleCreateTripAndAddHotel() {
                         initialValue={guestSelection}
                         onChange={(selection) => {
                           setGuestSelection(selection);
-                          setAgodaSearchDirty(true);
+                          setAvailabilitySearchDirty(true);
                         }}
                       />
                     </div>
@@ -2177,7 +2132,7 @@ async function handleCreateTripAndAddHotel() {
                         align="left"
                         onValueChange={(value) => {
                           setBedroomsValue(value);
-                          setAgodaSearchDirty(true);
+                          setAvailabilitySearchDirty(true);
                         }}
                         options={[1, 2, 3, 4].map((n) => ({
                           value: String(n),
@@ -2208,11 +2163,11 @@ async function handleCreateTripAndAddHotel() {
                   <button
                     type="submit"
                     onClick={saveCurrentHotelFlightSearch}
-                    disabled={topAgodaAvailabilityButtonDisabled}
+                    disabled={topAvailabilityButtonDisabled}
                     title={searchDisabledReason || undefined}
                     className={[
                       "min-h-[var(--oltra-button-height)] w-full md:col-start-2 md:col-span-3 text-[0.68rem] tracking-[0.12em]",
-                      searchIsActive && !topAgodaAvailabilityButtonDisabled
+                      searchIsActive && !topAvailabilityButtonDisabled
                         ? "oltra-button-primary"
                         : "oltra-button-secondary",
                     ].join(" ")}
@@ -2225,12 +2180,12 @@ async function handleCreateTripAndAddHotel() {
                         />
                       ) : null}
                       <span className="line-clamp-2 text-center leading-snug">
-                        {agodaResultAvailabilityStatus === "loading"
-                          ? "CHECKING AGODA..."
-                          : topAgodaAvailabilityChecked
-                            ? "AGODA AVAILABILITY CHECKED"
+                        {ratehawkResultAvailabilityStatus === "loading"
+                          ? "CHECKING..."
+                          : topAvailabilityChecked
+                            ? "AVAILABILITY CHECKED"
                             : searchIsActive
-                              ? "CHECK AGODA AVAILABILITY"
+                              ? "CHECK AVAILABILITY"
                               : searchDisabledReason.charAt(0) +
                                 searchDisabledReason.slice(1).toLowerCase()}
                       </span>
@@ -2328,7 +2283,7 @@ async function handleCreateTripAndAddHotel() {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
                   const hasPhoto = hasHotelPhotos(h);
-                  const agodaCardAvailability = agodaResultAvailability[String(h.id)];
+                  const ratehawkCardAvailability = ratehawkResultAvailability[String(h.id)];
                   const featuredAwards = getFeaturedAwardsForHotel(h);
                   const hotelBadges = getHotelBadges(h);
                   const nameAndLocation = [h.city, h.country].filter(Boolean).join(" · ");
@@ -2369,31 +2324,31 @@ async function handleCreateTripAndAddHotel() {
                           </div>
 
                           <div className="mt-2">
-                            {agodaResultAvailabilityLoading ? (
+                            {ratehawkResultAvailabilityLoading ? (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-white/10 bg-white/8 px-2 py-1.5 text-center text-[11px] leading-tight text-white/62">
-                                Checking Agoda...
+                                Checking availability...
                               </div>
-                            ) : agodaCardAvailability?.status === "available" ? (
+                            ) : ratehawkCardAvailability?.status === "available" && ratehawkCardAvailability.headline ? (
                               <div className="px-2 py-1.5 text-center">
                                 <div className="text-[13px] font-light leading-tight tracking-wide text-white">
-                                  {agodaCardAvailability.currency}{" "}
-                                  {Math.round(agodaCardAvailability.dailyRate ?? 0).toLocaleString()}
+                                  {ratehawkCardAvailability.headline.currency}{" "}
+                                  {Math.round(ratehawkCardAvailability.headline.pricePerStay).toLocaleString()}
                                 </div>
                                 <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-white/48">
-                                  / night
+                                  total stay
                                 </div>
                               </div>
-                            ) : agodaCardAvailability?.status === "unavailable" ? (
+                            ) : ratehawkCardAvailability?.status === "unavailable" ? (
                               <div className="px-2 py-1.5 text-center text-[11px] leading-tight text-white/56">
-                                Not available on Agoda
+                                Not available on Ratehawk
                               </div>
-                            ) : getAgodaHotelIdForHotel(h) ? (
+                            ) : getRatehawkHidForHotel(h) ? (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-white/8 bg-white/5 px-2 py-1.5 text-center text-[11px] leading-tight text-white/45">
                                 Select dates
                               </div>
                             ) : (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-white/8 bg-white/5 px-2 py-1.5 text-center text-[11px] leading-tight text-white/45">
-                                No Agoda ID
+                                No Ratehawk match
                               </div>
                             )}
                           </div>
@@ -2449,7 +2404,12 @@ async function handleCreateTripAndAddHotel() {
         </section>
         ) : null}
 
-        <section className="oltra-glass oltra-panel min-w-0 self-start overflow-visible">
+        <section
+          className={[
+            "oltra-glass oltra-panel min-w-0",
+            shouldShowFeatured ? "self-start overflow-visible" : "oltra-hotels-right-pane",
+          ].join(" ")}
+        >
           {effectiveView === "featured" ? (
             <div className="relative -m-4 min-h-[820px] overflow-hidden rounded-[var(--oltra-radius-xl)]">
               <img
@@ -2467,7 +2427,7 @@ async function handleCreateTripAndAddHotel() {
                   onChange={(e) => {
                     const form = e.currentTarget;
                     setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
-                    setAgodaSearchDirty(true);
+                    setAvailabilitySearchDirty(true);
                   }}
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -2724,65 +2684,233 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   </div>
 
-                  {/* Bottom action row inside left pane: Agoda (+price) left, Trip + Favourites right */}
+                  {selectedRatehawkHid ? (
+                    <div>
+                      <div className="oltra-subheader">Rooms</div>
+                      {ratehawkRooms.status === "loading" ? (
+                        <div className="mt-2 text-sm text-white/55">Loading room options…</div>
+                      ) : ratehawkRooms.status === "error" ? (
+                        <div className="mt-2 text-sm text-white/55">Could not load room options.</div>
+                      ) : ratehawkRooms.rooms.length === 0 ? (
+                        <div className="mt-2 text-sm text-white/55">
+                          {fromValue && toValue && datesAreValid
+                            ? "No rooms available for these dates."
+                            : "Select dates to see room options."}
+                        </div>
+                      ) : (
+                        <div className="mt-2 flex flex-col gap-2">
+                          {ratehawkRooms.rooms.map((room) => {
+                            const qty = roomSelection[room.roomKey] ?? 0;
+                            const thumb = room.images[0]
+                              ? resolveRatehawkUrl(room.images[0].url, RATEHAWK_THUMB_SIZE)
+                              : null;
+
+                            return (
+                              <div
+                                key={room.roomKey}
+                                className="flex items-center gap-3 rounded-[var(--oltra-radius-md)] border border-white/10 bg-[var(--oltra-field-bg)] p-2.5"
+                              >
+                                <div className="h-16 w-20 shrink-0 overflow-hidden rounded-[var(--oltra-radius-sm)]">
+                                  {thumb ? (
+                                    <img
+                                      src={thumb}
+                                      alt=""
+                                      loading="lazy"
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="oltra-photo-placeholder h-full w-full text-[9px]">
+                                      No photo
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate text-sm font-light text-white">
+                                    {room.roomName}
+                                  </div>
+                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-white/55">
+                                    <span>{formatRoomCapacity(room.capacity)}</span>
+                                    {room.balcony ? <span>· Balcony</span> : null}
+                                    {room.sizeSquareMeters ? (
+                                      <span>· {room.sizeSquareMeters} m²</span>
+                                    ) : null}
+                                    <span>· {formatRoomLayout(room)}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpenRoomDetailKey(room.roomKey)}
+                                    className="mt-1 text-[11px] text-white/50 underline underline-offset-2 hover:text-white/80"
+                                  >
+                                    More details
+                                  </button>
+                                </div>
+
+                                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                                  <div className="text-sm font-light text-white">
+                                    {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setRoomSelection((prev) => ({
+                                          ...prev,
+                                          [room.roomKey]: Math.max(0, (prev[room.roomKey] ?? 0) - 1),
+                                        }))
+                                      }
+                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-white/70 hover:text-white"
+                                      aria-label={`Fewer ${room.roomName}`}
+                                    >
+                                      −
+                                    </button>
+                                    <span className="w-4 text-center text-sm text-white">{qty}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setRoomSelection((prev) => ({
+                                          ...prev,
+                                          [room.roomKey]: (prev[room.roomKey] ?? 0) + 1,
+                                        }))
+                                      }
+                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-white/70 hover:text-white"
+                                      aria-label={`More ${room.roomName}`}
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {openRoomDetailKey && typeof document !== "undefined"
+                        ? createPortal(
+                            (() => {
+                              const room = ratehawkRooms.rooms.find(
+                                (r) => r.roomKey === openRoomDetailKey
+                              );
+                              if (!room) return null;
+                              return (
+                                <div
+                                  className="fixed inset-0 z-[1000] flex justify-center overflow-y-auto bg-[rgba(10,18,26,0.78)] px-6 py-10"
+                                  onClick={() => setOpenRoomDetailKey(null)}
+                                >
+                                  <div
+                                    className="relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-white/12 bg-[rgba(20,32,42,0.94)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenRoomDetailKey(null)}
+                                      className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                                      aria-label="Close"
+                                    >
+                                      ×
+                                    </button>
+
+                                    <div className="oltra-subheader">{room.roomName}</div>
+
+                                    {room.images.length ? (
+                                      <div className="oltra-scrollbar mt-3 grid max-h-[300px] grid-cols-3 gap-2 overflow-y-auto pr-1">
+                                        {room.images.map((img, i) => (
+                                          <img
+                                            key={i}
+                                            src={resolveRatehawkUrl(img.url, RATEHAWK_LARGE_SIZE)}
+                                            alt=""
+                                            loading="lazy"
+                                            className="aspect-[4/3] w-full rounded-[var(--oltra-radius-sm)] object-cover"
+                                          />
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="oltra-photo-placeholder mt-3 h-32 w-full">
+                                        No photos available
+                                      </div>
+                                    )}
+
+                                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-white/75">
+                                      <div>
+                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                          Occupancy
+                                        </div>
+                                        <div className="mt-0.5">{formatRoomCapacity(room.capacity)}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                          Layout
+                                        </div>
+                                        <div className="mt-0.5">{formatRoomLayout(room)}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                          Meal
+                                        </div>
+                                        <div className="mt-0.5">
+                                          {room.hasBreakfast
+                                            ? "Breakfast included"
+                                            : room.mealValue === "nomeal"
+                                              ? "Room only"
+                                              : room.mealValue}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                          Cancellation
+                                        </div>
+                                        <div className="mt-0.5">
+                                          {room.freeCancellationBefore
+                                            ? `Free cancellation before ${new Date(
+                                                room.freeCancellationBefore
+                                              ).toLocaleDateString()}`
+                                            : "Non-refundable"}
+                                        </div>
+                                      </div>
+                                      {room.amenities.length ? (
+                                        <div className="col-span-2">
+                                          <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                            Amenities
+                                          </div>
+                                          <div className="mt-0.5">{room.amenities.join(", ")}</div>
+                                        </div>
+                                      ) : null}
+                                    </div>
+
+                                    <div className="mt-4 text-right text-base font-light text-white">
+                                      {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })(),
+                            document.body
+                          )
+                        : null}
+                    </div>
+                  ) : null}
+
+                  {/* Bottom action row inside left pane: room-selection total left, Trip + Favourites right */}
                   <div className="mt-auto grid grid-cols-2 items-end gap-x-6 gap-y-2">
 
-                    {selectedHotelAgodaResult ? (
+                    {roomSelectionTotal > 0 ? (
                       <div className="col-start-1 row-start-1 flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 text-sm text-white/78">
-                        <span className="text-[12px] text-white/55">From</span>
+                        <span className="text-[12px] text-white/55">Total</span>
                         <span className="font-light text-white">
-                          {selectedHotelAgodaResult.currency}{" "}
-                          {Math.round(selectedHotelAgodaResult.dailyRate ?? 0).toLocaleString()}
-                          <span className="text-[11px] text-white/55"> /night</span>
+                          {roomSelectionCurrency} {Math.round(roomSelectionTotal).toLocaleString()}
                         </span>
                       </div>
-                    ) : null}
-
-                    {selectedHotelAgodaResult?.landingURL ? (
+                    ) : selectedHotelBookingHref ? (
                       <a
-                        href={selectedHotelAgodaResult.landingURL}
+                        href={selectedHotelBookingHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="col-start-1 row-start-2 oltra-button-primary w-full rounded-full"
+                        className="col-start-1 row-start-1 inline-flex h-[var(--oltra-button-height)] w-full items-center justify-center rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 text-[12px] text-white/60 underline underline-offset-4 hover:text-white"
                       >
-                        BOOK WITH AGODA
+                        {selectedHotelBookingLabel}
                       </a>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleCheckAgodaAvailability}
-                        disabled={
-                          selectedHotelHasBatchAvailability ||
-                          agodaAvailability.status === "loading" ||
-                          !selectedHotelCanCheckAgoda ||
-                          selectedHotelAgodaUnavailable
-                        }
-                        title={
-                          !selectedAgodaHotelId
-                            ? "Missing Agoda hotel ID"
-                            : !fromValue || !toValue || !datesAreValid
-                              ? "Select valid dates first"
-                              : undefined
-                        }
-                        className={[
-                          "col-start-1 row-start-2 w-full rounded-full",
-                          selectedHotelCanCheckAgoda &&
-                          !selectedHotelHasBatchAvailability &&
-                          agodaAvailability.status !== "loading" &&
-                          !selectedHotelAgodaUnavailable
-                            ? "oltra-button-primary"
-                            : "oltra-button-secondary opacity-60",
-                        ].join(" ")}
-                      >
-                        {agodaAvailability.status === "loading"
-                          ? "CHECKING AGODA..."
-                          : selectedHotelAgodaUnavailable
-                            ? "NO AVAILABILITY ON AGODA"
-                            : selectedHotelHasBatchAvailability
-                              ? "AGODA AVAILABILITY CHECKED"
-                              : "CHECK AGODA AVAILABILITY"}
-                      </button>
-                    )}
+                    ) : null}
 
                     <div ref={tripPickerRef} className="col-start-2 row-start-1 relative">
                       {showTripPicker && (
@@ -2896,24 +3024,9 @@ async function handleCreateTripAndAddHotel() {
                           : "ADD TO FAVOURITES"}
                     </button>
 
-                    {agodaAvailability.status === "error" && !selectedHotelHasBatchAvailability ? (
+                    {ratehawkRooms.status === "error" ? (
                       <div className="col-start-2 text-[12px] text-white/58">
-                        {agodaAvailability.error}
-                      </div>
-                    ) : null}
-
-                    {!selectedHotelAgodaResult &&
-                    !selectedHotelHasBatchAvailability &&
-                    selectedHotelBookingHref ? (
-                      <div className="col-start-2">
-                        <a
-                          href={selectedHotelBookingHref}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex w-full justify-center text-[12px] text-white/60 underline underline-offset-4 hover:text-white"
-                        >
-                          {selectedHotelBookingLabel}
-                        </a>
+                        Could not load room availability.
                       </div>
                     ) : null}
 

@@ -209,6 +209,7 @@ export type HotelRecord = {
   booking_label?: string | null;
   booking_notes?: string | null;
   agoda_hotel_id?: string | number | null;
+  ratehawk_hid?: number | null;
 };
 
 export async function getHotels(query: DirectusQuery): Promise<HotelRecord[]> {

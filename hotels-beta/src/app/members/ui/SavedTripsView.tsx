@@ -23,7 +23,17 @@ type TripItemCard = {
   hasPhoto?: boolean;
   hasOverlapWarning?: boolean;
   bookUrl?: string;
+  roomsSummary?: string;
 };
+
+function summarizeRoomSelection(
+  roomSelection: SavedTrip["hotels"][number]["roomSelection"]
+): string | undefined {
+  if (!roomSelection?.length) return undefined;
+  return roomSelection
+    .map((room) => `${room.quantity}× ${room.roomName}`)
+    .join(", ");
+}
 
 function statusLabel(status: "confirmed" | "pending" | "saved") {
   switch (status) {
@@ -264,6 +274,7 @@ export default function SavedTripsView() {
     hasPhoto: Boolean(item.thumbnail) && item.thumbnail !== "/images/hero-lp.jpg",
     hasOverlapWarning: item.hasOverlapWarning,
     bookUrl: buildHotelBookUrl(item.name, item.checkIn, item.checkOut, travelers),
+    roomsSummary: summarizeRoomSelection(item.roomSelection),
   }));
 
   const flightItems: TripItemCard[] = selectedTrip.flights.map((item) => ({
@@ -462,6 +473,10 @@ function TripSection({
 
                   {item.travelers ? (
                     <div className="members-item__meta">{item.travelers}</div>
+                  ) : null}
+
+                  {item.roomsSummary ? (
+                    <div className="members-item__meta">{item.roomsSummary}</div>
                   ) : null}
 
                   {item.hasOverlapWarning ? (

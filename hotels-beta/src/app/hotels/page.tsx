@@ -113,6 +113,7 @@ const hotelFields = [
   "booking_label",
   "booking_notes",
   "agoda_hotel_id",
+  "ratehawk_hid",
   "activities",
   "awards",
   "setting",
