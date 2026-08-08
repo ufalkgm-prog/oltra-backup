@@ -1130,4 +1130,48 @@ Before resuming either: re-verify `RATEHAWK_KEY`/`RATEHAWK_KEY_ID` are still val
 
 ---
 
+## 28. RATEHAWK HOTEL IMAGES — BACKFILL COMPLETE (2026-08-08)
+
+### What was done
+
+Completed phase 1 of §27 ("Hotel images from Ratehawk") for the 829 hotels confirmed matched in §26. **Data-only phase, same precedent as `ratehawk_hid`**: no app code, no `HotelRecord` TypeScript changes, no gallery UI — those come later, once a consumer is actually built.
+
+### Schema: 100 flat fields, not a JSON blob
+
+Added `ratehawk_image_1` … `ratehawk_image_50` (Directus `string`, the image URL) and `ratehawk_image_1_category` … `ratehawk_image_50_category` (Directus `string`, the `category_slug`, e.g. `exterior`, `guest_rooms`, `pool`) to the `hotels` collection. **Deliberately not a `json`-type array field** (that was the first draft of this plan) — flat numbered fields stay editable/browsable in the Directus admin UI, where a JSON blob would be opaque. **Deliberately not capped at a smaller number either** — the true per-hotel max is 50, and since these are just URL strings there's no real cost to keeping all of them; capping would silently drop real editorial value (a pool/spa shot sorted late in Ratehawk's list). No category-priority curation or truncation logic — every image Ratehawk returns for a hotel gets a slot, in Ratehawk's own native order.
+
+Script: `hotels-beta/scripts/ratehawk/add-ratehawk-image-fields.mjs` (idempotent, 409-safe re-run, same `createField` pattern as `scripts/restaurants/create-restaurants-collection.mjs`).
+
+### Data source and pipeline
+
+The full dump already on disk (`scripts/ratehawk/partner_feed__en_v3.jsonl.zst`, §26) carries hotel images in `images_ext: [{url, category_slug}]` (the plain `images: [String]` field is deprecated per ETG's own docs and always identical in content/order — confirmed 0 mismatches across all 829 hotels this session, so only `images_ext` is used).
+
+1. `scripts/ratehawk/extract-images-for-matched.mjs` — targeted re-scan of the dump (no re-download) keyed by the 829 confirmed `hid`s from `ratehawk_match_decisions.json`. Direct hid→oltra_id join per line (not index-based) — found 829/829, written to `scripts/ratehawk/output/matched-hotel-images.jsonl`.
+2. `scripts/ratehawk/apply-ratehawk-images.mjs` — walks each hotel's `images_ext` in Ratehawk's native order, maps `images_ext[0]` → `ratehawk_image_1`/`_1_category`, `images_ext[1]` → `_2`/`_2_category`, etc. Dry-run by default, `--confirm` to write, `--only <id>`/`--limit N` for scoped runs.
+
+**Result: 811/829 updated (≥1 image), 18 skipped (confirmed match, zero images available from Ratehawk), 0 failures.** Verified `ratehawk_image_1 IS NOT NULL` count in Directus = 811, matching exactly. Per-hotel image counts range up to the full 50 (e.g. id 1602, Four Seasons Dubai at Jumeirah Beach). Spot-checked one hotel (id 1602) against a **live** `POST /api/b2b/v3/hotel/info/` call for its `hid` — slots 1, 2, and 50 matched byte-for-byte (URL + category) against what was stored, confirming no drift between the dump snapshot and live data and no join/index errors in the pipeline.
+
+### `{size}` URL template — documented values
+
+Every image URL has an unresolved `{size}` placeholder (stored as-is — not pre-resolved, so one stored URL serves both a thumbnail grid and a full-size lightbox depending on what a future consumer substitutes). Confirmed via ETG's official docs (`docs.emergingtravel.com/docs/b2b-api/static-content/retrieve-hotel-content/` — like other ETG pages per §25/§26, blocked for plain `WebFetch`/`curl` with a default UA; fetched successfully with `curl -A "Mozilla/5.0 ..."`, a browser User-Agent) — the CDN accepts a **fixed whitelist**, not arbitrary `WxH`:
+
+* Square crop: `40x40`, `80x80`, `100x100`, `120x120`, `154x105`, `240x240`, `241x241`, `900x900`
+* Fit-by-height: `x220`, `x500`, `x768`, `x1080`, `x1920`, `768x1024`, `1080x1920`
+* Fit-by-width: `326x220`, `1920x`, `1080x`
+* Full fit: `1024x768`, `1920x1080`
+
+(An arbitrary `640x400` also returned 200 in ad-hoc testing — the CDN is lenient beyond the documented list — but stick to documented tokens for anything production-facing.)
+
+### Room images — deferred, and a real gotcha for whoever builds booking next
+
+**Do not backfill room images the same way — they don't belong in this phase.** Each `room_groups[]` entry in the static-content dump does carry its own `images`/`images_ext` (same `{size}`-template shape), but the field that would link a room group to search/booking results, **`room_group_id`, is explicitly marked `deprecated`** in ETG's current docs (both the static-content page and `b2b-api/hotel-search/retrieve-hotelpage/`). The documented, non-deprecated linkage is **`rg_ext`** — a room-characteristics object (`class`, `quality`, `bathroom`, `bedding`, `family`, `capacity`, `club`, `bedrooms`, `balcony`, `floor`, `view`) present on both the static content's `room_groups[]` and the live hotelpage rate objects. ETG's own docs say directly: *"rg_ext — Use this field to get extra data on the room from the hotel static data. For example, room images, descriptions."*
+
+**Implication for §27 phase 2 (booking integration)**: match a live search/hotelpage rate's `rg_ext` against the static content's `room_groups[].rg_ext` at request time to find that room's images — don't key anything off `room_group_id`. Since room offers are inherently live/per-search (not a fixed list), pre-storing room images in Directus now would either duplicate this matching logic later or go stale before booking is built — so it wasn't done.
+
+### Files (`hotels-beta/scripts/ratehawk/`)
+
+`add-ratehawk-image-fields.mjs` (schema, one-shot/idempotent), `extract-images-for-matched.mjs` (dump re-scan → `output/matched-hotel-images.jsonl`), `apply-ratehawk-images.mjs` (the only script here that writes `ratehawk_image_*` — dry-run by default).
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
