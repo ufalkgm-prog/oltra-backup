@@ -3,7 +3,7 @@ import type { HotelRecord } from "@/lib/directus";
 import {
   getHotelImageSet,
   HOTEL_CARD_PLACEHOLDERS,
-  hasAgodaPhotos,
+  hasHotelPhotos,
   clampHotelText,
 } from "@/lib/hotels/cardHelpers";
 
@@ -28,7 +28,7 @@ type Props = {
 
 export default function HotelSmallCard({ hotel, href, availability }: Props) {
   const img = getHotelImageSet(hotel)[0] ?? HOTEL_CARD_PLACEHOLDERS[0];
-  const hasPhoto = hasAgodaPhotos(hotel);
+  const hasPhoto = hasHotelPhotos(hotel);
   const nameAndLocation = [hotel.city, hotel.country].filter(Boolean).join(" · ");
 
   const rightBlock = (() => {

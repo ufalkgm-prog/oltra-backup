@@ -11,6 +11,10 @@ export const HOTEL_CARD_PLACEHOLDERS = [
 // §27/§28 for the documented token whitelist.
 export const RATEHAWK_THUMB_SIZE = "240x240";
 export const RATEHAWK_FULL_SIZE = "1024x768";
+// Used for the selected-hotel detail panel's large image and the lightbox —
+// both display much bigger than the card/popup contexts RATEHAWK_FULL_SIZE
+// covers, so they need a sharper source.
+export const RATEHAWK_LARGE_SIZE = "1920x1080";
 
 export function resolveRatehawkUrl(url: string, size: string): string {
   return url.includes("{size}") ? url.replace("{size}", size) : url;
