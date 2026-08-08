@@ -7,6 +7,15 @@ export const HOTEL_CARD_PLACEHOLDERS = [
   "/images/hotel-placeholder-4.jpg",
 ];
 
+// Ratehawk image URLs carry an unresolved {size} template — see CLAUDE.md
+// §27/§28 for the documented token whitelist.
+export const RATEHAWK_THUMB_SIZE = "240x240";
+export const RATEHAWK_FULL_SIZE = "1024x768";
+
+export function resolveRatehawkUrl(url: string, size: string): string {
+  return url.includes("{size}") ? url.replace("{size}", size) : url;
+}
+
 export function normalizeAgodaImage(url: string | null | undefined): string | null {
   if (!url) return null;
   try {
@@ -29,7 +38,19 @@ export function hasAgodaPhotos(hotel: HotelRecord): boolean {
   ].some((value) => Boolean(value));
 }
 
-export function getHotelImageSet(hotel: HotelRecord): string[] {
+// Ratehawk-or-Agoda, no placeholder fallback — the "real photo(s) or nothing"
+// list. Ratehawk takes priority when present; Agoda is only a fallback for
+// hotels with no Ratehawk images (see CLAUDE.md §29).
+function getRawHotelImages(hotel: HotelRecord): { url: string; category: string | null }[] {
+  if (hotel.ratehawk_image_1) {
+    return [
+      {
+        url: resolveRatehawkUrl(hotel.ratehawk_image_1, RATEHAWK_FULL_SIZE),
+        category: hotel.ratehawk_image_1_category ?? null,
+      },
+    ];
+  }
+
   const agodaImages = [
     hotel.agoda_photo1,
     hotel.agoda_photo2,
@@ -41,7 +62,24 @@ export function getHotelImageSet(hotel: HotelRecord): string[] {
     .filter((value): value is string => Boolean(value))
     .filter((value, index, array) => array.indexOf(value) === index);
 
-  if (agodaImages.length > 0) return agodaImages;
+  return agodaImages.map((url) => ({ url, category: null }));
+}
+
+export function hasRatehawkPhotos(hotel: HotelRecord): boolean {
+  return Boolean(hotel.ratehawk_image_1);
+}
+
+export function hasHotelPhotos(hotel: HotelRecord): boolean {
+  return getRawHotelImages(hotel).length > 0;
+}
+
+export function getHotelThumbnail(hotel: HotelRecord): string | null {
+  return getRawHotelImages(hotel)[0]?.url ?? null;
+}
+
+export function getHotelImageSet(hotel: HotelRecord): string[] {
+  const images = getRawHotelImages(hotel).map((image) => image.url);
+  if (images.length > 0) return images;
   return HOTEL_CARD_PLACEHOLDERS;
 }
 

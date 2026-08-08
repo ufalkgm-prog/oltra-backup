@@ -142,6 +142,8 @@ export default async function HomePage({
         "agoda_photo3",
         "agoda_photo4",
         "agoda_photo5",
+        "ratehawk_image_1",
+        "ratehawk_image_1_category",
         "agoda_hotel_id",
         "activities",
         "setting",

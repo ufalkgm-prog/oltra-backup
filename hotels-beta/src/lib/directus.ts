@@ -196,6 +196,12 @@ export type HotelRecord = {
   agoda_photo4?: string | null;
   agoda_photo5?: string | null;
 
+  // Hero-only fields from the Ratehawk backfill (CLAUDE.md §28) — the full
+  // ratehawk_image_1..50 set is fetched on demand, see
+  // src/app/api/hotels/[id]/ratehawk-images/route.ts
+  ratehawk_image_1?: string | null;
+  ratehawk_image_1_category?: string | null;
+
   booking_provider?: "booking" | "cj_booking" | "official" | "none" | null;
   booking_URL?: string | null;
   booking_hotel_ref?: string | null;

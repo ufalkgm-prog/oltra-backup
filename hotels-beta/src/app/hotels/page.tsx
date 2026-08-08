@@ -104,6 +104,8 @@ const hotelFields = [
   "agoda_photo3",
   "agoda_photo4",
   "agoda_photo5",
+  "ratehawk_image_1",
+  "ratehawk_image_1_category",
   "booking_provider",
   "booking_URL",
   "booking_hotel_ref",

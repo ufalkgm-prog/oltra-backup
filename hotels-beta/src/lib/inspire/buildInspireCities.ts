@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getHotels } from "@/lib/directus";
+import { normalizeAgodaImage, resolveRatehawkUrl, RATEHAWK_THUMB_SIZE } from "@/lib/hotels/cardHelpers";
 import { INSPIRE_CITY_METADATA } from "./cityMetadata";
 import type { InspireCity } from "./types";
 
@@ -46,19 +47,6 @@ function normalizeCity(city: string): string {
   return map[c] ?? city.trim();
 }
 
-function normalizeAgodaImage(url: string | null | undefined): string | null {
-  if (!url) return null;
-
-  try {
-    const u = new URL(url);
-    u.search = "";
-    u.protocol = "https:";
-    return u.toString();
-  } catch {
-    return url;
-  }
-}
-
 export async function buildInspireCities(): Promise<InspireCity[]> {
   const hotels = (await getHotels({
     fields: [
@@ -71,6 +59,7 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
       "lat",
       "lng",
       "agoda_photo1",
+      "ratehawk_image_1",
     ],
     filter: {
       published: { _eq: true },
@@ -86,6 +75,7 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
     lat?: number | string | null;
     lng?: number | string | null;
     agoda_photo1?: string | null;
+    ratehawk_image_1?: string | null;
   }>;
 
   const grouped = new Map<
@@ -140,7 +130,9 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
         hotel_name: String(hotel.hotel_name ?? "Untitled hotel"),
         lat,
         lng,
-        thumbnail: normalizeAgodaImage(hotel.agoda_photo1),
+        thumbnail: hotel.ratehawk_image_1
+          ? resolveRatehawkUrl(hotel.ratehawk_image_1, RATEHAWK_THUMB_SIZE)
+          : normalizeAgodaImage(hotel.agoda_photo1),
       });
     }
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -33,7 +33,10 @@ import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
   getHotelImageSet,
   HOTEL_CARD_PLACEHOLDERS as PLACEHOLDERS,
-  hasAgodaPhotos,
+  hasHotelPhotos,
+  RATEHAWK_FULL_SIZE,
+  RATEHAWK_THUMB_SIZE,
+  resolveRatehawkUrl,
 } from "@/lib/hotels/cardHelpers";
 import {
   getMemberActionButtonClass,
@@ -386,6 +389,14 @@ function HiddenPreserveParams(props: {
 
 function locationLine(h: HotelRecord): string {
   return [h.local_area, h.city, h.region, h.country].filter(Boolean).join(" · ");
+}
+
+function formatImageCategory(category: string | null): string | null {
+  if (!category || category === "unspecified") return null;
+  return category
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 function getFeaturedAwardsForHotel(hotel: HotelRecord) {
@@ -743,6 +754,12 @@ export default function HotelsView(props: {
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [ratehawkGallery, setRatehawkGallery] = useState<
+    { url: string; category: string | null }[] | null
+  >(null);
+  const thumbGridRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollThumbsUp, setCanScrollThumbsUp] = useState(false);
+  const [canScrollThumbsDown, setCanScrollThumbsDown] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("featured");
   const [descExpanded, setDescExpanded] = useState(false);
 
@@ -991,6 +1008,7 @@ export default function HotelsView(props: {
   useEffect(() => {
     setSelectedImageIndex(0);
     setLightboxOpen(false);
+    setRatehawkGallery(null);
   }, [selectedHotelId]);
 
   useEffect(() => {
@@ -1176,7 +1194,7 @@ export default function HotelsView(props: {
       `;
 
       const popupImage = getHotelImageSet(hotel)[0] ?? PLACEHOLDERS[0];
-      const popupHasPhoto = hasAgodaPhotos(hotel);
+      const popupHasPhoto = hasHotelPhotos(hotel);
       const popupTitle = (hotel.hotel_name ?? "Untitled hotel").replace(/</g, "&lt;");
       const popupMeta = (locationLine(hotel) || "—").replace(/</g, "&lt;");
 
@@ -1281,10 +1299,7 @@ export default function HotelsView(props: {
   
   const featuredHotels = useMemo(() => {
     if (!hotels.length) return [];
-    return hotels.filter((hotel) =>
-      [hotel.agoda_photo1, hotel.agoda_photo2, hotel.agoda_photo3, hotel.agoda_photo4, hotel.agoda_photo5]
-        .some((p) => Boolean(p))
-    );
+    return hotels.filter((hotel) => hasHotelPhotos(hotel));
   }, [hotels]);
 
   const featuredCycleRef = useRef<number[]>([]);
@@ -1438,10 +1453,91 @@ export default function HotelsView(props: {
     Boolean(toValue) &&
     datesAreValid;
 
-  const selectedHotelImages = useMemo(
-    () => (selectedHotel ? getHotelImageSet(selectedHotel) : PLACEHOLDERS),
-    [selectedHotel]
+  useEffect(() => {
+    if (!selectedHotel?.ratehawk_image_1) return;
+    let cancelled = false;
+
+    fetch(`/api/hotels/${selectedHotel.id}/ratehawk-images`)
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; images?: { url: string; category: string | null }[] }) => {
+        if (!cancelled && data?.ok) setRatehawkGallery(data.images ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setRatehawkGallery([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedHotel?.id, selectedHotel?.ratehawk_image_1]);
+
+  // {url, category} pairs, url unresolved ({size} template intact for
+  // Ratehawk, already-concrete for Agoda) — the shared source both the
+  // full-size and thumbnail-size views below derive from. While the full
+  // ratehawk-images fetch is pending (or for non-Ratehawk hotels), falls
+  // back to the single hero image already available synchronously from the
+  // bulk fetch, so the main image renders with no loading flash.
+  const selectedHotelGalleryRaw = useMemo(() => {
+    if (!selectedHotel) {
+      return PLACEHOLDERS.map((url) => ({ url, category: null as string | null }));
+    }
+
+    if (selectedHotel.ratehawk_image_1) {
+      if (ratehawkGallery && ratehawkGallery.length > 0) return ratehawkGallery;
+      return [
+        {
+          url: selectedHotel.ratehawk_image_1,
+          category: selectedHotel.ratehawk_image_1_category ?? null,
+        },
+      ];
+    }
+
+    return getHotelImageSet(selectedHotel).map((url) => ({ url, category: null as string | null }));
+  }, [selectedHotel, ratehawkGallery]);
+
+  const selectedHotelGallery = useMemo(
+    () =>
+      selectedHotelGalleryRaw.map((image) => ({
+        url: resolveRatehawkUrl(image.url, RATEHAWK_FULL_SIZE),
+        category: image.category,
+      })),
+    [selectedHotelGalleryRaw]
   );
+
+  const selectedHotelThumbGallery = useMemo(
+    () =>
+      selectedHotelGalleryRaw.map((image) => ({
+        url: resolveRatehawkUrl(image.url, RATEHAWK_THUMB_SIZE),
+        category: image.category,
+      })),
+    [selectedHotelGalleryRaw]
+  );
+
+  const selectedHotelImages = useMemo(
+    () => selectedHotelGallery.map((image) => image.url),
+    [selectedHotelGallery]
+  );
+
+  const updateThumbScrollState = useCallback(() => {
+    const el = thumbGridRef.current;
+    if (!el) {
+      setCanScrollThumbsUp(false);
+      setCanScrollThumbsDown(false);
+      return;
+    }
+    setCanScrollThumbsUp(el.scrollTop > 4);
+    setCanScrollThumbsDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+  }, []);
+
+  useEffect(() => {
+    updateThumbScrollState();
+  }, [selectedHotelThumbGallery, updateThumbScrollState]);
+
+  function scrollThumbsBy(direction: 1 | -1) {
+    const el = thumbGridRef.current;
+    if (!el) return;
+    el.scrollBy({ top: direction * el.clientHeight * 0.6, behavior: "smooth" });
+  }
 
   const isFavorited = Boolean(
     selectedHotel && favoriteHotelIds.has(String(selectedHotel.id))
@@ -1773,7 +1869,7 @@ export default function HotelsView(props: {
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
         stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-        thumbnail: selectedHotel && hasAgodaPhotos(selectedHotel) ? selectedHotelImages[0] : null,
+        thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
         checkIn: fromValue || null,
         checkOut: toValue || null,
       });
@@ -1842,7 +1938,7 @@ async function handleCreateTripAndAddHotel() {
       name: selectedHotel.hotel_name ?? "Untitled hotel",
       location: locationLine(selectedHotel),
       stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
-      thumbnail: selectedHotel && hasAgodaPhotos(selectedHotel) ? selectedHotelImages[0] : null,
+      thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
       checkIn: fromValue || null,
       checkOut: toValue || null,
     });
@@ -1892,7 +1988,7 @@ async function handleCreateTripAndAddHotel() {
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
         meta: selectedHotel.affiliation?.trim() || "",
-        thumbnail: selectedHotel && hasAgodaPhotos(selectedHotel) ? selectedHotelImages[0] : null,
+        thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
       });
 
       if (result.status !== "already_exists") {
@@ -2263,7 +2359,7 @@ async function handleCreateTripAndAddHotel() {
                 {orderedVisibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
-                  const hasPhoto = hasAgodaPhotos(h);
+                  const hasPhoto = hasHotelPhotos(h);
                   const agodaCardAvailability = agodaResultAvailability[String(h.id)];
                   const featuredAwards = getFeaturedAwardsForHotel(h);
                   const hotelBadges = getHotelBadges(h);
@@ -2571,14 +2667,14 @@ async function handleCreateTripAndAddHotel() {
                 <div
                   className={[
                     "col-span-12 overflow-hidden rounded-[var(--oltra-radius-lg)]",
-                    selectedHotel && hasAgodaPhotos(selectedHotel) ? "lg:col-span-8" : "",
+                    selectedHotel && hasHotelPhotos(selectedHotel) ? "lg:col-span-8" : "",
                   ].join(" ")}
                 >
-                  {selectedHotel && hasAgodaPhotos(selectedHotel) ? (
+                  {selectedHotel && hasHotelPhotos(selectedHotel) ? (
                     <button
                       type="button"
                       onClick={() => setLightboxOpen(true)}
-                      className="block w-full overflow-hidden rounded-[var(--oltra-radius-lg)]"
+                      className="relative block w-full overflow-hidden rounded-[var(--oltra-radius-lg)]"
                     >
                       <img
                         src={
@@ -2588,34 +2684,70 @@ async function handleCreateTripAndAddHotel() {
                         alt=""
                         className="h-[340px] w-full object-cover"
                       />
+                      {formatImageCategory(
+                        selectedHotelGallery[selectedImageIndex]?.category ?? null
+                      ) ? (
+                        <span className="oltra-status-badge absolute bottom-3 right-3 bg-black/55 text-white backdrop-blur-sm">
+                          {formatImageCategory(
+                            selectedHotelGallery[selectedImageIndex]?.category ?? null
+                          )}
+                        </span>
+                      ) : null}
                     </button>
                   ) : (
                     <div className="oltra-photo-placeholder h-[340px] w-full">Photos coming soon</div>
                   )}
                 </div>
 
-                {selectedHotel && hasAgodaPhotos(selectedHotel) ? (
+                {selectedHotel && hasHotelPhotos(selectedHotel) ? (
                   <div className="col-span-12 lg:col-span-4">
-                    <div className="oltra-scrollbar grid max-h-[340px] grid-cols-2 gap-2 overflow-y-auto pr-2 content-start">
-                      {selectedHotelImages.map((src, index) => (
+                    <div className="relative">
+                      {canScrollThumbsUp ? (
                         <button
-                          key={src}
                           type="button"
-                          onClick={() => setSelectedImageIndex(index)}
-                          className={[
-                            "overflow-hidden rounded-[var(--oltra-radius-md)] text-left transition",
-                            selectedImageIndex === index
-                              ? "bg-[var(--oltra-field-bg-strong)]"
-                              : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
-                          ].join(" ")}
+                          onClick={() => scrollThumbsBy(-1)}
+                          aria-label="Scroll thumbnails up"
+                          className="flex h-5 w-full items-center justify-center rounded-t-[var(--oltra-radius-md)] bg-[var(--oltra-field-bg)] text-white/70 transition hover:bg-[var(--oltra-field-bg-strong)] hover:text-white"
                         >
-                          <img
-                            src={src}
-                            alt=""
-                            className="aspect-[4/3] w-full object-cover"
-                          />
+                          <span aria-hidden="true">▲</span>
                         </button>
-                      ))}
+                      ) : null}
+                      <div
+                        ref={thumbGridRef}
+                        onScroll={updateThumbScrollState}
+                        className="oltra-scrollbar grid max-h-[340px] grid-cols-2 gap-2 overflow-y-auto pr-2 content-start"
+                      >
+                        {selectedHotelThumbGallery.map((image, index) => (
+                          <button
+                            key={`${image.url}-${index}`}
+                            type="button"
+                            onClick={() => setSelectedImageIndex(index)}
+                            className={[
+                              "overflow-hidden rounded-[var(--oltra-radius-md)] text-left transition",
+                              selectedImageIndex === index
+                                ? "bg-[var(--oltra-field-bg-strong)]"
+                                : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
+                            ].join(" ")}
+                          >
+                            <img
+                              src={image.url}
+                              alt=""
+                              loading="lazy"
+                              className="aspect-[4/3] w-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      {canScrollThumbsDown ? (
+                        <button
+                          type="button"
+                          onClick={() => scrollThumbsBy(1)}
+                          aria-label="Scroll thumbnails down"
+                          className="flex h-5 w-full items-center justify-center rounded-b-[var(--oltra-radius-md)] bg-[var(--oltra-field-bg)] text-white/70 transition hover:bg-[var(--oltra-field-bg-strong)] hover:text-white"
+                        >
+                          <span aria-hidden="true">▼</span>
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
@@ -2942,7 +3074,7 @@ async function handleCreateTripAndAddHotel() {
                             ‹
                           </button>
 
-                          <div className="flex h-[min(72vh,720px)] min-w-0 flex-1 items-center justify-center overflow-hidden">
+                          <div className="relative flex h-[min(72vh,720px)] min-w-0 flex-1 items-center justify-center overflow-hidden">
                             <img
                               src={
                                 selectedHotelImages[selectedImageIndex] ??
@@ -2951,6 +3083,15 @@ async function handleCreateTripAndAddHotel() {
                               alt=""
                               className="max-h-full max-w-full object-contain"
                             />
+                            {formatImageCategory(
+                              selectedHotelGallery[selectedImageIndex]?.category ?? null
+                            ) ? (
+                              <span className="oltra-status-badge absolute bottom-3 right-3 bg-black/55 text-white backdrop-blur-sm">
+                                {formatImageCategory(
+                                  selectedHotelGallery[selectedImageIndex]?.category ?? null
+                                )}
+                              </span>
+                            ) : null}
                           </div>
 
                           <button

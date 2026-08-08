@@ -348,7 +348,7 @@ const effectiveView
 
 ### Featured Mode — hotel cycling
 
-* Pool: all hotels with at least one real agoda photo (`agoda_photo1`–`agoda_photo5` any truthy) — no ext_points restriction
+* Pool: all hotels with at least one real photo — `hasHotelPhotos()` in `cardHelpers.ts`, Ratehawk (`ratehawk_image_1`) preferred, Agoda (`agoda_photo1`–`agoda_photo5`) as fallback (§29) — no ext_points restriction
 * Cycle: random shuffle of the pool indices, with ≥30 positions between any repeat across cycle boundaries — same gap-guarantee algorithm as `LandingBackground.buildCycle`
 * Implemented with `featuredCycleRef` (remaining indices queue) and `featuredTailRef` (last N shown) refs; `setSelectedImageIndex` advances the display every 5 s via `setInterval`
 * Hotels without images are excluded regardless of points
@@ -1171,6 +1171,46 @@ Every image URL has an unresolved `{size}` placeholder (stored as-is — not pre
 ### Files (`hotels-beta/scripts/ratehawk/`)
 
 `add-ratehawk-image-fields.mjs` (schema, one-shot/idempotent), `extract-images-for-matched.mjs` (dump re-scan → `output/matched-hotel-images.jsonl`), `apply-ratehawk-images.mjs` (the only script here that writes `ratehawk_image_*` — dry-run by default).
+
+---
+
+## 29. RATEHAWK IMAGES — DISPLAYED IN THE APP (2026-08-08)
+
+### What was done
+
+Wired the §28 backfill into the UI. Ratehawk images now take priority everywhere; Agoda is only a fallback for hotels with no Ratehawk images.
+
+### Priority logic centralized in `cardHelpers.ts`
+
+`getRawHotelImages(hotel)` (private) is the single source of truth: returns Ratehawk (as one `{url, category}` entry — see lazy-load below) if `hotel.ratehawk_image_1` is set, else the up-to-5 Agoda photos (`category: null`), else `[]`. Built on top of it:
+* `hasHotelPhotos(hotel)` — replaces `hasAgodaPhotos()` at every *display-gating* call site in `HotelsView.tsx` (map popup, featured-mode pool eligibility, results-row, detail-panel layout, the three member add-to-trip/add-to-favorites thumbnail picks) and in `HotelSmallCard.tsx`. `hasAgodaPhotos()` itself is untouched/still exported (still meaningful as "does this hotel have Agoda data").
+* `getHotelThumbnail(hotel)` — single nullable URL, no placeholder fallback (used by Inspire).
+* `getHotelImageSet(hotel)` — unchanged signature (`string[]`, placeholder-fallback), reimplemented on top of the same raw list. Every pre-existing call site that only ever read `[0]` needed no changes at all.
+* `resolveRatehawkUrl(url, size)` / `RATEHAWK_THUMB_SIZE` ("240x240") / `RATEHAWK_FULL_SIZE` ("1024x768") — the `{size}` template resolver and the two size tiers actually used (see §28 for the full documented token whitelist). Only two tiers are used app-wide: thumbnails at 240x240, everything else (hero/card/popup/lightbox/main panel image) at 1024x768 — no per-call-site size parameter, keeps the API surface small.
+
+### Bulk fetch vs. lazy full gallery
+
+The Hotels page fetches all ~870 published hotels in one request (`limit: -1`) for list/map/featured-pool/detail-panel alike. Adding all 100 `ratehawk_image_*` fields to that fetch measured at **~4.5MB** of extra JSON per page load — rejected. Instead:
+* `HotelRecord` (`src/lib/directus.ts`) and the three bulk `fields` lists (`src/app/hotels/page.tsx`, `src/app/page.tsx`, `src/lib/inspire/buildInspireCities.ts`) only gained **`ratehawk_image_1` + `ratehawk_image_1_category`** — enough for the hero image everywhere except the selected-hotel gallery.
+* New route `src/app/api/hotels/[id]/ratehawk-images/route.ts` (GET) fetches one hotel's full `ratehawk_image_1..50`/`_category` set on demand (local 100-field type, not added to the shared `HotelRecord`) and returns `{ok, images: [{url, category}]}`, URLs still unresolved.
+* `HotelsView.tsx`: a `useEffect` keyed on `selectedHotel?.id` fires this fetch **only when `selectedHotel.ratehawk_image_1` is set** (zero extra calls for Agoda-only/photo-less hotels — confirmed via the browser network tab during testing). While pending, `selectedHotelGalleryRaw` falls back to the single hero entry already available from the bulk fetch, so the main image renders with no loading flash; `selectedHotelGallery` (full-size) and `selectedHotelThumbGallery` (thumb-size) both derive from that one raw array via `resolveRatehawkUrl`.
+
+### Thumbnail strip and category badge
+
+The selected-hotel detail panel's thumbnail grid (`grid-cols-2`, `max-h-[340px]`, ~8 visible) kept its exact sizing — only the scroll affordance changed: a `thumbGridRef` + `canScrollThumbsUp`/`canScrollThumbsDown` state (derived from `scrollTop`/`scrollHeight`/`clientHeight`, recalculated on scroll and whenever the gallery changes) drive two flat chevron buttons (▲/▼, not the lightbox's round style) above/below the grid, each calling `scrollBy({top: ±60% of clientHeight, behavior: "smooth"})`. Both arrows are simply absent when everything fits (≤8 images) — every Agoda-only hotel looks unchanged. Thumbnails got `loading="lazy"` (up to 50 now, vs. Agoda's 5).
+
+A small pill badge (`.oltra-status-badge` — existing CSS, previously unused anywhere in the app — combined with a dark glass background) shows the current image's category bottom-right, on both the detail-panel hero and the lightbox. Hidden when `category` is `null` (always true for Agoda) or the literal string `"unspecified"` (~17% of Ratehawk images, per §28's session data — not useful to show). Label formatting: `guest_rooms` → "Guest Rooms" (`formatImageCategory()` in `HotelsView.tsx`).
+
+### `next.config.ts` — a real bug caught during browser testing
+
+`next/image` throws (and freezes the tab) on any hostname not in `images.remotePatterns`. Agoda's `*.agoda.net` was already allowlisted; **`cdn.worldota.net` (Ratehawk's image CDN) was missing** — added alongside it. Required a dev-server restart to take effect (Next.js reads `next.config.ts` once at startup, not hot-reloaded).
+
+### Explicitly out of scope
+
+* `src/app/hotels/[hotelid]/page.tsx` — untouched. Per §15 it's not part of the intended UX flow, and it already runs on a wholly separate Agoda-CSV-based image system (`getAgodaPhotos`), not `cardHelpers`/Directus fields.
+* No `SavedTripsView.tsx`/`FavoriteHotelsView.tsx` code changes — both only ever render a flat `thumbnail` string persisted to Supabase at add-time, sourced from the `hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null` calls in `HotelsView.tsx`. Once those prefer Ratehawk, new saves automatically do too. **Already-saved trips/favorites keep their old Agoda thumbnail — not retroactively backfilled.**
+* No Inspire category badge — the hover popup is a small, no-interaction card; only the thumbnail source changed there (`buildInspireCities.ts` now imports `normalizeAgodaImage`/`resolveRatehawkUrl` from `cardHelpers.ts` instead of a locally-duplicated copy, and prefers `ratehawk_image_1` at thumb size).
+* Room images: still not displayed anywhere — see §28's `rg_ext`-not-`room_group_id` note for the booking-integration phase.
 
 ---
 
