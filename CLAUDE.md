@@ -1227,7 +1227,20 @@ Two ETG endpoints, mirroring how Agoda had a batch check (list-row price) and a 
 * `POST /api/b2b/v3/search/hp/` — detail, one call for the selected hotel only, returns the full list of selectable room rates. ETG's "Recommended Flow" call.
 * Both take `guests: [{adults, children}]` — **one array entry per room**, built by `buildGuestsArray()` in `src/lib/ratehawk/availability.ts`, which evenly splits the search form's `adults`/`kids`/bedroom count across that many room slots.
 * Auth is HTTP Basic (`key_id:key`), unlike Agoda's custom header.
-* `residency` has no UI to source it from — hardcoded to `"gb"` in `availability.ts`. A documented simplification, not a per-user value.
+* `residency` (passport country) is a real, user-changeable search-form field
+  as of 2026-08-10 (§32) — a "Passport country" `OltraSelect` next to Bedrooms
+  on the Hotels results-mode search form, backed by `RESIDENCY_COUNTRIES` in
+  `src/lib/countries.ts` (full ISO 3166-1 alpha-2 list). Defaults to a
+  best-effort guess from the browser locale (`guessResidencyFromLocale()`,
+  client-only to avoid an SSR/hydration mismatch — see the effect in
+  `HotelsView.tsx`), but that default is not the only path: it's a real `name="residency"`
+  form field like `from`/`to`/`bedrooms`, round-trips through the `residency`
+  URL param, and is required (400 if missing/invalid) on both
+  `/api/ratehawk/availability` and `/api/ratehawk/availability/batch`. One
+  residency per search, applied to all guests, passed to both `search/hp/`
+  and `search/serp/hotels/`. Previously hardcoded to `"gb"` — that was flagged
+  as failing ETG certification ("hardcoding a default counts as not
+  implementing it") and has been replaced, not just documented as a gap.
 * Added `ratehawk_hid?: number | null` to `HotelRecord` (`src/lib/directus.ts`) and `hotels/page.tsx`'s field list — this hid already existed in Directus per §26 but, like `ratehawk_image_1` before §29, had never been wired into the TS layer.
 
 ### Headline price formula
@@ -1297,6 +1310,248 @@ This session's `hotels-beta/.env.local` had `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_P
 Corrected `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` to the Members project (ref `hrlvtzcapsqkgrcawluf`). Verified via the same PostgREST probe — `member_trip_hotels` now resolves (200, empty result set — RLS-gated, expected with the publishable key and no session). Dev server needed a restart to pick up the change (same as any `.env.local`/`next.config.ts` edit — not hot-reloaded).
 
 **For any future fresh checkout**: don't assume "the Supabase URL/key" in a shared `.env.local` template is correct without checking — ask the user directly which of their two projects it should be (per the general fresh-checkout credential guidance in §25), or verify with the same read-only `member_trip_hotels` probe before trusting it.
+
+---
+
+## 32. RATEHAWK / ETG INTEGRATION
+
+### Model
+Affiliate API, contract AFF-392026. ZenHotels = consumer brand, RateHawk =
+partner API layer, same inventory. Use Affiliate API documentation only — never
+B2B/wholesale endpoints, `deposit` payment type, net pricing, or fake-gross
+commission. myOLTRA is never merchant of record.
+
+Agreed architecture: myOLTRA owns discovery (search, hotel pages, rate display).
+ZenHotels owns checkout at `hotels.myoltra.com` via CNAME and is merchant of record.
+
+### BLOCKED — do not build
+The handoff mechanism to the ZenHotels checkout is not documented and is pending
+written confirmation from ETG (asked 10 Aug 2026). Until it arrives, do not write:
+- Create booking process, Start booking process, Check booking process
+- Create credit card token, `pay_uuid`/`init_uuid`/`return_path`, 3DS handling
+- Booking status webhooks or booking-status state machines
+- Retrieve bookings, Cancel booking
+
+Unknown until answered: at what point we redirect, what we pass across (prebook
+hash, rate identifiers, guest/search params), and whether any booking endpoint
+stays on our side.
+
+Everything below is confirmed by ETG documentation and safe to build now.
+
+### Hosts and credentials
+Base URL must remain a single config value, never hardcoded per call. **Verified
+against live code (`hotels-beta/src/lib/ratehawk/availability.ts`):** already
+follows this — `RATEHAWK_API_URL` is read from env with a fallback to
+`https://api.ratehawk.com`, matching ETG's stated production host below. No
+change needed.
+
+Host configuration was established during live API testing — treat the working
+values already in the codebase and existing §26 as authoritative. Do not
+change them based on documentation alone. For reference, ETG's stated production
+host is `api.ratehawk.com` (migrated from `api.worldota.net`, same auth and payload
+format); if what's in the code differs, the code wins and the discrepancy should be
+noted rather than "corrected."
+
+Sandbox key: RateHawk Backoffice → Settings → API tab. One key covers search,
+booking and content — no separate content key exists. **Note the nuance vs. §26**:
+this key returned `403 endpoint_not_found` / `is_active: false` on the Content
+API v1 endpoints (`hotel_ids_by_filter`, `hotel_content_by_ids`) — that's an
+account/contract enablement gap, not evidence of a separate "content key" the
+account is missing. The full-dump endpoint (`hotel/info/dump`) and single-hotel
+`hotel/info` both work fine on this same key. Worth re-testing Content API v1
+once/if ETG confirms the contract covers it.
+
+Never mix keys, IDs or static content across environments.
+
+**Sandbox and test bookings are treated as real orders.** Do not execute any
+booking call without explicit confirmation from Ulrik in-session.
+
+### Flow (our scope)
+Search by hotel IDs / region / geo → Retrieve hotelpage → Prebook from hotelpage
+step → [handoff to ZenHotels checkout — mechanism TBC]
+
+Hash chain: `h-…` from Retrieve hotelpage → passed to Prebook → returns `p-…`.
+Prebook is part of the search step and must be excluded from the booking flow.
+
+**Implementation gap, not a contradiction**: the current code (§30) never calls a
+separate Prebook endpoint — `book_hash` is read directly off each `search/hp/`
+rate and stored unused (per §30's "Explicitly out of scope"). Adding the actual
+Prebook call (`h-…` → `p-…`) is new scope from this section, still pending the
+BLOCKED handoff question above before it's worth building.
+
+### Static content
+- Retrieve hotel dump weekly; Retrieve hotel incremental dump daily.
+- Content API is for scheduled offline sync into Supabase/Directus **only** —
+  never called during a live user search. Explicitly checked at certification.
+- Use `updated_since` on Retrieve hotel IDs by filter for incremental updates.
+- Region IDs from the regions' dump or hotel dump.
+
+### Display rules (all certification-checked)
+- Pricing is **gross** — `amount` / `show_amount` already include ETG's
+  commission. Never add markup. Commission is calculated on ETG's side.
+  **Verified consistent**: `ratePrice()` in `availability.ts` reads
+  `show_amount`/`show_currency_code` directly, adds nothing on top.
+- Non-included taxes (`included_by_supplier: false`) shown separately, never
+  folded into the displayed price. **Resolved 2026-08-10.** `tax_data.taxes`
+  turned out to live on the rate's primary payment type
+  (`payment_options.payment_types[0].tax_data.taxes`), not on the rate
+  itself — confirmed live via `scripts/ratehawk/diagnose-tax-cancellation.mjs`
+  (kept as a reusable read-only check, takes an optional `DIAG_HID`). Each
+  room row shows a "+ taxes at hotel" note when a non-included tax exists;
+  the "More details" popup lists included taxes (informational — already in
+  the shown price, not re-added) separately from not-included ones (shown in
+  their own currency, e.g. a Dubai city tax quoted in AED alongside a
+  USD-displayed room price — never converted into the headline price).
+  `groupRoomOptions()`/`rateTaxes()` in `availability.ts`.
+- `residency` (passport country) collected on the **first** search step and sent
+  on all `/search/serp/*/` and `/search/hp/` requests. Hardcoding a default counts
+  as not implementing it. **Resolved 2026-08-10** (was flagged as a
+  contradiction against §30's earlier hardcoded `"gb"`). Replaced with a real
+  "Passport country" selector on the Hotels search form — see §30 for the
+  implementation. Not just a certification fix: residency-based price
+  adjustments are real in Gulf/Russian/some Asian markets, so the hardcode was
+  a correctness bug, not only a documentation gap.
+
+- Cancellation policies parsed from `cancellation_penalties.policies` and shown
+  unmodified in either direction. API returns UTC+0 — decide and document whether
+  the UI shows UTC+0 or converts to local. `free_cancellation_before: null` means
+  no free cancellation. **Resolved 2026-08-10.** Two real bugs found and fixed
+  along the way, both caught only by testing in the actual browser (not by
+  `tsc`/lint, which stayed clean throughout):
+  1. `cancellation_penalties` was being read straight off the rate
+     (`rate.cancellation_penalties`) — that path doesn't exist. Like
+     `tax_data`, it lives on the primary payment type
+     (`payment_options.payment_types[0].cancellation_penalties`). This means
+     `freeCancellationBefore` had silently read as `undefined` on every
+     single rate before this fix — the room popup always said
+     "Non-refundable" regardless of the real policy.
+  2. `Intl`'s `toLocaleString` throws a `RangeError` ("Invalid option :
+     option") if `dateStyle`/`timeStyle` are combined with `timeZoneName` in
+     the same options object — not a silent no-op, a hard crash on opening
+     the room detail popup. Fixed by spelling out the date/time parts
+     individually (`year`/`month`/`day`/`hour`/`minute`) alongside
+     `timeZoneName: "short"` instead.
+
+  `formatRatehawkUtcDateTime()` in `HotelsView.tsx` converts ETG's raw
+  no-offset UTC timestamps (`new Date()` on a bare "2026-09-22T11:00:00"
+  string parses as **local** time per the JS spec — a "Z" is appended first)
+  to the browser's local time with an explicit `GMT±N` label. The room
+  detail popup renders the full `policies` schedule unmodified — every
+  window and its charge amount (`0` = "no charge", not silently omitted),
+  not just a single collapsed before/after date.
+  `rateCancellationPolicies()` in `availability.ts`.
+- Parse and display **both** `metapolicy_struct` and `metapolicy_extra_info`.
+  Neither is read anywhere in the current code — implementation gap.
+- Room static data matched on `rg_ext` only — not `room_name`, not `room_group_id`.
+  **Resolved 2026-08-10** (was flagged as a contradiction against §30's earlier
+  "0/5 correct matches, use room_name instead" finding). Re-tested live via
+  `scripts/ratehawk/diagnose-rg-ext.mjs` (kept as a reusable read-only check —
+  takes an optional `DIAG_HID` env var to point at any hotel) against both the
+  ETG test hotel and a real, varied hotel (Four Seasons Dubai at Jumeirah
+  Beach): `rg_ext` matched field-by-field on 10/10 rooms tested, including
+  varied real values (`view: 5` vs `37`, `quality: 6` vs `17`). The original
+  "0/5" result was a comparison-method bug, not a data incompatibility —
+  `RawRoomGroup` never even declared an `rg_ext` field (so it read as
+  `undefined` regardless of the real data), and a raw `JSON.stringify()`
+  equality check would fail on identical data anyway since `/search/hp/` and
+  `/hotel/info/` serialize the object in different key orders. **Never compare
+  `rg_ext` via `JSON.stringify()` — always compare field-by-field (or
+  key-sorted).** Matching logic fixed in `availability.ts`
+  (`matchRoomImages()`/`rgExtEquals()`) to compare `rg_ext` field-by-field;
+  `room_name` containment is now only a fallback for when `rg_ext` is missing
+  from the rate or every room group, and logs a warning when it fires.
+
+- Rate name from `room_name` in `/search/hp/`. **Verified consistent** with
+  current code.
+- Meal type from `meal_data.value`. Never present a meal type as better than what
+  ETG sent. **Verified consistent** — `mealValue: rate.meal_data?.value`.
+- First search step shows one or two lowest rates per hotel; all rates only on the
+  hotel page.
+- ETG is our only supplier.
+- Upsells (early check-in / late check-out): not applicable to Affiliate API. Skip.
+
+### Caching
+Never cache Retrieve hotelpage or Prebook responses — prohibited. Hotelpage rates
+are storable for roughly 1 hour for display purposes only. **Verified consistent**:
+§30 already notes `/api/ratehawk/availability` fetches fresh on every request,
+no caching layer exists.
+
+### Limits and timeouts
+- Max 300 hotels per Search by hotel IDs request.
+- Max 9 rooms per rate, same room type only.
+- Max 6 adults + 4 children per room; children are 17 and under, ages passed as an
+  array e.g. `"children": [7]`. Current `buildGuestsArray()` already sends
+  children as an age array (consistent), but enforces none of the 300/9/6+4
+  limits above — implementation gap, not a contradiction (nothing in the code
+  claims otherwise).
+- Stays up to 30 nights; check-in no more than 730 days out. Not enforced in the
+  search form yet — gap.
+- Search timeout 30s recommended, sent as an explicit `timeout` parameter.
+- Prebook timeout 60s recommended, 30s minimum. Prebook does not accept an
+  incoming timeout — set on ETG's side.
+- `price_increase_percent` 0–100. Any value above 0 requires showing the price
+  change to the user before proceeding. Default TBC.
+
+### Certification deliverables (non-code)
+- Test hotel `hid` 8473727 / `test_hotel_do_not_book` must be mapped. **Verified
+  consistent** — §26 already confirms this exact `hid` returns ETG's "Test Hotel
+  (Do Not Book) test" fixture.
+- Diagram comparing ETG endpoints against the myOLTRA flow.
+- Workflow table: step name, triggering user action, ETG endpoint(s).
+- RPM estimates for `/serp/hotels`, `/serp/region`, `/serp/geo`, `/search/hp`,
+  `/hotel/prebook`, `/serp/prebook`.
+- IP whitelisting is mandatory on ETG's side. Vercel serverless egress is not
+  static — unresolved, raised with ETG 10 Aug 2026.
+- Scope of certification under the white-label model is itself unconfirmed.
+
+### TODO — before certification (deferred, not actioned yet)
+Real certification requirements, lower stakes than the items already fixed
+above — do a cleanup pass on these before certification, not now.
+
+- Parse and display `metapolicy_struct` / `metapolicy_extra_info` — neither is
+  read anywhere in the current code.
+- Enforce the Limits and timeouts above (300 hotels/request, 9 rooms/rate,
+  6 adults + 4 children/room, 30-night max stay, 730-day advance window) —
+  none are enforced in the search form today.
+- **Static content is fetched live, not synced offline.**
+  `fetchRatehawkRoomImages()` in `availability.ts` calls `/api/b2b/v3/hotel/info/`
+  live on every hotel-page request. ETG Best Practices requires static content
+  to be synced offline and cached, never called during a live user search —
+  this is a graded certification point, and it's also a real latency and
+  rate-limit risk on hotel pages as-is. Needs moving to a scheduled sync into
+  Supabase/Directus (same shape as the existing weekly/incremental dump
+  pipeline in §26/§28) rather than a per-request call.
+
+  **Schema for this landed 2026-08-10** (data sync itself has not — this was
+  additive schema only, approved and created via
+  `scripts/ratehawk/add-ratehawk-static-content-fields.mjs`, idempotent/safe
+  to re-run): 4 new nullable fields on `hotels`, none populated yet —
+  `ratehawk_room_groups` (`json` — array of `{name, rg_ext, images}`, one
+  entry per room group; a JSON blob rather than flat numbered fields like
+  `ratehawk_image_*` because room-group count and image count both vary per
+  hotel, unlike the fixed 50-slot hotel-image list), `ratehawk_metapolicy_struct`
+  (`json`, raw structured policy object), `ratehawk_metapolicy_extra_info`
+  (`text` — long free-form notes, confirmed via
+  `scripts/ratehawk/diagnose-metapolicy.mjs`, not `string`), and
+  `ratehawk_static_synced_at` (`timestamp`, shared "last synced" marker for
+  all of the above). Full Directus schema snapshots taken before and after
+  via `GET /schema/snapshot`, saved to `scripts/ratehawk/output/` (gitignored,
+  local only). **A real finding from the pre-proposal investigation**:
+  `metapolicy_struct`/`metapolicy_extra_info` turned out to live entirely on
+  `/hotel/info/` (hotel-level static content), not on live `/search/hp/`
+  rates — unlike taxes/cancellation (§32 Display rules), which are genuinely
+  live per-search pricing data and must never be cached, metapolicy was a
+  legitimate schema candidate. The actual sync script that populates these 4
+  fields and writes `ratehawk_static_synced_at` is separate follow-up work,
+  not done yet — this section only added the columns.
+- **Content API v1 returns 403 for our key** (see Hosts and credentials
+  above). ETG Best Practices assumes Content API for static sync, so this may
+  block the item above until resolved. Ulrik is raising it with Valeriy
+  Korobov.
+
+### Contacts
+Valeriy Korobov (integration) — apisupport@ratehawk.com
+Seseg Shuianova (commercial) — s.shuianova@emergingtravel.com
 
 ---
 

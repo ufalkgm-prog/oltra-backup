@@ -19,6 +19,7 @@ import {
   readGuestSelection,
   type GuestSelection,
 } from "@/lib/guests";
+import { RESIDENCY_COUNTRIES, guessResidencyFromLocale } from "@/lib/countries";
 import type { HotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import {
   addFavoriteHotelBrowser,
@@ -389,6 +390,43 @@ function formatRoomLayout(room: RatehawkGroupedRoom): string {
   return parts.join(" · ") || "—";
 }
 
+// ETG's cancellation timestamps have no timezone offset (e.g.
+// "2026-09-22T11:00:00") and are documented as UTC+0 — see CLAUDE.md §32.
+// `new Date()` on a bare no-offset ISO string parses as LOCAL time per the
+// JS spec, which would silently misread these, so "Z" is appended first.
+// timeZoneName: "short" makes the local conversion explicit, per the
+// certification requirement to label the timezone rather than leave it
+// ambiguous.
+function formatRatehawkUtcDateTime(isoNoOffset: string): string {
+  const date = new Date(
+    /[Z+-]\d{2}:?\d{2}$|Z$/.test(isoNoOffset) ? isoNoOffset : `${isoNoOffset}Z`
+  );
+  if (Number.isNaN(date.getTime())) return isoNoOffset;
+
+  // Intl throws if dateStyle/timeStyle are combined with timeZoneName (a
+  // real RangeError caught live in the browser, not just a lint concern) —
+  // so the date/time parts are spelled out individually here instead.
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
+function nonIncludedTaxes(room: RatehawkGroupedRoom) {
+  return room.taxes.filter((tax) => !tax.includedBySupplier);
+}
+
+function includedTaxNames(room: RatehawkGroupedRoom): string {
+  return room.taxes
+    .filter((tax) => tax.includedBySupplier)
+    .map((tax) => tax.name.replace(/_/g, " "))
+    .join(", ");
+}
+
 function getFeaturedAwardsForHotel(hotel: HotelRecord) {
   return FEATURED_AWARDS.filter((award) => Boolean(hotel[award.code]));
 }
@@ -668,6 +706,15 @@ export default function HotelsView(props: {
     normalizeParam(searchParams.bedrooms) || "1"
   );
 
+  // Passport country ("residency" in ETG's API), not country of residence —
+  // sent on every /search/serp/*/ and /search/hp/ request, one value applied
+  // to all guests in the search. Starts empty (SSR-safe — see the
+  // locale-default effect below) and is a real, user-changeable form field,
+  // not a hardcoded constant. See CLAUDE.md §30/§32.
+  const [residencyValue, setResidencyValue] = useState(
+    normalizeParam(searchParams.residency) || ""
+  );
+
   const fromDate = fromValue ? new Date(fromValue) : null;
   const toDate = toValue ? new Date(toValue) : null;
 
@@ -866,6 +913,13 @@ export default function HotelsView(props: {
         handleCurrencyChange as EventListener
       );
     };
+  }, []);
+
+  // Client-only locale-derived default for residency — mirrors the currency
+  // effect above. Runs once on mount; only fills in when nothing was already
+  // set from the URL, so a submitted search's `residency` param always wins.
+  useEffect(() => {
+    setResidencyValue((prev) => prev || guessResidencyFromLocale());
   }, []);
 
   useEffect(() => {
@@ -1458,7 +1512,7 @@ export default function HotelsView(props: {
   // just be displayed). Pre-selects the headline combo (N copies of the
   // cheapest qualifying room) once loaded.
   useEffect(() => {
-    if (!selectedRatehawkHid || !fromValue || !toValue || !datesAreValid) return;
+    if (!selectedRatehawkHid || !fromValue || !toValue || !datesAreValid || !residencyValue) return;
 
     let cancelled = false;
     setRatehawkRooms({ status: "loading", rooms: [], headline: null });
@@ -1473,6 +1527,7 @@ export default function HotelsView(props: {
         checkInDate: fromValue,
         checkOutDate: toValue,
         currency: activeCurrency,
+        residency: residencyValue,
         adults: guestSelection.adults,
         kids: guestSelection.kids,
         childrenAges: getChildrenAgesFromSearchParams(),
@@ -1511,6 +1566,7 @@ export default function HotelsView(props: {
     toValue,
     datesAreValid,
     activeCurrency,
+    residencyValue,
     guestSelection.adults,
     guestSelection.kids,
     bedroomsValue,
@@ -1623,7 +1679,7 @@ export default function HotelsView(props: {
       return;
     }
 
-    if (!fromValue || !toValue || !datesAreValid) {
+    if (!fromValue || !toValue || !datesAreValid || !residencyValue) {
       setRatehawkResultAvailability({});
       setRatehawkResultAvailabilityStatus("idle");
       return;
@@ -1659,6 +1715,7 @@ export default function HotelsView(props: {
             checkInDate: fromValue,
             checkOutDate: toValue,
             currency: activeCurrency,
+            residency: residencyValue,
             adults: guestSelection.adults,
             kids: guestSelection.kids,
             childrenAges: getChildrenAgesFromSearchParams(),
@@ -1723,6 +1780,7 @@ export default function HotelsView(props: {
     toValue,
     datesAreValid,
     activeCurrency,
+    residencyValue,
     guestSelection.adults,
     guestSelection.kids,
     bedroomsValue,
@@ -1984,6 +2042,7 @@ async function handleCreateTripAndAddHotel() {
                   "adults",
                   "kids",
                   "bedrooms",
+                  "residency",
                   "filters_open",
                   "search_submitted",
                   "kid_age_1",
@@ -2137,6 +2196,29 @@ async function handleCreateTripAndAddHotel() {
                         options={[1, 2, 3, 4].map((n) => ({
                           value: String(n),
                           label: String(n),
+                        }))}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Own row — a 5th column here made "Bedrooms"/"Passport
+                      country" labels overlap in this panel's narrow width
+                      (confirmed in the browser during testing). */}
+                  <div className="md:col-span-12 grid gap-[14px] md:grid-cols-4">
+                    <div className="relative min-w-0" data-oltra-control="true">
+                      <div className="oltra-label">Passport country</div>
+                      <OltraSelect
+                        name="residency"
+                        value={residencyValue}
+                        placeholder="Country"
+                        align="left"
+                        onValueChange={(value) => {
+                          setResidencyValue(value);
+                          setAvailabilitySearchDirty(true);
+                        }}
+                        options={RESIDENCY_COUNTRIES.map((c) => ({
+                          value: c.code,
+                          label: c.label,
                         }))}
                       />
                     </div>
@@ -2747,8 +2829,13 @@ async function handleCreateTripAndAddHotel() {
                                 </div>
 
                                 <div className="flex shrink-0 flex-col items-end gap-1.5">
-                                  <div className="text-sm font-light text-white">
-                                    {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
+                                  <div className="text-right">
+                                    <div className="text-sm font-light text-white">
+                                      {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
+                                    </div>
+                                    {nonIncludedTaxes(room).length > 0 ? (
+                                      <div className="text-[10px] text-white/50">+ taxes at hotel</div>
+                                    ) : null}
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <button
@@ -2856,18 +2943,55 @@ async function handleCreateTripAndAddHotel() {
                                               : room.mealValue}
                                         </div>
                                       </div>
-                                      <div>
+                                      <div className="col-span-2">
                                         <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
                                           Cancellation
                                         </div>
                                         <div className="mt-0.5">
                                           {room.freeCancellationBefore
-                                            ? `Free cancellation before ${new Date(
-                                                room.freeCancellationBefore
-                                              ).toLocaleDateString()}`
-                                            : "Non-refundable"}
+                                            ? `Free cancellation until ${formatRatehawkUtcDateTime(room.freeCancellationBefore)}`
+                                            : "No free cancellation"}
                                         </div>
+                                        {room.cancellationPolicies.map((policy, i) => {
+                                          const charge =
+                                            policy.amountShow === 0
+                                              ? "no charge"
+                                              : policy.amountShow != null
+                                                ? `${room.currency} ${Math.round(policy.amountShow).toLocaleString()} charge`
+                                                : "charge amount unavailable";
+                                          const window =
+                                            policy.startAt && policy.endAt
+                                              ? `${formatRatehawkUtcDateTime(policy.startAt)} – ${formatRatehawkUtcDateTime(policy.endAt)}`
+                                              : policy.endAt
+                                                ? `Until ${formatRatehawkUtcDateTime(policy.endAt)}`
+                                                : policy.startAt
+                                                  ? `From ${formatRatehawkUtcDateTime(policy.startAt)}`
+                                                  : "Full stay";
+                                          return (
+                                            <div key={i} className="mt-0.5 text-[12px] text-white/55">
+                                              {window}: {charge}
+                                            </div>
+                                          );
+                                        })}
                                       </div>
+                                      {nonIncludedTaxes(room).length > 0 || includedTaxNames(room) ? (
+                                        <div className="col-span-2">
+                                          <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                            Taxes &amp; fees
+                                          </div>
+                                          {includedTaxNames(room) ? (
+                                            <div className="mt-0.5">
+                                              Included in price: {includedTaxNames(room)}
+                                            </div>
+                                          ) : null}
+                                          {nonIncludedTaxes(room).map((tax, i) => (
+                                            <div key={i} className="mt-0.5">
+                                              + {tax.currency} {tax.amount.toLocaleString()}{" "}
+                                              {tax.name.replace(/_/g, " ")} — pay at hotel
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : null}
                                       {room.amenities.length ? (
                                         <div className="col-span-2">
                                           <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">

@@ -5,12 +5,14 @@ import {
   fetchRatehawkSerpBatch,
   groupRoomOptions,
 } from "@/lib/ratehawk/availability";
+import { isValidResidencyCode } from "@/lib/countries";
 
 type BatchAvailabilityPayload = {
   hids?: unknown;
   checkInDate?: unknown;
   checkOutDate?: unknown;
   currency?: unknown;
+  residency?: unknown;
   adults?: unknown;
   kids?: unknown;
   childrenAges?: unknown;
@@ -42,10 +44,18 @@ export async function POST(request: Request) {
     const checkInDate = asString(body.checkInDate);
     const checkOutDate = asString(body.checkOutDate);
     const currency = asString(body.currency) || "EUR";
+    const residency = asString(body.residency).toLowerCase();
 
     if (!hids.length) {
       return NextResponse.json(
         { ok: false, error: "Missing Ratehawk hids." },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidResidencyCode(residency)) {
+      return NextResponse.json(
+        { ok: false, error: "Missing or invalid residency (passport country)." },
         { status: 400 }
       );
     }
@@ -84,6 +94,7 @@ export async function POST(request: Request) {
       checkout: checkOutDate,
       guests,
       currency,
+      residency,
     });
 
     const results = hotels.map((hotel) => {

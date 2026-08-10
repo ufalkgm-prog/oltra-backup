@@ -6,12 +6,14 @@ import {
   fetchRatehawkRoomImages,
   groupRoomOptions,
 } from "@/lib/ratehawk/availability";
+import { isValidResidencyCode } from "@/lib/countries";
 
 type AvailabilityPayload = {
   hid?: unknown;
   checkInDate?: unknown;
   checkOutDate?: unknown;
   currency?: unknown;
+  residency?: unknown;
   adults?: unknown;
   kids?: unknown;
   childrenAges?: unknown;
@@ -40,10 +42,18 @@ export async function POST(request: Request) {
     const checkInDate = asString(body.checkInDate);
     const checkOutDate = asString(body.checkOutDate);
     const currency = asString(body.currency) || "EUR";
+    const residency = asString(body.residency).toLowerCase();
 
     if (!Number.isFinite(hid) || hid <= 0) {
       return NextResponse.json(
         { ok: false, error: "Missing or invalid Ratehawk hid." },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidResidencyCode(residency)) {
+      return NextResponse.json(
+        { ok: false, error: "Missing or invalid residency (passport country)." },
         { status: 400 }
       );
     }
@@ -77,7 +87,14 @@ export async function POST(request: Request) {
     const guests = buildGuestsArray(adults, kids, childrenAges, rooms);
 
     const [rates, roomGroups] = await Promise.all([
-      fetchRatehawkHotelpage({ hid, checkin: checkInDate, checkout: checkOutDate, guests, currency }),
+      fetchRatehawkHotelpage({
+        hid,
+        checkin: checkInDate,
+        checkout: checkOutDate,
+        guests,
+        currency,
+        residency,
+      }),
       fetchRatehawkRoomImages(hid),
     ]);
 

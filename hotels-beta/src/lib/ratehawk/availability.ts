@@ -1,9 +1,11 @@
 import "server-only";
 import type {
+  RatehawkCancellationPolicy,
   RatehawkGroupedRoom,
   RatehawkGuestGroup,
   RatehawkHeadline,
   RatehawkRoomImage,
+  RatehawkTax,
 } from "./types";
 
 const RATEHAWK_KEY = process.env.RATEHAWK_KEY?.trim();
@@ -11,11 +13,6 @@ const RATEHAWK_KEY_ID = process.env.RATEHAWK_KEY_ID?.trim();
 const RATEHAWK_API_URL = (
   process.env.RATEHAWK_API_URL?.trim() || "https://api.ratehawk.com"
 ).replace(/\/+$/, "");
-
-// This app collects no guest-citizenship field; ETG's residency parameter
-// affects pricing/availability for some hotels, so this is a documented
-// simplification, not a real per-user value. See CLAUDE.md §30.
-const RATEHAWK_DEFAULT_RESIDENCY = "gb";
 
 function assertRatehawkConfig() {
   if (!RATEHAWK_KEY) throw new Error("Missing env RATEHAWK_KEY");
@@ -79,19 +76,56 @@ async function ratehawkPost<T>(path: string, body: unknown): Promise<T> {
   return text ? (JSON.parse(text) as T) : ({} as T);
 }
 
+// Room-characteristics fingerprint present on both /search/hp/ rates and
+// /hotel/info/ room_groups[] — ETG's documented, non-deprecated linkage
+// between a live rate and its static room data (room_group_id is deprecated,
+// see CLAUDE.md §28/§32). Confirmed identical field-by-field on live data via
+// scripts/ratehawk/diagnose-rg-ext.mjs (both the ETG test hotel and a real,
+// varied hotel, 10/10 rooms) — the two endpoints just serialize the object in
+// different key orders, so never compare these via JSON.stringify equality.
+type RgExt = {
+  class?: number;
+  quality?: number;
+  sex?: number;
+  bathroom?: number;
+  bedding?: number;
+  family?: number;
+  capacity?: number;
+  club?: number;
+  bedrooms?: number;
+  balcony?: number;
+  view?: number;
+  floor?: number;
+};
+
+const RG_EXT_KEYS: (keyof RgExt)[] = [
+  "class",
+  "quality",
+  "sex",
+  "bathroom",
+  "bedding",
+  "family",
+  "capacity",
+  "club",
+  "bedrooms",
+  "balcony",
+  "view",
+  "floor",
+];
+
+function rgExtEquals(a: RgExt, b: RgExt): boolean {
+  return RG_EXT_KEYS.every((key) => (a[key] ?? null) === (b[key] ?? null));
+}
+
 type RawRate = {
   book_hash: string;
   match_hash: string;
   daily_prices?: string[];
   meal_data?: { value?: string; has_breakfast?: boolean };
   payment_options?: {
-    payment_types?: { show_amount?: string; show_currency_code?: string }[];
+    payment_types?: RawPaymentType[];
   };
-  rg_ext?: {
-    capacity?: number;
-    bedrooms?: number;
-    balcony?: number;
-  };
+  rg_ext?: RgExt;
   room_name: string;
   amenities_data?: string[];
   room_data_trans?: {
@@ -99,7 +133,34 @@ type RawRate = {
     misc_room_type?: string | null;
     beds?: { bed: string; count: number }[];
   };
-  cancellation_penalties?: { free_cancellation_before?: string | null };
+};
+
+// tax_data and cancellation_penalties live on the payment type, not on the
+// rate itself — confirmed live via scripts/ratehawk/diagnose-tax-cancellation.mjs
+// (see CLAUDE.md §32). An earlier version of this file read
+// `rate.cancellation_penalties` directly, which doesn't exist at that path —
+// free_cancellation_before silently read as undefined on every rate.
+type RawPaymentType = {
+  amount?: string;
+  show_amount?: string;
+  currency_code?: string;
+  show_currency_code?: string;
+  tax_data?: {
+    taxes?: {
+      name?: string;
+      included_by_supplier?: boolean;
+      amount?: string;
+      currency_code?: string;
+    }[];
+  };
+  cancellation_penalties?: {
+    policies?: {
+      start_at?: string | null;
+      end_at?: string | null;
+      amount_show?: string;
+    }[];
+    free_cancellation_before?: string | null;
+  };
 };
 
 export async function fetchRatehawkHotelpage(input: {
@@ -108,13 +169,14 @@ export async function fetchRatehawkHotelpage(input: {
   checkout: string;
   guests: RatehawkGuestGroup[];
   currency: string;
+  residency: string;
 }): Promise<RawRate[]> {
   const json = await ratehawkPost<{
     data?: { hotels?: { rates?: RawRate[] }[] };
   }>("/api/b2b/v3/search/hp/", {
     checkin: input.checkin,
     checkout: input.checkout,
-    residency: RATEHAWK_DEFAULT_RESIDENCY,
+    residency: input.residency,
     language: "en",
     guests: input.guests,
     hid: input.hid,
@@ -126,6 +188,7 @@ export async function fetchRatehawkHotelpage(input: {
 
 type RawRoomGroup = {
   name: string;
+  rg_ext?: RgExt;
   images_ext?: { url: string; category_slug?: string | null }[];
 };
 
@@ -145,13 +208,14 @@ export async function fetchRatehawkSerpBatch(input: {
   checkout: string;
   guests: RatehawkGuestGroup[];
   currency: string;
+  residency: string;
 }): Promise<RawSerpHotel[]> {
   const json = await ratehawkPost<{ data?: { hotels?: RawSerpHotel[] } }>(
     "/api/b2b/v3/search/serp/hotels/",
     {
       checkin: input.checkin,
       checkout: input.checkout,
-      residency: RATEHAWK_DEFAULT_RESIDENCY,
+      residency: input.residency,
       language: "en",
       guests: input.guests,
       hids: input.hids,
@@ -162,15 +226,19 @@ export async function fetchRatehawkSerpBatch(input: {
   return json.data?.hotels ?? [];
 }
 
-// ETG's docs suggest matching a rate to its static-content room group via
-// exact rg_ext equality — tested against live data and it does not work
-// (rg_ext differs slightly between the search and content endpoints).
-// Containment matching on room_name is what actually finds the right room.
-// See CLAUDE.md §30.
-export function matchRoomImages(
-  roomName: string,
-  roomGroups: RawRoomGroup[]
-): RatehawkRoomImage[] {
+// Matches a /search/hp/ rate to its static /hotel/info/ room_groups[] entry
+// by rg_ext, per ETG's documented linkage (rg_ext, not room_group_id — the
+// latter is deprecated, see CLAUDE.md §28/§32). Earlier code here matched on
+// room_name containment instead, believing rg_ext comparison didn't work —
+// that was a comparison-method bug (JSON.stringify equality on two
+// differently-ordered objects, plus a type that never even captured
+// group.rg_ext), not a real data mismatch. See CLAUDE.md §32 and
+// scripts/ratehawk/diagnose-rg-ext.mjs.
+//
+// room_name containment is kept only as a fallback for when rg_ext is
+// missing from the rate or from every room group — logged when it fires so
+// we can tell if that ever actually happens.
+function matchRoomGroupByName(roomName: string, roomGroups: RawRoomGroup[]): RawRoomGroup | null {
   const normalizedRoomName = roomName.toLowerCase();
   let best: RawRoomGroup | null = null;
 
@@ -181,15 +249,73 @@ export function matchRoomImages(
     }
   }
 
+  return best;
+}
+
+export function matchRoomImages(rate: RawRate, roomGroups: RawRoomGroup[]): RatehawkRoomImage[] {
+  const hasRgExt = Boolean(rate.rg_ext) && roomGroups.some((group) => Boolean(group.rg_ext));
+
+  let best: RawRoomGroup | null = null;
+  if (hasRgExt) {
+    best = roomGroups.find((group) => group.rg_ext && rgExtEquals(rate.rg_ext!, group.rg_ext)) ?? null;
+  } else {
+    console.warn(
+      `Ratehawk: rg_ext missing on rate "${rate.room_name}" or all room groups — falling back to room_name matching`
+    );
+    best = matchRoomGroupByName(rate.room_name, roomGroups);
+  }
+
   if (!best?.images_ext) return [];
   return best.images_ext.map((img) => ({ url: img.url, category: img.category_slug ?? null }));
 }
 
+// The same payment type must back price, taxes, and cancellation terms for a
+// given rate — they're all fields on one object, not independent per-rate
+// facts, so every extractor below reads from this single source per rate.
+function primaryPaymentType(rate: RawRate): RawPaymentType | undefined {
+  return rate.payment_options?.payment_types?.[0];
+}
+
 function ratePrice(rate: RawRate): { amount: number; currency: string } | null {
-  const paymentType = rate.payment_options?.payment_types?.[0];
+  const paymentType = primaryPaymentType(rate);
   const amount = Number(paymentType?.show_amount);
   if (!paymentType?.show_currency_code || !Number.isFinite(amount)) return null;
   return { amount, currency: paymentType.show_currency_code };
+}
+
+// Non-included taxes must never be folded into the displayed price and must
+// be shown separately; included ones are already inside show_amount and
+// must not be re-added. This returns all of them (both kinds) — callers
+// decide how to present includedBySupplier vs not. See CLAUDE.md §32.
+function rateTaxes(rate: RawRate): RatehawkTax[] {
+  const taxes = primaryPaymentType(rate)?.tax_data?.taxes ?? [];
+
+  return taxes
+    .map((tax): RatehawkTax | null => {
+      const amount = Number(tax.amount);
+      if (!tax.currency_code || !Number.isFinite(amount)) return null;
+      return {
+        name: tax.name ?? "tax",
+        includedBySupplier: Boolean(tax.included_by_supplier),
+        amount,
+        currency: tax.currency_code,
+      };
+    })
+    .filter((tax): tax is RatehawkTax => tax !== null);
+}
+
+// Unmodified copy of ETG's cancellation schedule — never simplified to a
+// single before/after date, per CLAUDE.md §32 ("shown unmodified in either
+// direction"). startAt/endAt stay as ETG's raw UTC+0 strings; formatting
+// (timezone conversion + explicit label) happens at display time.
+function rateCancellationPolicies(rate: RawRate): RatehawkCancellationPolicy[] {
+  const policies = primaryPaymentType(rate)?.cancellation_penalties?.policies ?? [];
+
+  return policies.map((policy) => ({
+    startAt: policy.start_at ?? null,
+    endAt: policy.end_at ?? null,
+    amountShow: policy.amount_show != null ? Number(policy.amount_show) : null,
+  }));
 }
 
 // Dedupes rates to one entry per distinct room_name (cheapest rate wins),
@@ -233,10 +359,13 @@ export function groupRoomOptions(
         miscRoomType: rate.room_data_trans?.misc_room_type ?? null,
         mealValue: rate.meal_data?.value ?? "nomeal",
         hasBreakfast: Boolean(rate.meal_data?.has_breakfast),
-        freeCancellationBefore: rate.cancellation_penalties?.free_cancellation_before ?? null,
+        freeCancellationBefore:
+          primaryPaymentType(rate)?.cancellation_penalties?.free_cancellation_before ?? null,
+        cancellationPolicies: rateCancellationPolicies(rate),
+        taxes: rateTaxes(rate),
         amenities: rate.amenities_data ?? [],
         sizeSquareMeters: null,
-        images: matchRoomImages(rate.room_name, roomGroups),
+        images: matchRoomImages(rate, roomGroups),
       };
     })
     .sort((a, b) => a.pricePerStay - b.pricePerStay);
