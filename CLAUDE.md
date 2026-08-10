@@ -1395,8 +1395,9 @@ BLOCKED handoff question above before it's worth building.
   folded into the displayed price. **Resolved 2026-08-10.** `tax_data.taxes`
   turned out to live on the rate's primary payment type
   (`payment_options.payment_types[0].tax_data.taxes`), not on the rate
-  itself — confirmed live via `scripts/ratehawk/diagnose-tax-cancellation.mjs`
-  (kept as a reusable read-only check, takes an optional `DIAG_HID`). Each
+  itself — confirmed 2026-08-10 via a one-off read-only diagnostic script
+  (`scripts/ratehawk/diagnose-tax-cancellation.mjs`, deleted after use — no
+  longer needed once the fix landed). Each
   room row shows a "+ taxes at hotel" note when a non-included tax exists;
   the "More details" popup lists included taxes (informational — already in
   the shown price, not re-added) separately from not-included ones (shown in
@@ -1444,9 +1445,9 @@ BLOCKED handoff question above before it's worth building.
   Neither is read anywhere in the current code — implementation gap.
 - Room static data matched on `rg_ext` only — not `room_name`, not `room_group_id`.
   **Resolved 2026-08-10** (was flagged as a contradiction against §30's earlier
-  "0/5 correct matches, use room_name instead" finding). Re-tested live via
-  `scripts/ratehawk/diagnose-rg-ext.mjs` (kept as a reusable read-only check —
-  takes an optional `DIAG_HID` env var to point at any hotel) against both the
+  "0/5 correct matches, use room_name instead" finding). Re-tested live via a
+  one-off read-only diagnostic script (`scripts/ratehawk/diagnose-rg-ext.mjs`,
+  deleted after use) against both the
   ETG test hotel and a real, varied hotel (Four Seasons Dubai at Jumeirah
   Beach): `rg_ext` matched field-by-field on 10/10 rooms tested, including
   varied real values (`view: 5` vs `37`, `quality: 6` vs `17`). The original
@@ -1531,8 +1532,9 @@ above — do a cleanup pass on these before certification, not now.
   `ratehawk_image_*` because room-group count and image count both vary per
   hotel, unlike the fixed 50-slot hotel-image list), `ratehawk_metapolicy_struct`
   (`json`, raw structured policy object), `ratehawk_metapolicy_extra_info`
-  (`text` — long free-form notes, confirmed via
-  `scripts/ratehawk/diagnose-metapolicy.mjs`, not `string`), and
+  (`text` — long free-form notes, confirmed 2026-08-10 via a one-off
+  read-only diagnostic script, `scripts/ratehawk/diagnose-metapolicy.mjs`,
+  deleted after use — not `string`), and
   `ratehawk_static_synced_at` (`timestamp`, shared "last synced" marker for
   all of the above). Full Directus schema snapshots taken before and after
   via `GET /schema/snapshot`, saved to `scripts/ratehawk/output/` (gitignored,
