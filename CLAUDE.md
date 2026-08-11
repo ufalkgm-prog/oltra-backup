@@ -1228,8 +1228,8 @@ Two ETG endpoints, mirroring how Agoda had a batch check (list-row price) and a 
 * Both take `guests: [{adults, children}]` — **one array entry per room**, built by `buildGuestsArray()` in `src/lib/ratehawk/availability.ts`, which evenly splits the search form's `adults`/`kids`/bedroom count across that many room slots.
 * Auth is HTTP Basic (`key_id:key`), unlike Agoda's custom header.
 * `residency` (passport country) is a real, user-changeable search-form field
-  as of 2026-08-10 (§32) — a "Passport country" `OltraSelect` next to Bedrooms
-  on the Hotels results-mode search form, backed by `RESIDENCY_COUNTRIES` in
+  as of 2026-08-10 (§32) — an `OltraSelect` on the Hotels results-mode search
+  form, backed by `RESIDENCY_COUNTRIES` in
   `src/lib/countries.ts` (full ISO 3166-1 alpha-2 list). Defaults to a
   best-effort guess from the browser locale (`guessResidencyFromLocale()`,
   client-only to avoid an SSR/hydration mismatch — see the effect in
@@ -1241,6 +1241,11 @@ Two ETG endpoints, mirroring how Agoda had a batch check (list-row price) and a 
   and `search/serp/hotels/`. Previously hardcoded to `"gb"` — that was flagged
   as failing ETG certification ("hardcoding a default counts as not
   implementing it") and has been replaced, not just documented as a gap.
+  **UI de-emphasized 2026-08-11 (§33)** — no longer its own full-width row
+  labeled "Passport country" next to Bedrooms (user feedback: reads like a
+  booking prerequisite, unlike any mainstream OTA). Now a small "Pricing for"
+  inline control. The underlying field/data behavior above is unchanged —
+  still auto-detected, still sent on every request, still overridable.
 * Added `ratehawk_hid?: number | null` to `HotelRecord` (`src/lib/directus.ts`) and `hotels/page.tsx`'s field list — this hid already existed in Directus per §26 but, like `ratehawk_image_1` before §29, had never been wired into the TS layer.
 
 ### Headline price formula
@@ -1554,6 +1559,127 @@ above — do a cleanup pass on these before certification, not now.
 ### Contacts
 Valeriy Korobov (integration) — apisupport@ratehawk.com
 Seseg Shuianova (commercial) — s.shuianova@emergingtravel.com
+
+---
+
+## 33. LANDING/HOTELS/FLIGHTS UI FIX SESSION (2026-08-11)
+
+Two commits, both pushed to `main`. Listed here mainly as a rollback map —
+each item names the exact file(s)/behavior touched so a future session can
+revert a single fix in isolation if it turns out to cause a regression,
+without having to re-derive intent from the diff alone.
+
+### Commit `c507f57` — landing page + cross-page date/availability fixes
+
+Files: `src/app/page.tsx`, `src/app/LandingSummary.tsx`,
+`src/app/LandingSearchPanel.tsx`, `src/app/hotels/ui/HotelsView.tsx`,
+`src/app/flights/ui/FlightsView.tsx`, `src/components/hotels/HotelSmallCard.tsx`.
+
+* **Real bug fix, high confidence**: `page.tsx`'s landing-summary hotel fetch
+  was missing `limit: -1`, so it silently capped at Directus's default page
+  size (100) before the JS-side setting/style/activity filter ran. Once no
+  location param narrowed the query, any matching hotel outside that first
+  page was invisible to the filter — root cause of "0 hotels identified"
+  after clearing destination and picking a taxonomy-only filter (e.g.
+  Setting=Beach). Fix is a one-line `limit: -1` add. Low rollback risk;
+  if reverted, the 0-hotels bug returns.
+* Landing hotel-summary header changed from a static "Hotels" label to a
+  dynamic string built from the actual selected params (`city`/`country`/
+  `region`/`settings`/`activities`), e.g. "24 hotels in London", "4 hotels
+  with beach setting". New `buildHotelsHeaderLabel()`/`joinWithAnd()` in
+  `page.tsx`; the previously-used `pickHotelGeographyLabel()` and the
+  `geography` field on `HotelSummary` were removed as dead code once nothing
+  read them anymore.
+* Landing `CARD_LIMIT` raised 20 → 40 in both `page.tsx` and
+  `LandingSummary.tsx` (must stay in sync between the two — there's no
+  shared constant, they're independently declared).
+* From-date pickers now call `openDatePicker(toRef)` (wrapped in
+  `requestAnimationFrame`) on change, on landing, hotels, and flights
+  (Depart→Return only, not the multi-city single-date fields). Flights
+  needed `DateField` converted to `forwardRef`/`useImperativeHandle`
+  (exports `DateFieldHandle`) since it's a shared component instantiated
+  3× in `FlightsView.tsx`. **Not visually confirmed** — this environment's
+  browser automation can't screenshot native `<input type=date>` popups on
+  Windows, so this was verified by code-path/console-error inspection only,
+  not a real click-through. Worth a manual sanity check next time someone's
+  in the actual UI.
+* Hotels page: the Ratehawk batch-availability `useEffect` had an early
+  `if (availabilitySearchDirty) { reset to idle; return; }` guard that
+  blocked auto-refetch until the user clicked "CHECK AVAILABILITY" —
+  removed that guard (dependency array already covered dates/guests/
+  bedrooms/currency/residency, so the effect just needed to be allowed to
+  run) and added a 450ms debounce so rapid stepper clicks don't fire one
+  request per click. This was the single fix behind two user-reported
+  symptoms in two different sessions ("select dates" stuck after landing
+  handoff, and "changing guests didn't update availability") — see §34
+  below, task 8, for the second confirmation pass.
+* Saved Trips date labels (`stayLabel`/`periodLabel` in
+  `handleAddHotelToTrip`/`handleCreateTripAndAddHotel`, `HotelsView.tsx`;
+  the flight `timing` string in `FlightsView.tsx`) were building raw ISO
+  `${fromValue} – ${toValue}` strings — switched to the existing
+  `formatDisplayDate()` helper each file already had for its own date
+  pickers, so trips/flights display "10 Sept 2026" instead of "2026-09-10".
+* `HotelSmallCard.tsx`'s `no-id` availability status ("No Agoda ID") now
+  renders `null` instead of the label — landing-page-only component, not
+  used on the Hotels page (that page has no Agoda references left post-§30).
+
+### Commit `799e614` — Hotels page filter/layout/image fixes
+
+Files: `src/app/hotels/ui/HotelsView.tsx` only.
+
+* **Passport country UI**: moved off its own full-width row (peer to
+  From/To/Guests/Bedrooms) into a small "Pricing for [country]" inline
+  control under the main fields. Purely a JSX/className change — same
+  `OltraSelect`, same `name="residency"`, same auto-detect-from-locale
+  default. See §32's residency entry for the still-unchanged data behavior.
+* **Results-pane squeeze**: when the Filters panel (Activities/Settings/
+  Accolades/Price) expanded, the results-card list — previously
+  `flex-1 min-h-0` — got compressed to a sliver because the outer left
+  `<section>` had a bounded height with no overflow of its own. Changed the
+  results list from `flex-1 min-h-0` to a fixed `max-h-[50vh]` (stays a
+  stable, comfortable size regardless of filter state) and gave the left
+  `<section>` `overflow-y-auto` (removed a `[contain:size]` utility that
+  was there previously, no comment on original intent) so the whole left
+  column scrolls as a bounded unit — same pattern `.oltra-hotels-right-pane`
+  already used for the right pane. Net effect: nested scrollbars (outer
+  left-pane scroll + inner results-list scroll) when both are needed —
+  intentional, not a bug, but worth knowing if it looks odd on a future pass.
+* **Ritz Paris thumbnails intermittently blank**: the hotel-detail thumbnail
+  grid (`selectedHotelThumbGallery.map(...)`, up to 50 images) had
+  `loading="lazy"` on each `<img>`. Images landing right at the fold
+  boundary during the async full-gallery fetch (which replaces a 1-image
+  fallback with up to 50 once `/api/hotels/[id]/ratehawk-images` resolves)
+  intermittently never triggered native lazy-load. Confirmed the CDN URLs
+  themselves were fine (loaded directly via `fetch` and via direct
+  navigation) — this was a browser lazy-load timing issue, not bad data.
+  Removed `loading="lazy"` from that one grid only (thumbnails are small
+  240×240 JPEGs; the room-detail-popup image grid elsewhere in the same
+  file still lazy-loads and was left alone, different component/context).
+  If a future session wants lazy-loading back for perf reasons, consider
+  re-adding it only for images beyond the first visible row, or switching
+  to an `IntersectionObserver`-driven approach instead of the native
+  attribute.
+* **Taxonomy filter checkboxes (Activities/Settings/Accolades) felt broken
+  on a second click**: each option was a `<Link>` doing a full server
+  round-trip (Directus re-fetch) with zero optimistic UI — a quick second
+  click before the first navigation resolved looked like nothing happened.
+  `RelDropdown` now keeps a local `localSelectedIds` state (initialized
+  from and reconciled via `useEffect` against `props.selectedIds`), updates
+  it synchronously on click for instant checkbox/pill feedback, and
+  triggers the actual navigation via `router.push` wrapped in
+  `startTransition` instead of `<Link>`. If this ever drifts from the URL
+  (e.g. a failed navigation), the reconciling `useEffect` will pull it back
+  in line with `props.selectedIds` on the next render — no separate
+  rollback state needed, it self-heals. Rollback would mean reverting to
+  the plain `<Link>` version and accepting the latency-reads-as-broken UX.
+
+### What was not independently re-verified this round
+Task 8 ("select dates" stuck) could not be reproduced against current code
+in either session — both times it traced back to the same
+`availabilitySearchDirty`-blocking bug fixed in commit `c507f57` above. If
+it's still seen after this, it's most likely a stale deployment/browser
+cache rather than a new bug — check the Vercel deploy timestamp against the
+commit before spending time re-diagnosing from scratch.
 
 ---
 
