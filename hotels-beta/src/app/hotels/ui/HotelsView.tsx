@@ -244,7 +244,21 @@ function RelDropdown(props: {
   onToggle: () => void;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const selected = useMemo(() => new Set(props.selectedIds), [props.selectedIds]);
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+
+  // Optimistic local mirror of the selection: clicking a checkbox navigates
+  // (a full server round-trip re-fetching hotels), which can take a second
+  // or more - without this, a quick second click before that round-trip
+  // resolves looked like it "did nothing" since props.selectedIds hadn't
+  // caught up yet. Local state updates instantly; the effect below
+  // reconciles it once the URL/server state actually changes.
+  const [localSelectedIds, setLocalSelectedIds] = useState(props.selectedIds);
+  useEffect(() => {
+    setLocalSelectedIds(props.selectedIds);
+  }, [props.selectedIds]);
+
+  const selected = useMemo(() => new Set(localSelectedIds), [localSelectedIds]);
 
   useEffect(() => {
     function handlePointerOver(event: PointerEvent) {
@@ -314,25 +328,31 @@ function RelDropdown(props: {
                   : Array.from(new Set([...selected, opt.id]));
 
                 return (
-                  <Link
+                  <button
                     key={`${props.paramKey}-${opt.id}`}
-                    href={buildHrefWithParam(
-                      props.searchParams,
-                      props.paramKey,
-                      next,
-                      { filters_open: "1" }
-                    )}
+                    type="button"
+                    onClick={() => {
+                      setLocalSelectedIds(next);
+                      const href = buildHrefWithParam(
+                        props.searchParams,
+                        props.paramKey,
+                        next,
+                        { filters_open: "1" }
+                      );
+                      startTransition(() => {
+                        router.push(href, { scroll: false });
+                      });
+                    }}
                     className={[
-                      "oltra-dropdown-item flex items-center gap-2",
+                      "oltra-dropdown-item flex w-full items-center gap-2 text-left",
                       opt.active ? "bg-white/10 text-white" : "",
                     ].join(" ")}
-                    prefetch={false}
                   >
                     <span className="w-4 shrink-0 text-white/72">
                       {opt.active ? "✓" : ""}
                     </span>
                     <span>{opt.label}</span>
-                  </Link>
+                  </button>
                 );
               })}
             </div>
@@ -2005,7 +2025,7 @@ async function handleCreateTripAndAddHotel() {
         ].join(" ")}
       >
         {!shouldShowFeatured ? (
-          <section className="flex min-h-0 min-w-0 flex-col gap-4 [contain:size]">
+          <section className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
           <div className="relative z-30 oltra-glass oltra-panel !p-4 flex-none">
             <form
               action="/hotels"
@@ -2202,12 +2222,17 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   </div>
 
-                  {/* Own row — a 5th column here made "Bedrooms"/"Passport
-                      country" labels overlap in this panel's narrow width
-                      (confirmed in the browser during testing). */}
-                  <div className="md:col-span-12 grid gap-[14px] md:grid-cols-4">
-                    <div className="relative min-w-0" data-oltra-control="true">
-                      <div className="oltra-label">Passport country</div>
+                  {/* Kept intentionally low-key: this only feeds ETG/Ratehawk
+                      pricing (residency-based rate differences in Gulf/Russian/
+                      some Asian markets), not something a guest should have to
+                      treat as a search prerequisite. Auto-detected from browser
+                      locale by default (see guessResidencyFromLocale effect
+                      below) - this is just an override, not a required field. */}
+                  <div className="md:col-span-12 -mt-1 flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-[0.1em] text-white/40">
+                      Pricing for
+                    </span>
+                    <div className="w-[150px]" data-oltra-control="true">
                       <OltraSelect
                         name="residency"
                         value={residencyValue}
@@ -2355,13 +2380,13 @@ async function handleCreateTripAndAddHotel() {
           </div>
 
           {shouldShowResults ? (
-            <div className="oltra-glass oltra-panel flex flex-1 flex-col min-h-0">
+            <div className="oltra-glass oltra-panel flex flex-none flex-col">
               <div className="flex flex-none items-baseline justify-between">
                 <div className="oltra-label">Results</div>
                 <div className="text-xs text-white/50">{resultsCount} matching hotels found</div>
               </div>
 
-              <div className="oltra-scrollbar mt-3.5 flex-1 min-h-0 space-y-3 overflow-y-auto pr-2">
+              <div className="oltra-scrollbar mt-3.5 max-h-[50vh] space-y-3 overflow-y-auto pr-2">
                 {orderedVisibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
@@ -2719,7 +2744,6 @@ async function handleCreateTripAndAddHotel() {
                           <img
                             src={image.url}
                             alt=""
-                            loading="lazy"
                             className="aspect-[4/3] w-full object-cover"
                           />
                         </button>
