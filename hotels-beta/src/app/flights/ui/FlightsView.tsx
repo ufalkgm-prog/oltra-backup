@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { readHotelFlightSearch, saveHotelFlightSearch } from "@/lib/searchSession";
@@ -307,7 +307,7 @@ export default function FlightsView({ searchParams }: Props) {
       const outLastSeg = itinerary.outbound.segments[itinerary.outbound.segments.length - 1];
       const inLastSeg = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
       const route = `${itinerary.outbound.originCode} → ${outLastSeg?.destinationName || itinerary.outbound.destinationCode}`;
-      const timing = `${outSeg0?.departIso?.slice(0, 10) ?? ''} · ${itinerary.outbound.departTime} → ${itinerary.outbound.arriveTime}`;
+      const timing = `${formatDisplayDate(outSeg0?.departIso?.slice(0, 10) ?? '')} · ${itinerary.outbound.departTime} → ${itinerary.outbound.arriveTime}`;
       const result = await addFlightToTripBrowser({
         route,
         timing,
@@ -496,6 +496,7 @@ export default function FlightsView({ searchParams }: Props) {
   }, [selectedOutboundId, isOneWay, itineraryByOutboundId, selectedReturnItinerary]);
 
   const resultsScrollRef = useRef<HTMLDivElement | null>(null);
+  const returnDateFieldRef = useRef<DateFieldHandle | null>(null);
   const [hasScrollGutter, setHasScrollGutter] = useState(false);
 
   useEffect(() => {
@@ -825,10 +826,15 @@ export default function FlightsView({ searchParams }: Props) {
                     label="Depart"
                     value={search.departDate}
                     min={todayIso}
-                    onChange={v => { setSearch(c => ({ ...c, departDate: v })); markDirty(); }}
+                    onChange={v => {
+                      setSearch(c => ({ ...c, departDate: v }));
+                      markDirty();
+                      if (v) requestAnimationFrame(() => returnDateFieldRef.current?.open());
+                    }}
                   />
                   {isReturnTrip ? (
                     <DateField
+                      ref={returnDateFieldRef}
                       label="Return"
                       value={search.returnDate}
                       min={minReturnIso}
@@ -1166,8 +1172,14 @@ function formatDisplayDate(value: string): string {
   }).format(new Date(year, month - 1, day));
 }
 
-function DateField({ label, value, onChange, min }: { label: string; value: string; onChange: (v: string) => void; min?: string }) {
+export type DateFieldHandle = { open: () => void };
+
+const DateField = forwardRef<DateFieldHandle, { label: string; value: string; onChange: (v: string) => void; min?: string }>(
+  function DateField({ label, value, onChange, min }, forwardedRef) {
   const ref = useRef<HTMLInputElement | null>(null);
+  useImperativeHandle(forwardedRef, () => ({
+    open: () => ref.current?.showPicker?.(),
+  }));
   return (
     <div className="relative min-w-0" data-oltra-control="true">
       <label className="oltra-label">{label}</label>
@@ -1197,7 +1209,8 @@ function DateField({ label, value, onChange, min }: { label: string; value: stri
       </div>
     </div>
   );
-}
+  }
+);
 
 function SelectField({
   label, value, onChange, options, labels,

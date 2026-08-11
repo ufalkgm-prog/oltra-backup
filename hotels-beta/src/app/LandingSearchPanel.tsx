@@ -403,8 +403,10 @@ export default function LandingSearchPanel({
                 min={todayIso}
                 value={fromValue}
                 onChange={(e) => {
-                  setFromValue(e.target.value);
+                  const value = e.target.value;
+                  setFromValue(value);
                   scheduleAutoSubmit();
+                  if (value) requestAnimationFrame(() => openDatePicker(toRef));
                 }}
                 onKeyDown={(e) => e.preventDefault()}
                 onBeforeInput={(e) => e.preventDefault()}

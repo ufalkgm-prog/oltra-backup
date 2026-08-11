@@ -1667,12 +1667,6 @@ export default function HotelsView(props: {
   }
 
   useEffect(() => {
-    if (availabilitySearchDirty) {
-      setRatehawkResultAvailability({});
-      setRatehawkResultAvailabilityStatus("idle");
-      return;
-    }
-
     if (!shouldShowResults || !visibleHotels.length) {
       setRatehawkResultAvailability({});
       setRatehawkResultAvailabilityStatus("idle");
@@ -1700,6 +1694,13 @@ export default function HotelsView(props: {
 
     let cancelled = false;
     const rooms = Math.max(1, Number(bedroomsValue) || 1);
+
+    // Debounced: rapid guest/bedroom stepper clicks or date changes shouldn't
+    // each fire their own request - only the settled value should.
+    setRatehawkResultAvailabilityStatus("loading");
+    const debounceTimer = window.setTimeout(() => {
+      void loadResultAvailability();
+    }, 450);
 
     async function loadResultAvailability() {
       try {
@@ -1767,13 +1768,11 @@ export default function HotelsView(props: {
       }
     }
 
-    void loadResultAvailability();
-
     return () => {
       cancelled = true;
+      window.clearTimeout(debounceTimer);
     };
   }, [
-    availabilitySearchDirty,
     shouldShowResults,
     visibleHotels,
     fromValue,
@@ -1847,7 +1846,7 @@ export default function HotelsView(props: {
         hotelDirectusId: String(selectedHotel.id),
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
-        stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+        stayLabel: fromValue && toValue ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}` : null,
         thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
         checkIn: fromValue || null,
         checkOut: toValue || null,
@@ -1906,7 +1905,7 @@ async function handleCreateTripAndAddHotel() {
       destination:
         [selectedHotel.city, selectedHotel.country].filter(Boolean).join(" · ") ||
         null,
-      periodLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+      periodLabel: fromValue && toValue ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}` : null,
     });
 
     setTripChoices((prev) => [...prev, createdTrip]);
@@ -1917,7 +1916,7 @@ async function handleCreateTripAndAddHotel() {
       hotelDirectusId: String(selectedHotel.id),
       name: selectedHotel.hotel_name ?? "Untitled hotel",
       location: locationLine(selectedHotel),
-      stayLabel: fromValue && toValue ? `${fromValue} – ${toValue}` : null,
+      stayLabel: fromValue && toValue ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}` : null,
       thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
       checkIn: fromValue || null,
       checkOut: toValue || null,
@@ -2122,8 +2121,10 @@ async function handleCreateTripAndAddHotel() {
                           value={fromValue}
                           tabIndex={-1}
                           onChange={(e) => {
-                            setFromValue(e.target.value);
+                            const value = e.target.value;
+                            setFromValue(value);
                             setAvailabilitySearchDirty(true);
+                            if (value) requestAnimationFrame(() => openDatePicker(toRef));
                           }}
                           onKeyDown={(e) => e.preventDefault()}
                           onBeforeInput={(e) => e.preventDefault()}

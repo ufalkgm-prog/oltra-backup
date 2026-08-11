@@ -76,11 +76,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
       );
     }
     if (availability.status === "no-id") {
-      return (
-        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-white/45">
-          No Agoda ID
-        </div>
-      );
+      return null;
     }
     if (availability.status === "error") {
       return (

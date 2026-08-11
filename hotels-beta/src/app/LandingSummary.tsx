@@ -10,13 +10,13 @@ import styles from "./page.module.css";
 
 type HotelSummary = {
   count: number;
-  geography: string;
   names: string[];
   hotels: HotelRecord[];
 };
 
 type Props = {
   hotelSummary: HotelSummary | null;
+  hotelHeaderLabel?: string;
   includeHotels: boolean;
   includeFlights: boolean;
   origin: string;
@@ -31,7 +31,7 @@ type Props = {
   narrowSuggestion: "city" | "purpose" | null;
 };
 
-const CARD_LIMIT = 20;
+const CARD_LIMIT = 40;
 const HARD_LIMIT = 50;
 
 function findAirportForCity(city: string): string {
@@ -90,6 +90,7 @@ function FlightDetailCard({ flight }: { flight: FlightLeg }) {
 
 export default function LandingSummary({
   hotelSummary,
+  hotelHeaderLabel,
   includeHotels,
   includeFlights,
   origin,
@@ -321,19 +322,18 @@ export default function LandingSummary({
   if (!showHotels && !showFlights) return null;
 
   const hotelCount = hotelSummary?.count ?? 0;
-  const hotelGeography = hotelSummary?.geography ?? "selected destination";
 
   let hotelLine: string | null = null;
   let showCards = false;
 
   if (hotelCount === 0) {
-    hotelLine = `0 hotels identified in ${hotelGeography}`;
+    hotelLine = null;
   } else if (hotelCount <= CARD_LIMIT) {
     hotelLine = null;
     showCards = true;
   } else if (hotelCount <= HARD_LIMIT) {
     hotelLine =
-      "More than 20 hotels match your criteria. Please narrow criteria to see here or go to hotels page.";
+      `More than ${CARD_LIMIT} hotels match your criteria. Please narrow criteria to see here or go to hotels page.`;
   } else {
     const suggestion = narrowSuggestion ?? "additional criteria";
     hotelLine = `More than ${HARD_LIMIT} hotels match your criteria. Please narrow by adding ${suggestion}.`;
@@ -344,7 +344,7 @@ export default function LandingSummary({
       {showHotels ? (
         <div className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}>
           <div className={styles.summaryHeaderRow}>
-            <div className="oltra-label">Hotels</div>
+            <div className="oltra-label">{hotelHeaderLabel || "Hotels"}</div>
             <Link
               href={hotelsHref}
               className={`oltra-button-primary ${styles.summaryTopButton}`}

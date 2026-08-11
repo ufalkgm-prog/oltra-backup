@@ -10,6 +10,8 @@ import styles from "./page.module.css";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+const CARD_LIMIT = 40;
+
 function normalizeParam(v: string | string[] | undefined): string {
   if (!v) return "";
   return Array.isArray(v) ? v[0] ?? "" : v;
@@ -37,25 +39,51 @@ function cleanLabel(value: string | null | undefined): string {
   return (value ?? "").trim();
 }
 
-function pickHotelGeographyLabel(
-  q: string,
-  hotels: Array<{
-    city?: string | null;
-    country?: string | null;
-    region?: string | null;
-  }>
-): string {
-  if (!hotels.length) return q || "selected destination";
+function joinWithAnd(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
 
-  const cities = new Set(hotels.map((h) => cleanLabel(h.city)).filter(Boolean));
-  const countries = new Set(hotels.map((h) => cleanLabel(h.country)).filter(Boolean));
-  const regions = new Set(hotels.map((h) => cleanLabel(h.region)).filter(Boolean));
+function buildHotelsHeaderLabel(count: number, sp: SearchParams): string {
+  const city = cleanLabel(normalizeParam(sp.city));
+  const country = cleanLabel(normalizeParam(sp.country));
+  const region = cleanLabel(normalizeParam(sp.region));
+  const location = city || country || region;
 
-  if (cities.size === 1) return [...cities][0];
-  if (countries.size === 1) return [...countries][0];
-  if (regions.size === 1) return [...regions][0];
+  const settingValues = normalizeParam(sp.settings)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const activityValues = normalizeParam(sp.activities)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-  return q || "selected destination";
+  const descriptors: string[] = [];
+  if (settingValues.length) {
+    descriptors.push(
+      `${joinWithAnd(settingValues)} setting${settingValues.length > 1 ? "s" : ""}`
+    );
+  }
+  if (activityValues.length) {
+    descriptors.push(
+      `${joinWithAnd(activityValues)} ${activityValues.length > 1 ? "activities" : "activity"}`
+    );
+  }
+
+  let label = `${count} hotel${count === 1 ? "" : "s"}`;
+
+  if (location) label += ` in ${location}`;
+  if (descriptors.length) label += ` with ${descriptors.join(" and ")}`;
+
+  if (!location && !descriptors.length) {
+    const q = cleanLabel(normalizeParam(sp.q));
+    if (q) label += ` matching "${q}"`;
+  }
+
+  return label;
 }
 
 function pickDestinationCity(
@@ -118,10 +146,10 @@ export default async function HomePage({
 
   let hotelSummary: {
     count: number;
-    geography: string;
     names: string[];
     hotels: Awaited<ReturnType<typeof getHotels>>;
   } | null = null;
+  let hotelHeaderLabel = "Hotels";
   let destinationCity = cityParam || q;
 
   if (submitted && includeHotels) {
@@ -151,6 +179,7 @@ export default async function HomePage({
       ],
       filter,
       sort: ["-editor_rank", "-ext_points", "hotel_name"],
+      limit: -1,
     });
 
     const hotels = filterHotelsByTags(hotelsAll, {
@@ -159,15 +188,15 @@ export default async function HomePage({
       styles: normalizeParam(resolvedSearchParams.styles).split(",").map((s) => s.trim()).filter(Boolean),
     });
 
-    const geography = pickHotelGeographyLabel(q, hotels);
     const names = hotels.map((h: any) => h.hotel_name ?? "").filter(Boolean);
 
     hotelSummary = {
       count: hotels.length,
-      geography,
       names,
-      hotels: hotels.slice(0, 20),
+      hotels: hotels.slice(0, CARD_LIMIT),
     };
+
+    hotelHeaderLabel = buildHotelsHeaderLabel(hotels.length, resolvedSearchParams);
 
     destinationCity = pickDestinationCity(q, hotels, cityParam);
   }
@@ -202,6 +231,7 @@ export default async function HomePage({
           {submitted && hasDestination ? (
             <LandingSummary
               hotelSummary={hotelSummary}
+              hotelHeaderLabel={hotelHeaderLabel}
               includeHotels={includeHotels}
               includeFlights={includeFlights}
               origin={origin}
