@@ -3,6 +3,7 @@ import PageShell from "@/components/site/PageShell";
 import RestaurantsMapView from "./ui/RestaurantsMapView";
 import { getRestaurantCities, getRestaurantsByCity } from "@/lib/restaurants";
 import { expandCityAliases } from "@/lib/locationAliases";
+import { getHotels } from "@/lib/directus";
 import "./restaurants.css";
 
 export const metadata: Metadata = {
@@ -66,6 +67,17 @@ export default async function RestaurantsPage({
     (a.restaurant_name ?? "").localeCompare(b.restaurant_name ?? "")
   );
 
+  const hotelId = normalizeParam(params.hotel_id).trim();
+  const selectedHotel = hotelId
+    ? (
+        await getHotels({
+          fields: ["id", "hotel_name", "lat", "lng", "city", "country"],
+          filter: { id: { _eq: hotelId } },
+          limit: 1,
+        })
+      )[0] ?? null
+    : null;
+
   return (
     <PageShell current="Restaurants">
       <RestaurantsMapView
@@ -73,6 +85,16 @@ export default async function RestaurantsPage({
         cityOptions={cityOptions}
         restaurants={restaurants}
         mapRestaurants={restaurants}
+        selectedHotel={
+          selectedHotel && selectedHotel.lat != null && selectedHotel.lng != null
+            ? {
+                id: selectedHotel.id,
+                hotel_name: selectedHotel.hotel_name ?? "",
+                lat: Number(selectedHotel.lat),
+                lng: Number(selectedHotel.lng),
+              }
+            : null
+        }
       />
     </PageShell>
   );

@@ -1,6 +1,10 @@
 .restaurants-layout {
   display: grid;
-  grid-template-columns: 380px minmax(0, 1fr);
+  /* Mirrors the Hotels page's left/right pane ratio (§ hotels ui) - the map
+     was previously given nearly the whole remaining viewport width via a
+     fixed 380px sidebar, making it far more dominant than the equivalent
+     Hotels split. */
+  grid-template-columns: minmax(360px, 0.95fr) minmax(0, 1.45fr);
   gap: 20px;
   width: 100%;
   height: calc(100vh - 140px);
@@ -274,6 +278,43 @@
   border-color: transparent;
   color: rgba(20, 20, 20, 0.98);
   box-shadow: 0 0 0 6px rgba(20, 20, 20, 0.12);
+}
+
+/* The one selected-hotel pin, visually distinct from restaurant markers -
+   sage-green to match the app's active/primary accent, square-ish icon so
+   it doesn't read as "just another restaurant". */
+.hotel-marker {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hotel-marker__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--oltra-button-active-bg);
+  border: 1px solid var(--oltra-button-active-bg);
+  color: rgba(20, 20, 20, 0.92);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.hotel-marker__icon {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+
+.hotel-marker:hover .hotel-marker__inner {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 6px rgba(182, 204, 168, 0.28);
 }
 
 @media (max-width: 1100px) {

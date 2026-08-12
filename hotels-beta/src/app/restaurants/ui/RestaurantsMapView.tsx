@@ -24,11 +24,19 @@ import {
   fetchTripChoicesBrowser,
 } from "@/lib/members/db";
 
+type HotelPin = {
+  id: string | number;
+  hotel_name: string;
+  lat: number;
+  lng: number;
+};
+
 type Props = {
   city: string;
   cityOptions: string[];
   restaurants: RestaurantRecord[];
   mapRestaurants: RestaurantRecord[];
+  selectedHotel?: HotelPin | null;
 };
 
 const RESTAURANT_TYPES = [
@@ -54,6 +62,7 @@ export default function RestaurantsMapView({
   cityOptions,
   restaurants,
   mapRestaurants,
+  selectedHotel = null,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -628,6 +637,63 @@ export default function RestaurantsMapView({
       hasBounds = true;
     }
 
+    if (selectedHotel) {
+      const hotelEl = document.createElement("button");
+      hotelEl.type = "button";
+      hotelEl.className = "hotel-marker";
+      hotelEl.setAttribute("aria-label", `${selectedHotel.hotel_name} (hotel)`);
+
+      const hotelInner = document.createElement("span");
+      hotelInner.className = "hotel-marker__inner";
+      hotelInner.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="hotel-marker__icon">
+          <path d="M4 21V6.5A1.5 1.5 0 0 1 5.5 5h4A1.5 1.5 0 0 1 11 6.5V21M4 21h16M4 21H2.5M20 21V6.5A1.5 1.5 0 0 0 18.5 5h-4A1.5 1.5 0 0 0 13 6.5V21M20 21h1.5M7 9h1M7 13h1M15 9h1M15 13h1M11 21v-4a1 1 0 0 1 1-1v0a1 1 0 0 1 1 1v4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      hotelEl.appendChild(hotelInner);
+
+      const hotelPopup = new ml.Popup({
+        closeButton: false,
+        closeOnClick: true,
+        closeOnMove: false,
+        offset: 14,
+        className: "oltra-map-popup",
+      }).setHTML(`
+        <div class="oltra-map-popup__box">
+          <div class="oltra-map-popup__title">${selectedHotel.hotel_name}</div>
+          <div class="oltra-map-popup__meta">Your hotel - click to go back</div>
+        </div>
+      `);
+
+      hotelEl.addEventListener("mouseenter", () => {
+        try {
+          hotelPopup.setLngLat([selectedHotel.lng, selectedHotel.lat]).addTo(map);
+        } catch {}
+      });
+
+      hotelEl.addEventListener("mouseleave", () => {
+        if (hotelPopup.isOpen()) {
+          try {
+            hotelPopup.remove();
+          } catch {}
+        }
+      });
+
+      hotelEl.addEventListener("click", (event) => {
+        event.stopPropagation();
+        router.push(`/hotels?q=${encodeURIComponent(selectedHotel.hotel_name)}&submitted=1`);
+      });
+
+      const hotelMarker = new ml.Marker({ element: hotelEl })
+        .setLngLat([selectedHotel.lng, selectedHotel.lat])
+        .setPopup(hotelPopup)
+        .addTo(map);
+
+      markersRef.current.push(hotelMarker);
+      bounds.extend([selectedHotel.lng, selectedHotel.lat]);
+      hasBounds = true;
+    }
+
     if (hasBounds) {
       map.fitBounds(bounds, {
         padding: { top: 72, right: 72, bottom: 72, left: 72 },
@@ -643,7 +709,7 @@ export default function RestaurantsMapView({
     // filtered to empty — leave map where it is
 
     map.resize();
-  }, [city, restaurants, filteredRestaurants, mapReady]);
+  }, [city, restaurants, filteredRestaurants, mapReady, selectedHotel, router]);
 
   useEffect(() => {
     markersRef.current.forEach((marker) => {
@@ -845,12 +911,6 @@ export default function RestaurantsMapView({
               {buildAwardsLabel(selectedRestaurant) && (
                 <div className="restaurant-detail-card__meta">
                   {buildAwardsLabel(selectedRestaurant)}
-                </div>
-              )}
-
-              {buildLocationLabel(selectedRestaurant) && (
-                <div className="restaurant-detail-card__location">
-                  {buildLocationLabel(selectedRestaurant)}
                 </div>
               )}
 

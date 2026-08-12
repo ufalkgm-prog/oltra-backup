@@ -167,6 +167,9 @@ export type HotelRecord = {
   city?: string | null;
   local_area?: string | null;
 
+  lat?: number | string | null;
+  lng?: number | string | null;
+
   activities?: string[] | null;
   awards?: string[] | null;
   setting?: string[] | null;
