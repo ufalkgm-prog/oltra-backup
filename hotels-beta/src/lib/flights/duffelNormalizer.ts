@@ -46,6 +46,7 @@ export type FlightLeg = {
   stopSummary: string
   layovers: Layover[]
   segments: Segment[]
+  fareBrand: string
 }
 
 export type Itinerary = {
@@ -145,9 +146,15 @@ function normalizeSegment(seg: OfferSlice['segments'][number]): Segment {
 }
 
 function sliceFingerprint(slice: OfferSlice): string {
-  return slice.segments
+  const segmentsKey = slice.segments
     .map(s => `${s.marketing_carrier.iata_code}${s.marketing_carrier_flight_number}@${s.departing_at.slice(0, 16)}`)
     .join('|')
+  // Include fare brand: the same physical flight can be sold as distinct
+  // fare products (e.g. "Standard" vs "Flex") at very different prices -
+  // without this, they'd collapse into a single id and render as
+  // indistinguishable duplicate cards with silently different prices.
+  const fareBrand = (slice as { fare_brand_name?: string | null }).fare_brand_name ?? ''
+  return fareBrand ? `${segmentsKey}#${fareBrand}` : segmentsKey
 }
 
 function segmentDurationMinutes(seg: OfferSlice['segments'][number]): number {
@@ -203,6 +210,11 @@ function normalizeSlice(slice: OfferSlice): FlightLeg {
     stopSummary: buildStopSummary(layovers),
     layovers,
     segments,
+    // Two offers can share identical flight times/carrier (same physical
+    // flight) but be different fare products (e.g. "Standard" vs "Flex")
+    // priced very differently - surfaced on the card so those don't render
+    // as indistinguishable duplicates with silently different prices.
+    fareBrand: (slice as { fare_brand_name?: string | null }).fare_brand_name ?? '',
   }
 }
 

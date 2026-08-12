@@ -353,8 +353,7 @@
 }
 
 .columnLabelRight {
-  text-align: left;
-  padding-left: 10px;
+  text-align: center;
 }
 
 .pinnedGrid,
@@ -524,7 +523,7 @@
   text-align: left;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease;
-  height: 90px;
+  height: 68px;
   display: grid;
   align-content: center;
 }
@@ -785,6 +784,9 @@
   display: flex;
   align-items: baseline;
   gap: 5px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .flightDepart,
@@ -792,11 +794,20 @@
   font-size: 1.1rem;
   letter-spacing: -0.02em;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .flightArrow {
   font-size: 0.82rem;
   opacity: 0.45;
+  flex-shrink: 0;
+}
+
+.flightAirlineText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .flightDurStop {
@@ -806,7 +817,6 @@
   white-space: nowrap;
 }
 
-.flightMetaRow,
 .flightStopsRow {
   display: flex;
   align-items: center;
@@ -839,10 +849,10 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   width: 100%;
-  min-height: 90px;
-  height: 90px;
+  min-height: 68px;
+  height: 68px;
   padding: 7px 10px 8px;
   border: 1px solid var(--oltra-field-border);
   border-radius: var(--oltra-radius-md);
@@ -927,27 +937,34 @@
   border-color: rgba(255, 255, 255, 0.35);
 }
 
+.priceCardButtonRow {
+  display: flex;
+  gap: 6px;
+}
+
 .bookButtonActive,
 .bookButtonInactive {
-  width: 100%;
-  height: 26px;
+  flex: 1;
+  min-width: 0;
+  height: 24px;
   border-radius: var(--oltra-radius-md);
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   font-weight: 400;
-  letter-spacing: 0.18em;
-  padding: 0 12px;
+  letter-spacing: 0.1em;
+  padding: 0 6px;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .savePillButton {
-  width: 100%;
-  height: 22px;
+  flex: 1;
+  min-width: 0;
+  height: 24px;
   border-radius: var(--oltra-radius-sm, 6px);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 500;
-  letter-spacing: 0.18em;
-  padding: 0 12px;
+  letter-spacing: 0.08em;
+  padding: 0 6px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.22);
   color: rgba(255, 255, 255, 0.78);
@@ -1057,14 +1074,14 @@
   background: var(--oltra-field-bg);
   color: var(--oltra-text-primary);
   padding: 10px 14px;
-  height: 90px;
+  height: 68px;
   display: grid;
   align-content: center;
 }
 
 .selectCardCompact,
 .staticCardCompact {
-  height: 108px;
+  height: 86px;
   padding: 8px 10px;
 }
 

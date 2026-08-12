@@ -290,7 +290,7 @@ export default function FlightsView({ searchParams }: Props) {
     if (s === 'duplicate') return 'IN TRIP';
     if (s === 'error') return 'TRY AGAIN';
     if (s === 'login') return 'LOG IN FIRST';
-    return 'SAVE TO TRIP';
+    return 'SAVE';
   }, [saveStateByOffer]);
 
   const handleSaveToTrip = useCallback(async (offerId: string) => {
@@ -466,14 +466,20 @@ export default function FlightsView({ searchParams }: Props) {
     setSelectedOutboundId("");
   }, [outboundOptions, selectedOutboundId]);
 
-  useEffect(() => {
-    setSelectedReturnId("");
-  }, [selectedOutboundId]);
-
   const visibleReturnItineraries = useMemo(() => {
     if (!selectedOutboundId) return [];
     return standardItineraries.filter(item => item.outbound.id === selectedOutboundId);
   }, [selectedOutboundId, standardItineraries]);
+
+  useEffect(() => {
+    // Auto-select the sole compatible return flight instead of leaving the
+    // user to pick from a list of one - there's nothing to choose between.
+    if (visibleReturnItineraries.length === 1) {
+      setSelectedReturnId(visibleReturnItineraries[0].id);
+    } else {
+      setSelectedReturnId("");
+    }
+  }, [visibleReturnItineraries]);
 
   const selectedOutboundLeg = useMemo(
     () => outboundOptions.find(f => f.id === selectedOutboundId) ?? null,
@@ -1028,7 +1034,7 @@ export default function FlightsView({ searchParams }: Props) {
                     {!isOneWay ? (
                       <div className={styles.columnLabel}>Return</div>
                     ) : null}
-                    <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Price</div>
+                    <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Total price</div>
                   </div>
 
                   <div className={`${styles.pinnedStack} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
@@ -1112,6 +1118,8 @@ export default function FlightsView({ searchParams }: Props) {
                                   })
                                 ) : !visibleReturnItineraries.length ? (
                                   <div className={styles.emptyHint}>No compatible return flights found.</div>
+                                ) : visibleReturnItineraries.length === 1 ? (
+                                  <div className={styles.emptyHint}>No other return flights match the selected departure flight.</div>
                                 ) : null}
                               </div>
                             </div>
@@ -1406,7 +1414,7 @@ function MultipleResults({
             {`Flight ${i + 1}${leg.from ? ` · ${leg.from} → ${leg.to || "?"}` : ""}`}
           </div>
         ))}
-        <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Price</div>
+        <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Total price</div>
       </div>
 
       {/* Pinned rows — same visual style as Return page */}
@@ -1609,9 +1617,8 @@ function PriceCard({
       <span className={styles.priceCardAmount}>
         {currency} {format(itinerary.priceEur, itinerary.currency)}
       </span>
-      <span className={styles.priceCardFrom}>Total</span>
       {!priceOnly && (
-        <>
+        <div className={styles.priceCardButtonRow}>
           <button
             type="button"
             className={active ? styles.bookButtonActive : styles.bookButtonInactive}
@@ -1626,9 +1633,9 @@ function PriceCard({
             disabled={!active}
             onClick={() => active && onSave?.(itinerary.offerId)}
           >
-            {getSaveLabel?.(itinerary.offerId) ?? 'SAVE TO TRIP'}
+            {getSaveLabel?.(itinerary.offerId) ?? 'SAVE'}
           </button>
-        </>
+        </div>
       )}
     </div>
   );
@@ -1674,6 +1681,13 @@ function FlightCardContent({
           <span className={styles.flightDepart} style={timeStyle}>{flight.departTime}</span>
           <span className={styles.flightArrow}>→</span>
           <span className={styles.flightArrive} style={timeStyle}>{flight.arriveTime}</span>
+          <span className={styles.flightMetaDot}>·</span>
+          <span className={`${styles.flightMetaText} ${styles.flightAirlineText}`}>{airlineLabel}</span>
+          {label ? (
+            <span className={matchTier === "long-haul" ? styles.matchBadgeStrong : styles.matchBadgeWeak}>
+              {label}
+            </span>
+          ) : null}
         </div>
         <div className={styles.flightStopsRow}>
           <span className={styles.flightMetaText}>{formatDuration(flight.durationMinutes)}</span>
@@ -1683,13 +1697,11 @@ function FlightCardContent({
               <span className={styles.flightMetaText}>{flight.stopSummary}</span>
             </>
           ) : null}
-        </div>
-        <div className={styles.flightMetaRow}>
-          <span className={styles.flightMetaText}>{airlineLabel}</span>
-          {label ? (
-            <span className={matchTier === "long-haul" ? styles.matchBadgeStrong : styles.matchBadgeWeak}>
-              {label}
-            </span>
+          {flight.fareBrand ? (
+            <>
+              <span className={styles.flightMetaDot}>·</span>
+              <span className={styles.flightMetaText}>{flight.fareBrand}</span>
+            </>
           ) : null}
         </div>
       </div>
