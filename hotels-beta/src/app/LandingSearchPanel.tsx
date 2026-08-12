@@ -7,6 +7,7 @@ import GuestSelector from "@/components/site/GuestSelector";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
+import { mergeHotelFlightSearch } from "@/lib/searchSession";
 import {
   normalizeParam,
   readGuestSelection,
@@ -178,6 +179,35 @@ export default function LandingSearchPanel({
       window.localStorage.setItem(HOME_AIRPORT_STORAGE_KEY, homeAirport);
     }
   }, [homeAirport]);
+
+  // Mirrors the equivalent save effects in HotelsView/FlightsView - keeps
+  // the shared cross-page session (read by SiteHeader's nav links, and by
+  // Hotels/Flights on a bare visit) in sync with the landing search,
+  // including the departure airport, which previously had no path into
+  // that shared session at all.
+  useEffect(() => {
+    const city = normalizeParam(effectiveSearchParams.city);
+    const country = normalizeParam(effectiveSearchParams.country);
+    const region = normalizeParam(effectiveSearchParams.region);
+    const q = normalizeParam(effectiveSearchParams.q);
+
+    const hasAnythingToSave =
+      Boolean(city || country || region || q || fromValue || toValue || homeAirport);
+
+    if (!hasAnythingToSave) return;
+
+    mergeHotelFlightSearch({
+      q,
+      city,
+      country,
+      region,
+      from: fromValue,
+      to: toValue,
+      adults: String(guestSelection.adults),
+      kids: String(guestSelection.kids),
+      origin: homeAirport,
+    });
+  }, [effectiveSearchParams, fromValue, toValue, guestSelection, homeAirport]);
 
   useEffect(() => {
     if (!airportPopoverOpen) return;
@@ -489,9 +519,12 @@ export default function LandingSearchPanel({
               name="include_flights"
               value={effectiveIncludeFlights ? "1" : "0"}
             />
-            {effectiveIncludeFlights ? (
-              <input type="hidden" name="origin" value={homeAirport} />
-            ) : null}
+            {/* Always present, not gated on effectiveIncludeFlights - a
+                previously-picked home airport should still hand off to
+                Flights/the shared session even if "Add flights" isn't
+                currently checked (e.g. re-enabled later, or read via
+                SiteHeader's saved-session nav links). */}
+            <input type="hidden" name="origin" value={homeAirport} />
 
             <div className={styles.flightsCheckWrap} ref={flightsWrapRef}>
               <label

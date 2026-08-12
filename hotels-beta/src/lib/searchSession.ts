@@ -8,6 +8,8 @@ export type SharedTravelSearch = {
   adults?: string;
   kids?: string;
   bedrooms?: string;
+  origin?: string;
+  hotelId?: string;
   kid_age_1?: string;
   kid_age_2?: string;
   kid_age_3?: string;

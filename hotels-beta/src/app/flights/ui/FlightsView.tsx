@@ -3,7 +3,7 @@
 import { Fragment, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
-import { readHotelFlightSearch, saveHotelFlightSearch } from "@/lib/searchSession";
+import { mergeHotelFlightSearch, readHotelFlightSearch } from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, getMemberActionAccessBrowser } from "@/lib/members/db";
 import { type Itinerary, type FlightLeg, normalizeOffers } from "@/lib/flights/duffelNormalizer";
@@ -373,7 +373,7 @@ export default function FlightsView({ searchParams }: Props) {
   }, []);
 
   useEffect(() => {
-    saveHotelFlightSearch({
+    mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
       city: normalizeParam(searchParams.city),
       country: normalizeParam(searchParams.country),
@@ -382,6 +382,7 @@ export default function FlightsView({ searchParams }: Props) {
       to: isReturnTrip ? search.returnDate : "",
       adults: String(search.adults),
       kids: String(search.children),
+      origin: search.from,
     });
   }, [search, searchParams, isReturnTrip]);
 

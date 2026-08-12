@@ -44,8 +44,8 @@ import {
   getMemberActionLoginMessage,
 } from "@/lib/members/memberActionUi";
 import {
+  mergeHotelFlightSearch,
   readHotelFlightSearch,
-  saveHotelFlightSearch,
 } from "@/lib/searchSession";
 import type { RatehawkGroupedRoom, RatehawkHeadline } from "@/lib/ratehawk/types";
 
@@ -887,7 +887,7 @@ export default function HotelsView(props: {
 
     if (!hasAnythingToSave) return;
 
-    saveHotelFlightSearch({
+    mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
       city: normalizeParam(searchParams.city),
       country: normalizeParam(searchParams.country),
@@ -1135,6 +1135,13 @@ export default function HotelsView(props: {
   useEffect(() => {
     setDescExpanded(false);
   }, [selectedHotel?.id]);
+
+  // Lets the Restaurants page show this hotel on its map (with a link back)
+  // when reached via the shared session (e.g. the top-nav Restaurants link).
+  useEffect(() => {
+    if (!selectedHotel) return;
+    mergeHotelFlightSearch({ hotelId: String(selectedHotel.id) });
+  }, [selectedHotel]);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current || effectiveView !== "map") {
@@ -1807,7 +1814,7 @@ export default function HotelsView(props: {
   ]);
 
   function saveCurrentHotelFlightSearch() {
-    saveHotelFlightSearch({
+    mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
       city: normalizeParam(searchParams.city),
       country: normalizeParam(searchParams.country),

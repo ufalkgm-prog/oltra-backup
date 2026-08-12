@@ -148,12 +148,16 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       }
 
       if (saved.bedrooms) hotelParams.set("bedrooms", saved.bedrooms);
+      if (saved.origin) flightParams.set("origin", saved.origin);
 
       setHotelsHref(hotelParams.toString() ? `/hotels?${hotelParams.toString()}` : "/hotels");
       setFlightsHref(flightParams.toString() ? `/flights?${flightParams.toString()}` : "/flights");
 
       const restaurantCity = saved.city?.trim();
-      setRestaurantsHref(restaurantCity ? `/restaurants?city=${encodeURIComponent(restaurantCity)}` : "/restaurants");
+      const restaurantParams = new URLSearchParams();
+      if (restaurantCity) restaurantParams.set("city", restaurantCity);
+      if (saved.hotelId) restaurantParams.set("hotel_id", saved.hotelId);
+      setRestaurantsHref(restaurantParams.toString() ? `/restaurants?${restaurantParams.toString()}` : "/restaurants");
     }
 
     updateSearchHrefs();
