@@ -50,7 +50,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
             </button>
           ) : null}
           <div className="w-full text-center">
-            <div className="text-[13px] font-light leading-tight tracking-wide text-white">
+            <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
               {availability.currency}{" "}
               {Math.round(availability.dailyRate).toLocaleString()}
             </div>
@@ -106,7 +106,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
 
       <div className="flex min-h-[80px] min-w-0 flex-col">
         <div className="min-w-0">
-          <div className="truncate text-base font-light tracking-wide text-white">
+          <div className="truncate text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
             {hotel.hotel_name ?? "Untitled hotel"}
           </div>
           <div className="mt-0.5 text-xs text-white/55">

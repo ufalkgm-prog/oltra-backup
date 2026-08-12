@@ -594,7 +594,7 @@
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(8, 16, 24, 0.6);
+  background: var(--oltra-flights-modal-backdrop);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
@@ -608,8 +608,8 @@
   width: min(560px, 100%);
   max-height: 86vh;
   overflow-y: auto;
-  background: rgba(24, 37, 46, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--oltra-flights-modal-bg);
+  border: 1px solid var(--oltra-flights-modal-border);
   border-radius: var(--oltra-radius-lg);
   color: var(--oltra-text-primary);
   padding: 22px 24px;

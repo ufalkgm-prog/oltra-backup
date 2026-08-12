@@ -1,0 +1,303 @@
+.page {
+  min-height: 100vh;
+  background: #0a0a0a;
+}
+
+.intro {
+  padding: 20px 24px 0;
+  color: #ddd;
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: 1000px;
+}
+
+.intro h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px;
+}
+
+.intro p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #999;
+  margin: 0 0 4px;
+}
+
+.tokenTable {
+  margin: 16px 24px 0;
+  max-width: 1200px;
+  overflow-x: auto;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+}
+
+.tokenTable table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.74rem;
+}
+
+.tokenTable th,
+.tokenTable td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid #222;
+  white-space: nowrap;
+}
+
+.tokenTable th {
+  color: #aaa;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  background: #141414;
+  position: sticky;
+  top: 0;
+}
+
+.tokenTable td {
+  color: #ddd;
+}
+
+.tokenSwatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.pass {
+  color: #7dbb7d;
+}
+
+.fail {
+  color: #e08a8a;
+  font-weight: 600;
+}
+
+.note {
+  color: #8a7a5a;
+}
+
+.introSectionTitle {
+  margin: 24px 24px 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #999;
+}
+
+.radiusGrid {
+  margin: 16px 24px 0;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.radiusCard {
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 12px;
+  background: #141414;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.radiusRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.radiusSwatch {
+  width: 64px;
+  height: 64px;
+}
+
+.singleColumnWrap {
+  display: flex;
+  justify-content: center;
+  padding: 20px 24px 60px;
+}
+
+.column {
+  background: var(--oltra-surface-page);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  width: 100%;
+  max-width: 820px;
+}
+
+.columnHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 14px 20px;
+  background: var(--oltra-surface-card);
+  border-bottom: 1px solid var(--oltra-border-decorative);
+  color: var(--oltra-surface-text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.columnHeader h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.columnHeader .swatchRow {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.columnHeader .miniSwatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--oltra-border-decorative);
+}
+
+.section {
+  padding: 20px;
+  border-bottom: 1px solid var(--oltra-border-decorative);
+  color: var(--oltra-surface-text);
+  font-family: var(--oltra-font-sans);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oltra-surface-muted);
+  margin: 0 0 14px;
+}
+
+.sectionNote {
+  margin-top: 10px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--oltra-surface-muted);
+  border-left: 2px solid var(--oltra-border-decorative);
+  padding-left: 10px;
+}
+
+.swatchStrip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.swatchCard {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--oltra-border-decorative);
+}
+
+.swatchColor {
+  height: 44px;
+}
+
+.swatchLabel {
+  padding: 6px 8px;
+  background: var(--oltra-surface-card);
+  font-size: 0.62rem;
+  line-height: 1.4;
+}
+
+.textSamples {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.buttonGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.buttonGridLabel {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oltra-surface-muted);
+  margin-bottom: 6px;
+}
+
+.stateButton {
+  width: 100%;
+  height: 32px;
+  border-radius: var(--oltra-radius-md, 10px);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.formGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.formFieldLabel {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oltra-surface-muted);
+  margin-bottom: 4px;
+}
+
+.dropdownRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px;
+  align-items: start;
+}
+
+.dropdownSlot {
+  position: relative;
+  min-height: 220px;
+}
+
+.dateRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.modalPreviewWrap {
+  position: relative;
+  height: 260px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--oltra-surface-card);
+}
+
+.mapWrap {
+  height: 220px;
+  border-radius: var(--oltra-radius-xl, 16px);
+  overflow: hidden;
+}
+
+.resultsGrid {
+  display: grid;
+  gap: 10px;
+}
+

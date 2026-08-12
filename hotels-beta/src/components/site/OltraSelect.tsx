@@ -18,6 +18,7 @@ type Props = {
   closeOnHoverOutside?: boolean;
   closeOnFocusOutside?: boolean;
   onValueChange?: (value: string) => void;
+  defaultOpen?: boolean;
 };
 
 function ChevronDown() {
@@ -49,8 +50,9 @@ export default function OltraSelect({
   closeOnHoverOutside = true,
   closeOnFocusOutside = true,
   onValueChange,
+  defaultOpen = false,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [selectedValue, setSelectedValue] = useState(value);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);

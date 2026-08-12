@@ -2,10 +2,16 @@
   /* Typography */
   --oltra-font-sans: Arial, Helvetica, sans-serif;
 
-  /* Text */
-  --oltra-text-primary: rgba(255, 255, 255, 0.96);
-  --oltra-text-secondary: rgba(255, 255, 255, 0.78);
-  --oltra-text-muted: rgba(255, 255, 255, 0.62);
+  /* Text — Candidate C, shipped site-wide 2026-08-13 (design-system audit,
+     dark-surface refinement). Was rgba(255,255,255,0.96)/rgba(...,0.78)/
+     rgba(...,0.62) - white at reduced opacity, which the audit flagged as
+     "too white" and inconsistent between base and raised panel. Primary and
+     muted are solid hex per that finding (not opacity-based); secondary
+     stays an alpha step off the new primary's own RGB, same pattern as
+     before, just re-based off the new color instead of white. */
+  --oltra-text-primary: #d9d4c9;
+  --oltra-text-secondary: rgba(217, 212, 201, 0.78);
+  --oltra-text-muted: #978869;
   --oltra-text-dark: #173247;
 
   /* Background */
@@ -33,12 +39,19 @@
   --oltra-button-inactive-border: rgba(255, 255, 255, 0.18);
   --oltra-button-inactive-text: rgba(255, 255, 255, 0.96);
 
-  /* Radius */
-  --oltra-radius-xl: 16px;
-  --oltra-radius-lg: 14px;
-  --oltra-radius-md: 10px;
-  --oltra-radius-sm: 8px;
-  --oltra-radius-xs: 5px;
+  /* Radius — tightened site-wide 2026-08-13 (design-system audit). Was
+     16/14/10/8/5px - read as consumer-app rounded rather than editorial.
+     Small scale, not one value: xl/lg (large panels, modals, lightbox) stay
+     a touch soft rather than 0 ("crisp, not crude"); md (cards, dropdowns,
+     map popups, inputs, buttons) and sm/xs (badges, chips, thumbnails,
+     dropdown rows) both tighten further. See --oltra-dropdown-radius /
+     --oltra-dropdown-item-radius below for the matching dropdown-specific
+     values. */
+  --oltra-radius-xl: 6px;
+  --oltra-radius-lg: 6px;
+  --oltra-radius-md: 4px;
+  --oltra-radius-sm: 2px;
+  --oltra-radius-xs: 2px;
   --oltra-radius-pill: 999px;
 
   /* Blur */
@@ -65,13 +78,13 @@
   --oltra-section-label-size: 0.72rem;
 
   /* Dropdown / popup system */
-  --oltra-dropdown-radius: 10px;
+  --oltra-dropdown-radius: 4px;
   --oltra-dropdown-border: 1px solid rgba(255, 255, 255, 0.18);
   --oltra-dropdown-shadow:
     0 18px 42px rgba(16, 30, 40, 0.16),
     0 6px 18px rgba(16, 30, 40, 0.08);
   --oltra-dropdown-padding: 10px;
-  --oltra-dropdown-item-radius: 5px;
+  --oltra-dropdown-item-radius: 2px;
   --oltra-dropdown-item-font-size: 0.72rem;
   --oltra-dropdown-label-font-size: 0.58rem;
  --oltra-dropdown-list-max-height: 160px;
@@ -89,6 +102,153 @@
   --oltra-z-header: 30;
   --oltra-z-dropdown: 200;
   --oltra-z-popup: 300;
+
+  /* Modal / lightbox overlays (HotelsView room-detail modal + photo lightbox) */
+  --oltra-modal-scrim: rgba(10, 18, 26, 0.78);
+  --oltra-modal-bg: rgba(20, 32, 42, 0.94);
+  --oltra-modal-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+
+  /* Flights info modal (FlightsView.module.css) — distinct values from the
+     HotelsView modal tokens above, preserved as-is rather than unified, so
+     this refactor stays pixel-identical to the live site. */
+  --oltra-flights-modal-backdrop: rgba(8, 16, 24, 0.6);
+  --oltra-flights-modal-bg: rgba(24, 37, 46, 0.96);
+  --oltra-flights-modal-border: rgba(255, 255, 255, 0.16);
+
+  /* Map / marker chrome */
+  --oltra-marker-border: rgba(255, 255, 255, 0.24);
+  --oltra-marker-bg: rgba(33, 50, 66, 0.88);
+  --oltra-marker-text: rgba(255, 255, 255, 0.92);
+  --oltra-marker-shadow: 0 10px 24px rgba(9, 18, 28, 0.22);
+  --oltra-marker-selected-bg: rgba(255, 255, 255, 0.94);
+  --oltra-marker-selected-text: rgba(25, 42, 56, 0.96);
+
+  --oltra-city-marker-border: rgba(255, 255, 255, 0.36);
+  --oltra-city-marker-bg: rgba(33, 50, 66, 0.7);
+  --oltra-city-marker-text: rgba(255, 255, 255, 0.94);
+
+  --oltra-origin-marker-border: rgba(255, 255, 255, 0.86);
+  --oltra-origin-marker-bg: rgba(8, 12, 16, 0.96);
+  --oltra-origin-marker-shadow: 0 10px 24px rgba(9, 18, 28, 0.28);
+  --oltra-origin-marker-star: rgba(10, 12, 14, 0.98);
+  --oltra-origin-marker-star-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+
+  --oltra-map-popup-bg: rgba(34, 56, 72, 0.9);
+  --oltra-map-popup-border: rgba(255, 255, 255, 0.18);
+  --oltra-inspire-popup-border: rgba(255, 255, 255, 0.2);
+  --oltra-map-popup-shadow:
+    0 18px 40px rgba(10, 20, 28, 0.18),
+    0 6px 18px rgba(10, 20, 28, 0.1);
+  --oltra-map-popup-meta: rgba(255, 255, 255, 0.82);
+  --oltra-map-popup-text-shadow: 0 1px 5px rgba(10, 18, 26, 0.5);
+
+  --oltra-hotel-popup-meta: rgba(255, 255, 255, 0.68);
+
+  --oltra-photo-placeholder-border: rgba(255, 255, 255, 0.12);
+  --oltra-photo-placeholder-text: rgba(255, 255, 255, 0.55);
+
+  /* Scrollbar chrome, extracted so it can be overridden per surface (see
+     [data-oltra-surface="ivory"] below) instead of being one hardcoded
+     light-thumb rule. Values unchanged from what was live before. */
+  --oltra-scrollbar-thumb: rgba(255, 255, 255, 0.82);
+  --oltra-scrollbar-track: var(--oltra-field-bg);
+}
+
+/* Proposed dark-surface refinement (design-system audit, 2026-08-11/12) —
+   not applied anywhere in the live app yet. Scoped under this attribute so a
+   wrapper (currently only /theme-test) can opt in via
+   [data-oltra-surface="dark"] without affecting the current all-dark site,
+   which keeps reading its values from bare :root above, untouched.
+   The ivory surface this originally sat alongside was dropped 2026-08-12
+   ("reads too mainstream, doesn't earn its place") — dark is the only
+   surface now. The [data-oltra-surface] attribute mechanism itself stays,
+   since it's cheap to leave in and /theme-test still needs a review sandbox
+   that doesn't touch bare :root. */
+[data-oltra-surface="dark"] {
+  --oltra-surface-page: #0e1719;
+  --oltra-surface-card: #162225;
+
+  /* Primary/muted text - candidate C confirmed 2026-08-12 (warm variant, on
+     the accent gold's hue H40 at low saturation, against the cool
+     blue-green base). Was #E8EDEC/#8FA3A5 (audit's original pick, too
+     white/too bright per your review); candidates A/B (same cool hue as
+     the original, just dimmer) are not carried forward now that C is
+     chosen. Muted is the dimmest value on this hue that still clears 4.5:1
+     against both --oltra-surface-page and --oltra-surface-card (5.23:1 /
+     4.68:1) - not an eyeballed pairing. */
+  --oltra-surface-text: #d9d4c9;
+  --oltra-surface-muted: #978869;
+  --oltra-surface-accent: #c8a96a;
+
+  /* Decorative hairline: a soft version of the surface text color - close
+     to the surface, no 3:1 requirement (the card/panel edge already does
+     the work of distinguishing the boundary). */
+  --oltra-border-decorative: rgba(217, 212, 201, 0.12);
+
+  /* Functional border: input outlines, focus rings, checkbox edges.
+     Computed, not picked by eye: darkest neutral grey that still clears 3:1
+     against both --oltra-surface-page (#0e1719) and --oltra-surface-card
+     (#162225) - the harder constraint here is the card (3.01:1); page comes
+     out to 3.36:1. */
+  --oltra-border-functional: #6a6a6a;
+
+  --oltra-scrollbar-thumb: rgba(255, 255, 255, 0.82);
+  --oltra-scrollbar-track: rgba(255, 255, 255, 0.08);
+
+  /* Accent: on dark, the source gold (#C8A96A) already clears 4.5:1 as TEXT
+     against both page (8.08) and card (7.24) with no adjustment - unlike
+     ivory below, one value serves text, outline-button border/label and
+     focus ring. As a FILLED button background it also clears 3:1 trivially
+     (same 8.08/7.24, since fill-vs-page is the same relationship as
+     text-vs-bg), but the text drawn on top of that fill has to be DARK, not
+     light - white/near-white on #C8A96A only reaches ~2:1. So
+     accent-fill-text is the dark surface page color, not the light surface
+     text color. */
+  --oltra-accent-text: #c8a96a;
+  --oltra-accent-fill: #c8a96a;
+  --oltra-accent-fill-hover: #c09c54;
+  --oltra-accent-fill-active: #b38e42;
+  --oltra-accent-fill-text: #0e1719;
+  --oltra-focus-ring: var(--oltra-accent-fill);
+
+  /* Error: not part of the original 5-color proposal or the accent brief -
+     a genuine gap (no error/red color exists anywhere in the current
+     codebase either). Derived with the same method as the accent: a warm
+     brick-red hue (H8 S62, warmer than a stock UI red, to sit with the gold
+     rather than clash), lightest/darkest value clearing 4.5:1 as text
+     against both page and card. Flagged as an unreviewed proposal - only
+     the accent was explicitly specified and verified with you. */
+  --oltra-error-text: #d66452;
+
+  /* Component-facing token overrides: real components (OltraSelect,
+     GuestSelector, buttons, cards, dropdowns) read the token NAMES already
+     used site-wide (--oltra-text-primary, --oltra-field-bg, etc.), not the
+     --oltra-surface-* names above. Overriding those same names here is what
+     makes real components actually re-skin inside a
+     [data-oltra-surface="dark"] wrapper, instead of only new/bespoke markup
+     picking up the new palette. Values are mechanically derived from the
+     surface + accent tokens above, not independently invented. */
+  --oltra-bg-color: var(--oltra-surface-page);
+  --oltra-glass-bg: rgba(22, 34, 37, 0.55);
+  --oltra-glass-bg-strong: rgba(22, 34, 37, 0.88);
+  --oltra-glass-border: var(--oltra-border-decorative);
+  --oltra-field-bg: #121d1f;
+  --oltra-field-bg-strong: #162325;
+  --oltra-field-bg-solid: var(--oltra-surface-card);
+  --oltra-field-border: var(--oltra-border-functional);
+  --oltra-button-active-bg: var(--oltra-accent-fill);
+  --oltra-button-active-text: var(--oltra-accent-fill-text);
+  --oltra-button-inactive-bg: rgba(217, 212, 201, 0.08);
+  --oltra-button-inactive-border: var(--oltra-border-decorative);
+  --oltra-button-inactive-text: var(--oltra-surface-text);
+  --oltra-dropdown-border: 1px solid var(--oltra-border-decorative);
+
+  /* Corner-radius scale and text-primary/secondary/muted both shipped to
+     bare :root 2026-08-13 - no longer overridden here since they'd just be
+     redundant with what :root already says. --oltra-surface-text/muted
+     above stay defined regardless, since /theme-test's own CSS module reads
+     those two names directly for its swatches/labels, independent of the
+     shared component tokens. */
 }
 
 /* Base page behavior */
@@ -319,7 +479,7 @@ textarea,
 *[style*="overflow-y-auto"],
 *[class*="overflow-y-auto"] {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.82) var(--oltra-field-bg);
+  scrollbar-color: var(--oltra-scrollbar-thumb) var(--oltra-scrollbar-track);
 }
 
 .oltra-dropdown-list::-webkit-scrollbar,
@@ -336,7 +496,7 @@ textarea::-webkit-scrollbar,
 textarea::-webkit-scrollbar-track,
 *[style*="overflow-y-auto"]::-webkit-scrollbar-track,
 *[class*="overflow-y-auto"]::-webkit-scrollbar-track {
-  background: var(--oltra-field-bg);
+  background: var(--oltra-scrollbar-track);
   border-radius: 999px;
 }
 
@@ -345,7 +505,7 @@ textarea::-webkit-scrollbar-track,
 textarea::-webkit-scrollbar-thumb,
 *[style*="overflow-y-auto"]::-webkit-scrollbar-thumb,
 *[class*="overflow-y-auto"]::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--oltra-scrollbar-thumb);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
@@ -374,7 +534,7 @@ textarea::-webkit-scrollbar-thumb,
   border: 0;
   border-radius: var(--oltra-dropdown-item-radius);
   background: transparent;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--oltra-text-primary);
   font: inherit;
   font-size: var(--oltra-dropdown-item-font-size);
   line-height: 1.15;
@@ -385,7 +545,7 @@ textarea::-webkit-scrollbar-thumb,
 
 .oltra-dropdown-item:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 1);
+  color: var(--oltra-text-primary);
 }
 
 .oltra-dropdown-row-link {
@@ -407,6 +567,15 @@ textarea::-webkit-scrollbar-thumb,
 .oltra-dropdown-row-link.is-active {
   background: var(--oltra-field-bg-strong);
   color: rgba(255, 255, 255, 0.98);
+}
+
+.oltra-modal-scrim {
+  background: var(--oltra-modal-scrim);
+}
+
+.oltra-modal-panel {
+  background: var(--oltra-modal-bg);
+  box-shadow: var(--oltra-modal-shadow);
 }
 
 .oltra-status-badge {
@@ -915,16 +1084,14 @@ input[type="date"]:not([value=""])::-webkit-datetime-edit {
 .maplibregl-popup.inspire-map-popup .maplibregl-popup-content {
   padding: 0;
   border-radius: var(--oltra-radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(34, 56, 72, 0.9);
-  box-shadow:
-    0 18px 40px rgba(10, 20, 28, 0.18),
-    0 6px 18px rgba(10, 20, 28, 0.1);
+  border: 1px solid var(--oltra-inspire-popup-border);
+  background: var(--oltra-map-popup-bg);
+  box-shadow: var(--oltra-map-popup-shadow);
   color: white;
 }
 
 .maplibregl-popup.inspire-map-popup .maplibregl-popup-tip {
-  border-top-color: rgba(34, 56, 72, 0.9);
+  border-top-color: var(--oltra-map-popup-bg);
 }
 
 details > summary {
@@ -1085,10 +1252,10 @@ details > summary::-webkit-details-marker {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(33, 50, 66, 0.88);
-  color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.22);
+  border: 1px solid var(--oltra-marker-border);
+  background: var(--oltra-marker-bg);
+  color: var(--oltra-marker-text);
+  box-shadow: var(--oltra-marker-shadow);
   transition:
     transform 140ms ease,
     background-color 140ms ease,
@@ -1096,34 +1263,34 @@ details > summary::-webkit-details-marker {
 }
 
 .hotel-marker[data-selected="true"] .hotel-marker__inner {
-  background: rgba(255, 255, 255, 0.94);
-  color: rgba(25, 42, 56, 0.96);
-  border-color: rgba(255, 255, 255, 0.94);
+  background: var(--oltra-marker-selected-bg);
+  color: var(--oltra-marker-selected-text);
+  border-color: var(--oltra-marker-selected-bg);
   transform: scale(1.07);
 }
 
 .hotel-map-popup {
   min-width: 220px;
-  background: rgba(34, 56, 72, 0.9);
+  background: var(--oltra-map-popup-bg);
 }
 
 .hotel-map-popup__title {
   font-size: 0.94rem;
   line-height: 1.25;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--oltra-text-primary);
 }
 
 .hotel-map-popup__meta {
   margin-top: 4px;
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--oltra-hotel-popup-meta);
 }
 
 .hotel-map-popup__desc {
   margin-top: 8px;
   font-size: 0.78rem;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--oltra-text-secondary);
 }
 
 .oltra-button-function {
@@ -1193,10 +1360,10 @@ details > summary::-webkit-details-marker {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(33, 50, 66, 0.88);
-  color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.22);
+  border: 1px solid var(--oltra-marker-border);
+  background: var(--oltra-marker-bg);
+  color: var(--oltra-marker-text);
+  box-shadow: var(--oltra-marker-shadow);
   transition:
     transform 140ms ease,
     background-color 140ms ease,
@@ -1204,34 +1371,34 @@ details > summary::-webkit-details-marker {
 }
 
 .hotel-marker[data-selected="true"] .hotel-marker__inner {
-  background: rgba(255, 255, 255, 0.94);
-  color: rgba(25, 42, 56, 0.96);
-  border-color: rgba(255, 255, 255, 0.94);
+  background: var(--oltra-marker-selected-bg);
+  color: var(--oltra-marker-selected-text);
+  border-color: var(--oltra-marker-selected-bg);
   transform: scale(1.07);
 }
 
 .hotel-map-popup {
   min-width: 220px;
-  background: rgba(34, 56, 72, 0.9);
+  background: var(--oltra-map-popup-bg);
 }
 
 .hotel-map-popup__title {
   font-size: 0.94rem;
   line-height: 1.25;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--oltra-text-primary);
 }
 
 .hotel-map-popup__meta {
   margin-top: 4px;
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--oltra-hotel-popup-meta);
 }
 
 .hotel-map-popup__desc {
   margin-top: 8px;
   font-size: 0.78rem;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--oltra-text-secondary);
 }
 
 .oltra-button-map-toggle {
@@ -1289,16 +1456,16 @@ details > summary::-webkit-details-marker {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.36);
-  background: rgba(33, 50, 66, 0.7);
-  color: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.22);
+  border: 1px solid var(--oltra-city-marker-border);
+  background: var(--oltra-city-marker-bg);
+  color: var(--oltra-city-marker-text);
+  box-shadow: var(--oltra-marker-shadow);
 }
 
 .oltra-map-city-marker[data-selected="true"] .oltra-map-city-marker__inner {
-  background: rgba(255, 255, 255, 0.94);
-  color: rgba(25, 42, 56, 0.96);
-  border-color: rgba(255, 255, 255, 0.94);
+  background: var(--oltra-marker-selected-bg);
+  color: var(--oltra-marker-selected-text);
+  border-color: var(--oltra-marker-selected-bg);
   transform: scale(1.06);
 }
 
@@ -1312,38 +1479,36 @@ details > summary::-webkit-details-marker {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.86);
-  background: rgba(8, 12, 16, 0.96);
-  box-shadow: 0 10px 24px rgba(9, 18, 28, 0.28);
+  border: 2px solid var(--oltra-origin-marker-border);
+  background: var(--oltra-origin-marker-bg);
+  box-shadow: var(--oltra-origin-marker-shadow);
 }
 
 .maplibregl-popup.oltra-map-popup .maplibregl-popup-content {
   padding: 0;
   border-radius: var(--oltra-radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(34, 56, 72, 0.9);
-  box-shadow:
-    0 18px 40px rgba(10, 20, 28, 0.18),
-    0 6px 18px rgba(10, 20, 28, 0.1);
+  border: 1px solid var(--oltra-map-popup-border);
+  background: var(--oltra-map-popup-bg);
+  box-shadow: var(--oltra-map-popup-shadow);
   color: white;
 }
 
 .maplibregl-popup.oltra-map-popup .maplibregl-popup-tip {
-  border-top-color: rgba(34, 56, 72, 0.9);
+  border-top-color: var(--oltra-map-popup-bg);
 }
 
 .oltra-map-popup__title {
   font-size: 0.92rem;
   line-height: 1.25;
-  color: rgba(255, 255, 255, 0.96);
-  text-shadow: 0 1px 5px rgba(10, 18, 26, 0.5);
+  color: var(--oltra-text-primary);
+  text-shadow: var(--oltra-map-popup-text-shadow);
 }
 
 .oltra-map-popup__meta {
   margin-top: 4px;
   font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.82);
-  text-shadow: 0 1px 5px rgba(10, 18, 26, 0.5);
+  color: var(--oltra-map-popup-meta);
+  text-shadow: var(--oltra-map-popup-text-shadow);
 }
 
 .oltra-map-popup__box {
@@ -1364,9 +1529,9 @@ details > summary::-webkit-details-marker {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: rgba(10, 12, 14, 0.98); /* deep black */
+  color: var(--oltra-origin-marker-star); /* deep black */
   transform: scale(1.1);
-  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(var(--oltra-origin-marker-star-shadow));
 }
 
 .oltra-map-popup__image {
@@ -1385,8 +1550,8 @@ details > summary::-webkit-details-marker {
   width: 100%;
   height: 100%;
   background: var(--oltra-glass-bg);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--oltra-photo-placeholder-border);
+  color: var(--oltra-photo-placeholder-text);
   font-size: 0.68rem;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -1404,8 +1569,8 @@ details > summary::-webkit-details-marker {
   border-radius: var(--oltra-radius-sm);
   margin-bottom: 10px;
   background: var(--oltra-glass-bg);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--oltra-photo-placeholder-border);
+  color: var(--oltra-photo-placeholder-text);
   font-size: 0.68rem;
   font-weight: 500;
   letter-spacing: 0.14em;

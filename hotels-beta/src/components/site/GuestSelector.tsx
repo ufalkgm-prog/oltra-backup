@@ -14,6 +14,7 @@ type Props = {
   className?: string;
   placeholder?: string;
   onChange?: (selection: GuestSelection) => void;
+  defaultOpen?: boolean;
 };
 
 function selectionKey(selection: GuestSelection): string {
@@ -48,8 +49,9 @@ export default function GuestSelector({
   className = "",
   placeholder = "Guests",
   onChange,
+  defaultOpen = false,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [adults, setAdults] = useState(initialValue.adults);
   const [kids, setKids] = useState(initialValue.kids);
   const [kidAges, setKidAges] = useState<string[]>(

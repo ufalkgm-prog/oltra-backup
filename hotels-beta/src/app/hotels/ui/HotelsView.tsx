@@ -2914,11 +2914,11 @@ async function handleCreateTripAndAddHotel() {
                               if (!room) return null;
                               return (
                                 <div
-                                  className="fixed inset-0 z-[1000] flex justify-center overflow-y-auto bg-[rgba(10,18,26,0.78)] px-6 py-10"
+                                  className="oltra-modal-scrim fixed inset-0 z-[1000] flex justify-center overflow-y-auto px-6 py-10"
                                   onClick={() => setOpenRoomDetailKey(null)}
                                 >
                                   <div
-                                    className="relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-white/12 bg-[rgba(20,32,42,0.94)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+                                    className="oltra-modal-panel relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-white/12 p-5"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <button
@@ -3244,11 +3244,11 @@ async function handleCreateTripAndAddHotel() {
               {lightboxOpen && typeof document !== "undefined"
                 ? createPortal(
                     <div
-                      className="fixed inset-0 z-[1000] flex justify-center bg-[rgba(10,18,26,0.78)] px-6"
+                      className="oltra-modal-scrim fixed inset-0 z-[1000] flex justify-center px-6"
                       onClick={() => setLightboxOpen(false)}
                     >
                       <div
-                        className="relative mt-[110px] h-fit w-full max-w-[1100px] rounded-[var(--oltra-radius-xl)] border border-white/12 bg-[rgba(20,32,42,0.94)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.38)]"
+                        className="oltra-modal-panel relative mt-[110px] h-fit w-full max-w-[1100px] rounded-[var(--oltra-radius-xl)] border border-white/12 p-5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
