@@ -1683,4 +1683,227 @@ commit before spending time re-diagnosing from scratch.
 
 ---
 
+## 34. DESIGN-SYSTEM AUDIT & DARK-SURFACE REFINEMENT (2026-08-11 to 2026-08-13)
+
+### What this was
+
+Ulrik proposed moving the site to a two-surface theme — a tinted dark for
+editorial/browse pages, a warm ivory for transactional ones — and asked for
+an audit of what it would break *before* any code changed. The audit (8
+checklist items: color definitions, maps, native controls, overlays,
+third-party surfaces, Duffel logos, RateHawk imagery, WCAG contrast) was
+delivered as findings only, no code. What actually shipped by the end of
+the session is much narrower than the original proposal: the ivory surface
+was reviewed and rejected, and only two refinements to the existing dark
+theme landed — a tighter corner-radius scale and a dimmer/warmer primary
+text color. Final commit: **`ae62e5b`**, pushed to `origin/main`.
+
+### Resequencing Ulrik set, in order
+
+1. Pure tokenization refactor first (no visual change), so a later "the
+   palette is wrong" reaction could be told apart from "this component
+   isn't wired to tokens at all."
+2. Token *value* fixes (ivory border split, scrollbar surface-awareness).
+3. Answer the map-surface question before touching any MapTiler style URL.
+4. Build `/theme-test` last, once the above made it meaningful to look at.
+
+### Step 1 — tokenization refactor (zero visual change)
+
+Moved ~30 hardcoded `rgba()`/hex literals into `--oltra-*` tokens in
+`oltra-theme.css`, across exactly the areas flagged in the audit and no
+more:
+
+* HotelsView room-detail modal + photo lightbox → `--oltra-modal-scrim`,
+  `--oltra-modal-bg`, `--oltra-modal-shadow`, plus two new helper classes
+  (`.oltra-modal-scrim`, `.oltra-modal-panel`) replacing the Tailwind
+  arbitrary-value `bg-[rgba(...)]`/`shadow-[rgba(...)]` literals in the JSX.
+* `FlightsView.module.css` `.modalBackdrop`/`.modal` → `--oltra-flights-modal-backdrop`/`-bg`/`-border`.
+  **Kept as a separate token pair from the HotelsView modal above** even
+  though they serve the same role — the two had genuinely different rgba
+  values (not just historical drift assumed to be mergeable), and unifying
+  them would have been a real, if tiny, visual change.
+* Map popup/marker chrome and badge colours (`oltra-theme.css` — hotel
+  markers, city markers, origin marker, `.maplibregl-popup` variants,
+  `.oltra-photo-placeholder`) → `--oltra-marker-*`, `--oltra-city-marker-*`,
+  `--oltra-origin-marker-*`, `--oltra-map-popup-*`, `--oltra-hotel-popup-meta`,
+  `--oltra-photo-placeholder-*`.
+
+Found along the way and deliberately **not** touched: `.hotel-marker`/
+`.hotel-map-popup` exist as two byte-identical duplicate rule blocks in
+`oltra-theme.css` — harmless redundancy, out of scope for a pure refactor.
+
+Verified pixel-identical via `git stash`/`stash pop` before/after screenshot
+pairs (photo lightbox, hotel-map popup) rather than just trusting the
+diff — this was Ulrik's explicit acceptance test for the step.
+
+### Step 2 — token value fixes
+
+* Ivory border split into `--oltra-border-decorative` (#E2DBCD, unchanged —
+  cards/dividers where the card background already distinguishes the
+  boundary, no 3:1 requirement) vs `--oltra-border-functional` (#908C83,
+  **computed** — lightest warm grey on the same hue as the decorative
+  border that still clears 3:1 against both `#F6F2EA` and `#FFFDF9`, for
+  input outlines/focus rings/checkbox edges where WCAG's 3:1 *does* apply).
+* Scrollbar rules made surface-aware: extracted `--oltra-scrollbar-thumb`/
+  `-track` tokens out of one hardcoded global rule, added an ivory override
+  reusing the functional-border colour.
+* Map question resolved without touching any style URL: "just go with the
+  standard map format... need to see the final layout before deciding" —
+  reconfirmed after ivory was dropped ("maps look fine on dark as they
+  are"). `streets-v4` stays the basemap everywhere, no dark MapTiler
+  variant was ever added.
+
+### `/theme-test` — built, survived, still exists
+
+`hotels-beta/src/app/theme-test/{page.tsx, ThemeTestView.tsx,
+ThemeTestView.module.css}`. Prod-guarded (`notFound()` when
+`NODE_ENV=production`), not linked from any nav. Renders **real** app
+components (`OltraSelect`, `GuestSelector`, `HotelSmallCard`, the actual
+modal/lightbox markup, a live MapLibre instance) wrapped via
+`[data-oltra-surface="dark"]`, not replicas — this is why building it kept
+surfacing real bugs rather than just showing a mockup. `OltraSelect`/
+`GuestSelector` both gained a small additive `defaultOpen` prop so the page
+can render them pre-opened for review.
+
+Building the two-surface (dark + ivory) version required expanding the
+token system with full accent/error/button/field/glass/border roles for
+*both* surfaces, computed rather than eyeballed:
+
+* Ivory accent split into two distinct values that came out too close to
+  merge: `accent-text` #876B32 (4.50/4.95 vs page/card — lightest bronze on
+  the gold's own hue/saturation, H40/S46, that still clears 4.5:1 as text)
+  and `accent-fill` #8C6F34 (darker than "3:1 vs page" alone would ever
+  require — the actual binding constraint turned out to be near-white
+  *text on top of* the fill needing 4.5:1, not the fill-vs-page ratio by
+  itself).
+* Dark accent needed no change (#C8A96A already 8.08/7.24 vs page/card),
+  but its filled-button text has to be **dark** (`#0E1719`), not
+  near-white — near-white on that gold only reached ~2:1. Opposite pattern
+  from ivory, confirmed and kept.
+* A derived error/red colour for both surfaces — not part of Ulrik's
+  original brief, and no error colour existed anywhere in the codebase
+  before this either. Flagged explicitly as an unreviewed proposal, unlike
+  the accent which was verified. Dark: `#D66452`. (Ivory's `#C4422E` is now
+  dead code — see below.)
+* Building the page surfaced two more hardcoded-white-text bugs beyond
+  what the original audit found: `.oltra-dropdown-item`
+  (`color: rgba(255,255,255,0.86)`, hardcoded) and `HotelSmallCard`'s title
+  and price (`text-white` Tailwind literals) — both went white-on-white,
+  effectively invisible, on the ivory column. Flagged in-page first
+  (`/theme-test`'s own "known gap" notes), fixed for real once brought
+  into scope in a later turn (see below).
+
+**Recurring dev-server flakiness this session** (not a code defect, worth
+knowing about for future long sessions with heavy file churn): hit a bare
+500 on `/theme-test` and, later, a Flights page whose CSS module had
+silently stopped applying (`grid-template-columns: none` despite the
+correct class name being present — traced to
+`/_next/static/css/app/flights/page.css` returning a 404). Both times,
+spinning up a clean `next dev` on a scratch port confirmed the *source* was
+correct and the problem was purely accumulated `.next` build state. Fixed
+for good by killing the port-3000 `next` process tree, `rm -rf .next`, and
+restarting via `npm run dev`.
+
+### Decision: drop ivory entirely (2026-08-12)
+
+Ulrik's verdict after looking at the built page: *"the ivory column reads
+too mainstream — it's the standard luxury-travel white-and-black look I
+deliberately moved away from, and it doesn't earn its place on the results
+grid or the forms."* Removed the entire `[data-oltra-surface="ivory"]`
+block, the bronze accent tokens, and the ivory border split. The
+`[data-oltra-surface]` attribute mechanism itself was kept (cheap to leave
+in, `/theme-test` still needs it as a sandbox) — there's just no `"ivory"`
+variant registered against it anymore.
+
+### Two refinements, requested and shipped
+
+**1. Corner-radius scale.** Computed by grepping every real consumer of
+each radius token first, not guessed:
+
+| Token(s) | Was | Now | Used for |
+|---|---|---|---|
+| `--oltra-radius-xl`, `--oltra-radius-lg` | 16px / 14px | **6px** (both) | Large panels, modals, lightbox — deliberately not 0 ("crisp, not crude") |
+| `--oltra-radius-md`, `--oltra-dropdown-radius` | 10px | **4px** | Cards, dropdowns, map popups, inputs, buttons — these already shared `radius-md` before this, so no restructuring was needed |
+| `--oltra-radius-sm`, `--oltra-radius-xs`, `--oltra-dropdown-item-radius` | 8px / 5px | **2px** | Badges, chips, small pills, thumbnails, dropdown option rows |
+
+`--oltra-radius-pill` (999px) untouched — it's a shape keyword, not a
+rounding amount.
+
+**2. Primary/muted text colour.** Three candidates were computed and
+rendered live in `/theme-test` (not picked by eye), all **solid hex**, not
+white at reduced opacity — Ulrik's explicit constraint, since opacity
+renders inconsistently between the base and the raised panel:
+
+| Candidate | Primary | vs page/panel | Muted companion | vs page/panel |
+|---|---|---|---|---|
+| A — same cool family, moderate dim | `#C2CBCB` | 10.99:1 / 9.85:1 | `#708F8E` | 5.20:1 / 4.66:1 |
+| B — same cool family, deeper dim | `#A7B4B3` | 8.50:1 / 7.62:1 | `#708F8E` | 5.20:1 / 4.66:1 |
+| **C — warm variant (SELECTED)** | **`#D9D4C9`** | 12.30:1 / 11.02:1 | **`#978869`** | 5.23:1 / 4.68:1 |
+
+Muted companions are each the dimmest value on that hue that still clears
+4.5:1 against both base and panel — computed, not eyeballed. A and B share
+one companion since they're the same hue family. Candidate C — shifted
+onto the gold accent's own hue (H40) at low saturation, i.e. warm against
+the cool blue-green base — is what Ulrik picked.
+
+### Shipped to bare `:root` 2026-08-13 — deliberately narrow scope
+
+Only the radius scale and `--oltra-text-primary`/`-secondary`/`-muted`
+went live site-wide. **Not** pushed: the accent-driven button recolour
+(gold fill), the glass-bg/field-bg retint, `--oltra-border-functional`, or
+the derived error colour — none of those were ever explicitly reviewed as
+a "ship this" decision the way radius and text were; they were built only
+to make the (now-dropped) two-surface `/theme-test` render correctly.
+**`--oltra-button-active-bg` is still live sage green
+`rgb(182, 204, 168)`** — the gold button treatment never shipped. If a
+future session is asked to "finish" this, check with Ulrik before assuming
+those sandboxed tokens should go live too — that's a real, visible decision
+(sage green → gold buttons site-wide), not a mechanical follow-on.
+
+The now-redundant duplicate overrides (radius + text-primary/secondary/
+muted) were removed from the `[data-oltra-surface="dark"]` block once
+`:root` matched them exactly, to avoid the file implying they're still
+sandbox-only. `--oltra-surface-page/card/text/muted/accent` stay defined
+in that block regardless — `/theme-test`'s own CSS module reads those
+names directly, independent of the shared component tokens.
+
+The two hardcoded-white-text bugs found while building `/theme-test` were
+fixed for real in this pass: `.oltra-dropdown-item` and `HotelSmallCard`'s
+title/price now read `var(--oltra-text-primary)`. **Not quite
+byte-pixel-identical** — the old hardcoded values were
+`rgba(255,255,255,0.86)`/pure white, not exactly whatever
+`--oltra-text-primary` held at the time — flagged as a real if visually
+negligible delta rather than claimed as a clean refactor.
+
+### Files
+
+* `hotels-beta/src/styles/oltra-theme.css` — the bulk of the change; see
+  above for the token inventory.
+* `hotels-beta/src/app/hotels/ui/HotelsView.tsx` — modal/lightbox markup
+  repointed to the new helper classes (step 1 only).
+* `hotels-beta/src/app/flights/ui/FlightsView.module.css` — modal tokens
+  (step 1 only).
+* `hotels-beta/src/components/hotels/HotelSmallCard.tsx` — title/price
+  hardcoded-white fix.
+* `hotels-beta/src/components/site/OltraSelect.tsx`,
+  `GuestSelector.tsx` — added `defaultOpen` prop for `/theme-test`.
+* New: `hotels-beta/src/app/theme-test/{page.tsx, ThemeTestView.tsx,
+  ThemeTestView.module.css}` — kept as a standing review route for future
+  design-system work, not a one-off scaffold to delete.
+
+### What's still outstanding
+
+* The sandboxed-but-unshipped tokens above (accent/button-active-bg/
+  glass-bg/field-bg/border-functional/error-colour) — still only live
+  inside `[data-oltra-surface="dark"]`, real decisions pending.
+* The step-1 modal tokens (`--oltra-modal-scrim`/`-bg`) were never made
+  surface-aware — moot now that there's only one surface, but worth
+  knowing they're a distinct token pair from the general
+  `--oltra-text-primary`/etc. pushed this session.
+* Ivory's derived error colour (`#C4422E`) and everything else ivory-only
+  is gone from the codebase entirely, not just unused — if a warm surface
+  ever comes back, it isn't a matter of re-enabling something dormant.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
