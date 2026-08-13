@@ -68,7 +68,7 @@ export default async function RestaurantsPage({
   );
 
   const hotelId = normalizeParam(params.hotel_id).trim();
-  const selectedHotel = hotelId
+  const selectedHotelRaw = hotelId
     ? (
         await getHotels({
           fields: ["id", "hotel_name", "lat", "lng", "city", "country"],
@@ -77,6 +77,19 @@ export default async function RestaurantsPage({
         })
       )[0] ?? null
     : null;
+
+  // Only surface the hotel handed off from Hotels (e.g. via the top-nav
+  // Restaurants link) if it's actually in the city being viewed here - the
+  // shared session's hotelId can point at a hotel in an unrelated city
+  // (e.g. Featured Mode's automatic cycling keeps overwriting it regardless
+  // of any city filter), so it shouldn't be trusted on its own.
+  const selectedHotelCity = selectedHotelRaw?.city?.trim().toLowerCase() ?? "";
+  const selectedHotel =
+    selectedHotelRaw &&
+    selectedHotelCity &&
+    cityAliases.some((alias) => alias.toLowerCase() === selectedHotelCity)
+      ? selectedHotelRaw
+      : null;
 
   return (
     <PageShell current="Restaurants">
