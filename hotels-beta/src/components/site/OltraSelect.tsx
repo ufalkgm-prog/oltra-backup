@@ -113,7 +113,7 @@ export default function OltraSelect({
         className={[
           "oltra-select relative flex w-full cursor-pointer items-center gap-2 pr-3",
           justifyClass,
-          selectedValue ? "text-white" : "text-white/62",
+          selectedValue ? "text-[color:var(--oltra-text-primary)]" : "text-[color:var(--oltra-text-placeholder)]",
         ].join(" ")}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -141,7 +141,7 @@ export default function OltraSelect({
                   className={[
                     "oltra-dropdown-item",
                     justifyClass,
-                    active ? "bg-white/10 text-white" : "",
+                    active ? "bg-[var(--oltra-dropdown-item-selected-bg)] text-[color:var(--oltra-text-primary)]" : "",
                   ].join(" ")}
                   role="option"
                   aria-selected={active}

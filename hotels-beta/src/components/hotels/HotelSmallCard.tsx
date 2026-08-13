@@ -54,7 +54,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
               {availability.currency}{" "}
               {Math.round(availability.dailyRate).toLocaleString()}
             </div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-white/48">
+            <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
               / night
             </div>
           </div>
@@ -63,14 +63,14 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     }
     if (availability.status === "loading") {
       return (
-        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-white/62">
+        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           Checking Agoda…
         </div>
       );
     }
     if (availability.status === "unavailable") {
       return (
-        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-white/56">
+        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           Not available on Agoda
         </div>
       );
@@ -80,13 +80,13 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     }
     if (availability.status === "error") {
       return (
-        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-white/55">
+        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           Price check unavailable
         </div>
       );
     }
     return (
-      <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-white/45">
+      <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
         Select dates
       </div>
     );
@@ -109,13 +109,13 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
           <div className="truncate text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
             {hotel.hotel_name ?? "Untitled hotel"}
           </div>
-          <div className="mt-0.5 text-xs text-white/55">
+          <div className="mt-0.5 text-xs text-[color:var(--oltra-text-muted)]">
             {nameAndLocation || "—"}
           </div>
         </div>
 
         {hotel.highlights ? (
-          <div className="mt-2 text-xs leading-relaxed text-white/65">
+          <div className="mt-2 text-xs leading-relaxed text-[color:var(--oltra-text-muted)]">
             {clampHotelText(hotel.highlights, 170)}
           </div>
         ) : null}

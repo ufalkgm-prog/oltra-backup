@@ -290,7 +290,7 @@ function RelDropdown(props: {
   return (
     <div
       ref={rootRef}
-      className="border-t border-white/10 py-2"
+      className="border-t border-[var(--oltra-field-border)] py-2"
       data-oltra-control="true"
       {...dismissHoverProps}
     >
@@ -299,11 +299,11 @@ function RelDropdown(props: {
         onClick={props.onToggle}
         className="flex w-full items-center justify-between px-[14px] text-left"
       >
-        <span className="text-[12px] uppercase tracking-[0.14em] text-white/70">
+        <span className="text-[12px] uppercase tracking-[0.14em] text-[color:var(--oltra-text-muted)]">
           {props.title}
         </span>
         <span
-          className="flex h-4 w-4 items-center justify-center text-white/55 transition-transform duration-150"
+          className="flex h-4 w-4 items-center justify-center text-[color:var(--oltra-text-muted)] transition-transform duration-150"
           style={{ transform: props.open ? "rotate(180deg)" : "rotate(0deg)" }}
         >
           <ChevronDown />
@@ -337,10 +337,10 @@ function RelDropdown(props: {
                     }}
                     className={[
                       "oltra-dropdown-item flex w-full items-center gap-2 text-left",
-                      opt.active ? "bg-white/10 text-white" : "",
+                      opt.active ? "bg-[var(--oltra-dropdown-item-selected-bg)] text-[color:var(--oltra-text-primary)]" : "",
                     ].join(" ")}
                   >
-                    <span className="w-4 shrink-0 text-white/72">
+                    <span className="w-4 shrink-0 text-[color:var(--oltra-text-primary)]">
                       {opt.active ? "✓" : ""}
                     </span>
                     <span>{opt.label}</span>
@@ -2063,11 +2063,11 @@ async function handleCreateTripAndAddHotel() {
                           <Link
                             key={`selected-award-${awardId}`}
                             href={removeSingleValueHref(searchParams, "awards", awardId)}
-                            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-3 py-[3px] text-[12px] text-white/74 hover:bg-white/12"
+                            className="inline-flex items-center gap-2 rounded-full border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 py-[3px] text-[12px] text-[color:var(--oltra-badge-text)] hover:bg-[var(--oltra-field-bg-strong)]"
                             prefetch={false}
                           >
                             <span>{label}</span>
-                            <span className="text-white/62">×</span>
+                            <span className="text-[color:var(--oltra-badge-text)]">×</span>
                           </Link>
                         );
                       })}
@@ -2075,7 +2075,7 @@ async function handleCreateTripAndAddHotel() {
                       {selectedPriceLabels.map((label) => (
                         <div
                           key={`selected-price-${label}`}
-                          className="inline-flex items-center rounded-full border border-white/12 bg-white/8 px-3 py-[3px] text-[12px] text-white/74"
+                          className="inline-flex items-center rounded-full border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 py-[3px] text-[12px] text-[color:var(--oltra-badge-text)]"
                         >
                           {label}
                         </div>
@@ -2137,7 +2137,7 @@ async function handleCreateTripAndAddHotel() {
                       locale by default (see guessResidencyFromLocale effect
                       below) - this is just an override, not a required field. */}
                   <div className="md:col-span-12 -mt-1 flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-[0.1em] text-white/40">
+                    <span className="text-[10px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                       Pricing for
                     </span>
                     <div className="w-[150px]" data-oltra-control="true">
@@ -2161,7 +2161,7 @@ async function handleCreateTripAndAddHotel() {
               ) : null}
 
               {showNarrowFurtherMessage ? (
-                <div className="md:col-span-12 text-[12px] leading-relaxed text-white/64">
+                <div className="md:col-span-12 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
                   Narrow results further by adding region, country, city or setting.
                 </div>
               ) : null}
@@ -2212,17 +2212,17 @@ async function handleCreateTripAndAddHotel() {
 
               {!compactTopMode && filtersOpen ? (
                 <div className="md:col-span-12 pt-3">
-                  <div className="border-t border-white/10 py-2">
+                  <div className="border-t border-[var(--oltra-field-border)] py-2">
                     <button
                       type="button"
                       onClick={() => setPriceOpen((prev) => !prev)}
                       className="flex w-full items-center justify-between px-[14px] text-left"
                     >
-                      <span className="text-[12px] uppercase tracking-[0.14em] text-white/70">
+                      <span className="text-[12px] uppercase tracking-[0.14em] text-[color:var(--oltra-text-muted)]">
                         PRICE / TOTAL STAY ({activeCurrency})
                       </span>
                       <span
-                        className="flex h-4 w-4 items-center justify-center text-white/55 transition-transform duration-150"
+                        className="flex h-4 w-4 items-center justify-center text-[color:var(--oltra-text-muted)] transition-transform duration-150"
                         style={{ transform: priceOpen ? "rotate(180deg)" : "rotate(0deg)" }}
                       >
                         <ChevronDown />
@@ -2245,7 +2245,7 @@ async function handleCreateTripAndAddHotel() {
                             />
                           </div>
 
-                          <div className="mt-2 text-[11px] text-white/45">
+                          <div className="mt-2 text-[11px] text-[color:var(--oltra-text-muted)]">
                             (Illustrative for now — will connect when pricing fields exist)
                           </div>
                         </div>
@@ -2291,7 +2291,7 @@ async function handleCreateTripAndAddHotel() {
             <div className="oltra-glass oltra-panel flex flex-none flex-col">
               <div className="flex flex-none items-baseline justify-between">
                 <div className="oltra-label">Results</div>
-                <div className="text-xs text-white/50">{resultsCount} matching hotels found</div>
+                <div className="text-xs text-[color:var(--oltra-text-muted)]">{resultsCount} matching hotels found</div>
               </div>
 
               <div className="oltra-scrollbar mt-3.5 max-h-[50vh] space-y-3 overflow-y-auto pr-2">
@@ -2341,29 +2341,29 @@ async function handleCreateTripAndAddHotel() {
 
                           <div className="mt-2">
                             {ratehawkResultAvailabilityLoading ? (
-                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/10 bg-white/8 px-2 py-1.5 text-center text-[11px] leading-tight text-white/62">
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
                                 Checking availability...
                               </div>
                             ) : ratehawkCardAvailability?.status === "available" && ratehawkCardAvailability.headline ? (
                               <div className="px-2 py-1.5 text-center">
-                                <div className="text-[13px] font-light leading-tight tracking-wide text-white">
+                                <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
                                   {ratehawkCardAvailability.headline.currency}{" "}
                                   {Math.round(ratehawkCardAvailability.headline.pricePerStay).toLocaleString()}
                                 </div>
-                                <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-white/48">
+                                <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
                                   total stay
                                 </div>
                               </div>
                             ) : ratehawkCardAvailability?.status === "unavailable" ? (
-                              <div className="px-2 py-1.5 text-center text-[11px] leading-tight text-white/56">
+                              <div className="px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
                                 Not available on Ratehawk
                               </div>
                             ) : getRatehawkHidForHotel(h) ? (
-                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/8 bg-white/5 px-2 py-1.5 text-center text-[11px] leading-tight text-white/45">
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
                                 Select dates
                               </div>
                             ) : (
-                              <div className="rounded-[var(--oltra-radius-sm)] border border-white/8 bg-white/5 px-2 py-1.5 text-center text-[11px] leading-tight text-white/45">
+                              <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
                                 No Ratehawk match
                               </div>
                             )}
@@ -2373,10 +2373,10 @@ async function handleCreateTripAndAddHotel() {
                         <div className="flex min-h-[80px] min-w-0 flex-col">
                           <div className="flex items-start gap-1.5">
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-base font-light tracking-wide text-white">
+                              <div className="truncate text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
                                 {h.hotel_name ?? "Untitled hotel"}
                               </div>
-                              <div className="mt-0.5 text-xs text-white/55">
+                              <div className="mt-0.5 text-xs text-[color:var(--oltra-text-muted)]">
                                 {nameAndLocation || "—"}
                               </div>
                             </div>
@@ -2386,7 +2386,7 @@ async function handleCreateTripAndAddHotel() {
                                   <span
                                     key={key}
                                     title={title}
-                                    className="inline-flex items-center justify-center rounded-full text-white"
+                                    className="inline-flex items-center justify-center rounded-full text-[color:var(--oltra-text-primary)]"
                                     style={{ width: "18px", height: "18px", background: bg, fontSize: "0.46rem", fontWeight: 700, flexShrink: 0, lineHeight: 1 }}
                                   >
                                     {key}
@@ -2397,14 +2397,14 @@ async function handleCreateTripAndAddHotel() {
                           </div>
 
                           {h.highlights ? (
-                            <div className="mt-2 text-xs leading-relaxed text-white/65">
+                            <div className="mt-2 text-xs leading-relaxed text-[color:var(--oltra-text-muted)]">
                               {clampText(h.highlights, 170)}
                             </div>
                           ) : null}
 
                           <div className="mt-auto pt-2">
                             {featuredAwards.length ? (
-                              <div className="truncate text-[11px] text-white/60">
+                              <div className="truncate text-[11px] text-[color:var(--oltra-text-muted)]">
                                 {featuredAwards.map((award) => award.label).join(" · ")}
                               </div>
                             ) : null}                            
@@ -2501,7 +2501,7 @@ async function handleCreateTripAndAddHotel() {
                   />
 
                   {showNarrowFurtherMessage ? (
-                    <div className="text-[12px] leading-relaxed text-white/72">
+                    <div className="text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
                       Narrow results further by adding region, country, city or setting.
                     </div>
                   ) : null}
@@ -2512,16 +2512,16 @@ async function handleCreateTripAndAddHotel() {
                 href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
                 className="absolute right-5 top-5 z-10 block w-[min(360px,calc(100%-40px))] cursor-pointer rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(24,34,42,0.22)] px-4 py-3 backdrop-blur-[14px] transition-colors hover:border-white/22 hover:bg-[rgba(24,34,42,0.32)]"
               >
-                <div className="text-[11px] uppercase tracking-[0.16em] text-white/72">
+                <div className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--oltra-text-muted)]">
                   Featured hotel
                 </div>
-                <div className="mt-2 text-[1.15rem] font-light tracking-wide text-white">
+                <div className="mt-2 text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
                   {featuredHotel.hotel_name ?? "Featured hotel"}
                 </div>
-                <div className="mt-1 text-[12px] text-white/78">
+                <div className="mt-1 text-[12px] text-[color:var(--oltra-text-muted)]">
                   {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "Curated selection"}
                 </div>
-                <div className="mt-2 text-[12px] leading-relaxed text-white/74">
+                <div className="mt-2 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
                   {getFeaturedAwardsForHotel(featuredHotel as HotelRecord)
                     .map((award) => award.label)
                     .join(" · ") || "Curated featured selection"}
@@ -2551,11 +2551,11 @@ async function handleCreateTripAndAddHotel() {
                 <div className="col-span-12 min-w-0 lg:col-span-8">
                   <div className="oltra-subheader">Selected hotel</div>
 
-                  <h2 className="mt-2 truncate text-2xl font-light tracking-wide text-white md:text-3xl">
+                  <h2 className="mt-2 truncate text-2xl font-light tracking-wide text-[color:var(--oltra-text-primary)] md:text-3xl">
                     {selectedHotel.hotel_name ?? "Untitled hotel"}
                   </h2>
 
-                  <div className="mt-1 text-sm text-white/60">
+                  <div className="mt-1 text-sm text-[color:var(--oltra-text-muted)]">
                     {[selectedHotel.city, selectedHotel.country]
                       .filter(Boolean)
                       .join(" · ") || "—"}
@@ -2575,7 +2575,7 @@ async function handleCreateTripAndAddHotel() {
 
                 {/* Row 2 left: highlights — same row as links for vertical alignment */}
                 {selectedHotel.highlights?.trim() ? (
-                  <div className="col-span-12 text-sm leading-relaxed text-white/72 lg:col-span-8">
+                  <div className="col-span-12 text-sm leading-relaxed text-[color:var(--oltra-text-muted)] lg:col-span-8">
                     {clampText(selectedHotel.highlights, 320)}
                   </div>
                 ) : null}
@@ -2585,7 +2585,7 @@ async function handleCreateTripAndAddHotel() {
                   <div className="col-span-12 flex gap-4 text-sm lg:col-start-9 lg:col-span-4">
                     {selectedHotel.www ? (
                       <a
-                        className="underline underline-offset-4 text-white/80 hover:text-white"
+                        className="underline underline-offset-4 text-[color:var(--oltra-text-primary)]"
                         href={selectedHotel.www}
                         target="_blank"
                         rel="noreferrer"
@@ -2595,7 +2595,7 @@ async function handleCreateTripAndAddHotel() {
                     ) : null}
                     {selectedHotel.insta ? (
                       <a
-                        className="underline underline-offset-4 text-white/80 hover:text-white"
+                        className="underline underline-offset-4 text-[color:var(--oltra-text-primary)]"
                         href={selectedHotel.insta}
                         target="_blank"
                         rel="noreferrer"
@@ -2666,7 +2666,7 @@ async function handleCreateTripAndAddHotel() {
                 <div className="col-span-12 flex flex-col gap-4 lg:col-span-8">
                   <div>
                     <div className="oltra-subheader">Description</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
                       {selectedHotel.description?.trim() ? (() => {
                         const full = selectedHotel.description.trim();
                         const needsExpand = full.length > 520;
@@ -2685,7 +2685,7 @@ async function handleCreateTripAndAddHotel() {
                                     <button
                                       type="button"
                                       onClick={() => setDescExpanded(!descExpanded)}
-                                      className="text-white/45 hover:text-white/75 transition-colors"
+                                      className="text-[color:var(--oltra-text-muted)] hover:text-[color:var(--oltra-text-primary)] transition-colors"
                                     >
                                       {descExpanded ? "less" : "more"}
                                     </button>
@@ -2703,11 +2703,11 @@ async function handleCreateTripAndAddHotel() {
                     <div>
                       <div className="oltra-subheader">Rooms</div>
                       {ratehawkRooms.status === "loading" ? (
-                        <div className="mt-2 text-sm text-white/55">Loading room options…</div>
+                        <div className="mt-2 text-sm text-[color:var(--oltra-text-muted)]">Loading room options…</div>
                       ) : ratehawkRooms.status === "error" ? (
-                        <div className="mt-2 text-sm text-white/55">Could not load room options.</div>
+                        <div className="mt-2 text-sm text-[color:var(--oltra-text-muted)]">Could not load room options.</div>
                       ) : ratehawkRooms.rooms.length === 0 ? (
-                        <div className="mt-2 text-sm text-white/55">
+                        <div className="mt-2 text-sm text-[color:var(--oltra-text-muted)]">
                           {fromValue && toValue && datesAreValid
                             ? "No rooms available for these dates."
                             : "Select dates to see room options."}
@@ -2723,7 +2723,7 @@ async function handleCreateTripAndAddHotel() {
                             return (
                               <div
                                 key={room.roomKey}
-                                className="flex items-center gap-3 rounded-[var(--oltra-radius-md)] border border-white/10 bg-[var(--oltra-field-bg)] p-2.5"
+                                className="flex items-center gap-3 rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-2.5"
                               >
                                 <div className="h-16 w-20 shrink-0 overflow-hidden rounded-[var(--oltra-radius-sm)]">
                                   {thumb ? (
@@ -2741,10 +2741,10 @@ async function handleCreateTripAndAddHotel() {
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-                                  <div className="truncate text-sm font-light text-white">
+                                  <div className="truncate text-sm font-light text-[color:var(--oltra-text-primary)]">
                                     {room.roomName}
                                   </div>
-                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-white/55">
+                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[color:var(--oltra-text-muted)]">
                                     <span>{formatRoomCapacity(room.capacity)}</span>
                                     {room.balcony ? <span>· Balcony</span> : null}
                                     {room.sizeSquareMeters ? (
@@ -2755,7 +2755,7 @@ async function handleCreateTripAndAddHotel() {
                                   <button
                                     type="button"
                                     onClick={() => setOpenRoomDetailKey(room.roomKey)}
-                                    className="mt-1 text-[11px] text-white/50 underline underline-offset-2 hover:text-white/80"
+                                    className="mt-1 text-[11px] text-[color:var(--oltra-text-muted)] underline underline-offset-2 hover:text-[color:var(--oltra-text-primary)]"
                                   >
                                     More details
                                   </button>
@@ -2763,11 +2763,11 @@ async function handleCreateTripAndAddHotel() {
 
                                 <div className="flex shrink-0 flex-col items-end gap-1.5">
                                   <div className="text-right">
-                                    <div className="text-sm font-light text-white">
+                                    <div className="text-sm font-light text-[color:var(--oltra-text-primary)]">
                                       {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
                                     </div>
                                     {nonIncludedTaxes(room).length > 0 ? (
-                                      <div className="text-[10px] text-white/50">+ taxes at hotel</div>
+                                      <div className="text-[10px] text-[color:var(--oltra-text-muted)]">+ taxes at hotel</div>
                                     ) : null}
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -2779,12 +2779,12 @@ async function handleCreateTripAndAddHotel() {
                                           [room.roomKey]: Math.max(0, (prev[room.roomKey] ?? 0) - 1),
                                         }))
                                       }
-                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-white/70 hover:text-white"
+                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:text-[color:var(--oltra-text-primary)]"
                                       aria-label={`Fewer ${room.roomName}`}
                                     >
                                       −
                                     </button>
-                                    <span className="w-4 text-center text-sm text-white">{qty}</span>
+                                    <span className="w-4 text-center text-sm text-[color:var(--oltra-text-primary)]">{qty}</span>
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -2793,7 +2793,7 @@ async function handleCreateTripAndAddHotel() {
                                           [room.roomKey]: (prev[room.roomKey] ?? 0) + 1,
                                         }))
                                       }
-                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-white/70 hover:text-white"
+                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:text-[color:var(--oltra-text-primary)]"
                                       aria-label={`More ${room.roomName}`}
                                     >
                                       +
@@ -2819,13 +2819,13 @@ async function handleCreateTripAndAddHotel() {
                                   onClick={() => setOpenRoomDetailKey(null)}
                                 >
                                   <div
-                                    className="oltra-modal-panel relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-white/12 p-5"
+                                    className="oltra-modal-panel relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-5"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <button
                                       type="button"
                                       onClick={() => setOpenRoomDetailKey(null)}
-                                      className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                                      className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:bg-[var(--oltra-field-bg-solid)] hover:text-[color:var(--oltra-text-primary)]"
                                       aria-label="Close"
                                     >
                                       ×
@@ -2851,21 +2851,21 @@ async function handleCreateTripAndAddHotel() {
                                       </div>
                                     )}
 
-                                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-white/75">
+                                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-[color:var(--oltra-text-primary)]">
                                       <div>
-                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                        <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                           Occupancy
                                         </div>
                                         <div className="mt-0.5">{formatRoomCapacity(room.capacity)}</div>
                                       </div>
                                       <div>
-                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                        <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                           Layout
                                         </div>
                                         <div className="mt-0.5">{formatRoomLayout(room)}</div>
                                       </div>
                                       <div>
-                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                        <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                           Meal
                                         </div>
                                         <div className="mt-0.5">
@@ -2877,7 +2877,7 @@ async function handleCreateTripAndAddHotel() {
                                         </div>
                                       </div>
                                       <div className="col-span-2">
-                                        <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                        <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                           Cancellation
                                         </div>
                                         <div className="mt-0.5">
@@ -2901,7 +2901,7 @@ async function handleCreateTripAndAddHotel() {
                                                   ? `From ${formatRatehawkUtcDateTime(policy.startAt)}`
                                                   : "Full stay";
                                           return (
-                                            <div key={i} className="mt-0.5 text-[12px] text-white/55">
+                                            <div key={i} className="mt-0.5 text-[12px] text-[color:var(--oltra-text-muted)]">
                                               {window}: {charge}
                                             </div>
                                           );
@@ -2909,7 +2909,7 @@ async function handleCreateTripAndAddHotel() {
                                       </div>
                                       {nonIncludedTaxes(room).length > 0 || includedTaxNames(room) ? (
                                         <div className="col-span-2">
-                                          <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                          <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                             Taxes &amp; fees
                                           </div>
                                           {includedTaxNames(room) ? (
@@ -2927,7 +2927,7 @@ async function handleCreateTripAndAddHotel() {
                                       ) : null}
                                       {room.amenities.length ? (
                                         <div className="col-span-2">
-                                          <div className="text-[11px] uppercase tracking-[0.1em] text-white/45">
+                                          <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                             Amenities
                                           </div>
                                           <div className="mt-0.5">{room.amenities.join(", ")}</div>
@@ -2935,7 +2935,7 @@ async function handleCreateTripAndAddHotel() {
                                       ) : null}
                                     </div>
 
-                                    <div className="mt-4 text-right text-base font-light text-white">
+                                    <div className="mt-4 text-right text-base font-light text-[color:var(--oltra-text-primary)]">
                                       {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
                                     </div>
                                   </div>
@@ -2952,9 +2952,9 @@ async function handleCreateTripAndAddHotel() {
                   <div className="mt-auto grid grid-cols-2 items-end gap-x-6 gap-y-2">
 
                     {roomSelectionTotal > 0 ? (
-                      <div className="col-start-1 row-start-1 flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 text-sm text-white/78">
-                        <span className="text-[12px] text-white/55">Total</span>
-                        <span className="font-light text-white">
+                      <div className="col-start-1 row-start-1 flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-sm text-[color:var(--oltra-text-primary)]">
+                        <span className="text-[12px] text-[color:var(--oltra-text-muted)]">Total</span>
+                        <span className="font-light text-[color:var(--oltra-text-primary)]">
                           {roomSelectionCurrency} {Math.round(roomSelectionTotal).toLocaleString()}
                         </span>
                       </div>
@@ -2963,7 +2963,7 @@ async function handleCreateTripAndAddHotel() {
                         href={selectedHotelBookingHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="col-start-1 row-start-1 inline-flex h-[var(--oltra-button-height)] w-full items-center justify-center rounded-[var(--oltra-radius-md)] border border-white/14 bg-[rgba(24,34,42,0.42)] px-3 text-[12px] text-white/60 underline underline-offset-4 hover:text-white"
+                        className="col-start-1 row-start-1 inline-flex h-[var(--oltra-button-height)] w-full items-center justify-center rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-[12px] text-[color:var(--oltra-text-muted)] underline underline-offset-4 hover:text-[color:var(--oltra-text-primary)]"
                       >
                         {selectedHotelBookingLabel}
                       </a>
@@ -2994,12 +2994,12 @@ async function handleCreateTripAndAddHotel() {
                                 </button>
                               ))
                             ) : (
-                              <div className="text-[12px] text-white/65">
+                              <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
                                 No trips available.
                               </div>
                             )}
 
-                            <div className="mt-3 border-t border-white/10 pt-3">
+                            <div className="mt-3 border-t border-[var(--oltra-field-border)] pt-3">
                               <div className="oltra-subheader">Create new trip</div>
 
                               <div className="mt-2 flex flex-col gap-2">
@@ -3082,13 +3082,13 @@ async function handleCreateTripAndAddHotel() {
                     </button>
 
                     {ratehawkRooms.status === "error" ? (
-                      <div className="col-start-2 text-[12px] text-white/58">
+                      <div className="col-start-2 text-[12px] text-[color:var(--oltra-text-muted)]">
                         Could not load room availability.
                       </div>
                     ) : null}
 
                     {(memberActionError || memberActionMessage) ? (
-                      <div className="col-start-2 text-[12px] text-white/65">
+                      <div className="col-start-2 text-[12px] text-[color:var(--oltra-text-muted)]">
                         {memberActionError || memberActionMessage}
                       </div>
                     ) : null}
@@ -3099,7 +3099,7 @@ async function handleCreateTripAndAddHotel() {
                 <div className="col-span-12 lg:col-span-4 space-y-4">
                   <div>
                     <div className="oltra-subheader">Setting</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
                       {selectedHotelSettings.length
                         ? selectedHotelSettings.slice(0, 8).join(" · ")
                         : "—"}
@@ -3108,7 +3108,7 @@ async function handleCreateTripAndAddHotel() {
 
                   <div>
                     <div className="oltra-subheader">Style</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
                       {selectedHotelStyles.length
                         ? selectedHotelStyles.slice(0, 8).join(" · ")
                         : "—"}
@@ -3117,7 +3117,7 @@ async function handleCreateTripAndAddHotel() {
 
                   <div>
                     <div className="oltra-subheader">Activities</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
                       {selectedHotelActivities.length
                         ? selectedHotelActivities.slice(0, 10).join(" · ")
                         : "—"}
@@ -3126,7 +3126,7 @@ async function handleCreateTripAndAddHotel() {
 
                   <div>
                     <div className="oltra-subheader">Accolades</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
                       {selectedHotelAwards.length
                         ? selectedHotelAwards.slice(0, 8).join(" · ")
                         : "—"}
@@ -3135,7 +3135,7 @@ async function handleCreateTripAndAddHotel() {
 
                   <div>
                     <div className="oltra-subheader">Brand</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-white/75">
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
                       {selectedHotel.affiliation?.trim() || "—"}
                     </div>
                   </div>
@@ -3149,13 +3149,13 @@ async function handleCreateTripAndAddHotel() {
                       onClick={() => setLightboxOpen(false)}
                     >
                       <div
-                        className="oltra-modal-panel relative mt-[110px] h-fit w-full max-w-[1100px] rounded-[var(--oltra-radius-xl)] border border-white/12 p-5"
+                        className="oltra-modal-panel relative mt-[110px] h-fit w-full max-w-[1100px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           type="button"
                           onClick={() => setLightboxOpen(false)}
-                          className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                          className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:bg-[var(--oltra-field-bg-solid)] hover:text-[color:var(--oltra-text-primary)]"
                           aria-label="Close"
                         >
                           ×
@@ -3171,7 +3171,7 @@ async function handleCreateTripAndAddHotel() {
                                   : prev - 1
                               )
                             }
-                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:bg-[var(--oltra-field-bg-solid)] hover:text-[color:var(--oltra-text-primary)]"
                             aria-label="Previous image"
                           >
                             ‹
@@ -3197,7 +3197,7 @@ async function handleCreateTripAndAddHotel() {
                                   : prev + 1
                               )
                             }
-                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/16"
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:bg-[var(--oltra-field-bg-solid)] hover:text-[color:var(--oltra-text-primary)]"
                             aria-label="Next image"
                           >
                             ›
@@ -3210,7 +3210,7 @@ async function handleCreateTripAndAddHotel() {
                 : null}
             </div>
           ) : (
-            <div className="p-10 text-white/60">Select a hotel to view details.</div>
+            <div className="p-10 text-[color:var(--oltra-text-muted)]">Select a hotel to view details.</div>
           )}
         </section>
       </div>
