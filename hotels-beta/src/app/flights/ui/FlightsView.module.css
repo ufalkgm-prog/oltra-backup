@@ -562,46 +562,96 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
+/* Departure/active-column cards carry their own inline price instead of a
+   separate price column, so their content is a row: flight info + price. */
+.selectCardRow {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.selectCardRow > .flightCardInner {
+  flex: 1;
+  min-width: 0;
+}
+
+.inlinePrice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.inlinePriceFrom {
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+
+.inlinePriceAmount {
+  font-size: 0.95rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* Two independently-scrolling panes side by side (Departure | Return+Price
+   for return trips; one pane per leg + a final price pane for multi-city). */
+.splitPanes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--oltra-gap-md);
+  align-items: start;
+}
+
+.paneHeader {
+  padding: 0 13px;
+  margin-bottom: -4px;
+}
+
 .flightCardInner {
   position: relative;
   display: grid;
   gap: 3px;
+  /* Reserve room so the times/duration row (and its match badge) never
+     renders underneath the absolutely-positioned Info pill. */
+  padding-right: 44px;
 }
 
 .infoButton {
   position: absolute;
   top: 8px;
   right: 10px;
-  width: 16px;
-  height: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--oltra-text-secondary);
-  font-size: 0.62rem;
+  border-radius: var(--oltra-radius-sm, 4px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: #fff;
+  color: #111;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   line-height: 1;
-  font-family: serif;
-  font-style: italic;
   cursor: pointer;
-  padding: 0;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  padding: 4px 8px;
+  transition: background 140ms ease, border-color 140ms ease;
 }
 
 .infoButton:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: var(--oltra-text-primary);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: #f0f0f0;
+  border-color: #fff;
 }
 
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: var(--oltra-flights-modal-backdrop);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* No dimming/blur - this should behave like a normal popup, not a
+     page-blocking modal. Kept as a transparent full-screen layer purely so
+     a click outside the popup panel still closes it. */
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -806,6 +856,30 @@
   font-size: 0.82rem;
   opacity: 0.45;
   flex-shrink: 0;
+}
+
+.flightDuration {
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.airlineMarks {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.airlineMark {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  display: block;
+  border-radius: 2px;
 }
 
 .flightAirlineText {

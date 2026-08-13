@@ -6,12 +6,26 @@ type TripType = 'one-way' | 'return' | 'multiple'
 export type AirlineRef = {
   name: string
   iataCode: string
+  logoUrl: string | null
 }
 
 export type Layover = {
   code: string
   name: string
   durationMinutes: number
+}
+
+export type Baggage = {
+  type: 'carry_on' | 'checked'
+  quantity: number
+}
+
+export type CabinAmenities = {
+  wifiAvailable: boolean | null
+  wifiCost: string | null
+  seatType: string | null
+  seatPitch: string | null
+  powerAvailable: boolean | null
 }
 
 export type Segment = {
@@ -29,6 +43,25 @@ export type Segment = {
   aircraft: string
   originTimezone: string
   destinationTimezone: string
+  originTerminal: string | null
+  destinationTerminal: string | null
+  cabinClassMarketingName: string
+  baggages: Baggage[]
+  amenities: CabinAmenities | null
+}
+
+// Duffel's condition fields are a genuine tri-state: `true`/`false` (allowed
+// or not) or `null` when the airline hasn't told Duffel either way - collapse
+// that into a boolean loses real "unspecified" information, so this stays a
+// tri-state rather than defaulting null to false.
+export type SliceConditionFlag = boolean | null
+
+export type SliceConditions = {
+  refundable: SliceConditionFlag
+  changeable: SliceConditionFlag
+  advanceSeatSelection: SliceConditionFlag
+  priorityBoarding: SliceConditionFlag
+  priorityCheckIn: SliceConditionFlag
 }
 
 export type FlightLeg = {
@@ -47,6 +80,7 @@ export type FlightLeg = {
   layovers: Layover[]
   segments: Segment[]
   fareBrand: string
+  conditions: SliceConditions
 }
 
 export type Itinerary = {
@@ -123,11 +157,24 @@ function placeName(place: unknown): string {
   return p?.city?.name ?? p?.name ?? ''
 }
 
+function segmentAmenities(seg: OfferSlice['segments'][number]): CabinAmenities | null {
+  const cabin = seg.passengers?.[0]?.cabin
+  if (!cabin) return null
+  return {
+    wifiAvailable: cabin.amenities?.wifi?.available ?? null,
+    wifiCost: cabin.amenities?.wifi?.cost ?? null,
+    seatType: cabin.amenities?.seat?.type ?? null,
+    seatPitch: cabin.amenities?.seat?.pitch ?? null,
+    powerAvailable: cabin.amenities?.power?.available ?? null,
+  }
+}
+
 function normalizeSegment(seg: OfferSlice['segments'][number]): Segment {
   return {
     airline: {
       name: seg.marketing_carrier.name,
       iataCode: seg.marketing_carrier.iata_code ?? '',
+      logoUrl: seg.marketing_carrier.logo_symbol_url ?? null,
     },
     flightNumber: `${seg.marketing_carrier.iata_code}${seg.marketing_carrier_flight_number}`,
     originCode: placeCode(seg.origin),
@@ -142,6 +189,33 @@ function normalizeSegment(seg: OfferSlice['segments'][number]): Segment {
     aircraft: (seg as { aircraft?: { name?: string | null } | null }).aircraft?.name ?? '',
     originTimezone: placeTimezone(seg.origin),
     destinationTimezone: placeTimezone(seg.destination),
+    originTerminal: seg.origin_terminal ?? null,
+    destinationTerminal: seg.destination_terminal ?? null,
+    cabinClassMarketingName: seg.passengers?.[0]?.cabin_class_marketing_name ?? '',
+    baggages: (seg.passengers?.[0]?.baggages ?? []).map(b => ({ type: b.type, quantity: b.quantity })),
+    amenities: segmentAmenities(seg),
+  }
+}
+
+function sliceConditionFlag(condition: { allowed: boolean } | null | undefined): SliceConditionFlag {
+  return condition ? condition.allowed : null
+}
+
+function normalizeSliceConditions(slice: OfferSlice): SliceConditions {
+  const conditions = (slice as { conditions?: {
+    refund_before_departure?: { allowed: boolean } | null
+    change_before_departure?: { allowed: boolean } | null
+    advance_seat_selection?: boolean | null
+    priority_boarding?: boolean | null
+    priority_check_in?: boolean | null
+  } }).conditions ?? {}
+
+  return {
+    refundable: sliceConditionFlag(conditions.refund_before_departure),
+    changeable: sliceConditionFlag(conditions.change_before_departure),
+    advanceSeatSelection: conditions.advance_seat_selection ?? null,
+    priorityBoarding: conditions.priority_boarding ?? null,
+    priorityCheckIn: conditions.priority_check_in ?? null,
   }
 }
 
@@ -180,7 +254,11 @@ function normalizeSlice(slice: OfferSlice): FlightLeg {
     const code = seg.marketing_carrier.iata_code
     if (!code || seenCarriers.has(code)) continue
     seenCarriers.add(code)
-    airlines.push({ name: seg.marketing_carrier.name, iataCode: code })
+    airlines.push({
+      name: seg.marketing_carrier.name,
+      iataCode: code,
+      logoUrl: seg.marketing_carrier.logo_symbol_url ?? null,
+    })
   }
 
   const longestSeg = segs.reduce(
@@ -189,7 +267,11 @@ function normalizeSlice(slice: OfferSlice): FlightLeg {
   )
   const longHaulAirline: AirlineRef | null =
     longestSeg && longestSeg.marketing_carrier.iata_code
-      ? { name: longestSeg.marketing_carrier.name, iataCode: longestSeg.marketing_carrier.iata_code }
+      ? {
+          name: longestSeg.marketing_carrier.name,
+          iataCode: longestSeg.marketing_carrier.iata_code,
+          logoUrl: longestSeg.marketing_carrier.logo_symbol_url ?? null,
+        }
       : null
 
   const layovers = buildLayovers(slice)
@@ -215,6 +297,7 @@ function normalizeSlice(slice: OfferSlice): FlightLeg {
     // priced very differently - surfaced on the card so those don't render
     // as indistinguishable duplicates with silently different prices.
     fareBrand: (slice as { fare_brand_name?: string | null }).fare_brand_name ?? '',
+    conditions: normalizeSliceConditions(slice),
   }
 }
 

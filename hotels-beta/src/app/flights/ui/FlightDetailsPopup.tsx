@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { FlightLeg } from "@/lib/flights/duffelNormalizer";
+import type { FlightLeg, Segment, Baggage, SliceConditionFlag } from "@/lib/flights/duffelNormalizer";
 import styles from "./FlightsView.module.css";
 
 type Props = {
@@ -11,6 +11,38 @@ type Props = {
 
 function formatDur(mins: number): string {
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+}
+
+function formatFlag(flag: SliceConditionFlag): string {
+  if (flag === true) return "Yes";
+  if (flag === false) return "No";
+  return "Not specified by airline";
+}
+
+function formatSeatType(type: string | null): string {
+  if (!type || type === "n/a") return "";
+  return type
+    .split("_")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function formatWifi(seg: Segment): string {
+  if (seg.amenities?.wifiAvailable === false) return "Not available";
+  if (seg.amenities?.wifiAvailable !== true) return "Not specified by airline";
+  const cost = seg.amenities?.wifiCost;
+  if (cost === "free") return "Available · Free";
+  if (cost === "paid") return "Available · Paid";
+  if (cost === "free or paid") return "Available · Free or paid";
+  return "Available";
+}
+
+function formatBaggages(baggages: Baggage[]): string {
+  if (!baggages.length) return "Not specified by airline";
+  const parts = baggages
+    .filter(b => b.quantity > 0)
+    .map(b => `${b.quantity} ${b.type === "checked" ? "checked" : "carry-on"}`);
+  return parts.length ? parts.join(", ") : "None included";
 }
 
 function tzOffsetHours(iso: string): number | null {
@@ -98,11 +130,44 @@ export default function FlightDetailsPopup({ flight, onClose }: Props) {
                   <div className={styles.segmentAirports}>
                     <div>
                       <div className={styles.segmentAirport}>{seg.originName}</div>
-                      <div className={styles.segmentCode}>{seg.originCode}</div>
+                      <div className={styles.segmentCode}>
+                        {seg.originCode}
+                        {seg.originTerminal ? ` · Terminal ${seg.originTerminal}` : ""}
+                      </div>
                     </div>
                     <div className={styles.segmentAirportRight}>
                       <div className={styles.segmentAirport}>{seg.destinationName}</div>
-                      <div className={styles.segmentCode}>{seg.destinationCode}</div>
+                      <div className={styles.segmentCode}>
+                        {seg.destinationCode}
+                        {seg.destinationTerminal ? ` · Terminal ${seg.destinationTerminal}` : ""}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.modalSummary}>
+                    {seg.cabinClassMarketingName ? (
+                      <div className={styles.summaryRow}>
+                        <span>Cabin</span>
+                        <span>{seg.cabinClassMarketingName}</span>
+                      </div>
+                    ) : null}
+                    {formatSeatType(seg.amenities?.seatType ?? null) ? (
+                      <div className={styles.summaryRow}>
+                        <span>Seat type</span>
+                        <span>{formatSeatType(seg.amenities?.seatType ?? null)}</span>
+                      </div>
+                    ) : null}
+                    <div className={styles.summaryRow}>
+                      <span>Wi-Fi</span>
+                      <span>{formatWifi(seg)}</span>
+                    </div>
+                    <div className={styles.summaryRow}>
+                      <span>Power</span>
+                      <span>{formatFlag(seg.amenities?.powerAvailable ?? null)}</span>
+                    </div>
+                    <div className={styles.summaryRow}>
+                      <span>Bags included</span>
+                      <span>{formatBaggages(seg.baggages)}</span>
                     </div>
                   </div>
                 </div>
@@ -130,6 +195,26 @@ export default function FlightDetailsPopup({ flight, onClose }: Props) {
             <div className={styles.summaryRow}>
               <span>Airlines</span>
               <span>{flight.airlines.map(a => a.name).join(", ")}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span>Refundable</span>
+              <span>{formatFlag(flight.conditions.refundable)}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span>Changeable</span>
+              <span>{formatFlag(flight.conditions.changeable)}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span>Priority boarding</span>
+              <span>{formatFlag(flight.conditions.priorityBoarding)}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span>Priority check-in</span>
+              <span>{formatFlag(flight.conditions.priorityCheckIn)}</span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span>Advance seat selection</span>
+              <span>{formatFlag(flight.conditions.advanceSeatSelection)}</span>
             </div>
           </div>
         </div>

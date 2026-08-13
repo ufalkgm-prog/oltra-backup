@@ -6,7 +6,7 @@ import OltraSelect from "@/components/site/OltraSelect";
 import { mergeHotelFlightSearch, readHotelFlightSearch } from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, getMemberActionAccessBrowser } from "@/lib/members/db";
-import { type Itinerary, type FlightLeg, normalizeOffers } from "@/lib/flights/duffelNormalizer";
+import { type Itinerary, type FlightLeg, type AirlineRef, normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
@@ -143,7 +143,11 @@ function buildInitialSearch(searchParams: PageSearchParams): SearchState {
 
   const source = saved ?? searchParams;
 
-  const originParam = normalizeParam(searchParams.origin);
+  // Falls back to session storage (source.origin) same as the destination
+  // below - previously only ever read from the URL, so the origin airport
+  // silently reverted to blank on any revisit that didn't carry it as a URL
+  // param (e.g. navigating back via the header "Flights" link).
+  const originParam = normalizeParam(searchParams.origin) || normalizeParam(source.origin);
   const cityHandover = normalizeParam(source.city) || normalizeParam(source.q);
   const resolvedTo = cityHandover ? resolveAirportCode(cityHandover) : "";
 
@@ -211,6 +215,36 @@ function dedupeById<T extends { id: string }>(items: T[]): T[] {
     seen.add(item.id);
     return true;
   });
+}
+
+// departTime is always a zero-padded "HH:MM" string, so a plain string sort
+// is a correct chronological (same-day) sort.
+function sortByDepartTime<T extends { departTime: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => a.departTime.localeCompare(b.departTime));
+}
+
+// Departure/Return/each multi-city leg now scroll independently (their own
+// container each), so the "does this pane's scrollbar eat into its width"
+// check (which drives the header's matching right-padding) has to be
+// tracked per-pane rather than once globally. `content` is whatever list is
+// currently rendered in that pane - passing it as the effect's dependency
+// re-runs the check whenever the pane's row count changes.
+function useScrollGutter(content: unknown): [React.MutableRefObject<HTMLDivElement | null>, boolean] {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [hasGutter, setHasGutter] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setHasGutter(el.scrollHeight > el.clientHeight + 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    Array.from(el.children).forEach(c => ro.observe(c));
+    return () => ro.disconnect();
+  }, [content]);
+
+  return [ref, hasGutter];
 }
 
 type ReturnMatchTier = "long-haul" | "alliance" | null;
@@ -374,7 +408,12 @@ export default function FlightsView({ searchParams }: Props) {
   useEffect(() => {
     mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
-      city: normalizeParam(searchParams.city),
+      // Destination typed directly into this page's own AirportAutocomplete
+      // (search.to) has to win over a stale/absent URL `city` param, or the
+      // destination silently fails to round-trip through session storage on
+      // navigation away and back (e.g. logging in, then returning via the
+      // header "Flights" link).
+      city: cityForCode(search.to) || normalizeParam(searchParams.city),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
       from: search.departDate,
@@ -447,7 +486,7 @@ export default function FlightsView({ searchParams }: Props) {
   );
 
   const outboundOptions = useMemo(
-    () => dedupeById(standardItineraries.map(item => item.outbound)),
+    () => sortByDepartTime(dedupeById(standardItineraries.map(item => item.outbound))),
     [standardItineraries]
   );
 
@@ -470,14 +509,24 @@ export default function FlightsView({ searchParams }: Props) {
     return standardItineraries.filter(item => item.outbound.id === selectedOutboundId);
   }, [selectedOutboundId, standardItineraries]);
 
+  // Remembers the physical return flight (by its leg fingerprint, not the
+  // offer id, which is specific to one outbound+inbound pairing) so that
+  // switching to a different but still-compatible departure can re-select
+  // the equivalent itinerary instead of always blanking the return choice.
+  const lastReturnLegIdRef = useRef<string>("");
+
   useEffect(() => {
-    // Auto-select the sole compatible return flight instead of leaving the
-    // user to pick from a list of one - there's nothing to choose between.
-    if (visibleReturnItineraries.length === 1) {
-      setSelectedReturnId(visibleReturnItineraries[0].id);
-    } else {
-      setSelectedReturnId("");
-    }
+    // Preserve the previously-selected return flight if it's still
+    // compatible with the newly-selected departure; otherwise auto-select
+    // the sole compatible return (nothing to choose between) or clear.
+    setSelectedReturnId(() => {
+      const preserved = lastReturnLegIdRef.current
+        ? visibleReturnItineraries.find(it => it.inbound?.id === lastReturnLegIdRef.current)
+        : undefined;
+      if (preserved) return preserved.id;
+      if (visibleReturnItineraries.length === 1) return visibleReturnItineraries[0].id;
+      return "";
+    });
   }, [visibleReturnItineraries]);
 
   const selectedOutboundLeg = useMemo(
@@ -495,25 +544,37 @@ export default function FlightsView({ searchParams }: Props) {
     [selectedReturnItinerary]
   );
 
+  useEffect(() => {
+    if (selectedReturnLeg) lastReturnLegIdRef.current = selectedReturnLeg.id;
+  }, [selectedReturnLeg]);
+
   const selectedFullItinerary = useMemo(() => {
     if (!selectedOutboundId) return null;
     if (isOneWay) return itineraryByOutboundId.get(selectedOutboundId) ?? null;
     return selectedReturnItinerary;
   }, [selectedOutboundId, isOneWay, itineraryByOutboundId, selectedReturnItinerary]);
 
-  const resultsScrollRef = useRef<HTMLDivElement | null>(null);
-  const [hasScrollGutter, setHasScrollGutter] = useState(false);
+  // Departure pane (also used as the single pane for one-way) and the
+  // Return+Price pane now scroll independently, so each tracks its own
+  // scrollbar-gutter state for its own header's padding.
+  const [departureScrollRef, departureHasGutter] = useScrollGutter(outboundOptions);
+  const [returnScrollRef, returnHasGutter] = useScrollGutter(visibleReturnItineraries);
 
-  useEffect(() => {
-    const el = resultsScrollRef.current;
-    if (!el) return;
-    const check = () => setHasScrollGutter(el.scrollHeight > el.clientHeight + 1);
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    Array.from(el.children).forEach(c => ro.observe(c));
-    return () => ro.disconnect();
-  }, [filteredItineraries, selectedOutboundId, visibleReturnItineraries]);
+  // Cheapest full itinerary containing each departure, across every
+  // compatible return - Duffel has no standalone per-slice price on a
+  // return-trip offer (see CLAUDE.md §7B), so this "from €X" is the closest
+  // real equivalent, shown inline on each departure card.
+  const departureFromPriceMap = useMemo(() => {
+    const map = new Map<string, { priceEur: number; currency: string }>();
+    if (isOneWay || isMultiple) return map;
+    for (const it of filteredItineraries) {
+      const existing = map.get(it.outbound.id);
+      if (!existing || it.priceEur < existing.priceEur) {
+        map.set(it.outbound.id, { priceEur: it.priceEur, currency: it.currency });
+      }
+    }
+    return map;
+  }, [filteredItineraries, isOneWay, isMultiple]);
 
   const canSearch = useMemo(() => {
     if (isMultiple) {
@@ -538,6 +599,7 @@ export default function FlightsView({ searchParams }: Props) {
     setSelectedReturnId("");
     setSelectedMultiLegIds([]);
     setItineraries([]);
+    lastReturnLegIdRef.current = "";
     setFilters(f => ({ ...f, airlines: [], layoverAirports: [] }));
     try {
       const requestBody = isMultiple
@@ -704,7 +766,7 @@ export default function FlightsView({ searchParams }: Props) {
       const matching = filteredItineraries.filter(it =>
         prevSelections.every((legId, i) => it.slices[i]?.id === legId)
       );
-      return dedupeById(matching.map(it => it.slices[k]).filter((l): l is FlightLeg => Boolean(l)));
+      return sortByDepartTime(dedupeById(matching.map(it => it.slices[k]).filter((l): l is FlightLeg => Boolean(l))));
     });
   }, [filteredItineraries, selectedMultiLegIds, isMultiple, search.multiCity]);
 
@@ -1020,33 +1082,59 @@ export default function FlightsView({ searchParams }: Props) {
                     onInfo={setDetailFlight}
                     onSave={handleSaveToTrip}
                     getSaveLabel={getSaveLabel}
-                    resultsScrollRef={resultsScrollRef}
-                    hasScrollGutter={hasScrollGutter}
                   />
                 </div>
-              ) : (
+              ) : isOneWay ? (
                 <>
-                  <div className={`${isOneWay ? styles.columnHeadersOneWay : styles.columnHeaders} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
-                    <div className={styles.columnLabel}>Departure</div>
-                    {!isOneWay ? (
-                      <div className={styles.columnLabel}>Return</div>
-                    ) : null}
-                    <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Total price</div>
+                  <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
+                    Departure
                   </div>
 
-                  <div className={`${styles.pinnedStack} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
-                    {recommended ? (
-                      <PinnedRow label="Top pick" itinerary={recommended} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} onSave={handleSaveToTrip} getSaveLabel={getSaveLabel} />
-                    ) : null}
+                  <div className={styles.pinnedStack}>
                     {fastest ? (
-                      <PinnedRow label="Fastest" itinerary={fastest} oneWay={isOneWay} onBook={handleBook} onInfo={setDetailFlight} onSave={handleSaveToTrip} getSaveLabel={getSaveLabel} />
+                      <PinnedRow
+                        label="Fastest"
+                        itinerary={fastest}
+                        oneWay
+                        selectedOutboundId={selectedOutboundId}
+                        selectedReturnId={selectedReturnId}
+                        visibleReturnItineraries={visibleReturnItineraries}
+                        departureHasGutter={departureHasGutter}
+                        returnHasGutter={returnHasGutter}
+                        onSelectOutbound={setSelectedOutboundId}
+                        onSelectReturn={setSelectedReturnId}
+                        onBook={handleBook}
+                        onInfo={setDetailFlight}
+                        onSave={handleSaveToTrip}
+                        getSaveLabel={getSaveLabel}
+                      />
+                    ) : null}
+                    {recommended ? (
+                      <PinnedRow
+                        label="Best price"
+                        itinerary={recommended}
+                        oneWay
+                        selectedOutboundId={selectedOutboundId}
+                        selectedReturnId={selectedReturnId}
+                        visibleReturnItineraries={visibleReturnItineraries}
+                        departureHasGutter={departureHasGutter}
+                        returnHasGutter={returnHasGutter}
+                        onSelectOutbound={setSelectedOutboundId}
+                        onSelectReturn={setSelectedReturnId}
+                        onBook={handleBook}
+                        onInfo={setDetailFlight}
+                        onSave={handleSaveToTrip}
+                        getSaveLabel={getSaveLabel}
+                      />
                     ) : null}
                     {selectedOutboundLeg ? (
                       <SelectedRow
                         outbound={selectedOutboundLeg}
                         inbound={selectedReturnLeg}
                         itinerary={selectedFullItinerary}
-                        oneWay={isOneWay}
+                        oneWay
+                        departureHasGutter={departureHasGutter}
+                        returnHasGutter={returnHasGutter}
                         onBook={handleBook}
                         onInfo={setDetailFlight}
                         onSave={handleSaveToTrip}
@@ -1055,105 +1143,192 @@ export default function FlightsView({ searchParams }: Props) {
                     ) : null}
                   </div>
 
-                  <div className={styles.resultsScroll} ref={resultsScrollRef}>
-                  <div className={isOneWay ? styles.resultsGridOneWay : styles.resultsGrid}>
-                    {(() => {
-                      const sortedOutbound = sortTopFirst(outboundOptions, selectedOutboundId);
-                      const sortedReturn = sortTopFirst(visibleReturnItineraries, selectedReturnId);
-                      const displayedOutbound = sortedOutbound.filter(f => f.id !== selectedOutboundId);
-                      const displayedReturn = sortedReturn.filter(it => it.id !== selectedReturnId);
-                      return (
-                        <>
-                          <div className={styles.columnBox}>
-                            <div className={styles.cardStack}>
-                              {displayedOutbound.length ? (
-                                displayedOutbound.map(flight => (
-                                  <div
-                                    key={flight.id}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => setSelectedOutboundId(flight.id)}
-                                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
-                                    className={styles.selectCard}
-                                  >
-                                    <FlightCardContent flight={flight} onInfo={setDetailFlight} />
-                                  </div>
-                                ))
-                              ) : (
-                                <div className={styles.emptyHint}>No departure flights match the selected filters.</div>
-                              )}
+                  <div className={styles.resultsScroll} ref={departureScrollRef}>
+                    <div className={styles.cardStack}>
+                      {(() => {
+                        const displayedOutbound = sortTopFirst(outboundOptions, selectedOutboundId)
+                          .filter(f => f.id !== selectedOutboundId);
+                        if (!displayedOutbound.length) {
+                          return <div className={styles.emptyHint}>No departure flights match the selected filters.</div>;
+                        }
+                        return displayedOutbound.map(flight => {
+                          const it = itineraryByOutboundId.get(flight.id);
+                          return (
+                            <div
+                              key={flight.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setSelectedOutboundId(flight.id)}
+                              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
+                              className={`${styles.selectCard} ${styles.selectCardRow}`}
+                            >
+                              <FlightCardContent flight={flight} onInfo={setDetailFlight} />
+                              {it ? <InlinePrice priceEur={it.priceEur} currency={it.currency} showFrom={false} /> : null}
                             </div>
-                          </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.splitPanes}>
+                    <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
+                      Departure
+                    </div>
+                    <div className={`${styles.columnHeadersOneWay} ${returnHasGutter ? styles.withScrollGutter : ""}`}>
+                      <div className={styles.columnLabel}>Return</div>
+                      <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Total price</div>
+                    </div>
+                  </div>
 
-                          {!isOneWay ? (
-                            <div className={styles.columnBox}>
-                              <div className={styles.cardStack}>
-                                {!selectedOutboundId ? (
-                                  <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
-                                ) : displayedReturn.length ? (
-                                  displayedReturn.map(item => {
-                                    const tier = item.inbound && selectedOutboundLeg
-                                      ? getReturnMatchTier(selectedOutboundLeg, item.inbound)
-                                      : null;
-                                    const matchClass = tier === "long-haul"
-                                      ? styles.selectCardMatchStrong
-                                      : tier === "alliance"
-                                      ? styles.selectCardMatchWeak
-                                      : "";
-                                    return (
-                                      <div
-                                        key={item.id}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => setSelectedReturnId(item.id)}
-                                        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedReturnId(item.id); }}
-                                        className={`${styles.selectCard} ${matchClass}`}
-                                      >
-                                        {item.inbound ? <FlightCardContent flight={item.inbound} matchTier={tier} onInfo={setDetailFlight} /> : null}
-                                      </div>
-                                    );
-                                  })
-                                ) : !visibleReturnItineraries.length ? (
-                                  <div className={styles.emptyHint}>No compatible return flights found.</div>
-                                ) : visibleReturnItineraries.length === 1 ? (
-                                  <div className={styles.emptyHint}>No other return flights match the selected departure flight.</div>
-                                ) : null}
+                  <div className={styles.pinnedStack}>
+                    {fastest ? (
+                      <PinnedRow
+                        label="Fastest"
+                        itinerary={fastest}
+                        oneWay={false}
+                        selectedOutboundId={selectedOutboundId}
+                        selectedReturnId={selectedReturnId}
+                        visibleReturnItineraries={visibleReturnItineraries}
+                        departureHasGutter={departureHasGutter}
+                        returnHasGutter={returnHasGutter}
+                        onSelectOutbound={setSelectedOutboundId}
+                        onSelectReturn={setSelectedReturnId}
+                        onBook={handleBook}
+                        onInfo={setDetailFlight}
+                        onSave={handleSaveToTrip}
+                        getSaveLabel={getSaveLabel}
+                      />
+                    ) : null}
+                    {recommended ? (
+                      <PinnedRow
+                        label="Best price"
+                        itinerary={recommended}
+                        oneWay={false}
+                        selectedOutboundId={selectedOutboundId}
+                        selectedReturnId={selectedReturnId}
+                        visibleReturnItineraries={visibleReturnItineraries}
+                        departureHasGutter={departureHasGutter}
+                        returnHasGutter={returnHasGutter}
+                        onSelectOutbound={setSelectedOutboundId}
+                        onSelectReturn={setSelectedReturnId}
+                        onBook={handleBook}
+                        onInfo={setDetailFlight}
+                        onSave={handleSaveToTrip}
+                        getSaveLabel={getSaveLabel}
+                      />
+                    ) : null}
+                    {selectedOutboundLeg ? (
+                      <SelectedRow
+                        outbound={selectedOutboundLeg}
+                        inbound={selectedReturnLeg}
+                        itinerary={selectedFullItinerary}
+                        oneWay={false}
+                        departureHasGutter={departureHasGutter}
+                        returnHasGutter={returnHasGutter}
+                        onBook={handleBook}
+                        onInfo={setDetailFlight}
+                        onSave={handleSaveToTrip}
+                        getSaveLabel={getSaveLabel}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className={styles.splitPanes}>
+                    {/* Departure pane - its own scroll, own "from €X" price per card */}
+                    <div className={styles.resultsScroll} ref={departureScrollRef}>
+                      <div className={styles.cardStack}>
+                        {(() => {
+                          const displayedOutbound = sortTopFirst(outboundOptions, selectedOutboundId)
+                            .filter(f => f.id !== selectedOutboundId);
+                          if (!displayedOutbound.length) {
+                            return <div className={styles.emptyHint}>No departure flights match the selected filters.</div>;
+                          }
+                          return displayedOutbound.map(flight => {
+                            const price = departureFromPriceMap.get(flight.id);
+                            return (
+                              <div
+                                key={flight.id}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => setSelectedOutboundId(flight.id)}
+                                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
+                                className={`${styles.selectCard} ${styles.selectCardRow}`}
+                              >
+                                <FlightCardContent flight={flight} onInfo={setDetailFlight} />
+                                {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} showFrom /> : null}
                               </div>
-                            </div>
-                          ) : null}
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
 
-                          <div className={styles.priceColumn}>
-                            <div className={styles.cardStack}>
-                              {isOneWay
-                                ? displayedOutbound
-                                    .map(flight => itineraryByOutboundId.get(flight.id))
-                                    .filter((it): it is Itinerary => Boolean(it))
-                                    .map(it => (
-                                      <PriceCard
-                                        key={it.id}
-                                        itinerary={it}
-                                        onBook={handleBook}
-                                        priceOnly
-                                      />
-                                    ))
-                                : selectedOutboundId
-                                ? displayedReturn.map(it => (
-                                    <PriceCard
-                                      key={it.id}
-                                      itinerary={it}
-                                      onBook={handleBook}
-                                      priceOnly
-                                    />
-                                  ))
-                                : null}
-                            </div>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                  </div>
+                    {/* Return + Total price pane - its own scroll, unchanged pairing */}
+                    <div className={styles.resultsScroll} ref={returnScrollRef}>
+                      <div className={styles.resultsGridOneWay}>
+                        {(() => {
+                          const displayedReturn = sortTopFirst(visibleReturnItineraries, selectedReturnId)
+                            .filter(it => it.id !== selectedReturnId);
+                          return (
+                            <>
+                              <div className={styles.columnBox}>
+                                <div className={styles.cardStack}>
+                                  {!selectedOutboundId ? (
+                                    <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
+                                  ) : displayedReturn.length ? (
+                                    displayedReturn.map(item => {
+                                      const tier = item.inbound && selectedOutboundLeg
+                                        ? getReturnMatchTier(selectedOutboundLeg, item.inbound)
+                                        : null;
+                                      const matchClass = tier === "long-haul"
+                                        ? styles.selectCardMatchStrong
+                                        : tier === "alliance"
+                                        ? styles.selectCardMatchWeak
+                                        : "";
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          role="button"
+                                          tabIndex={0}
+                                          onClick={() => setSelectedReturnId(item.id)}
+                                          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedReturnId(item.id); }}
+                                          className={`${styles.selectCard} ${matchClass}`}
+                                        >
+                                          {item.inbound ? <FlightCardContent flight={item.inbound} matchTier={tier} onInfo={setDetailFlight} /> : null}
+                                        </div>
+                                      );
+                                    })
+                                  ) : !visibleReturnItineraries.length ? (
+                                    <div className={styles.emptyHint}>No compatible return flights found.</div>
+                                  ) : visibleReturnItineraries.length === 1 ? (
+                                    <div className={styles.emptyHint}>No other return flights match the selected departure flight.</div>
+                                  ) : null}
+                                </div>
+                              </div>
 
+                              <div className={styles.priceColumn}>
+                                <div className={styles.cardStack}>
+                                  {selectedOutboundId
+                                    ? displayedReturn.map(it => (
+                                        <PriceCard
+                                          key={it.id}
+                                          itinerary={it}
+                                          onBook={handleBook}
+                                          priceOnly
+                                        />
+                                      ))
+                                    : null}
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
                 </>
               )
             )}
@@ -1369,8 +1544,6 @@ function MultipleResults({
   onInfo,
   onSave,
   getSaveLabel,
-  resultsScrollRef,
-  hasScrollGutter,
 }: {
   searchLegs: MultiCityLeg[];
   activeLegIndex: number;
@@ -1385,90 +1558,120 @@ function MultipleResults({
   onInfo: (flight: FlightLeg) => void;
   onSave?: (id: string) => void;
   getSaveLabel?: (id: string) => string;
-  resultsScrollRef: { current: HTMLDivElement | null };
-  hasScrollGutter: boolean;
 }) {
   const N = searchLegs.length;
   const compact = N >= 4;
   const allSelected = activeLegIndex >= N;
   const isLastStep = activeLegIndex === N - 1;
   const gridCols = `repeat(${N}, minmax(0, 1fr)) 140px`;
-  const activeOptions = allLegOptions[activeLegIndex] ?? [];
+
+  // Each leg column (up to the fixed max of 5, per addMultiCityLeg) scrolls
+  // independently, same as Departure/Return on the return-trip page - hooks
+  // must be called unconditionally, so all 5 are always declared and only
+  // the first N are actually rendered.
+  const legGutters = [
+    useScrollGutter(allLegOptions[0]),
+    useScrollGutter(allLegOptions[1]),
+    useScrollGutter(allLegOptions[2]),
+    useScrollGutter(allLegOptions[3]),
+    useScrollGutter(allLegOptions[4]),
+  ];
+  const [priceScrollRef, priceHasGutter] = useScrollGutter(selectedItinerary);
 
   return (
     <>
-      {/* Column headers — same format as Return page, span all legs */}
-      <div
-        className={hasScrollGutter ? styles.withScrollGutter : ""}
-        style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", alignItems: "end", padding: "0 13px", marginBottom: "-4px" }}
-      >
+      {/* Column headers — one per leg pane, plus the final total-price pane */}
+      <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", alignItems: "end", padding: "0 13px", marginBottom: "-4px" }}>
         {searchLegs.map((leg, i) => (
-          <div key={i} className={styles.columnLabel}>
+          <div key={i} className={`${styles.columnLabel} ${legGutters[i]?.[1] ? styles.withScrollGutter : ""}`}>
             {`Flight ${i + 1}${leg.from ? ` · ${leg.from} → ${leg.to || "?"}` : ""}`}
           </div>
         ))}
-        <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Total price</div>
+        <div className={`${styles.columnLabel} ${styles.columnLabelRight} ${priceHasGutter ? styles.withScrollGutter : ""}`}>Total price</div>
       </div>
 
       {/* Pinned rows — same visual style as Return page */}
-      <div className={`${styles.pinnedStack} ${hasScrollGutter ? styles.withScrollGutter : ""}`}>
-        {recommended ? (
-          <MultiPinnedRow label="Top pick" itinerary={recommended} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} onSave={onSave} getSaveLabel={getSaveLabel} />
-        ) : null}
+      <div className={styles.pinnedStack}>
         {fastest ? (
-          <MultiPinnedRow label="Fastest" itinerary={fastest} columnCount={N} compact={compact} onBook={onBook} onInfo={onInfo} onSave={onSave} getSaveLabel={getSaveLabel} />
+          <MultiPinnedRow
+            label="Fastest"
+            itinerary={fastest}
+            columnCount={N}
+            compact={compact}
+            allLegOptions={allLegOptions}
+            selectedLegIds={selectedLegIds}
+            onSelectLeg={onSelectLeg}
+            onBook={onBook}
+            onInfo={onInfo}
+            onSave={onSave}
+            getSaveLabel={getSaveLabel}
+          />
+        ) : null}
+        {recommended ? (
+          <MultiPinnedRow
+            label="Best price"
+            itinerary={recommended}
+            columnCount={N}
+            compact={compact}
+            allLegOptions={allLegOptions}
+            selectedLegIds={selectedLegIds}
+            onSelectLeg={onSelectLeg}
+            onBook={onBook}
+            onInfo={onInfo}
+            onSave={onSave}
+            getSaveLabel={getSaveLabel}
+          />
         ) : null}
       </div>
 
-      {/* Standard results — N column stacks + price, same pattern as Return page */}
-      <div className={styles.resultsScroll} ref={resultsScrollRef as React.RefObject<HTMLDivElement>}>
-        <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", padding: "0 13px", alignItems: "start" }}>
-          {searchLegs.map((_, k) => {
-            const colOptions = allLegOptions[k] ?? [];
-            const colSelected = selectedLegIds[k] ?? "";
-            const displayOptions = k <= activeLegIndex ? sortTopFirst(colOptions, colSelected) : colOptions;
-            return (
-              <div key={k} className={styles.columnBox}>
-                <div className={styles.cardStack}>
-                  {k > activeLegIndex ? (
-                    k === activeLegIndex + 1 ? (
-                      <div className={styles.emptyHint}>Select flight {activeLegIndex + 1} to see options.</div>
-                    ) : null
-                  ) : displayOptions.length ? (
-                    displayOptions.map(legOpt => (
+      {/* Standard results — N independently-scrolling leg panes + a final
+          price pane, same pattern as Return page's split panes */}
+      <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", alignItems: "start" }}>
+        {searchLegs.map((_, k) => {
+          const colOptions = allLegOptions[k] ?? [];
+          const colSelected = selectedLegIds[k] ?? "";
+          const displayOptions = k <= activeLegIndex ? sortTopFirst(colOptions, colSelected) : colOptions;
+          const [colScrollRef] = legGutters[k] ?? [];
+          const isActive = k === activeLegIndex;
+          return (
+            <div key={k} className={styles.resultsScroll} ref={colScrollRef}>
+              <div className={styles.cardStack}>
+                {k > activeLegIndex ? (
+                  k === activeLegIndex + 1 ? (
+                    <div className={styles.emptyHint}>Select flight {activeLegIndex + 1} to see options.</div>
+                  ) : null
+                ) : displayOptions.length ? (
+                  displayOptions.map(legOpt => {
+                    const price = isActive ? optionPriceMap.get(legOpt.id) : undefined;
+                    return (
                       <div
                         key={legOpt.id}
                         role="button"
                         tabIndex={0}
                         onClick={() => onSelectLeg(k, legOpt.id)}
                         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectLeg(k, legOpt.id); }}
-                        className={`${styles.selectCard} ${compact ? styles.selectCardCompact : ""} ${colSelected === legOpt.id ? styles.selectCardActive : ""}`}
+                        className={`${styles.selectCard} ${price ? styles.selectCardRow : ""} ${compact ? styles.selectCardCompact : ""} ${colSelected === legOpt.id ? styles.selectCardActive : ""}`}
                       >
                         <FlightCardContent flight={legOpt} onInfo={onInfo} compact={compact} />
+                        {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} showFrom={!isLastStep} /> : null}
                       </div>
-                    ))
-                  ) : (
-                    <div className={styles.emptyHint}>No flights match the filters.</div>
-                  )}
-                </div>
+                    );
+                  })
+                ) : (
+                  <div className={styles.emptyHint}>No flights match the filters.</div>
+                )}
               </div>
-            );
-          })}
-
-          {/* Price column — aligned with active column's options */}
-          <div className={styles.priceColumn}>
-            <div className={styles.cardStack}>
-              {allSelected && selectedItinerary ? (
-                <PriceCard itinerary={selectedItinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active compact={compact} />
-              ) : (
-                sortTopFirst(activeOptions, selectedLegIds[activeLegIndex] ?? "").map(legOpt => {
-                  const p = optionPriceMap.get(legOpt.id);
-                  return p ? (
-                    <MultiOptionPriceCard key={legOpt.id} priceEur={p.priceEur} currency={p.currency} showFrom={!isLastStep} compact={compact} />
-                  ) : null;
-                })
-              )}
             </div>
+          );
+        })}
+
+        {/* Total price — only meaningful once every leg is picked; the
+            active leg's own price is already inline on its cards above. */}
+        <div className={styles.resultsScroll} ref={priceScrollRef}>
+          <div className={styles.cardStack}>
+            {allSelected && selectedItinerary ? (
+              <PriceCard itinerary={selectedItinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active compact={compact} />
+            ) : null}
           </div>
         </div>
       </div>
@@ -1481,6 +1684,9 @@ function MultiPinnedRow({
   itinerary,
   columnCount,
   compact,
+  allLegOptions,
+  selectedLegIds,
+  onSelectLeg,
   onBook,
   onInfo,
   onSave,
@@ -1490,6 +1696,9 @@ function MultiPinnedRow({
   itinerary: Itinerary;
   columnCount: number;
   compact?: boolean;
+  allLegOptions: FlightLeg[][];
+  selectedLegIds: string[];
+  onSelectLeg: (colIndex: number, legId: string) => void;
   onBook: (id: string) => void;
   onInfo: (flight: FlightLeg) => void;
   onSave?: (id: string) => void;
@@ -1504,8 +1713,26 @@ function MultiPinnedRow({
       >
         {itinerary.slices.slice(0, columnCount).map((leg, i) => {
           const tier = i === 0 ? null : getReturnMatchTier(itinerary.slices[0]!, leg);
+          // Only reachable if this leg option is actually available given the
+          // legs already locked in for column i - otherwise selecting it
+          // wouldn't correspond to any real fetched itinerary.
+          const reachable = (allLegOptions[i] ?? []).some(opt => opt.id === leg.id);
+          if (!reachable) {
+            return (
+              <div key={i} className={`${styles.staticCard} ${compact ? styles.staticCardCompact : ""}`}>
+                <FlightCardContent flight={leg} matchTier={tier} onInfo={onInfo} compact={compact} />
+              </div>
+            );
+          }
           return (
-            <div key={i} className={`${styles.staticCard} ${compact ? styles.staticCardCompact : ""}`}>
+            <div
+              key={i}
+              role="button"
+              tabIndex={0}
+              onClick={() => onSelectLeg(i, leg.id)}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectLeg(i, leg.id); }}
+              className={`${styles.selectCard} ${compact ? styles.selectCardCompact : ""} ${selectedLegIds[i] === leg.id ? styles.selectCardActive : ""}`}
+            >
               <FlightCardContent flight={leg} matchTier={tier} onInfo={onInfo} compact={compact} />
             </div>
           );
@@ -1516,54 +1743,151 @@ function MultiPinnedRow({
   );
 }
 
-function MultiOptionPriceCard({ priceEur, currency, showFrom, compact }: { priceEur: number; currency: string; showFrom: boolean; compact?: boolean }) {
-  const { format } = useCurrency();
+function InlinePrice({ priceEur, currency, showFrom }: { priceEur: number; currency: string; showFrom: boolean }) {
+  const { currency: displayCurrency, format } = useCurrency();
   return (
-    <div className={`${styles.priceCard} ${compact ? styles.selectCardCompact : ""}`}>
-      {showFrom ? <span className={styles.priceCardFrom}>from</span> : null}
-      <span className={styles.priceCardAmount}>{currency} {format(priceEur, currency)}</span>
-    </div>
+    <span className={styles.inlinePrice}>
+      {showFrom ? <span className={styles.inlinePriceFrom}>from</span> : null}
+      <span className={styles.inlinePriceAmount}>{displayCurrency} {format(priceEur, currency)}</span>
+    </span>
   );
 }
 
-function PinnedRow({ label, itinerary, oneWay, onBook, onInfo, onSave, getSaveLabel }: { label: string; itinerary: Itinerary; oneWay: boolean; onBook: (id: string) => void; onInfo: (flight: FlightLeg) => void; onSave?: (id: string) => void; getSaveLabel?: (id: string) => string }) {
+function PinnedRow({
+  label,
+  itinerary,
+  oneWay,
+  selectedOutboundId,
+  selectedReturnId,
+  visibleReturnItineraries,
+  departureHasGutter,
+  returnHasGutter,
+  onSelectOutbound,
+  onSelectReturn,
+  onBook,
+  onInfo,
+  onSave,
+  getSaveLabel,
+}: {
+  label: string;
+  itinerary: Itinerary;
+  oneWay: boolean;
+  selectedOutboundId: string;
+  selectedReturnId: string;
+  visibleReturnItineraries: Itinerary[];
+  departureHasGutter: boolean;
+  returnHasGutter: boolean;
+  onSelectOutbound: (id: string) => void;
+  onSelectReturn: (id: string) => void;
+  onBook: (id: string) => void;
+  onInfo: (flight: FlightLeg) => void;
+  onSave?: (id: string) => void;
+  getSaveLabel?: (id: string) => string;
+}) {
   const tier = !oneWay && itinerary.inbound
     ? getReturnMatchTier(itinerary.outbound, itinerary.inbound)
     : null;
+  const matchingReturn = !oneWay && itinerary.inbound
+    ? visibleReturnItineraries.find(it => it.inbound?.id === itinerary.inbound?.id) ?? null
+    : null;
+  const outboundCard = (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelectOutbound(itinerary.outbound.id)}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectOutbound(itinerary.outbound.id); }}
+      className={`${styles.selectCard} ${itinerary.outbound.id === selectedOutboundId ? styles.selectCardActive : ""}`}
+    >
+      <FlightCardContent flight={itinerary.outbound} onInfo={onInfo} />
+    </div>
+  );
+
+  if (oneWay) {
+    return (
+      <div className={styles.pinnedRow}>
+        <span className={styles.pinnedLegend}>{label}</span>
+        <div className={styles.pinnedGridOneWay}>
+          {outboundCard}
+          <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.pinnedRow}>
       <span className={styles.pinnedLegend}>{label}</span>
-      <div className={oneWay ? styles.pinnedGridOneWay : styles.pinnedGrid}>
-        <div className={styles.staticCard}><FlightCardContent flight={itinerary.outbound} onInfo={onInfo} /></div>
-        {!oneWay && itinerary.inbound ? (
-          <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} /></div>
-        ) : null}
-        <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
+      {/* Same outer split as the Departure / Return+Price panes below, so
+          this row's cells line up with the panes it sits above. */}
+      <div className={styles.splitPanes}>
+        <div className={departureHasGutter ? styles.withScrollGutter : ""}>{outboundCard}</div>
+        <div className={`${styles.pinnedGridOneWay} ${returnHasGutter ? styles.withScrollGutter : ""}`}>
+          {itinerary.inbound ? (
+            matchingReturn ? (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectReturn(matchingReturn.id)}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectReturn(matchingReturn.id); }}
+                className={`${styles.selectCard} ${matchingReturn.id === selectedReturnId ? styles.selectCardActive : ""}`}
+              >
+                <FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} />
+              </div>
+            ) : (
+              <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} /></div>
+            )
+          ) : <div />}
+          <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
+        </div>
       </div>
     </div>
   );
 }
 
 
-function SelectedRow({ outbound, inbound, itinerary, oneWay, onBook, onInfo, onSave, getSaveLabel }: {
+function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter, returnHasGutter, onBook, onInfo, onSave, getSaveLabel }: {
   outbound: FlightLeg;
   inbound: FlightLeg | null;
   itinerary: Itinerary | null;
   oneWay: boolean;
+  departureHasGutter: boolean;
+  returnHasGutter: boolean;
   onBook: (id: string) => void;
   onInfo: (flight: FlightLeg) => void;
   onSave?: (id: string) => void;
   getSaveLabel?: (id: string) => string;
 }) {
+  const priceCell = itinerary ? (
+    <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
+  ) : (
+    <div className={styles.priceCard}>
+      <span style={{ fontSize: "0.8rem", color: "var(--oltra-text-secondary)", textAlign: "center" }}>—</span>
+    </div>
+  );
+
+  if (oneWay) {
+    return (
+      <div className={styles.pinnedRow}>
+        <span className={styles.pinnedLegend}>Selected</span>
+        <div className={styles.pinnedGridOneWay}>
+          <div className={styles.staticCard}>
+            <FlightCardContent flight={outbound} onInfo={onInfo} />
+          </div>
+          {priceCell}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.pinnedRow}>
       <span className={styles.pinnedLegend}>Selected</span>
-      <div className={oneWay ? styles.pinnedGridOneWay : styles.pinnedGrid}>
-        <div className={styles.staticCard}>
+      <div className={styles.splitPanes}>
+        <div className={`${styles.staticCard} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
           <FlightCardContent flight={outbound} onInfo={onInfo} />
         </div>
-        {!oneWay ? (
-          inbound ? (
+        <div className={`${styles.pinnedGridOneWay} ${returnHasGutter ? styles.withScrollGutter : ""}`}>
+          {inbound ? (
             <div className={styles.staticCard}>
               <FlightCardContent flight={inbound} onInfo={onInfo} />
             </div>
@@ -1573,15 +1897,9 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, onBook, onInfo, onS
                 Select a return flight
               </span>
             </div>
-          )
-        ) : null}
-        {itinerary ? (
-          <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
-        ) : (
-          <div className={styles.priceCard}>
-            <span style={{ fontSize: "0.8rem", color: "var(--oltra-text-secondary)", textAlign: "center" }}>—</span>
-          </div>
-        )}
+          )}
+          {priceCell}
+        </div>
       </div>
     </div>
   );
@@ -1640,6 +1958,24 @@ function matchTierLabel(tier: ReturnMatchTier): string {
   return "";
 }
 
+function AirlineMarks({ airlines }: { airlines: AirlineRef[] }) {
+  const withLogo = airlines.filter(a => a.logoUrl).slice(0, 2);
+  if (!withLogo.length) return null;
+  return (
+    <span className={styles.airlineMarks}>
+      {withLogo.map(a => (
+        <img
+          key={a.iataCode || a.name}
+          src={a.logoUrl!}
+          alt=""
+          className={styles.airlineMark}
+          onError={e => { e.currentTarget.style.display = "none"; }}
+        />
+      ))}
+    </span>
+  );
+}
+
 function FlightCardContent({
   flight,
   matchTier,
@@ -1654,6 +1990,7 @@ function FlightCardContent({
   const airlineLabel = flight.airlines.length
     ? flight.airlines.map(a => a.name).join(" + ")
     : flight.airline;
+  const cabinClass = flight.segments[0]?.cabinClassMarketingName || "";
   const label = matchTierLabel(matchTier ?? null);
   const timeStyle = compact ? { fontSize: "0.82rem" } : undefined;
   return (
@@ -1664,18 +2001,18 @@ function FlightCardContent({
           className={styles.infoButton}
           onClick={e => { e.stopPropagation(); onInfo(flight); }}
           aria-label="Flight details"
-          title="Flight details"
         >
-          i
+          Info
         </button>
       ) : null}
       <div className={styles.flightCardInner}>
         <div className={styles.flightTimesRow}>
+          <AirlineMarks airlines={flight.airlines} />
           <span className={styles.flightDepart} style={timeStyle}>{flight.departTime}</span>
           <span className={styles.flightArrow}>→</span>
           <span className={styles.flightArrive} style={timeStyle}>{flight.arriveTime}</span>
           <span className={styles.flightMetaDot}>·</span>
-          <span className={`${styles.flightMetaText} ${styles.flightAirlineText}`}>{airlineLabel}</span>
+          <span className={styles.flightDuration} style={timeStyle}>{formatDuration(flight.durationMinutes)}</span>
           {label ? (
             <span className={matchTier === "long-haul" ? styles.matchBadgeStrong : styles.matchBadgeWeak}>
               {label}
@@ -1683,11 +2020,17 @@ function FlightCardContent({
           ) : null}
         </div>
         <div className={styles.flightStopsRow}>
-          <span className={styles.flightMetaText}>{formatDuration(flight.durationMinutes)}</span>
+          <span className={`${styles.flightMetaText} ${styles.flightAirlineText}`}>{airlineLabel}</span>
           {flight.stopSummary ? (
             <>
               <span className={styles.flightMetaDot}>·</span>
               <span className={styles.flightMetaText}>{flight.stopSummary}</span>
+            </>
+          ) : null}
+          {cabinClass ? (
+            <>
+              <span className={styles.flightMetaDot}>·</span>
+              <span className={styles.flightMetaText}>{cabinClass}</span>
             </>
           ) : null}
           {flight.fareBrand ? (
