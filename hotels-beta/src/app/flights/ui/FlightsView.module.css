@@ -51,6 +51,11 @@
   gap: var(--oltra-gap-md);
 }
 
+.fieldGridSpan2 {
+  grid-column: span 2;
+  min-width: 0;
+}
+
 .guestCabinGrid {
   position: relative;
   z-index: 90;
@@ -1043,6 +1048,10 @@
   .resultsGrid,
   .resultsGridOneWay {
     grid-template-columns: 1fr !important;
+  }
+
+  .fieldGridSpan2 {
+    grid-column: span 1;
   }
 
   .multiCityRow {

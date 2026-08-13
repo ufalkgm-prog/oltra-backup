@@ -4,6 +4,7 @@ import OltraSelect from "@/components/site/OltraSelect";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import GuestSelector from "@/components/site/GuestSelector";
+import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
@@ -119,8 +120,6 @@ export default function LandingSearchPanel({
   });
 
   const formRef = useRef<HTMLFormElement | null>(null);
-  const fromRef = useRef<HTMLInputElement | null>(null);
-  const toRef = useRef<HTMLInputElement | null>(null);
   const autoSubmitTimerRef = useRef<number | null>(null);
   const lastSubmittedKeyRef = useRef(
     buildComparableSearchKey(initialSearchParams)
@@ -254,14 +253,6 @@ export default function LandingSearchPanel({
 
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const minToIso = fromValue
-    ? new Date(new Date(fromValue).getTime() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10)
-    : new Date(Date.now() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10);
-
   const datesAreValid =
     Boolean(fromDate) &&
     Boolean(toDate) &&
@@ -332,11 +323,6 @@ export default function LandingSearchPanel({
   ]);
 
   const searchIsActive = searchDisabledReason === "";
-
-  function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
-    ref.current?.focus();
-    ref.current?.showPicker?.();
-  }
 
   function buildUrlFromForm(form: HTMLFormElement, submitted: boolean): string {
     const formData = new FormData(form);
@@ -420,68 +406,20 @@ export default function LandingSearchPanel({
             busy={isPending}
           />
 
-          <div className={styles.landingField}>
-            <span className="oltra-label">From</span>
-            <div
-              className={styles.dateFieldWrap}
-              onClick={() => openDatePicker(fromRef)}
-            >
-              <input
-                ref={fromRef}
-                type="date"
-                name="from"
-                min={todayIso}
-                value={fromValue}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setFromValue(value);
-                  scheduleAutoSubmit();
-                  if (value) requestAnimationFrame(() => openDatePicker(toRef));
-                }}
-                onKeyDown={(e) => e.preventDefault()}
-                onBeforeInput={(e) => e.preventDefault()}
-                className={`${styles.nativeDateInput} oltra-input w-full cursor-pointer`}
-              />
-
-              <span
-                className={styles.dateDisplay}
-                data-has-value={fromValue ? "true" : "false"}
-                aria-hidden="true"
-              >
-                {fromValue ? formatDisplayDate(fromValue) : "date"}
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.landingField}>
-            <span className="oltra-label">To</span>
-            <div
-              className={styles.dateFieldWrap}
-              onClick={() => openDatePicker(toRef)}
-            >
-              <input
-                ref={toRef}
-                type="date"
-                name="to"
-                min={minToIso}
-                value={toValue}
-                onChange={(e) => {
-                  setToValue(e.target.value);
-                  scheduleAutoSubmit();
-                }}
-                onKeyDown={(e) => e.preventDefault()}
-                onBeforeInput={(e) => e.preventDefault()}
-                className={`${styles.nativeDateInput} oltra-input w-full cursor-pointer`}
-              />
-
-              <span
-                className={styles.dateDisplay}
-                data-has-value={toValue ? "true" : "false"}
-                aria-hidden="true"
-              >
-                {toValue ? formatDisplayDate(toValue) : "date"}
-              </span>
-            </div>
+          <div className={styles.dateRangeField}>
+            <DateRangePicker
+              fromValue={fromValue}
+              toValue={toValue}
+              fromMinDate={todayIso}
+              onFromChange={(value) => {
+                setFromValue(value);
+                scheduleAutoSubmit();
+              }}
+              onToChange={(value) => {
+                setToValue(value);
+                scheduleAutoSubmit();
+              }}
+            />
           </div>
 
           <div className={styles.landingField}>

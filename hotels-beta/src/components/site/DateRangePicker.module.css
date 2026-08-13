@@ -1,0 +1,194 @@
+.root {
+  position: relative;
+  z-index: 40;
+  overflow: visible;
+  min-width: 0;
+}
+
+.trigger {
+  width: 100%;
+  height: var(--oltra-control-height);
+  min-height: var(--oltra-control-height);
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  font: inherit;
+}
+
+.triggerText {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: var(--oltra-text-primary);
+}
+
+.triggerText[data-has-value="false"] {
+  color: var(--oltra-text-muted);
+}
+
+.panel {
+  position: fixed;
+  z-index: var(--oltra-z-popup);
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 6px;
+}
+
+.navButton {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--oltra-field-border);
+  background: transparent;
+  color: var(--oltra-dropdown-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.navButton:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.monthsRow {
+  display: flex;
+  gap: 14px;
+}
+
+.month {
+  flex: 1;
+  min-width: 0;
+}
+
+.monthLabel {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--oltra-dropdown-text);
+  margin-bottom: 4px;
+}
+
+.weekdayRow,
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.weekdayRow {
+  margin-bottom: 2px;
+}
+
+.weekdayCell {
+  text-align: center;
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--oltra-dropdown-text);
+  opacity: 0.55;
+  padding-bottom: 2px;
+}
+
+.dayCellBlank {
+  aspect-ratio: 1 / 1;
+}
+
+.dayCell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 0;
+  background: transparent;
+  padding: 1px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dayCell:disabled {
+  cursor: not-allowed;
+}
+
+.dayCell::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  background: transparent;
+  z-index: 0;
+}
+
+.dayCellInRange::before {
+  background: rgba(182, 204, 168, 0.22);
+}
+
+.dayCellStart.dayCellInRange::before {
+  left: 50%;
+}
+
+.dayCellEnd.dayCellInRange::before {
+  right: 50%;
+}
+
+.dayNumber {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  color: var(--oltra-dropdown-text);
+}
+
+.dayCell:disabled .dayNumber {
+  opacity: 0.32;
+}
+
+.dayCell:not(:disabled):hover .dayNumber {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dayCellStart .dayNumber,
+.dayCellEnd .dayNumber {
+  background: var(--oltra-button-active-bg);
+  color: var(--oltra-button-active-text);
+}
+
+.dayCellStart:not(:disabled):hover .dayNumber,
+.dayCellEnd:not(:disabled):hover .dayNumber {
+  background: var(--oltra-button-active-bg);
+}
+
+@media (max-width: 560px) {
+  .panel {
+    width: calc(100vw - 32px);
+  }
+
+  .monthsRow {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

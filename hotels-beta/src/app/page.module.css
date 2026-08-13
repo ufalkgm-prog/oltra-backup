@@ -169,6 +169,13 @@
   overflow: visible;
 }
 
+.dateRangeField {
+  grid-column: span 2;
+  min-width: 0;
+  align-self: start;
+  overflow: visible;
+}
+
 .guestSelectorField {
   position: relative;
   z-index: 20;
@@ -632,6 +639,10 @@
 
   .searchGrid {
     grid-template-columns: 1fr;
+  }
+
+  .dateRangeField {
+    grid-column: span 1;
   }
 
   .summaryRow {

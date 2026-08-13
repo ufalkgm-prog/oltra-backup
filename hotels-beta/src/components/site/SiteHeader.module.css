@@ -43,7 +43,9 @@
   line-height: 1;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--oltra-text-secondary);
+  font-weight: 600;
+  color: var(--oltra-text-primary);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
 }
 
 .menuDropdown,

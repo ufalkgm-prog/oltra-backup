@@ -14,6 +14,16 @@
   --oltra-text-muted: #978869;
   --oltra-text-dark: #173247;
 
+  /* Dedicated text color for the solid mid-grey dropdown/selection-box
+     surface (--oltra-field-bg-solid, #717377) — OltraSelect, GuestSelector,
+     RelDropdown option lists, etc. Deliberately NOT --oltra-text-primary:
+     that token is tuned (12.3:1) against the dark page/panel backgrounds,
+     but only reaches ~3.2:1 against this much lighter grey, which read as
+     washed-out/bronze rather than crisp. Matches the near-white value
+     Inspire's own dropdown (`.dropdownOption` in InspireView.module.css)
+     already used independently for the same surface. */
+  --oltra-dropdown-text: rgba(255, 255, 255, 0.92);
+
   /* Background */
   --oltra-bg-image: url("/images/hero-lp.jpg");
   --oltra-bg-color: #16181c;
@@ -443,7 +453,7 @@ button.oltra-select {
   border-radius: var(--oltra-dropdown-radius);
   border: var(--oltra-dropdown-border);
   background: var(--oltra-field-bg-solid);
-  color: var(--oltra-text-primary);
+  color: var(--oltra-dropdown-text);
   box-shadow: var(--oltra-dropdown-shadow);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -534,7 +544,7 @@ textarea::-webkit-scrollbar-thumb,
   border: 0;
   border-radius: var(--oltra-dropdown-item-radius);
   background: transparent;
-  color: var(--oltra-text-primary);
+  color: var(--oltra-dropdown-text);
   font: inherit;
   font-size: var(--oltra-dropdown-item-font-size);
   line-height: 1.15;
@@ -545,7 +555,7 @@ textarea::-webkit-scrollbar-thumb,
 
 .oltra-dropdown-item:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--oltra-text-primary);
+  color: var(--oltra-dropdown-text);
 }
 
 .oltra-dropdown-row-link {

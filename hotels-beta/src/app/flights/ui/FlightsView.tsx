@@ -12,6 +12,7 @@ import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
 import AirportAutocomplete from "./AirportAutocomplete";
+import DateRangePicker from "@/components/site/DateRangePicker";
 import styles from "./FlightsView.module.css";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -262,9 +263,6 @@ export default function FlightsView({ searchParams }: Props) {
   const isMultiple = search.tripType === "multiple";
 
   const todayIso = new Date().toISOString().slice(0, 10);
-  const minReturnIso = search.departDate
-    ? new Date(new Date(search.departDate).getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-    : todayIso;
 
   function markDirty() {
     setIsDirty(true);
@@ -503,7 +501,6 @@ export default function FlightsView({ searchParams }: Props) {
   }, [selectedOutboundId, isOneWay, itineraryByOutboundId, selectedReturnItinerary]);
 
   const resultsScrollRef = useRef<HTMLDivElement | null>(null);
-  const returnDateFieldRef = useRef<DateFieldHandle | null>(null);
   const [hasScrollGutter, setHasScrollGutter] = useState(false);
 
   useEffect(() => {
@@ -829,25 +826,24 @@ export default function FlightsView({ searchParams }: Props) {
                     value={search.to}
                     onChange={v => { setSearch(c => ({ ...c, to: v })); markDirty(); }}
                   />
-                  <DateField
-                    label="Depart"
-                    value={search.departDate}
-                    min={todayIso}
-                    onChange={v => {
-                      setSearch(c => ({ ...c, departDate: v }));
-                      markDirty();
-                      if (v) requestAnimationFrame(() => returnDateFieldRef.current?.open());
-                    }}
-                  />
                   {isReturnTrip ? (
+                    <div className={styles.fieldGridSpan2}>
+                      <DateRangePicker
+                        fromValue={search.departDate}
+                        toValue={search.returnDate}
+                        fromMinDate={todayIso}
+                        onFromChange={v => { setSearch(c => ({ ...c, departDate: v })); markDirty(); }}
+                        onToChange={v => { setSearch(c => ({ ...c, returnDate: v })); markDirty(); }}
+                      />
+                    </div>
+                  ) : (
                     <DateField
-                      ref={returnDateFieldRef}
-                      label="Return"
-                      value={search.returnDate}
-                      min={minReturnIso}
-                      onChange={v => { setSearch(c => ({ ...c, returnDate: v })); markDirty(); }}
+                      label="Depart"
+                      value={search.departDate}
+                      min={todayIso}
+                      onChange={v => { setSearch(c => ({ ...c, departDate: v })); markDirty(); }}
                     />
-                  ) : null}
+                  )}
                 </div>
               )}
 

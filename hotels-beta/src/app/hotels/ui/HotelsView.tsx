@@ -9,6 +9,7 @@ import type maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
+import DateRangePicker from "@/components/site/DateRangePicker";
 import {
   buildBookingLink,
   type BookingSearchParams,
@@ -642,8 +643,6 @@ export default function HotelsView(props: {
   const router = useRouter();
   const pathname = usePathname();
   const tripPickerRef = useRef<HTMLDivElement | null>(null);
-  const fromRef = useRef<HTMLInputElement | null>(null);
-  const toRef = useRef<HTMLInputElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -714,14 +713,6 @@ export default function HotelsView(props: {
 
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const minToIso = fromValue
-    ? new Date(new Date(fromValue).getTime() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10)
-    : new Date(Date.now() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10);
-
   const [bedroomsValue, setBedroomsValue] = useState(
     normalizeParam(searchParams.bedrooms) || "1"
   );
@@ -778,37 +769,6 @@ export default function HotelsView(props: {
     !searchIsActive ||
     ratehawkResultAvailabilityStatus === "loading" ||
     topAvailabilityChecked;
-
-  function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
-    ref.current?.showPicker?.();
-  }
-
-  useEffect(() => {
-    function handlePointerOver(event: PointerEvent) {
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-
-      const hoveredInteractive = target.closest(
-        'input, button, select, textarea, a, [role="button"], [data-oltra-control="true"]'
-      );
-
-      if (!hoveredInteractive) return;
-
-      const isFromDateField = fromRef.current?.parentElement?.contains(target);
-      const isToDateField = toRef.current?.parentElement?.contains(target);
-
-      if (isFromDateField || isToDateField) return;
-
-      fromRef.current?.blur();
-      toRef.current?.blur();
-    }
-
-    document.addEventListener("pointerover", handlePointerOver);
-
-    return () => {
-      document.removeEventListener("pointerover", handlePointerOver);
-    };
-  }, []);
 
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -2133,70 +2093,20 @@ async function handleCreateTripAndAddHotel() {
                   ) : null}
 
                   <div className="md:col-span-12 grid gap-[14px] md:grid-cols-[minmax(0,1.45fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
-                    <div className="relative min-w-0" data-oltra-control="true">
-                      <div className="oltra-label">From</div>
-                      <div
-                        className="hotel-date-field relative cursor-pointer"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => openDatePicker(fromRef)}
-                      >
-                        <input
-                          ref={fromRef}
-                          type="date"
-                          name="from"
-                          min={todayIso}
-                          value={fromValue}
-                          tabIndex={-1}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setFromValue(value);
-                            setAvailabilitySearchDirty(true);
-                            if (value) requestAnimationFrame(() => openDatePicker(toRef));
-                          }}
-                          onKeyDown={(e) => e.preventDefault()}
-                          onBeforeInput={(e) => e.preventDefault()}
-                          className="oltra-input hotel-date-field__input w-full cursor-pointer"
-                          data-has-value={fromValue ? "true" : "false"}
-                        />
-                        <span
-                          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
-                          data-has-value={fromValue ? "true" : "false"}
-                        >
-                          {formatDisplayDate(fromValue) || "date"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="relative min-w-0" data-oltra-control="true">
-                      <div className="oltra-label">To</div>
-                      <div
-                        className="hotel-date-field relative cursor-pointer"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => openDatePicker(toRef)}
-                      >
-                        <input
-                          ref={toRef}
-                          type="date"
-                          name="to"
-                          min={minToIso}
-                          value={toValue}
-                          tabIndex={-1}
-                          onChange={(e) => {
-                            setToValue(e.target.value);
-                            setAvailabilitySearchDirty(true);
-                          }}
-                          onKeyDown={(e) => e.preventDefault()}
-                          onBeforeInput={(e) => e.preventDefault()}
-                          className="oltra-input hotel-date-field__input w-full cursor-pointer"
-                          data-has-value={toValue ? "true" : "false"}
-                        />
-                        <span
-                          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
-                          data-has-value={toValue ? "true" : "false"}
-                        >
-                          {formatDisplayDate(toValue) || "date"}
-                        </span>
-                      </div>
+                    <div className="md:col-span-2 min-w-0" data-oltra-control="true">
+                      <DateRangePicker
+                        fromValue={fromValue}
+                        toValue={toValue}
+                        fromMinDate={todayIso}
+                        onFromChange={(value) => {
+                          setFromValue(value);
+                          setAvailabilitySearchDirty(true);
+                        }}
+                        onToChange={(value) => {
+                          setToValue(value);
+                          setAvailabilitySearchDirty(true);
+                        }}
+                      />
                     </div>
 
                     <div className="relative min-w-0" data-oltra-control="true">
