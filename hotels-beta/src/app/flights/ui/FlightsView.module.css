@@ -357,6 +357,13 @@
   grid-template-columns: minmax(0, 1fr) 140px;
 }
 
+/* Only meaningful when nested inside .splitPanes (return-trip Return+Price
+   wrapper) - a no-op when used standalone (one-way trips). */
+.columnHeadersOneWay,
+.pinnedGridOneWay {
+  grid-column: span 2;
+}
+
 .columnLabelRight {
   text-align: center;
 }
@@ -392,6 +399,12 @@
   max-height: 60vh;
   overflow-y: auto;
   padding-bottom: 4px;
+}
+
+/* Applied only to the Return+Price scroll wrapper inside .splitPanes - see
+   the .splitPanes comment above. */
+.resultsScrollSpan2 {
+  grid-column: span 2;
 }
 
 .withScrollGutter {
@@ -544,15 +557,6 @@
   padding: 9px 13px;
 }
 
-.selectCardMatchStrong {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.32);
-}
-
-.selectCardMatchStrong:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
 .selectCardMatchWeak {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
@@ -598,9 +602,16 @@
 
 /* Two independently-scrolling panes side by side (Departure | Return+Price
    for return trips; one pane per leg + a final price pane for multi-city). */
+/* 3 tracks - Departure | Return | Price - so the Return card lines up at
+   the same width as Departure instead of sharing its track with Price.
+   The Return+Price wrapper (the pane's 2nd child) spans tracks 2-3 and
+   re-splits internally via resultsGridOneWay/pinnedGridOneWay/
+   columnHeadersOneWay (minmax(0,1fr) 140px) - since that wrapper's own
+   width equals track2 + gap + track3, its local 1fr resolves to exactly
+   track2's width, matching Departure. */
 .splitPanes {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 140px;
   gap: var(--oltra-gap-md);
   align-items: start;
 }
@@ -612,11 +623,19 @@
 
 .flightCardInner {
   position: relative;
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   /* Reserve room so the times/duration row (and its match badge) never
      renders underneath the absolutely-positioned Info pill. */
-  padding-right: 44px;
+  padding-right: 38px;
+}
+
+.flightCardText {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
 }
 
 .infoButton {
@@ -631,12 +650,11 @@
   background: #fff;
   color: #111;
   font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-style: italic;
+  font-weight: 400;
   line-height: 1;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 2px 6px;
   transition: background 140ms ease, border-color 140ms ease;
 }
 
@@ -871,15 +889,14 @@
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
-  align-self: center;
 }
 
 .airlineMark {
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   display: block;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .flightAirlineText {
@@ -1074,7 +1091,6 @@
   opacity: 0.6;
 }
 
-.matchBadgeStrong,
 .matchBadgeWeak {
   margin-left: 6px;
   font-size: 0.5rem;
@@ -1085,14 +1101,6 @@
   line-height: 1.4;
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.matchBadgeStrong {
-  background: rgba(255, 255, 255, 0.22);
-  color: var(--oltra-text-primary);
-}
-
-.matchBadgeWeak {
   background: rgba(255, 255, 255, 0.1);
   color: var(--oltra-text-secondary);
 }
@@ -1120,7 +1128,8 @@
   .pinnedGrid,
   .pinnedGridOneWay,
   .resultsGrid,
-  .resultsGridOneWay {
+  .resultsGridOneWay,
+  .splitPanes {
     grid-template-columns: 1fr !important;
   }
 
