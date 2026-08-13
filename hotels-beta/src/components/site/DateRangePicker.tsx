@@ -25,6 +25,8 @@ type Props = {
   minNights?: number;
   label?: string;
   className?: string;
+  fromName?: string;
+  toName?: string;
 };
 
 type Awaiting = "start" | "end";
@@ -62,6 +64,8 @@ export default function DateRangePicker({
   minNights = 1,
   label = "Dates",
   className = "",
+  fromName = "from",
+  toName = "to",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState("");
@@ -264,6 +268,9 @@ export default function DateRangePicker({
       data-oltra-control="true"
       {...dismissHoverProps}
     >
+      <input type="hidden" name={fromName} value={fromValue} />
+      <input type="hidden" name={toName} value={toValue} />
+
       <div className="oltra-label">{label}</div>
       <button
         type="button"
