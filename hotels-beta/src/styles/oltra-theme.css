@@ -2,52 +2,76 @@
   /* Typography */
   --oltra-font-sans: Arial, Helvetica, sans-serif;
 
-  /* Text — Candidate C, shipped site-wide 2026-08-13 (design-system audit,
-     dark-surface refinement). Was rgba(255,255,255,0.96)/rgba(...,0.78)/
-     rgba(...,0.62) - white at reduced opacity, which the audit flagged as
-     "too white" and inconsistent between base and raised panel. Primary and
-     muted are solid hex per that finding (not opacity-based); secondary
-     stays an alpha step off the new primary's own RGB, same pattern as
-     before, just re-based off the new color instead of white. */
-  --oltra-text-primary: #d9d4c9;
-  --oltra-text-secondary: rgba(217, 212, 201, 0.78);
-  --oltra-text-muted: #978869;
+  /* Text — FINAL PALETTE, shipped site-wide 2026-08-13 (supersedes
+     Candidate C, itself shipped only hours earlier the same day - this
+     palette pass came with a genuinely lighter base and needed everything
+     re-derived, not just re-verified, so Candidate C didn't survive
+     unchanged). Three roles now, solid hex throughout, no white/near-white
+     at reduced opacity anywhere: primary for headings/body/card
+     titles/input values/dropdown item labels/map popup labels/outline
+     -button labels; muted for secondary/metadata only (locations, price
+     suffixes, helper text, timestamps, badge text) - secondary aliases to
+     it directly, there's no third intermediate tier anymore; placeholder is
+     its own dedicated role, not a reuse of muted. See --oltra-text-disabled
+     and --oltra-error-text below for the other two roles the brief called
+     for. Full contrast table: /theme-test. */
+  --oltra-text-primary: #f5f2ec;
+  --oltra-text-secondary: #cbd0cb;
+  --oltra-text-muted: #cbd0cb;
+  --oltra-text-placeholder: #c0c6c1;
+  --oltra-text-disabled: #787774;
   --oltra-text-dark: #173247;
 
-  /* Dedicated text color for the solid mid-grey dropdown/selection-box
-     surface (--oltra-field-bg-solid, #717377) — OltraSelect, GuestSelector,
-     RelDropdown option lists, etc. Deliberately NOT --oltra-text-primary:
-     that token is tuned (12.3:1) against the dark page/panel backgrounds,
-     but only reaches ~3.2:1 against this much lighter grey, which read as
-     washed-out/bronze rather than crisp. Matches the near-white value
-     Inspire's own dropdown (`.dropdownOption` in InspireView.module.css)
-     already used independently for the same surface. */
-  --oltra-dropdown-text: rgba(255, 255, 255, 0.92);
+  /* Dedicated text color for the dropdown/selection-box surface
+     (--oltra-field-bg-solid) — OltraSelect, GuestSelector, RelDropdown
+     option lists, etc. Same value as --oltra-text-primary now (that
+     surface is the raised panel color, which primary clears with real
+     margin) - kept as its own token since components already reference it
+     by this name, not because the value needs to differ anymore. */
+  --oltra-dropdown-text: #f5f2ec;
 
   /* Background */
   --oltra-bg-image: url("/images/hero-lp.jpg");
-  --oltra-bg-color: #16181c;
+  --oltra-bg-color: #2c3634;
 
-  /* Shared glass / panel surfaces */
-  --oltra-glass-bg: rgba(34, 56, 72, 0.26);
-  --oltra-glass-bg-strong: rgba(34, 56, 72, 0.82);
-  --oltra-glass-border: rgba(255, 255, 255, 0.22);
+  /* Shared glass / panel surfaces - re-based on the new field color, still
+     translucent (kept as-is from what was reviewed at /theme-test; the
+     brief's "solid everywhere except imagery/map-popup glass" call was
+     about fields/dropdowns/badges specifically, not this floating-panel
+     wrapper, so it wasn't touched beyond re-deriving its base hue). */
+  --oltra-glass-bg: rgba(35, 44, 42, 0.55);
+  --oltra-glass-bg-strong: rgba(35, 44, 42, 0.88);
+  --oltra-glass-border: #738783;
   --oltra-glass-shadow:
     0 18px 40px rgba(10, 24, 36, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 
-  /* Shared fields */
-  --oltra-field-bg: rgba(220, 232, 240, 0.14);
-  --oltra-field-bg-strong: rgba(220, 232, 240, 0.22);
-  --oltra-field-bg-solid: #717377;
-  --oltra-field-border: rgba(255, 255, 255, 0.18);
+  /* Shared fields — translucent to solid recessed, the approach change the
+     brief called for, not just a value swap. Darker than the page (#232C2A
+     vs #2C3634), a real recessed fill rather than an rgba wash over
+     whatever sits behind it. */
+  --oltra-field-bg: #232c2a;
+  --oltra-field-bg-strong: #283330;
+  --oltra-field-bg-solid: #374240;
+  --oltra-field-border: #3e4947;
 
-  /* Buttons */
-  --oltra-button-active-bg: rgb(182, 204, 168);
-  --oltra-button-active-text: #173247;
-  --oltra-button-inactive-bg: rgba(255, 255, 255, 0.08);
-  --oltra-button-inactive-border: rgba(255, 255, 255, 0.18);
-  --oltra-button-inactive-text: rgba(255, 255, 255, 0.96);
+  /* Buttons — recomputed against the new (lighter) base, not reused from
+     the old #B6CCA8 pastel sage or the old dark-navy label. Kept the sage
+     hue family; both fill and label needed to move. See /theme-test's
+     contrast table for the full derivation (fill 4.24:1 vs base; label
+     4.88:1 vs fill; outline border 3.32:1 vs base). */
+  --oltra-button-active-bg: #7ba079;
+  --oltra-button-active-text: #232c2a;
+  --oltra-button-inactive-bg: transparent;
+  --oltra-button-inactive-border: #6c8c6a;
+  --oltra-button-inactive-text: #f5f2ec;
+
+  /* Error — genuinely new, no prior shipped value existed. Brick-red at a
+     brightness that clears 4.5:1 on every surface it might render on
+     (base/panel/field) reads closer to coral than brick - the alternative
+     that stays closer to brick-red only clears the base, not panels, so
+     wasn't used. See /theme-test for both values side by side. */
+  --oltra-error-text: #ff8a71;
 
   /* Radius — tightened site-wide 2026-08-13 (design-system audit). Was
      16/14/10/8/5px - read as consumer-app rounded rather than editorial.
@@ -89,7 +113,11 @@
 
   /* Dropdown / popup system */
   --oltra-dropdown-radius: 4px;
-  --oltra-dropdown-border: 1px solid rgba(255, 255, 255, 0.18);
+  /* Derived to clear 3:1 against the base page - panel and base are close
+     enough in luminance (~1.2:1 apart) that "panel color, a shade lighter"
+     couldn't reach the threshold; had to go notably brighter than either
+     surface. Same hue as --oltra-field-border, scaled up. */
+  --oltra-dropdown-border: 1px solid #738783;
   --oltra-dropdown-shadow:
     0 18px 42px rgba(16, 30, 40, 0.16),
     0 6px 18px rgba(16, 30, 40, 0.08);
@@ -162,103 +190,141 @@
      light-thumb rule. Values unchanged from what was live before. */
   --oltra-scrollbar-thumb: rgba(255, 255, 255, 0.82);
   --oltra-scrollbar-track: var(--oltra-field-bg);
+
+  /* Dropdown item hover/selected rows - raised relative to the panel
+     they sit on (one step lighter / two steps lighter, per brief), same
+     hue as the panel, stepped up. */
+  --oltra-dropdown-item-hover-bg: #414c4a;
+  --oltra-dropdown-item-selected-bg: #4c5754;
+
+  /* Badge/chip label color, split out of .oltra-chip's previously-inline
+     var(--oltra-text-primary) so badges have their own (muted) label color
+     without changing every other primary-text consumer. Per brief: badges
+     and chips are recessed like fields, with a muted label. */
+  --oltra-badge-text: var(--oltra-text-muted);
 }
 
-/* Proposed dark-surface refinement (design-system audit, 2026-08-11/12) —
-   not applied anywhere in the live app yet. Scoped under this attribute so a
-   wrapper (currently only /theme-test) can opt in via
-   [data-oltra-surface="dark"] without affecting the current all-dark site,
-   which keeps reading its values from bare :root above, untouched.
-   The ivory surface this originally sat alongside was dropped 2026-08-12
-   ("reads too mainstream, doesn't earn its place") — dark is the only
-   surface now. The [data-oltra-surface] attribute mechanism itself stays,
-   since it's cheap to leave in and /theme-test still needs a review sandbox
-   that doesn't touch bare :root. */
+/* FINAL PALETTE (design-system pass, 2026-08-13) — supersedes the
+   2026-08-11/12 "dark-surface refinement" proposal that lived here before
+   (gold accent, #0e1719/#162225 base/card, translucent fields). That
+   proposal's era is over: this is a genuinely lighter base (#2C3634 vs
+   #0e1719), which is why almost nothing carries forward unchanged - even
+   values that cleared their thresholds before had far less headroom to work
+   with here and needed re-deriving from scratch, not just re-verifying.
+   Still scoped under [data-oltra-surface="dark"] so only /theme-test picks
+   it up - bare :root (the live site) is untouched until this is reviewed
+   there and explicitly shipped, same staged pattern as the previous pass. */
 [data-oltra-surface="dark"] {
-  --oltra-surface-page: #0e1719;
-  --oltra-surface-card: #162225;
+  /* Surfaces - three tiers now, not two. Base and raised panel/card are
+     close in luminance by design (a real UI relationship, not a mistake -
+     panel needs to read as "a card sitting on the page", not "a different
+     material"), which is exactly why the panel/dropdown border below can't
+     just be "panel color, a touch lighter" and had to be derived far
+     brighter than either surface to hit 3:1. Field is recessed - darker
+     than both - the new solid-fill treatment for every input/select. */
+  --oltra-surface-page: #2c3634;
+  --oltra-surface-card: #374240;
+  --oltra-surface-field: #232c2a;
 
-  /* Primary/muted text - candidate C confirmed 2026-08-12 (warm variant, on
-     the accent gold's hue H40 at low saturation, against the cool
-     blue-green base). Was #E8EDEC/#8FA3A5 (audit's original pick, too
-     white/too bright per your review); candidates A/B (same cool hue as
-     the original, just dimmer) are not carried forward now that C is
-     chosen. Muted is the dimmest value on this hue that still clears 4.5:1
-     against both --oltra-surface-page and --oltra-surface-card (5.23:1 /
-     4.68:1) - not an eyeballed pairing. */
-  --oltra-surface-text: #d9d4c9;
-  --oltra-surface-muted: #978869;
-  --oltra-surface-accent: #c8a96a;
+  /* Text - three roles only, solid hex throughout, no white-at-opacity
+     anywhere. All three clear 7:1+ against every surface (base/panel/field)
+     with real headroom - see the contrast table delivered alongside this
+     change for the full matrix. */
+  --oltra-surface-text: #f5f2ec;
+  --oltra-surface-muted: #cbd0cb;
+  --oltra-surface-placeholder: #c0c6c1;
 
-  /* Decorative hairline: a soft version of the surface text color - close
-     to the surface, no 3:1 requirement (the card/panel edge already does
-     the work of distinguishing the boundary). */
-  --oltra-border-decorative: rgba(217, 212, 201, 0.12);
+  /* Disabled - deliberately below AA (2.78:1 vs base). This is intentional,
+     not an oversight: WCAG doesn't require inactive-control contrast, and a
+     disabled state needs to visibly read as "not available" - full-AA
+     disabled text would look identical to muted and lose that signal. Only
+     use this where the disabled-ness itself is also conveyed some other way
+     (cursor, opacity, a "disabled" attribute) - never where the text is the
+     only carrier of essential information. */
+  --oltra-surface-disabled: #787774;
 
-  /* Functional border: input outlines, focus rings, checkbox edges.
-     Computed, not picked by eye: darkest neutral grey that still clears 3:1
-     against both --oltra-surface-page (#0e1719) and --oltra-surface-card
-     (#162225) - the harder constraint here is the card (3.01:1); page comes
-     out to 3.36:1. */
-  --oltra-border-functional: #6a6a6a;
+  /* Field border: given value, not derived (#3E4947 per brief) - flagged
+     honestly rather than silently strengthened: this is only ~1.34:1
+     against the base and ~1.53:1 against the field itself, well under even
+     the 3:1 non-text-UI guideline. It reads as a soft recessed edge, not a
+     assertive boundary - the field's own darker fill against the page is
+     what actually carries the "this is a field" signal, the border is a
+     finishing touch on top of that, not the primary cue. If a firmer edge
+     turns out to be wanted after seeing it live, this is the one to revisit. */
+  --oltra-border-field: #3e4947;
+
+  /* Panel/dropdown border: derived, not given - needed to clear 3:1 against
+     base per the brief, which forced it well past "panel color, a shade
+     lighter" (base and panel are only ~1.2:1 apart - see above). Built on
+     the same hue as the field border, scaled up to the minimum brightness
+     that clears the threshold with a small safety margin (3.28:1, the exact
+     minimum was 3.02:1). */
+  --oltra-border-panel: #738783;
 
   --oltra-scrollbar-thumb: rgba(255, 255, 255, 0.82);
   --oltra-scrollbar-track: rgba(255, 255, 255, 0.08);
 
-  /* Accent: on dark, the source gold (#C8A96A) already clears 4.5:1 as TEXT
-     against both page (8.08) and card (7.24) with no adjustment - unlike
-     ivory below, one value serves text, outline-button border/label and
-     focus ring. As a FILLED button background it also clears 3:1 trivially
-     (same 8.08/7.24, since fill-vs-page is the same relationship as
-     text-vs-bg), but the text drawn on top of that fill has to be DARK, not
-     light - white/near-white on #C8A96A only reaches ~2:1. So
-     accent-fill-text is the dark surface page color, not the light surface
-     text color. */
-  --oltra-accent-text: #c8a96a;
-  --oltra-accent-fill: #c8a96a;
-  --oltra-accent-fill-hover: #c09c54;
-  --oltra-accent-fill-active: #b38e42;
-  --oltra-accent-fill-text: #0e1719;
-  --oltra-focus-ring: var(--oltra-accent-fill);
+  /* Dropdown item hover/selected rows - raised relative to the panel
+     they're sitting on, per brief ("one step lighter" / "two steps
+     lighter, plus primary text"). Same hue as the panel, stepped up. */
+  --oltra-dropdown-item-hover-bg: #414c4a;
+  --oltra-dropdown-item-selected-bg: #4c5754;
 
-  /* Error: not part of the original 5-color proposal or the accent brief -
-     a genuine gap (no error/red color exists anywhere in the current
-     codebase either). Derived with the same method as the accent: a warm
-     brick-red hue (H8 S62, warmer than a stock UI red, to sit with the gold
-     rather than clash), lightest/darkest value clearing 4.5:1 as text
-     against both page and card. Flagged as an unreviewed proposal - only
-     the accent was explicitly specified and verified with you. */
-  --oltra-error-text: #d66452;
+  /* Buttons - recomputed from scratch against the new base, not reused from
+     any earlier pass (the brief's own #5E7A5C/#3C4B4E reference values were
+     computed against the old near-black base and don't hold here either -
+     both needed to move further than one might expect, precisely because
+     base/panel here are so much lighter than before, leaving much less
+     luminance headroom to place a "clearly darker" or "clearly lighter"
+     accent into). Kept the sage hue family throughout (source ~H100,
+     muted-green) - only brightness was adjusted, not hue.
 
-  /* Component-facing token overrides: real components (OltraSelect,
-     GuestSelector, buttons, cards, dropdowns) read the token NAMES already
-     used site-wide (--oltra-text-primary, --oltra-field-bg, etc.), not the
-     --oltra-surface-* names above. Overriding those same names here is what
-     makes real components actually re-skin inside a
-     [data-oltra-surface="dark"] wrapper, instead of only new/bespoke markup
-     picking up the new palette. Values are mechanically derived from the
-     surface + accent tokens above, not independently invented. */
-  --oltra-bg-color: var(--oltra-surface-page);
-  --oltra-glass-bg: rgba(22, 34, 37, 0.55);
-  --oltra-glass-bg-strong: rgba(22, 34, 37, 0.88);
-  --oltra-glass-border: var(--oltra-border-decorative);
-  --oltra-field-bg: #121d1f;
-  --oltra-field-bg-strong: #162325;
-  --oltra-field-bg-solid: var(--oltra-surface-card);
-  --oltra-field-border: var(--oltra-border-functional);
-  --oltra-button-active-bg: var(--oltra-accent-fill);
-  --oltra-button-active-text: var(--oltra-accent-fill-text);
-  --oltra-button-inactive-bg: rgba(217, 212, 201, 0.08);
-  --oltra-button-inactive-border: var(--oltra-border-decorative);
-  --oltra-button-inactive-text: var(--oltra-surface-text);
-  --oltra-dropdown-border: 1px solid var(--oltra-border-decorative);
+     Filled (primary) fill: #7BA079, 4.24:1 vs base (min 3:1, real margin).
+     THIS IS A VISIBLE SHIFT from the live --oltra-button-active-bg
+     (rgb(182,204,168) / #B6CCA8, a much paler pastel sage) to a more
+     saturated, deeper mid-tone green - flagged per the brief's own
+     instruction ("if the sage has to move significantly, show me the value
+     before applying"). Label on the fill is the field color (#232C2A,
+     4.88:1 vs fill, min 4.5:1) rather than a new dark token - reuses an
+     already-defined color instead of inventing one.
 
-  /* Corner-radius scale and text-primary/secondary/muted both shipped to
-     bare :root 2026-08-13 - no longer overridden here since they'd just be
-     redundant with what :root already says. --oltra-surface-text/muted
-     above stay defined regardless, since /theme-test's own CSS module reads
-     those two names directly for its swatches/labels, independent of the
-     shared component tokens. */
+     Outline (secondary) border: #6C8C6A, 3.32:1 vs base (min 3:1). Label on
+     outline buttons is plain surface-text (primary #F5F2EC) per the brief -
+     "button labels on outline buttons" is explicitly a primary-text role,
+     not a separate accent color, so there's no distinct
+     "outline text" token here (unlike the old gold-accent version of this
+     block, which had one). */
+  --oltra-button-fill: #7ba079;
+  --oltra-button-fill-text: var(--oltra-surface-field);
+  --oltra-button-outline-border: #6c8c6a;
+  --oltra-focus-ring: var(--oltra-button-outline-border);
+
+  /* Error: also fully re-derived, not reused - the brief's own reference
+     history (#D66452, from the previous pass) only reaches 3.45:1 against
+     this base and 2.88:1 against the panel, both short of 4.5:1 text
+     contrast. Brightening the same brick-red hue enough to clear 4.5:1
+     against the hardest surface (panel) pushes it a long way toward coral -
+     #FF8A71 (5.42/4.53/6.23 vs base/panel/field). That's a materially
+     different color identity than "brick red", flagged per the same
+     "show me before applying" standard as the sage above rather than
+     shipped quietly. A less-shifted alternative that only targets base
+     (not panel) is #FF7762 (4.79 vs base, but just 4.00 vs panel - would
+     fail on a panel background). Not part of the original brief or the
+     button/text work either way - still a genuine gap, no error color
+     exists anywhere in the live codebase. */
+  --oltra-error-text: #ff8a71;
+
+  /* Shipped to bare :root 2026-08-13 (confirmed: sage fill and coral error
+     both approved as-is). The component-facing token overrides that used
+     to live here (--oltra-bg-color, --oltra-field-bg, --oltra-text-primary,
+     --oltra-button-active-bg, etc., all re-pointed at the surface tokens
+     above) are gone - they would just be redundant duplication now that
+     bare :root already says the same thing, and leaving them would wrongly
+     imply this palette is still sandbox-only. The surface, border, button
+     and error tokens above stay defined here regardless, since the
+     theme-test page's own CSS module reads several of those names directly
+     (surface-text, surface-muted, surface-page, surface-card in particular)
+     independent of the shared component tokens. */
 }
 
 /* Base page behavior */
@@ -405,7 +471,7 @@ button.oltra-select {
 
 .oltra-input::placeholder,
 .oltra-textarea::placeholder {
-  color: var(--oltra-text-muted);
+  color: var(--oltra-text-placeholder);
 }
 
 .oltra-input:focus,
@@ -554,7 +620,7 @@ textarea::-webkit-scrollbar-thumb,
 }
 
 .oltra-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--oltra-dropdown-item-hover-bg);
   color: var(--oltra-dropdown-text);
 }
 
@@ -672,7 +738,7 @@ textarea::-webkit-scrollbar-thumb,
   border: 1px solid var(--oltra-field-border);
   border-radius: var(--oltra-radius-pill);
   background: var(--oltra-field-bg);
-  color: var(--oltra-text-primary);
+  color: var(--oltra-badge-text);
 }
 
 /* Unified checkbox style */
@@ -1058,7 +1124,7 @@ textarea::-webkit-scrollbar-thumb,
 }
 
 .hotel-date-field__display[data-has-value="false"] {
-  color: var(--oltra-text-muted);
+  color: var(--oltra-text-placeholder);
 }
 
 /* Make native calendar icon white */

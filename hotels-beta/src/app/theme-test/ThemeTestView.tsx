@@ -36,120 +36,111 @@ function ratio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-const PAGE = "#0e1719";
-const PANEL = "#162225";
-// Candidate C, confirmed 2026-08-12 — warm variant on the accent gold's hue
-// (H40, low saturation), replacing the audit's original #E8EDEC/#8FA3A5
-// pick (too white/too bright per review). Candidates A/B (cool-hue dims)
-// were not carried forward.
-const TEXT_PRIMARY = "#d9d4c9";
-const MUTED = "#978869";
-const ACCENT_TEXT = "#c8a96a";
-const ACCENT_FILL = "#c8a96a";
-const ACCENT_FILL_TEXT = "#0e1719";
-const BORDER_FUNCTIONAL = "#6a6a6a";
-const ERROR_TEXT = "#d66452";
+// FINAL PALETTE, 2026-08-13 — mirrors the values now shipped into
+// [data-oltra-surface="dark"] in oltra-theme.css. Kept as local constants
+// here (rather than reading the CSS custom properties at runtime) so the
+// contrast table below can compute against them directly in JS.
+const BASE = "#2c3634";
+const PANEL = "#374240";
+const FIELD = "#232c2a";
+const TEXT_PRIMARY = "#f5f2ec";
+const MUTED = "#cbd0cb";
+const PLACEHOLDER = "#c0c6c1";
+const DISABLED = "#787774";
+const BORDER_FIELD = "#3e4947";
+const BORDER_PANEL = "#738783";
+const BUTTON_FILL = "#7ba079";
+const BUTTON_FILL_TEXT = FIELD;
+const BUTTON_OUTLINE_BORDER = "#6c8c6a";
+const ERROR_TEXT = "#ff8a71";
+const ERROR_TEXT_ALT = "#ff7762"; // less-shifted alternative, fails vs panel — shown for comparison only
 
-type TokenRow = {
+type ContrastRow = {
   role: string;
   value: string;
-  checks?: { against: string; label: string; min: number }[];
+  checks: { against: string; againstLabel: string; label: string; min: number }[];
   note?: string;
 };
 
-const TOKEN_ROWS: TokenRow[] = [
+const SURFACE_CHECKS = [
+  { against: BASE, againstLabel: BASE, label: "vs base" },
+  { against: PANEL, againstLabel: PANEL, label: "vs panel" },
+  { against: FIELD, againstLabel: FIELD, label: "vs field" },
+];
+
+const CONTRAST_ROWS: ContrastRow[] = [
   {
-    role: "Body text — Candidate C (confirmed 2026-08-12)",
+    role: "Text — primary #F5F2EC",
     value: TEXT_PRIMARY,
-    checks: [
-      { against: PAGE, label: "vs page", min: 4.5 },
-      { against: PANEL, label: "vs panel", min: 4.5 },
-    ],
-    note: "Was #E8EDEC (audit's original pick, too white/too bright per review). See the Primary text candidates section below for A/B, not carried forward.",
+    checks: SURFACE_CHECKS.map((c) => ({ ...c, min: 4.5 })),
+    note: "Headings, body, card titles, input values, dropdown item labels, map popup labels, outline-button labels.",
   },
   {
-    role: "Muted text — Candidate C's companion (confirmed)",
+    role: "Text — muted #CBD0CB",
     value: MUTED,
+    checks: SURFACE_CHECKS.map((c) => ({ ...c, min: 4.5 })),
+    note: "Secondary/metadata only — locations, price-per-night suffixes, helper text, timestamps, badge text.",
+  },
+  {
+    role: "Text — placeholder #C0C6C1",
+    value: PLACEHOLDER,
+    checks: SURFACE_CHECKS.map((c) => ({ ...c, min: 4.5 })),
+    note: "Input placeholders only.",
+  },
+  {
+    role: "Field border #3E4947 (given, not derived)",
+    value: BORDER_FIELD,
     checks: [
-      { against: PAGE, label: "vs page", min: 4.5 },
-      { against: PANEL, label: "vs panel", min: 4.5 },
+      { against: BASE, againstLabel: BASE, label: "vs base", min: 3 },
+      { against: FIELD, againstLabel: FIELD, label: "vs field", min: 3 },
     ],
-    note: "Was #8FA3A5. Dimmest value on Candidate C's hue that still clears 4.5:1 against both page and panel.",
+    note: "Flagged, not silently strengthened: 1.34:1 vs base, 1.53:1 vs field — well under the 3:1 non-text-UI guideline. Reads as a soft recessed edge; the field's own darker fill is what actually signals \"this is a field\".",
   },
   {
-    role: "Accent — text/link/outline label/focus ring",
-    value: ACCENT_TEXT,
-    checks: [
-      { against: PAGE, label: "vs page", min: 4.5 },
-      { against: PANEL, label: "vs panel", min: 4.5 },
-    ],
-    note: "Confirmed — the source gold #C8A96A needed no adjustment for dark.",
+    role: "Panel/dropdown border #738783 (derived)",
+    value: BORDER_PANEL,
+    checks: [{ against: BASE, againstLabel: BASE, label: "vs base", min: 3 }],
+    note: "Minimum hue-matched value that clears 3:1 was #6D817D (3.02:1) — used with a small safety margin instead (3.28:1).",
   },
   {
-    role: "Accent — filled button bg",
-    value: ACCENT_FILL,
-    checks: [{ against: PAGE, label: "vs page", min: 3 }],
-    note: "Same value as accent-text on dark — one gold serves both roles here (unlike the ivory version, which needed two).",
+    role: "Outline button border #6C8C6A (derived)",
+    value: BUTTON_OUTLINE_BORDER,
+    checks: [{ against: BASE, againstLabel: BASE, label: "vs base", min: 3 }],
+    note: "Sage hue family, brightness recomputed for the new base. Label on outline buttons is plain primary text, not this color.",
   },
   {
-    role: "Text on filled accent button",
-    value: ACCENT_FILL_TEXT,
-    checks: [{ against: ACCENT_FILL, label: "vs fill", min: 4.5 }],
-    note: "Confirmed — dark text on the gold fill, not near-white. Near-white only reached ~2:1 on this fill.",
+    role: "Filled button bg #7BA079 (derived)",
+    value: BUTTON_FILL,
+    checks: [{ against: BASE, againstLabel: BASE, label: "vs base", min: 3 }],
+    note: "SHIFTED from live --oltra-button-active-bg (#B6CCA8, pale pastel) to a deeper mid-tone sage — flagged per instruction rather than shipped quietly.",
   },
   {
-    role: "Functional border (input/focus/checkbox)",
-    value: BORDER_FUNCTIONAL,
-    checks: [
-      { against: PAGE, label: "vs page", min: 3 },
-      { against: PANEL, label: "vs panel", min: 3 },
-    ],
+    role: "Filled button label (field color) on fill",
+    value: BUTTON_FILL_TEXT,
+    checks: [{ against: BUTTON_FILL, againstLabel: BUTTON_FILL, label: "vs fill", min: 4.5 }],
+    note: "Reuses the field color #232C2A as the dark label, rather than inventing a new token.",
   },
   {
-    role: "Decorative border (card/divider)",
-    value: "rgba(217,212,201,0.12)",
-    note: "No 3:1 requirement — the card background already distinguishes the boundary. Re-derived from Candidate C's RGB (was based on #E8EDEC before).",
+    role: "Disabled text #787774 (derived, deliberately sub-AA)",
+    value: DISABLED,
+    checks: [{ against: BASE, againstLabel: BASE, label: "vs base", min: 4.5 }],
+    note: "Intentionally below 4.5:1 (2.78:1) — disabled state needs to visibly read as unavailable. Only for text backed up by another disabled cue (cursor/opacity/attribute).",
   },
   {
-    role: "Error text/border",
+    role: "Error text #FF8A71 (derived, flagged hue shift)",
     value: ERROR_TEXT,
-    checks: [
-      { against: PAGE, label: "vs page", min: 4.5 },
-      { against: PANEL, label: "vs panel", min: 4.5 },
-    ],
-    note: "Still not part of your brief — no error color exists anywhere in the codebase either. Derived, flagged as unreviewed, review it alongside the text candidates below.",
+    checks: SURFACE_CHECKS.map((c) => ({ ...c, min: 4.5 })),
+    note: "Brick-red source (#D66452) only reached 3.45/2.88/3.96 vs base/panel/field — brightened to clear 4.5:1 on the hardest surface (panel), which pushed it toward coral. See the alternative row below.",
+  },
+  {
+    role: "Error text — less-shifted alternative (fails vs panel)",
+    value: ERROR_TEXT_ALT,
+    checks: SURFACE_CHECKS.map((c) => ({ ...c, min: 4.5 })),
+    note: "Stays closer to brick-red but only clears base (4.79:1) — fails vs panel (4.00:1) and would need to avoid ever rendering on a panel background.",
   },
 ];
 
-type TextCandidate = {
-  label: string;
-  primary: string;
-  muted: string;
-  family: string;
-};
-
-const TEXT_CANDIDATES: TextCandidate[] = [
-  {
-    label: "A — same cool family, moderate dim (not carried forward)",
-    primary: "#c2cbcb",
-    muted: "#708f8e",
-    family: "Same hue as the original #E8EDEC (blue-green-grey), just less bright.",
-  },
-  {
-    label: "B — same cool family, deeper dim (not carried forward)",
-    primary: "#a7b4b3",
-    muted: "#708f8e",
-    family: "Same hue again, pulled further down — closer to the muted tone, still clearly a distinct tier.",
-  },
-  {
-    label: "C — warm variant — SELECTED 2026-08-12",
-    primary: "#d9d4c9",
-    muted: "#978869",
-    family: "Shifted onto the gold accent's hue (H40) at low saturation — warm off-white against the cool blue-green base. Now the live values below, throughout the single-column preview.",
-  },
-];
-
-function TokenTable() {
+function ContrastTable() {
   return (
     <div className={styles.tokenTable}>
       <table>
@@ -162,73 +153,24 @@ function TokenTable() {
           </tr>
         </thead>
         <tbody>
-          {TOKEN_ROWS.map((row) => (
+          {CONTRAST_ROWS.map((row) => (
             <tr key={row.role}>
               <td>{row.role}</td>
               <td>
                 <span className={styles.tokenSwatch} style={{ background: row.value }} />
-                {row.value}
+                {row.value.toUpperCase()}
               </td>
               <td>
                 {row.checks
-                  ? row.checks
-                      .map((c) => {
-                        const r = ratio(row.value.startsWith("#") ? row.value : PAGE, c.against);
-                        const pass = r >= c.min;
-                        return `${c.label} ${r.toFixed(2)}:1${pass ? "" : " ✗"}`;
-                      })
-                      .join("  ·  ")
-                  : "—"}
+                  .map((c) => {
+                    const r = ratio(row.value, c.against);
+                    const pass = r >= c.min;
+                    return `${c.label} ${r.toFixed(2)}:1${pass ? "" : " ✗ below " + c.min + ":1"}`;
+                  })
+                  .join("  ·  ")}
               </td>
-              <td className={row.note ? styles.note : undefined} style={{ whiteSpace: "normal", maxWidth: 380 }}>
+              <td className={row.note ? styles.note : undefined} style={{ whiteSpace: "normal", maxWidth: 420 }}>
                 {row.note ?? ""}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function TextCandidates() {
-  return (
-    <div className={styles.tokenTable}>
-      <table>
-        <thead>
-          <tr>
-            <th>Candidate</th>
-            <th>Primary</th>
-            <th>Contrast</th>
-            <th>Muted companion</th>
-            <th>Contrast</th>
-            <th>Sample</th>
-          </tr>
-        </thead>
-        <tbody>
-          {TEXT_CANDIDATES.map((c) => (
-            <tr key={c.label}>
-              <td style={{ whiteSpace: "normal", maxWidth: 240 }}>
-                <strong>{c.label}</strong>
-                <div className={styles.note}>{c.family}</div>
-              </td>
-              <td>
-                <span className={styles.tokenSwatch} style={{ background: c.primary }} />
-                {c.primary}
-              </td>
-              <td>
-                vs page {ratio(c.primary, PAGE).toFixed(2)}:1 · vs panel {ratio(c.primary, PANEL).toFixed(2)}:1
-              </td>
-              <td>
-                <span className={styles.tokenSwatch} style={{ background: c.muted }} />
-                {c.muted}
-              </td>
-              <td>
-                vs page {ratio(c.muted, PAGE).toFixed(2)}:1 · vs panel {ratio(c.muted, PANEL).toFixed(2)}:1
-              </td>
-              <td style={{ background: PAGE, padding: "10px 14px" }}>
-                <div style={{ color: c.primary, fontSize: "0.95rem" }}>Body text sample</div>
-                <div style={{ color: c.muted, fontSize: "0.8rem", marginTop: 2 }}>Muted / secondary sample</div>
               </td>
             </tr>
           ))}
@@ -251,11 +193,11 @@ function RadiusScale() {
         <div key={t.label} className={styles.radiusCard}>
           <div className={styles.radiusRow}>
             <div>
-              <div className={styles.radiusSwatch} style={{ borderRadius: t.oldPx, background: PANEL, border: `1px solid ${BORDER_FUNCTIONAL}` }} />
+              <div className={styles.radiusSwatch} style={{ borderRadius: t.oldPx, background: PANEL, border: `1px solid ${BORDER_PANEL}` }} />
               <div className={styles.note}>before {t.oldPx}px</div>
             </div>
             <div>
-              <div className={styles.radiusSwatch} style={{ borderRadius: t.newPx, background: PANEL, border: `1px solid ${BORDER_FUNCTIONAL}` }} />
+              <div className={styles.radiusSwatch} style={{ borderRadius: t.newPx, background: PANEL, border: `1px solid ${BORDER_PANEL}` }} />
               <div className={styles.note}>after {t.newPx}px</div>
             </div>
           </div>
@@ -272,20 +214,20 @@ function RadiusScale() {
 function StateButtons() {
   return (
     <div>
-      <div className={styles.buttonGridLabel}>Primary (filled)</div>
+      <div className={styles.buttonGridLabel}>Primary (filled) — deepened sage, recomputed</div>
       <div className={styles.buttonGrid}>
-        <button className={styles.stateButton} style={{ background: ACCENT_FILL, color: ACCENT_FILL_TEXT }}>
+        <button className={styles.stateButton} style={{ background: BUTTON_FILL, color: BUTTON_FILL_TEXT }}>
           Default
         </button>
-        <button className={styles.stateButton} style={{ background: "#c09c54", color: ACCENT_FILL_TEXT }}>
+        <button className={styles.stateButton} style={{ background: "#719570", color: BUTTON_FILL_TEXT }}>
           Hover
         </button>
-        <button className={styles.stateButton} style={{ background: "#b38e42", color: ACCENT_FILL_TEXT }}>
+        <button className={styles.stateButton} style={{ background: "#688b67", color: BUTTON_FILL_TEXT }}>
           Active
         </button>
         <button
           className={styles.stateButton}
-          style={{ background: MUTED, color: PANEL, opacity: 0.4, cursor: "not-allowed" }}
+          style={{ background: PANEL, color: DISABLED, border: `1px solid ${BORDER_FIELD}`, cursor: "not-allowed" }}
           disabled
         >
           Disabled
@@ -293,21 +235,21 @@ function StateButtons() {
       </div>
 
       <div className={styles.buttonGridLabel} style={{ marginTop: 14 }}>
-        Secondary (outline)
+        Secondary (outline) — border recomputed, label is plain primary text
       </div>
       <div className={styles.buttonGrid}>
-        <button className={styles.stateButton} style={{ background: "transparent", color: ACCENT_TEXT, borderColor: ACCENT_TEXT }}>
+        <button className={styles.stateButton} style={{ background: "transparent", color: TEXT_PRIMARY, borderColor: BUTTON_OUTLINE_BORDER }}>
           Default
         </button>
-        <button className={styles.stateButton} style={{ background: "rgba(200,169,106,0.1)", color: ACCENT_TEXT, borderColor: ACCENT_TEXT }}>
+        <button className={styles.stateButton} style={{ background: "rgba(108,140,106,0.12)", color: TEXT_PRIMARY, borderColor: BUTTON_OUTLINE_BORDER }}>
           Hover
         </button>
-        <button className={styles.stateButton} style={{ background: "rgba(200,169,106,0.18)", color: ACCENT_TEXT, borderColor: ACCENT_TEXT }}>
+        <button className={styles.stateButton} style={{ background: "rgba(108,140,106,0.2)", color: TEXT_PRIMARY, borderColor: BUTTON_OUTLINE_BORDER }}>
           Active
         </button>
         <button
           className={styles.stateButton}
-          style={{ background: "transparent", color: MUTED, borderColor: MUTED, opacity: 0.5, cursor: "not-allowed" }}
+          style={{ background: "transparent", color: DISABLED, borderColor: BORDER_FIELD, cursor: "not-allowed" }}
           disabled
         >
           Disabled
@@ -326,27 +268,118 @@ function FieldStates() {
     fontSize: "0.85rem",
     fontFamily: "inherit",
     color: TEXT_PRIMARY,
-    background: "#121d1f",
-    border: `1px solid ${BORDER_FUNCTIONAL}`,
+    background: FIELD,
+    border: `1px solid ${BORDER_FIELD}`,
   };
   return (
     <div className={styles.formGrid}>
       <div>
-        <div className={styles.formFieldLabel}>Default</div>
+        <div className={styles.formFieldLabel}>Default (recessed solid)</div>
         <input style={fieldBase} placeholder="Guest name" readOnly />
       </div>
       <div>
-        <div className={styles.formFieldLabel}>Focus</div>
-        <input style={{ ...fieldBase, border: `2px solid ${ACCENT_TEXT}`, outline: "none" }} placeholder="Guest name" readOnly />
+        <div className={styles.formFieldLabel}>Filled with placeholder-role value</div>
+        <input style={fieldBase} defaultValue="" placeholder="Type 2+ letters…" readOnly />
+        <div className={styles.note} style={{ marginTop: 4 }}>
+          Placeholder text is #C0C6C1, distinct from a real (primary) value.
+        </div>
       </div>
       <div>
         <div className={styles.formFieldLabel}>Disabled</div>
-        <input style={{ ...fieldBase, opacity: 0.45, cursor: "not-allowed" }} placeholder="Guest name" disabled />
+        <input style={{ ...fieldBase, color: DISABLED, cursor: "not-allowed" }} placeholder="Guest name" disabled />
       </div>
       <div>
         <div className={styles.formFieldLabel}>Error</div>
         <input style={{ ...fieldBase, border: `1px solid ${ERROR_TEXT}` }} placeholder="Guest name" readOnly />
-        <div style={{ marginTop: 4, fontSize: "0.68rem", color: ERROR_TEXT }}>Required field</div>
+        <div style={{ marginTop: 4, fontSize: "0.72rem", color: ERROR_TEXT }}>Required field</div>
+      </div>
+    </div>
+  );
+}
+
+function BadgeStates() {
+  return (
+    <div className={styles.buttonGrid} style={{ gridTemplateColumns: "repeat(3, minmax(0,1fr))" }}>
+      <div>
+        <div className={styles.formFieldLabel}>Chip / badge (recessed)</div>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            height: 28,
+            padding: "0 12px",
+            borderRadius: 999,
+            background: FIELD,
+            border: `1px solid ${BORDER_FIELD}`,
+            color: MUTED,
+            fontSize: "0.78rem",
+          }}
+        >
+          Free cancellation
+        </span>
+      </div>
+      <div>
+        <div className={styles.formFieldLabel}>Rectangular badge, 2px radius</div>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            height: 24,
+            padding: "0 10px",
+            borderRadius: 2,
+            background: FIELD,
+            border: `1px solid ${BORDER_FIELD}`,
+            color: MUTED,
+            fontSize: "0.68rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          Michelin 3 Keys
+        </span>
+      </div>
+      <div>
+        <div className={styles.formFieldLabel}>Disabled badge</div>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            height: 28,
+            padding: "0 12px",
+            borderRadius: 999,
+            background: FIELD,
+            border: `1px solid ${BORDER_FIELD}`,
+            color: DISABLED,
+            fontSize: "0.78rem",
+          }}
+        >
+          Sold out
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function DropdownRowStates() {
+  const rowBase: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    height: 32,
+    padding: "0 10px",
+    borderRadius: 2,
+    fontSize: "0.78rem",
+    color: TEXT_PRIMARY,
+  };
+  return (
+    <div style={{ marginTop: 14, maxWidth: 280, background: PANEL, border: `1px solid ${BORDER_PANEL}`, borderRadius: 4, padding: 6 }}>
+      <div style={rowBase}>Default row</div>
+      <div style={{ ...rowBase, background: "#414c4a" }}>Hover row — one step lighter</div>
+      <div style={{ ...rowBase, background: "#4c5754" }}>Selected row — two steps lighter</div>
+      <div className={styles.note} style={{ marginTop: 6, paddingLeft: 10 }}>
+        Illustrative — the real OltraSelect/GuestSelector below already re-skin via tokens (panel bg,
+        primary item text, hover row); the row-level *selected* state is still hardcoded per-component
+        Tailwind (e.g. OltraSelect.tsx) rather than token-driven, so it is not previewed live here yet —
+        that is a live-page migration, out of scope for this token pass.
       </div>
     </div>
   );
@@ -355,7 +388,7 @@ function FieldStates() {
 function InlineMessage() {
   return (
     <div style={{ fontSize: "0.75rem", color: TEXT_PRIMARY }}>
-      <button className={styles.stateButton} style={{ background: ACCENT_FILL, color: ACCENT_FILL_TEXT, width: "auto", padding: "0 16px" }}>
+      <button className={styles.stateButton} style={{ background: BUTTON_FILL, color: BUTTON_FILL_TEXT, width: "auto", padding: "0 16px" }}>
         Add to trip
       </button>
       <div style={{ marginTop: 8, color: MUTED }}>Added to trip.</div>
@@ -372,10 +405,10 @@ function ModalPreview() {
     <div className={styles.modalPreviewWrap}>
       <div className="oltra-modal-scrim absolute inset-0 flex items-center justify-center p-6">
         <div className="oltra-modal-panel relative w-full max-w-[420px] rounded-[var(--oltra-radius-xl)] border border-white/12 p-4">
-          <div style={{ color: "rgba(255,255,255,0.96)", fontSize: "0.85rem", fontWeight: 600 }}>
+          <div style={{ color: TEXT_PRIMARY, fontSize: "0.85rem", fontWeight: 600 }}>
             Deluxe Double Room
           </div>
-          <div style={{ color: "rgba(255,255,255,0.68)", fontSize: "0.72rem", marginTop: 4 }}>
+          <div style={{ color: MUTED, fontSize: "0.75rem", marginTop: 4 }}>
             Sleeps 2 · City view · Free cancellation
           </div>
         </div>
@@ -433,7 +466,9 @@ function LiveMap() {
     <div>
       <div className={styles.mapWrap} ref={mapRef} />
       <div className={styles.sectionNote}>
-        Standard MapTiler streets-v4, unchanged — confirmed fine as-is, no dark style needed.
+        Standard MapTiler streets-v4, unchanged — confirmed fine as-is, no dark style needed. Map
+        popups/markers keep their existing translucency (glass-over-imagery exception) — not part of
+        this pass.
       </div>
     </div>
   );
@@ -446,59 +481,67 @@ export default function ThemeTestView({ sampleHotels }: { sampleHotels: HotelRec
   return (
     <div className={styles.page}>
       <div className={styles.intro}>
-        <h1>Theme test — dark surface refinement</h1>
+        <h1>Theme test — final palette (2026-08-13)</h1>
         <p>
-          Ivory dropped 2026-08-12 — dark is the only surface now. Corner-radius scale and primary
-          text color (Candidate C, confirmed 2026-08-12) are both decided below but still only
-          live in this sandbox — neither has shipped site-wide yet. Wraps real app components via
-          [data-oltra-surface=&quot;dark&quot;], not replicas.
+          Lighter base (#2C3634, was #0E1719) with a genuine three-tier surface system: recessed
+          fields, base page, raised panels — plus a raised dropdown/popup tier. Three text roles
+          (primary/muted/placeholder), solid hex throughout, no white-at-opacity anywhere. Supersedes
+          the 2026-08-11/12 gold-accent pass entirely — nothing from that palette carried forward.
+          Still sandbox-only via [data-oltra-surface=&quot;dark&quot;]; nothing here is live yet.
         </p>
       </div>
 
-      <div className={styles.introSectionTitle}>Token table (dark)</div>
-      <TokenTable />
+      <div className={styles.introSectionTitle}>Contrast table (required, computed live)</div>
+      <ContrastTable />
 
-      <div className={styles.introSectionTitle}>Radius scale — before / after</div>
+      <div className={styles.introSectionTitle}>Radius scale — before / after (unchanged this pass)</div>
       <RadiusScale />
-
-      <div className={styles.introSectionTitle}>Primary text candidates</div>
-      <TextCandidates />
 
       {ready ? (
         <div className={styles.singleColumnWrap}>
           <div className={styles.column} data-oltra-surface="dark">
             <div className={styles.columnHeader}>
-              <h2>Tinted dark (editorial/browse) — with the new radius scale applied</h2>
+              <h2>Final palette — recessed fields, raised dropdowns</h2>
             </div>
 
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>1 — Typography &amp; tokens</div>
+              <div className={styles.sectionTitle}>1 — Surfaces &amp; text roles</div>
               <div className={styles.swatchStrip}>
                 <div className={styles.swatchCard}>
-                  <div className={styles.swatchColor} style={{ background: PAGE }} />
-                  <div className={styles.swatchLabel}>page {PAGE}</div>
+                  <div className={styles.swatchColor} style={{ background: BASE }} />
+                  <div className={styles.swatchLabel}>base {BASE}</div>
                 </div>
                 <div className={styles.swatchCard}>
                   <div className={styles.swatchColor} style={{ background: PANEL }} />
-                  <div className={styles.swatchLabel}>card {PANEL}</div>
+                  <div className={styles.swatchLabel}>panel (raised) {PANEL}</div>
+                </div>
+                <div className={styles.swatchCard}>
+                  <div className={styles.swatchColor} style={{ background: FIELD }} />
+                  <div className={styles.swatchLabel}>field (recessed) {FIELD}</div>
                 </div>
                 <div className={styles.swatchCard}>
                   <div className={styles.swatchColor} style={{ background: TEXT_PRIMARY }} />
-                  <div className={styles.swatchLabel}>text (Candidate C) {TEXT_PRIMARY}</div>
+                  <div className={styles.swatchLabel}>text primary {TEXT_PRIMARY}</div>
                 </div>
                 <div className={styles.swatchCard}>
                   <div className={styles.swatchColor} style={{ background: MUTED }} />
-                  <div className={styles.swatchLabel}>muted (Candidate C) {MUTED}</div>
+                  <div className={styles.swatchLabel}>text muted {MUTED}</div>
                 </div>
                 <div className={styles.swatchCard}>
-                  <div className={styles.swatchColor} style={{ background: ACCENT_TEXT }} />
-                  <div className={styles.swatchLabel}>accent {ACCENT_TEXT}</div>
+                  <div className={styles.swatchColor} style={{ background: PLACEHOLDER }} />
+                  <div className={styles.swatchLabel}>placeholder {PLACEHOLDER}</div>
+                </div>
+                <div className={styles.swatchCard}>
+                  <div className={styles.swatchColor} style={{ background: DISABLED }} />
+                  <div className={styles.swatchLabel}>disabled {DISABLED}</div>
                 </div>
               </div>
               <div className={styles.textSamples}>
-                <div style={{ color: TEXT_PRIMARY, fontSize: "1.05rem" }}>Body text at default size (Candidate C)</div>
-                <div style={{ color: MUTED, fontSize: "0.78rem" }}>Muted / secondary text (Candidate C)</div>
-                <div style={{ color: ACCENT_TEXT, fontSize: "0.85rem" }}>Accent / link text</div>
+                <div style={{ color: TEXT_PRIMARY, fontSize: "1.05rem" }}>Body text at default size (primary)</div>
+                <div style={{ color: MUTED, fontSize: "0.78rem" }}>Muted / secondary / metadata text</div>
+                <div style={{ color: PLACEHOLDER, fontSize: "0.85rem" }}>Placeholder-only text</div>
+                <div style={{ color: DISABLED, fontSize: "0.85rem" }}>Disabled text (deliberately sub-AA)</div>
+                <div style={{ color: ERROR_TEXT, fontSize: "0.85rem" }}>Error text — flagged hue shift, see table above</div>
               </div>
             </div>
 
@@ -509,7 +552,12 @@ export default function ThemeTestView({ sampleHotels }: { sampleHotels: HotelRec
             </div>
 
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>3 — Dropdowns, open</div>
+              <div className={styles.sectionTitle}>3 — Badges &amp; chips (recessed like fields)</div>
+              <BadgeStates />
+            </div>
+
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>4 — Dropdowns, open (raised, not recessed)</div>
               <div className={styles.dropdownRow}>
                 <div className={styles.dropdownSlot}>
                   <OltraSelect
@@ -529,10 +577,11 @@ export default function ThemeTestView({ sampleHotels }: { sampleHotels: HotelRec
                   <GuestSelector initialValue={{ adults: 2, kids: 1, kidAges: ["7"] }} defaultOpen placeholder="Guests" />
                 </div>
               </div>
+              <DropdownRowStates />
             </div>
 
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>4 — Date picker (native)</div>
+              <div className={styles.sectionTitle}>5 — Date picker (native)</div>
               <div className={styles.dateRow}>
                 <div>
                   <div className={styles.formFieldLabel}>From</div>
@@ -546,8 +595,8 @@ export default function ThemeTestView({ sampleHotels }: { sampleHotels: HotelRec
                       padding: "0 12px",
                       fontFamily: "inherit",
                       color: TEXT_PRIMARY,
-                      background: "#121d1f",
-                      border: `1px solid ${BORDER_FUNCTIONAL}`,
+                      background: FIELD,
+                      border: `1px solid ${BORDER_FIELD}`,
                       colorScheme: "dark",
                     }}
                   />
@@ -564,8 +613,8 @@ export default function ThemeTestView({ sampleHotels }: { sampleHotels: HotelRec
                       padding: "0 12px",
                       fontFamily: "inherit",
                       color: TEXT_PRIMARY,
-                      background: "#121d1f",
-                      border: `1px solid ${BORDER_FUNCTIONAL}`,
+                      background: FIELD,
+                      border: `1px solid ${BORDER_FIELD}`,
                       colorScheme: "dark",
                     }}
                   />
@@ -574,22 +623,22 @@ export default function ThemeTestView({ sampleHotels }: { sampleHotels: HotelRec
             </div>
 
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>5 — Modal</div>
+              <div className={styles.sectionTitle}>6 — Modal</div>
               <ModalPreview />
             </div>
 
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>6 — Inline confirmation message</div>
+              <div className={styles.sectionTitle}>7 — Inline confirmation message</div>
               <InlineMessage />
             </div>
 
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>7 — Results grid</div>
+              <div className={styles.sectionTitle}>8 — Results grid</div>
               <ResultsGridSection hotels={sampleHotels} />
             </div>
 
             <div className={styles.section}>
-              <div className={styles.sectionTitle}>8 — Live map</div>
+              <div className={styles.sectionTitle}>9 — Live map</div>
               <LiveMap />
             </div>
           </div>

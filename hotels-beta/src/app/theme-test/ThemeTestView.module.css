@@ -142,7 +142,7 @@
   z-index: 5;
   padding: 14px 20px;
   background: var(--oltra-surface-card);
-  border-bottom: 1px solid var(--oltra-border-decorative);
+  border-bottom: 1px solid var(--oltra-border-field);
   color: var(--oltra-surface-text);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -163,12 +163,12 @@
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  border: 1px solid var(--oltra-border-decorative);
+  border: 1px solid var(--oltra-border-field);
 }
 
 .section {
   padding: 20px;
-  border-bottom: 1px solid var(--oltra-border-decorative);
+  border-bottom: 1px solid var(--oltra-border-field);
   color: var(--oltra-surface-text);
   font-family: var(--oltra-font-sans);
 }
@@ -191,7 +191,7 @@
   font-size: 0.72rem;
   line-height: 1.5;
   color: var(--oltra-surface-muted);
-  border-left: 2px solid var(--oltra-border-decorative);
+  border-left: 2px solid var(--oltra-border-field);
   padding-left: 10px;
 }
 
@@ -204,7 +204,7 @@
 .swatchCard {
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--oltra-border-decorative);
+  border: 1px solid var(--oltra-border-field);
 }
 
 .swatchColor {
