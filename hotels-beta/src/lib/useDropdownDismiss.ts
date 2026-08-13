@@ -97,7 +97,12 @@ export function useDropdownDismiss({
   }
 
   function handleMouseLeave() {
-    if (!closeOnHoverOutside) return;
+    // Without this, hovering a CLOSED dropdown and moving away still
+    // scheduled a delayed onClose call - harmless for consumers whose
+    // onClose is an idempotent "set closed", but for a toggle-based
+    // onClose (e.g. Inspire's shared openMenu field) it flips the
+    // dropdown OPEN instead, since it wasn't open to begin with.
+    if (!open || !closeOnHoverOutside) return;
     cancelScheduledClose();
     closeTimerRef.current = setTimeout(() => {
       onCloseRef.current();
