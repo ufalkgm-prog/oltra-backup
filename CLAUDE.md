@@ -1906,4 +1906,120 @@ negligible delta rather than claimed as a clean refactor.
 
 ---
 
+## 35. FINAL PALETTE + LIVE-COMPONENT MIGRATION (2026-08-13, in progress)
+
+### Supersedes §34's shipped text-color values
+
+After §34 shipped its own radius-scale + text-color refinement, Ulrik gave a
+new, fully prescriptive **FINAL PALETTE** spec in a later session the same
+day — a genuine second round, not a continuation of §34's candidate C. It
+replaces §34's shipped text colors (`#D9D4C9` primary / `#978869` muted)
+and expands the surface tokens beyond what §34 touched. Shipped straight to
+bare `:root` (not just `/theme-test`) as commit **`a2b1c30`** ("Ship final
+palette: lighter base, recessed fields, raised dropdowns"). §34's
+**radius scale is unaffected** and stays current; only its text/surface
+values are superseded here.
+
+**Surfaces**: base `--oltra-bg-color: #2c3634`, raised panel/card
+`--oltra-field-bg-solid: #374240`, recessed field
+`--oltra-field-bg: #232c2a`, field border `--oltra-field-border: #3e4947`.
+
+**Text — three solid roles, no opacity variants**: primary
+`--oltra-text-primary: #f5f2ec` (headings, body, values, labels on outline
+buttons); muted `--oltra-text-secondary`/`--oltra-text-muted: #cbd0cb`
+(secondary/metadata only — locations, price suffixes, helper text,
+timestamps, badge text; the two token names now alias the same value, no
+third intermediate tier); placeholder `--oltra-text-placeholder: #c0c6c1`
+(input placeholders only); disabled `--oltra-text-disabled: #787774`
+(deliberately sub-AA, only where nothing essential is carried by the text
+alone).
+
+**Fields switched from translucent to solid recessed** — every form field
+(destination input, guest/room selector trigger, date fields, any text
+input/select trigger) is `--oltra-field-bg` fill + 1px `--oltra-field-border`.
+Translucency is kept **only** where glass is doing real work over imagery —
+map popups and photo-overlay chrome (the featured-mode hero search panel,
+the featured hotel card, the map container). Everything else went solid.
+
+**Dropdowns/popup panels are raised, not recessed** — panel bg
+`--oltra-field-bg-solid`, panel border `--oltra-dropdown-border` (`1px solid
+#738783`), item hover `--oltra-dropdown-item-hover-bg: #414c4a`, item
+selected `--oltra-dropdown-item-selected-bg: #4c5754` + primary text.
+
+**Badges/chips**: recessed like fields (`--oltra-field-bg` +
+`--oltra-field-border`), label color is its own token
+`--oltra-badge-text` (currently aliases muted) so badge color can't drift
+from body text color by accident.
+
+**Buttons**: kept the sage hue family, recomputed for contrast — active
+`--oltra-button-active-bg: #7ba079` with **dark** active text
+`--oltra-button-active-text: #232c2a` (not white-on-sage); inactive
+`transparent` fill, `--oltra-button-inactive-border: #6c8c6a`, primary text.
+
+**Error color**: `--oltra-error-text: #ff8a71` — chosen over a
+`#ff7762` alternative (fully-WCAG-compliant option, picked over the
+marginally-brighter one).
+
+**Type size**: metadata/secondary text raised from 11px to 12px wherever it
+appears (applied during the component migration below, not the token pass
+itself).
+
+### Live-component migration (commit `15c8ea8`, same session)
+
+Token/`/theme-test` work only changes what CSS custom properties *resolve
+to* — components still holding literal `text-white/NN` Tailwind utilities
+don't pick any of it up. Migrating those literal call sites to the token
+syntax (`text-[color:var(--oltra-text-primary)]` etc. — the established
+Tailwind-v4-without-a-config convention in this codebase, since there's no
+`tailwind.config.js`/`@theme` block) is separate, ongoing work.
+
+**Done**: `HotelsView.tsx` (all ~74 hardcoded instances — result cards,
+detail panel, description, taxonomy metadata, Rooms section, room-detail
+popup, total-price footer, trip picker, photo lightbox, favorites/trip
+buttons), `HotelSmallCard.tsx`, `OltraSelect.tsx` (trigger + selected
+dropdown row), `StructuredDestinationField.module.css` (token pill →
+badge treatment).
+
+**Methodology used, for consistency in future passes**: primary for
+headings/body copy/values/icon glyphs on solid fills; muted for
+metadata/status text/helper text/secondary blurbs; the recessed
+field-bg/field-border/badge-text treatment for filter or status "pill"
+chips; a new **two-step muted→primary hover** pattern for small utility
+links and icon-only buttons (there's no continuous opacity scale to step
+through anymore in a solid 3-role system). The main hotel "Description"
+section body copy was classified **primary** (matches the spec's explicit
+"body" role), distinct from smaller "highlights" card blurbs classified
+**muted**. Photo-overlay/glass chrome (the three elements named above)
+was deliberately left untouched/translucent.
+
+**Verified**: `npx tsc --noEmit` clean, `npm run lint` clean (no new
+warnings beyond this repo's pre-existing baseline), live Chrome walkthrough
+of `/hotels` — result list, detail panel, Rooms section + room-detail
+popup, total-price box, trip/favourites buttons, photo lightbox, and the
+Bedrooms `OltraSelect` dropdown's raised-panel/selected-row treatment all
+confirmed rendering correctly.
+
+**Found and skipped**: `TopNav.tsx` is dead code — confirmed via grep, never
+imported or rendered anywhere in the app — not migrated, not worth the
+effort.
+
+### Remaining scope (not started as of 2026-08-13)
+
+* `PersonalInformationView.tsx` — one `bg-white/10 text-white`
+  dropdown-selected-row instance, same fix already applied to
+  `RelDropdown`/`OltraSelect` elsewhere.
+* Members (`members.css`, ~19 rules).
+* Restaurants (`RestaurantsMapView.tsx` + `restaurants.css`).
+* Inspire (`InspireView.module.css`).
+* `PageShell.module.css` — `.page`'s white fallback, and `.intro`'s
+  photo-overlay text. The `.intro` one needs an explicit call: is it over
+  imagery (keep translucent, like the featured-mode hero panel) or solid
+  chrome (migrate to tokens)? Don't assume — check the actual render
+  context first.
+* Flights' inline error-color fallback
+  (`var(--oltra-accent, #f87171)`) — should be reconciled to use the now-
+  shipped `--oltra-error-text` token instead of its own ad hoc fallback.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
