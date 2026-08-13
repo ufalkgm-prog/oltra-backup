@@ -15,6 +15,7 @@ import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { readHotelFlightSearch } from "@/lib/searchSession";
 
 import OltraSelect from "@/components/site/OltraSelect";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import type { RestaurantRecord } from "../types";
 import { buildAwardsLabel, buildLocationLabel, buildAddressLabel } from "../utils";
 import {
@@ -74,6 +75,7 @@ export default function RestaurantsMapView({
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const cityInputRef = useRef<HTMLInputElement | null>(null);
+  const cityLookupRef = useRef<HTMLDivElement | null>(null);
   const tripPickerRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedId, setSelectedId] = useState<number | null>(
@@ -253,23 +255,21 @@ export default function RestaurantsMapView({
     };
   }, []);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!tripPickerRef.current) return;
+  const tripPickerDismissProps = useDropdownDismiss({
+    open: showTripPicker,
+    onClose: () => setShowTripPicker(false),
+    refs: tripPickerRef,
+  });
 
-      if (!tripPickerRef.current.contains(event.target as Node)) {
-        setShowTripPicker(false);
-      }
-    }
-
-    if (showTripPicker) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showTripPicker]);
+  // Layered alongside (not replacing) the input's existing onBlur +
+  // setTimeout(120) + onMouseDown-preventDefault mechanism below, which
+  // correctly handles Tab/keyboard-driven focus loss - this hook only adds
+  // hover-away and Escape closing on top of that.
+  const cityLookupDismissProps = useDropdownDismiss({
+    open: showCityOptions,
+    onClose: () => setShowCityOptions(false),
+    refs: cityLookupRef,
+  });
 
   useEffect(() => {
     if (!memberActionMessage && !memberActionError) return;
@@ -748,7 +748,12 @@ export default function RestaurantsMapView({
         <div className="restaurants-sidebar__intro">
           <div className="oltra-label restaurants-sidebar__label">CITY</div>
 
-          <div className="restaurants-city-lookup">
+          <div
+            ref={cityLookupRef}
+            className="restaurants-city-lookup"
+            data-oltra-control="true"
+            {...cityLookupDismissProps}
+          >
             <input
               ref={cityInputRef}
               id="restaurants-city"
@@ -940,7 +945,12 @@ export default function RestaurantsMapView({
                 </div>
               )}
 
-              <div ref={tripPickerRef} className="relative pt-1">
+              <div
+                ref={tripPickerRef}
+                className="relative pt-1"
+                data-oltra-control="true"
+                {...tripPickerDismissProps}
+              >
                 {showTripPicker && (
                   <div
                     className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"

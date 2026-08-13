@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { readHotelFlightSearch } from "@/lib/searchSession";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 
 type SiteHeaderProps = {
   current?: string;
@@ -47,6 +48,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const [isScrolled, setIsScrolled] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(currentCurrency);
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const currencyRef = useRef<HTMLDivElement | null>(null);
   const [hotelsHref, setHotelsHref] = useState("/hotels");
   const [flightsHref, setFlightsHref] = useState("/flights");
   const [restaurantsHref, setRestaurantsHref] = useState("/restaurants");
@@ -171,15 +173,11 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
     };
   }, []);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as HTMLElement | null;
-      if (!target?.closest(".oltra-site-header__currency")) setCurrencyOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const currencyDismissProps = useDropdownDismiss({
+    open: currencyOpen,
+    onClose: () => setCurrencyOpen(false),
+    refs: currencyRef,
+  });
 
   function updateCurrency(currency: string) {
     setSelectedCurrency(currency);
@@ -249,7 +247,12 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
             );
           })}
 
-          <div className="oltra-site-header__currency">
+          <div
+            ref={currencyRef}
+            className="oltra-site-header__currency"
+            data-oltra-control="true"
+            {...currencyDismissProps}
+          >
             <button
               type="button"
               className="oltra-site-header__currency-trigger"

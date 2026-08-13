@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { AIRPORT_OPTIONS } from '@/lib/airportOptions'
+import { useDropdownDismiss } from '@/lib/useDropdownDismiss'
 import styles from './FlightsView.module.css'
 
 type Props = {
@@ -24,15 +25,11 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
     setText(labelForCode(value))
   }, [value])
 
-  useEffect(() => {
-    function onPointerDown(e: PointerEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [])
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: containerRef,
+  })
 
   const query = text.toLowerCase().trim()
   const matches = query.length >= 2
@@ -48,7 +45,12 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }} data-oltra-control="true">
+    <div
+      ref={containerRef}
+      style={{ position: 'relative' }}
+      data-oltra-control="true"
+      {...dismissHoverProps}
+    >
       <label className="oltra-label">{label}</label>
       <input
         ref={inputRef}

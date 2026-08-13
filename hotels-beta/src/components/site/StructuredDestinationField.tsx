@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSpinner from "./OltraSpinner";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import type {
   HotelSuggestionDataset,
   SuggestionType,
@@ -267,69 +268,11 @@ export default function StructuredDestinationField({
     setOpen(false);
   }, [searchParams, dataset, allowedTypes]);
 
-  useEffect(() => {
-    function handleOutside(event: MouseEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleFocusIn(event: FocusEvent) {
-      const target = event.target as Node | null;
-      if (!rootRef.current?.contains(target)) {
-        setOpen(false);
-      }
-    }
-
-    function handleMouseDown(event: MouseEvent) {
-      const target = event.target as Node | null;
-      if (!rootRef.current?.contains(target)) {
-        setOpen(false);
-      }
-    }
-
-    function handlePointerOver(event: PointerEvent) {
-      if (!open) return;
-
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-
-      if (rootRef.current?.contains(target)) return;
-
-      const hoveredInteractive = target.closest(
-        'input, button, select, textarea, [role="button"], [data-oltra-control="true"]'
-      );
-
-      if (hoveredInteractive) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("focusin", handleFocusIn);
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("pointerover", handlePointerOver);
-
-    return () => {
-      document.removeEventListener("focusin", handleFocusIn);
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("pointerover", handlePointerOver);
-    };
-  }, [open]);
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: rootRef,
+  });
 
   const activeHotels = useMemo(() => {
     return dataset.hotels.filter((hotel) => {
@@ -616,7 +559,12 @@ export default function StructuredDestinationField({
   }
 
   return (
-    <div ref={rootRef} className={`${styles.wrapper} ${wrapperClassName}`}>
+    <div
+      ref={rootRef}
+      className={`${styles.wrapper} ${wrapperClassName}`}
+      data-oltra-control="true"
+      {...dismissHoverProps}
+    >
       <div className="oltra-label">{label}</div>
 
       <div className={styles.inputWrap}>

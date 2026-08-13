@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 
 type Option = {
   value: string;
@@ -61,56 +62,13 @@ export default function OltraSelect({
     setSelectedValue(value);
   }, [value]);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleFocusIn(event: FocusEvent) {
-      if (!closeOnFocusOutside) return;
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    function handlePointerOver(event: PointerEvent) {
-      if (!closeOnHoverOutside) return;
-      if (!open) return;
-
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-
-      if (rootRef.current?.contains(target)) return;
-
-      const hoveredInteractive = target.closest(
-        'input, button, select, textarea, [role="button"], [data-oltra-control="true"]'
-      );
-
-      if (hoveredInteractive) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("focusin", handleFocusIn);
-    document.addEventListener("keydown", handleEscape);
-    document.addEventListener("pointerover", handlePointerOver);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("focusin", handleFocusIn);
-      document.removeEventListener("keydown", handleEscape);
-      document.removeEventListener("pointerover", handlePointerOver);
-    };
-  }, [open, closeOnFocusOutside, closeOnHoverOutside]);
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: rootRef,
+    closeOnHoverOutside,
+    closeOnFocusOutside,
+  });
 
   const selected = useMemo(
     () => options.find((opt) => opt.value === selectedValue),
@@ -145,6 +103,7 @@ export default function OltraSelect({
       ref={rootRef}
       className={`relative z-20 overflow-visible ${className}`}
       data-oltra-control="true"
+      {...dismissHoverProps}
     >
       <input ref={hiddenInputRef} type="hidden" name={name} value={selectedValue} />
 

@@ -7,6 +7,7 @@ import {
   clampKidsCount,
   type GuestSelection,
 } from "@/lib/guests";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import styles from "./GuestSelector.module.css";
 
 type Props = {
@@ -102,31 +103,13 @@ export default function GuestSelector({
     });
   }, [adults, kids]);
 
-  useEffect(() => {
-    function handleMouseDown(event: MouseEvent) {
-      if (!rootRef.current) return;
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: rootRef,
+  });
 
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
 
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
-
-  
   const currentSelection = useMemo<GuestSelection>(
     () => ({ adults, kids, kidAges }),
     [adults, kids, kidAges]
@@ -160,6 +143,7 @@ export default function GuestSelector({
       ref={rootRef}
       className={`${styles.root} ${className}`}
       data-oltra-control="true"
+      {...dismissHoverProps}
     >
       <input type="hidden" name="adults" value={String(adults)} />
       <input type="hidden" name="kids" value={String(kids)} />

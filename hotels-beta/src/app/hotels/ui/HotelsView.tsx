@@ -10,6 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import DateRangePicker from "@/components/site/DateRangePicker";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import {
   buildBookingLink,
   type BookingSearchParams,
@@ -261,26 +262,11 @@ function RelDropdown(props: {
 
   const selected = useMemo(() => new Set(localSelectedIds), [localSelectedIds]);
 
-  useEffect(() => {
-    function handlePointerOver(event: PointerEvent) {
-      if (!props.open) return;
-
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-      if (rootRef.current?.contains(target)) return;
-
-      const hoveredInteractive = target.closest(
-        'input, button, select, textarea, a, [role="button"], [data-oltra-control="true"]'
-      );
-
-      if (hoveredInteractive) props.onToggle();
-    }
-
-    document.addEventListener("pointerover", handlePointerOver);
-    return () => {
-      document.removeEventListener("pointerover", handlePointerOver);
-    };
-  }, [props.open, props.onToggle]);
+  const dismissHoverProps = useDropdownDismiss({
+    open: props.open,
+    onClose: props.onToggle,
+    refs: rootRef,
+  });
 
   const options = useMemo(() => {
     const out: Array<{ id: string; label: string; active: boolean }> = [];
@@ -302,7 +288,12 @@ function RelDropdown(props: {
   }, [props.map, selected]);
 
   return (
-    <div ref={rootRef} className="border-t border-white/10 py-2">
+    <div
+      ref={rootRef}
+      className="border-t border-white/10 py-2"
+      data-oltra-control="true"
+      {...dismissHoverProps}
+    >
       <button
         type="button"
         onClick={props.onToggle}

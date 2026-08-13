@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   addDaysIso,
@@ -13,6 +13,7 @@ import {
   toIsoDateLocal,
   weekdayLabelsMondayFirst,
 } from "@/lib/dateRange";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import styles from "./DateRangePicker.module.css";
 
 type Props = {
@@ -27,8 +28,6 @@ type Props = {
 };
 
 type Awaiting = "start" | "end";
-
-const CLOSE_DELAY_MS = 200;
 
 function formatDisplayDate(value: string): string {
   if (!value) return "";
@@ -75,32 +74,13 @@ export default function DateRangePicker({
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-      if (rootRef.current?.contains(target)) return;
-      if (panelRef.current?.contains(target)) return;
-      setOpen(false);
-    }
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    };
-  }, []);
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: [rootRef, panelRef],
+  });
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -125,20 +105,6 @@ export default function DateRangePicker({
       window.removeEventListener("scroll", reposition, true);
     };
   }, [open, visibleMonth]);
-
-  function cancelScheduledClose() {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-  }
-
-  function scheduleClose() {
-    cancelScheduledClose();
-    closeTimerRef.current = setTimeout(() => {
-      setOpen(false);
-    }, CLOSE_DELAY_MS);
-  }
 
   function openPicker() {
     if (open) return;
@@ -296,8 +262,7 @@ export default function DateRangePicker({
       ref={rootRef}
       className={`${styles.root} ${className}`}
       data-oltra-control="true"
-      onMouseEnter={cancelScheduledClose}
-      onMouseLeave={scheduleClose}
+      {...dismissHoverProps}
     >
       <div className="oltra-label">{label}</div>
       <button
@@ -322,8 +287,7 @@ export default function DateRangePicker({
                   ? { top: panelPos.top, left: panelPos.left }
                   : { top: -9999, left: -9999 }
               }
-              onMouseEnter={cancelScheduledClose}
-              onMouseLeave={scheduleClose}
+              {...dismissHoverProps}
             >
               <div className={styles.panelHead}>
                 <button

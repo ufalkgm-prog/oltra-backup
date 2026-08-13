@@ -13,6 +13,7 @@ import { useCurrency } from "@/lib/currency/useCurrency";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
 import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import styles from "./FlightsView.module.css";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -1288,20 +1289,11 @@ function MultiSelectDropdown({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    function handleDown(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    function handleEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", handleDown);
-    document.addEventListener("keydown", handleEsc);
-    return () => {
-      document.removeEventListener("mousedown", handleDown);
-      document.removeEventListener("keydown", handleEsc);
-    };
-  }, []);
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: rootRef,
+  });
 
   const labelFor = (v: string) => labelMap?.get(v) ?? v;
   const allSelected = selected.length === items.length;
@@ -1316,7 +1308,12 @@ function MultiSelectDropdown({
     : `${selected.length} selected`;
 
   return (
-    <div ref={rootRef} className={styles.multiSelectRoot} data-oltra-control="true">
+    <div
+      ref={rootRef}
+      className={styles.multiSelectRoot}
+      data-oltra-control="true"
+      {...dismissHoverProps}
+    >
       <label className="oltra-label">{label}</label>
       <button
         type="button"

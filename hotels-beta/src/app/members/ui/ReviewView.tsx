@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import { submitReviewBrowser } from "@/lib/members/db";
 
 type ReviewType = "hotel" | "restaurant";
@@ -424,26 +425,11 @@ function ReviewTargetSearchField({
     }
   }, [disabled]);
 
-  useEffect(() => {
-    function handleOutside(event: MouseEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: rootRef,
+  });
 
   const filteredOptions = useMemo(() => {
     const normalize = (input: unknown) =>
@@ -486,6 +472,7 @@ function ReviewTargetSearchField({
       ref={rootRef}
       className="members-review-search"
       data-oltra-control="true"
+      {...dismissHoverProps}
     >
       <input
         className="oltra-input w-full"

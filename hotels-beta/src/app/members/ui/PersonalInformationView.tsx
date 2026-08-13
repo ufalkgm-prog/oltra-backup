@@ -13,6 +13,7 @@ import {
   saveMemberProfileBrowser,
 } from "@/lib/members/db";
 import { createClient } from "@/lib/supabase/client";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 
 type Option = {
   value: string;
@@ -901,24 +902,11 @@ function MultiSelectDropdown({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) setOpen(false);
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: rootRef,
+  });
 
   const selectedLabels: string[] = value
     .map((selectedValue: string) => {
@@ -953,6 +941,7 @@ function MultiSelectDropdown({
       ref={rootRef}
       className="members-multiselect"
       data-oltra-control="true"
+      {...dismissHoverProps}
     >
       <button
         type="button"

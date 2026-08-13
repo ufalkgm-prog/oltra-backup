@@ -7,6 +7,7 @@ import OltraSpinner from "@/components/site/OltraSpinner";
 import styles from "./InspireView.module.css";
 import { filterInspireCities } from "@/lib/inspire/filterCities";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import type {
   InspireCity,
   InspireCityMatch,
@@ -142,8 +143,21 @@ function DropdownField({
   onToggle,
   children,
 }: DropdownFieldProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: onToggle,
+    refs: rootRef,
+  });
+
   return (
-    <div className={`${styles.field} ${open ? styles.fieldOpen : ""}`}>
+    <div
+      ref={rootRef}
+      className={`${styles.field} ${open ? styles.fieldOpen : ""}`}
+      data-oltra-control="true"
+      {...dismissHoverProps}
+    >
       <div className="oltra-label">{label}</div>
       <div className={styles.dropdownWrap}>
         <button
@@ -187,7 +201,6 @@ export default function InspireView({ cities }: Props) {
   const [isPending, startTransition] = useTransition();
   const [pendingCityId, setPendingCityId] = useState<string | null>(null);
   const router = useRouter();
-  const rootRef = useRef<HTMLDivElement | null>(null);
 
   const [month, setMonth] = useState<InspireMonth>("june");
   const [purpose, setPurpose] = useState<InspirePurpose | "">("");
@@ -221,27 +234,6 @@ export default function InspireView({ cities }: Props) {
       });
     return () => {
       cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleOutside(event: MouseEvent) {
-      if (!rootRef.current) return;
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpenMenu(null);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpenMenu(null);
-    }
-
-    document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
@@ -303,7 +295,7 @@ export default function InspireView({ cities }: Props) {
   );
 
   return (
-    <div ref={rootRef} className={styles.page}>
+    <div className={styles.page}>
       <section className={styles.content}>
         <aside className={`oltra-glass oltra-panel ${styles.sidebar}`}>
           <div className={styles.filters}>

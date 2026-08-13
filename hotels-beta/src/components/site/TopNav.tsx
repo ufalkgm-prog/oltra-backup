@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 
 const MENU_ITEMS = [
   { label: "Hotels", href: "/hotels" },
@@ -15,17 +16,11 @@ export default function TopNav() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const dismissHoverProps = useDropdownDismiss({
+    open,
+    onClose: () => setOpen(false),
+    refs: menuRef,
+  });
 
   return (
     <header className="absolute left-0 top-0 z-50 w-full">
@@ -37,7 +32,12 @@ export default function TopNav() {
           OLTRA
         </Link>
 
-        <div ref={menuRef} className="relative">
+        <div
+          ref={menuRef}
+          className="relative"
+          data-oltra-control="true"
+          {...dismissHoverProps}
+        >
           <button
             type="button"
             aria-label="Open menu"
