@@ -568,62 +568,71 @@ export default function StructuredDestinationField({
       <div className="oltra-label">{label}</div>
 
       <div className={styles.inputWrap}>
-        {isSingleHotel && hotelToken ? (
-          <div className={`oltra-input w-full ${styles.inlineHotelChipWrap}`}>
+        <div
+          className={styles.chipInputBox}
+          onClick={() => {
+            if (!isSingleHotel) inputRef.current?.focus();
+          }}
+        >
+          {tokens.map((token) => (
             <button
+              key={`${token.type}-${token.id ?? token.value}`}
               type="button"
-              onClick={() => removeToken(hotelToken)}
+              onClick={() => removeToken(token)}
               className={styles.tokenPill}
-              title={`Hotel: ${hotelToken.label}`}
+              title={
+                isSingleHotel ? token.label : `${typeLabel(token.type)}: ${token.label}`
+              }
             >
-              <span className={styles.tokenPillLabel}>{hotelToken.label}</span>
+              <span className={styles.tokenPillLabel}>
+                {isSingleHotel ? token.label : `${typeLabel(token.type)}: ${token.label}`}
+              </span>
               <span className={styles.tokenPillClose}>×</span>
             </button>
-          </div>
-        ) : null}
+          ))}
 
-        <input
-          ref={inputRef}
-          value={typedValue}
-          onChange={(e) => {
-            const nextValue = e.target.value;
-            setTypedValue(nextValue);
-            setOpen(nextValue.trim().length >= 2);
-          }}
-          onFocus={() => {
-            if (suppressNextFocusOpenRef.current) {
-              suppressNextFocusOpenRef.current = false;
-              return;
-            }
+          {!isSingleHotel ? (
+            <input
+              ref={inputRef}
+              value={typedValue}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                setTypedValue(nextValue);
+                setOpen(nextValue.trim().length >= 2);
+              }}
+              onFocus={() => {
+                if (suppressNextFocusOpenRef.current) {
+                  suppressNextFocusOpenRef.current = false;
+                  return;
+                }
 
-            if (minimumCharsReached && groupedSuggestions.length > 0) {
-              setOpen(true);
-            }
-          }}
-          onClick={() => {
-            if (suppressNextFocusOpenRef.current) {
-              suppressNextFocusOpenRef.current = false;
-              return;
-            }
+                if (minimumCharsReached && groupedSuggestions.length > 0) {
+                  setOpen(true);
+                }
+              }}
+              onClick={() => {
+                if (suppressNextFocusOpenRef.current) {
+                  suppressNextFocusOpenRef.current = false;
+                  return;
+                }
 
-            if (minimumCharsReached && groupedSuggestions.length > 0) {
-              setOpen(true);
-            }
-          }}
-          onKeyDown={() => {
-            if (!open && minimumCharsReached && groupedSuggestions.length > 0) {
-              setOpen(true);
-            }
-          }}
-          placeholder={inputPlaceholder}
-          className="oltra-input w-full"
-          autoComplete="off"
-          spellCheck={false}
-          style={{
-            ...(busy ? { paddingRight: 36 } : null),
-            ...(isSingleHotel ? { display: "none" } : null),
-          }}
-        />
+                if (minimumCharsReached && groupedSuggestions.length > 0) {
+                  setOpen(true);
+                }
+              }}
+              onKeyDown={() => {
+                if (!open && minimumCharsReached && groupedSuggestions.length > 0) {
+                  setOpen(true);
+                }
+              }}
+              placeholder={inputPlaceholder}
+              className={styles.chipInputField}
+              autoComplete="off"
+              spellCheck={false}
+              style={busy ? { paddingRight: 36 } : undefined}
+            />
+          ) : null}
+        </div>
 
         {busy ? (
           <span
@@ -631,7 +640,7 @@ export default function StructuredDestinationField({
             style={{
               position: "absolute",
               right: 12,
-              top: "50%",
+              top: 17,
               transform: "translateY(-50%)",
               display: "inline-flex",
               alignItems: "center",
@@ -679,25 +688,6 @@ export default function StructuredDestinationField({
           </div>
         ) : null}
       </div>
-
-      {tokens.length > 0 && !isSingleHotel ? (
-        <div className={styles.tokenRow}>
-          {tokens.map((token) => (
-            <button
-              key={`${token.type}-${token.id ?? token.value}`}
-              type="button"
-              onClick={() => removeToken(token)}
-              className={styles.tokenPill}
-              title={`${typeLabel(token.type)}: ${token.label}`}
-            >
-              <span className={styles.tokenPillLabel}>
-                {typeLabel(token.type)}: {token.label}
-              </span>
-              <span className={styles.tokenPillClose}>×</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
 
       <input
         type="hidden"

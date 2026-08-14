@@ -97,6 +97,9 @@ export default function LandingSearchPanel({
     readGuestSelection(initialSearchParams)
   );
 
+  const [includeHotels, setIncludeHotels] = useState(
+    normalizeParam(initialSearchParams.include_hotels) !== "0"
+  );
   const [includeFlights, setIncludeFlights] = useState(
     normalizeParam(initialSearchParams.include_flights) === "1" ||
       normalizeParam(initialSearchParams.origin) !== ""
@@ -136,6 +139,7 @@ export default function LandingSearchPanel({
     setFromValue(normalizeParam(initialSearchParams.from));
     setToValue(normalizeParam(initialSearchParams.to));
     setGuestSelection(readGuestSelection(initialSearchParams));
+    setIncludeHotels(normalizeParam(initialSearchParams.include_hotels) !== "0");
 
     const nextOrigin = normalizeParam(initialSearchParams.origin);
     setHomeAirport(nextOrigin);
@@ -158,6 +162,7 @@ export default function LandingSearchPanel({
       setFromValue(normalizeParam(saved.from));
       setToValue(normalizeParam(saved.to));
       setGuestSelection(readGuestSelection(saved));
+      setIncludeHotels(normalizeParam(saved.include_hotels) !== "0");
       const savedOrigin = normalizeParam(saved.origin);
       setHomeAirport(savedOrigin);
       setIncludeFlights(
@@ -451,7 +456,11 @@ export default function LandingSearchPanel({
 
         <div className={styles.includeRow}>
           <div className={styles.includeLeft}>
-            <input type="hidden" name="include_hotels" value="1" />
+            <input
+              type="hidden"
+              name="include_hotels"
+              value={includeHotels ? "1" : "0"}
+            />
             <input
               type="hidden"
               name="include_flights"
@@ -459,10 +468,22 @@ export default function LandingSearchPanel({
             />
             {/* Always present, not gated on effectiveIncludeFlights - a
                 previously-picked home airport should still hand off to
-                Flights/the shared session even if "Add flights" isn't
+                Flights/the shared session even if the Flights box isn't
                 currently checked (e.g. re-enabled later, or read via
                 SiteHeader's saved-session nav links). */}
             <input type="hidden" name="origin" value={homeAirport} />
+
+            <label className={styles.includeChecksItem}>
+              <input
+                type="checkbox"
+                checked={includeHotels}
+                onChange={(e) => {
+                  setIncludeHotels(e.target.checked);
+                  scheduleAutoSubmit();
+                }}
+              />
+              <span>Hotels</span>
+            </label>
 
             <div className={styles.flightsCheckWrap} ref={flightsWrapRef}>
               <label
@@ -472,6 +493,11 @@ export default function LandingSearchPanel({
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                title={
+                  !flightsCanActivate
+                    ? "Fill in city or hotel, dates and guests to activate"
+                    : undefined
+                }
               >
                 <input
                   type="checkbox"
@@ -488,13 +514,14 @@ export default function LandingSearchPanel({
                     scheduleAutoSubmit();
                   }}
                 />
-                <span>
-                  Add flights
-                  {!flightsCanActivate ? (
-                    <> - To activate please fill in city or hotel, dates and guests</>
-                  ) : effectiveIncludeFlights && homeAirport ? (
+                <span>Flights</span>
+              </label>
+
+              {flightsCanActivate && effectiveIncludeFlights ? (
+                <div className={styles.homeAirportLine}>
+                  {homeAirport ? (
                     <>
-                      {" from "}
+                      From{" "}
                       <button
                         type="button"
                         className={styles.airportNameButton}
@@ -507,9 +534,21 @@ export default function LandingSearchPanel({
                         {cityForAirportCode(homeAirport)}
                       </button>
                     </>
-                  ) : null}
-                </span>
-              </label>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.airportNameButton}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setAirportPopoverOpen(true);
+                      }}
+                    >
+                      Set home airport
+                    </button>
+                  )}
+                </div>
+              ) : null}
 
               {flightsCanActivate && effectiveIncludeFlights && airportPopoverOpen ? (
                 <div className={styles.airportPopover}>

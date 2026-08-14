@@ -63,7 +63,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Andermatt": [
     { iata: "LUG", label: "Lugano", distKm: 74 },
-    { iata: "BRN", label: "Bern", distKm: 89 }
+    { iata: "BRN", label: "Bern", distKm: 89 },
+    { iata: "ZRH", label: "Zürich", distKm: 91 }
   ],
   "Angthong": [
     { iata: "USM", label: "Samui", distKm: 15 }
@@ -88,11 +89,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Argolida": [
     { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 96 },
-    { iata: "KLX", label: "Kalamata", distKm: 102 }
+    { iata: "KLX", label: "Kalamata", distKm: 102 },
+    { iata: "KIT", label: "Kithira", distKm: 122 }
   ],
   "Arosa": [
     { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 79 },
-    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 100 }
+    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 100 },
+    { iata: "LUG", label: "Lugano", distKm: 104 }
   ],
   "Arue Tahiti": [
     { iata: "MOZ", label: "Moorea Temae", distKm: 55 },
@@ -258,7 +261,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "By Achnasheen": [
     { iata: "INV", label: "Inverness", distKm: 88 },
-    { iata: "SYY", label: "Stornoway", distKm: 90 }
+    { iata: "SYY", label: "Stornoway", distKm: 90 },
+    { iata: "BEB", label: "Benbecula", distKm: 110 }
   ],
   "Cabo San Lucas": [
     { iata: "CSW", label: "Cabo San Lucas", distKm: 7 }
@@ -330,11 +334,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Cervinia": [
     { iata: "TRN", label: "Turin", distKm: 81 },
-    { iata: "MXP", label: "Milan Malpensa", distKm: 92 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 92 },
+    { iata: "LUG", label: "Lugano", distKm: 99 }
   ],
   "Chamonix": [
     { iata: "NCY", label: "Annecy Meythet", distKm: 60 },
-    { iata: "GVA", label: "Geneva", distKm: 69 }
+    { iata: "GVA", label: "Geneva", distKm: 69 },
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 83 }
   ],
   "Chania": [
     { iata: "CHQ", label: "Chania", distKm: 14 }
@@ -380,7 +386,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Cognac": [
     { iata: "LRH", label: "La Rochelle Île de Ré", distKm: 86 },
-    { iata: "BOD", label: "Bordeaux-Mérignac", distKm: 100 }
+    { iata: "BOD", label: "Bordeaux-Mérignac", distKm: 100 },
+    { iata: "PIS", label: "Poitiers-Biard", distKm: 111 }
   ],
   "Cologne": [
     { iata: "CGN", label: "Cologne Bonn", distKm: 11 }
@@ -393,7 +400,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Cong": [
     { iata: "NNR", label: "Connemara", distKm: 36 },
-    { iata: "NOC", label: "Ireland West Knock", distKm: 52 }
+    { iata: "NOC", label: "Ireland West Knock", distKm: 52 },
+    { iata: "IIA", label: "Inishmaan Aerodrome", distKm: 53 }
   ],
   "Copenhagen": [
     { iata: "CPH", label: "Copenhagen Kastrup", distKm: 8 },
@@ -407,11 +415,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Courchevel": [
     { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 71 }
+    { iata: "NCY", label: "Annecy Meythet", distKm: 71 },
+    { iata: "TRN", label: "Turin", distKm: 83 }
   ],
   "Courchevel 1850": [
     { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 71 }
+    { iata: "NCY", label: "Annecy Meythet", distKm: 71 },
+    { iata: "TRN", label: "Turin", distKm: 83 }
   ],
   "Crans-Montana": [
     { iata: "BRN", label: "Bern", distKm: 67 }
@@ -485,7 +495,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Eynsham Park": [
     { iata: "LTN", label: "London Luton", distKm: 73 },
-    { iata: "BHX", label: "Birmingham", distKm: 75 }
+    { iata: "BHX", label: "Birmingham", distKm: 75 },
+    { iata: "LHR", label: "London Heathrow", distKm: 77 }
   ],
   "Eze": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14 }
@@ -506,8 +517,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SNN", label: "Shannon", distKm: 9 }
   ],
   "Fisher Island": [
-    { iata: "MIA", label: "Miami", distKm: 16 },
-    { iata: "OPF", label: "Miami-Opa Locka Executive", distKm: 21 }
+    { iata: "MIA", label: "Miami", distKm: 16 }
   ],
   "Fiuggi": [
     { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 52 }
@@ -564,11 +574,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Greensboro": [
     { iata: "MCN", label: "Middle Georgia", distKm: 93 },
-    { iata: "PDK", label: "DeKalb Peachtree", distKm: 113 }
+    { iata: "PDK", label: "DeKalb Peachtree", distKm: 113 },
+    { iata: "AGS", label: "Augusta Regional At Bush Field", distKm: 114 }
   ],
   "Grumeti Game Reserve": [
     { iata: "SEU", label: "Seronera", distKm: 73 },
-    { iata: "MUZ", label: "Musoma", distKm: 82 }
+    { iata: "MUZ", label: "Musoma", distKm: 82 },
+    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 105 }
   ],
   "Gstaad": [
     { iata: "BRN", label: "Bern", distKm: 51 }
@@ -593,7 +605,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Hampshire": [
     { iata: "LHR", label: "London Heathrow", distKm: 38 },
-    { iata: "SOU", label: "Southampton", distKm: 47 }
+    { iata: "SOU", label: "Southampton", distKm: 47 },
+    { iata: "LGW", label: "London Gatwick", distKm: 51 }
   ],
   "Hangzhou": [
     { iata: "HGH", label: "Hangzhou Xiaoshan", distKm: 29 }
@@ -622,7 +635,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Hokkaido": [
     { iata: "OKD", label: "Sapporo Okadama", distKm: 77 },
-    { iata: "CTS", label: "New Chitose", distKm: 79 }
+    { iata: "CTS", label: "New Chitose", distKm: 79 },
+    { iata: "HKD", label: "Hakodate", distKm: 92 }
   ],
   "Honegg": [
     { iata: "ZRH", label: "Zürich", distKm: 53 },
@@ -740,7 +754,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Kohler": [
     { iata: "ATW", label: "Appleton", distKm: 83 },
-    { iata: "GRB", label: "Austin Straubel", distKm: 87 }
+    { iata: "GRB", label: "Austin Straubel", distKm: 87 },
+    { iata: "MKE", label: "General Mitchell", distKm: 89 }
   ],
   "Kokomo Island": [
     { iata: "KDV", label: "Vunisea", distKm: 48 }
@@ -911,7 +926,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Maldives": [
     { iata: "HDK", label: "Kulhudhuffushi", distKm: 59 },
-    { iata: "FND", label: "Funadhoo", distKm: 74 }
+    { iata: "FND", label: "Funadhoo", distKm: 74 },
+    { iata: "HAQ", label: "Hanimaadhoo", distKm: 75 }
   ],
   "Maldonado": [
     { iata: "PDP", label: "Capitan Corbeta CA Curbelo", distKm: 19 }
@@ -988,12 +1004,10 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "NLU", label: "Felipe Ángeles", distKm: 39 }
   ],
   "Miami": [
-    { iata: "MIA", label: "Miami", distKm: 6 },
-    { iata: "OPF", label: "Miami-Opa Locka Executive", distKm: 18 }
+    { iata: "MIA", label: "Miami", distKm: 6 }
   ],
   "Miami Beach": [
-    { iata: "MIA", label: "Miami", distKm: 17 },
-    { iata: "OPF", label: "Miami-Opa Locka Executive", distKm: 18 }
+    { iata: "MIA", label: "Miami", distKm: 17 }
   ],
   "Milan": [
     { iata: "LIN", label: "Milano Linate", distKm: 7 },
@@ -1004,7 +1018,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Mitzpe Ramon": [
     { iata: "ETM", label: "Ramon", distKm: 100 },
-    { iata: "AAC", label: "El Arish", distKm: 106 }
+    { iata: "AAC", label: "El Arish", distKm: 106 },
+    { iata: "AQJ", label: "King Hussein", distKm: 113 }
   ],
   "Miyako Island": [
     { iata: "MMY", label: "Miyako", distKm: 7 },
@@ -1021,11 +1036,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Mont-Peleron": [
     { iata: "GVA", label: "Geneva", distKm: 61 },
-    { iata: "BRN", label: "Bern", distKm: 70 }
+    { iata: "BRN", label: "Bern", distKm: 70 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 83 }
   ],
   "Montalcino": [
     { iata: "FLR", label: "Florence, Peretola", distKm: 82 },
-    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 89 }
+    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 89 },
+    { iata: "EBA", label: "Marina di Campo", distKm: 103 }
   ],
   "Monte Carlo": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 19 }
@@ -1043,7 +1060,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Montreux": [
     { iata: "GVA", label: "Geneva", distKm: 65 },
-    { iata: "BRN", label: "Bern", distKm: 69 }
+    { iata: "BRN", label: "Bern", distKm: 69 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 84 }
   ],
   "Moscow": [
     { iata: "VKO", label: "Vnukovo", distKm: 16 },
@@ -1072,7 +1090,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Muravandhoo": [
     { iata: "DRV", label: "Dharavandhoo", distKm: 54 },
-    { iata: "NMF", label: "Maafaru", distKm: 62 }
+    { iata: "NMF", label: "Maafaru", distKm: 62 },
+    { iata: "FND", label: "Funadhoo", distKm: 72 }
   ],
   "Muscat": [
     { iata: "MCT", label: "Muscat", distKm: 18 }
@@ -1132,7 +1151,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Nikko": [
     { iata: "FKS", label: "Fukushima", distKm: 99 },
-    { iata: "IBR", label: "Ibaraki", distKm: 103 }
+    { iata: "IBR", label: "Ibaraki", distKm: 103 },
+    { iata: "NRT", label: "Narita", distKm: 134 }
   ],
   "Ninh Van Bay": [
     { iata: "CXR", label: "Cam Ranh / Cam Ranh Air Base", distKm: 41 }
@@ -1185,11 +1205,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Pamushana": [
     { iata: "VPY", label: "Chimoio", distKm: 266 },
-    { iata: "PHW", label: "Hendrik Van Eck", distKm: 329 }
+    { iata: "PHW", label: "Hendrik Van Eck", distKm: 329 },
+    { iata: "BEW", label: "Beira", distKm: 346 }
   ],
   "Papas Beach": [
     { iata: "JTR", label: "Santorini", distKm: 33 },
-    { iata: "JNX", label: "Naxos Island National", distKm: 44 }
+    { iata: "JNX", label: "Naxos Island National", distKm: 44 },
+    { iata: "PAS", label: "Paros National", distKm: 44 }
   ],
   "Paphos": [
     { iata: "PFO", label: "Paphos", distKm: 7 }
@@ -1198,7 +1220,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "NAS", label: "Lynden Pindling", distKm: 16 }
   ],
   "Paris": [
-    { iata: "LBG", label: "Paris-Le Bourget", distKm: 14 },
     { iata: "ORY", label: "Paris-Orly", distKm: 16 },
     { iata: "CDG", label: "Charles de Gaulle", distKm: 24 }
   ],
@@ -1214,11 +1235,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Perez Zeledón": [
     { iata: "XQP", label: "Quepos Managua", distKm: 62 },
-    { iata: "GLF", label: "Golfito", distKm: 87 }
+    { iata: "GLF", label: "Golfito", distKm: 87 },
+    { iata: "LIO", label: "Limón", distKm: 92 }
   ],
   "Perthshire": [
     { iata: "EDI", label: "Edinburgh", distKm: 44 },
-    { iata: "DND", label: "Dundee", distKm: 49 }
+    { iata: "DND", label: "Dundee", distKm: 49 },
+    { iata: "GLA", label: "Glasgow", distKm: 62 }
   ],
   "Perugia": [
     { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 32 }
@@ -1231,7 +1254,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Philipsburg": [
     { iata: "MSO", label: "Missoula Montana", distKm: 85 },
-    { iata: "BTM", label: "Bert Mooney", distKm: 86 }
+    { iata: "BTM", label: "Bert Mooney", distKm: 86 },
+    { iata: "HLN", label: "Helena", distKm: 124 }
   ],
   "Phnom Penh": [
     { iata: "KTI", label: "Techo", distKm: 24 }
@@ -1251,7 +1275,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Porto Ercole": [
     { iata: "EBA", label: "Marina di Campo", distKm: 89 },
-    { iata: "FCO", label: "Rome-Fiumicino Leonardo da Vinci", distKm: 108 }
+    { iata: "FCO", label: "Rome-Fiumicino Leonardo da Vinci", distKm: 108 },
+    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 133 }
   ],
   "Portofino": [
     { iata: "GOA", label: "Genoa Cristoforo Colombo", distKm: 32 }
@@ -1341,7 +1366,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Rio San Juan": [
     { iata: "AZS", label: "Samaná El Catey", distKm: 54 },
-    { iata: "POP", label: "Gregorio Luperon", distKm: 58 }
+    { iata: "POP", label: "Gregorio Luperon", distKm: 58 },
+    { iata: "STI", label: "Cibao", distKm: 69 }
   ],
   "Rippon": [
     { iata: "LBA", label: "Leeds Bradford", distKm: 28 }
@@ -1444,7 +1470,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Sesriem": [
     { iata: "LUD", label: "Luderitz", distKm: 222 },
-    { iata: "WVB", label: "Walvis Bay", distKm: 237 }
+    { iata: "WVB", label: "Walvis Bay", distKm: 237 },
+    { iata: "ERS", label: "Eros", distKm: 270 }
   ],
   "Seven Mile Beach": [
     { iata: "GCM", label: "Owen Roberts", distKm: 5 }
@@ -1497,7 +1524,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "St. Moritz": [
     { iata: "LUG", label: "Lugano", distKm: 91 },
-    { iata: "BGY", label: "Il Caravaggio", distKm: 92 }
+    { iata: "BGY", label: "Il Caravaggio", distKm: 92 },
+    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 112 }
   ],
   "Stockholm": [
     { iata: "BMA", label: "Stockholm-Bromma", distKm: 8 },
@@ -1512,14 +1540,12 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Sunny Isles Beach": [
     { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 15 },
-    { iata: "OPF", label: "Miami-Opa Locka Executive", distKm: 16 },
     { iata: "MIA", label: "Miami", distKm: 23 }
   ],
   "Surfers Paradise": [
     { iata: "OOL", label: "Gold Coast", distKm: 18 }
   ],
   "Surfside": [
-    { iata: "OPF", label: "Miami-Opa Locka Executive", distKm: 16 },
     { iata: "MIA", label: "Miami", distKm: 19 },
     { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 22 }
   ],
@@ -1569,7 +1595,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Torres Del Paine": [
     { iata: "RYO", label: "28 de Noviembre", distKm: 75 },
-    { iata: "PNT", label: "Lieutenant Julio Gallardo", distKm: 78 }
+    { iata: "PNT", label: "Lieutenant Julio Gallardo", distKm: 78 },
+    { iata: "FTE", label: "El Calafate - Commander Armando Tola", distKm: 86 }
   ],
   "Tourrettes": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 40 },
@@ -1610,7 +1637,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Val d'Isere": [
     { iata: "TRN", label: "Turin", distKm: 59 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 87 }
+    { iata: "NCY", label: "Annecy Meythet", distKm: 87 },
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 88 }
   ],
   "Vallee": [
     { iata: "FSC", label: "Figari Sud-Corse", distKm: 12 }
@@ -1633,7 +1661,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Vevey": [
     { iata: "GVA", label: "Geneva", distKm: 62 },
-    { iata: "BRN", label: "Bern", distKm: 71 }
+    { iata: "BRN", label: "Bern", distKm: 71 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 83 }
   ],
   "Vienna": [
     { iata: "VIE", label: "Vienna", distKm: 18 }
@@ -1664,7 +1693,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Washington": [
     { iata: "IAD", label: "Washington Dulles", distKm: 66 },
-    { iata: "CHO", label: "Charlottesville Albemarle", distKm: 69 }
+    { iata: "CHO", label: "Charlottesville Albemarle", distKm: 69 },
+    { iata: "SHD", label: "Shenandoah Valley", distKm: 81 }
   ],
   "Washington D.C.": [
     { iata: "DCA", label: "Ronald Reagan Washington National", distKm: 4 }
@@ -1687,7 +1717,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Whistler": [
     { iata: "YVR", label: "Vancouver", distKm: 104 },
-    { iata: "YPW", label: "Powell River", distKm: 115 }
+    { iata: "YPW", label: "Powell River", distKm: 115 },
+    { iata: "YXX", label: "Abbotsford", distKm: 128 }
   ],
   "Williamsburg": [
     { iata: "PHF", label: "Newport News Williamsburg", distKm: 24 }
@@ -1704,7 +1735,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Zermatt": [
     { iata: "MXP", label: "Milan Malpensa", distKm: 87 },
-    { iata: "LUG", label: "Lugano", distKm: 90 }
+    { iata: "LUG", label: "Lugano", distKm: 90 },
+    { iata: "TRN", label: "Turin", distKm: 91 }
   ],
   "Zurich": [
     { iata: "ZRH", label: "Zürich", distKm: 10 }

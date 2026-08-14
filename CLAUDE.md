@@ -2188,4 +2188,126 @@ clean throughout.
 
 ---
 
+## 38. LANDING PAGE — RICHER FLIGHT TEASER, SIMPLE CHECKBOXES, INLINE CHIPS (2026-08-14)
+
+Same-day follow-up to §37, based on more specific direction from Ulrik.
+Four changes, all live-verified in the browser:
+
+### 1. Hub cap raised 2 → 3
+
+`scripts/airports/build-city-airports.mjs`: the "different hub" tier
+(§37's rule 2) now keeps up to `MAX_HUBS = 3` candidates, each still
+required to be within `FAVORITE_RATIO` (1.5x) of the *nearest* one, not
+chained pairwise — so a single dominant airport still collapses to 1, but
+comparably-distant cases now show 3 instead of 2 (e.g. Zermatt → Milan
+Malpensa 87km / Lugano 90km / Turin 91km). Same-city-uncapped and
+single-clear-favorite behavior unchanged.
+
+Also added two more manual exclusions alongside Teterboro (§37): `LBG`
+(Paris-Le Bourget — business aviation/air-show venue) and `OPF`
+(Miami-Opa Locka Executive — business aviation), both of which were
+surfacing in same-city buckets despite `scheduled_service: yes` in the
+raw OurAirports data, for the same reason TEB was excluded — no real
+commercial-airline routes worth showing. Paris now correctly shows just
+CDG + Orly, matching Ulrik's own example exactly.
+
+### 2. Flight teaser: 4 rows per airport (Best price + Fastest × Standard + Business)
+
+`LandingSummary.tsx`: each candidate airport now fires **two** searches
+(one per cabin, `economy`/`business` — Duffel's `CabinClass` values,
+confirmed via `node_modules/@duffel/api/dist/typings.d.ts`), not one. Per
+(airport, cabin) pair, a single search result is used to derive **both**
+"Best price" (cheapest by `priceEur`) and "Fastest" (shortest total
+duration, deduped against best-price by itinerary id — same pattern as
+the pre-§37 single-airport code, restored) — no need for a second search
+per metric. State keyed `${iata}__${cabin}` in `flightResults`.
+
+Render structure per airport, all new classes in `page.module.css`:
+```
+{AIRPORT LABEL} ({IATA})                    {distKm} km from {city} centre
+  STANDARD CABIN
+    Best price  €xxx [BOOK]  <times/duration>
+    Fastest     €xxx [BOOK]  <times/duration>
+  BUSINESS CABIN
+    Best price  €xxx [BOOK]
+    Fastest     €xxx [BOOK]
+```
+Distance line reuses `CityAirport.distKm`, already computed by §37's
+pipeline — no new data needed, just surfaced in the UI per Ulrik's ask
+("distance from airport to selected city centre as support info").
+
+**Real cost implication, worse than §37's already-flagged one**: up to 3
+airports × 2 cabins = **6 parallel Duffel searches** per landing-page
+visit for a multi-hub destination (was up to 3). Each still cached
+server-side 15 min (`api/flights/search/route.ts`). Not addressed this
+session — noted as a scaling/cost watch-item, not a bug.
+
+Verified live: Paris (LHR origin) → Orly block (16km) with Standard+Business
+×2 rows each, then Charles de Gaulle block (24km) with its own set,
+Business Cabin at Orly showing a real €406/€420 split — confirms both
+cabins genuinely hit Duffel rather than one being a stub.
+
+### 3. Two plain checkboxes replace the single dynamic "Add flights" control
+
+`LandingSearchPanel.tsx`: `include_hotels` was previously a hardcoded
+`<input type="hidden" value="1">` with no user-facing toggle at all — now
+a real checkbox (`includeHotels` state, default `true`, synced through the
+same three places `includeFlights`/`homeAirport` already were: the
+searchParams-changed effect, the sessionStorage-restore-on-mount effect,
+and the hidden form field). The Flights checkbox is simplified from
+dynamic label text ("Add flights - To activate please fill in city or
+hotel, dates and guests" / "Add flights from London") down to a plain
+"Flights" label — the disabled-reason moved to a `title` tooltip, and the
+"from {home airport}" detail moved to a small secondary line
+(`.homeAirportLine`) below the checkbox rather than embedded inside the
+label itself. `.flightsCheckWrap` changed from a single-line inline-flex
+to a column layout to stack the checkbox and that secondary line. All
+existing activation logic (`flightsCanActivate`, the airport popover,
+localStorage persistence) is unchanged — this was a presentation
+simplification, not a behavior change.
+
+Verified live: Flights checkbox greyed out with no city/dates/guests set;
+once Venice + dates were filled (origin already known from URL), it
+auto-activated showing "From London" beneath it, and the flight teaser
+populated correctly on the right.
+
+### 4. Selected-token chips moved inside the input box (shared component)
+
+`StructuredDestinationField.tsx`/`.module.css` — used by **both** the
+landing page and the Hotels page, so one change covers both. Chips
+(`City: Venice ×`, `Purpose: Spa ×`, etc.) previously rendered in a
+separate `.tokenRow` below the bordered input; now they render inside a
+new `.chipInputBox` flex-wrap container alongside the typed-text input
+itself, which flows after the last chip. Saves the vertical line the old
+row took, and — per Ulrik's ask — the box grows to a second line via
+plain `flex-wrap` when chips overflow, rather than truncating or
+scrolling.
+
+Deliberately **not** built on the shared `oltra-input` class: that class
+hardcodes `height: var(--oltra-control-height)` (34px), which would have
+fought the wrap-to-two-lines requirement via CSS specificity/load-order
+fragility. `.chipInputBox` instead replicates the visual border/background/
+radius tokens directly with `min-height` (not `height`), so it can grow
+freely. The pre-existing single-hotel special case (chip replaces the
+input entirely, e.g. selecting one specific hotel) folded into the same
+unified chip-rendering path instead of staying a separate branch — same
+visual result, less duplicated markup.
+
+Verified live on both pages with a 6-chip case (Rome + 5 activities):
+wraps cleanly to two lines, no layout breakage, results panels below
+unaffected.
+
+### Files
+
+* `hotels-beta/scripts/airports/build-city-airports.mjs` — hub cap +
+  manual exclusions.
+* `hotels-beta/src/lib/cityAirports.ts` — regenerated.
+* `hotels-beta/src/app/LandingSummary.tsx`, `page.module.css` — 4-row
+  per-airport flight teaser.
+* `hotels-beta/src/app/LandingSearchPanel.tsx` — Hotels/Flights checkboxes.
+* `hotels-beta/src/components/site/StructuredDestinationField.tsx`,
+  `.module.css` — inline chip box (shared, affects Hotels page too).
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.

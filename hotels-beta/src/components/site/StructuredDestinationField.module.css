@@ -9,18 +9,45 @@
   z-index: 60;
 }
 
-.inlineHotelChipWrap {
-  display: flex;
-  align-items: center;
-  padding-left: 6px;
-  padding-right: 6px;
-}
-
-.tokenRow {
-  margin-top: 4px;
+/* Selected-token chips render inline inside this box, before the typed-text
+   input, instead of in a separate row underneath - saves a line of vertical
+   space and keeps "what's selected" visually part of the same control. Not
+   the shared `oltra-input` class (which has a fixed height) since this box
+   needs to grow to a second line once chips wrap. */
+.chipInputBox {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+  width: 100%;
+  min-height: var(--oltra-control-height);
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+  padding: 6px 10px;
+  cursor: text;
+}
+
+.chipInputBox:focus-within {
+  background: var(--oltra-field-bg-strong);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.chipInputField {
+  flex: 1 1 100px;
+  min-width: 100px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  outline: none;
+  padding: 0 2px;
+  font-family: var(--oltra-font-sans);
+  font-size: 0.95rem;
+  color: var(--oltra-text-primary);
+}
+
+.chipInputField::placeholder {
+  color: var(--oltra-text-placeholder);
 }
 
 .tokenPill {

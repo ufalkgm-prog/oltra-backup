@@ -124,8 +124,16 @@
 .flightsCheckWrap {
   position: relative;
   display: inline-flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
   line-height: 1.2;
+}
+
+.homeAirportLine {
+  padding-left: 1.55rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .airportNameButton {
@@ -395,7 +403,46 @@
 
 .flightDetailList {
   display: grid;
-  gap: 0.7rem;
+  gap: 1.1rem;
+}
+
+.airportBlock {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.airportBlockHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.airportBlockTitle {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.airportBlockDistance {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+
+.cabinGroup {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cabinGroupLabel {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .flightDetailRow {

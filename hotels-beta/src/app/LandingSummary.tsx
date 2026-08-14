@@ -34,6 +34,11 @@ type Props = {
 const CARD_LIMIT = 40;
 const HARD_LIMIT = 50;
 
+type CabinKey = "economy" | "business";
+const CABINS: { key: CabinKey; label: string }[] = [
+  { key: "economy", label: "Standard Cabin" },
+  { key: "business", label: "Business Cabin" },
+];
 
 function formatDurationMinutes(total: number): string {
   if (!Number.isFinite(total) || total <= 0) return "—";
@@ -99,10 +104,13 @@ export default function LandingSummary({
   const showFlights = includeFlights;
 
   // A destination city can resolve to more than one relevant airport (a
-  // multi-airport city like London, or an area served by two comparably
+  // multi-airport city like London, or an area served by several comparably
   // distant hub airports like an Alpine ski resort) - see
-  // src/lib/cityAirports.ts for the selection rule. Each candidate gets its
-  // own independent search below rather than picking a single "winner".
+  // src/lib/cityAirports.ts for the selection rule (up to 3 hubs, or every
+  // airport belonging to the city itself). Each candidate gets its own
+  // independent search below rather than picking a single "winner", and
+  // each is searched in both cabins so Best price + Fastest can be shown
+  // for Standard and Business separately (up to 4 flight rows per airport).
   const candidateAirports = useMemo(() => {
     const all = getAirportsForCity(destinationCity);
     return all.filter((a) => a.iata !== origin);
@@ -111,17 +119,19 @@ export default function LandingSummary({
   const canSearchFlights =
     Boolean(origin) && Boolean(fromDate) && candidateAirports.length > 0;
 
-  type FlightBlockState =
+  type CabinResult =
     | { status: "loading" }
-    | { status: "ready"; recommended: Itinerary | null; isOneWay: boolean }
+    | { status: "ready"; bestPrice: Itinerary | null; fastest: Itinerary | null; isOneWay: boolean }
     | { status: "empty" }
     | { status: "error"; message: string };
 
-  const [flightBlocks, setFlightBlocks] = useState<Record<string, FlightBlockState>>({});
+  const cabinKey = (iata: string, cabin: CabinKey) => `${iata}__${cabin}`;
+
+  const [flightResults, setFlightResults] = useState<Record<string, CabinResult>>({});
 
   useEffect(() => {
     if (!showFlights || !canSearchFlights) {
-      setFlightBlocks({});
+      setFlightResults({});
       return;
     }
 
@@ -129,64 +139,77 @@ export default function LandingSummary({
     const isOneWay = !toDate;
     const controllers: AbortController[] = [];
 
-    setFlightBlocks(
+    setFlightResults(
       Object.fromEntries(
-        candidateAirports.map((a) => [a.iata, { status: "loading" } as FlightBlockState])
+        candidateAirports.flatMap((a) =>
+          CABINS.map((cabin) => [cabinKey(a.iata, cabin.key), { status: "loading" } as CabinResult])
+        )
       )
     );
 
     for (const airport of candidateAirports) {
-      const controller = new AbortController();
-      controllers.push(controller);
+      for (const cabin of CABINS) {
+        const key = cabinKey(airport.iata, cabin.key);
+        const controller = new AbortController();
+        controllers.push(controller);
 
-      fetch("/api/flights/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          origin,
-          destination: airport.iata,
-          departureDate: fromDate,
-          returnDate: toDate || undefined,
-          adults: Math.max(1, adults),
-          children: kids,
-          cabinClass: "economy",
-        }),
-      })
-        .then(async (res) => {
-          const json = await res.json();
-          if (cancelled) return;
-          if (!json.ok) {
-            setFlightBlocks((prev) => ({
-              ...prev,
-              [airport.iata]: { status: "error", message: json.error || "Flight search failed" },
-            }));
-            return;
-          }
-          const itineraries = normalizeOffers(
-            json.offers ?? [],
-            isOneWay ? "one-way" : "return"
-          );
-          if (itineraries.length === 0) {
-            setFlightBlocks((prev) => ({ ...prev, [airport.iata]: { status: "empty" } }));
-            return;
-          }
-          const recommended = [...itineraries].sort((a, b) => b.score - a.score)[0] ?? null;
-          setFlightBlocks((prev) => ({
-            ...prev,
-            [airport.iata]: { status: "ready", recommended, isOneWay },
-          }));
+        fetch("/api/flights/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            origin,
+            destination: airport.iata,
+            departureDate: fromDate,
+            returnDate: toDate || undefined,
+            adults: Math.max(1, adults),
+            children: kids,
+            cabinClass: cabin.key,
+          }),
         })
-        .catch((err) => {
-          if (cancelled || err?.name === "AbortError") return;
-          setFlightBlocks((prev) => ({
-            ...prev,
-            [airport.iata]: {
-              status: "error",
-              message: err instanceof Error ? err.message : "Flight search failed",
-            },
-          }));
-        });
+          .then(async (res) => {
+            const json = await res.json();
+            if (cancelled) return;
+            if (!json.ok) {
+              setFlightResults((prev) => ({
+                ...prev,
+                [key]: { status: "error", message: json.error || "Flight search failed" },
+              }));
+              return;
+            }
+            const itineraries = normalizeOffers(
+              json.offers ?? [],
+              isOneWay ? "one-way" : "return"
+            );
+            if (itineraries.length === 0) {
+              setFlightResults((prev) => ({ ...prev, [key]: { status: "empty" } }));
+              return;
+            }
+            const byPrice = [...itineraries].sort((a, b) => a.priceEur - b.priceEur);
+            const byDuration = [...itineraries].sort((a, b) => {
+              const ad = a.outbound.durationMinutes + (a.inbound?.durationMinutes ?? 0);
+              const bd = b.outbound.durationMinutes + (b.inbound?.durationMinutes ?? 0);
+              return ad - bd;
+            });
+            const bestPrice = byPrice[0] ?? null;
+            const fastest =
+              byDuration[0]?.id !== bestPrice?.id ? byDuration[0] ?? null : byDuration[1] ?? null;
+            setFlightResults((prev) => ({
+              ...prev,
+              [key]: { status: "ready", bestPrice, fastest, isOneWay },
+            }));
+          })
+          .catch((err) => {
+            if (cancelled || err?.name === "AbortError") return;
+            setFlightResults((prev) => ({
+              ...prev,
+              [key]: {
+                status: "error",
+                message: err instanceof Error ? err.message : "Flight search failed",
+              },
+            }));
+          });
+      }
     }
 
     return () => {
@@ -317,6 +340,37 @@ export default function LandingSummary({
     }
   }, []);
 
+  function renderFlightRow(
+    key: string,
+    label: string,
+    flight: Itinerary | null,
+    isOneWay: boolean
+  ) {
+    if (!flight) return null;
+
+    return (
+      <div className={styles.flightDetailRow} key={key}>
+        <div className={styles.flightRowLegend}>
+          <span className={styles.flightLineLabel}>{label}</span>
+          <span className={styles.flightRowPrice}>
+            {formatPrice(flight.priceEur, flight.currency)}
+          </span>
+          <button
+            type="button"
+            className={`oltra-button-primary ${styles.flightBookButton}`}
+            onClick={() => handleBookFlight(flight.offerId)}
+          >
+            BOOK
+          </button>
+        </div>
+        <div className={styles.flightLegsGrid}>
+          <FlightDetailCard flight={flight.outbound} />
+          {!isOneWay && flight.inbound ? <FlightDetailCard flight={flight.inbound} /> : null}
+        </div>
+      </div>
+    );
+  }
+
   if (!showHotels && !showFlights) return null;
 
   const hotelCount = hotelSummary?.count ?? 0;
@@ -404,62 +458,55 @@ export default function LandingSummary({
             </div>
           ) : (
             <div className={styles.flightDetailList}>
-              {candidateAirports.map((airport) => {
-                const state = flightBlocks[airport.iata];
-                const viaLabel = `${airport.label} (${airport.iata})`;
-
-                if (!state || state.status === "loading") {
-                  return (
-                    <div className={styles.summaryLine} key={airport.iata}>
-                      Searching flights via {viaLabel}…
-                    </div>
-                  );
-                }
-
-                if (state.status === "empty") {
-                  return (
-                    <div className={styles.summaryLine} key={airport.iata}>
-                      No flights found via {viaLabel} on {fromDate}
-                      {toDate ? ` (return ${toDate})` : ""}.
-                    </div>
-                  );
-                }
-
-                if (state.status === "error") {
-                  return (
-                    <div className={styles.summaryLine} key={airport.iata}>
-                      Could not load flights via {viaLabel} ({state.message}).
-                    </div>
-                  );
-                }
-
-                if (!state.recommended) return null;
-                const flight = state.recommended;
-
-                return (
-                  <div className={styles.flightDetailRow} key={airport.iata}>
-                    <div className={styles.flightRowLegend}>
-                      <span className={styles.flightLineLabel}>Via {viaLabel}</span>
-                      <span className={styles.flightRowPrice}>
-                        {formatPrice(flight.priceEur, flight.currency)}
-                      </span>
-                      <button
-                        type="button"
-                        className={`oltra-button-primary ${styles.flightBookButton}`}
-                        onClick={() => handleBookFlight(flight.offerId)}
-                      >
-                        BOOK
-                      </button>
-                    </div>
-                    <div className={styles.flightLegsGrid}>
-                      <FlightDetailCard flight={flight.outbound} />
-                      {!state.isOneWay && flight.inbound ? (
-                        <FlightDetailCard flight={flight.inbound} />
-                      ) : null}
-                    </div>
+              {candidateAirports.map((airport) => (
+                <div className={styles.airportBlock} key={airport.iata}>
+                  <div className={styles.airportBlockHeader}>
+                    <span className={styles.airportBlockTitle}>
+                      {airport.label} ({airport.iata})
+                    </span>
+                    <span className={styles.airportBlockDistance}>
+                      {airport.distKm} km from {destinationCity} centre
+                    </span>
                   </div>
-                );
-              })}
+
+                  {CABINS.map((cabin) => {
+                    const state = flightResults[cabinKey(airport.iata, cabin.key)];
+
+                    return (
+                      <div className={styles.cabinGroup} key={cabin.key}>
+                        <div className={styles.cabinGroupLabel}>{cabin.label}</div>
+
+                        {!state || state.status === "loading" ? (
+                          <div className={styles.summaryLine}>Searching flights…</div>
+                        ) : state.status === "empty" ? (
+                          <div className={styles.summaryLine}>
+                            No {cabin.label.toLowerCase()} flights found.
+                          </div>
+                        ) : state.status === "error" ? (
+                          <div className={styles.summaryLine}>
+                            Could not load flights ({state.message}).
+                          </div>
+                        ) : (
+                          <>
+                            {renderFlightRow(
+                              `${airport.iata}-${cabin.key}-price`,
+                              "Best price",
+                              state.bestPrice,
+                              state.isOneWay
+                            )}
+                            {renderFlightRow(
+                              `${airport.iata}-${cabin.key}-fastest`,
+                              "Fastest",
+                              state.fastest,
+                              state.isOneWay
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           )}
         </div>

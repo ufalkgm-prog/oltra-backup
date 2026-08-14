@@ -32,9 +32,9 @@
 //      uncapped. This is what makes London show all 6 of its airports.
 //   2. Otherwise: the single nearest airport (any type) within 400km is
 //      used alone if it's a "clear favorite" (next-nearest is >1.5x
-//      farther); if two candidates are comparably distant, both are
-//      listed (e.g. an Alpine ski resort reachable via two similarly-far
-//      hub airports).
+//      farther); otherwise up to 3 comparably-distant candidates are kept
+//      (each within 1.5x of the nearest one), e.g. an Alpine ski resort
+//      reachable via Geneva/Milan/Turin.
 //   3. If nothing is within 400km at all (very remote), the single
 //      globally-nearest scheduled airport is used regardless of distance.
 //
@@ -65,11 +65,16 @@ if (!DIRECTUS_URL || !DIRECTUS_TOKEN) {
 // Known false positives from the raw dataset: fields carrying
 // scheduled_service=yes for small commuter/charter ops but with no real
 // commercial airline routes worth surfacing.
-const MANUAL_EXCLUDE_IATA = new Set(["TEB" /* Teterboro — business aviation only */]);
+const MANUAL_EXCLUDE_IATA = new Set([
+  "TEB", // Teterboro (NYC) — business aviation only
+  "LBG", // Paris-Le Bourget — business aviation / air show venue, not scheduled airline service
+  "OPF", // Miami-Opa Locka Executive — business aviation only
+]);
 const EXCLUDED_TYPES = new Set(["heliport", "seaplane_base", "closed", "balloonport"]);
 
 const MAX_RADIUS_KM = 400;
 const FAVORITE_RATIO = 1.5;
+const MAX_HUBS = 3;
 
 async function fetchHotels() {
   const res = await fetch(
@@ -205,11 +210,16 @@ function selectAirports(centroidLat, centroidLon, cityNorm, airports) {
   const inRadius = withDist.filter((a) => a.distKm <= MAX_RADIUS_KM);
   const pool = inRadius.length > 0 ? inRadius : withDist.slice(0, 1);
 
-  const top1 = pool[0];
-  const top2 = pool[1];
-  if (!top2) return [top1];
-  if (top2.distKm > top1.distKm * FAVORITE_RATIO) return [top1];
-  return [top1, top2];
+  // Up to MAX_HUBS candidates, each within FAVORITE_RATIO of the nearest -
+  // a single "clear favorite" collapses to 1, comparably-distant hub
+  // airports (e.g. an Alpine resort near Geneva/Milan/Turin) keep going up
+  // to the cap.
+  const chosen = [pool[0]];
+  for (let i = 1; i < pool.length && chosen.length < MAX_HUBS; i++) {
+    if (pool[i].distKm > pool[0].distKm * FAVORITE_RATIO) break;
+    chosen.push(pool[i]);
+  }
+  return chosen;
 }
 
 async function main() {
