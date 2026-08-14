@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { HotelRecord } from "@/lib/directus";
-import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
+import { getAirportsForCity } from "@/lib/cityAirports";
 import { normalizeOffers, type Itinerary, type FlightLeg } from "@/lib/flights/duffelNormalizer";
 import HotelSmallCard, { type SmallCardAvailability } from "@/components/hotels/HotelSmallCard";
 import styles from "./page.module.css";
@@ -34,15 +34,6 @@ type Props = {
 const CARD_LIMIT = 40;
 const HARD_LIMIT = 50;
 
-function findAirportForCity(city: string): string {
-  if (!city) return "";
-  const target = city.toLowerCase().trim();
-  for (const opt of AIRPORT_OPTIONS) {
-    const cityPart = opt.label.split("·")[1]?.toLowerCase().trim() ?? "";
-    if (cityPart && cityPart.includes(target)) return opt.value;
-  }
-  return "";
-}
 
 function formatDurationMinutes(total: number): string {
   if (!Number.isFinite(total) || total <= 0) return "—";
@@ -107,95 +98,102 @@ export default function LandingSummary({
   const showHotels = includeHotels;
   const showFlights = includeFlights;
 
-  const destinationAirport = useMemo(
-    () => findAirportForCity(destinationCity),
-    [destinationCity]
-  );
+  // A destination city can resolve to more than one relevant airport (a
+  // multi-airport city like London, or an area served by two comparably
+  // distant hub airports like an Alpine ski resort) - see
+  // src/lib/cityAirports.ts for the selection rule. Each candidate gets its
+  // own independent search below rather than picking a single "winner".
+  const candidateAirports = useMemo(() => {
+    const all = getAirportsForCity(destinationCity);
+    return all.filter((a) => a.iata !== origin);
+  }, [destinationCity, origin]);
 
   const canSearchFlights =
-    Boolean(destinationAirport) &&
-    Boolean(origin) &&
-    Boolean(fromDate) &&
-    origin !== destinationAirport;
+    Boolean(origin) && Boolean(fromDate) && candidateAirports.length > 0;
 
-  const [flightState, setFlightState] = useState<
-    | { status: "idle" }
+  type FlightBlockState =
     | { status: "loading" }
-    | { status: "ready"; recommended: Itinerary | null; fastest: Itinerary | null; isOneWay: boolean }
+    | { status: "ready"; recommended: Itinerary | null; isOneWay: boolean }
     | { status: "empty" }
-    | { status: "error"; message: string }
-  >({ status: "idle" });
+    | { status: "error"; message: string };
+
+  const [flightBlocks, setFlightBlocks] = useState<Record<string, FlightBlockState>>({});
 
   useEffect(() => {
-    if (!showFlights) {
-      setFlightState({ status: "idle" });
-      return;
-    }
-    if (!canSearchFlights) {
-      setFlightState({ status: "idle" });
+    if (!showFlights || !canSearchFlights) {
+      setFlightBlocks({});
       return;
     }
 
     let cancelled = false;
-    setFlightState({ status: "loading" });
-    const controller = new AbortController();
     const isOneWay = !toDate;
+    const controllers: AbortController[] = [];
 
-    fetch("/api/flights/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-      body: JSON.stringify({
-        origin,
-        destination: destinationAirport,
-        departureDate: fromDate,
-        returnDate: toDate || undefined,
-        adults: Math.max(1, adults),
-        children: kids,
-        cabinClass: "economy",
-      }),
-    })
-      .then(async (res) => {
-        const json = await res.json();
-        if (cancelled) return;
-        if (!json.ok) {
-          setFlightState({ status: "error", message: json.error || "Flight search failed" });
-          return;
-        }
-        const itineraries = normalizeOffers(
-          json.offers ?? [],
-          isOneWay ? "one-way" : "return"
-        );
-        if (itineraries.length === 0) {
-          setFlightState({ status: "empty" });
-          return;
-        }
-        const byScore = [...itineraries].sort((a, b) => b.score - a.score);
-        const byDuration = [...itineraries].sort((a, b) => {
-          const ad = a.outbound.durationMinutes + (a.inbound?.durationMinutes ?? 0);
-          const bd = b.outbound.durationMinutes + (b.inbound?.durationMinutes ?? 0);
-          return ad - bd;
-        });
-        const recommended = byScore[0] ?? null;
-        const fastest =
-          byDuration[0]?.id !== recommended?.id
-            ? byDuration[0] ?? null
-            : byDuration[1] ?? null;
-        setFlightState({ status: "ready", recommended, fastest, isOneWay });
+    setFlightBlocks(
+      Object.fromEntries(
+        candidateAirports.map((a) => [a.iata, { status: "loading" } as FlightBlockState])
+      )
+    );
+
+    for (const airport of candidateAirports) {
+      const controller = new AbortController();
+      controllers.push(controller);
+
+      fetch("/api/flights/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          origin,
+          destination: airport.iata,
+          departureDate: fromDate,
+          returnDate: toDate || undefined,
+          adults: Math.max(1, adults),
+          children: kids,
+          cabinClass: "economy",
+        }),
       })
-      .catch((err) => {
-        if (cancelled || err?.name === "AbortError") return;
-        setFlightState({
-          status: "error",
-          message: err instanceof Error ? err.message : "Flight search failed",
+        .then(async (res) => {
+          const json = await res.json();
+          if (cancelled) return;
+          if (!json.ok) {
+            setFlightBlocks((prev) => ({
+              ...prev,
+              [airport.iata]: { status: "error", message: json.error || "Flight search failed" },
+            }));
+            return;
+          }
+          const itineraries = normalizeOffers(
+            json.offers ?? [],
+            isOneWay ? "one-way" : "return"
+          );
+          if (itineraries.length === 0) {
+            setFlightBlocks((prev) => ({ ...prev, [airport.iata]: { status: "empty" } }));
+            return;
+          }
+          const recommended = [...itineraries].sort((a, b) => b.score - a.score)[0] ?? null;
+          setFlightBlocks((prev) => ({
+            ...prev,
+            [airport.iata]: { status: "ready", recommended, isOneWay },
+          }));
+        })
+        .catch((err) => {
+          if (cancelled || err?.name === "AbortError") return;
+          setFlightBlocks((prev) => ({
+            ...prev,
+            [airport.iata]: {
+              status: "error",
+              message: err instanceof Error ? err.message : "Flight search failed",
+            },
+          }));
         });
-      });
+    }
 
     return () => {
       cancelled = true;
-      controller.abort();
+      controllers.forEach((c) => c.abort());
     };
-  }, [showFlights, canSearchFlights, origin, destinationAirport, fromDate, toDate, adults, kids]);
+  }, [showFlights, canSearchFlights, candidateAirports, origin, fromDate, toDate, adults, kids]);
 
   const [availabilityById, setAvailabilityById] = useState<Record<string, SmallCardAvailability>>({});
 
@@ -404,79 +402,66 @@ export default function LandingSummary({
             <div className={styles.summaryLine}>
               Please be more specific to find relevant flights
             </div>
-          ) : flightState.status === "loading" || flightState.status === "idle" ? (
-            <div className={styles.summaryLine}>Searching flights…</div>
-          ) : flightState.status === "ready" ? (
+          ) : (
             <div className={styles.flightDetailList}>
-              {flightState.recommended ? (
-                <div className={styles.flightDetailRow}>
-                  <div className={styles.flightRowLegend}>
-                    <span className={styles.flightLineLabel}>Recommended</span>
-                    <span className={styles.flightRowPrice}>
-                      {formatPrice(
-                        flightState.recommended.priceEur,
-                        flightState.recommended.currency
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      className={`oltra-button-primary ${styles.flightBookButton}`}
-                      onClick={() =>
-                        flightState.recommended &&
-                        handleBookFlight(flightState.recommended.offerId)
-                      }
-                    >
-                      BOOK
-                    </button>
+              {candidateAirports.map((airport) => {
+                const state = flightBlocks[airport.iata];
+                const viaLabel = `${airport.label} (${airport.iata})`;
+
+                if (!state || state.status === "loading") {
+                  return (
+                    <div className={styles.summaryLine} key={airport.iata}>
+                      Searching flights via {viaLabel}…
+                    </div>
+                  );
+                }
+
+                if (state.status === "empty") {
+                  return (
+                    <div className={styles.summaryLine} key={airport.iata}>
+                      No flights found via {viaLabel} on {fromDate}
+                      {toDate ? ` (return ${toDate})` : ""}.
+                    </div>
+                  );
+                }
+
+                if (state.status === "error") {
+                  return (
+                    <div className={styles.summaryLine} key={airport.iata}>
+                      Could not load flights via {viaLabel} ({state.message}).
+                    </div>
+                  );
+                }
+
+                if (!state.recommended) return null;
+                const flight = state.recommended;
+
+                return (
+                  <div className={styles.flightDetailRow} key={airport.iata}>
+                    <div className={styles.flightRowLegend}>
+                      <span className={styles.flightLineLabel}>Via {viaLabel}</span>
+                      <span className={styles.flightRowPrice}>
+                        {formatPrice(flight.priceEur, flight.currency)}
+                      </span>
+                      <button
+                        type="button"
+                        className={`oltra-button-primary ${styles.flightBookButton}`}
+                        onClick={() => handleBookFlight(flight.offerId)}
+                      >
+                        BOOK
+                      </button>
+                    </div>
+                    <div className={styles.flightLegsGrid}>
+                      <FlightDetailCard flight={flight.outbound} />
+                      {!state.isOneWay && flight.inbound ? (
+                        <FlightDetailCard flight={flight.inbound} />
+                      ) : null}
+                    </div>
                   </div>
-                  <div className={styles.flightLegsGrid}>
-                    <FlightDetailCard flight={flightState.recommended.outbound} />
-                    {!flightState.isOneWay && flightState.recommended.inbound ? (
-                      <FlightDetailCard flight={flightState.recommended.inbound} />
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-              {flightState.fastest ? (
-                <div className={styles.flightDetailRow}>
-                  <div className={styles.flightRowLegend}>
-                    <span className={styles.flightLineLabel}>Fastest</span>
-                    <span className={styles.flightRowPrice}>
-                      {formatPrice(
-                        flightState.fastest.priceEur,
-                        flightState.fastest.currency
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      className={`oltra-button-primary ${styles.flightBookButton}`}
-                      onClick={() =>
-                        flightState.fastest &&
-                        handleBookFlight(flightState.fastest.offerId)
-                      }
-                    >
-                      BOOK
-                    </button>
-                  </div>
-                  <div className={styles.flightLegsGrid}>
-                    <FlightDetailCard flight={flightState.fastest.outbound} />
-                    {!flightState.isOneWay && flightState.fastest.inbound ? (
-                      <FlightDetailCard flight={flightState.fastest.inbound} />
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
+                );
+              })}
             </div>
-          ) : flightState.status === "empty" ? (
-            <div className={styles.summaryLine}>
-              No flights returned for {origin} → {destinationAirport} on {fromDate}
-              {toDate ? ` (return ${toDate})` : ""}.
-            </div>
-          ) : flightState.status === "error" ? (
-            <div className={styles.summaryLine}>
-              Could not load flights ({flightState.message}).
-            </div>
-          ) : null}
+          )}
         </div>
       ) : null}
     </div>

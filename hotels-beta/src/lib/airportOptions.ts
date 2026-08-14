@@ -37,6 +37,7 @@ export const AIRPORT_OPTIONS: AirportOption[] = [
   { value: "MXP", label: "MXP · Milan Malpensa" },
   { value: "LIN", label: "LIN · Milan Linate" },
   { value: "FCO", label: "FCO · Rome Fiumicino" },
+  { value: "VCE", label: "VCE · Venice Marco Polo" },
 
   { value: "MAD", label: "MAD · Madrid Barajas" },
   { value: "BCN", label: "BCN · Barcelona El Prat" },

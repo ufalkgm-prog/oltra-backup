@@ -43,6 +43,12 @@
   padding: 10px 12px;
 }
 
+/* Single-month variant (SingleDatePicker) - same panel chrome, half the
+   width since .monthsRow only ever gets one .month child. */
+.panelSingle {
+  width: 260px;
+}
+
 .panelHead {
   display: flex;
   align-items: center;

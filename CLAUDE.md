@@ -2022,4 +2022,170 @@ effort.
 
 ---
 
+## 36. LOCAL DEV — BETA-LOGIN GATE
+
+The whole site (all routes) sits behind a simple password gate —
+`hotels-beta/src/middleware.ts` redirects any request without a
+`beta_auth=oltra_beta_granted` cookie to `/beta-login`. This applies to
+direct browser navigation (including automated browser sessions used for
+live UI verification) and to any `curl`/fetch call made without the cookie.
+
+Password (hardcoded in `hotels-beta/src/app/api/beta-login/route.ts`,
+`BETA_PASSWORD`, already plaintext-committed there — recording it here isn't
+a new exposure): `Oltra2387`
+
+---
+
+## 37. LANDING PAGE — PER-CITY NEAREST-AIRPORT MAPPING & MULTI-AIRPORT FLIGHT TEASER (2026-08-14)
+
+### What prompted this
+
+A user report ("Venice says be more specific to find flights") traced back
+to the landing page's flight teaser resolving a destination city to an
+airport via a ~70-entry hardcoded `AIRPORT_OPTIONS` list
+(`src/lib/airportOptions.ts`) meant for the Flights page's manual
+autocomplete — Venice (and most of the hotel roster's ~500 other cities)
+simply wasn't in it. Adding Venice fixed that one case; this section is the
+follow-up to cover the entire hotel roster properly, including cities
+genuinely served by more than one relevant airport (multi-airport cities
+like London, or regions like Alpine ski resorts reachable via two
+comparably-distant hub airports).
+
+### Data pipeline: `scripts/airports/build-city-airports.mjs`
+
+Regenerates `src/lib/cityAirports.ts` from two sources:
+
+* **Directus `hotels` collection** — `city`/`country`/`lat`/`lng` for all
+  838 published hotels (all of which have coordinates). Grouped by
+  city+country (507 distinct combinations as of 2026-08-14); each group's
+  centroid (mean lat/lng of its hotels) is the point distances are measured
+  from.
+* **OurAirports' public dataset**
+  (`davidmegginson.github.io/ourairports-data/airports.csv`, ~86k airports
+  worldwide) — downloaded fresh each run to `scripts/airports/airports.csv`
+  (gitignored, large third-party data). Filtered to `scheduled_service ==
+  "yes"` (real commercial routes, not private/charter-only strips) and
+  excludes `heliport`/`seaplane_base`/`closed`/`balloonport` types. One
+  further manual exclusion: `TEB` (Teterboro) — flagged `scheduled_service:
+  yes` in the raw data but is a business-aviation-only field with no real
+  passenger routes.
+
+**Selection rule per city** (confirmed with Ulrik before building — see
+"max 2, all if the city itself has multiple, single if there's a clear
+favorite" below):
+
+1. **Same-city airports** — any airport within 25km of the centroid, OR
+   within 60km whose own `name` or `municipality` field starts with the
+   city name (catches e.g. "London Luton Airport" for London, or "Milan
+   Malpensa" for Milan, whose OurAirports `municipality` is a small
+   satellite town rather than the city itself — matching on the airport's
+   own *name* catches these where matching on `municipality` alone would
+   miss them). **All** same-city matches are listed, uncapped — this is
+   what makes London show all 6 (City/Heathrow/Gatwick/Luton/Stansted/
+   Southend) and New York show 3 (LaGuardia/Newark/JFK).
+2. **Otherwise** (no airport belongs to the city itself — the common case
+   for smaller towns/resorts): the single nearest airport (any type, large
+   or small) within 400km is used alone if it's a **clear favorite** (the
+   next-nearest candidate is >1.5x farther away). If two candidates are
+   comparably distant (ratio ≤1.5x), **both** are listed — this is the
+   Alpine-ski-resort case (e.g. Zermatt → Milan Malpensa 87km + Lugano
+   90km; Courchevel → Chambéry 64km + Annecy 71km).
+3. If nothing is within 400km at all (very remote), the single
+   globally-nearest scheduled airport is used regardless of distance.
+
+**A real bug caught during build, not just theorized**: an earlier version
+of the ranking (tier 2) pre-filtered to `large_airport`-type candidates
+before picking nearest, on the theory that a bigger/better-connected hub
+should be preferred over a closer small one. This blew up for "Greenough"
+(a Montana ranch resort near Missoula): it skipped Missoula
+(`medium_airport`, 50km) entirely in favor of Spokane (`large_airport`,
+319km) purely because of the type label, and did the same for a Sumba
+island resort (skipped the correct **Tambolaka** `small_airport` 36-44km
+away in favor of Lombok 300km+ across open water). Fixed by dropping the
+type-based pre-filter entirely — type is stored for reference but never
+used to filter or re-rank the candidate pool; pure nearest-distance (after
+the heliport/seaplane/TEB exclusions above) turned out to already match
+real-world gateway patterns well once that bug was gone. Re-verified after
+the fix: Greenough → Missoula, Sumba resorts → Tambolaka, both correct.
+
+**Known soft spot, accepted rather than chased further**: a handful of
+very remote safari lodges (e.g. Pamushana in Zimbabwe, Sesriem/Sonop Farm
+in Namibia) are in reality reached by charter flight from a regional hub,
+not commercial service to a nearby strip — for these, "nearest airport
+with real *scheduled* service" can legitimately be a distant major city
+(200-330km) rather than the practical charter gateway a travel agent would
+actually book. Affects ~9 of 507 cities (spot-checked by listing every
+city whose picked airport was >150km away). Not auto-fixable from public
+scheduled-service data; would need manual per-lodge research to improve,
+not done this session.
+
+**Airport labels** are derived from the OurAirports `name` field with
+generic suffixes stripped (`International Airport`, `Regional Airport`,
+`Airport`, parenthetical codes) — e.g. "Milan Malpensa International
+Airport" → "Milan Malpensa", "Zayed International Airport" → "Zayed". Not
+hand-tuned per airport; a few (like Abu Dhabh's renamed "Zayed" airport,
+which dropped "Abu Dhabi" from its official name in 2023) read a little
+opaque in isolation, but the surrounding UI always shows the destination
+city already, so this wasn't treated as worth special-casing.
+
+**Regenerate**: `DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/airports/build-city-airports.mjs`
+whenever the hotel roster's city list changes meaningfully. Safe to re-run
+anytime — always recomputes from scratch and overwrites
+`src/lib/cityAirports.ts`.
+
+### `src/lib/cityAirports.ts`
+
+Auto-generated (regenerate via the script above, don't hand-edit). Exports
+`CITY_AIRPORTS: Record<string, CityAirport[]>` (keyed by the exact Directus
+`hotels.city` string) and `getAirportsForCity(city)` (case/whitespace-
+normalized lookup, returns `[]` if the city isn't in the mapping).
+
+### `LandingSummary.tsx` — multi-airport flight teaser
+
+Replaced the single-airport `findAirportForCity()`/`destinationAirport`
+logic with `candidateAirports` (the full array from `getAirportsForCity`,
+minus the selected origin airport if it happens to coincide). UX choice
+(Ulrik, 2026-08-14): **one flight-result block per candidate airport**, not
+a single "best price" pick — each block fires its own independent
+`/api/flights/search` call and renders as soon as *that* call resolves
+(not blocked by slower siblings), labeled "Via {airport label} ({IATA})".
+Reuses the exact same row markup/CSS
+(`flightDetailRow`/`flightRowLegend`/`flightLineLabel`/`flightRowPrice`/
+`flightBookButton`/`flightLegsGrid`) that previously rendered the
+Recommended/Fastest pair for a single airport — just one row per airport
+now, showing that airport's top-scored (`recommended`) itinerary rather
+than a separate fastest pick, since the preview Ulrik approved showed one
+price line per airport block, not two.
+
+**Real cost implication, not yet limited**: a multi-airport city fires one
+Duffel search per candidate — up to 6 in parallel for London. Each result
+is cached server-side for 15 minutes
+(`src/app/api/flights/search/route.ts`'s existing `CACHE_TTL_MS`), but the
+first visitor to search a given London date/guest combination triggers 6
+live Duffel calls at once. Not a problem observed this session, but worth
+knowing if Duffel usage/latency ever becomes a concern — the same-city
+uncapped-list rule is the direct cause for cities with many airports.
+
+**Verified live** (2026-08-14, via a properly re-paired browser session —
+see §36's context on why that took a retry): Venice → single VCE block
+with real Duffel results; London → all 6 airports rendering independently
+with real results (€104–€115 range); Zermatt → both Milan Malpensa and
+Lugano blocks with real results. `tsc --noEmit` and `npm run lint` both
+clean throughout.
+
+### Files
+
+* `hotels-beta/scripts/airports/build-city-airports.mjs` — the regenerable
+  build script (documented above).
+* `hotels-beta/src/lib/cityAirports.ts` — auto-generated output, committed
+  (unlike the raw `airports.csv` cache, which is gitignored).
+* `hotels-beta/src/app/LandingSummary.tsx` — multi-airport search/render.
+* `hotels-beta/src/lib/airportOptions.ts` — untouched beyond the earlier
+  Venice addition; still the separate, manually-curated list backing the
+  Flights page's own airport autocomplete and the landing page's "home
+  airport" (origin) field, which have no equivalent "cover every hotel
+  city" requirement.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.

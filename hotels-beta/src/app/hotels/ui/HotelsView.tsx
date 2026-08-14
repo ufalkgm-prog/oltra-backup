@@ -731,7 +731,8 @@ export default function HotelsView(props: {
     Boolean(fromValue) &&
     Boolean(toValue) &&
     hasGuestDetails &&
-    Boolean(bedroomsValue);
+    Boolean(bedroomsValue) &&
+    Boolean(residencyValue);
 
   const datesAreValid =
     Boolean(fromDate) &&
@@ -2200,10 +2201,12 @@ async function handleCreateTripAndAddHotel() {
                           ? "CHECKING..."
                           : topAvailabilityChecked
                             ? "AVAILABILITY CHECKED"
-                            : searchIsActive
-                              ? "CHECK AVAILABILITY"
-                              : searchDisabledReason.charAt(0) +
-                                searchDisabledReason.slice(1).toLowerCase()}
+                            : searchIsActive && ratehawkResultAvailabilityStatus === "error"
+                              ? "COULDN'T CHECK — TAP TO RETRY"
+                              : searchIsActive
+                                ? "CHECK AVAILABILITY"
+                                : searchDisabledReason.charAt(0) +
+                                  searchDisabledReason.slice(1).toLowerCase()}
                       </span>
                     </span>
                   </button>
@@ -2360,7 +2363,9 @@ async function handleCreateTripAndAddHotel() {
                               </div>
                             ) : getRatehawkHidForHotel(h) ? (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
-                                Select dates
+                                {ratehawkResultAvailabilityStatus === "error"
+                                  ? "Couldn't check availability"
+                                  : "Select dates"}
                               </div>
                             ) : (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">

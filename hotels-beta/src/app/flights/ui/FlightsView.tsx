@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { mergeHotelFlightSearch, readHotelFlightSearch } from "@/lib/searchSession";
@@ -13,6 +13,7 @@ import { useCurrency } from "@/lib/currency/useCurrency";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
 import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
+import SingleDatePicker from "@/components/site/SingleDatePicker";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import styles from "./FlightsView.module.css";
 
@@ -857,10 +858,10 @@ export default function FlightsView({ searchParams }: Props) {
                           value={leg.to}
                           onChange={v => updateMultiCityLeg(leg.id, { to: v })}
                         />
-                        <DateField
+                        <SingleDatePicker
                           label="Date"
                           value={leg.date}
-                          min={minLegDate}
+                          minDate={minLegDate}
                           onChange={v => updateMultiCityLeg(leg.id, { date: v })}
                         />
                       </div>
@@ -908,10 +909,10 @@ export default function FlightsView({ searchParams }: Props) {
                       />
                     </div>
                   ) : (
-                    <DateField
+                    <SingleDatePicker
                       label="Depart"
                       value={search.departDate}
-                      min={todayIso}
+                      minDate={todayIso}
                       onChange={v => { setSearch(c => ({ ...c, departDate: v })); markDirty(); }}
                     />
                   )}
@@ -1357,45 +1358,6 @@ function formatDisplayDate(value: string): string {
   }).format(new Date(year, month - 1, day));
 }
 
-export type DateFieldHandle = { open: () => void };
-
-const DateField = forwardRef<DateFieldHandle, { label: string; value: string; onChange: (v: string) => void; min?: string }>(
-  function DateField({ label, value, onChange, min }, forwardedRef) {
-  const ref = useRef<HTMLInputElement | null>(null);
-  useImperativeHandle(forwardedRef, () => ({
-    open: () => ref.current?.showPicker?.(),
-  }));
-  return (
-    <div className="relative min-w-0" data-oltra-control="true">
-      <label className="oltra-label">{label}</label>
-      <div
-        className="hotel-date-field relative cursor-pointer"
-        onMouseDown={e => e.preventDefault()}
-        onClick={() => ref.current?.showPicker?.()}
-      >
-        <input
-          ref={ref}
-          type="date"
-          value={value}
-          min={min}
-          tabIndex={-1}
-          onChange={e => onChange(e.target.value)}
-          onKeyDown={e => e.preventDefault()}
-          onBeforeInput={e => e.preventDefault()}
-          className="oltra-input hotel-date-field__input w-full cursor-pointer"
-          data-has-value={value ? "true" : "false"}
-        />
-        <span
-          className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px] overflow-hidden"
-          data-has-value={value ? "true" : "false"}
-        >
-          <span className="truncate">{formatDisplayDate(value) || "date"}</span>
-        </span>
-      </div>
-    </div>
-  );
-  }
-);
 
 function SelectField({
   label, value, onChange, options, labels,
