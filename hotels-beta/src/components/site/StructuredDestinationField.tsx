@@ -84,14 +84,26 @@ function buildInitialTokens(
 ): Token[] {
   const out: Token[] = [];
 
+  // Only ever surface a city/country/region as a selectable token if it's
+  // real - i.e. some hotel in our own dataset actually has it. Destination
+  // params can arrive here from outside sources (e.g. the Flights page's
+  // shared search-session handoff), and this field must never offer
+  // something like an airport's descriptive name ("Venice Marco Polo") as
+  // if it were one of our hotel cities.
   const city = normalizeParam(searchParams.city);
-  if (city) out.push({ type: "city", label: city, value: city });
+  if (city && dataset.hotels.some((hotel) => hotel.city === city)) {
+    out.push({ type: "city", label: city, value: city });
+  }
 
   const country = normalizeParam(searchParams.country);
-  if (country) out.push({ type: "country", label: country, value: country });
+  if (country && dataset.hotels.some((hotel) => hotel.country === country)) {
+    out.push({ type: "country", label: country, value: country });
+  }
 
   const region = normalizeParam(searchParams.region);
-  if (region) out.push({ type: "region", label: region, value: region });
+  if (region && dataset.hotels.some((hotel) => hotel.region === region)) {
+    out.push({ type: "region", label: region, value: region });
+  }
 
   const activityIds = listFromParam(searchParams.activities);
   for (const activityId of activityIds) {

@@ -289,6 +289,29 @@ export function getAirportsForCity(city: string): CityAirport[] {
   if (!city) return [];
   return LOOKUP[normalizeCityKey(city)] ?? [];
 }
+
+const IATA_TO_CITY: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (const [city, airports] of Object.entries(CITY_AIRPORTS)) {
+    for (const airport of airports) {
+      if (!(airport.iata in map)) map[airport.iata] = city;
+    }
+  }
+  return map;
+})();
+
+/** Reverse lookup: which OLTRA hotel city (if any) treats this IATA code as
+ * one of its own nearest airports. Returns "" if the airport isn't
+ * associated with any city in our hotel roster. Use this - never an
+ * airport's own display label/name - whenever an airport code needs to be
+ * turned back into a "city" value for something that expects a real hotel
+ * city (e.g. handing a Flights-page destination airport back to the Hotels
+ * page's destination filter). An airport's descriptive name (e.g. "Venice
+ * Marco Polo") is not a city and must never be written into a city field. */
+export function getCityForAirportIata(iata: string): string {
+  if (!iata) return "";
+  return IATA_TO_CITY[iata.trim().toUpperCase()] ?? "";
+}
 `;
 
   fs.writeFileSync(OUTPUT_PATH, out);

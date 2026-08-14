@@ -2310,4 +2310,133 @@ unaffected.
 
 ---
 
+## 39. HOTELS PAGE — POPUP/LAYOUT FIXES, AIRPORT-NAME LEAK FIX, RESIDENCY SELECTOR REMOVED (2026-08-14)
+
+Five independent Hotels-page fixes from the same session, all live-verified.
+
+### 1. Room-detail popup: images cramped, close button crowded
+
+The image grid was a hardcoded `grid-cols-3` inside a `max-h-[300px]
+overflow-y-auto` box — with 1-2 images (common), each image only got 1/3
+of the available width (grid still reserved 3 columns) and looked tiny,
+and the inner scrollbar added a second, unnecessary scroll region inside
+an already-scrollable modal. Fixed: column count now tracks actual image
+count (`grid-cols-1`/`-2`/`-3` for 1/2/3+ images), and the inner
+max-height/overflow-scroll was dropped entirely — images lay out at full
+width, no internal scrollbar. Also gave the panel `pt-14` (was `p-5`
+uniformly) and the title `pr-10`, so a long room name no longer runs
+under the close button.
+
+### 2. Airport descriptive-name leaking into the Hotels destination field ("Venice Marco Polo")
+
+Root cause, traced end to end: landing page saves `city: "Venice"` to the
+shared cross-page session (`searchSession.ts`) when a user picks Venice
+and enables flights. On the Flights page, `buildInitialSearch` resolves
+that city to a destination airport code (`VCE`) via
+`resolveAirportCode()`. Flights' own session-merge effect then wrote
+`city: cityForCode(search.to)` back into the *same* shared session -
+`cityForCode` parses the part after "·" in the `AIRPORT_OPTIONS` label,
+which for `VCE` is `"Venice Marco Polo"` (the airport's own descriptive
+name, since that entry was added for §36's Venice fix as `"VCE · Venice
+Marco Polo"`, not a bare city name like `"CPH · Copenhagen"`). So the
+shared session's `city` value got silently overwritten from a real city
+to an airport name - which then showed up as a normal, removable "City:
+Venice Marco Polo" chip on the Hotels page, because
+`StructuredDestinationField`'s `buildInitialTokens` builds a city token
+from the URL param unconditionally, with no check that it's a city that
+actually exists in the hotel dataset.
+
+**This exact `cityForCode()` fragility likely predates §36** for any
+`AIRPORT_OPTIONS` entry whose label isn't a bare city (Milan Malpensa,
+Rome Fiumicino, New York JFK, ...) - Venice just made it newly visible
+because that entry didn't exist before this session.
+
+Two-part fix, addressing both root cause and the missing guard:
+* `scripts/airports/build-city-airports.mjs` now also emits
+  `getCityForAirportIata(iata)` in the generated `cityAirports.ts` - a
+  reverse lookup (IATA → the OLTRA hotel city that treats it as one of its
+  own nearest airports), built from the same `CITY_AIRPORTS` data already
+  used for the landing flight teaser. `FlightsView.tsx`'s session-merge
+  effect now uses this instead of `cityForCode(search.to)` - it returns
+  either a real hotel city or `""`, never a fabricated one built from an
+  airport's display name.
+* `StructuredDestinationField.tsx`'s `buildInitialTokens` now only builds
+  a city/country/region token if some hotel in `dataset.hotels` actually
+  has that exact value (mirrors the pre-existing `qMatchesHotel` guard
+  already used for hotel-name tokens) - defense in depth, so this class of
+  bug can't resurface some other way and land a fake destination on this
+  page again.
+
+Verified live end to end: Landing (Venice + flights, origin LHR) → Flights
+page (correctly shows "VCE · Venice Marco Polo" as destination, that's
+expected/correct there) → clicked through to Hotels via the header nav →
+shared session inspected via devtools (`city: "Venice"`, confirmed via
+`sessionStorage`) → Hotels page renders "City: Venice ×", 6 real Venice
+hotels.
+
+### 3. Add to Trip / Add to Favourites moved to the right-hand pane
+
+Previously lived in a 2-column grid at the very bottom of the left
+(main-content) pane, sharing a row with the room-selection Total/booking
+link. Moved into the right metadata pane, directly under the "Brand"
+row - a real 4th argument the user made (grouping account-actions with
+the rest of the hotel's static metadata rather than pinning them to
+whatever happens to be at the bottom of a variable-height rooms list).
+The trip-picker popover (`oltra-popup-panel--up`, opened upward to clear
+the bottom edge) now opens downward instead, since it's no longer pinned
+to the pane's bottom - fits its new position better. The left pane's
+bottom row is now just the Total/booking-link block, no longer a 2-column
+grid. No behavior changes - same handlers, same `tripPickerRef`
+click-outside logic, same trip-picker/create-new-trip UI, just relocated.
+
+### 4. "Not available on Ratehawk" → "No availability"
+
+One-line copy change in the result-card fallback (`HotelsView.tsx`) -
+"Ratehawk" is an internal supplier name a guest has no reason to know;
+"No availability" says the same thing without the implementation detail.
+
+### 5. Residency ("Pricing for") selector removed from the Hotels search form
+
+Before removing it, measured whether residency-based price differences
+are real and worth this UI real estate at all - live-tested the same
+hotel/dates across 10-16 residency codes via
+`/api/ratehawk/availability/batch` (bypassing the beta-login gate with a
+cookie jar, `curl -c/-b`). Findings:
+* **A real Paris hotel showed zero price variance** across gb/us/ae/cn/id/sa.
+* **A real Dubai hotel showed measurable but modest variance**: a baseline
+  (gb, sa, ru, in, th, kr, br, qa, kw) vs. two higher tiers roughly 1.9%
+  and 2.9% above baseline (us and cn at the lower elevated tier; ae and id
+  at the higher one). Tiered, not a smooth per-country curve.
+* The ETG test hotel (`hid` 8473727) showed **no** variance at all across
+  any residency tried - it's a static certification fixture, not real
+  inventory, so it's useless for this kind of check (noted here so a
+  future session doesn't waste time re-testing against it for this
+  purpose).
+
+Conclusion: real but genuinely marginal (≤3%), and property/market-
+specific rather than a fixed list of "these countries always differ" -
+matches Ulrik's own "I assume it is marginal" instinct, empirically
+confirmed rather than assumed. Removed the interactive `OltraSelect`
+"Pricing for" control entirely. `residencyValue` and the
+`guessResidencyFromLocale()` auto-detect effect (§30) are **unchanged** -
+still silently detected from browser locale and still sent on every
+Ratehawk request (required field, per §32 certification requirements) -
+just no longer exposed as something a guest picks on this page. Replaced
+with a small, non-interactive line: "Prices assume booking from
+{country}." A precise country prompt at actual booking time (per Ulrik's
+"could we include it later upon booking" suggestion) is a natural fit for
+whenever the booking flow itself gets built - still blocked, see §32 -
+not attempted this session.
+
+### Files
+
+* `hotels-beta/src/app/hotels/ui/HotelsView.tsx` — items 1, 3, 4, 5.
+* `hotels-beta/scripts/airports/build-city-airports.mjs`,
+  `hotels-beta/src/lib/cityAirports.ts` — `getCityForAirportIata` (item 2).
+* `hotels-beta/src/app/flights/ui/FlightsView.tsx` — item 2 fix.
+* `hotels-beta/src/components/site/StructuredDestinationField.tsx` —
+  item 2 defense-in-depth guard.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.

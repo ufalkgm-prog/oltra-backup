@@ -2131,33 +2131,26 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   </div>
 
-                  {/* Kept intentionally low-key: this only feeds ETG/Ratehawk
-                      pricing (residency-based rate differences in Gulf/Russian/
-                      some Asian markets), not something a guest should have to
-                      treat as a search prerequisite. Auto-detected from browser
-                      locale by default (see guessResidencyFromLocale effect
-                      below) - this is just an override, not a required field. */}
-                  <div className="md:col-span-12 -mt-1 flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
-                      Pricing for
-                    </span>
-                    <div className="w-[150px]" data-oltra-control="true">
-                      <OltraSelect
-                        name="residency"
-                        value={residencyValue}
-                        placeholder="Country"
-                        align="left"
-                        onValueChange={(value) => {
-                          setResidencyValue(value);
-                          setAvailabilitySearchDirty(true);
-                        }}
-                        options={RESIDENCY_COUNTRIES.map((c) => ({
-                          value: c.code,
-                          label: c.label,
-                        }))}
-                      />
+                  {/* No user-facing control here on purpose - residency-based
+                      rate differences from ETG/Ratehawk are marginal (spot-
+                      checked live: 0-3% depending on the specific hotel, most
+                      hotels show no difference at all) and not something a
+                      guest should have to treat as a search prerequisite.
+                      Silently auto-detected from browser locale (see
+                      guessResidencyFromLocale effect below) and still sent
+                      on every Ratehawk request - just not exposed as a
+                      pickable field on this page. A precise "what country are
+                      you booking from" prompt belongs at actual booking time
+                      (not built yet - booking flow is still blocked, see
+                      CLAUDE.md §32), so for now this is purely informational. */}
+                  {residencyValue ? (
+                    <div className="md:col-span-12 -mt-1 text-[11px] text-[color:var(--oltra-text-muted)]">
+                      Prices assume booking from{" "}
+                      {RESIDENCY_COUNTRIES.find((c) => c.code === residencyValue)?.label ??
+                        residencyValue}
+                      .
                     </div>
-                  </div>
+                  ) : null}
                 </>
               ) : null}
 
@@ -2359,7 +2352,7 @@ async function handleCreateTripAndAddHotel() {
                               </div>
                             ) : ratehawkCardAvailability?.status === "unavailable" ? (
                               <div className="px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
-                                Not available on Ratehawk
+                                No availability
                               </div>
                             ) : getRatehawkHidForHotel(h) ? (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
@@ -2824,7 +2817,7 @@ async function handleCreateTripAndAddHotel() {
                                   onClick={() => setOpenRoomDetailKey(null)}
                                 >
                                   <div
-                                    className="oltra-modal-panel relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-5"
+                                    className="oltra-modal-panel relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6 pt-14"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <button
@@ -2836,10 +2829,18 @@ async function handleCreateTripAndAddHotel() {
                                       ×
                                     </button>
 
-                                    <div className="oltra-subheader">{room.roomName}</div>
+                                    <div className="oltra-subheader pr-10">{room.roomName}</div>
 
                                     {room.images.length ? (
-                                      <div className="oltra-scrollbar mt-3 grid max-h-[300px] grid-cols-3 gap-2 overflow-y-auto pr-1">
+                                      <div
+                                        className={`mt-3 grid gap-2 ${
+                                          room.images.length === 1
+                                            ? "grid-cols-1"
+                                            : room.images.length === 2
+                                              ? "grid-cols-2"
+                                              : "grid-cols-3"
+                                        }`}
+                                      >
                                         {room.images.map((img, i) => (
                                           <img
                                             key={i}
@@ -2953,11 +2954,10 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   ) : null}
 
-                  {/* Bottom action row inside left pane: room-selection total left, Trip + Favourites right */}
-                  <div className="mt-auto grid grid-cols-2 items-end gap-x-6 gap-y-2">
-
+                  {/* Bottom action row inside left pane: room-selection total / booking link */}
+                  <div className="mt-auto">
                     {roomSelectionTotal > 0 ? (
-                      <div className="col-start-1 row-start-1 flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-sm text-[color:var(--oltra-text-primary)]">
+                      <div className="flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-sm text-[color:var(--oltra-text-primary)]">
                         <span className="text-[12px] text-[color:var(--oltra-text-muted)]">Total</span>
                         <span className="font-light text-[color:var(--oltra-text-primary)]">
                           {roomSelectionCurrency} {Math.round(roomSelectionTotal).toLocaleString()}
@@ -2968,16 +2968,70 @@ async function handleCreateTripAndAddHotel() {
                         href={selectedHotelBookingHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="col-start-1 row-start-1 inline-flex h-[var(--oltra-button-height)] w-full items-center justify-center rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-[12px] text-[color:var(--oltra-text-muted)] underline underline-offset-4 hover:text-[color:var(--oltra-text-primary)]"
+                        className="inline-flex h-[var(--oltra-button-height)] w-full items-center justify-center rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-[12px] text-[color:var(--oltra-text-muted)] underline underline-offset-4 hover:text-[color:var(--oltra-text-primary)]"
                       >
                         {selectedHotelBookingLabel}
                       </a>
                     ) : null}
 
-                    <div ref={tripPickerRef} className="col-start-2 row-start-1 relative">
+                    {ratehawkRooms.status === "error" ? (
+                      <div className="mt-2 text-[12px] text-[color:var(--oltra-text-muted)]">
+                        Could not load room availability.
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* col-span-4: Metadata aligned with thumbnail column */}
+                <div className="col-span-12 lg:col-span-4 space-y-4">
+                  <div>
+                    <div className="oltra-subheader">Setting</div>
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
+                      {selectedHotelSettings.length
+                        ? selectedHotelSettings.slice(0, 8).join(" · ")
+                        : "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="oltra-subheader">Style</div>
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
+                      {selectedHotelStyles.length
+                        ? selectedHotelStyles.slice(0, 8).join(" · ")
+                        : "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="oltra-subheader">Activities</div>
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
+                      {selectedHotelActivities.length
+                        ? selectedHotelActivities.slice(0, 10).join(" · ")
+                        : "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="oltra-subheader">Accolades</div>
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
+                      {selectedHotelAwards.length
+                        ? selectedHotelAwards.slice(0, 8).join(" · ")
+                        : "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="oltra-subheader">Brand</div>
+                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
+                      {selectedHotel.affiliation?.trim() || "—"}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div ref={tripPickerRef} className="relative">
                       {showTripPicker && (
                         <div
-                          className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"
+                          className="oltra-popup-panel oltra-popup-panel--bounded absolute left-0 right-0 z-50 mt-2"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="oltra-subheader">Select trip</div>
@@ -3074,7 +3128,7 @@ async function handleCreateTripAndAddHotel() {
                         void handleAddHotelToFavorites();
                       }}
                       disabled={memberActionLoading !== null || isFavorited}
-                      className={`col-start-2 row-start-2 ${getMemberActionButtonClass(
+                      className={`${getMemberActionButtonClass(
                         isMemberLoggedIn && !isFavorited
                       )} w-full`}
                       aria-disabled={!isMemberLoggedIn || isFavorited}
@@ -3086,63 +3140,11 @@ async function handleCreateTripAndAddHotel() {
                           : "ADD TO FAVOURITES"}
                     </button>
 
-                    {ratehawkRooms.status === "error" ? (
-                      <div className="col-start-2 text-[12px] text-[color:var(--oltra-text-muted)]">
-                        Could not load room availability.
-                      </div>
-                    ) : null}
-
                     {(memberActionError || memberActionMessage) ? (
-                      <div className="col-start-2 text-[12px] text-[color:var(--oltra-text-muted)]">
+                      <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
                         {memberActionError || memberActionMessage}
                       </div>
                     ) : null}
-                  </div>
-                </div>
-
-                {/* col-span-4: Metadata aligned with thumbnail column */}
-                <div className="col-span-12 lg:col-span-4 space-y-4">
-                  <div>
-                    <div className="oltra-subheader">Setting</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
-                      {selectedHotelSettings.length
-                        ? selectedHotelSettings.slice(0, 8).join(" · ")
-                        : "—"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="oltra-subheader">Style</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
-                      {selectedHotelStyles.length
-                        ? selectedHotelStyles.slice(0, 8).join(" · ")
-                        : "—"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="oltra-subheader">Activities</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
-                      {selectedHotelActivities.length
-                        ? selectedHotelActivities.slice(0, 10).join(" · ")
-                        : "—"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="oltra-subheader">Accolades</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
-                      {selectedHotelAwards.length
-                        ? selectedHotelAwards.slice(0, 8).join(" · ")
-                        : "—"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="oltra-subheader">Brand</div>
-                    <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
-                      {selectedHotel.affiliation?.trim() || "—"}
-                    </div>
                   </div>
                 </div>
               </div>

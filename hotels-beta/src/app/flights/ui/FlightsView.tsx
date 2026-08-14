@@ -11,6 +11,7 @@ import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
+import { getCityForAirportIata } from "@/lib/cityAirports";
 import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
@@ -409,8 +410,14 @@ export default function FlightsView({ searchParams }: Props) {
       // (search.to) has to win over a stale/absent URL `city` param, or the
       // destination silently fails to round-trip through session storage on
       // navigation away and back (e.g. logging in, then returning via the
-      // header "Flights" link).
-      city: cityForCode(search.to) || normalizeParam(searchParams.city),
+      // header "Flights" link). Deliberately NOT cityForCode(search.to) -
+      // that returns the airport's own descriptive label (e.g. "Venice
+      // Marco Polo"), not a real city, and this value feeds the Hotels
+      // page's city filter, which only understands real hotel cities.
+      // getCityForAirportIata does a reverse lookup against our own hotel
+      // roster's nearest-airport data instead, so it's either a genuine
+      // hotel city or "" (never a fabricated one).
+      city: getCityForAirportIata(search.to) || normalizeParam(searchParams.city),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
       from: search.departDate,
