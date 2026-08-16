@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -38,6 +38,7 @@ import {
   getHotelImageSet,
   HOTEL_CARD_PLACEHOLDERS as PLACEHOLDERS,
   hasHotelPhotos,
+  RATEHAWK_FULL_SIZE,
   RATEHAWK_LARGE_SIZE,
   RATEHAWK_THUMB_SIZE,
   resolveRatehawkUrl,
@@ -68,6 +69,9 @@ type TaxMaps = {
 };
 
 type ViewMode = "details" | "map" | "featured";
+
+/** Images shown side by side in the featured strip. */
+const FEATURED_IMAGE_COUNT = 3;
 
 type RatehawkResultAvailability =
   | { status: "available"; headline: RatehawkHeadline }
@@ -1334,6 +1338,17 @@ export default function HotelsView(props: {
 
   const featuredCycleRef = useRef<number[]>([]);
   const featuredTailRef = useRef<number[]>([]);
+  // Everything already shown, in order, plus where in it we currently are.
+  // The arrows walk this rather than stepping the pool by ±1: "previous" has
+  // to mean "the hotel I just saw", and the auto-revolve order is a shuffle,
+  // so pool order would send Back somewhere the viewer has never been.
+  const featuredHistoryRef = useRef<number[]>([]);
+  const featuredHistoryPosRef = useRef(0);
+  const featuredBuildCycleRef = useRef<((prevTail: number[]) => number[]) | null>(null);
+  // Bumped by the arrows so the auto-advance interval restarts - otherwise a
+  // manual step could be followed a fraction of a second later by an automatic
+  // one.
+  const [featuredTimerNonce, setFeaturedTimerNonce] = useState(0);
 
   useEffect(() => {
     if (effectiveView !== "featured") return;
@@ -1368,24 +1383,63 @@ export default function HotelsView(props: {
       return all;
     }
 
+    featuredBuildCycleRef.current = buildCycle;
+
     const initial = buildCycle([]);
     featuredTailRef.current = [];
     const first = initial.shift() ?? 0;
     featuredCycleRef.current = initial;
     featuredTailRef.current = [first];
+    featuredHistoryRef.current = [first];
+    featuredHistoryPosRef.current = 0;
     setSelectedImageIndex(first);
-
-    const timer = window.setInterval(() => {
-      if (featuredCycleRef.current.length === 0) {
-        featuredCycleRef.current = buildCycle(featuredTailRef.current);
-      }
-      const next = featuredCycleRef.current.shift()!;
-      featuredTailRef.current = [...featuredTailRef.current, next].slice(-GAP);
-      setSelectedImageIndex(next);
-    }, 5000);
-
-    return () => window.clearInterval(timer);
   }, [effectiveView, featuredHotels]);
+
+  // Pulls the next hotel out of the shuffled cycle, or replays forward history
+  // when the viewer has stepped back with the arrows.
+  const advanceFeatured = useCallback(() => {
+    const history = featuredHistoryRef.current;
+    if (featuredHistoryPosRef.current < history.length - 1) {
+      featuredHistoryPosRef.current += 1;
+      setSelectedImageIndex(history[featuredHistoryPosRef.current]);
+      return;
+    }
+
+    const buildCycle = featuredBuildCycleRef.current;
+    if (!buildCycle) return;
+    if (featuredCycleRef.current.length === 0) {
+      featuredCycleRef.current = buildCycle(featuredTailRef.current);
+    }
+    const next = featuredCycleRef.current.shift();
+    if (next === undefined) return;
+
+    const GAP = Math.min(30, Math.max(featuredHotels.length, 1));
+    featuredTailRef.current = [...featuredTailRef.current, next].slice(-GAP);
+    // Capped so an idle page left running overnight doesn't grow this forever.
+    featuredHistoryRef.current = [...history, next].slice(-200);
+    featuredHistoryPosRef.current = featuredHistoryRef.current.length - 1;
+    setSelectedImageIndex(next);
+  }, [featuredHotels.length]);
+
+  const stepFeaturedBack = useCallback(() => {
+    if (featuredHistoryPosRef.current <= 0) return;
+    featuredHistoryPosRef.current -= 1;
+    setSelectedImageIndex(featuredHistoryRef.current[featuredHistoryPosRef.current]);
+    setFeaturedTimerNonce((n) => n + 1);
+  }, []);
+
+  const stepFeaturedForward = useCallback(() => {
+    advanceFeatured();
+    setFeaturedTimerNonce((n) => n + 1);
+  }, [advanceFeatured]);
+
+  useEffect(() => {
+    if (effectiveView !== "featured") return;
+    if (featuredHotels.length <= 1) return;
+    // 7.5s - the auto-revolve stays live alongside the arrows, just slower.
+    const timer = window.setInterval(advanceFeatured, 7500);
+    return () => window.clearInterval(timer);
+  }, [effectiveView, featuredHotels.length, advanceFeatured, featuredTimerNonce]);
 
   const featuredHotel =
     featuredHotels[selectedImageIndex % Math.max(featuredHotels.length, 1)] ??
@@ -1400,8 +1454,62 @@ export default function HotelsView(props: {
       editor_rank: 0,
     };
 
-  const featuredHeroImage =
-    getHotelImageSet(featuredHotel as HotelRecord)[0] ?? PLACEHOLDERS[0];
+  // The featured strip shows three images of the current hotel, but the bulk
+  // hotels fetch only carries ratehawk_image_1 (§29 - pulling all 50 slots for
+  // ~870 hotels measured at ~4.5MB), so the rest come from the same per-hotel
+  // route the detail panel uses. Cached by hotel id: the revolver returns to
+  // hotels it has already shown, and the arrows make that common.
+  const featuredImagesCacheRef = useRef<Map<string, string[]>>(new Map());
+  const [featuredExtraImages, setFeaturedExtraImages] = useState<string[]>([]);
+  const featuredHotelId = (featuredHotel as HotelRecord).id;
+
+  useEffect(() => {
+    const hotel = featuredHotel as HotelRecord;
+    const key = String(hotel.id ?? "");
+    if (!key || !hotel.ratehawk_image_1) {
+      setFeaturedExtraImages([]);
+      return;
+    }
+
+    const cached = featuredImagesCacheRef.current.get(key);
+    if (cached) {
+      setFeaturedExtraImages(cached);
+      return;
+    }
+
+    let cancelled = false;
+    fetch(`/api/hotels/${key}/ratehawk-images`)
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; images?: { url: string }[] }) => {
+        if (cancelled || !data?.ok) return;
+        const urls = (data.images ?? [])
+          .slice(0, FEATURED_IMAGE_COUNT)
+          .map((image) => resolveRatehawkUrl(image.url, RATEHAWK_FULL_SIZE));
+        featuredImagesCacheRef.current.set(key, urls);
+        setFeaturedExtraImages(urls);
+      })
+      .catch(() => {
+        if (!cancelled) setFeaturedExtraImages([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featuredHotelId]);
+
+  // Agoda hotels already carry up to 5 images in the bulk fetch, so they need
+  // no extra request. Whatever is available is shown - 1, 2 or 3 - rather than
+  // padding the row with repeats.
+  const featuredStripImages = useMemo(() => {
+    const fromSet = getHotelImageSet(featuredHotel as HotelRecord).slice(
+      0,
+      FEATURED_IMAGE_COUNT
+    );
+    if (featuredExtraImages.length > fromSet.length) return featuredExtraImages;
+    return fromSet.length ? fromSet : [PLACEHOLDERS[0]];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featuredHotelId, featuredExtraImages]);
 
   const selectedPriceLabels = useMemo(
     () => getPriceSummary(searchParams, activeCurrency),
@@ -2448,15 +2556,13 @@ async function handleCreateTripAndAddHotel() {
           ].join(" ")}
         >
           {effectiveView === "featured" ? (
-            <div className="relative -m-4 min-h-[820px] overflow-hidden rounded-[var(--oltra-radius-xl)]">
-              <img
-                src={featuredHeroImage}
-                alt={featuredHotel.hotel_name ?? "Featured hotel"}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/24 via-black/8 to-black/34" />
-
-              <div className="absolute left-5 top-5 z-10 w-[min(420px,calc(100%-40px))] rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(24,34,42,0.22)] p-4 backdrop-blur-[14px]">
+            /* Search and featured-hotel details sit side by side on one row,
+               stretched to a common height, with the revolving images below.
+               (This replaced a full-bleed hero with both boxes floated on top
+               of it.) */
+            <div className="flex flex-col gap-4">
+              <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+              <div className="flex flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-4">
                 <form
                   action="/hotels"
                   method="GET"
@@ -2529,25 +2635,65 @@ async function handleCreateTripAndAddHotel() {
                 </form>
               </div>
 
+              {/* Slimmer than before - name and location share a line, and the
+                  awards sit under them - so this stays the same height as the
+                  search box beside it rather than driving the row taller. */}
               <a
                 href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
-                className="absolute right-5 top-5 z-10 block w-[min(360px,calc(100%-40px))] cursor-pointer rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(24,34,42,0.22)] px-4 py-3 backdrop-blur-[14px] transition-colors hover:border-white/22 hover:bg-[rgba(24,34,42,0.32)]"
+                className="flex cursor-pointer flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)]"
               >
                 <div className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--oltra-text-muted)]">
                   Featured hotel
                 </div>
-                <div className="mt-2 text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
-                  {featuredHotel.hotel_name ?? "Featured hotel"}
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+                    {featuredHotel.hotel_name ?? "Featured hotel"}
+                  </span>
+                  <span className="text-[12px] text-[color:var(--oltra-text-muted)]">
+                    {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "Curated selection"}
+                  </span>
                 </div>
-                <div className="mt-1 text-[12px] text-[color:var(--oltra-text-muted)]">
-                  {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "Curated selection"}
-                </div>
-                <div className="mt-2 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
+                <div className="mt-1 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
                   {getFeaturedAwardsForHotel(featuredHotel as HotelRecord)
                     .map((award) => award.label)
                     .join(" · ") || "Curated featured selection"}
                 </div>
               </a>
+              </div>
+
+              <div className="relative">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {featuredStripImages.map((image, index) => (
+                    <img
+                      key={`${featuredHotelId}-${index}`}
+                      src={image}
+                      alt={featuredHotel.hotel_name ?? "Featured hotel"}
+                      className="h-[300px] w-full rounded-[var(--oltra-radius-lg)] object-cover"
+                    />
+                  ))}
+                </div>
+
+                {featuredHotels.length > 1 ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={stepFeaturedBack}
+                      aria-label="Previous featured hotel"
+                      className="oltra-featured-arrow left-3"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stepFeaturedForward}
+                      aria-label="Next featured hotel"
+                      className="oltra-featured-arrow right-3"
+                    >
+                      ›
+                    </button>
+                  </>
+                ) : null}
+              </div>
             </div>
           ) : effectiveView === "map" ? (
             <div className="relative">
@@ -3142,7 +3288,7 @@ async function handleCreateTripAndAddHotel() {
                         )} w-full`}
                         aria-disabled={!isMemberLoggedIn}
                       >
-                        ADD TO TRIP
+                        SAVE TO TRIP
                       </button>
                     </div>
 

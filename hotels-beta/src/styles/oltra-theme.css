@@ -1467,6 +1467,36 @@ details > summary::-webkit-details-marker {
   filter: grayscale(0.9);
 }
 
+/* Featured-strip prev/next. Overlays the image row's outer edges, vertically
+   centred, so it doesn't add a control row of its own. */
+.oltra-featured-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(18, 28, 36, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--oltra-text-primary);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0 0 3px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.oltra-featured-arrow:hover {
+  background: rgba(18, 28, 36, 0.82);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .hotel-availability-pill {
   display: block;
   width: 100%;
