@@ -2607,38 +2607,34 @@ import into Directus by virtue of existing.
   `written_to_directus: false` field is stale as of 2026-08-16** — the hids
   *were* written. That file belongs to `oltra-agents` and is being corrected
   there; do not edit it from this repo.
-* `database-agent/hotels/flagged/` — 215 per-hotel findings (mostly
-  `url-redirected` / `url-blocked-by-bot-protection`).
-* Restaurant folders exist but are empty as of this date.
+* `database-agent/hotels/flagged/` — per-hotel findings, mostly
+  `url-redirected` / `url-blocked-by-bot-protection`.
+* Restaurant folders existed but were empty as of this date.
 
 **The batch was promoted to Directus on 2026-08-16**, in three passes, each
-verified by an independent readback:
+verified by an independent readback: create the records via
+`create-hotels-batch.mjs` (at the §40 version) → write `ratehawk_hid` to the
+matched ones → apply images. No failures in any pass, and no duplicate `hid`
+anywhere in the collection.
 
-1. Created 32 records, ids 3001–3032, via `create-hotels-batch.mjs` at the §40
-   version. 32 created, 0 failed. Collection 871 → **903**.
-2. Wrote `ratehawk_hid` to the 24 matched records. 24 updated, 0 failed, no
-   duplicate hids anywhere in the collection (853 rows carry one, up from 829).
-3. Applied images: **348 URLs across 15 hotels**, verified URL by URL and
-   category by category.
+A subset was then **unpublished**: ETG carried no images at all for them and
+`agoda_photo1`–`5` were empty, so they were live with no image source.
 
-Nine hotels were then **unpublished**: ETG carries no images at all for them and
-`agoda_photo1`–`5` were empty, so they were live with no image source — ids
-3004, 3010, 3011, 3015, 3016, 3021, 3022, 3029, 3030.
-
-**Current state of the batch: 15 published / 17 unpublished** (re-verified
-against Directus 2026-08-16). The 17 are the 8 with no ETG match (3001, 3006,
-3007, 3012, 3017, 3019, 3025, 3027) plus those 9.
-
-**The rule is no longer "published tracks the ETG match".** Nine hotels have a
-confirmed `hid` and are deliberately unpublished. The rule is now:
+**The rule is no longer "published tracks the ETG match".** Some hotels in the
+batch have a confirmed `hid` and are deliberately unpublished. The rule is now:
 
 > **published requires a `hid` AND an image source.**
 
-Verified as an exact set equality across the batch — the 15 published are
-precisely the 15 with ≥1 `ratehawk_image_*`.
+Verified as an exact set equality when it was applied — the published rows were
+precisely those with ≥1 `ratehawk_image_*`.
 
-**Import-order gotcha — now a recorded outcome, not a prediction.** The
-create → `hid` → images order *was* followed, and it still left 9 hotels
+*Live counts and per-id state are deliberately not recorded here — they drift
+as images and hids are backfilled. Query Directus for the current split
+(`filter[id][_between]=3001,3032`, fields `published,ratehawk_hid,
+ratehawk_image_1`) rather than trusting a number in this file.*
+
+**Import-order gotcha — a recorded outcome, not a prediction.** The
+create → `hid` → images order *was* followed, and it still left a set of hotels
 briefly published with no photo: exactly the §30 "No availability" and §6
 Featured-Mode-exclusion case. Correct ordering is necessary but not sufficient,
 because whether ETG has any images for a hotel is not knowable until the image
@@ -2647,25 +2643,17 @@ expect a cleanup pass like the one above. Do not assume a confirmed match
 implies a usable image set.
 
 **A confirmed `hid` also does not mean the property is bookable.** Read-only
-`POST /api/b2b/v3/search/hp/` probes on 2026-08-16 (2026-10-14→17, 2 adults,
-residency `gb`, EUR; ETG rate-limits this to ~5 requests/60s) returned, for
-hotels that all have a confirmed hid:
+`POST /api/b2b/v3/search/hp/` probes on 2026-08-16 (one date window, 2 adults,
+residency `gb`, EUR; ETG rate-limits this to ~5 requests/60s) returned rates for
+some hotels with a confirmed hid and none at all for others — including two
+lodges and one Aman with no rates, while a different Aman and an Airelles both
+returned rates on the same window.
 
-| Property | Rates |
-|---|---|
-| Four Seasons Hotel New York | 15 |
-| Rosewood Mandarina | 67 |
-| Pan Deï Palais (Airelles) | 5 |
-| Amanfayun (Aman) | 4 |
-| Amanwella (Aman) | 0 |
-| &Beyond Phinda Rock Lodge | 0 |
-| &Beyond Phinda Mountain Lodge | 0 |
-
-So rate availability is **per property, not per brand** — an Aman and an
-Airelles both returned rates while another Aman returned none. A zero on one
-date window is also not proof a property is never bookable. This bears on §30
-and on what `published` ought to mean: a published hotel with a hid, images and
-no rates still shows "No availability" to the user.
+So rate availability is **per property, not per brand** — do not generalise a
+zero result to a brand. A zero on one date window is also not proof a property
+is never bookable. This bears on §30 and on what `published` ought to mean: a
+published hotel with a hid, images and no rates still shows "No availability"
+to the user.
 
 **Probe gotcha**: `/search/hp/` takes **`hid`**, not `id`. Sending `id` returns
 HTTP 400 with zero rates — indistinguishable at a glance from a genuine
