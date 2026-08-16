@@ -1,0 +1,72 @@
+[
+  {
+    "id": "1151",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "The Datai Langkawi"
+  },
+  {
+    "id": "1441",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "Grand Hotel a Villa Feltrinelli"
+  },
+  {
+    "id": "1486",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "Villa d'Este"
+  },
+  {
+    "id": "1603",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "Emirates Palace Mandarin Oriental Abu Dhabi"
+  },
+  {
+    "id": "1679",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "Sensei Lanai"
+  },
+  {
+    "id": "1724",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "The Hay-Adams"
+  },
+  {
+    "id": "1733",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "The Lodge at Torrey Pines"
+  },
+  {
+    "id": "1745",
+    "field": "secondary_style",
+    "previous": "184",
+    "applied": null,
+    "hotel": "The Ritz-Carlton, Bachelor Gulch"
+  },
+  {
+    "id": "1461",
+    "field": "primary_setting",
+    "previous": "Lakefront",
+    "applied": "Waterfront",
+    "hotel": "Mandarin Oriental, Lago di Como"
+  },
+  {
+    "id": "1839",
+    "field": "secondary_setting",
+    "previous": "Riverfront",
+    "applied": "Riverside",
+    "hotel": "Clayoquot Wilderness Lodge"
+  }
+]
