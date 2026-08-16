@@ -2439,4 +2439,118 @@ not attempted this session.
 
 ---
 
+## 40. CREATE-HOTELS-BATCH — SIX MISSING COLUMNS, SINGLE-SELECT VALIDATION, VALUE CLEANUP (2026-08-16)
+
+Branch `fix/create-hotels-batch-missing-columns`, PR #2 — four commits. The
+first two are script changes only; the last two **were applied to Directus**.
+
+### 1. Six columns were missing from the create payload
+
+`buildCreatePayload()` in `scripts/hotels/new-hotels-2026/create-hotels-batch.mjs`
+omitted six columns that exist on `hotels`, so any batch input file carrying
+them had those values silently dropped at create time: `lat`, `lng`,
+`primary_setting`, `secondary_setting`, `primary_style`, `secondary_style`.
+The four text fields use `normalizeText()` like the rest of the file.
+
+**`lat`/`lng` deliberately do NOT use `Math.trunc`**, unlike the three adjacent
+numeric fields (`editor_rank`, `ext_points`, `total_rooms_suites_villas`) which
+are genuine integers. Truncating a coordinate discards everything after the
+decimal point and moves a hotel by up to ~100km. `null` stays `null`, and `0`
+stays `0` (a valid coordinate, so `??`-style defaulting is wrong here too).
+
+**Schema gotcha worth remembering**: `GET /fields/hotels` reports `lat`/`lng`
+as Directus `type: "integer"`, but `schema.data_type` is `numeric` and decimals
+round-trip intact (confirmed by reading rows back — id 1002 `lat:
+"-19.226859"`). Same class of cosmetic mislabelling as the `text[]` columns in
+§4 — **do not take Directus's `type` metadata as evidence about these columns.**
+
+Note the 14 `new_hotels_batch*.json` files in that folder carry none of the six
+fields (checked all 67 rows), so this changed nothing for the existing
+2001–2067 batch — those got their coordinates separately via
+`google-geocode-hotels.mjs` (§23). Ulrik confirmed the upstream payload
+generator now emits them, and that the script is only for **new** additions
+from here on — existing hotels are not to be re-uploaded.
+
+### 2. The four single-select columns had no validation anywhere
+
+`GET /fields/hotels` shows `primary_setting`/`secondary_setting`/
+`primary_style`/`secondary_style` have **no `meta.options.choices` and
+`interface: null`** — plain text, unconstrained at the CMS layer, unlike the
+`setting`/`style` tag arrays (`select-multiple-dropdown`, `allowOther: false`).
+So this script is the only place their vocabulary can be enforced.
+
+They are now validated against the same `TAXONOMY.setting`/`.style` lists
+already hardcoded in the script, which match the live field choices exactly
+(22 and 20 values — verified, currently in sync).
+
+**Matching is case-insensitive and canonicalizes to the taxonomy's spelling.**
+Because nothing ever constrained these columns, existing rows drifted:
+
+| Column | Drifted value | Rows | Taxonomy spelling |
+|---|---|---|---|
+| `primary_style` | `"Safari lodge"` | 13 | `"Safari Lodge"` |
+| `primary_setting` | `"Private island"` | 8 | `"Private Island"` |
+| `primary_style`/`secondary_style` | `"Tented camp"` | 6 | `"Tented Camp"` |
+
+For the first two the drifted form is the *only* spelling present in that
+column, so a case-sensitive check would reject values that are legitimate and
+currently dominant. A case-only correction prints a `note:` line rather than
+being applied silently.
+
+**Bug caught in testing, worth not repeating**: the first version compared
+against `canonicalizeChoice()`'s return value — that helper passes an unmatched
+value straight through, so an unknown value was indistinguishable from an exact
+match and `"Lakefront"` validated clean. Membership must be tested directly.
+
+### 3. Value cleanup — APPLIED to Directus (10 hotels)
+
+Existing rows needed their own pass, since the validator only guards new rows.
+Applied via `fix-setting-style-values-2026-08-16.mjs` (dry-run by default,
+`--confirm` to write, re-runnable — each change re-reads the stored value first):
+
+| Change | Rows |
+|---|---|
+| `secondary_style` `"184"` → `null` | 8 (ids 1151, 1441, 1486, 1603, 1679, 1724, 1733, 1745) |
+| `primary_setting` `"Lakefront"` → `"Lakeside"` | 1 (id 1461, Mandarin Oriental Lago di Como) |
+| `secondary_setting` `"Riverfront"` → `"Riverside"` | 1 (id 1839, Clayoquot Wilderness Lodge) |
+
+Verified against a fresh read of all 871 rows: **no value in the four columns
+now falls outside the taxonomy.**
+
+**`"Riverside"` is deliberately untouched everywhere.** It is a canonical
+taxonomy value (a live choice on the `setting` field, carried by 29 hotels'
+`setting[]` arrays), not drift. Retiring it in favour of `Waterfront` was
+considered and explicitly deferred — it would mean converting ~30 hotels
+*including* their `setting[]` tag arrays, removing the choice from the Directus
+field, and dropping "Riverside" from the Hotels page Setting filter. Not a
+mechanical follow-on; ask before assuming it should happen.
+
+id 1461 was first written as `"Waterfront"` and then corrected to `"Lakeside"`
+— it is a lake hotel whose `setting[]` already read `["Lakeside"]`, so
+`Waterfront` left the single-select and the tag array disagreeing. **General
+lesson: a row's own `setting[]`/`style[]` tag array is the best available
+corroboration when deciding what a drifted single-select value should become.**
+
+Two script details that exist because of that double-write, and matter for any
+similar one-time fix script:
+* `from` accepts an **array** of prior values, so the script converges on the
+  same end state whether re-run against pristine or already-patched data.
+* The rollback record **appends** rather than overwrites. A re-run only reports
+  rows it actually changed, so writing fresh would have discarded the first
+  run's record of the nine rows it skipped as already correct.
+
+### Files
+
+* `hotels-beta/scripts/hotels/new-hotels-2026/create-hotels-batch.mjs` —
+  payload fix + `SINGLE_SELECT_TAXONOMY`/`canonicalizeChoice()` validation.
+* `hotels-beta/scripts/hotels/new-hotels-2026/fix-setting-style-values-2026-08-16.mjs`
+  — the applied data cleanup (one-time, hardcoded list, same pattern as the
+  `apply-award-review-*` scripts in §24/§25).
+* `hotels-beta/scripts/hotels/new-hotels-2026/fix-setting-style-values-2026-08-16-rollback.json`
+  — committed record of every previous value (11 entries, both steps of id 1461).
+* `scripts/hotels/directus-create-hotels-from-json.mjs` — untouched, still the
+  unused pre-migration M2M version.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
