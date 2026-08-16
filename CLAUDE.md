@@ -560,6 +560,24 @@ session where it was explicitly requested. Live verification of **data/API**
 behaviour (throwaway read-only scripts against Directus/RateHawk, per §32) is
 unaffected and still expected.
 
+### Commit and push straight to `main` — but only when asked
+
+`main` takes direct pushes. The classic branch-protection rule that required a
+pull request was removed on 2026-08-16 (`required_pull_request_reviews`
+deleted) precisely so this workflow needs no PR — it had been producing a
+"Bypassed rule violations" warning on every push instead of actually stopping
+anything, since `enforce_admins` was false. Force-pushes and branch deletion on
+`main` are still blocked, and should stay that way.
+
+**Do not commit or push on your own initiative.** Ulrik decides when work is
+committed; wait for an explicit instruction in that session ("commit", "push",
+"commit and push"). Removing the PR requirement changed *how* a push happens,
+not *who* decides that it happens. Leave finished work in the working tree and
+say it's ready.
+
+Do not create a branch for the change either — this repo's history is a linear
+series of commits on `main` (see §33's rollback map), and that's deliberate.
+
 ---
 
 ## 15. LANDING PAGE LOGIC
