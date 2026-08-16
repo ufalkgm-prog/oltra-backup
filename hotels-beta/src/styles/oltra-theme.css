@@ -549,42 +549,39 @@ button.oltra-select {
   overflow-y: auto;
 }
 
-.oltra-dropdown-list,
-.oltra-scrollbar,
-textarea,
-*[style*="overflow-y-auto"],
-*[class*="overflow-y-auto"] {
+/* One scrollbar treatment for the whole site.
+   This used to be a hand-maintained selector list (.oltra-scrollbar,
+   textarea, *[class*="overflow-y-auto"], ...), which meant every scroll
+   container defined in a CSS module or with a different overflow utility
+   (overflow-auto, overflow-y-scroll, the flights results pane, the
+   restaurants sidebar, the page scrollbar itself) silently fell back to
+   the browser default chrome. Applying it universally is the only way to
+   guarantee "same thin bar everywhere"; the .oltra-scrollbar class is kept
+   as a no-op marker so existing call sites keep working. */
+* {
   scrollbar-width: thin;
   scrollbar-color: var(--oltra-scrollbar-thumb) var(--oltra-scrollbar-track);
 }
 
-.oltra-dropdown-list::-webkit-scrollbar,
-.oltra-scrollbar::-webkit-scrollbar,
-textarea::-webkit-scrollbar,
-*[style*="overflow-y-auto"]::-webkit-scrollbar,
-*[class*="overflow-y-auto"]::-webkit-scrollbar {
+*::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-.oltra-dropdown-list::-webkit-scrollbar-track,
-.oltra-scrollbar::-webkit-scrollbar-track,
-textarea::-webkit-scrollbar-track,
-*[style*="overflow-y-auto"]::-webkit-scrollbar-track,
-*[class*="overflow-y-auto"]::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: var(--oltra-scrollbar-track);
   border-radius: 999px;
 }
 
-.oltra-dropdown-list::-webkit-scrollbar-thumb,
-.oltra-scrollbar::-webkit-scrollbar-thumb,
-textarea::-webkit-scrollbar-thumb,
-*[style*="overflow-y-auto"]::-webkit-scrollbar-thumb,
-*[class*="overflow-y-auto"]::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: var(--oltra-scrollbar-thumb);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--oltra-scrollbar-track);
 }
 
 .oltra-dropdown-group + .oltra-dropdown-group {
@@ -1418,6 +1415,58 @@ details > summary::-webkit-details-marker {
     inset 0 0 0 1px rgba(255, 255, 255, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.12);
   pointer-events: none;
+}
+
+/* Availability state on the hotel result cards.
+   The "bookable" lift is a subtle raise off the card's own background rather
+   than a second accent colour, so "highlighted" reads as one thing across the
+   app. (It was lifted from the flights page's alliance-match highlight, which
+   has since been retired there - selection is now the only highlight in that
+   column - so these values live here on their own.) Specificity is
+   0-2-0 (.oltra-output.hotel-result-card--*) so these win over the
+   bg-[var(--oltra-field-bg)] Tailwind utility on the same element without
+   depending on stylesheet order. */
+.oltra-output.hotel-result-card--available {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.oltra-output.hotel-result-card--available:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.oltra-output.hotel-result-card--unavailable {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.oltra-output.hotel-result-card--unavailable:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Only the content fades - the "no availability" pill itself stays at full
+   strength so the reason the card is demoted stays legible. */
+.hotel-result-card--unavailable .hotel-result-card__fade {
+  opacity: 0.5;
+}
+
+.hotel-result-card--unavailable .hotel-result-card__fade img {
+  filter: grayscale(0.9);
+}
+
+.hotel-availability-pill {
+  display: block;
+  width: 100%;
+  padding: 5px 6px;
+  border-radius: var(--oltra-radius-sm);
+  border: 1px solid rgba(255, 138, 113, 0.4);
+  background: rgba(255, 138, 113, 0.12);
+  color: var(--oltra-error-text);
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .hotel-marker {

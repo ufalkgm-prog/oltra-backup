@@ -614,16 +614,6 @@ export default function HotelsView(props: {
 
   const [pinnedHotelId, setPinnedHotelId] = useState<string>("");
 
-  const orderedVisibleHotels = useMemo(() => {
-    if (!pinnedHotelId) return visibleHotels;
-    const idx = visibleHotels.findIndex((h) => String(h.id) === pinnedHotelId);
-    if (idx <= 0) return visibleHotels;
-    const reordered = [...visibleHotels];
-    const [picked] = reordered.splice(idx, 1);
-    reordered.unshift(picked);
-    return reordered;
-  }, [visibleHotels, pinnedHotelId]);
-
   const showNarrowFurtherMessage =
     hasMeaningfulFilters &&
     !hasDirectHotelSelection &&
@@ -675,6 +665,28 @@ export default function HotelsView(props: {
 
   const ratehawkResultAvailabilityLoading =
     ratehawkResultAvailabilityStatus === "loading";
+
+  // Result-card ordering: bookable hotels first, everything we couldn't price
+  // (no dates yet, no Ratehawk match, check failed) in the middle, explicitly
+  // unavailable hotels last. The pinned hotel still wins outright so clicking a
+  // card never makes it jump away under the cursor.
+  const orderedVisibleHotels = useMemo(() => {
+    const rank = (h: HotelRecord) => {
+      const availability = ratehawkResultAvailability[String(h.id)];
+      if (availability?.status === "available" && availability.headline) return 0;
+      if (availability?.status === "unavailable") return 2;
+      return 1;
+    };
+    // Array.prototype.sort is stable, so hotels of equal rank keep the
+    // editorial order they arrived in.
+    const ordered = [...visibleHotels].sort((a, b) => rank(a) - rank(b));
+    if (!pinnedHotelId) return ordered;
+    const idx = ordered.findIndex((h) => String(h.id) === pinnedHotelId);
+    if (idx <= 0) return ordered;
+    const [picked] = ordered.splice(idx, 1);
+    ordered.unshift(picked);
+    return ordered;
+  }, [visibleHotels, pinnedHotelId, ratehawkResultAvailability]);
 
   const [ratehawkRooms, setRatehawkRooms] = useState<RatehawkDetailState>({
     status: "idle",
@@ -2299,6 +2311,11 @@ async function handleCreateTripAndAddHotel() {
                   const featuredAwards = getFeaturedAwardsForHotel(h);
                   const hotelBadges = getHotelBadges(h);
                   const nameAndLocation = [h.city, h.country].filter(Boolean).join(" · ");
+                  const cardAvailable =
+                    ratehawkCardAvailability?.status === "available" &&
+                    Boolean(ratehawkCardAvailability.headline);
+                  const cardUnavailable =
+                    ratehawkCardAvailability?.status === "unavailable";
 
                   return (
                     <button
@@ -2314,7 +2331,11 @@ async function handleCreateTripAndAddHotel() {
                         active
                           ? "bg-[var(--oltra-field-bg-strong)] hotel-result-card--active"
                           : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
-                      ].join(" ")}
+                        cardAvailable ? "hotel-result-card--available" : "",
+                        cardUnavailable ? "hotel-result-card--unavailable" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                       style={
                         active
                           ? {
@@ -2327,7 +2348,7 @@ async function handleCreateTripAndAddHotel() {
                     >
                       <div className="grid grid-cols-[132px_1fr] gap-3.5">
                         <div>
-                          <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
+                          <div className="hotel-result-card__fade overflow-hidden rounded-[var(--oltra-radius-md)]">
                             {hasPhoto ? (
                               <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
                             ) : (
@@ -2350,10 +2371,8 @@ async function handleCreateTripAndAddHotel() {
                                   total stay
                                 </div>
                               </div>
-                            ) : ratehawkCardAvailability?.status === "unavailable" ? (
-                              <div className="px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
-                                No availability
-                              </div>
+                            ) : cardUnavailable ? (
+                              <div className="hotel-availability-pill">No availability</div>
                             ) : getRatehawkHidForHotel(h) ? (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
                                 {ratehawkResultAvailabilityStatus === "error"
@@ -2368,7 +2387,7 @@ async function handleCreateTripAndAddHotel() {
                           </div>
                         </div>
 
-                        <div className="flex min-h-[80px] min-w-0 flex-col">
+                        <div className="hotel-result-card__fade flex min-h-[80px] min-w-0 flex-col">
                           <div className="flex items-start gap-1.5">
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
