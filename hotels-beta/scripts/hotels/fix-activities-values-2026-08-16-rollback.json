@@ -1,0 +1,794 @@
+[
+  {
+    "applied_at": "2026-08-16T19:34:06.392Z",
+    "id": "1042",
+    "activities": {
+      "from": [
+        "Spa",
+        "Fishing",
+        "Sailing",
+        "Diving",
+        "Spa"
+      ],
+      "to": [
+        "Spa",
+        "Fishing",
+        "Sailing",
+        "Diving"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:06.543Z",
+    "id": "1068",
+    "activities": {
+      "from": [
+        "Nature",
+        "Spa",
+        "Hiking",
+        "Nature"
+      ],
+      "to": [
+        "Nature",
+        "Spa",
+        "Hiking"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:06.789Z",
+    "id": "1155",
+    "activities": {
+      "from": [
+        "Beach",
+        "Diving",
+        "Fishing",
+        "Beach",
+        "Spa",
+        "Family"
+      ],
+      "to": [
+        "Beach",
+        "Diving",
+        "Fishing",
+        "Spa",
+        "Family"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.000Z",
+    "id": "1169",
+    "activities": {
+      "from": [
+        "Beach",
+        "Spa",
+        "Watersports",
+        "Diving",
+        "Fishing",
+        "Fishing"
+      ],
+      "to": [
+        "Beach",
+        "Spa",
+        "Watersports",
+        "Diving",
+        "Fishing"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.136Z",
+    "id": "1185",
+    "activities": {
+      "from": [
+        "Sightseeing",
+        "Spa",
+        "Spa"
+      ],
+      "to": [
+        "Sightseeing",
+        "Spa"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.272Z",
+    "id": "1194",
+    "activities": {
+      "from": [
+        "Beach",
+        "Diving",
+        "Fishing",
+        "Beach",
+        "Spa",
+        "Family"
+      ],
+      "to": [
+        "Beach",
+        "Diving",
+        "Fishing",
+        "Spa",
+        "Family"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.401Z",
+    "id": "1206",
+    "activities": {
+      "from": [
+        "Diving",
+        "Spa",
+        "Hiking",
+        "Diving",
+        "Golf",
+        "Tennis",
+        "Beach"
+      ],
+      "to": [
+        "Diving",
+        "Spa",
+        "Hiking",
+        "Golf",
+        "Tennis",
+        "Beach"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.549Z",
+    "id": "1213",
+    "activities": {
+      "from": [
+        "Diving",
+        "Spa",
+        "Beach",
+        "Diving"
+      ],
+      "to": [
+        "Diving",
+        "Spa",
+        "Beach"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.697Z",
+    "id": "1376",
+    "activities": {
+      "from": [
+        "Spa",
+        "Shopping",
+        "Spa"
+      ],
+      "to": [
+        "Spa",
+        "Shopping"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.840Z",
+    "id": "1493",
+    "activities": {
+      "from": [
+        "Sailing",
+        "Beach",
+        "Family",
+        "Tennis",
+        "Tennis"
+      ],
+      "to": [
+        "Sailing",
+        "Beach",
+        "Family",
+        "Tennis"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:07.967Z",
+    "id": "1558",
+    "activities": {
+      "from": [
+        "Spa",
+        "Tennis",
+        "Boating",
+        "Cycling",
+        "Tennis",
+        "Family",
+        "Watersports"
+      ],
+      "to": [
+        "Spa",
+        "Tennis",
+        "Boating",
+        "Cycling",
+        "Family",
+        "Watersports"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:08.100Z",
+    "id": "1561",
+    "activities4": {
+      "from": "HIking",
+      "to": "Hiking"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:08.328Z",
+    "id": "1589",
+    "activities": {
+      "from": [
+        "Nature",
+        "Spa",
+        "Hiking",
+        "Cycling",
+        "Jeep safari"
+      ],
+      "to": [
+        "Nature",
+        "Spa",
+        "Hiking",
+        "Cycling",
+        "Safari"
+      ]
+    },
+    "activities5": {
+      "from": "Jeep safari",
+      "to": "Safari"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:08.465Z",
+    "id": "1625",
+    "activities": {
+      "from": [
+        "Spa",
+        "Golf",
+        "Golf"
+      ],
+      "to": [
+        "Spa",
+        "Golf"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:08.594Z",
+    "id": "1676",
+    "activities": {
+      "from": [
+        "Wine",
+        "Nature",
+        "Biking",
+        "Family"
+      ],
+      "to": [
+        "Wine",
+        "Nature",
+        "Cycling",
+        "Family"
+      ]
+    },
+    "activities3": {
+      "from": "Biking",
+      "to": "Cycling"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:08.726Z",
+    "id": "1732",
+    "activities": {
+      "from": [
+        "Skiing",
+        "Spa",
+        "Cycling",
+        "Spa",
+        "Fishing",
+        "Horseback riding",
+        "Hiking"
+      ],
+      "to": [
+        "Skiing",
+        "Spa",
+        "Cycling",
+        "Fishing",
+        "Horseback riding",
+        "Hiking"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:08.867Z",
+    "id": "1754",
+    "activities4": {
+      "from": "Kajaking",
+      "to": "Kayaking"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:08.997Z",
+    "id": "1782",
+    "activities": {
+      "from": [
+        "Nature",
+        "Spa",
+        "Hiking",
+        "Nature"
+      ],
+      "to": [
+        "Nature",
+        "Spa",
+        "Hiking"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:09.150Z",
+    "id": "1786",
+    "activities": {
+      "from": [
+        "Nature",
+        "Hiking",
+        "Spa",
+        "Sailing",
+        "Nature",
+        "Horseback riding"
+      ],
+      "to": [
+        "Nature",
+        "Hiking",
+        "Spa",
+        "Sailing",
+        "Horseback riding"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:09.288Z",
+    "id": "1788",
+    "activities": {
+      "from": [
+        "Hiking",
+        "Kayaking",
+        "Hiking",
+        "Fishing",
+        "Spa",
+        "Sailing",
+        "Horseback riding"
+      ],
+      "to": [
+        "Hiking",
+        "Kayaking",
+        "Fishing",
+        "Spa",
+        "Sailing",
+        "Horseback riding"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:09.413Z",
+    "id": "1791",
+    "activities": {
+      "from": [
+        "Nature",
+        "Spa",
+        "Hiking",
+        "Nature"
+      ],
+      "to": [
+        "Nature",
+        "Spa",
+        "Hiking"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:09.541Z",
+    "id": "1795",
+    "activities": {
+      "from": [
+        "Sightseeing",
+        "Spa",
+        "Sightseeing"
+      ],
+      "to": [
+        "Sightseeing",
+        "Spa"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:09.671Z",
+    "id": "1827",
+    "activities": {
+      "from": [
+        "Spa",
+        "Shopping",
+        "Spa"
+      ],
+      "to": [
+        "Spa",
+        "Shopping"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:09.808Z",
+    "id": "1833",
+    "activities": {
+      "from": [
+        "Spa",
+        "Hiking",
+        "Nature",
+        "Nature"
+      ],
+      "to": [
+        "Spa",
+        "Hiking",
+        "Nature"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:09.968Z",
+    "id": "2001",
+    "activities": {
+      "from": [
+        "Spa",
+        "Fitness",
+        "Hiking",
+        "Biking",
+        "Skiing",
+        "Nature",
+        "Sightseeing"
+      ],
+      "to": [
+        "Spa",
+        "Fitness",
+        "Hiking",
+        "Cycling",
+        "Skiing",
+        "Nature",
+        "Sightseeing"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:10.173Z",
+    "id": "2002",
+    "activities": {
+      "from": [
+        "Spa",
+        "Fitness",
+        "Nature",
+        "Sightseeing",
+        "Hiking",
+        "Biking",
+        "Family"
+      ],
+      "to": [
+        "Spa",
+        "Fitness",
+        "Nature",
+        "Sightseeing",
+        "Hiking",
+        "Cycling",
+        "Family"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:10.317Z",
+    "id": "2014",
+    "activities": {
+      "from": [
+        "Safari",
+        "Wildlife",
+        "Jeep safari",
+        "Nature",
+        "Spa",
+        "Family",
+        "Wilderness safari"
+      ],
+      "to": [
+        "Safari",
+        "Wildlife",
+        "Nature",
+        "Spa",
+        "Family",
+        "Wilderness safari"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:10.461Z",
+    "id": "2037",
+    "activities": {
+      "from": [
+        "Spa",
+        "Fitness",
+        "Sightseeing",
+        "Shopping",
+        "Biking",
+        "Nature",
+        "Family"
+      ],
+      "to": [
+        "Spa",
+        "Fitness",
+        "Sightseeing",
+        "Shopping",
+        "Cycling",
+        "Nature",
+        "Family"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:10.591Z",
+    "id": "2040",
+    "activities": {
+      "from": [
+        "Safari",
+        "Wilderness safari",
+        "Wildlife",
+        "Nature",
+        "Jeep safari",
+        "Spa",
+        "Family"
+      ],
+      "to": [
+        "Safari",
+        "Wilderness safari",
+        "Wildlife",
+        "Nature",
+        "Spa",
+        "Family"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:10.721Z",
+    "id": "2043",
+    "activities": {
+      "from": [
+        "Spa",
+        "Fitness",
+        "Nature",
+        "Biking",
+        "Rafting",
+        "Sightseeing",
+        "Family"
+      ],
+      "to": [
+        "Spa",
+        "Fitness",
+        "Nature",
+        "Cycling",
+        "Rafting",
+        "Sightseeing",
+        "Family"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:10.864Z",
+    "id": "2048",
+    "activities": {
+      "from": [
+        "Biking",
+        "Fitness",
+        "Hiking",
+        "Shopping",
+        "Sightseeing",
+        "Spa"
+      ],
+      "to": [
+        "Cycling",
+        "Fitness",
+        "Hiking",
+        "Shopping",
+        "Sightseeing",
+        "Spa"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:10.999Z",
+    "id": "2052",
+    "activities": {
+      "from": [
+        "Gastronomy",
+        "Golf",
+        "Wine",
+        "Spa",
+        "Fitness",
+        "Biking",
+        "Hiking"
+      ],
+      "to": [
+        "Gastronomy",
+        "Golf",
+        "Wine",
+        "Spa",
+        "Fitness",
+        "Cycling",
+        "Hiking"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:11.195Z",
+    "id": "2054",
+    "activities": {
+      "from": [
+        "Spa",
+        "Fitness",
+        "Nature",
+        "Hiking",
+        "Biking",
+        "Watersports",
+        "Sightseeing"
+      ],
+      "to": [
+        "Spa",
+        "Fitness",
+        "Nature",
+        "Hiking",
+        "Cycling",
+        "Watersports",
+        "Sightseeing"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:11.329Z",
+    "id": "2058",
+    "activities": {
+      "from": [
+        "Spa",
+        "Biking",
+        "Boating",
+        "Nature",
+        "Sightseeing",
+        "Wildlife"
+      ],
+      "to": [
+        "Spa",
+        "Cycling",
+        "Boating",
+        "Nature",
+        "Sightseeing",
+        "Wildlife"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:11.477Z",
+    "id": "3003",
+    "activities": {
+      "from": [
+        "Beach",
+        "Spa",
+        "Nature",
+        "Wildlife",
+        "Biking",
+        "Sightseeing",
+        "Fitness"
+      ],
+      "to": [
+        "Beach",
+        "Spa",
+        "Nature",
+        "Wildlife",
+        "Cycling",
+        "Sightseeing",
+        "Fitness"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:11.604Z",
+    "id": "3007",
+    "activities": {
+      "from": [
+        "Safari",
+        "Wildlife",
+        "Nature",
+        "Biking",
+        "Spa",
+        "Wilderness safari"
+      ],
+      "to": [
+        "Safari",
+        "Wildlife",
+        "Nature",
+        "Cycling",
+        "Spa",
+        "Wilderness safari"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:11.736Z",
+    "id": "3017",
+    "activities": {
+      "from": [
+        "Hiking",
+        "Spa",
+        "Rafting",
+        "Biking",
+        "Nature",
+        "Sightseeing",
+        "Archery"
+      ],
+      "to": [
+        "Hiking",
+        "Spa",
+        "Rafting",
+        "Cycling",
+        "Nature",
+        "Sightseeing",
+        "Archery"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:11.863Z",
+    "id": "3029",
+    "activities": {
+      "from": [
+        "Spa",
+        "Hiking",
+        "Sightseeing",
+        "Nature",
+        "Fitness",
+        "Biking"
+      ],
+      "to": [
+        "Spa",
+        "Hiking",
+        "Sightseeing",
+        "Nature",
+        "Fitness",
+        "Cycling"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:34:12.006Z",
+    "id": "3030",
+    "activities": {
+      "from": [
+        "Hiking",
+        "Spa",
+        "Nature",
+        "Wildlife",
+        "Biking",
+        "Sightseeing"
+      ],
+      "to": [
+        "Hiking",
+        "Spa",
+        "Nature",
+        "Wildlife",
+        "Cycling",
+        "Sightseeing"
+      ]
+    }
+  },
+  {
+    "applied_at": "2026-08-16T19:35:53.128Z",
+    "id": "1419",
+    "activities1": {
+      "from": "Spa ",
+      "to": "Spa"
+    }
+  }
+]

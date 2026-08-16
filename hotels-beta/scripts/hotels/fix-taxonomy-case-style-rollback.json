@@ -1,0 +1,150 @@
+[
+  {
+    "applied_at": "2026-08-16T18:48:35.763Z",
+    "id": "1002",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:35.906Z",
+    "id": "1003",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.043Z",
+    "id": "1006",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.170Z",
+    "id": "1007",
+    "primary_style": {
+      "from": "Tented camp",
+      "to": "Tented Camp"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.303Z",
+    "id": "1008",
+    "primary_style": {
+      "from": "Tented camp",
+      "to": "Tented Camp"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.427Z",
+    "id": "1009",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.560Z",
+    "id": "1010",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.695Z",
+    "id": "1029",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.820Z",
+    "id": "1047",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:36.961Z",
+    "id": "1049",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.098Z",
+    "id": "1053",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.227Z",
+    "id": "1054",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.363Z",
+    "id": "1055",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.491Z",
+    "id": "1057",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.616Z",
+    "id": "1060",
+    "primary_style": {
+      "from": "Tented camp",
+      "to": "Tented Camp"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.737Z",
+    "id": "1063",
+    "primary_style": {
+      "from": "Safari lodge",
+      "to": "Safari Lodge"
+    },
+    "secondary_style": {
+      "from": "Tented camp",
+      "to": "Tented Camp"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.869Z",
+    "id": "1207",
+    "primary_style": {
+      "from": "Tented camp",
+      "to": "Tented Camp"
+    }
+  },
+  {
+    "applied_at": "2026-08-16T18:48:37.990Z",
+    "id": "1266",
+    "primary_style": {
+      "from": "Tented camp",
+      "to": "Tented Camp"
+    }
+  }
+]

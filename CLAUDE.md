@@ -2552,6 +2552,13 @@ from here on — existing hotels are not to be re-uploaded.
 
 ### 2. The four single-select columns had no validation anywhere
 
+> **Superseded 2026-08-16 — see §44.** All four columns are now
+> `select-dropdown` with locked choices, so the script is no longer the only
+> place their vocabulary is enforced. Its validation stays as a useful
+> pre-flight for batch imports (it fails fast, before hitting Directus), but
+> the field itself is now authoritative. The paragraph below describes the
+> pre-2026-08-16 state.
+
 `GET /fields/hotels` shows `primary_setting`/`secondary_setting`/
 `primary_style`/`secondary_style` have **no `meta.options.choices` and
 `interface: null`** — plain text, unconstrained at the CMS layer, unlike the
@@ -2851,6 +2858,64 @@ cleanup script. A value the app branches on must not be free text.
 
 ---
 
+## 42B. OUTSTANDING — WATER-PROXIMITY SETTING RECLASSIFICATION (logged 2026-08-16, not started)
+
+Agreed as a content clean-up task, deliberately **not run**. Ulrik's definitions:
+
+| Value | Means |
+|---|---|
+| `Beachfront` | Truly on the beach, or first row to it |
+| `Beach` | Walking distance to a beach, with beach/water views |
+| `Seaside` | Like Beachfront but **no direct beach access** — includes city hotels by the ocean |
+| `Coastal` | No beach, sea view, **not** walking distance from the coast |
+| `Lakeside` | Seaside, but a lake |
+| `Canalside` | City hotels on canals that aren't rivers |
+| `Riverside` | On or very close to a river |
+| `Oceanfront`, `Waterfront` | **To be retired** — reclassified into the above |
+
+### Why this can't be done as a rename
+
+The old label does not predict the new one. Both retiring values contain a
+mixture of what would become Beachfront, Seaside *and* Coastal:
+
+* **Oceanfront (29 primaries)** splits roughly in half. Clifftop, no beach →
+  Seaside: Andronis, Katikies ×2, Canaves Oia, Cavo Tagoo Santorini, Il San
+  Pietro, Le Sirenuse, Splendido Portofino, Maybourne Riviera, San Domenico
+  Palace, Hotel La Palma, Six Senses Uluwatu, Bulgari Bali. Genuinely
+  Beachfront: Lesante Blu, W Dubai Mina Seyahi, Four Seasons Surf Club,
+  Riviera Maya EDITION, Phulay Bay.
+* **Waterfront (23 primaries)** splits three ways — Beachfront (Elounda Beach,
+  Myconian Imperial, St. Regis Bali, Six Senses Samui, BLESS Ibiza, Mauna
+  Lani), Seaside (Hôtel du Cap Eden-Roc, Cap Estel, J.K. Place Capri, Santa
+  Caterina, Fairmont Waterfront Vancouver) and Coastal (Finca Cortesin, an
+  inland golf resort).
+* **Two aren't sea at all**: Four Seasons Jackson Hole (secondary Waterfront,
+  in the Rockies → Lakeside) and Airelles Palladio, Venice (→ Canalside).
+
+### Scope notes for whoever picks this up
+
+* **The `setting[]` tag array is the real target**, not just the single-selects
+  — §4: the Hotels page filter runs JS-side on the arrays. `Waterfront` is on
+  41 hotels there, `Oceanfront` on 37. Retiring a value means converting the
+  arrays, then removing the choice, or the filter keeps offering a dead option.
+* **`Beachfront` has 144 primaries / 177 tags** and the sharper definition
+  changes what belongs in it. Reclassifying only the two retiring values leaves
+  correctly-labelled Seaside hotels beside Beachfront ones that should also be
+  Seaside. Auditing all of it is the consistent answer and roughly triples the
+  work — an explicit choice, not an oversight.
+* **Geopositioning helps less than expected.** Lat/lng cannot separate a
+  clifftop hotel 50 m from the sea from a beach resort 50 m from the sea, which
+  is exactly the Beachfront/Seaside line. It *is* decisive for `Coastal` (pure
+  distance), and an OpenStreetMap `natural=beach` polygon within ~200 m is a
+  real proxy for "is there actually a beach" — free, no key, no new npm
+  dependency, but a build, and OSM beach coverage is uneven outside Europe.
+* Agreed approach when it runs: per-hotel classification with evidence
+  attached (description excerpt, city, coordinates, current tags) and a
+  confidence level; auto-apply only the unambiguous, hand the rest back as a
+  review list. "Only change where sure" means evidenced, not inferred.
+
+---
+
 ## 43. RECURRING DATA MAINTENANCE — SCHEDULE
 
 Data that goes stale on a clock rather than when someone changes something. Nothing
@@ -2877,6 +2942,87 @@ Notes:
 * The two airport builds are triggered by data changes, not time. Re-run them after
   any meaningful batch of new hotels (e.g. a promotion out of `oltra-agents`, §41),
   or destinations will resolve to the wrong nearest airport.
+
+---
+
+## 44. TAXONOMY FIELDS LOCKED + HIGHLIGHTS TYPO PASS (2026-08-16)
+
+### Every taxonomy field now has a locked choice list
+
+| Field(s) | Choices | Interface |
+|---|---:|---|
+| `primary_style` / `secondary_style` / `style[]` | 20 | dropdown / multi |
+| `primary_setting` / `secondary_setting` / `setting[]` | 22 | dropdown / multi |
+| `activities1`–`7` / `activities[]` | **37** (was 39) | dropdown / multi |
+
+All `allowOther: false`, `allowNone: true` on the single-selects. The six
+single-selects were plain `text` with `interface: null` until now — §40
+describes that state and is marked superseded.
+
+**The choices came from the multiselect siblings**, which have been locked
+since §4 — no vocabulary was invented. Both members of each pair share one
+list, so an editor can set a value as primary even if it currently only
+appears as secondary.
+
+### Why locking, not just another clean-up
+
+`"Private island"` has now been corrected **twice** — §40 fixed 8 rows of it in
+`primary_setting`, and 8 more had appeared by this session. Cleaning an
+unconstrained field only resets the clock.
+
+### Data corrected
+
+* `Safari lodge` → `Safari Lodge` (13), `Tented camp` → `Tented Camp` (6)
+* `Private island` → `Private Island` (8)
+* `HIking` → `Hiking`, `Kajaking` → `Kayaking`, one `"Spa "` trimmed
+* **Merges** (approved): `Biking` → `Cycling` (15), `Jeep safari` → `Safari`
+  (4); both removed from the `activities[]` choice list afterwards so the
+  Hotels page filter stops offering dead options.
+* **20 hotels had duplicate tags** in `activities[]` (Spa ×5, Nature ×5,
+  Beach, Diving, Tennis, Fishing, Golf, Hiking, Sightseeing) — pre-existing,
+  unrelated to the merges, deduped in the same pass.
+
+### Scripts (`hotels-beta/scripts/hotels/`)
+
+* `fix-taxonomy-case.mjs --group style|setting` — case normalisation. Anything
+  that is *not* a case variant is reported, never guessed: §40's
+  `Lakefront`→`Lakeside` needed a human call and was initially got wrong
+  (id 1461 written as `Waterfront` first). **A row's own tag array is the best
+  corroboration** for what a drifted single-select should become.
+* `set-taxonomy-field-choices.mjs --group style|setting|activities` — copies the
+  multiselect's choices onto its single-selects. Meta-only; the Postgres column
+  stays `text`. **Refuses to run if any stored value is outside the list** —
+  Directus does not validate existing rows, so locking over bad data leaves it
+  in the database rendering blank in the admin UI. That guard caught the
+  invisible `"Spa "` trailing space.
+* `fix-activities-values-2026-08-16.mjs`, `retire-activity-choices-2026-08-16.mjs`
+* All dry-run by default, `--confirm` to write, rollback records that **append**
+  rather than overwrite (§40).
+
+**Writing `activities[]`/`setting[]`/`style[]` still needs the Postgres array
+literal** (`toPgArrayLiteral`, §4/§24) — on `PATCH` as well as `POST`.
+
+### Highlights typo pass
+
+126 of 903 hotels edited: 99 spelling occurrences, 28 leading/trailing
+whitespace, 3 double spaces, 1 dangling comma, plus 14 approved grammar
+rewrites. `facilities` was misspelled **13 different ways**; `Michelin` as
+"Micheling" ×5. Three proper nouns were wrong: `Kilimajaro`, `Altas Mountains`,
+`Ihuazu` (→ Iguazu).
+
+**Method, for whoever repeats this on `description`:** frequency-map the field,
+review rare words *in context*, then widen the band. A ≤2-occurrence filter
+alone would have missed `facilties` (5), `micheling` (5), `accomodation` (4) —
+a typo repeated often enough stops looking rare. And beware the tokeniser:
+splitting on non-`[A-Za-z]` turns `décor`→`cor`, `château`→`teau`,
+`Belle Époque`→`poque`. Those are not typos.
+
+Script: `fix-highlights-typos-2026-08-16.mjs`. Two bugs in it were caught by
+its own dry run and are worth not repeating: phrase rewrites ran *before* word
+fixes, so any phrase containing a typo could never match; and Directus returns
+`id` as a **string**, so a number-keyed lookup silently matched nothing —
+including silencing the "did not match" warning. A no-op that reports success
+is the dangerous shape.
 
 ---
 
