@@ -24,6 +24,7 @@ import {
   createTripBrowser,
   fetchTripChoicesBrowser,
 } from "@/lib/members/db";
+import { MAX_TRIPS_PER_MEMBER, TRIP_LIMIT_MESSAGE, isTripLimitError } from "@/lib/members/tripLimits";
 
 type HotelPin = {
   id: string | number;
@@ -108,6 +109,7 @@ export default function RestaurantsMapView({
   const [showTripPicker, setShowTripPicker] = useState(false);
   const [newTripName, setNewTripName] = useState("");
   const [creatingTrip, setCreatingTrip] = useState(false);
+  const tripLimitReached = tripChoices.length >= MAX_TRIPS_PER_MEMBER;
 
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
 
@@ -323,7 +325,9 @@ export default function RestaurantsMapView({
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
 
-      if (
+      if (isTripLimitError(error)) {
+        setMemberActionError(TRIP_LIMIT_MESSAGE);
+      } else if (
         message.includes("auth") ||
         message.includes("login") ||
         message.includes("sign in") ||
@@ -875,6 +879,12 @@ export default function RestaurantsMapView({
                 {selectedRestaurant.restaurant_name}
               </h2>
 
+              {buildAddressLabel(selectedRestaurant) && (
+                <div className="restaurant-detail-card__address">
+                  {buildAddressLabel(selectedRestaurant)}
+                </div>
+              )}
+
               {(selectedRestaurant.www || selectedRestaurant.insta) && (
                 <div className="restaurant-detail-card__links">
                   {selectedRestaurant.www && (
@@ -939,12 +949,6 @@ export default function RestaurantsMapView({
                 </div>
               )}
 
-              {buildAddressLabel(selectedRestaurant) && (
-                <div className="restaurant-detail-card__address">
-                  {buildAddressLabel(selectedRestaurant)}
-                </div>
-              )}
-
               <div
                 ref={tripPickerRef}
                 className="relative pt-1"
@@ -981,7 +985,10 @@ export default function RestaurantsMapView({
                         </div>
                       )}
 
-                      <div className="mt-3 border-t border-white/10 pt-3">
+                      <div
+                        className="mt-3 border-t border-white/10 pt-3"
+                        title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
+                      >
                         <div className="oltra-subheader">Create new trip</div>
 
                         <div className="mt-2 flex flex-col gap-2">
@@ -991,16 +998,24 @@ export default function RestaurantsMapView({
                             onChange={(e) => setNewTripName(e.target.value)}
                             placeholder="Trip name"
                             className="oltra-input"
+                            disabled={tripLimitReached}
                           />
 
                           <button
                             type="button"
                             onClick={handleCreateTripAndAddRestaurant}
-                            disabled={creatingTrip}
+                            disabled={creatingTrip || tripLimitReached}
                             className="oltra-dropdown-item"
+                            title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
                           >
                             {creatingTrip ? "Creating..." : "Create new trip"}
                           </button>
+
+                          {tripLimitReached ? (
+                            <div className="text-[12px] leading-snug text-[color:var(--oltra-text-muted)]">
+                              {TRIP_LIMIT_MESSAGE}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>

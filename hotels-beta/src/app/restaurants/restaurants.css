@@ -174,10 +174,10 @@
   color: var(--oltra-text-muted);
 }
 
+/* Sits directly under the title now, not as a footer block at the bottom of
+   the card - so the separating top border it used to carry is gone. */
 .restaurant-detail-card__address {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 6px;
   font-size: 13px;
   line-height: 1.5;
   letter-spacing: 0.02em;
