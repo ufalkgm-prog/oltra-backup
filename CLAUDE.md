@@ -543,6 +543,23 @@ All handled via:
 * Keep UI consistent with Hotels as reference
 * Do not break editorial hierarchy
 
+### Do not run your own browser UI test unless asked
+
+**Ulrik checks the UI himself.** Do not start a dev server and drive the page
+in Chrome to verify a change unless he explicitly asks for it in that session.
+Driving the browser is slow and burns a lot of credits — a multi-step search
+form can cost more than the code change itself.
+
+Default verification for a UI change is `npx tsc --noEmit` and `npm run lint`,
+plus reading the code path. Then hand it over and say what was *not* visually
+verified, so Ulrik knows what to look at.
+
+This supersedes any earlier note in this file (or in session memory) that says
+to browser-verify UI changes as a matter of course — that guidance came from a
+session where it was explicitly requested. Live verification of **data/API**
+behaviour (throwaway read-only scripts against Directus/RateHawk, per §32) is
+unaffected and still expected.
+
 ---
 
 ## 15. LANDING PAGE LOGIC
