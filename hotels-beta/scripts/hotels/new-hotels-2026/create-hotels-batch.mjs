@@ -63,6 +63,18 @@ const TAXONOMY = {
   ],
 };
 
+// The editorial single-select companions to the setting/style tag arrays. Unlike setting/style —
+// which are locked to their choices in Directus (meta.options.allowOther = false) — these four are
+// plain nullable text columns with no meta.options.choices at all (confirmed via GET /fields/hotels),
+// so this script is the only place their vocabulary can be enforced. They draw on the same
+// vocabularies as the tag arrays above.
+const SINGLE_SELECT_TAXONOMY = {
+  primary_setting: TAXONOMY.setting,
+  secondary_setting: TAXONOMY.setting,
+  primary_style: TAXONOMY.style,
+  secondary_style: TAXONOMY.style,
+};
+
 const BOOLEAN_AWARD_FLAGS = [
   "best50", "cn", "forbes5", "michelin3keys", "telegraph", "tl100", "aaa5d",
 ];
@@ -170,6 +182,17 @@ function toPgArrayLiteral(values) {
   return `{${escaped.join(",")}}`;
 }
 
+// Because nothing has ever constrained the four single-select columns, existing rows drifted on
+// casing — "Safari lodge" (13 rows) vs the taxonomy's "Safari Lodge", "Private island" (8) vs
+// "Private Island". Matching case-insensitively avoids rejecting a legitimate value over casing
+// alone; returning the taxonomy's own spelling stops new rows from adding to the drift. A value
+// with no case-insensitive match is returned unchanged for validateRow() to reject.
+function canonicalizeChoice(value, allowed) {
+  const s = normalizeText(value);
+  if (s == null) return null;
+  return allowed.find((a) => a.toLowerCase() === s.toLowerCase()) ?? s;
+}
+
 function validateRow(row, seenIds) {
   const errors = [];
 
@@ -200,6 +223,26 @@ function validateRow(row, seenIds) {
     }
   }
 
+  for (const [field, allowed] of Object.entries(SINGLE_SELECT_TAXONOMY)) {
+    const value = normalizeText(row[field]);
+    if (value == null) continue;
+
+    // Test membership directly rather than comparing against canonicalizeChoice()'s return —
+    // that helper passes an unmatched value straight through, so an unknown value would be
+    // indistinguishable from an exact match.
+    const canonical = allowed.find((a) => a.toLowerCase() === value.toLowerCase());
+    if (canonical == null) {
+      errors.push(`invalid ${field} value: ${JSON.stringify(row[field])}`);
+      continue;
+    }
+    if (canonical !== value) {
+      // Case-only difference: accepted, but say so rather than rewriting it silently.
+      console.warn(
+        `  note: id=${row.id} ${field} ${JSON.stringify(value)} will be written as ${JSON.stringify(canonical)}`
+      );
+    }
+  }
+
   return errors;
 }
 
@@ -224,12 +267,12 @@ function buildCreatePayload(row) {
     awards: toPgArrayLiteral(row.awards),
     setting: toPgArrayLiteral(row.setting),
     style: toPgArrayLiteral(row.style),
-    // Editorial single-select companions to the setting/style tag arrays above —
-    // plain nullable text columns, not taxonomy-validated.
-    primary_setting: normalizeText(row.primary_setting),
-    secondary_setting: normalizeText(row.secondary_setting),
-    primary_style: normalizeText(row.primary_style),
-    secondary_style: normalizeText(row.secondary_style),
+    // Editorial single-select companions to the setting/style tag arrays above. Validated against
+    // SINGLE_SELECT_TAXONOMY in validateRow(); canonicalizeChoice() normalizes casing only.
+    primary_setting: canonicalizeChoice(row.primary_setting, TAXONOMY.setting),
+    secondary_setting: canonicalizeChoice(row.secondary_setting, TAXONOMY.setting),
+    primary_style: canonicalizeChoice(row.primary_style, TAXONOMY.style),
+    secondary_style: canonicalizeChoice(row.secondary_style, TAXONOMY.style),
     best50: row.best50,
     cn: row.cn,
     forbes5: row.forbes5,
