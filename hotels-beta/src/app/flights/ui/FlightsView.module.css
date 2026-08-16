@@ -407,8 +407,11 @@
   grid-column: span 2;
 }
 
+/* Must match the site-wide scrollbar width set in oltra-theme.css
+   (::-webkit-scrollbar { width: 10px }), otherwise the column headers and
+   pinned rows drift out of alignment with the scrollable grid below them. */
 .withScrollGutter {
-  padding-right: 12px;
+  padding-right: 10px;
 }
 
 .multiResultsScroller {
@@ -557,18 +560,17 @@
   padding: 9px 13px;
 }
 
-.selectCardMatchWeak {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.selectCardMatchWeak:hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-
 /* Departure/active-column cards carry their own inline price instead of a
-   separate price column, so their content is a row: flight info + price. */
+   separate price column, so their content is a row: flight info + price.
+   The Info and Deselect pills are absolutely positioned against the card, so
+   without a reserved lane they land on top of the price - hence the shared
+   --flight-price-lane width that both the price block and those two pills
+   are sized/offset from. */
 .selectCardRow {
+  /* Kept as tight as the wrapped label and the amount actually need - the
+     multi-city leg columns are only ~245px wide, so every px here comes
+     straight out of the flight-info block next to it. */
+  --flight-price-lane: 68px;
   display: flex !important;
   align-items: center;
   justify-content: space-between;
@@ -580,24 +582,34 @@
   min-width: 0;
 }
 
+/* 24px = the card's own 14px right padding + the 10px flex gap, so the pills
+   sit flush with the right edge of the flight-info block. */
+.selectCardRow > .infoButton,
+.selectCardRow > .deselectButton {
+  right: calc(var(--flight-price-lane) + 24px);
+}
+
 .inlinePrice {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   flex-shrink: 0;
+  width: var(--flight-price-lane, auto);
+  text-align: right;
 }
 
-.inlinePriceFrom {
-  font-size: 0.58rem;
+.inlinePriceLabel {
+  font-size: 0.55rem;
+  line-height: 1.25;
   letter-spacing: 0.06em;
-  opacity: 0.5;
   text-transform: uppercase;
+  color: var(--oltra-text-muted);
 }
 
 .inlinePriceAmount {
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   letter-spacing: -0.02em;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
 /* Two independently-scrolling panes side by side (Departure | Return+Price
@@ -638,8 +650,12 @@
   flex: 1;
 }
 
+/* z-index matters here: .flightCardInner is position:relative and comes
+   later in the DOM, so without it these pills paint (and hit-test) behind
+   the card content that overlaps them. */
 .infoButton {
   position: absolute;
+  z-index: 2;
   top: 8px;
   right: 10px;
   display: inline-flex;
@@ -661,6 +677,36 @@
 .infoButton:hover {
   background: #f0f0f0;
   border-color: #fff;
+}
+
+/* Mirrors the Info pill in the opposite corner of the same reserved lane
+   (.flightCardInner's 38px right padding), so a selected card can be cleared
+   without having to pick a different flight instead. */
+.deselectButton {
+  position: absolute;
+  z-index: 2;
+  bottom: 8px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--oltra-field-border);
+  background: transparent;
+  color: var(--oltra-text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.deselectButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: var(--oltra-text-primary);
 }
 
 .modalBackdrop {

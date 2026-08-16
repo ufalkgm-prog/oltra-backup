@@ -10,8 +10,8 @@ import { type Itinerary, type FlightLeg, type AirlineRef, normalizeOffers } from
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
-import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
-import { getCityForAirportIata } from "@/lib/cityAirports";
+import type { AirportOption } from "@/lib/airportOptions";
+import { getCityForAirportIata, pickPrimaryAirportForCity } from "@/lib/cityAirports";
 import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
@@ -116,25 +116,30 @@ function hasFlightSearchParams(searchParams: PageSearchParams): boolean {
   );
 }
 
-function cityForCode(code: string): string {
+// Never parse a city out of an airport label (see §39) - prefer the curated
+// hotel-city mapping, which knows the metro name a traveller expects (Malpensa
+// sits in a village called Ferno, not Milan). `picked` carries the airport's
+// own municipality for anything outside the hotel roster, captured when the
+// user chose it in the autocomplete - the full airport dataset is not imported
+// here, so it can't be looked up on demand.
+function cityForCode(code: string, picked: Record<string, string>): string {
   if (!code) return "";
-  const label = AIRPORT_OPTIONS.find(o => o.value === code)?.label ?? "";
-  const cityPart = label.split("·")[1]?.trim();
-  return cityPart || code;
+  return getCityForAirportIata(code) || picked[code] || code;
 }
 
 function resolveAirportCode(value: string): string {
   if (!value) return "";
   const trimmed = value.trim();
   if (!trimmed) return "";
+
   const upper = trimmed.toUpperCase();
-  if (AIRPORT_OPTIONS.some(o => o.value === upper)) return upper;
-  const lower = trimmed.toLowerCase();
-  for (const opt of AIRPORT_OPTIONS) {
-    const cityPart = opt.label.split("·")[1]?.trim().toLowerCase() ?? "";
-    if (cityPart.startsWith(lower)) return opt.value;
-  }
-  return "";
+  if (/^[A-Z]{3}$/.test(upper)) return upper;
+
+  // A destination handed over from the Hotels/landing side is a hotel city, so
+  // resolve it through the same mapping the landing page's flight teaser uses,
+  // taking that city's main gateway rather than the airport physically nearest
+  // to its hotels (New York's nearest is LaGuardia; the expected answer is JFK).
+  return pickPrimaryAirportForCity(trimmed)?.iata ?? "";
 }
 
 function buildInitialSearch(searchParams: PageSearchParams): SearchState {
@@ -280,6 +285,17 @@ function getPinnedItineraries(itineraries: Itinerary[], tripType: TripType) {
 export default function FlightsView({ searchParams }: Props) {
   const [search, setSearch] = useState<SearchState>(() => buildInitialSearch(searchParams));
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
+  // IATA -> municipality for airports the user picked here, so the route
+  // header can still name a place for airports outside the hotel-city mapping
+  // without this page importing the full airport dataset (see cityForCode).
+  const [pickedAirportCities, setPickedAirportCities] = useState<Record<string, string>>({});
+  const rememberAirportCity = useCallback((code: string, option?: AirportOption) => {
+    if (!code || !option?.city) return;
+    setPickedAirportCities(prev =>
+      prev[code] === option.city ? prev : { ...prev, [code]: option.city }
+    );
+  }, []);
+
   const [selectedOutboundId, setSelectedOutboundId] = useState("");
   const [selectedReturnId, setSelectedReturnId] = useState("");
   const [selectedMultiLegIds, setSelectedMultiLegIds] = useState<string[]>([]);
@@ -563,6 +579,22 @@ export default function FlightsView({ searchParams }: Props) {
   useEffect(() => {
     if (selectedReturnLeg) lastReturnLegIdRef.current = selectedReturnLeg.id;
   }, [selectedReturnLeg]);
+
+  // Explicit deselect, so a picked departure/return can be cleared without
+  // having to pick a different one. Both clear lastReturnLegIdRef as well -
+  // otherwise the "preserve a still-compatible return" effect above would
+  // quietly restore the return the user just dismissed the next time the
+  // departure changes.
+  const handleDeselectOutbound = useCallback(() => {
+    lastReturnLegIdRef.current = "";
+    setSelectedOutboundId("");
+    setSelectedReturnId("");
+  }, []);
+
+  const handleDeselectReturn = useCallback(() => {
+    lastReturnLegIdRef.current = "";
+    setSelectedReturnId("");
+  }, []);
 
   const selectedFullItinerary = useMemo(() => {
     if (!selectedOutboundId) return null;
@@ -858,12 +890,12 @@ export default function FlightsView({ searchParams }: Props) {
                         <AirportAutocomplete
                           label={`From ${index + 1}`}
                           value={leg.from}
-                          onChange={v => updateMultiCityLeg(leg.id, { from: v })}
+                          onChange={(v, opt) => { rememberAirportCity(v, opt); updateMultiCityLeg(leg.id, { from: v }); }}
                         />
                         <AirportAutocomplete
                           label="To"
                           value={leg.to}
-                          onChange={v => updateMultiCityLeg(leg.id, { to: v })}
+                          onChange={(v, opt) => { rememberAirportCity(v, opt); updateMultiCityLeg(leg.id, { to: v }); }}
                         />
                         <SingleDatePicker
                           label="Date"
@@ -898,12 +930,12 @@ export default function FlightsView({ searchParams }: Props) {
                   <AirportAutocomplete
                     label="From"
                     value={search.from}
-                    onChange={v => { setSearch(c => ({ ...c, from: v })); markDirty(); }}
+                    onChange={(v, opt) => { rememberAirportCity(v, opt); setSearch(c => ({ ...c, from: v })); markDirty(); }}
                   />
                   <AirportAutocomplete
                     label="To"
                     value={search.to}
-                    onChange={v => { setSearch(c => ({ ...c, to: v })); markDirty(); }}
+                    onChange={(v, opt) => { rememberAirportCity(v, opt); setSearch(c => ({ ...c, to: v })); markDirty(); }}
                   />
                   {isReturnTrip ? (
                     <div className={styles.fieldGridSpan2}>
@@ -1052,8 +1084,8 @@ export default function FlightsView({ searchParams }: Props) {
                 {isMultiple ? (
                   "Multi-city itinerary"
                 ) : (() => {
-                  const fromCity = cityForCode(search.from) || search.from;
-                  const toCity = cityForCode(search.to) || search.to;
+                  const fromCity = cityForCode(search.from, pickedAirportCities) || search.from;
+                  const toCity = cityForCode(search.to, pickedAirportCities) || search.to;
                   const hasFrom = Boolean(search.from);
                   const hasTo = Boolean(search.to);
                   if (!hasFrom && !hasTo) return isReturnTrip ? "Return trip" : "One-way trip";
@@ -1155,6 +1187,8 @@ export default function FlightsView({ searchParams }: Props) {
                         onInfo={setDetailFlight}
                         onSave={handleSaveToTrip}
                         getSaveLabel={getSaveLabel}
+                        onDeselectOutbound={handleDeselectOutbound}
+                        onDeselectReturn={handleDeselectReturn}
                       />
                     ) : null}
                   </div>
@@ -1162,13 +1196,17 @@ export default function FlightsView({ searchParams }: Props) {
                   <div className={styles.resultsScroll} ref={departureScrollRef}>
                     <div className={styles.cardStack}>
                       {(() => {
+                        // The selected departure stays in the list (highlighted
+                        // and floated to the top by sortTopFirst) instead of
+                        // being lifted out of it into the Selected row.
                         const displayedOutbound = sortTopFirst(outboundOptions, selectedOutboundId)
-                          .filter(f => f.id !== selectedOutboundId && standardOutboundLegIds.has(f.id));
+                          .filter(f => standardOutboundLegIds.has(f.id));
                         if (!displayedOutbound.length) {
                           return <div className={styles.emptyHint}>No departure flights match the selected filters.</div>;
                         }
                         return displayedOutbound.map(flight => {
                           const it = itineraryByOutboundId.get(flight.id);
+                          const isSelected = flight.id === selectedOutboundId;
                           return (
                             <div
                               key={flight.id}
@@ -1176,9 +1214,14 @@ export default function FlightsView({ searchParams }: Props) {
                               tabIndex={0}
                               onClick={() => setSelectedOutboundId(flight.id)}
                               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
-                              className={`${styles.selectCard} ${styles.selectCardRow}`}
+                              className={`${styles.selectCard} ${styles.selectCardRow} ${isSelected ? styles.selectCardActive : ""}`}
                             >
-                              <FlightCardContent flight={flight} onInfo={setDetailFlight} />
+                              <FlightCardContent
+                                flight={flight}
+                                onInfo={setDetailFlight}
+                                onDeselect={isSelected ? handleDeselectOutbound : undefined}
+                                deselectLabel="Deselect departure flight"
+                              />
                               {it ? <InlinePrice priceEur={it.priceEur} currency={it.currency} showFrom={false} /> : null}
                             </div>
                           );
@@ -1248,6 +1291,8 @@ export default function FlightsView({ searchParams }: Props) {
                         onInfo={setDetailFlight}
                         onSave={handleSaveToTrip}
                         getSaveLabel={getSaveLabel}
+                        onDeselectOutbound={handleDeselectOutbound}
+                        onDeselectReturn={handleDeselectReturn}
                       />
                     ) : null}
                   </div>
@@ -1257,13 +1302,16 @@ export default function FlightsView({ searchParams }: Props) {
                     <div className={styles.resultsScroll} ref={departureScrollRef}>
                       <div className={styles.cardStack}>
                         {(() => {
+                          // Selected departure stays listed and highlighted -
+                          // see the one-way branch above.
                           const displayedOutbound = sortTopFirst(outboundOptions, selectedOutboundId)
-                            .filter(f => f.id !== selectedOutboundId && standardOutboundLegIds.has(f.id));
+                            .filter(f => standardOutboundLegIds.has(f.id));
                           if (!displayedOutbound.length) {
                             return <div className={styles.emptyHint}>No departure flights match the selected filters.</div>;
                           }
                           return displayedOutbound.map(flight => {
                             const price = departureFromPriceMap.get(flight.id);
+                            const isSelected = flight.id === selectedOutboundId;
                             return (
                               <div
                                 key={flight.id}
@@ -1271,9 +1319,14 @@ export default function FlightsView({ searchParams }: Props) {
                                 tabIndex={0}
                                 onClick={() => setSelectedOutboundId(flight.id)}
                                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
-                                className={`${styles.selectCard} ${styles.selectCardRow}`}
+                                className={`${styles.selectCard} ${styles.selectCardRow} ${isSelected ? styles.selectCardActive : ""}`}
                               >
-                                <FlightCardContent flight={flight} onInfo={setDetailFlight} />
+                                <FlightCardContent
+                                  flight={flight}
+                                  onInfo={setDetailFlight}
+                                  onDeselect={isSelected ? handleDeselectOutbound : undefined}
+                                  deselectLabel="Deselect departure flight"
+                                />
                                 {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} showFrom /> : null}
                               </div>
                             );
@@ -1286,8 +1339,10 @@ export default function FlightsView({ searchParams }: Props) {
                     <div className={`${styles.resultsScroll} ${styles.resultsScrollSpan2}`} ref={returnScrollRef}>
                       <div className={styles.resultsGridOneWay}>
                         {(() => {
+                          // Selected return stays listed and highlighted too,
+                          // so its Total price cell stays row-aligned with it.
                           const displayedReturn = sortTopFirst(visibleReturnItineraries, selectedReturnId)
-                            .filter(it => it.id !== selectedReturnId && !pinnedIds.has(it.id));
+                            .filter(it => !pinnedIds.has(it.id));
                           return (
                             <>
                               <div className={styles.columnBox}>
@@ -1296,10 +1351,14 @@ export default function FlightsView({ searchParams }: Props) {
                                     <div className={styles.emptyHint}>Select a departure flight to see return options.</div>
                                   ) : displayedReturn.length ? (
                                     displayedReturn.map(item => {
+                                      // Alliance/same-airline matches keep their
+                                      // badge but no longer get a card highlight -
+                                      // selection is the only thing a highlight
+                                      // means in this column now.
                                       const tier = item.inbound && selectedOutboundLeg
                                         ? getReturnMatchTier(selectedOutboundLeg, item.inbound)
                                         : null;
-                                      const matchClass = tier === "alliance" ? styles.selectCardMatchWeak : "";
+                                      const isSelected = item.id === selectedReturnId;
                                       return (
                                         <div
                                           key={item.id}
@@ -1307,9 +1366,17 @@ export default function FlightsView({ searchParams }: Props) {
                                           tabIndex={0}
                                           onClick={() => setSelectedReturnId(item.id)}
                                           onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedReturnId(item.id); }}
-                                          className={`${styles.selectCard} ${matchClass}`}
+                                          className={`${styles.selectCard} ${isSelected ? styles.selectCardActive : ""}`}
                                         >
-                                          {item.inbound ? <FlightCardContent flight={item.inbound} matchTier={tier} onInfo={setDetailFlight} /> : null}
+                                          {item.inbound ? (
+                                            <FlightCardContent
+                                              flight={item.inbound}
+                                              matchTier={tier}
+                                              onInfo={setDetailFlight}
+                                              onDeselect={isSelected ? handleDeselectReturn : undefined}
+                                              deselectLabel="Deselect return flight"
+                                            />
+                                          ) : null}
                                         </div>
                                       );
                                     })
@@ -1716,11 +1783,19 @@ function MultiPinnedRow({
   );
 }
 
+// The amount is always a whole-itinerary price, never a per-leg one - Duffel
+// prices a return/multi-city offer as a single ticket (CLAUDE.md §7B), so the
+// label spells that out. `showFrom` distinguishes the two cases: on a card
+// whose remaining legs aren't picked yet the figure is the cheapest total
+// across every compatible combination ("from"); once the itinerary is fully
+// determined it's the exact total.
 function InlinePrice({ priceEur, currency, showFrom }: { priceEur: number; currency: string; showFrom: boolean }) {
   const { currency: displayCurrency, format } = useCurrency();
   return (
     <span className={styles.inlinePrice}>
-      {showFrom ? <span className={styles.inlinePriceFrom}>from</span> : null}
+      <span className={styles.inlinePriceLabel}>
+        {showFrom ? "Total flight price from:" : "Total flight price:"}
+      </span>
       <span className={styles.inlinePriceAmount}>{displayCurrency} {format(priceEur, currency)}</span>
     </span>
   );
@@ -1818,7 +1893,7 @@ function PinnedRow({
 }
 
 
-function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter, returnHasGutter, onBook, onInfo, onSave, getSaveLabel }: {
+function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter, returnHasGutter, onBook, onInfo, onSave, getSaveLabel, onDeselectOutbound, onDeselectReturn }: {
   outbound: FlightLeg;
   inbound: FlightLeg | null;
   itinerary: Itinerary | null;
@@ -1829,6 +1904,8 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
   onInfo: (flight: FlightLeg) => void;
   onSave?: (id: string) => void;
   getSaveLabel?: (id: string) => string;
+  onDeselectOutbound: () => void;
+  onDeselectReturn: () => void;
 }) {
   const priceCell = itinerary ? (
     <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
@@ -1844,7 +1921,12 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
         <span className={styles.pinnedLegend}>Selected</span>
         <div className={styles.pinnedGridOneWay}>
           <div className={styles.staticCard}>
-            <FlightCardContent flight={outbound} onInfo={onInfo} />
+            <FlightCardContent
+              flight={outbound}
+              onInfo={onInfo}
+              onDeselect={onDeselectOutbound}
+              deselectLabel="Deselect departure flight"
+            />
           </div>
           {priceCell}
         </div>
@@ -1857,12 +1939,22 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
       <span className={styles.pinnedLegend}>Selected</span>
       <div className={styles.splitPanes}>
         <div className={`${styles.staticCard} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
-          <FlightCardContent flight={outbound} onInfo={onInfo} />
+          <FlightCardContent
+            flight={outbound}
+            onInfo={onInfo}
+            onDeselect={onDeselectOutbound}
+            deselectLabel="Deselect departure flight"
+          />
         </div>
         <div className={`${styles.pinnedGridOneWay} ${returnHasGutter ? styles.withScrollGutter : ""}`}>
           {inbound ? (
             <div className={styles.staticCard}>
-              <FlightCardContent flight={inbound} onInfo={onInfo} />
+              <FlightCardContent
+                flight={inbound}
+                onInfo={onInfo}
+                onDeselect={onDeselectReturn}
+                deselectLabel="Deselect return flight"
+              />
             </div>
           ) : (
             <div className={styles.staticCard}>
@@ -1953,11 +2045,15 @@ function FlightCardContent({
   matchTier,
   onInfo,
   compact,
+  onDeselect,
+  deselectLabel,
 }: {
   flight: FlightLeg;
   matchTier?: ReturnMatchTier;
   onInfo?: (flight: FlightLeg) => void;
   compact?: boolean;
+  onDeselect?: () => void;
+  deselectLabel?: string;
 }) {
   const airlineLabel = flight.airlines.length
     ? flight.airlines.map(a => a.name).join(" + ")
@@ -1975,6 +2071,17 @@ function FlightCardContent({
           aria-label="Flight details"
         >
           info
+        </button>
+      ) : null}
+      {onDeselect ? (
+        <button
+          type="button"
+          className={styles.deselectButton}
+          onClick={e => { e.stopPropagation(); onDeselect(); }}
+          aria-label={deselectLabel ?? "Deselect flight"}
+          title={deselectLabel ?? "Deselect flight"}
+        >
+          ×
         </button>
       ) : null}
       <div className={styles.flightCardInner}>
