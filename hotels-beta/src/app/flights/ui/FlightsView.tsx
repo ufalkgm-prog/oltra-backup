@@ -5,7 +5,8 @@ import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { mergeHotelFlightSearch, readHotelFlightSearch } from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
-import { addFlightToTripBrowser, getMemberActionAccessBrowser } from "@/lib/members/db";
+import { addFlightToTripBrowser } from "@/lib/members/db";
+import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import { type Itinerary, type FlightLeg, type AirlineRef, normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
@@ -311,8 +312,6 @@ export default function FlightsView({ searchParams }: Props) {
     () => normalizeParam(searchParams.rebook) === "flight"
   );
   const [detailFlight, setDetailFlight] = useState<FlightLeg | null>(null);
-  const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
-  const [saveStateByOffer, setSaveStateByOffer] = useState<Record<string, string>>({});
 
   const isReturnTrip = search.tripType === "return";
   const isOneWay = search.tripType === "one-way";
@@ -329,52 +328,30 @@ export default function FlightsView({ searchParams }: Props) {
     setSearchError(null);
   }
 
-  useEffect(() => {
-    let active = true;
-    getMemberActionAccessBrowser()
-      .then(r => { if (active) setIsMemberLoggedIn(r.isLoggedIn); })
-      .catch(() => { if (active) setIsMemberLoggedIn(false); });
-    return () => { active = false; };
-  }, []);
-
-  const getSaveLabel = useCallback((offerId: string): string => {
-    const s = saveStateByOffer[offerId];
-    if (s === 'saving') return 'SAVING...';
-    if (s === 'saved') return 'SAVED';
-    if (s === 'duplicate') return 'IN TRIP';
-    if (s === 'error') return 'TRY AGAIN';
-    if (s === 'login') return 'LOG IN FIRST';
-    return 'SAVE';
-  }, [saveStateByOffer]);
-
-  const handleSaveToTrip = useCallback(async (offerId: string) => {
-    const clearAfter = (state: string) => {
-      setSaveStateByOffer(prev => ({ ...prev, [offerId]: state }));
-      setTimeout(() => setSaveStateByOffer(prev => { const n = { ...prev }; delete n[offerId]; return n; }), 3000);
-    };
-    if (!isMemberLoggedIn) { clearAfter('login'); return; }
-    const itinerary = itineraries.find(it => it.offerId === offerId);
-    if (!itinerary) return;
-    setSaveStateByOffer(prev => ({ ...prev, [offerId]: 'saving' }));
-    try {
+  // Trip selection now happens in SaveToTripControl, so this only performs the
+  // save against the trip the member actually chose.
+  const handleSaveToTrip = useCallback(
+    async (tripId: string, itinerary: Itinerary): Promise<SaveToTripResult> => {
       const outSeg0 = itinerary.outbound.segments[0];
       const outLastSeg = itinerary.outbound.segments[itinerary.outbound.segments.length - 1];
       const inLastSeg = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
       const route = `${itinerary.outbound.originCode} → ${outLastSeg?.destinationName || itinerary.outbound.destinationCode}`;
       const timing = `${formatDisplayDate(outSeg0?.departIso?.slice(0, 10) ?? '')} · ${itinerary.outbound.departTime} → ${itinerary.outbound.arriveTime}`;
       const result = await addFlightToTripBrowser({
+        tripId,
         route,
         timing,
         cabin: search.cabin,
         departAt: outSeg0?.departIso ?? null,
         arriveAt: (inLastSeg ?? outLastSeg)?.arriveIso ?? null,
-        externalFlightId: offerId,
+        externalFlightId: itinerary.offerId,
       });
-      clearAfter(result.status === 'already_exists' ? 'duplicate' : 'saved');
-    } catch {
-      clearAfter('error');
-    }
-  }, [isMemberLoggedIn, itineraries, search.cabin]);
+      return {
+        message: result.status === 'already_exists' ? 'Already in that trip.' : 'Saved to trip.',
+      };
+    },
+    [search.cabin]
+  );
 
   useEffect(() => {
     const originParam = normalizeParam(searchParams.origin);
@@ -1151,8 +1128,7 @@ export default function FlightsView({ searchParams }: Props) {
                     onSelectLeg={(col, legId) => setSelectedMultiLegIds(prev => [...prev.slice(0, col), legId])}
                     onBook={handleBook}
                     onInfo={setDetailFlight}
-                    onSave={handleSaveToTrip}
-                    getSaveLabel={getSaveLabel}
+                        onSaveToTrip={handleSaveToTrip}
                   />
                 </div>
               ) : isOneWay ? (
@@ -1176,8 +1152,7 @@ export default function FlightsView({ searchParams }: Props) {
                         onSelectReturn={setSelectedReturnId}
                         onBook={handleBook}
                         onInfo={setDetailFlight}
-                        onSave={handleSaveToTrip}
-                        getSaveLabel={getSaveLabel}
+                        onSaveToTrip={handleSaveToTrip}
                       />
                     ) : null}
                     {recommended ? (
@@ -1194,8 +1169,7 @@ export default function FlightsView({ searchParams }: Props) {
                         onSelectReturn={setSelectedReturnId}
                         onBook={handleBook}
                         onInfo={setDetailFlight}
-                        onSave={handleSaveToTrip}
-                        getSaveLabel={getSaveLabel}
+                        onSaveToTrip={handleSaveToTrip}
                       />
                     ) : null}
                     {selectedOutboundLeg ? (
@@ -1208,8 +1182,7 @@ export default function FlightsView({ searchParams }: Props) {
                         returnHasGutter={returnHasGutter}
                         onBook={handleBook}
                         onInfo={setDetailFlight}
-                        onSave={handleSaveToTrip}
-                        getSaveLabel={getSaveLabel}
+                        onSaveToTrip={handleSaveToTrip}
                         onDeselectOutbound={handleDeselectOutbound}
                         onDeselectReturn={handleDeselectReturn}
                       />
@@ -1280,8 +1253,7 @@ export default function FlightsView({ searchParams }: Props) {
                         onSelectReturn={setSelectedReturnId}
                         onBook={handleBook}
                         onInfo={setDetailFlight}
-                        onSave={handleSaveToTrip}
-                        getSaveLabel={getSaveLabel}
+                        onSaveToTrip={handleSaveToTrip}
                       />
                     ) : null}
                     {recommended ? (
@@ -1298,8 +1270,7 @@ export default function FlightsView({ searchParams }: Props) {
                         onSelectReturn={setSelectedReturnId}
                         onBook={handleBook}
                         onInfo={setDetailFlight}
-                        onSave={handleSaveToTrip}
-                        getSaveLabel={getSaveLabel}
+                        onSaveToTrip={handleSaveToTrip}
                       />
                     ) : null}
                     {selectedOutboundLeg ? (
@@ -1312,8 +1283,7 @@ export default function FlightsView({ searchParams }: Props) {
                         returnHasGutter={returnHasGutter}
                         onBook={handleBook}
                         onInfo={setDetailFlight}
-                        onSave={handleSaveToTrip}
-                        getSaveLabel={getSaveLabel}
+                        onSaveToTrip={handleSaveToTrip}
                         onDeselectOutbound={handleDeselectOutbound}
                         onDeselectReturn={handleDeselectReturn}
                       />
@@ -1605,8 +1575,7 @@ function MultipleResults({
   onSelectLeg,
   onBook,
   onInfo,
-  onSave,
-  getSaveLabel,
+  onSaveToTrip,
 }: {
   searchLegs: MultiCityLeg[];
   activeLegIndex: number;
@@ -1619,8 +1588,7 @@ function MultipleResults({
   onSelectLeg: (colIndex: number, legId: string) => void;
   onBook: (offerId: string) => void;
   onInfo: (flight: FlightLeg) => void;
-  onSave?: (id: string) => void;
-  getSaveLabel?: (id: string) => string;
+  onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
 }) {
   const N = searchLegs.length;
   const compact = N >= 4;
@@ -1666,8 +1634,7 @@ function MultipleResults({
             onSelectLeg={onSelectLeg}
             onBook={onBook}
             onInfo={onInfo}
-            onSave={onSave}
-            getSaveLabel={getSaveLabel}
+            onSaveToTrip={onSaveToTrip}
           />
         ) : null}
         {recommended ? (
@@ -1681,8 +1648,7 @@ function MultipleResults({
             onSelectLeg={onSelectLeg}
             onBook={onBook}
             onInfo={onInfo}
-            onSave={onSave}
-            getSaveLabel={getSaveLabel}
+            onSaveToTrip={onSaveToTrip}
           />
         ) : null}
       </div>
@@ -1733,7 +1699,7 @@ function MultipleResults({
         <div className={styles.resultsScroll} ref={priceScrollRef}>
           <div className={styles.cardStack}>
             {allSelected && selectedItinerary ? (
-              <PriceCard itinerary={selectedItinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active compact={compact} />
+              <PriceCard itinerary={selectedItinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active compact={compact} />
             ) : null}
           </div>
         </div>
@@ -1752,8 +1718,7 @@ function MultiPinnedRow({
   onSelectLeg,
   onBook,
   onInfo,
-  onSave,
-  getSaveLabel,
+  onSaveToTrip,
 }: {
   label: string;
   itinerary: Itinerary;
@@ -1764,8 +1729,7 @@ function MultiPinnedRow({
   onSelectLeg: (colIndex: number, legId: string) => void;
   onBook: (id: string) => void;
   onInfo: (flight: FlightLeg) => void;
-  onSave?: (id: string) => void;
-  getSaveLabel?: (id: string) => string;
+  onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
 }) {
   return (
     <div className={styles.pinnedRow}>
@@ -1800,7 +1764,7 @@ function MultiPinnedRow({
             </div>
           );
         })}
-        <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active compact={compact} />
+        <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active compact={compact} />
       </div>
     </div>
   );
@@ -1837,8 +1801,7 @@ function PinnedRow({
   onSelectReturn,
   onBook,
   onInfo,
-  onSave,
-  getSaveLabel,
+  onSaveToTrip,
 }: {
   label: string;
   itinerary: Itinerary;
@@ -1852,8 +1815,7 @@ function PinnedRow({
   onSelectReturn: (id: string) => void;
   onBook: (id: string) => void;
   onInfo: (flight: FlightLeg) => void;
-  onSave?: (id: string) => void;
-  getSaveLabel?: (id: string) => string;
+  onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
 }) {
   const tier = !oneWay && itinerary.inbound
     ? getReturnMatchTier(itinerary.outbound, itinerary.inbound)
@@ -1879,7 +1841,7 @@ function PinnedRow({
         <span className={styles.pinnedLegend}>{label}</span>
         <div className={styles.pinnedGridOneWay}>
           {outboundCard}
-          <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
+          <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active />
         </div>
       </div>
     );
@@ -1908,7 +1870,7 @@ function PinnedRow({
               <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} /></div>
             )
           ) : <div />}
-          <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
+          <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active />
         </div>
       </div>
     </div>
@@ -1916,7 +1878,7 @@ function PinnedRow({
 }
 
 
-function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter, returnHasGutter, onBook, onInfo, onSave, getSaveLabel, onDeselectOutbound, onDeselectReturn }: {
+function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter, returnHasGutter, onBook, onInfo, onSaveToTrip, onDeselectOutbound, onDeselectReturn }: {
   outbound: FlightLeg;
   inbound: FlightLeg | null;
   itinerary: Itinerary | null;
@@ -1925,13 +1887,12 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
   returnHasGutter: boolean;
   onBook: (id: string) => void;
   onInfo: (flight: FlightLeg) => void;
-  onSave?: (id: string) => void;
-  getSaveLabel?: (id: string) => string;
+  onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
   onDeselectOutbound: () => void;
   onDeselectReturn: () => void;
 }) {
   const priceCell = itinerary ? (
-    <PriceCard itinerary={itinerary} onBook={onBook} onSave={onSave} getSaveLabel={getSaveLabel} active />
+    <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active />
   ) : (
     <div className={styles.priceCard}>
       <span style={{ fontSize: "0.8rem", color: "var(--oltra-text-secondary)", textAlign: "center" }}>—</span>
@@ -1996,16 +1957,14 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
 function PriceCard({
   itinerary,
   onBook,
-  onSave,
-  getSaveLabel,
+  onSaveToTrip,
   active = false,
   compact,
   priceOnly = false,
 }: {
   itinerary: Itinerary;
   onBook: (id: string) => void;
-  onSave?: (id: string) => void;
-  getSaveLabel?: (id: string) => string;
+  onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
   active?: boolean;
   compact?: boolean;
   priceOnly?: boolean;
@@ -2026,14 +1985,22 @@ function PriceCard({
           >
             BOOK
           </button>
-          <button
-            type="button"
-            className={active ? styles.savePillButton : styles.bookButtonInactive}
-            disabled={!active}
-            onClick={() => active && onSave?.(itinerary.offerId)}
-          >
-            {getSaveLabel?.(itinerary.offerId) ?? 'SAVE'}
-          </button>
+          {/* Same picker as Hotels/Restaurants - saving used to go straight to
+              whatever default trip the db helper picked, with no way to tell
+              where it landed. */}
+          {active && onSaveToTrip ? (
+            <SaveToTripControl
+              onSave={(tripId) => onSaveToTrip(tripId, itinerary)}
+              label="SAVE"
+              compact
+              align="right"
+              className={styles.savePillButton}
+            />
+          ) : (
+            <button type="button" className={styles.bookButtonInactive} disabled>
+              SAVE
+            </button>
+          )}
         </div>
       )}
     </div>

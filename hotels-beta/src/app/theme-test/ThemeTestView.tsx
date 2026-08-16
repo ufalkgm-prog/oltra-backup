@@ -389,7 +389,7 @@ function InlineMessage() {
   return (
     <div style={{ fontSize: "0.75rem", color: TEXT_PRIMARY }}>
       <button className={styles.stateButton} style={{ background: BUTTON_FILL, color: BUTTON_FILL_TEXT, width: "auto", padding: "0 16px" }}>
-        Add to trip
+        Save to trip
       </button>
       <div style={{ marginTop: 8, color: MUTED }}>Added to trip.</div>
       <div className={styles.sectionNote}>

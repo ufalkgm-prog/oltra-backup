@@ -8,11 +8,8 @@ import { guessResidencyFromLocale } from "@/lib/countries";
 import { getAirportsForCity } from "@/lib/cityAirports";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
-import {
-  addFlightToTripBrowser,
-  addHotelToTripBrowser,
-  getMemberActionAccessBrowser,
-} from "@/lib/members/db";
+import { addFlightToTripBrowser, addHotelToTripBrowser } from "@/lib/members/db";
+import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import { normalizeOffers, type Itinerary, type FlightLeg } from "@/lib/flights/duffelNormalizer";
 import HotelSmallCard, { type SmallCardAvailability } from "@/components/hotels/HotelSmallCard";
 import styles from "./page.module.css";
@@ -43,8 +40,6 @@ type Props = {
 
 const CARD_LIMIT = 40;
 const HARD_LIMIT = 50;
-
-type SaveState = "saving" | "saved" | "duplicate" | "error" | "login";
 
 type CabinKey = "economy" | "business";
 // Short labels because they are folded into each row's own header
@@ -371,91 +366,61 @@ export default function LandingSummary({
     bedrooms,
   ]);
 
-  // Save-to-trip on both card types goes to the member's default trip
-  // (getOrCreateDefaultTripIdBrowser inside the db helpers) - these are teaser
-  // cards, so they deliberately don't carry the Hotels page's trip picker.
-  const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
-  const [saveState, setSaveState] = useState<Record<string, SaveState>>({});
-
-  useEffect(() => {
-    let active = true;
-    getMemberActionAccessBrowser()
-      .then((r) => { if (active) setIsMemberLoggedIn(r.isLoggedIn); })
-      .catch(() => { if (active) setIsMemberLoggedIn(false); });
-    return () => { active = false; };
-  }, []);
-
-  const markSaveState = useCallback((key: string, state: SaveState) => {
-    setSaveState((prev) => ({ ...prev, [key]: state }));
-    setTimeout(() => {
-      setSaveState((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
-    }, 3000);
-  }, []);
-
-  const saveLabelFor = useCallback(
-    (key: string): string => {
-      switch (saveState[key]) {
-        case "saving": return "SAVING";
-        case "saved": return "SAVED";
-        case "duplicate": return "IN TRIP";
-        case "error": return "RETRY";
-        case "login": return "LOG IN";
-        default: return "SAVE";
-      }
-    },
-    [saveState]
-  );
-
+  // Both card types use the same SaveToTripControl as Hotels/Restaurants, so
+  // the member picks (or creates) the trip. These used to write straight to
+  // whatever getOrCreateDefaultTripIdBrowser returned, which saved successfully
+  // but gave no indication of where the item had gone.
   const handleSaveHotel = useCallback(
-    async (hotel: HotelRecord) => {
-      const key = `hotel-${hotel.id}`;
-      if (!isMemberLoggedIn) { markSaveState(key, "login"); return; }
-      setSaveState((prev) => ({ ...prev, [key]: "saving" }));
-      try {
-        const result = await addHotelToTripBrowser({
-          hotelDirectusId: String(hotel.id),
-          name: hotel.hotel_name ?? "Hotel",
-          location: [hotel.city, hotel.country].filter(Boolean).join(" · "),
-          stayLabel: fromDate && toDate ? `${fromDate} – ${toDate}` : null,
-          thumbnail: getHotelThumbnail(hotel),
-          checkIn: fromDate || null,
-          checkOut: toDate || null,
-        });
-        markSaveState(key, result.status === "already_exists" ? "duplicate" : "saved");
-      } catch {
-        markSaveState(key, "error");
-      }
+    async (tripId: string, hotel: HotelRecord): Promise<SaveToTripResult> => {
+      const result = await addHotelToTripBrowser({
+        tripId,
+        hotelDirectusId: String(hotel.id),
+        name: hotel.hotel_name ?? "Hotel",
+        location: [hotel.city, hotel.country].filter(Boolean).join(" · "),
+        stayLabel: fromDate && toDate ? `${fromDate} – ${toDate}` : null,
+        thumbnail: getHotelThumbnail(hotel),
+        checkIn: fromDate || null,
+        checkOut: toDate || null,
+      });
+      return {
+        message:
+          result.status === "already_exists"
+            ? "Already in that trip."
+            : result.overlapWarning
+            ? "Saved — dates overlap another item."
+            : "Saved to trip.",
+      };
     },
-    [isMemberLoggedIn, markSaveState, fromDate, toDate]
+    [fromDate, toDate]
   );
 
   const handleSaveFlight = useCallback(
-    async (itinerary: Itinerary) => {
-      const key = `flight-${itinerary.offerId}`;
-      if (!isMemberLoggedIn) { markSaveState(key, "login"); return; }
-      setSaveState((prev) => ({ ...prev, [key]: "saving" }));
-      try {
-        const out = itinerary.outbound;
-        const lastOut = out.segments[out.segments.length - 1];
-        const lastIn = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
-        const result = await addFlightToTripBrowser({
-          route: `${out.originCode} → ${lastOut?.destinationName || out.destinationCode}`,
-          timing: `${out.segments[0]?.departIso?.slice(0, 10) ?? ""} · ${out.departTime} → ${out.arriveTime}`,
-          cabin: "",
-          departAt: out.segments[0]?.departIso ?? null,
-          arriveAt: (lastIn ?? lastOut)?.arriveIso ?? null,
-          externalFlightId: itinerary.offerId,
-        });
-        markSaveState(key, result.status === "already_exists" ? "duplicate" : "saved");
-      } catch {
-        markSaveState(key, "error");
-      }
+    async (tripId: string, itinerary: Itinerary): Promise<SaveToTripResult> => {
+      const out = itinerary.outbound;
+      const lastOut = out.segments[out.segments.length - 1];
+      const lastIn = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
+      const result = await addFlightToTripBrowser({
+        tripId,
+        route: `${out.originCode} → ${lastOut?.destinationName || out.destinationCode}`,
+        timing: `${out.segments[0]?.departIso?.slice(0, 10) ?? ""} · ${out.departTime} → ${out.arriveTime}`,
+        cabin: "",
+        departAt: out.segments[0]?.departIso ?? null,
+        arriveAt: (lastIn ?? lastOut)?.arriveIso ?? null,
+        externalFlightId: itinerary.offerId,
+      });
+      return {
+        message: result.status === "already_exists" ? "Already in that trip." : "Saved to trip.",
+      };
     },
-    [isMemberLoggedIn, markSaveState]
+    []
+  );
+
+  const tripDefaults = useMemo(
+    () => ({
+      destination: destinationCity || null,
+      periodLabel: fromDate && toDate ? `${fromDate} – ${toDate}` : null,
+    }),
+    [destinationCity, fromDate, toDate]
   );
 
   const handleBookFlight = useCallback(async (offerId: string) => {
@@ -482,8 +447,6 @@ export default function LandingSummary({
   ) {
     if (!flight) return null;
 
-    const saveKey = `flight-${flight.offerId}`;
-
     return (
       <div className={styles.flightDetailRow} key={key}>
         <div className={styles.flightRowLegend}>
@@ -498,13 +461,14 @@ export default function LandingSummary({
           >
             BOOK
           </button>
-          <button
-            type="button"
+          <SaveToTripControl
+            onSave={(tripId) => handleSaveFlight(tripId, flight)}
+            newTripDefaults={tripDefaults}
+            label="SAVE"
+            compact
+            align="right"
             className={`oltra-button-secondary ${styles.flightBookButton}`}
-            onClick={() => handleSaveFlight(flight)}
-          >
-            {saveLabelFor(saveKey)}
-          </button>
+          />
         </div>
         <div className={styles.flightLegsGrid}>
           <FlightDetailCard flight={flight.outbound} />
@@ -580,8 +544,16 @@ export default function LandingSummary({
                     adults,
                     kids,
                   })}
-                  onSave={() => handleSaveHotel(h)}
-                  saveLabel={saveLabelFor(`hotel-${h.id}`)}
+                  renderSaveControl={() => (
+                    <SaveToTripControl
+                      onSave={(tripId) => handleSaveHotel(tripId, h)}
+                      newTripDefaults={tripDefaults}
+                      label="SAVE"
+                      compact
+                      align="right"
+                      className="oltra-button-secondary w-full"
+                    />
+                  )}
                 />
                 );
               })}

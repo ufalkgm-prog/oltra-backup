@@ -27,8 +27,9 @@ type Props = {
   availability?: SmallCardAvailability;
   /** Absolute booking URL, or null when the hotel has no bookable link. */
   bookingHref?: string | null;
-  onSave?: () => void;
-  saveLabel?: string;
+  /** Supplied by the caller so the card doesn't have to know about trips - it
+   * is a SaveToTripControl, which owns its own popup picker. */
+  renderSaveControl?: () => React.ReactNode;
 };
 
 export default function HotelSmallCard({
@@ -36,8 +37,7 @@ export default function HotelSmallCard({
   href,
   availability,
   bookingHref,
-  onSave,
-  saveLabel,
+  renderSaveControl,
 }: Props) {
   const img = getHotelImageSet(hotel)[0] ?? HOTEL_CARD_PLACEHOLDERS[0];
   const hasPhoto = hasHotelPhotos(hotel);
@@ -102,8 +102,8 @@ export default function HotelSmallCard({
   } as const;
 
   const actions =
-    bookingHref || onSave ? (
-      <div className="mt-1.5 flex w-full gap-1.5">
+    bookingHref || renderSaveControl ? (
+      <div className="mt-1.5 flex w-full flex-col gap-1.5">
         {bookingHref ? (
           <button
             type="button"
@@ -112,26 +112,15 @@ export default function HotelSmallCard({
               e.stopPropagation();
               window.open(bookingHref, "_blank", "noopener,noreferrer");
             }}
-            className="oltra-button-primary flex-1"
+            className="oltra-button-primary w-full"
             style={smallButtonStyle}
           >
             BOOK
           </button>
         ) : null}
-        {onSave ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onSave();
-            }}
-            className="oltra-button-secondary flex-1"
-            style={smallButtonStyle}
-          >
-            {saveLabel ?? "SAVE"}
-          </button>
-        ) : null}
+        {/* Stacked, not side by side: the save control opens a trip picker
+            panel and needs the full column width to anchor it. */}
+        {renderSaveControl ? renderSaveControl() : null}
       </div>
     ) : null;
 

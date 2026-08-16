@@ -1041,7 +1041,7 @@ export default function RestaurantsMapView({
                     className={`${getMemberActionButtonClass(isMemberLoggedIn)} w-full`}
                     aria-disabled={!isMemberLoggedIn}
                   >
-                    {memberActionLoading === "trip" ? "ADDING..." : "ADD TO TRIP"}
+                    {memberActionLoading === "trip" ? "SAVING..." : "SAVE TO TRIP"}
                   </button>
 
                   <button
