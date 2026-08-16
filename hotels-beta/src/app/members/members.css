@@ -33,7 +33,7 @@
   line-height: 1.2;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--oltra-text-secondary);
   text-decoration: none;
   transition:
     color 160ms ease,
@@ -42,13 +42,13 @@
 }
 
 .members-nav__item:hover {
-  color: rgba(255, 255, 255, 0.94);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--oltra-text-primary);
+  background: var(--oltra-surface-lift-soft);
 }
 
 .members-nav__item.is-active {
-  color: rgba(255, 255, 255, 0.98);
-  border-color: rgba(255, 255, 255, 0.28);
+  color: var(--oltra-text-primary);
+  border-color: var(--oltra-border-strong);
   background: transparent;
 }
 
@@ -248,13 +248,13 @@
 }
 
 .members-note {
-  color: rgba(255, 255, 255, 0.66);
+  color: var(--oltra-text-secondary);
   line-height: 1.55;
   font-size: 0.92rem;
 }
 
 .members-empty {
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--oltra-text-secondary);
   padding: 4px 0;
 }
 
@@ -309,8 +309,8 @@
   z-index: 1;
   padding: 16px 18px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--oltra-surface-lift-soft);
+  border: 1px solid var(--oltra-border-subtle);
   overflow: visible;
 }
 
@@ -342,7 +342,7 @@
 }
 
 .members-multiselect__trigger--empty {
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--oltra-text-secondary);
 }
 
 .members-multiselect__text {
@@ -361,7 +361,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--oltra-text-muted);
 }
 
 .members-multiselect__panel {
@@ -383,12 +383,12 @@
 .members-multiselect__check {
   width: 14px;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--oltra-text-secondary);
   font-size: 0.78rem;
 }
 
 .members-multiselect__option--active {
-  color: rgba(255, 255, 255, 1);
+  color: var(--oltra-text-primary);
 }
 
 .members-trip-summary {
@@ -422,7 +422,7 @@
   align-items: start;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--oltra-border-subtle);
 }
 
 .members-trip-col {
@@ -440,7 +440,7 @@
 }
 
 .members-trip-col + .members-trip-col {
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid var(--oltra-border-subtle);
 }
 
 .members-trip-line {
@@ -469,7 +469,7 @@
   padding: 0 14px;
   border-radius: var(--oltra-radius-md);
   background: var(--oltra-field-bg);
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--oltra-text-primary);
   border: 1px solid var(--oltra-field-border);
   overflow: hidden;
 }
@@ -507,8 +507,8 @@
 .members-item {
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--oltra-surface-lift-soft);
+  border: 1px solid var(--oltra-border-subtle);
 }
 
 .members-item__top {
@@ -521,14 +521,14 @@
 .members-item__title {
   font-size: 0.96rem;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--oltra-text-primary);
 }
 
 .members-item__location,
 .members-item__meta {
   font-size: 0.9rem;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--oltra-text-secondary);
 }
 
 .members-item__location {
@@ -545,7 +545,7 @@
   line-height: 1;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--oltra-text-secondary);
   padding-top: 2px;
 }
 
@@ -563,7 +563,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--oltra-border-subtle);
 }
 
 .members-item__thumb--placeholder {
@@ -573,7 +573,7 @@
   text-align: center;
   padding: 4px;
   background: var(--oltra-glass-bg);
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--oltra-text-muted);
   font-size: 0.5rem;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -608,7 +608,7 @@
 }
 
 .members-warning-panel__text {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--oltra-text-secondary);
   line-height: 1.5;
 }
 
@@ -720,7 +720,7 @@
   padding: 0 14px;
   border-radius: var(--oltra-radius-md);
   background: var(--oltra-field-bg);
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--oltra-text-secondary);
   border: 1px solid var(--oltra-field-border);
   pointer-events: none;
   font-size: 0.92rem;
@@ -728,7 +728,7 @@
 }
 
 .members-date-display--selected {
-  color: rgba(255, 255, 255, 0.94);
+  color: var(--oltra-text-primary);
 }
 
 .members-leave-overlay {
@@ -750,7 +750,7 @@
 
 .members-leave-modal__text {
   max-width: 340px;
-  color: rgba(255, 255, 255, 0.94);
+  color: var(--oltra-text-primary);
   font-size: 1rem;
   line-height: 1.4;
 }
@@ -813,7 +813,7 @@
   .members-trip-col {
     padding: 18px 0 0;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--oltra-border-subtle);
   }
 
   .members-trip-col:first-child {

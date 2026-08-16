@@ -1545,11 +1545,11 @@ function MultiSelectDropdown({
                   key={item}
                   type="button"
                   onClick={() => onToggle(item)}
-                  className={`oltra-dropdown-item flex items-center gap-2 ${active ? "bg-white/10 text-white" : ""}`}
+                  className={`oltra-dropdown-item flex items-center gap-2 ${active ? "bg-[var(--oltra-dropdown-item-selected-bg)] text-[color:var(--oltra-text-primary)]" : ""}`}
                   role="option"
                   aria-selected={active}
                 >
-                  <span className="w-4 shrink-0 text-white/72">
+                  <span className="w-4 shrink-0 text-[color:var(--oltra-text-secondary)]">
                     {active ? "✓" : ""}
                   </span>
                   <span>{labelFor(item)}</span>

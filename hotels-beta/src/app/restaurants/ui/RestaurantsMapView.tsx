@@ -980,7 +980,7 @@ export default function RestaurantsMapView({
                           </button>
                         ))
                       ) : (
-                        <div className="text-[12px] text-white/65">
+                        <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
                           No trips available.
                         </div>
                       )}
@@ -1068,7 +1068,7 @@ export default function RestaurantsMapView({
               </div>
 
               {(memberActionError || memberActionMessage) ? (
-                <div className="pt-2 text-[12px] text-white/65">
+                <div className="pt-2 text-[12px] text-[color:var(--oltra-text-muted)]">
                   {memberActionError || memberActionMessage}
                 </div>
               ) : null}

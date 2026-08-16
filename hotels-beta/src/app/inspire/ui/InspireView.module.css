@@ -40,7 +40,7 @@
 
 .intro {
   margin: 0;
-  color: rgba(255, 255, 255, 0.852);
+  color: var(--oltra-text-secondary);
   font-size: 1.1rem;
   line-height: 1.5;
 }
@@ -100,7 +100,7 @@
 
 .dropdownTriggerOpen {
   background: var(--oltra-field-bg-strong);
-  border-color: rgba(255, 255, 255, 0.24);
+  border-color: var(--oltra-border-medium);
 }
 
 .dropdownValue {
@@ -114,7 +114,7 @@
   flex: 0 0 auto;
   width: 12px;
   height: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--oltra-text-secondary);
   transition: transform 160ms ease;
 }
 
@@ -152,17 +152,17 @@
   background: transparent;
   padding: 8px 10px;
   text-align: left;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--oltra-text-primary);
   font-size: 0.78rem;
   line-height: 1.2;
 }
 
 .dropdownOption:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--oltra-surface-lift);
 }
 
 .dropdownOptionActive {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--oltra-surface-lift);
 }
 
 .resultsBlock {
@@ -215,26 +215,26 @@
 }
 
 .destinationCard:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--oltra-surface-lift-strong);
 }
 
 .destinationCardActive {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--oltra-border-strong);
+  background: var(--oltra-surface-lift-strong);
   box-shadow:
     0 10px 24px rgba(10, 24, 36, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .destinationTitle {
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--oltra-text-primary);
   font-size: 0.96rem;
   line-height: 1.2;
 }
 
 .destinationMeta {
   margin-top: 6px;
-  color: rgba(255, 255, 255, 0.66);
+  color: var(--oltra-text-secondary);
   font-size: 0.78rem;
   line-height: 1.35;
 }

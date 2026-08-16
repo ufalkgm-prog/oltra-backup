@@ -142,7 +142,7 @@
   min-width: 180px;
   padding: 12px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--oltra-border-soft);
   background: rgba(34, 56, 72, 0.28);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -182,7 +182,7 @@
 
 .dropdownLink:hover,
 .dropdownItem:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--oltra-surface-lift);
 }
 
 @media (max-width: 800px) {

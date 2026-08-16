@@ -174,7 +174,7 @@
 }
 
 .dayCell:not(:disabled):hover .dayNumber {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--oltra-surface-lift);
 }
 
 .dayCellStart .dayNumber,

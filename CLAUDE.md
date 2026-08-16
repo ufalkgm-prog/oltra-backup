@@ -1928,9 +1928,17 @@ negligible delta rather than claimed as a clean refactor.
 
 ### What's still outstanding
 
-* The sandboxed-but-unshipped tokens above (accent/button-active-bg/
+* ~~The sandboxed-but-unshipped tokens above (accent/button-active-bg/
   glass-bg/field-bg/border-functional/error-colour) — still only live
-  inside `[data-oltra-surface="dark"]`, real decisions pending.
+  inside `[data-oltra-surface="dark"]`, real decisions pending.~~
+  **Resolved — this bullet was stale (corrected 2026-08-16).** §35's final
+  palette shipped all of these to bare `:root` a day later, so nothing is
+  waiting on a decision. In particular the "sage green → gold buttons
+  site-wide" call this section flagged as pending never happened and is not
+  pending: §35 shipped a *recomputed sage* (`--oltra-button-active-bg:
+  #7ba079`), gold was dropped. `--oltra-error-text` shipped too.
+  `--oltra-border-functional` and the ivory accent tokens don't exist
+  anywhere in the codebase — they went with ivory.
 * The step-1 modal tokens (`--oltra-modal-scrim`/`-bg`) were never made
   surface-aware — moot now that there's only one surface, but worth
   knowing they're a distinct token pair from the general
@@ -1941,7 +1949,7 @@ negligible delta rather than claimed as a clean refactor.
 
 ---
 
-## 35. FINAL PALETTE + LIVE-COMPONENT MIGRATION (2026-08-13, in progress)
+## 35. FINAL PALETTE + TOKEN MIGRATION (2026-08-13; completed 2026-08-16)
 
 ### Supersedes §34's shipped text-color values
 
@@ -2038,22 +2046,58 @@ confirmed rendering correctly.
 imported or rendered anywhere in the app — not migrated, not worth the
 effort.
 
-### Remaining scope (not started as of 2026-08-13)
+### Remaining scope — CLOSED 2026-08-16
 
-* `PersonalInformationView.tsx` — one `bg-white/10 text-white`
-  dropdown-selected-row instance, same fix already applied to
-  `RelDropdown`/`OltraSelect` elsewhere.
-* Members (`members.css`, ~19 rules).
-* Restaurants (`RestaurantsMapView.tsx` + `restaurants.css`).
-* Inspire (`InspireView.module.css`).
-* `PageShell.module.css` — `.page`'s white fallback, and `.intro`'s
-  photo-overlay text. The `.intro` one needs an explicit call: is it over
-  imagery (keep translucent, like the featured-mode hero panel) or solid
-  chrome (migrate to tokens)? Don't assume — check the actual render
-  context first.
-* Flights' inline error-color fallback
-  (`var(--oltra-accent, #f87171)`) — should be reconciled to use the now-
-  shipped `--oltra-error-text` token instead of its own ad hoc fallback.
+Every item on the original list is done. The list itself turned out to be
+incomplete in a way worth recording, since it under-described the job by
+roughly 3×:
+
+* It covered **text colour only**. Borders (78 hardcoded
+  `rgba(255,255,255,a)` literals) and backgrounds (55) were never mentioned.
+* It **missed the two largest text files**: `oltra-theme.css` (21 instances —
+  the theme file itself still hardcoded white-at-opacity, despite §35's stated
+  premise of "no white-at-opacity anywhere") and `page.module.css` (20).
+* It listed the **Flights page nowhere**, which held ~46% of all the border
+  and background literals.
+
+Resolved along the way:
+* `PageShell`'s `.intro` — the open question ("over imagery or solid
+  chrome?") is answered: it carries a `text-shadow` and sits over
+  `.background`'s hero image, so it is photo-overlay chrome and **stays
+  translucent**. Its sibling `.page { color: #ffffff }` was migrated.
+* Flights' `var(--oltra-accent, #f87171)` fallback — already fixed earlier
+  the same day while adding the saved-trip rebook notice.
+
+### What is deliberately NOT tokenised (2026-08-16)
+
+Not oversights — check here before "finishing" any of them:
+
+* **Map/photo-overlay chrome.** `.oltra-temp-controls__*` (5 text rules, a
+  glass panel over the Inspire map) and `PageShell`'s `.intro`. Same
+  exemption §35 applied to the old featured-mode hero.
+* **Functional borders at alpha 0.32+** — checkbox edges, focus rings, the
+  selected-card outline on flight cards. These are the only cue for what they
+  enclose, per the decorative/functional split in §34.
+* **The Info pill** (`.infoButton`: `background:#fff; color:#111`) — a
+  deliberately inverted control, not a theme colour.
+* **`@media print` `#000`/`#fff`** in `members.css` — paper is white.
+* **`/editor/*` (20 instances) and `TopNav.tsx` (3)** — internal-only tool
+  that doesn't follow the design system, and dead code respectively.
+
+### New tokens added 2026-08-16
+
+`--oltra-border-subtle/-soft/-medium/-strong` and
+`--oltra-surface-lift-soft/-lift/-lift-strong`. Banded from the values
+actually in use (the app had 25 distinct border alphas and 19 background
+alphas — not a scale). Deliberately kept **translucent**, unlike the solid
+text and field tokens: they sit inside glass over imagery where a relative
+lift is the correct behaviour, and it means the pass preserved rendering
+rather than shifting it. Making them solid is a separate, visible decision.
+
+`--oltra-border-field` and `--oltra-border-panel` were **removed** — sandbox
+duplicates that had gone stale (`-panel` still held `#738783`, the pane border
+softened to `#545F5D` that same day, so `/theme-test` was drawing borders the
+live site no longer used). `/theme-test` now reads the live tokens directly.
 
 ---
 

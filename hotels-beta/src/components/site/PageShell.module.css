@@ -4,7 +4,11 @@
   min-height: 100vh;
   padding: 120px var(--page-side) 36px;
   overflow: hidden;
-  color: #ffffff;
+  /* Inherited default for everything inside the shell; migrated components
+     override it themselves. .intro below is deliberately NOT migrated - it has
+     a text-shadow and sits over .background's hero image, so it is
+     photo-overlay chrome, which stays translucent. */
+  color: var(--oltra-text-primary);
   background: transparent;
 }
 

@@ -35,7 +35,7 @@
 
 .chipInputBox:focus-within {
   background: var(--oltra-field-bg-strong);
-  border-color: rgba(255, 255, 255, 0.24);
+  border-color: var(--oltra-border-medium);
 }
 
 .chipInputField {

@@ -117,13 +117,13 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--oltra-border-soft);
+  background: var(--oltra-surface-lift);
 }
 
 .restaurant-row.is-active {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--oltra-border-strong);
+  background: var(--oltra-surface-lift-strong);
   box-shadow:
     0 10px 24px rgba(10, 24, 36, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -251,7 +251,7 @@
   border-radius: 9999px;
   background: rgba(20, 20, 20, 0.95);
   border: 1px solid rgba(20, 20, 20, 0.95);
-  color: rgba(255, 255, 255, 0.98);
+  color: var(--oltra-text-primary);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
   transition:
     opacity 160ms ease,
@@ -377,8 +377,8 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--oltra-border-soft);
+  background: var(--oltra-surface-lift-soft);
   color: var(--oltra-text-secondary);
   cursor: pointer;
   transition:
@@ -390,12 +390,12 @@
 
 .restaurants-type-pill.is-active {
   border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--oltra-surface-lift-strong);
   color: var(--oltra-text-primary);
 }
 
 .restaurants-type-pill:hover:not(.is-active) {
-  background: rgba(255, 255, 255, 0.10);
+  background: var(--oltra-surface-lift);
   color: var(--oltra-text-primary);
 }
 

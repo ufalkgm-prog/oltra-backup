@@ -101,7 +101,7 @@
 
 .legFilterBlock + .legFilterBlock {
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid var(--oltra-border-soft);
 }
 
 .legFilterTitle {
@@ -121,9 +121,9 @@
   display: grid;
   gap: 8px;
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--oltra-border-subtle);
   border-radius: var(--oltra-radius-md);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--oltra-surface-lift-soft);
 }
 
 .range {
@@ -150,7 +150,7 @@
 }
 
 .rangeSlider::before {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--oltra-surface-lift-strong);
 }
 
 .rangeSlider::after {
@@ -251,7 +251,7 @@
 }
 
 .multiSelectItemActive {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--oltra-surface-lift);
 }
 
 .multiSelectCheck {
@@ -460,16 +460,16 @@
   font-size: 0.74rem;
   letter-spacing: 0.14em;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--oltra-border-medium);
   border-radius: var(--oltra-radius-sm, 6px);
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--oltra-text-secondary);
   padding: 4px 10px;
   cursor: pointer;
 }
 
 .multiLegChange:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: var(--oltra-surface-lift);
+  color: var(--oltra-text-primary);
 }
 
 .multiPinnedSelectable {
@@ -485,12 +485,12 @@
 }
 
 .multiAllSelected {
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--oltra-border-soft);
   background: rgba(20, 32, 48, 0.45);
   border-radius: var(--oltra-radius-md);
   padding: 12px 14px;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--oltra-text-secondary);
 }
 
 .multiResultsHeader {
@@ -704,7 +704,7 @@
 }
 
 .deselectButton:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--oltra-surface-lift);
   border-color: rgba(255, 255, 255, 0.55);
   color: var(--oltra-text-primary);
 }
@@ -771,7 +771,7 @@
   gap: 16px;
   margin-bottom: 18px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--oltra-border-subtle);
 }
 
 .modalTitle {
@@ -789,7 +789,7 @@
 
 .modalClose {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--oltra-border-medium);
   border-radius: 50%;
   width: 28px;
   height: 28px;
@@ -803,7 +803,7 @@
 }
 
 .modalClose:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--oltra-surface-lift);
 }
 
 .modalBody {
@@ -815,9 +815,9 @@
   display: grid;
   gap: 8px;
   padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--oltra-border-subtle);
   border-radius: var(--oltra-radius-md);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--oltra-surface-lift-soft);
 }
 
 .segmentAirline {
@@ -866,7 +866,7 @@
   content: "";
   width: 100%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--oltra-surface-lift-strong);
 }
 
 .segmentDuration {
@@ -915,7 +915,7 @@
   gap: 8px;
   margin-top: 6px;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--oltra-border-subtle);
   font-size: 0.82rem;
 }
 
@@ -1058,8 +1058,8 @@
   display: grid;
   gap: 6px;
   padding: 10px 13px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--oltra-surface-lift-soft);
+  border: 1px solid var(--oltra-border-subtle);
   border-radius: var(--oltra-radius-md);
 }
 
@@ -1095,7 +1095,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--oltra-border-medium);
   border-radius: var(--oltra-radius-sm, 6px);
   color: var(--oltra-text-secondary);
   padding: 3px 8px;
@@ -1104,7 +1104,7 @@
 }
 
 .multiChangeLegButton:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--oltra-surface-lift);
   color: var(--oltra-text-primary);
   border-color: rgba(255, 255, 255, 0.35);
 }
@@ -1138,15 +1138,15 @@
   letter-spacing: 0.08em;
   padding: 0 6px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--oltra-border-medium);
+  color: var(--oltra-text-secondary);
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .savePillButton:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: var(--oltra-surface-lift);
+  color: var(--oltra-text-primary);
 }
 
 .bookButtonActive {
@@ -1161,7 +1161,7 @@
 
 .bookButtonInactive {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--oltra-border-medium);
   color: var(--oltra-text-secondary);
   cursor: not-allowed;
   opacity: 0.6;
@@ -1177,7 +1177,7 @@
   line-height: 1.4;
   white-space: nowrap;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--oltra-surface-lift);
   color: var(--oltra-text-secondary);
 }
 
@@ -1273,7 +1273,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--oltra-surface-lift-soft);
   border: 1px solid var(--oltra-glass-border);
   border-radius: var(--oltra-radius-md);
 }

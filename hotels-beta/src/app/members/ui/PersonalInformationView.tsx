@@ -839,7 +839,7 @@ function CountryCodeSelect({
                 type="button"
                 className={[
                   "oltra-dropdown-item",
-                  opt.value === value ? "bg-white/10 text-white" : "",
+                  opt.value === value ? "bg-[var(--oltra-dropdown-item-selected-bg)] text-[color:var(--oltra-text-primary)]" : "",
                 ].join(" ")}
                 onMouseDown={(e) => {
                   e.preventDefault();

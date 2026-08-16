@@ -84,7 +84,7 @@
   margin: 0;
   border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--oltra-surface-lift);
   cursor: pointer;
   position: relative;
   display: inline-flex;
@@ -94,12 +94,12 @@
 }
 
 .includeChecksItem input[type="checkbox"]:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--oltra-surface-lift-strong);
   border-color: rgba(255, 255, 255, 0.48);
 }
 
 .includeChecksItem input[type="checkbox"]:checked {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--oltra-surface-lift-strong);
   border-color: rgba(255, 255, 255, 0.55);
 }
 
@@ -118,7 +118,7 @@
 }
 
 .includeChecksItemDisabled {
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--oltra-text-disabled);
   cursor: not-allowed;
 }
 
@@ -145,7 +145,7 @@
   border: none;
   padding: 0;
   margin: 0;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--oltra-text-primary);
   font: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -153,7 +153,7 @@
 }
 
 .airportNameButton:hover {
-  color: #fff;
+  color: var(--oltra-text-primary);
 }
 
 .airportPopover {
@@ -164,7 +164,7 @@
   width: min(320px, calc(100vw - 2rem));
   padding: 0.85rem 0.9rem 0.95rem;
   border-radius: var(--oltra-radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--oltra-border-soft);
   background: rgba(24, 37, 46, 0.96);
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(14px);
@@ -215,10 +215,10 @@
   display: flex;
   align-items: center;
   padding-inline: 14px;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--oltra-text-primary);
   border-radius: var(--oltra-radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.11);
+  border: 1px solid var(--oltra-border-soft);
+  background: var(--oltra-surface-lift);
   font-size: 0.95rem;
   line-height: 1;
 }
@@ -228,7 +228,7 @@
 }
 
 .dateDisplay:not([data-has-value="true"]) {
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--oltra-text-secondary);
   text-transform: lowercase;
 }
 
@@ -262,9 +262,9 @@
 
 .searchButtonPassive {
   border-radius: var(--oltra-radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.44);
+  border: 1px solid var(--oltra-border-soft);
+  background: var(--oltra-surface-lift-soft);
+  color: var(--oltra-text-disabled);
   cursor: not-allowed;
   font-size: 0.76rem;
   font-weight: 400;
@@ -289,7 +289,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--oltra-text-secondary);
 }
 
 .kidAgesGrid {
@@ -345,7 +345,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--oltra-text-secondary);
   font-size: 0.95rem;
 }
 
@@ -431,19 +431,19 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding-bottom: 0.3rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid var(--oltra-border-soft);
 }
 
 .airportBlockTitle {
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--oltra-text-primary);
 }
 
 .airportBlockDistance {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--oltra-text-muted);
   white-space: nowrap;
 }
 
@@ -453,8 +453,8 @@
 }
 
 .flightDetailRow {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--oltra-border-soft);
+  background: var(--oltra-surface-lift-soft);
   border-radius: var(--oltra-radius-md);
   padding: 0.5rem 0.7rem;
   display: grid;
@@ -470,7 +470,7 @@
 
 .flightRowPrice {
   font-size: 0.95rem;
-  color: #fff;
+  color: var(--oltra-text-primary);
   margin-left: auto;
 }
 
@@ -496,8 +496,8 @@
   display: grid;
   gap: 0.2rem;
   padding: 0.45rem 0.6rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--oltra-border-subtle);
+  background: var(--oltra-surface-lift-soft);
   border-radius: var(--oltra-radius-sm);
 }
 
@@ -506,7 +506,7 @@
   align-items: baseline;
   gap: 0.45rem;
   font-size: 0.92rem;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--oltra-text-primary);
   flex-wrap: wrap;
 }
 
@@ -515,23 +515,23 @@
 }
 
 .flightCardArrow {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--oltra-text-muted);
 }
 
 .flightCardDuration {
   margin-left: auto;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--oltra-text-secondary);
 }
 
 .flightCardMeta {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--oltra-text-secondary);
 }
 
 .flightCardStops {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--oltra-text-secondary);
 }
 
 .flightLines {
@@ -544,12 +544,12 @@
   grid-template-columns: 112px 1fr;
   gap: 0.75rem;
   align-items: baseline;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--oltra-border-soft);
+  background: var(--oltra-surface-lift-soft);
   border-radius: var(--oltra-radius-md);
   padding: 0.7rem 0.85rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.84);
+  color: var(--oltra-text-secondary);
   line-height: 1.45;
 }
 
@@ -557,7 +557,7 @@
   font-size: 0.7rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--oltra-text-secondary);
 }
 
 .summaryHeader {
@@ -569,7 +569,7 @@
 
 .summarySubhead {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--oltra-text-secondary);
 }
 
 .summaryLines {
@@ -578,13 +578,13 @@
 }
 
 .summaryLine {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--oltra-border-soft);
+  background: var(--oltra-surface-lift-soft);
   border-radius: var(--oltra-radius-lg);
   padding: 0.95rem 1.1rem;
   font-size: 0.95rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--oltra-text-secondary);
 }
 
 .summaryActions {
@@ -610,8 +610,8 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--oltra-border-soft);
+  background: var(--oltra-surface-lift-soft);
   border-radius: var(--oltra-radius-lg);
   padding: 1rem 1rem 1rem 1.1rem;
 }
@@ -625,14 +625,14 @@
   line-height: 1.1;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--oltra-text-secondary);
 }
 
 .summaryText {
   margin-top: 0.38rem;
   font-size: 0.95rem;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--oltra-text-secondary);
 }
 
 .searchPanel {
