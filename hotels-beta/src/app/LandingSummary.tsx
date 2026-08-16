@@ -6,6 +6,13 @@ import type { HotelRecord } from "@/lib/directus";
 import type { RatehawkHeadline } from "@/lib/ratehawk/types";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import { getAirportsForCity } from "@/lib/cityAirports";
+import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
+import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
+import {
+  addFlightToTripBrowser,
+  addHotelToTripBrowser,
+  getMemberActionAccessBrowser,
+} from "@/lib/members/db";
 import { normalizeOffers, type Itinerary, type FlightLeg } from "@/lib/flights/duffelNormalizer";
 import HotelSmallCard, { type SmallCardAvailability } from "@/components/hotels/HotelSmallCard";
 import styles from "./page.module.css";
@@ -37,10 +44,14 @@ type Props = {
 const CARD_LIMIT = 40;
 const HARD_LIMIT = 50;
 
+type SaveState = "saving" | "saved" | "duplicate" | "error" | "login";
+
 type CabinKey = "economy" | "business";
+// Short labels because they are folded into each row's own header
+// ("Standard · Best price") rather than sitting on a line of their own.
 const CABINS: { key: CabinKey; label: string }[] = [
-  { key: "economy", label: "Standard Cabin" },
-  { key: "business", label: "Business Cabin" },
+  { key: "economy", label: "Standard" },
+  { key: "business", label: "Business" },
 ];
 
 function formatDurationMinutes(total: number): string {
@@ -55,6 +66,23 @@ function formatPrice(value: number, currency: string): string {
   const symbol =
     currency === "EUR" ? "€" : currency === "USD" ? "$" : currency === "GBP" ? "£" : `${currency} `;
   return `${symbol}${Math.round(value).toLocaleString()}`;
+}
+
+// buildBookingLink returns null unless a hotel has booking_provider configured,
+// and as of 2026-08-16 none of the 853 published hotels does (see CLAUDE.md
+// §23 - the booking fields were never populated), so on its own it would mean
+// no card ever shows a BOOK button. Falling back to the hotel's own website
+// gives a real destination now, and buildBookingLink takes precedence
+// automatically once those fields do get filled in.
+function bookingHrefFor(
+  hotel: HotelRecord,
+  params: { from: string; to: string; adults: number; kids: number }
+): string | null {
+  const link = buildBookingLink(hotel, params);
+  if (link) return link;
+  const site = (hotel.www ?? "").trim();
+  if (!site) return null;
+  return /^https?:\/\//i.test(site) ? site : `https://${site}`;
 }
 
 function getRatehawkHid(hotel: HotelRecord): number | null {
@@ -343,6 +371,93 @@ export default function LandingSummary({
     bedrooms,
   ]);
 
+  // Save-to-trip on both card types goes to the member's default trip
+  // (getOrCreateDefaultTripIdBrowser inside the db helpers) - these are teaser
+  // cards, so they deliberately don't carry the Hotels page's trip picker.
+  const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
+  const [saveState, setSaveState] = useState<Record<string, SaveState>>({});
+
+  useEffect(() => {
+    let active = true;
+    getMemberActionAccessBrowser()
+      .then((r) => { if (active) setIsMemberLoggedIn(r.isLoggedIn); })
+      .catch(() => { if (active) setIsMemberLoggedIn(false); });
+    return () => { active = false; };
+  }, []);
+
+  const markSaveState = useCallback((key: string, state: SaveState) => {
+    setSaveState((prev) => ({ ...prev, [key]: state }));
+    setTimeout(() => {
+      setSaveState((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }, 3000);
+  }, []);
+
+  const saveLabelFor = useCallback(
+    (key: string): string => {
+      switch (saveState[key]) {
+        case "saving": return "SAVING";
+        case "saved": return "SAVED";
+        case "duplicate": return "IN TRIP";
+        case "error": return "RETRY";
+        case "login": return "LOG IN";
+        default: return "SAVE";
+      }
+    },
+    [saveState]
+  );
+
+  const handleSaveHotel = useCallback(
+    async (hotel: HotelRecord) => {
+      const key = `hotel-${hotel.id}`;
+      if (!isMemberLoggedIn) { markSaveState(key, "login"); return; }
+      setSaveState((prev) => ({ ...prev, [key]: "saving" }));
+      try {
+        const result = await addHotelToTripBrowser({
+          hotelDirectusId: String(hotel.id),
+          name: hotel.hotel_name ?? "Hotel",
+          location: [hotel.city, hotel.country].filter(Boolean).join(" · "),
+          stayLabel: fromDate && toDate ? `${fromDate} – ${toDate}` : null,
+          thumbnail: getHotelThumbnail(hotel),
+          checkIn: fromDate || null,
+          checkOut: toDate || null,
+        });
+        markSaveState(key, result.status === "already_exists" ? "duplicate" : "saved");
+      } catch {
+        markSaveState(key, "error");
+      }
+    },
+    [isMemberLoggedIn, markSaveState, fromDate, toDate]
+  );
+
+  const handleSaveFlight = useCallback(
+    async (itinerary: Itinerary) => {
+      const key = `flight-${itinerary.offerId}`;
+      if (!isMemberLoggedIn) { markSaveState(key, "login"); return; }
+      setSaveState((prev) => ({ ...prev, [key]: "saving" }));
+      try {
+        const out = itinerary.outbound;
+        const lastOut = out.segments[out.segments.length - 1];
+        const lastIn = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
+        const result = await addFlightToTripBrowser({
+          route: `${out.originCode} → ${lastOut?.destinationName || out.destinationCode}`,
+          timing: `${out.segments[0]?.departIso?.slice(0, 10) ?? ""} · ${out.departTime} → ${out.arriveTime}`,
+          cabin: "",
+          departAt: out.segments[0]?.departIso ?? null,
+          arriveAt: (lastIn ?? lastOut)?.arriveIso ?? null,
+          externalFlightId: itinerary.offerId,
+        });
+        markSaveState(key, result.status === "already_exists" ? "duplicate" : "saved");
+      } catch {
+        markSaveState(key, "error");
+      }
+    },
+    [isMemberLoggedIn, markSaveState]
+  );
+
   const handleBookFlight = useCallback(async (offerId: string) => {
     try {
       const res = await fetch("/api/flights/book-link", {
@@ -367,6 +482,8 @@ export default function LandingSummary({
   ) {
     if (!flight) return null;
 
+    const saveKey = `flight-${flight.offerId}`;
+
     return (
       <div className={styles.flightDetailRow} key={key}>
         <div className={styles.flightRowLegend}>
@@ -380,6 +497,13 @@ export default function LandingSummary({
             onClick={() => handleBookFlight(flight.offerId)}
           >
             BOOK
+          </button>
+          <button
+            type="button"
+            className={`oltra-button-secondary ${styles.flightBookButton}`}
+            onClick={() => handleSaveFlight(flight)}
+          >
+            {saveLabelFor(saveKey)}
           </button>
         </div>
         <div className={styles.flightLegsGrid}>
@@ -450,6 +574,14 @@ export default function LandingSummary({
                       ? availabilityById[String(h.id)] ?? { status: "loading" }
                       : { status: "idle" }
                   }
+                  bookingHref={bookingHrefFor(h, {
+                    from: fromDate,
+                    to: toDate,
+                    adults,
+                    kids,
+                  })}
+                  onSave={() => handleSaveHotel(h)}
+                  saveLabel={saveLabelFor(`hotel-${h.id}`)}
                 />
                 );
               })}
@@ -492,30 +624,33 @@ export default function LandingSummary({
                     const state = flightResults[cabinKey(airport.iata, cabin.key)];
 
                     return (
+                      // No separate cabin heading row - the cabin is folded
+                      // into each row's own header ("Standard · Best price"),
+                      // which is a line of vertical space saved per cabin.
                       <div className={styles.cabinGroup} key={cabin.key}>
-                        <div className={styles.cabinGroupLabel}>{cabin.label}</div>
-
                         {!state || state.status === "loading" ? (
-                          <div className={styles.summaryLine}>Searching flights…</div>
+                          <div className={styles.summaryLine}>
+                            Searching {cabin.label.toLowerCase()} flights…
+                          </div>
                         ) : state.status === "empty" ? (
                           <div className={styles.summaryLine}>
-                            No {cabin.label.toLowerCase()} flights found.
+                            No {cabin.label.toLowerCase()} cabin flights found.
                           </div>
                         ) : state.status === "error" ? (
                           <div className={styles.summaryLine}>
-                            Could not load flights ({state.message}).
+                            Could not load {cabin.label.toLowerCase()} flights ({state.message}).
                           </div>
                         ) : (
                           <>
                             {renderFlightRow(
                               `${airport.iata}-${cabin.key}-price`,
-                              "Best price",
+                              `${cabin.label} · Best price`,
                               state.bestPrice,
                               state.isOneWay
                             )}
                             {renderFlightRow(
                               `${airport.iata}-${cabin.key}-fastest`,
-                              "Fastest",
+                              `${cabin.label} · Fastest`,
                               state.fastest,
                               state.isOneWay
                             )}

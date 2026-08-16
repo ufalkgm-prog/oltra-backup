@@ -14,17 +14,22 @@
    space and keeps "what's selected" visually part of the same control. Not
    the shared `oltra-input` class (which has a fixed height) since this box
    needs to grow to a second line once chips wrap. */
+/* Heights are load-bearing here: this box has to sit at exactly
+   --oltra-control-height (34px) when it holds a single row, so it lines up
+   with the Dates/Guests/Bedrooms controls beside it. 34 = 22px content row
+   + 5px padding top/bottom + 1px border top/bottom, and the chips below are
+   sized to fit inside that 22px rather than pushing the box taller. */
 .chipInputBox {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   width: 100%;
   min-height: var(--oltra-control-height);
   border-radius: var(--oltra-radius-md);
   border: 1px solid var(--oltra-field-border);
   background: var(--oltra-field-bg);
-  padding: 6px 10px;
+  padding: 5px 10px;
   cursor: text;
 }
 
@@ -50,6 +55,9 @@
   color: var(--oltra-text-placeholder);
 }
 
+/* Reads as the field's own text, not as a separate small badge: same size and
+   colour as the typed input next to it, with the surrounding border pulled in
+   tight so the whole chip still fits the 22px content row. */
 .tokenPill {
   max-width: min(100%, 240px);
   display: inline-flex;
@@ -57,10 +65,10 @@
   gap: 6px;
   border-radius: 999px;
   border: 1px solid var(--oltra-field-border);
-  background: var(--oltra-field-bg);
-  padding: 0.24rem 0.64rem;
-  color: var(--oltra-badge-text);
-  font-size: 0.72rem;
+  background: var(--oltra-field-bg-strong);
+  padding: 2px 8px;
+  color: var(--oltra-text-primary);
+  font-size: 0.95rem;
   line-height: 1;
 }
 
@@ -75,7 +83,11 @@
   flex: 0 0 auto;
   font-size: 0.95rem;
   line-height: 1;
-  opacity: 0.72;
+  color: var(--oltra-text-muted);
+}
+
+.tokenPill:hover .tokenPillClose {
+  color: var(--oltra-text-primary);
 }
 
 .suggestionPanel {

@@ -176,6 +176,12 @@ export default async function HomePage({
         // falls through to "no price available". (Replaces agoda_hotel_id,
         // which this page no longer prices against.)
         "ratehawk_hid",
+        // For the card's BOOK link (buildBookingLink).
+        "www",
+        "booking_provider",
+        "booking_URL",
+        "booking_enabled",
+        "booking_hotel_ref",
         "activities",
         "setting",
         "style",

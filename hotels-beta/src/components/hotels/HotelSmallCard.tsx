@@ -25,9 +25,20 @@ type Props = {
   hotel: HotelRecord;
   href?: string;
   availability?: SmallCardAvailability;
+  /** Absolute booking URL, or null when the hotel has no bookable link. */
+  bookingHref?: string | null;
+  onSave?: () => void;
+  saveLabel?: string;
 };
 
-export default function HotelSmallCard({ hotel, href, availability }: Props) {
+export default function HotelSmallCard({
+  hotel,
+  href,
+  availability,
+  bookingHref,
+  onSave,
+  saveLabel,
+}: Props) {
   const img = getHotelImageSet(hotel)[0] ?? HOTEL_CARD_PLACEHOLDERS[0];
   const hasPhoto = hasHotelPhotos(hotel);
   const nameAndLocation = [hotel.city, hotel.country].filter(Boolean).join(" · ");
@@ -36,7 +47,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     if (!availability) return null;
     if (availability.status === "available") {
       return (
-        <div className="flex w-[100px] shrink-0 flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center">
           <div className="w-full text-center">
             <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
               {availability.currency}{" "}
@@ -51,14 +62,14 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     }
     if (availability.status === "loading") {
       return (
-        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+        <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           Checking availability…
         </div>
       );
     }
     if (availability.status === "unavailable") {
       return (
-        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+        <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           No availability
         </div>
       );
@@ -68,7 +79,7 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     }
     if (availability.status === "error") {
       return (
-        <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+        <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           Price check unavailable
         </div>
       );
@@ -79,6 +90,50 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
       </div>
     );
   })();
+
+  // The card itself is a link, so these have to stop propagation rather than
+  // rely on being outside it.
+  const smallButtonStyle = {
+    height: "24px",
+    minHeight: "24px",
+    fontSize: "0.62rem",
+    letterSpacing: "0.16em",
+    padding: "0 6px",
+  } as const;
+
+  const actions =
+    bookingHref || onSave ? (
+      <div className="mt-1.5 flex w-full gap-1.5">
+        {bookingHref ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.open(bookingHref, "_blank", "noopener,noreferrer");
+            }}
+            className="oltra-button-primary flex-1"
+            style={smallButtonStyle}
+          >
+            BOOK
+          </button>
+        ) : null}
+        {onSave ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSave();
+            }}
+            className="oltra-button-secondary flex-1"
+            style={smallButtonStyle}
+          >
+            {saveLabel ?? "SAVE"}
+          </button>
+        ) : null}
+      </div>
+    ) : null;
 
   const inner = (
     <div className="grid grid-cols-[132px_1fr_auto] gap-3.5">
@@ -109,7 +164,10 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
         ) : null}
       </div>
 
-      {rightBlock}
+      <div className="flex w-[100px] shrink-0 flex-col justify-center">
+        {rightBlock}
+        {actions}
+      </div>
     </div>
   );
 

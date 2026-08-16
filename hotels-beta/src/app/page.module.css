@@ -25,7 +25,7 @@
 .heroPanel {
   position: relative;
   z-index: 2;
-  width: min(1240px, calc(100vw - 3rem));
+  width: min(1120px, calc(100vw - 3rem));
   margin: 0 auto;
   padding: 0;
   display: grid;
@@ -41,11 +41,17 @@
   overflow: visible;
 }
 
+/* Dates used to span two of four equal trailing tracks, which made it far
+   wider than the "10 Sept 2026 – 13 Sept 2026" label needs. It now has its own
+   track, sized to just fit that label, and the panel is trimmed to match. */
 .searchGrid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 2.9fr) repeat(4, minmax(112px, 1fr));
+  grid-template-columns:
+    minmax(0, 2.9fr)
+    minmax(196px, 1.2fr)
+    repeat(2, minmax(112px, 1fr));
   gap: 1rem;
   align-items: start;
   overflow: visible;
@@ -176,7 +182,6 @@
 }
 
 .dateRangeField {
-  grid-column: span 2;
   min-width: 0;
   align-self: start;
   overflow: visible;
@@ -297,9 +302,14 @@
   min-width: 0;
 }
 
+/* Kept in step with .searchGrid above so the checkbox row lines up under the
+   fields. */
 .includeRow {
   display: grid;
-  grid-template-columns: minmax(0, 2.9fr) repeat(4, minmax(112px, 1fr));
+  grid-template-columns:
+    minmax(0, 2.9fr)
+    minmax(196px, 1.2fr)
+    repeat(2, minmax(112px, 1fr));
   gap: 1rem;
   padding-top: 0.25rem;
   align-items: center;
@@ -442,27 +452,20 @@
   gap: 0.5rem;
 }
 
-.cabinGroupLabel {
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-}
-
 .flightDetailRow {
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   border-radius: var(--oltra-radius-md);
-  padding: 0.7rem 0.85rem;
+  padding: 0.5rem 0.7rem;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .flightRowLegend {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .flightRowPrice {
