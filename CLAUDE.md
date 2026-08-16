@@ -2592,30 +2592,85 @@ Convention: **everything lands in `pending/` or `flagged/` first, and the path
 from staging to live runs through Ulrik.** Nothing there is authorised for
 import into Directus by virtue of existing.
 
-### What is staged as of 2026-08-16
+### What was staged there, and promoted 2026-08-16
 
 * `database-agent/hotels/pending/new-hotels-2026-08-15.json` — **32 hotel
   records, ids 3001–3032**, from the brand-delta audit (the audit itself and
-  the include/exclude decisions live in this repo, on the unmerged
-  `brand-delta-audit-2026-08-15` branch: 34 approved, 2 later excluded —
-  Danieli, not yet open, and Six Senses Courchevel, residences). All 32 pass
-  `validateRow()` in `create-hotels-batch.mjs` unmodified, carry all six
-  columns added in §40, and use affiliation strings that exactly match existing
-  DB spellings. Not imported — verified read-only 2026-08-16.
+  the include/exclude decisions are in this repo under
+  `hotels-beta/scripts/hotels/brand-delta-*`: 34 approved, 2 later excluded —
+  Danieli, not yet open, and Six Senses Courchevel, residences). All 32 passed
+  `validateRow()` in `create-hotels-batch.mjs` unmodified, carried all six
+  columns added in §40, and used affiliation strings matching existing DB
+  spellings.
 * `database-agent/hotels/pending/etg-match-2026-08-15.json` — Ratehawk/ETG
-  `hid` matches for those same 32 (24 confirmed, 8 unresolved),
-  `written_to_directus: false`.
+  `hid` matches for those same 32 (24 confirmed, 8 unresolved). **Its
+  `written_to_directus: false` field is stale as of 2026-08-16** — the hids
+  *were* written. That file belongs to `oltra-agents` and is being corrected
+  there; do not edit it from this repo.
 * `database-agent/hotels/flagged/` — 215 per-hotel findings (mostly
   `url-redirected` / `url-blocked-by-bot-protection`).
 * Restaurant folders exist but are empty as of this date.
 
-**Import-order gotcha for that batch**: `published` tracks the ETG match
-exactly — the 24 hotels with a confirmed `hid` are `published: true`, the 8
-unresolved are `false`. But the `hid` lives in the *second* file, and the hotel
-records themselves carry no `ratehawk_hid`. Creating from the hotel file alone
-would put 24 hotels live with no hid and no images — "No availability" per §30,
-no photo, and excluded from the Featured Mode pool per §6. Create → write
-`ratehawk_hid` → backfill images, or create unpublished and flip afterwards.
+**The batch was promoted to Directus on 2026-08-16**, in three passes, each
+verified by an independent readback:
+
+1. Created 32 records, ids 3001–3032, via `create-hotels-batch.mjs` at the §40
+   version. 32 created, 0 failed. Collection 871 → **903**.
+2. Wrote `ratehawk_hid` to the 24 matched records. 24 updated, 0 failed, no
+   duplicate hids anywhere in the collection (853 rows carry one, up from 829).
+3. Applied images: **348 URLs across 15 hotels**, verified URL by URL and
+   category by category.
+
+Nine hotels were then **unpublished**: ETG carries no images at all for them and
+`agoda_photo1`–`5` were empty, so they were live with no image source — ids
+3004, 3010, 3011, 3015, 3016, 3021, 3022, 3029, 3030.
+
+**Current state of the batch: 15 published / 17 unpublished** (re-verified
+against Directus 2026-08-16). The 17 are the 8 with no ETG match (3001, 3006,
+3007, 3012, 3017, 3019, 3025, 3027) plus those 9.
+
+**The rule is no longer "published tracks the ETG match".** Nine hotels have a
+confirmed `hid` and are deliberately unpublished. The rule is now:
+
+> **published requires a `hid` AND an image source.**
+
+Verified as an exact set equality across the batch — the 15 published are
+precisely the 15 with ≥1 `ratehawk_image_*`.
+
+**Import-order gotcha — now a recorded outcome, not a prediction.** The
+create → `hid` → images order *was* followed, and it still left 9 hotels
+briefly published with no photo: exactly the §30 "No availability" and §6
+Featured-Mode-exclusion case. Correct ordering is necessary but not sufficient,
+because whether ETG has any images for a hotel is not knowable until the image
+pass runs. Either create unpublished and flip only after the image pass, or
+expect a cleanup pass like the one above. Do not assume a confirmed match
+implies a usable image set.
+
+**A confirmed `hid` also does not mean the property is bookable.** Read-only
+`POST /api/b2b/v3/search/hp/` probes on 2026-08-16 (2026-10-14→17, 2 adults,
+residency `gb`, EUR; ETG rate-limits this to ~5 requests/60s) returned, for
+hotels that all have a confirmed hid:
+
+| Property | Rates |
+|---|---|
+| Four Seasons Hotel New York | 15 |
+| Rosewood Mandarina | 67 |
+| Pan Deï Palais (Airelles) | 5 |
+| Amanfayun (Aman) | 4 |
+| Amanwella (Aman) | 0 |
+| &Beyond Phinda Rock Lodge | 0 |
+| &Beyond Phinda Mountain Lodge | 0 |
+
+So rate availability is **per property, not per brand** — an Aman and an
+Airelles both returned rates while another Aman returned none. A zero on one
+date window is also not proof a property is never bookable. This bears on §30
+and on what `published` ought to mean: a published hotel with a hid, images and
+no rates still shows "No availability" to the user.
+
+**Probe gotcha**: `/search/hp/` takes **`hid`**, not `id`. Sending `id` returns
+HTTP 400 with zero rates — indistinguishable at a glance from a genuine
+zero-availability result, and a good way to manufacture a false "nothing is
+bookable" conclusion. Always run a known-good control in the same batch.
 
 ### `oltra-agents` has its own rules — do not carry habits across
 
