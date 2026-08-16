@@ -7,7 +7,7 @@ import GuestSelector from "@/components/site/GuestSelector";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
-import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
+import { getCityForAirportIata } from "@/lib/cityAirports";
 import { mergeHotelFlightSearch } from "@/lib/searchSession";
 import {
   normalizeParam,
@@ -21,18 +21,21 @@ import type {
 import styles from "./page.module.css";
 
 const HOME_AIRPORT_STORAGE_KEY = "oltra_home_airport";
+// Stored alongside the code so "Flights from {city}" can name a place for an
+// airport that no OLTRA hotel city maps to (a home airport in a city we don't
+// list hotels in), without this page importing the full airport dataset.
+const HOME_AIRPORT_CITY_STORAGE_KEY = "oltra_home_airport_city";
 const SEARCH_STATE_KEY = "oltra_landing_search";
 
 const SINGLE_AIRPORT_COUNTRIES = new Set(
   ["Maldives", "Bhutan", "Brunei"].map((c) => c.toLowerCase())
 );
 
-function cityForAirportCode(code: string): string {
+// Prefer the curated hotel-city mapping over the airport's own municipality -
+// see the matching helper in FlightsView. Never parsed out of the label (§39).
+function cityForAirportCode(code: string, fallbackCity: string): string {
   if (!code) return "";
-  const opt = AIRPORT_OPTIONS.find((o) => o.value === code);
-  if (!opt) return code;
-  const after = opt.label.split("·")[1]?.trim() ?? "";
-  return after.split(/\s+/)[0] || after || code;
+  return getCityForAirportIata(code) || fallbackCity || code;
 }
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -100,13 +103,18 @@ export default function LandingSearchPanel({
   const [includeHotels, setIncludeHotels] = useState(
     normalizeParam(initialSearchParams.include_hotels) !== "0"
   );
+  // Off unless explicitly turned on. This used to also switch itself on when
+  // an `origin` was present - but a home airport is remembered in
+  // localStorage and written back into the URL as a hidden field, so once a
+  // user had ever picked one, Flights re-armed itself on every search and
+  // looked like it was checking itself the moment dates were filled in.
   const [includeFlights, setIncludeFlights] = useState(
-    normalizeParam(initialSearchParams.include_flights) === "1" ||
-      normalizeParam(initialSearchParams.origin) !== ""
+    normalizeParam(initialSearchParams.include_flights) === "1"
   );
   const [homeAirport, setHomeAirport] = useState(
     normalizeParam(initialSearchParams.origin)
   );
+  const [homeAirportCity, setHomeAirportCity] = useState("");
   const [airportPopoverOpen, setAirportPopoverOpen] = useState(false);
   const flightsWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -141,11 +149,9 @@ export default function LandingSearchPanel({
     setGuestSelection(readGuestSelection(initialSearchParams));
     setIncludeHotels(normalizeParam(initialSearchParams.include_hotels) !== "0");
 
-    const nextOrigin = normalizeParam(initialSearchParams.origin);
-    setHomeAirport(nextOrigin);
+    setHomeAirport(normalizeParam(initialSearchParams.origin));
     setIncludeFlights(
-      normalizeParam(initialSearchParams.include_flights) === "1" ||
-        nextOrigin !== ""
+      normalizeParam(initialSearchParams.include_flights) === "1"
     );
   }, [initialSearchParams]);
 
@@ -163,16 +169,15 @@ export default function LandingSearchPanel({
       setToValue(normalizeParam(saved.to));
       setGuestSelection(readGuestSelection(saved));
       setIncludeHotels(normalizeParam(saved.include_hotels) !== "0");
-      const savedOrigin = normalizeParam(saved.origin);
-      setHomeAirport(savedOrigin);
-      setIncludeFlights(
-        normalizeParam(saved.include_flights) === "1" || savedOrigin !== ""
-      );
+      setHomeAirport(normalizeParam(saved.origin));
+      setIncludeFlights(normalizeParam(saved.include_flights) === "1");
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    const storedCity = window.localStorage.getItem(HOME_AIRPORT_CITY_STORAGE_KEY);
+    if (storedCity) setHomeAirportCity((prev) => prev || storedCity);
     if (homeAirport) return;
     const stored = window.localStorage.getItem(HOME_AIRPORT_STORAGE_KEY);
     if (stored) setHomeAirport(stored);
@@ -182,7 +187,10 @@ export default function LandingSearchPanel({
     if (homeAirport) {
       window.localStorage.setItem(HOME_AIRPORT_STORAGE_KEY, homeAirport);
     }
-  }, [homeAirport]);
+    if (homeAirportCity) {
+      window.localStorage.setItem(HOME_AIRPORT_CITY_STORAGE_KEY, homeAirportCity);
+    }
+  }, [homeAirport, homeAirportCity]);
 
   // Mirrors the equivalent save effects in HotelsView/FlightsView - keeps
   // the shared cross-page session (read by SiteHeader's nav links, and by
@@ -514,14 +522,13 @@ export default function LandingSearchPanel({
                     scheduleAutoSubmit();
                   }}
                 />
-                <span>Flights</span>
-              </label>
-
-              {flightsCanActivate && effectiveIncludeFlights ? (
-                <div className={styles.homeAirportLine}>
-                  {homeAirport ? (
+                {/* One line: "Flights from London". The origin used to sit on
+                    its own second line under the checkbox. */}
+                <span className={styles.flightsCheckLabel}>
+                  Flights
+                  {flightsCanActivate && effectiveIncludeFlights ? (
                     <>
-                      From{" "}
+                      {homeAirport ? " from " : " "}
                       <button
                         type="button"
                         className={styles.airportNameButton}
@@ -531,32 +538,23 @@ export default function LandingSearchPanel({
                           setAirportPopoverOpen((v) => !v);
                         }}
                       >
-                        {cityForAirportCode(homeAirport)}
+                        {homeAirport
+                          ? cityForAirportCode(homeAirport, homeAirportCity)
+                          : "— set home airport"}
                       </button>
                     </>
-                  ) : (
-                    <button
-                      type="button"
-                      className={styles.airportNameButton}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setAirportPopoverOpen(true);
-                      }}
-                    >
-                      Set home airport
-                    </button>
-                  )}
-                </div>
-              ) : null}
+                  ) : null}
+                </span>
+              </label>
 
               {flightsCanActivate && effectiveIncludeFlights && airportPopoverOpen ? (
                 <div className={styles.airportPopover}>
                   <AirportAutocomplete
                     label="Home airport"
                     value={homeAirport}
-                    onChange={(code) => {
+                    onChange={(code, option) => {
                       setHomeAirport(code);
+                      setHomeAirportCity(option?.city ?? "");
                       setAirportPopoverOpen(false);
                       scheduleAutoSubmit();
                     }}

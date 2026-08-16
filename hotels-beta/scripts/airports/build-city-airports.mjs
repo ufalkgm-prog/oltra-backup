@@ -54,6 +54,8 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const OUTPUT_PATH = path.join(REPO_ROOT, "src", "lib", "cityAirports.ts");
 const AIRPORTS_CSV_PATH = path.join(__dirname, "airports.csv");
 const AIRPORTS_CSV_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv";
+const RUNWAYS_CSV_PATH = path.join(__dirname, "runways.csv");
+const RUNWAYS_CSV_URL = "https://davidmegginson.github.io/ourairports-data/runways.csv";
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN;
@@ -86,13 +88,42 @@ async function fetchHotels() {
   return json.data ?? [];
 }
 
+async function ensureCsv(filePath, url) {
+  if (fs.existsSync(filePath)) return;
+  console.log(`Downloading ${path.basename(filePath)} from OurAirports...`);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to download ${path.basename(filePath)}: ${res.status}`);
+  fs.writeFileSync(filePath, await res.text());
+}
+
 async function ensureAirportsCsv() {
-  if (fs.existsSync(AIRPORTS_CSV_PATH)) return;
-  console.log("Downloading airports.csv from OurAirports...");
-  const res = await fetch(AIRPORTS_CSV_URL);
-  if (!res.ok) throw new Error(`Failed to download airports.csv: ${res.status}`);
-  const text = await res.text();
-  fs.writeFileSync(AIRPORTS_CSV_PATH, text);
+  await ensureCsv(AIRPORTS_CSV_PATH, AIRPORTS_CSV_URL);
+  await ensureCsv(RUNWAYS_CSV_PATH, RUNWAYS_CSV_URL);
+}
+
+// Total paved runway length per airport, in metres.
+//
+// OurAirports' `type` field is far too coarse to answer "which is the main
+// airport for this city" - all three New York airports are `large_airport`,
+// as are all six London ones. Total runway length is the best size proxy
+// available in this dataset and gets the expected answer in every case
+// checked (JFK over LGA/EWR, Heathrow over the other five, CDG over Orly,
+// Malpensa over Linate).
+function loadRunwayLengths() {
+  const rows = parseCsv(fs.readFileSync(RUNWAYS_CSV_PATH, "utf8"));
+  const header = rows[0];
+  const idx = Object.fromEntries(header.map((h, i) => [h, i]));
+  const byIdent = new Map();
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r.length < header.length) continue;
+    if (r[idx.closed] === "1") continue;
+    const ident = r[idx.airport_ident];
+    const ft = parseFloat(r[idx.length_ft]);
+    if (!ident || !Number.isFinite(ft) || ft <= 0) continue;
+    byIdent.set(ident, (byIdent.get(ident) ?? 0) + Math.round(ft * 0.3048));
+  }
+  return byIdent;
 }
 
 function parseCsv(text) {
@@ -120,6 +151,7 @@ function parseCsv(text) {
 }
 
 function loadAirports() {
+  const runwayLengths = loadRunwayLengths();
   const csvText = fs.readFileSync(AIRPORTS_CSV_PATH, "utf8");
   const csvRows = parseCsv(csvText);
   const header = csvRows[0];
@@ -144,6 +176,7 @@ function loadAirports() {
       name: r[idx.name],
       type,
       municipality: r[idx.municipality] || "",
+      runwayM: runwayLengths.get(r[idx.ident]) ?? 0,
       lat,
       lon,
     });
@@ -182,6 +215,12 @@ function isSameCityMatch(cityNorm, airport, distKm) {
     munNorm.startsWith(cityNorm + " ") ||
     nameNorm.startsWith(cityNorm + " ")
   );
+}
+
+function sizeClass(type) {
+  if (type === "large_airport") return "large";
+  if (type === "medium_airport") return "medium";
+  return "small";
 }
 
 function cleanAirportLabel(name) {
@@ -257,6 +296,14 @@ export type CityAirport = {
   iata: string;
   label: string;
   distKm: number;
+  /** OurAirports' size class. */
+  size: "large" | "medium" | "small";
+  /** Total open runway length in metres - the finer size signal. \`size\` alone
+   * can't separate a city's airports (all three New York ones and all six
+   * London ones are "large"). Entries stay ordered nearest-first (that is the
+   * selection rule), so anything wanting the main gateway for a city rather
+   * than the closest strip must sort on these - see pickPrimaryAirportForCity. */
+  runwayM: number;
 };
 
 export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
@@ -267,7 +314,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
         (a) =>
           `    { iata: ${JSON.stringify(a.iata)}, label: ${JSON.stringify(
             cleanAirportLabel(a.name)
-          )}, distKm: ${Math.round(a.distKm)} }`
+          )}, distKm: ${Math.round(a.distKm)}, size: ${JSON.stringify(
+            sizeClass(a.type)
+          )}, runwayM: ${a.runwayM} }`
       )
       .join(",\n");
     out += `  ${JSON.stringify(r.city)}: [\n${entries}\n  ],\n`;
@@ -288,6 +337,24 @@ const LOOKUP: Record<string, CityAirport[]> = Object.fromEntries(
 export function getAirportsForCity(city: string): CityAirport[] {
   if (!city) return [];
   return LOOKUP[normalizeCityKey(city)] ?? [];
+}
+
+const SIZE_ORDER: Record<CityAirport["size"], number> = { large: 0, medium: 1, small: 2 };
+
+/** The single airport to preselect when something needs one code for a city
+ * (e.g. the Flights page resolving a destination handed over from Hotels).
+ * Favours the biggest airport, not the closest: New York's nearest to the
+ * hotel centroid is LaGuardia, but the gateway a traveller expects is JFK.
+ * Distance only breaks ties. */
+export function pickPrimaryAirportForCity(city: string): CityAirport | null {
+  const airports = getAirportsForCity(city);
+  if (airports.length === 0) return null;
+  return [...airports].sort(
+    (a, b) =>
+      SIZE_ORDER[a.size] - SIZE_ORDER[b.size] ||
+      b.runwayM - a.runwayM ||
+      a.distKm - b.distKm
+  )[0];
 }
 
 const IATA_TO_CITY: Record<string, string> = (() => {

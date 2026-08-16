@@ -172,7 +172,10 @@ export default async function HomePage({
         "agoda_photo5",
         "ratehawk_image_1",
         "ratehawk_image_1_category",
-        "agoda_hotel_id",
+        // Required for the summary cards' price lookup — without it every card
+        // falls through to "no price available". (Replaces agoda_hotel_id,
+        // which this page no longer prices against.)
+        "ratehawk_hid",
         "activities",
         "setting",
         "style",
@@ -240,6 +243,7 @@ export default async function HomePage({
               toDate={toDate}
               adults={guests.adults}
               kids={guests.kids}
+              bedrooms={Math.max(1, Number(bedrooms) || 1)}
               hasFullStayDetails={hasFullStayDetails}
               hotelsHref={hotelsHref}
               flightsHref={flightsHref}

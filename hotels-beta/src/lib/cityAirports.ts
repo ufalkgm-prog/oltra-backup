@@ -6,1740 +6,1748 @@ export type CityAirport = {
   iata: string;
   label: string;
   distKm: number;
+  /** OurAirports' size class. */
+  size: "large" | "medium" | "small";
+  /** Total open runway length in metres - the finer size signal. `size` alone
+   * can't separate a city's airports (all three New York ones and all six
+   * London ones are "large"). Entries stay ordered nearest-first (that is the
+   * selection rule), so anything wanting the main gateway for a city rather
+   * than the closest strip must sort on these - see pickPrimaryAirportForCity. */
+  runwayM: number;
 };
 
 export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Abu Dhabi": [
-    { iata: "AUH", label: "Zayed", distKm: 32 }
+    { iata: "AUH", label: "Zayed", distKm: 32, size: "large", runwayM: 8206 }
   ],
   "Acapulco": [
-    { iata: "ACA", label: "General Juan N. Álvarez", distKm: 12 }
+    { iata: "ACA", label: "General Juan N. Álvarez", distKm: 12, size: "large", runwayM: 5002 }
   ],
   "Adare": [
-    { iata: "SNN", label: "Shannon", distKm: 18 }
+    { iata: "SNN", label: "Shannon", distKm: 18, size: "large", runwayM: 3199 }
   ],
   "Agios Ioannis": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 4 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 4, size: "medium", runwayM: 1902 }
   ],
   "Agra": [
-    { iata: "AGR", label: "Agra / Agra Air Force Station", distKm: 9 }
+    { iata: "AGR", label: "Agra / Agra Air Force Station", distKm: 9, size: "medium", runwayM: 4561 }
   ],
   "Akrotiri": [
-    { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 7 }
+    { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 7, size: "medium", runwayM: 2228 }
   ],
   "Al Wajh": [
-    { iata: "RSI", label: "Red Sea", distKm: 18 }
+    { iata: "RSI", label: "Red Sea", distKm: 18, size: "large", runwayM: 3700 }
   ],
   "Aleomandra": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 4 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 4, size: "medium", runwayM: 1902 }
   ],
   "Alpe de Siusi": [
-    { iata: "BZO", label: "Bolzano", distKm: 24 }
+    { iata: "BZO", label: "Bolzano", distKm: 24, size: "medium", runwayM: 2449 }
   ],
   "Alta Badia": [
-    { iata: "BZO", label: "Bolzano", distKm: 48 }
+    { iata: "BZO", label: "Bolzano", distKm: 48, size: "medium", runwayM: 2449 }
   ],
   "Alto Agrelo": [
-    { iata: "MDZ", label: "Governor Francisco Gabrielli", distKm: 34 }
+    { iata: "MDZ", label: "Governor Francisco Gabrielli", distKm: 34, size: "large", runwayM: 2835 }
   ],
   "Alula": [
-    { iata: "ULH", label: "Al-Ula", distKm: 40 }
+    { iata: "ULH", label: "Al-Ula", distKm: 40, size: "large", runwayM: 3050 }
   ],
   "Amalfi": [
-    { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 28 },
-    { iata: "NAP", label: "Naples", distKm: 38 }
+    { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 28, size: "medium", runwayM: 1962 },
+    { iata: "NAP", label: "Naples", distKm: 38, size: "large", runwayM: 2628 }
   ],
   "Amphur Muang": [
-    { iata: "KBV", label: "Krabi", distKm: 19 }
+    { iata: "KBV", label: "Krabi", distKm: 19, size: "large", runwayM: 3000 }
   ],
   "Amsterdam": [
-    { iata: "AMS", label: "Amsterdam Schiphol", distKm: 10 }
+    { iata: "AMS", label: "Amsterdam Schiphol", distKm: 10, size: "large", runwayM: 19412 }
   ],
   "Anacapri": [
-    { iata: "NAP", label: "Naples", distKm: 37 }
+    { iata: "NAP", label: "Naples", distKm: 37, size: "large", runwayM: 2628 }
   ],
   "Analipsis Hersonissos": [
-    { iata: "HER", label: "Heraklion Nikos Kazantzakis", distKm: 14 }
+    { iata: "HER", label: "Heraklion Nikos Kazantzakis", distKm: 14, size: "large", runwayM: 4280 }
   ],
   "Andermatt": [
-    { iata: "LUG", label: "Lugano", distKm: 74 },
-    { iata: "BRN", label: "Bern", distKm: 89 },
-    { iata: "ZRH", label: "Zürich", distKm: 91 }
+    { iata: "LUG", label: "Lugano", distKm: 74, size: "medium", runwayM: 1415 },
+    { iata: "BRN", label: "Bern", distKm: 89, size: "medium", runwayM: 3695 },
+    { iata: "ZRH", label: "Zürich", distKm: 91, size: "large", runwayM: 9808 }
   ],
   "Angthong": [
-    { iata: "USM", label: "Samui", distKm: 15 }
+    { iata: "USM", label: "Samui", distKm: 15, size: "large", runwayM: 2060 }
   ],
   "Anse Aux Poules Bleues": [
-    { iata: "SEZ", label: "Seychelles", distKm: 9 }
+    { iata: "SEZ", label: "Seychelles", distKm: 9, size: "large", runwayM: 2987 }
   ],
   "Anse Boileau": [
-    { iata: "SEZ", label: "Seychelles", distKm: 7 }
+    { iata: "SEZ", label: "Seychelles", distKm: 7, size: "large", runwayM: 2987 }
   ],
   "Anse Intendance": [
-    { iata: "SEZ", label: "Seychelles", distKm: 12 }
+    { iata: "SEZ", label: "Seychelles", distKm: 12, size: "large", runwayM: 2987 }
   ],
   "Anse Kerlan": [
-    { iata: "PRI", label: "Praslin Island", distKm: 3 }
+    { iata: "PRI", label: "Praslin Island", distKm: 3, size: "medium", runwayM: 1316 }
   ],
   "Antibes": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14, size: "large", runwayM: 5591 }
   ],
   "Arenal": [
-    { iata: "FON", label: "La Fortuna Arenal", distKm: 13 }
+    { iata: "FON", label: "La Fortuna Arenal", distKm: 13, size: "medium", runwayM: 800 }
   ],
   "Argolida": [
-    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 96 },
-    { iata: "KLX", label: "Kalamata", distKm: 102 },
-    { iata: "KIT", label: "Kithira", distKm: 122 }
+    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 96, size: "large", runwayM: 7800 },
+    { iata: "KLX", label: "Kalamata", distKm: 102, size: "medium", runwayM: 6000 },
+    { iata: "KIT", label: "Kithira", distKm: 122, size: "small", runwayM: 1461 }
   ],
   "Arosa": [
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 79 },
-    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 100 },
-    { iata: "LUG", label: "Lugano", distKm: 104 }
+    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 79, size: "medium", runwayM: 2265 },
+    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 100, size: "large", runwayM: 3015 },
+    { iata: "LUG", label: "Lugano", distKm: 104, size: "medium", runwayM: 1415 }
   ],
   "Arue Tahiti": [
-    { iata: "MOZ", label: "Moorea Temae", distKm: 55 },
-    { iata: "PPT", label: "Fa'a'ā", distKm: 59 }
+    { iata: "MOZ", label: "Moorea Temae", distKm: 55, size: "medium", runwayM: 1230 },
+    { iata: "PPT", label: "Fa'a'ā", distKm: 59, size: "large", runwayM: 3463 }
   ],
   "Ashar Valley": [
-    { iata: "ULH", label: "Al-Ula", distKm: 39 }
+    { iata: "ULH", label: "Al-Ula", distKm: 39, size: "large", runwayM: 3050 }
   ],
   "Asni": [
-    { iata: "RAK", label: "Marrakesh Menara", distKm: 43 }
+    { iata: "RAK", label: "Marrakesh Menara", distKm: 43, size: "large", runwayM: 3100 }
   ],
   "Aspen": [
-    { iata: "ASE", label: "Aspen-Pitkin County", distKm: 6 }
+    { iata: "ASE", label: "Aspen-Pitkin County", distKm: 6, size: "medium", runwayM: 2440 }
   ],
   "Athens": [
-    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 19 }
+    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 19, size: "large", runwayM: 7800 }
   ],
   "Atlanta": [
-    { iata: "PDK", label: "DeKalb Peachtree", distKm: 6 },
-    { iata: "ATL", label: "Hartsfield Jackson Atlanta", distKm: 25 }
+    { iata: "PDK", label: "DeKalb Peachtree", distKm: 6, size: "medium", runwayM: 4197 },
+    { iata: "ATL", label: "Hartsfield Jackson Atlanta", distKm: 25, size: "large", runwayM: 15053 }
   ],
   "Avon": [
-    { iata: "EGE", label: "Eagle County", distKm: 32 }
+    { iata: "EGE", label: "Eagle County", distKm: 32, size: "medium", runwayM: 2743 }
   ],
   "Ayios Yiannis": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 3 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 3, size: "medium", runwayM: 1902 }
   ],
   "Bad Ragaz": [
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 54 },
-    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 75 }
+    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 54, size: "medium", runwayM: 2265 },
+    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 75, size: "large", runwayM: 3015 }
   ],
   "Baden-Baden": [
-    { iata: "FKB", label: "Karlsruhe Baden-Baden", distKm: 12 }
+    { iata: "FKB", label: "Karlsruhe Baden-Baden", distKm: 12, size: "large", runwayM: 2983 }
   ],
   "Bai Truong": [
-    { iata: "PQC", label: "Phú Quốc", distKm: 7 }
+    { iata: "PQC", label: "Phú Quốc", distKm: 7, size: "large", runwayM: 3000 }
   ],
   "Baku": [
-    { iata: "GYD", label: "Heydar Aliyev", distKm: 22 }
+    { iata: "GYD", label: "Heydar Aliyev", distKm: 22, size: "large", runwayM: 7200 }
   ],
   "Ballyfin": [
-    { iata: "DUB", label: "Dublin", distKm: 87 },
-    { iata: "SNN", label: "Shannon", distKm: 109 }
+    { iata: "DUB", label: "Dublin", distKm: 87, size: "large", runwayM: 7819 },
+    { iata: "SNN", label: "Shannon", distKm: 109, size: "large", runwayM: 3199 }
   ],
   "Banff": [
-    { iata: "YYC", label: "Calgary", distKm: 108 }
+    { iata: "YYC", label: "Calgary", distKm: 108, size: "large", runwayM: 10568 }
   ],
   "Bangkok": [
-    { iata: "DMK", label: "Don Mueang", distKm: 22 },
-    { iata: "BKK", label: "Suvarnabhumi", distKm: 24 }
+    { iata: "DMK", label: "Don Mueang", distKm: 22, size: "large", runwayM: 7200 },
+    { iata: "BKK", label: "Suvarnabhumi", distKm: 24, size: "large", runwayM: 11700 }
   ],
   "Banjar Dinas Kangin Uluwatu": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 12 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 12, size: "large", runwayM: 2984 }
   ],
   "Banjar Dukuh": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 23 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 23, size: "large", runwayM: 2984 }
   ],
   "Banjar Triwangsa": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 35 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 35, size: "large", runwayM: 2984 }
   ],
   "Banyalbufar": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 23 }
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 23, size: "large", runwayM: 6270 }
   ],
   "Barcelona": [
-    { iata: "BCN", label: "Josep Tarradellas Barcelona-El Prat", distKm: 13 }
+    { iata: "BCN", label: "Josep Tarradellas Barcelona-El Prat", distKm: 13, size: "large", runwayM: 8543 }
   ],
   "Barnard": [
-    { iata: "LEB", label: "Lebanon", distKm: 26 },
-    { iata: "RUT", label: "Rutland - Southern Vermont", distKm: 36 }
+    { iata: "LEB", label: "Lebanon", distKm: 26, size: "medium", runwayM: 3260 },
+    { iata: "RUT", label: "Rutland - Southern Vermont", distKm: 36, size: "medium", runwayM: 2583 }
   ],
   "Basel": [
-    { iata: "BSL", label: "EuroAirport Basel-Mulhouse-Freiburg", distKm: 7 }
+    { iata: "BSL", label: "EuroAirport Basel-Mulhouse-Freiburg", distKm: 7, size: "large", runwayM: 5615 }
   ],
   "Bath": [
-    { iata: "BRS", label: "Bristol", distKm: 28 }
+    { iata: "BRS", label: "Bristol", distKm: 28, size: "large", runwayM: 2011 }
   ],
   "Beaulieu-Sur-Mer": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 11 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 11, size: "large", runwayM: 5591 }
   ],
   "Beaver Creek": [
-    { iata: "EGE", label: "Eagle County", distKm: 35 }
+    { iata: "EGE", label: "Eagle County", distKm: 35, size: "medium", runwayM: 2743 }
   ],
   "Beijing": [
-    { iata: "PEK", label: "Beijing Capital", distKm: 22 },
-    { iata: "PKX", label: "Beijing Daxing", distKm: 47 }
+    { iata: "PEK", label: "Beijing Capital", distKm: 22, size: "large", runwayM: 10800 },
+    { iata: "PKX", label: "Beijing Daxing", distKm: 47, size: "large", runwayM: 14800 }
   ],
   "Belgrade": [
-    { iata: "BEG", label: "Belgrade Nikola Tesla", distKm: 12 }
+    { iata: "BEG", label: "Belgrade Nikola Tesla", distKm: 12, size: "large", runwayM: 6900 }
   ],
   "Belle Mare": [
-    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 28 }
+    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 28, size: "large", runwayM: 3370 }
   ],
   "Benguerra Island": [
-    { iata: "VNX", label: "Vilankulo", distKm: 18 }
+    { iata: "VNX", label: "Vilankulo", distKm: 18, size: "medium", runwayM: 2220 }
   ],
   "Berlin": [
-    { iata: "BER", label: "Berlin Brandenburg", distKm: 19 }
+    { iata: "BER", label: "Berlin Brandenburg", distKm: 19, size: "large", runwayM: 7600 }
   ],
   "Beverly Hills": [
-    { iata: "LAX", label: "Los Angeles", distKm: 14 },
-    { iata: "BUR", label: "Hollywood Burbank/Bob Hope", distKm: 15 },
-    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 18 }
+    { iata: "LAX", label: "Los Angeles", distKm: 14, size: "large", runwayM: 13343 },
+    { iata: "BUR", label: "Hollywood Burbank/Bob Hope", distKm: 15, size: "large", runwayM: 3867 },
+    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 18, size: "medium", runwayM: 1489 }
   ],
   "Biarritz": [
-    { iata: "BIQ", label: "Biarritz Pays Basque", distKm: 3 },
-    { iata: "EAS", label: "San Sebastián", distKm: 24 }
+    { iata: "BIQ", label: "Biarritz Pays Basque", distKm: 3, size: "medium", runwayM: 2250 },
+    { iata: "EAS", label: "San Sebastián", distKm: 24, size: "medium", runwayM: 1754 }
   ],
   "Big Island": [
-    { iata: "MUE", label: "Waimea Kohala", distKm: 22 }
+    { iata: "MUE", label: "Waimea Kohala", distKm: 22, size: "medium", runwayM: 1584 }
   ],
   "Big Island, Ka`Upulehu-Kona HI": [
-    { iata: "KOA", label: "Ellison Onizuka Kona at Keāhole", distKm: 11 }
+    { iata: "KOA", label: "Ellison Onizuka Kona at Keāhole", distKm: 11, size: "large", runwayM: 3353 }
   ],
   "Big Sky": [
-    { iata: "BZN", label: "Bozeman Yellowstone", distKm: 60 },
-    { iata: "WYS", label: "Yellowstone", distKm: 66 }
+    { iata: "BZN", label: "Bozeman Yellowstone", distKm: 60, size: "medium", runwayM: 5942 },
+    { iata: "WYS", label: "Yellowstone", distKm: 66, size: "medium", runwayM: 2560 }
   ],
   "Big Sur": [
-    { iata: "MRY", label: "Monterey", distKm: 40 }
+    { iata: "MRY", label: "Monterey", distKm: 40, size: "medium", runwayM: 3255 }
   ],
   "Blevio": [
-    { iata: "LUG", label: "Lugano", distKm: 23 }
+    { iata: "LUG", label: "Lugano", distKm: 23, size: "medium", runwayM: 1415 }
   ],
   "Blois": [
-    { iata: "TUF", label: "Tours Val de Loire", distKm: 49 }
+    { iata: "TUF", label: "Tours Val de Loire", distKm: 49, size: "medium", runwayM: 2404 }
   ],
   "Bo Phut": [
-    { iata: "USM", label: "Samui", distKm: 4 }
+    { iata: "USM", label: "Samui", distKm: 4, size: "large", runwayM: 2060 }
   ],
   "Boca Raton": [
-    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 31 },
-    { iata: "PBI", label: "President Donald J. Trump", distKm: 38 }
+    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 31, size: "large", runwayM: 5181 },
+    { iata: "PBI", label: "President Donald J. Trump", distKm: 38, size: "large", runwayM: 6141 }
   ],
   "Bodrum": [
-    { iata: "BJV", label: "Milas Bodrum", distKm: 30 }
+    { iata: "BJV", label: "Milas Bodrum", distKm: 30, size: "large", runwayM: 5940 }
   ],
   "Bora Bora": [
-    { iata: "BOB", label: "Bora Bora", distKm: 7 }
+    { iata: "BOB", label: "Bora Bora", distKm: 7, size: "medium", runwayM: 1500 }
   ],
   "Borobudur": [
-    { iata: "JOG", label: "Adisutjipto", distKm: 31 },
-    { iata: "YIA", label: "Yogyakarta", distKm: 34 }
+    { iata: "JOG", label: "Adisutjipto", distKm: 31, size: "medium", runwayM: 3536 },
+    { iata: "YIA", label: "Yogyakarta", distKm: 34, size: "large", runwayM: 3250 }
   ],
   "Boston": [
-    { iata: "BOS", label: "Boston Logan", distKm: 5 },
-    { iata: "BED", label: "Laurence G Hanscom Field", distKm: 22 }
+    { iata: "BOS", label: "Boston Logan", distKm: 5, size: "large", runwayM: 12957 },
+    { iata: "BED", label: "Laurence G Hanscom Field", distKm: 22, size: "medium", runwayM: 3694 }
   ],
   "Brixen": [
-    { iata: "BZO", label: "Bolzano", distKm: 38 }
+    { iata: "BZO", label: "Bolzano", distKm: 38, size: "medium", runwayM: 2449 }
   ],
   "Buahan": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 43 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 43, size: "large", runwayM: 2984 }
   ],
   "Budapest": [
-    { iata: "BUD", label: "Budapest Liszt Ferenc", distKm: 18 }
+    { iata: "BUD", label: "Budapest Liszt Ferenc", distKm: 18, size: "large", runwayM: 6717 }
   ],
   "Buenos Aires": [
-    { iata: "AEP", label: "Aeroparque Jorge Newbery", distKm: 6 },
-    { iata: "EZE", label: "Ezeiza - Ministro Pistarini", distKm: 29 }
+    { iata: "AEP", label: "Aeroparque Jorge Newbery", distKm: 6, size: "large", runwayM: 2350 },
+    { iata: "EZE", label: "Ezeiza - Ministro Pistarini", distKm: 29, size: "large", runwayM: 6405 }
   ],
   "Bukit Peninsula": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 11 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 11, size: "large", runwayM: 2984 }
   ],
   "By Achnasheen": [
-    { iata: "INV", label: "Inverness", distKm: 88 },
-    { iata: "SYY", label: "Stornoway", distKm: 90 },
-    { iata: "BEB", label: "Benbecula", distKm: 110 }
+    { iata: "INV", label: "Inverness", distKm: 88, size: "medium", runwayM: 2589 },
+    { iata: "SYY", label: "Stornoway", distKm: 90, size: "medium", runwayM: 3200 },
+    { iata: "BEB", label: "Benbecula", distKm: 110, size: "medium", runwayM: 3045 }
   ],
   "Cabo San Lucas": [
-    { iata: "CSW", label: "Cabo San Lucas", distKm: 7 }
+    { iata: "CSW", label: "Cabo San Lucas", distKm: 7, size: "medium", runwayM: 2133 }
   ],
   "Cairo": [
-    { iata: "CAI", label: "Cairo", distKm: 19 }
+    { iata: "CAI", label: "Cairo", distKm: 19, size: "large", runwayM: 11300 }
   ],
   "Cala Blava-Llucmajor": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 8 }
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 8, size: "large", runwayM: 6270 }
   ],
   "Calistoga": [
-    { iata: "STS", label: "Charles M. Schulz Sonoma County", distKm: 23 }
+    { iata: "STS", label: "Charles M. Schulz Sonoma County", distKm: 23, size: "medium", runwayM: 3415 }
   ],
   "Calvia": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 23 }
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 23, size: "large", runwayM: 6270 }
   ],
   "Cancun": [
-    { iata: "CUN", label: "Cancún", distKm: 9 }
+    { iata: "CUN", label: "Cancún", distKm: 9, size: "large", runwayM: 6300 }
   ],
   "Cannes": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 20 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 20, size: "large", runwayM: 5591 }
   ],
   "Canouan Island": [
-    { iata: "CIW", label: "Canouan", distKm: 3 },
-    { iata: "UNI", label: "Union Island", distKm: 17 },
-    { iata: "MQS", label: "Mustique", distKm: 24 }
+    { iata: "CIW", label: "Canouan", distKm: 3, size: "medium", runwayM: 1798 },
+    { iata: "UNI", label: "Union Island", distKm: 17, size: "medium", runwayM: 752 },
+    { iata: "MQS", label: "Mustique", distKm: 24, size: "medium", runwayM: 992 }
   ],
   "Canyon Point": [
-    { iata: "PGA", label: "Page", distKm: 18 }
+    { iata: "PGA", label: "Page", distKm: 18, size: "medium", runwayM: 2485 }
   ],
   "Cap Ferrat": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 10 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 10, size: "large", runwayM: 5591 }
   ],
   "Cape Panwa": [
-    { iata: "HKT", label: "Phuket", distKm: 36 }
+    { iata: "HKT", label: "Phuket", distKm: 36, size: "large", runwayM: 3100 }
   ],
   "Cape Town": [
-    { iata: "CPT", label: "Cape Town", distKm: 19 }
+    { iata: "CPT", label: "Cape Town", distKm: 19, size: "large", runwayM: 4902 }
   ],
   "Capri": [
-    { iata: "NAP", label: "Naples", distKm: 38 }
+    { iata: "NAP", label: "Naples", distKm: 38, size: "large", runwayM: 2628 }
   ],
   "Carenage Bay": [
-    { iata: "CIW", label: "Canouan", distKm: 3 },
-    { iata: "UNI", label: "Union Island", distKm: 16 },
-    { iata: "MQS", label: "Mustique", distKm: 25 }
+    { iata: "CIW", label: "Canouan", distKm: 3, size: "medium", runwayM: 1798 },
+    { iata: "UNI", label: "Union Island", distKm: 16, size: "medium", runwayM: 752 },
+    { iata: "MQS", label: "Mustique", distKm: 25, size: "medium", runwayM: 992 }
   ],
   "Carmel Valley": [
-    { iata: "MRY", label: "Monterey", distKm: 13 }
+    { iata: "MRY", label: "Monterey", distKm: 13, size: "medium", runwayM: 3255 }
   ],
   "Carretera": [
-    { iata: "CZM", label: "Cozumel", distKm: 34 }
+    { iata: "CZM", label: "Cozumel", distKm: 34, size: "large", runwayM: 2700 }
   ],
   "Cary": [
-    { iata: "RDU", label: "Raleigh-Durham", distKm: 6 }
+    { iata: "RDU", label: "Raleigh-Durham", distKm: 6, size: "large", runwayM: 6422 }
   ],
   "Casares": [
-    { iata: "GIB", label: "Gibraltar", distKm: 30 }
+    { iata: "GIB", label: "Gibraltar", distKm: 30, size: "large", runwayM: 1829 }
   ],
   "Casole d'Elsa": [
-    { iata: "FLR", label: "Florence, Peretola", distKm: 55 },
-    { iata: "PSA", label: "Pisa", distKm: 69 }
+    { iata: "FLR", label: "Florence, Peretola", distKm: 55, size: "large", runwayM: 1560 },
+    { iata: "PSA", label: "Pisa", distKm: 69, size: "large", runwayM: 5785 }
   ],
   "Cernobbio": [
-    { iata: "LUG", label: "Lugano", distKm: 22 }
+    { iata: "LUG", label: "Lugano", distKm: 22, size: "medium", runwayM: 1415 }
   ],
   "Cerretto Langhe": [
-    { iata: "CUF", label: "Cuneo", distKm: 34 }
+    { iata: "CUF", label: "Cuneo", distKm: 34, size: "medium", runwayM: 2104 }
   ],
   "Cervinia": [
-    { iata: "TRN", label: "Turin", distKm: 81 },
-    { iata: "MXP", label: "Milan Malpensa", distKm: 92 },
-    { iata: "LUG", label: "Lugano", distKm: 99 }
+    { iata: "TRN", label: "Turin", distKm: 81, size: "large", runwayM: 3300 },
+    { iata: "MXP", label: "Milan Malpensa", distKm: 92, size: "large", runwayM: 7840 },
+    { iata: "LUG", label: "Lugano", distKm: 99, size: "medium", runwayM: 1415 }
   ],
   "Chamonix": [
-    { iata: "NCY", label: "Annecy Meythet", distKm: 60 },
-    { iata: "GVA", label: "Geneva", distKm: 69 },
-    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 83 }
+    { iata: "NCY", label: "Annecy Meythet", distKm: 60, size: "medium", runwayM: 2475 },
+    { iata: "GVA", label: "Geneva", distKm: 69, size: "large", runwayM: 3900 },
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 83, size: "medium", runwayM: 2020 }
   ],
   "Chania": [
-    { iata: "CHQ", label: "Chania", distKm: 14 }
+    { iata: "CHQ", label: "Chania", distKm: 14, size: "large", runwayM: 3347 }
   ],
   "Chatham": [
-    { iata: "HYA", label: "Cape Cod Gateway", distKm: 24 }
+    { iata: "HYA", label: "Cape Cod Gateway", distKm: 24, size: "medium", runwayM: 3256 }
   ],
   "Chauth Ka Barwara": [
-    { iata: "JAI", label: "Jaipur", distKm: 93 }
+    { iata: "JAI", label: "Jaipur", distKm: 93, size: "large", runwayM: 4389 }
   ],
   "Chengdu": [
-    { iata: "CTU", label: "Chengdu Shuangliu", distKm: 17 },
-    { iata: "TFU", label: "Chengdu Tianfu", distKm: 51 }
+    { iata: "CTU", label: "Chengdu Shuangliu", distKm: 17, size: "large", runwayM: 7200 },
+    { iata: "TFU", label: "Chengdu Tianfu", distKm: 51, size: "large", runwayM: 11000 }
   ],
   "Cherngtalay": [
-    { iata: "HKT", label: "Phuket", distKm: 10 }
+    { iata: "HKT", label: "Phuket", distKm: 10, size: "large", runwayM: 3100 }
   ],
   "Chiang Mai": [
-    { iata: "CNX", label: "Chiang Mai", distKm: 17 }
+    { iata: "CNX", label: "Chiang Mai", distKm: 17, size: "large", runwayM: 3400 }
   ],
   "Chiang Rai": [
-    { iata: "BOR", label: "Bokeo", distKm: 11 },
-    { iata: "THL", label: "Tachileik", distKm: 19 },
-    { iata: "CEI", label: "Mae Fah Luang - Chiang Rai", distKm: 51 }
+    { iata: "BOR", label: "Bokeo", distKm: 11, size: "medium", runwayM: 2700 },
+    { iata: "THL", label: "Tachileik", distKm: 19, size: "medium", runwayM: 2134 },
+    { iata: "CEI", label: "Mae Fah Luang - Chiang Rai", distKm: 51, size: "large", runwayM: 3000 }
   ],
   "Chicago": [
-    { iata: "MDW", label: "Chicago Midway", distKm: 16 },
-    { iata: "ORD", label: "Chicago O'Hare", distKm: 25 }
+    { iata: "MDW", label: "Chicago Midway", distKm: 16, size: "large", runwayM: 6807 },
+    { iata: "ORD", label: "Chicago O'Hare", distKm: 25, size: "large", runwayM: 23432 }
   ],
   "Chobe National Park": [
-    { iata: "MPA", label: "Katima Mulilo", distKm: 105 },
-    { iata: "BBK", label: "Kasane", distKm: 143 }
+    { iata: "MPA", label: "Katima Mulilo", distKm: 105, size: "medium", runwayM: 2292 },
+    { iata: "BBK", label: "Kasane", distKm: 143, size: "large", runwayM: 2000 }
   ],
   "Chochola": [
-    { iata: "MID", label: "Manuel Crescencio Rejón", distKm: 30 }
+    { iata: "MID", label: "Manuel Crescencio Rejón", distKm: 30, size: "large", runwayM: 5500 }
   ],
   "Chongzou": [
-    { iata: "AEB", label: "Baise Bama", distKm: 114 },
-    { iata: "NNG", label: "Nanning Wuxu", distKm: 129 }
+    { iata: "AEB", label: "Baise Bama", distKm: 114, size: "medium", runwayM: 2500 },
+    { iata: "NNG", label: "Nanning Wuxu", distKm: 129, size: "large", runwayM: 3200 }
   ],
   "Cocoa Island": [
-    { iata: "MLE", label: "Velana", distKm: 31 }
+    { iata: "MLE", label: "Velana", distKm: 31, size: "large", runwayM: 3400 }
   ],
   "Cognac": [
-    { iata: "LRH", label: "La Rochelle Île de Ré", distKm: 86 },
-    { iata: "BOD", label: "Bordeaux-Mérignac", distKm: 100 },
-    { iata: "PIS", label: "Poitiers-Biard", distKm: 111 }
+    { iata: "LRH", label: "La Rochelle Île de Ré", distKm: 86, size: "medium", runwayM: 2255 },
+    { iata: "BOD", label: "Bordeaux-Mérignac", distKm: 100, size: "large", runwayM: 5515 },
+    { iata: "PIS", label: "Poitiers-Biard", distKm: 111, size: "medium", runwayM: 2350 }
   ],
   "Cologne": [
-    { iata: "CGN", label: "Cologne Bonn", distKm: 11 }
+    { iata: "CGN", label: "Cologne Bonn", distKm: 11, size: "large", runwayM: 8137 }
   ],
   "Colorado Springs": [
-    { iata: "COS", label: "City of Colorado Springs", distKm: 13 }
+    { iata: "COS", label: "City of Colorado Springs", distKm: 13, size: "large", runwayM: 9996 }
   ],
   "Con Dao Town": [
-    { iata: "VCS", label: "Con Dao", distKm: 3 }
+    { iata: "VCS", label: "Con Dao", distKm: 3, size: "medium", runwayM: 1830 }
   ],
   "Cong": [
-    { iata: "NNR", label: "Connemara", distKm: 36 },
-    { iata: "NOC", label: "Ireland West Knock", distKm: 52 },
-    { iata: "IIA", label: "Inishmaan Aerodrome", distKm: 53 }
+    { iata: "NNR", label: "Connemara", distKm: 36, size: "small", runwayM: 600 },
+    { iata: "NOC", label: "Ireland West Knock", distKm: 52, size: "large", runwayM: 2300 },
+    { iata: "IIA", label: "Inishmaan Aerodrome", distKm: 53, size: "small", runwayM: 811 }
   ],
   "Copenhagen": [
-    { iata: "CPH", label: "Copenhagen Kastrup", distKm: 8 },
-    { iata: "RKE", label: "Copenhagen Roskilde", distKm: 30 }
+    { iata: "CPH", label: "Copenhagen Kastrup", distKm: 8, size: "large", runwayM: 9700 },
+    { iata: "RKE", label: "Copenhagen Roskilde", distKm: 30, size: "medium", runwayM: 3240 }
   ],
   "Corfu": [
-    { iata: "CFU", label: "Corfu Ioannis Kapodistrias", distKm: 11 }
+    { iata: "CFU", label: "Corfu Ioannis Kapodistrias", distKm: 11, size: "large", runwayM: 2375 }
   ],
   "Costa Smeralda": [
-    { iata: "OLB", label: "Olbia Costa Smeralda", distKm: 23 }
+    { iata: "OLB", label: "Olbia Costa Smeralda", distKm: 23, size: "large", runwayM: 2745 }
   ],
   "Courchevel": [
-    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 71 },
-    { iata: "TRN", label: "Turin", distKm: 83 }
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64, size: "medium", runwayM: 2020 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 71, size: "medium", runwayM: 2475 },
+    { iata: "TRN", label: "Turin", distKm: 83, size: "large", runwayM: 3300 }
   ],
   "Courchevel 1850": [
-    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 71 },
-    { iata: "TRN", label: "Turin", distKm: 83 }
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64, size: "medium", runwayM: 2020 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 71, size: "medium", runwayM: 2475 },
+    { iata: "TRN", label: "Turin", distKm: 83, size: "large", runwayM: 3300 }
   ],
   "Crans-Montana": [
-    { iata: "BRN", label: "Bern", distKm: 67 }
+    { iata: "BRN", label: "Bern", distKm: 67, size: "medium", runwayM: 3695 }
   ],
   "Cusco": [
-    { iata: "CUZ", label: "Alejandro Velasco Astete", distKm: 5 }
+    { iata: "CUZ", label: "Alejandro Velasco Astete", distKm: 5, size: "large", runwayM: 3397 }
   ],
   "Da Nang": [
-    { iata: "DAD", label: "Da Nang", distKm: 14 }
+    { iata: "DAD", label: "Da Nang", distKm: 14, size: "large", runwayM: 6548 }
   ],
   "Dallas": [
-    { iata: "DAL", label: "Dallas Love Field", distKm: 4 },
-    { iata: "DFW", label: "Dallas Fort Worth", distKm: 17 }
+    { iata: "DAL", label: "Dallas Love Field", distKm: 4, size: "large", runwayM: 5045 },
+    { iata: "DFW", label: "Dallas Fort Worth", distKm: 17, size: "large", runwayM: 24506 }
   ],
   "Dana Point": [
-    { iata: "SNA", label: "John Wayne Orange County", distKm: 26 }
+    { iata: "SNA", label: "John Wayne Orange County", distKm: 26, size: "large", runwayM: 2617 }
   ],
   "Deauville": [
-    { iata: "DOL", label: "Deauville Normandie", distKm: 6 }
+    { iata: "DOL", label: "Deauville Normandie", distKm: 6, size: "medium", runwayM: 2550 }
   ],
   "Deia": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 23 }
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 23, size: "large", runwayM: 6270 }
   ],
   "Den Haag": [
-    { iata: "RTM", label: "Rotterdam The Hague", distKm: 16 }
+    { iata: "RTM", label: "Rotterdam The Hague", distKm: 16, size: "large", runwayM: 2200 }
   ],
   "Desroches Island": [
-    { iata: "SEZ", label: "Seychelles", distKm: 236 },
-    { iata: "PRI", label: "Praslin Island", distKm: 273 }
+    { iata: "SEZ", label: "Seychelles", distKm: 236, size: "large", runwayM: 2987 },
+    { iata: "PRI", label: "Praslin Island", distKm: 273, size: "medium", runwayM: 1316 }
   ],
   "Dibba": [
-    { iata: "RKT", label: "Ras Al Khaimah", distKm: 34 }
+    { iata: "RKT", label: "Ras Al Khaimah", distKm: 34, size: "large", runwayM: 3760 }
   ],
   "Djimbaran": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 5 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 5, size: "large", runwayM: 2984 }
   ],
   "Doha": [
-    { iata: "DIA", label: "Doha", distKm: 6 },
-    { iata: "DOH", label: "Hamad", distKm: 8 }
+    { iata: "DIA", label: "Doha", distKm: 6, size: "large", runwayM: 4572 },
+    { iata: "DOH", label: "Hamad", distKm: 8, size: "large", runwayM: 9100 }
   ],
   "Dorado": [
-    { iata: "SIG", label: "Fernando Luis Ribas Dominicci", distKm: 21 }
+    { iata: "SIG", label: "Fernando Luis Ribas Dominicci", distKm: 21, size: "medium", runwayM: 1621 }
   ],
   "Dubai": [
-    { iata: "DXB", label: "Dubai", distKm: 12 },
-    { iata: "DWC", label: "Al Maktoum", distKm: 35 }
+    { iata: "DXB", label: "Dubai", distKm: 12, size: "large", runwayM: 8798 },
+    { iata: "DWC", label: "Al Maktoum", distKm: 35, size: "large", runwayM: 6338 }
   ],
   "Dublin": [
-    { iata: "DUB", label: "Dublin", distKm: 9 }
+    { iata: "DUB", label: "Dublin", distKm: 9, size: "large", runwayM: 7819 }
   ],
   "Dubrovnik": [
-    { iata: "DBV", label: "Dubrovnik Ruđer Bošković", distKm: 14 }
+    { iata: "DBV", label: "Dubrovnik Ruđer Bošković", distKm: 14, size: "large", runwayM: 3230 }
   ],
   "Edinburgh": [
-    { iata: "EDI", label: "Edinburgh", distKm: 11 }
+    { iata: "EDI", label: "Edinburgh", distKm: 11, size: "large", runwayM: 2558 }
   ],
   "Elia Beach": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 4 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 4, size: "medium", runwayM: 1902 }
   ],
   "Elmau": [
-    { iata: "INN", label: "Innsbruck", distKm: 25 }
+    { iata: "INN", label: "Innsbruck", distKm: 25, size: "large", runwayM: 2350 }
   ],
   "Elounda": [
-    { iata: "JSH", label: "Sitia", distKm: 34 }
+    { iata: "JSH", label: "Sitia", distKm: 34, size: "medium", runwayM: 2074 }
   ],
   "Es Canar": [
-    { iata: "IBZ", label: "Ibiza", distKm: 23 }
+    { iata: "IBZ", label: "Ibiza", distKm: 23, size: "large", runwayM: 2800 }
   ],
   "Eurgenie les Bains": [
-    { iata: "PUF", label: "Pau Pyrénées", distKm: 35 }
+    { iata: "PUF", label: "Pau Pyrénées", distKm: 35, size: "medium", runwayM: 2500 }
   ],
   "Eynsham Park": [
-    { iata: "LTN", label: "London Luton", distKm: 73 },
-    { iata: "BHX", label: "Birmingham", distKm: 75 },
-    { iata: "LHR", label: "London Heathrow", distKm: 77 }
+    { iata: "LTN", label: "London Luton", distKm: 73, size: "large", runwayM: 2162 },
+    { iata: "BHX", label: "Birmingham", distKm: 75, size: "large", runwayM: 3052 },
+    { iata: "LHR", label: "London Heathrow", distKm: 77, size: "large", runwayM: 7559 }
   ],
   "Eze": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14, size: "large", runwayM: 5591 }
   ],
   "Èze Bord-De-Mer": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14, size: "large", runwayM: 5591 }
   ],
   "Fari Islands Archipelago": [
-    { iata: "MLE", label: "Velana", distKm: 47 }
+    { iata: "MLE", label: "Velana", distKm: 47, size: "large", runwayM: 3400 }
   ],
   "Fasmendhoo Island": [
-    { iata: "DRV", label: "Dharavandhoo", distKm: 47 }
+    { iata: "DRV", label: "Dharavandhoo", distKm: 47, size: "small", runwayM: 1189 }
   ],
   "Felicite Island": [
-    { iata: "PRI", label: "Praslin Island", distKm: 20 }
+    { iata: "PRI", label: "Praslin Island", distKm: 20, size: "medium", runwayM: 1316 }
   ],
   "Fergus": [
-    { iata: "SNN", label: "Shannon", distKm: 9 }
+    { iata: "SNN", label: "Shannon", distKm: 9, size: "large", runwayM: 3199 }
   ],
   "Fisher Island": [
-    { iata: "MIA", label: "Miami", distKm: 16 }
+    { iata: "MIA", label: "Miami", distKm: 16, size: "large", runwayM: 12643 }
   ],
   "Fiuggi": [
-    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 52 }
+    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 52, size: "large", runwayM: 2202 }
   ],
   "Florence": [
-    { iata: "FLR", label: "Florence, Peretola", distKm: 6 }
+    { iata: "FLR", label: "Florence, Peretola", distKm: 6, size: "large", runwayM: 1560 }
   ],
   "Fort Lauderdale": [
-    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 7 }
+    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 7, size: "large", runwayM: 5181 }
   ],
   "Fort William": [
-    { iata: "OBN", label: "Oban", distKm: 47 }
+    { iata: "OBN", label: "Oban", distKm: 47, size: "small", runwayM: 1264 }
   ],
   "Forte dei Marmi": [
-    { iata: "PSA", label: "Pisa", distKm: 34 }
+    { iata: "PSA", label: "Pisa", distKm: 34, size: "large", runwayM: 5785 }
   ],
   "Funchal": [
-    { iata: "FNC", label: "Cristiano Ronaldo", distKm: 15 }
+    { iata: "FNC", label: "Cristiano Ronaldo", distKm: 15, size: "large", runwayM: 2777 }
   ],
   "Galapagos": [
-    { iata: "GPS", label: "Seymour Galapagos Ecological", distKm: 26 }
+    { iata: "GPS", label: "Seymour Galapagos Ecological", distKm: 26, size: "medium", runwayM: 2401 }
   ],
   "Gardone Riviera": [
-    { iata: "VBS", label: "Brescia Gabriele d'Annunzio", distKm: 29 },
-    { iata: "VRN", label: "Verona Villafranca Valerio Catullo", distKm: 35 }
+    { iata: "VBS", label: "Brescia Gabriele d'Annunzio", distKm: 29, size: "medium", runwayM: 2990 },
+    { iata: "VRN", label: "Verona Villafranca Valerio Catullo", distKm: 35, size: "large", runwayM: 3068 }
   ],
   "Gargnano": [
-    { iata: "VRN", label: "Verona Villafranca Valerio Catullo", distKm: 37 },
-    { iata: "VBS", label: "Brescia Gabriele d'Annunzio", distKm: 40 }
+    { iata: "VRN", label: "Verona Villafranca Valerio Catullo", distKm: 37, size: "large", runwayM: 3068 },
+    { iata: "VBS", label: "Brescia Gabriele d'Annunzio", distKm: 40, size: "medium", runwayM: 2990 }
   ],
   "Geneva": [
-    { iata: "GVA", label: "Geneva", distKm: 4 }
+    { iata: "GVA", label: "Geneva", distKm: 4, size: "large", runwayM: 3900 }
   ],
   "Gisakura": [
-    { iata: "KME", label: "Kamembe", distKm: 22 }
+    { iata: "KME", label: "Kamembe", distKm: 22, size: "medium", runwayM: 1500 }
   ],
   "Gordes": [
-    { iata: "AVN", label: "Avignon Caumont", distKm: 24 }
+    { iata: "AVN", label: "Avignon Caumont", distKm: 24, size: "medium", runwayM: 1880 }
   ],
   "Gournes": [
-    { iata: "HER", label: "Heraklion Nikos Kazantzakis", distKm: 13 }
+    { iata: "HER", label: "Heraklion Nikos Kazantzakis", distKm: 13, size: "large", runwayM: 4280 }
   ],
   "Grand Anse Beach": [
-    { iata: "GND", label: "Maurice Bishop", distKm: 5 }
+    { iata: "GND", label: "Maurice Bishop", distKm: 5, size: "large", runwayM: 2744 }
   ],
   "Grand Baie": [
-    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 48 }
+    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 48, size: "large", runwayM: 3370 }
   ],
   "Grand Cul-de-sac": [
-    { iata: "SBH", label: "St. Jean", distKm: 4 }
+    { iata: "SBH", label: "St. Jean", distKm: 4, size: "medium", runwayM: 646 }
   ],
   "Greenough": [
-    { iata: "MSO", label: "Missoula Montana", distKm: 50 }
+    { iata: "MSO", label: "Missoula Montana", distKm: 50, size: "medium", runwayM: 2896 }
   ],
   "Greensboro": [
-    { iata: "MCN", label: "Middle Georgia", distKm: 93 },
-    { iata: "PDK", label: "DeKalb Peachtree", distKm: 113 },
-    { iata: "AGS", label: "Augusta Regional At Bush Field", distKm: 114 }
+    { iata: "MCN", label: "Middle Georgia", distKm: 93, size: "medium", runwayM: 3505 },
+    { iata: "PDK", label: "DeKalb Peachtree", distKm: 113, size: "medium", runwayM: 4197 },
+    { iata: "AGS", label: "Augusta Regional At Bush Field", distKm: 114, size: "medium", runwayM: 4268 }
   ],
   "Grumeti Game Reserve": [
-    { iata: "SEU", label: "Seronera", distKm: 73 },
-    { iata: "MUZ", label: "Musoma", distKm: 82 },
-    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 105 }
+    { iata: "SEU", label: "Seronera", distKm: 73, size: "small", runwayM: 2280 },
+    { iata: "MUZ", label: "Musoma", distKm: 82, size: "small", runwayM: 1600 },
+    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 105, size: "medium", runwayM: 1052 }
   ],
   "Gstaad": [
-    { iata: "BRN", label: "Bern", distKm: 51 }
+    { iata: "BRN", label: "Bern", distKm: 51, size: "medium", runwayM: 3695 }
   ],
   "Guanacaste": [
-    { iata: "LIR", label: "Daniel Oduber Quirós", distKm: 16 }
+    { iata: "LIR", label: "Daniel Oduber Quirós", distKm: 16, size: "large", runwayM: 2750 }
   ],
   "Guangzhou": [
-    { iata: "CAN", label: "Guangzhou Baiyun", distKm: 30 }
+    { iata: "CAN", label: "Guangzhou Baiyun", distKm: 30, size: "large", runwayM: 18200 }
   ],
   "Gustavia": [
-    { iata: "SBH", label: "St. Jean", distKm: 1 }
+    { iata: "SBH", label: "St. Jean", distKm: 1, size: "medium", runwayM: 646 }
   ],
   "Haeundae-gu": [
-    { iata: "PUS", label: "Gimhae", distKm: 21 }
+    { iata: "PUS", label: "Gimhae", distKm: 21, size: "large", runwayM: 5945 }
   ],
   "Hainan Island": [
-    { iata: "SYX", label: "Sanya Phoenix", distKm: 36 }
+    { iata: "SYX", label: "Sanya Phoenix", distKm: 36, size: "large", runwayM: 3400 }
   ],
   "Hamburg": [
-    { iata: "HAM", label: "Hamburg Helmut Schmidt", distKm: 8 }
+    { iata: "HAM", label: "Hamburg Helmut Schmidt", distKm: 8, size: "large", runwayM: 6916 }
   ],
   "Hampshire": [
-    { iata: "LHR", label: "London Heathrow", distKm: 38 },
-    { iata: "SOU", label: "Southampton", distKm: 47 },
-    { iata: "LGW", label: "London Gatwick", distKm: 51 }
+    { iata: "LHR", label: "London Heathrow", distKm: 38, size: "large", runwayM: 7559 },
+    { iata: "SOU", label: "Southampton", distKm: 47, size: "medium", runwayM: 1887 },
+    { iata: "LGW", label: "London Gatwick", distKm: 51, size: "large", runwayM: 5878 }
   ],
   "Hangzhou": [
-    { iata: "HGH", label: "Hangzhou Xiaoshan", distKm: 29 }
+    { iata: "HGH", label: "Hangzhou Xiaoshan", distKm: 29, size: "large", runwayM: 7000 }
   ],
   "Hanoi": [
-    { iata: "HAN", label: "Noi Bai", distKm: 22 }
+    { iata: "HAN", label: "Noi Bai", distKm: 22, size: "large", runwayM: 7000 }
   ],
   "Hermanus": [
-    { iata: "CPT", label: "Cape Town", distKm: 79 }
+    { iata: "CPT", label: "Cape Town", distKm: 79, size: "large", runwayM: 4902 }
   ],
   "Higuera Blanca": [
-    { iata: "PVR", label: "Puerto Vallarta", distKm: 28 }
+    { iata: "PVR", label: "Puerto Vallarta", distKm: 28, size: "large", runwayM: 3100 }
   ],
   "Ho Chi Minh City": [
-    { iata: "SGN", label: "Tan Son Nhat", distKm: 7 }
+    { iata: "SGN", label: "Tan Son Nhat", distKm: 7, size: "large", runwayM: 6850 }
   ],
   "Hoa Thanh": [
-    { iata: "UIH", label: "Phu Cat", distKm: 51 },
-    { iata: "TBB", label: "Dong Tac", distKm: 56 }
+    { iata: "UIH", label: "Phu Cat", distKm: 51, size: "medium", runwayM: 3051 },
+    { iata: "TBB", label: "Dong Tac", distKm: 56, size: "medium", runwayM: 2902 }
   ],
   "Hoedspruit": [
-    { iata: "HDS", label: "Eastgate / Air Force Base Hoedspruit", distKm: 21 }
+    { iata: "HDS", label: "Eastgate / Air Force Base Hoedspruit", distKm: 21, size: "medium", runwayM: 6106 }
   ],
   "Hoi An": [
-    { iata: "DAD", label: "Da Nang", distKm: 18 }
+    { iata: "DAD", label: "Da Nang", distKm: 18, size: "large", runwayM: 6548 }
   ],
   "Hokkaido": [
-    { iata: "OKD", label: "Sapporo Okadama", distKm: 77 },
-    { iata: "CTS", label: "New Chitose", distKm: 79 },
-    { iata: "HKD", label: "Hakodate", distKm: 92 }
+    { iata: "OKD", label: "Sapporo Okadama", distKm: 77, size: "medium", runwayM: 1500 },
+    { iata: "CTS", label: "New Chitose", distKm: 79, size: "large", runwayM: 6000 },
+    { iata: "HKD", label: "Hakodate", distKm: 92, size: "large", runwayM: 3000 }
   ],
   "Honegg": [
-    { iata: "ZRH", label: "Zürich", distKm: 53 },
-    { iata: "BRN", label: "Bern", distKm: 69 }
+    { iata: "ZRH", label: "Zürich", distKm: 53, size: "large", runwayM: 9808 },
+    { iata: "BRN", label: "Bern", distKm: 69, size: "medium", runwayM: 3695 }
   ],
   "Hong Kong": [
-    { iata: "HKG", label: "Hong Kong", distKm: 26 }
+    { iata: "HKG", label: "Hong Kong", distKm: 26, size: "large", runwayM: 11400 }
   ],
   "Honolulu": [
-    { iata: "HNL", label: "Daniel K. Inouye", distKm: 11 }
+    { iata: "HNL", label: "Daniel K. Inouye", distKm: 11, size: "large", runwayM: 14754 }
   ],
   "Houston": [
-    { iata: "HOU", label: "William P. Hobby", distKm: 21 },
-    { iata: "IAH", label: "George Bush Intercontinental", distKm: 28 }
+    { iata: "HOU", label: "William P. Hobby", distKm: 21, size: "large", runwayM: 6203 },
+    { iata: "IAH", label: "George Bush Intercontinental", distKm: 28, size: "large", runwayM: 15363 }
   ],
   "Hua Hin": [
-    { iata: "HHQ", label: "Hua Hin", distKm: 11 }
+    { iata: "HHQ", label: "Hua Hin", distKm: 11, size: "medium", runwayM: 2100 }
   ],
   "Hudson Valley": [
-    { iata: "SWF", label: "New York Stewart", distKm: 21 }
+    { iata: "SWF", label: "New York Stewart", distKm: 21, size: "medium", runwayM: 5432 }
   ],
   "Hurawalhi Island": [
-    { iata: "NMF", label: "Maafaru", distKm: 33 }
+    { iata: "NMF", label: "Maafaru", distKm: 33, size: "medium", runwayM: 2850 }
   ],
   "Huvafen Fushi Island": [
-    { iata: "MLE", label: "Velana", distKm: 26 }
+    { iata: "MLE", label: "Velana", distKm: 26, size: "large", runwayM: 3400 }
   ],
   "Iguazu National Park": [
-    { iata: "IGR", label: "Cataratas Del Iguazú", distKm: 7 },
-    { iata: "IGU", label: "Cataratas", distKm: 11 }
+    { iata: "IGR", label: "Cataratas Del Iguazú", distKm: 7, size: "medium", runwayM: 3300 },
+    { iata: "IGU", label: "Cataratas", distKm: 11, size: "large", runwayM: 2705 }
   ],
   "Imerovigli": [
-    { iata: "JTR", label: "Santorini", distKm: 7 }
+    { iata: "JTR", label: "Santorini", distKm: 7, size: "large", runwayM: 2197 }
   ],
   "Inakara Road": [
-    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 65 }
+    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 65, size: "medium", runwayM: 1052 }
   ],
   "Interlaken": [
-    { iata: "BRN", label: "Bern", distKm: 37 }
+    { iata: "BRN", label: "Bern", distKm: 37, size: "medium", runwayM: 3695 }
   ],
   "Ise-Shima": [
-    { iata: "NGO", label: "Chubu Centrair", distKm: 63 }
+    { iata: "NGO", label: "Chubu Centrair", distKm: 63, size: "large", runwayM: 3500 }
   ],
   "Istanbul": [
-    { iata: "SAW", label: "Istanbul Sabiha Gökçen", distKm: 30 },
-    { iata: "IST", label: "İstanbul", distKm: 35 }
+    { iata: "SAW", label: "Istanbul Sabiha Gökçen", distKm: 30, size: "large", runwayM: 6540 },
+    { iata: "IST", label: "İstanbul", distKm: 35, size: "large", runwayM: 21579 }
   ],
   "Jabal Akhdar": [
-    { iata: "MCT", label: "Muscat", distKm: 92 }
+    { iata: "MCT", label: "Muscat", distKm: 92, size: "large", runwayM: 8080 }
   ],
   "Jakarta": [
-    { iata: "HLP", label: "Halim Perdanakusuma", distKm: 10 },
-    { iata: "CGK", label: "Soekarno-Hatta", distKm: 20 }
+    { iata: "HLP", label: "Halim Perdanakusuma", distKm: 10, size: "large", runwayM: 3000 },
+    { iata: "CGK", label: "Soekarno-Hatta", distKm: 20, size: "large", runwayM: 10260 }
   ],
   "Jerusalem": [
-    { iata: "TLV", label: "Ben Gurion", distKm: 41 }
+    { iata: "TLV", label: "Ben Gurion", distKm: 41, size: "large", runwayM: 9946 }
   ],
   "Jimbaran Bay": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 4 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 4, size: "large", runwayM: 2984 }
   ],
   "Juan-les-Pins": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 13 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 13, size: "large", runwayM: 5591 }
   ],
   "Kailua-Kona": [
-    { iata: "KOA", label: "Ellison Onizuka Kona at Keāhole", distKm: 12 }
+    { iata: "KOA", label: "Ellison Onizuka Kona at Keāhole", distKm: 12, size: "large", runwayM: 3353 }
   ],
   "Kalafati": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 7 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 7, size: "medium", runwayM: 1902 }
   ],
   "Kangaroo Island": [
-    { iata: "KGC", label: "Kingscote", distKm: 71 }
+    { iata: "KGC", label: "Kingscote", distKm: 71, size: "medium", runwayM: 3700 }
   ],
   "Kapalua, Maui": [
-    { iata: "JHM", label: "Kapalua", distKm: 5 }
+    { iata: "JHM", label: "Kapalua", distKm: 5, size: "medium", runwayM: 914 }
   ],
   "Kapps Farm": [
-    { iata: "WDH", label: "Hosea Kutako", distKm: 9 }
+    { iata: "WDH", label: "Hosea Kutako", distKm: 9, size: "large", runwayM: 6099 }
   ],
   "Karoso Beach": [
-    { iata: "TMC", label: "Tambolaka", distKm: 36 }
+    { iata: "TMC", label: "Tambolaka", distKm: 36, size: "small", runwayM: 1800 }
   ],
   "Kea Island": [
-    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 46 },
-    { iata: "JSY", label: "Syros", distKm: 63 }
+    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 46, size: "large", runwayM: 7800 },
+    { iata: "JSY", label: "Syros", distKm: 63, size: "small", runwayM: 1080 }
   ],
   "Khok Kloi": [
-    { iata: "HKT", label: "Phuket", distKm: 20 }
+    { iata: "HKT", label: "Phuket", distKm: 20, size: "large", runwayM: 3100 }
   ],
   "Kiawah Island": [
-    { iata: "CHS", label: "Charleston", distKm: 33 }
+    { iata: "CHS", label: "Charleston", distKm: 33, size: "large", runwayM: 4878 }
   ],
   "Kihavah": [
-    { iata: "DRV", label: "Dharavandhoo", distKm: 17 }
+    { iata: "DRV", label: "Dharavandhoo", distKm: 17, size: "small", runwayM: 1189 }
   ],
   "Kingdom of Fife": [
-    { iata: "DND", label: "Dundee", distKm: 18 }
+    { iata: "DND", label: "Dundee", distKm: 18, size: "medium", runwayM: 1400 }
   ],
   "Kinigi": [
-    { iata: "KXO", label: "Kisoro", distKm: 23 }
+    { iata: "KXO", label: "Kisoro", distKm: 23, size: "small", runwayM: 1200 }
   ],
   "Kirawira": [
-    { iata: "SEU", label: "Seronera", distKm: 75 },
-    { iata: "MUZ", label: "Musoma", distKm: 86 }
+    { iata: "SEU", label: "Seronera", distKm: 75, size: "small", runwayM: 2280 },
+    { iata: "MUZ", label: "Musoma", distKm: 86, size: "small", runwayM: 1600 }
   ],
   "Koh Krabey Island": [
-    { iata: "KOS", label: "Sihanouk", distKm: 10 }
+    { iata: "KOS", label: "Sihanouk", distKm: 10, size: "large", runwayM: 2500 }
   ],
   "Koh Lanta": [
-    { iata: "TST", label: "Trang", distKm: 60 },
-    { iata: "KBV", label: "Krabi", distKm: 67 }
+    { iata: "TST", label: "Trang", distKm: 60, size: "medium", runwayM: 2100 },
+    { iata: "KBV", label: "Krabi", distKm: 67, size: "large", runwayM: 3000 }
   ],
   "Koh Yao Yai": [
-    { iata: "HKT", label: "Phuket", distKm: 33 },
-    { iata: "KBV", label: "Krabi", distKm: 42 }
+    { iata: "HKT", label: "Phuket", distKm: 33, size: "large", runwayM: 3100 },
+    { iata: "KBV", label: "Krabi", distKm: 42, size: "large", runwayM: 3000 }
   ],
   "Kohler": [
-    { iata: "ATW", label: "Appleton", distKm: 83 },
-    { iata: "GRB", label: "Austin Straubel", distKm: 87 },
-    { iata: "MKE", label: "General Mitchell", distKm: 89 }
+    { iata: "ATW", label: "Appleton", distKm: 83, size: "medium", runwayM: 4421 },
+    { iata: "GRB", label: "Austin Straubel", distKm: 87, size: "medium", runwayM: 4999 },
+    { iata: "MKE", label: "General Mitchell", distKm: 89, size: "large", runwayM: 10000 }
   ],
   "Kokomo Island": [
-    { iata: "KDV", label: "Vunisea", distKm: 48 }
+    { iata: "KDV", label: "Vunisea", distKm: 48, size: "small", runwayM: 0 }
   ],
   "Krabi": [
-    { iata: "KBV", label: "Krabi", distKm: 26 }
+    { iata: "KBV", label: "Krabi", distKm: 26, size: "large", runwayM: 3000 }
   ],
   "Krong Siem Reap": [
-    { iata: "SAI", label: "Siem Reap-Angkor", distKm: 43 }
+    { iata: "SAI", label: "Siem Reap-Angkor", distKm: 43, size: "large", runwayM: 3605 }
   ],
   "Kruger National Park": [
-    { iata: "SZK", label: "Skukuza", distKm: 32 }
+    { iata: "SZK", label: "Skukuza", distKm: 32, size: "medium", runwayM: 1550 }
   ],
   "Kuala Lumpur": [
-    { iata: "SZB", label: "Sultan Abdul Aziz Shah", distKm: 18 },
-    { iata: "KUL", label: "Kuala Lumpur", distKm: 45 }
+    { iata: "SZB", label: "Sultan Abdul Aziz Shah", distKm: 18, size: "large", runwayM: 3780 },
+    { iata: "KUL", label: "Kuala Lumpur", distKm: 45, size: "large", runwayM: 12134 }
   ],
   "Kuda Huraa Island": [
-    { iata: "MLE", label: "Velana", distKm: 17 }
+    { iata: "MLE", label: "Velana", distKm: 17, size: "large", runwayM: 3400 }
   ],
   "Kudadoo Island": [
-    { iata: "NMF", label: "Maafaru", distKm: 35 },
-    { iata: "DRV", label: "Dharavandhoo", distKm: 51 }
+    { iata: "NMF", label: "Maafaru", distKm: 35, size: "medium", runwayM: 2850 },
+    { iata: "DRV", label: "Dharavandhoo", distKm: 51, size: "small", runwayM: 1189 }
   ],
   "Kunfunadhoo Island": [
-    { iata: "DRV", label: "Dharavandhoo", distKm: 8 }
+    { iata: "DRV", label: "Dharavandhoo", distKm: 8, size: "small", runwayM: 1189 }
   ],
   "Kyllini": [
-    { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 23 }
+    { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 23, size: "medium", runwayM: 2228 }
   ],
   "Kyoto": [
-    { iata: "ITM", label: "Osaka Itami", distKm: 39 }
+    { iata: "ITM", label: "Osaka Itami", distKm: 39, size: "large", runwayM: 4827 }
   ],
   "La Croix-Valmer": [
-    { iata: "LTT", label: "La Môle", distKm: 9 }
+    { iata: "LTT", label: "La Môle", distKm: 9, size: "small", runwayM: 1071 }
   ],
   "La Jolla": [
-    { iata: "SAN", label: "San Diego", distKm: 20 }
+    { iata: "SAN", label: "San Diego", distKm: 20, size: "large", runwayM: 2865 }
   ],
   "La Manzanilla": [
-    { iata: "ZLO", label: "Playa de Oro", distKm: 29 }
+    { iata: "ZLO", label: "Playa de Oro", distKm: 29, size: "medium", runwayM: 2200 }
   ],
   "Laamu": [
-    { iata: "KDO", label: "Kadhdhoo", distKm: 14 }
+    { iata: "KDO", label: "Kadhdhoo", distKm: 14, size: "medium", runwayM: 1220 }
   ],
   "Laguna Beach": [
-    { iata: "SNA", label: "John Wayne Orange County", distKm: 21 }
+    { iata: "SNA", label: "John Wayne Orange County", distKm: 21, size: "large", runwayM: 2617 }
   ],
   "Lake Louise": [
-    { iata: "YYC", label: "Calgary", distKm: 157 },
-    { iata: "YXC", label: "Cranbrook/Canadian Rockies", distKm: 203 }
+    { iata: "YYC", label: "Calgary", distKm: 157, size: "large", runwayM: 10568 },
+    { iata: "YXC", label: "Cranbrook/Canadian Rockies", distKm: 203, size: "medium", runwayM: 1829 }
   ],
   "Lake Tahoe": [
-    { iata: "TKF", label: "Truckee Tahoe", distKm: 43 },
-    { iata: "RNO", label: "Reno Tahoe", distKm: 61 }
+    { iata: "TKF", label: "Truckee Tahoe", distKm: 43, size: "medium", runwayM: 3551 },
+    { iata: "RNO", label: "Reno Tahoe", distKm: 61, size: "large", runwayM: 7956 }
   ],
   "Lamego": [
-    { iata: "VRL", label: "Vila Real", distKm: 16 }
+    { iata: "VRL", label: "Vila Real", distKm: 16, size: "medium", runwayM: 947 }
   ],
   "Lanai City": [
-    { iata: "LNY", label: "Lanai", distKm: 5 }
+    { iata: "LNY", label: "Lanai", distKm: 5, size: "medium", runwayM: 1524 }
   ],
   "Landaa Giraavaru": [
-    { iata: "DRV", label: "Dharavandhoo", distKm: 15 }
+    { iata: "DRV", label: "Dharavandhoo", distKm: 15, size: "small", runwayM: 1189 }
   ],
   "Langkawi": [
-    { iata: "LGK", label: "Langkawi", distKm: 12 }
+    { iata: "LGK", label: "Langkawi", distKm: 12, size: "large", runwayM: 3810 }
   ],
   "Lankanfushi": [
-    { iata: "MLE", label: "Velana", distKm: 12 }
+    { iata: "MLE", label: "Velana", distKm: 12, size: "large", runwayM: 3400 }
   ],
   "Las Vegas": [
-    { iata: "LAS", label: "Harry Reid", distKm: 4 }
+    { iata: "LAS", label: "Harry Reid", distKm: 4, size: "large", runwayM: 13686 }
   ],
   "Laucala Island": [
-    { iata: "TVU", label: "Matei", distKm: 22 }
+    { iata: "TVU", label: "Matei", distKm: 22, size: "small", runwayM: 985 }
   ],
   "Lausanne": [
-    { iata: "GVA", label: "Geneva", distKm: 50 }
+    { iata: "GVA", label: "Geneva", distKm: 50, size: "large", runwayM: 3900 }
   ],
   "Le Baux de Provence": [
-    { iata: "AVN", label: "Avignon Caumont", distKm: 21 }
+    { iata: "AVN", label: "Avignon Caumont", distKm: 21, size: "medium", runwayM: 1880 }
   ],
   "Le Morne Peninsula": [
-    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 39 }
+    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 39, size: "large", runwayM: 3370 }
   ],
   "Le Puy-Sainte-Réparade": [
-    { iata: "MRS", label: "Marseille Provence", distKm: 27 }
+    { iata: "MRS", label: "Marseille Provence", distKm: 27, size: "large", runwayM: 5870 }
   ],
   "Lech Am Arlberg": [
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 53 },
-    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 70 }
+    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 53, size: "medium", runwayM: 2265 },
+    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 70, size: "large", runwayM: 3015 }
   ],
   "Les Belleville": [
-    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 58 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 70 }
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 58, size: "medium", runwayM: 2020 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 70, size: "medium", runwayM: 2475 }
   ],
   "Lhaviyani Atoll": [
-    { iata: "NMF", label: "Maafaru", distKm: 32 }
+    { iata: "NMF", label: "Maafaru", distKm: 32, size: "medium", runwayM: 2850 }
   ],
   "Lima": [
-    { iata: "LIM", label: "Jorge Chávez", distKm: 16 }
+    { iata: "LIM", label: "Jorge Chávez", distKm: 16, size: "large", runwayM: 6987 }
   ],
   "Lisbon": [
-    { iata: "LIS", label: "Lisbon Humberto Delgado", distKm: 6 },
-    { iata: "CAT", label: "Cascais", distKm: 17 }
+    { iata: "LIS", label: "Lisbon Humberto Delgado", distKm: 6, size: "large", runwayM: 3810 },
+    { iata: "CAT", label: "Cascais", distKm: 17, size: "medium", runwayM: 1400 }
   ],
   "London": [
-    { iata: "LCY", label: "London City", distKm: 14 },
-    { iata: "LHR", label: "London Heathrow", distKm: 22 },
-    { iata: "LGW", label: "London Gatwick", distKm: 40 },
-    { iata: "LTN", label: "London Luton", distKm: 44 },
-    { iata: "STN", label: "London Stansted", distKm: 49 },
-    { iata: "SEN", label: "London Southend", distKm: 58 }
+    { iata: "LCY", label: "London City", distKm: 14, size: "medium", runwayM: 1508 },
+    { iata: "LHR", label: "London Heathrow", distKm: 22, size: "large", runwayM: 7559 },
+    { iata: "LGW", label: "London Gatwick", distKm: 40, size: "large", runwayM: 5878 },
+    { iata: "LTN", label: "London Luton", distKm: 44, size: "large", runwayM: 2162 },
+    { iata: "STN", label: "London Stansted", distKm: 49, size: "large", runwayM: 3049 },
+    { iata: "SEN", label: "London Southend", distKm: 58, size: "medium", runwayM: 1856 }
   ],
   "Long Bay Village": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 9 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 13 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 17 }
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 9, size: "medium", runwayM: 1665 },
+    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 13, size: "medium", runwayM: 1200 },
+    { iata: "SXM", label: "Princess Juliana", distKm: 17, size: "large", runwayM: 2300 }
   ],
   "Long Island": [
-    { iata: "ANU", label: "V. C. Bird", distKm: 4 }
+    { iata: "ANU", label: "V. C. Bird", distKm: 4, size: "large", runwayM: 2744 }
   ],
   "Lord Howe Island": [
-    { iata: "LDH", label: "Lord Howe Island", distKm: 1 }
+    { iata: "LDH", label: "Lord Howe Island", distKm: 1, size: "small", runwayM: 886 }
   ],
   "Los Angeles": [
-    { iata: "LAX", label: "Los Angeles", distKm: 14 },
-    { iata: "BUR", label: "Hollywood Burbank/Bob Hope", distKm: 16 },
-    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 16 }
+    { iata: "LAX", label: "Los Angeles", distKm: 14, size: "large", runwayM: 13343 },
+    { iata: "BUR", label: "Hollywood Burbank/Bob Hope", distKm: 16, size: "large", runwayM: 3867 },
+    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 16, size: "medium", runwayM: 1489 }
   ],
   "Los Cabos": [
-    { iata: "SJD", label: "Los Cabos", distKm: 10 }
+    { iata: "SJD", label: "Los Cabos", distKm: 10, size: "large", runwayM: 3000 }
   ],
   "Los Olivos": [
-    { iata: "SBA", label: "Santa Barbara", distKm: 37 },
-    { iata: "SMX", label: "Santa Maria Public Captain G Allan Hancock Field", distKm: 40 }
+    { iata: "SBA", label: "Santa Barbara", distKm: 37, size: "medium", runwayM: 4394 },
+    { iata: "SMX", label: "Santa Maria Public Captain G Allan Hancock Field", distKm: 40, size: "medium", runwayM: 4025 }
   ],
   "Luang Prabang": [
-    { iata: "LPQ", label: "Luang Phabang", distKm: 8 }
+    { iata: "LPQ", label: "Luang Phabang", distKm: 8, size: "large", runwayM: 2500 }
   ],
   "Lucerne": [
-    { iata: "ZRH", label: "Zürich", distKm: 48 },
-    { iata: "BRN", label: "Bern", distKm: 64 }
+    { iata: "ZRH", label: "Zürich", distKm: 48, size: "large", runwayM: 9808 },
+    { iata: "BRN", label: "Bern", distKm: 64, size: "medium", runwayM: 3695 }
   ],
   "Lugano": [
-    { iata: "LUG", label: "Lugano", distKm: 4 }
+    { iata: "LUG", label: "Lugano", distKm: 4, size: "medium", runwayM: 1415 }
   ],
   "Maagau Island": [
-    { iata: "VAM", label: "Villa Maamigili", distKm: 59 },
-    { iata: "TMF", label: "Thimarafushi", distKm: 86 }
+    { iata: "VAM", label: "Villa Maamigili", distKm: 59, size: "medium", runwayM: 1800 },
+    { iata: "TMF", label: "Thimarafushi", distKm: 86, size: "small", runwayM: 0 }
   ],
   "Maalifushi": [
-    { iata: "TMF", label: "Thimarafushi", distKm: 20 }
+    { iata: "TMF", label: "Thimarafushi", distKm: 20, size: "small", runwayM: 0 }
   ],
   "Macau": [
-    { iata: "MFM", label: "Macau", distKm: 4 },
-    { iata: "ZUH", label: "Zhuhai Jinwan", distKm: 25 }
+    { iata: "MFM", label: "Macau", distKm: 4, size: "large", runwayM: 3214 },
+    { iata: "ZUH", label: "Zhuhai Jinwan", distKm: 25, size: "large", runwayM: 4120 }
   ],
   "Madrid": [
-    { iata: "MAD", label: "Adolfo Suárez Madrid-Barajas", distKm: 13 }
+    { iata: "MAD", label: "Adolfo Suárez Madrid-Barajas", distKm: 13, size: "large", runwayM: 15338 }
   ],
   "Majorca": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 16 }
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 16, size: "large", runwayM: 6270 }
   ],
   "Malaga": [
-    { iata: "AGP", label: "Málaga-Costa del Sol", distKm: 10 }
+    { iata: "AGP", label: "Málaga-Costa del Sol", distKm: 10, size: "large", runwayM: 5950 }
   ],
   "Maldives": [
-    { iata: "HDK", label: "Kulhudhuffushi", distKm: 59 },
-    { iata: "FND", label: "Funadhoo", distKm: 74 },
-    { iata: "HAQ", label: "Hanimaadhoo", distKm: 75 }
+    { iata: "HDK", label: "Kulhudhuffushi", distKm: 59, size: "small", runwayM: 0 },
+    { iata: "FND", label: "Funadhoo", distKm: 74, size: "small", runwayM: 0 },
+    { iata: "HAQ", label: "Hanimaadhoo", distKm: 75, size: "large", runwayM: 2465 }
   ],
   "Maldonado": [
-    { iata: "PDP", label: "Capitan Corbeta CA Curbelo", distKm: 19 }
+    { iata: "PDP", label: "Capitan Corbeta CA Curbelo", distKm: 19, size: "medium", runwayM: 3733 }
   ],
   "Mangis": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 48 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 48, size: "large", runwayM: 2984 }
   ],
   "Manila": [
-    { iata: "MNL", label: "Ninoy Aquino", distKm: 4 }
+    { iata: "MNL", label: "Ninoy Aquino", distKm: 4, size: "large", runwayM: 5995 }
   ],
   "Marana": [
-    { iata: "TUS", label: "Tucson", distKm: 43 }
+    { iata: "TUS", label: "Tucson", distKm: 43, size: "large", runwayM: 5486 }
   ],
   "Marbella": [
-    { iata: "AGP", label: "Málaga-Costa del Sol", distKm: 42 },
-    { iata: "GIB", label: "Gibraltar", distKm: 55 }
+    { iata: "AGP", label: "Málaga-Costa del Sol", distKm: 42, size: "large", runwayM: 5950 },
+    { iata: "GIB", label: "Gibraltar", distKm: 55, size: "large", runwayM: 1829 }
   ],
   "Marigot": [
-    { iata: "SXM", label: "Princess Juliana", distKm: 4 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 11 },
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 19 }
+    { iata: "SXM", label: "Princess Juliana", distKm: 4, size: "large", runwayM: 2300 },
+    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 11, size: "medium", runwayM: 1200 },
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 19, size: "medium", runwayM: 1665 }
   ],
   "Marmaris": [
-    { iata: "RHO", label: "Rhodes \"Diagoras\"", distKm: 40 }
+    { iata: "RHO", label: "Rhodes \"Diagoras\"", distKm: 40, size: "large", runwayM: 3306 }
   ],
   "Marrakech": [
-    { iata: "RAK", label: "Marrakesh Menara", distKm: 6 }
+    { iata: "RAK", label: "Marrakesh Menara", distKm: 6, size: "large", runwayM: 3100 }
   ],
   "Mashpi": [
-    { iata: "UIO", label: "Mariscal Sucre", distKm: 67 }
+    { iata: "UIO", label: "Mariscal Sucre", distKm: 67, size: "large", runwayM: 4098 }
   ],
   "Matauri Bay": [
-    { iata: "KKE", label: "Kerikeri", distKm: 20 }
+    { iata: "KKE", label: "Kerikeri", distKm: 20, size: "medium", runwayM: 2365 }
   ],
   "Maui": [
-    { iata: "OGG", label: "Kahului", distKm: 24 }
+    { iata: "OGG", label: "Kahului", distKm: 24, size: "large", runwayM: 3651 }
   ],
   "Maundays Bay": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 12 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 14 }
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10, size: "medium", runwayM: 1665 },
+    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 12, size: "medium", runwayM: 1200 },
+    { iata: "SXM", label: "Princess Juliana", distKm: 14, size: "large", runwayM: 2300 }
   ],
   "Mazzarò": [
-    { iata: "REG", label: "Reggio Calabria", distKm: 39 },
-    { iata: "CTA", label: "Catania-Fontanarossa", distKm: 48 }
+    { iata: "REG", label: "Reggio Calabria", distKm: 39, size: "medium", runwayM: 3695 },
+    { iata: "CTA", label: "Catania-Fontanarossa", distKm: 48, size: "large", runwayM: 2435 }
   ],
   "Medhufaru Island": [
-    { iata: "NMF", label: "Maafaru", distKm: 12 }
+    { iata: "NMF", label: "Maafaru", distKm: 12, size: "medium", runwayM: 2850 }
   ],
   "Megali Ammos": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 2 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 2, size: "medium", runwayM: 1902 }
   ],
   "Megeve": [
-    { iata: "NCY", label: "Annecy Meythet", distKm: 41 },
-    { iata: "GVA", label: "Geneva", distKm: 58 }
+    { iata: "NCY", label: "Annecy Meythet", distKm: 41, size: "medium", runwayM: 2475 },
+    { iata: "GVA", label: "Geneva", distKm: 58, size: "large", runwayM: 3900 }
   ],
   "Melbourne": [
-    { iata: "MEB", label: "Melbourne Essendon", distKm: 12 },
-    { iata: "MEL", label: "Melbourne", distKm: 20 },
-    { iata: "MBW", label: "Melbourne Moorabbin", distKm: 21 },
-    { iata: "AVV", label: "Melbourne Avalon", distKm: 50 }
+    { iata: "MEB", label: "Melbourne Essendon", distKm: 12, size: "medium", runwayM: 3235 },
+    { iata: "MEL", label: "Melbourne", distKm: 20, size: "large", runwayM: 5943 },
+    { iata: "MBW", label: "Melbourne Moorabbin", distKm: 21, size: "medium", runwayM: 5355 },
+    { iata: "AVV", label: "Melbourne Avalon", distKm: 50, size: "large", runwayM: 3048 }
   ],
   "Menlo Park": [
-    { iata: "SQL", label: "San Carlos", distKm: 11 }
+    { iata: "SQL", label: "San Carlos", distKm: 11, size: "medium", runwayM: 799 }
   ],
   "Meradhoo Island": [
-    { iata: "KDM", label: "Kaadedhdhoo", distKm: 15 }
+    { iata: "KDM", label: "Kaadedhdhoo", distKm: 15, size: "medium", runwayM: 1220 }
   ],
   "Merano": [
-    { iata: "BZO", label: "Bolzano", distKm: 23 }
+    { iata: "BZO", label: "Bolzano", distKm: 23, size: "medium", runwayM: 2449 }
   ],
   "Mexico City": [
-    { iata: "MEX", label: "Mexico City Benito Juárez", distKm: 11 },
-    { iata: "NLU", label: "Felipe Ángeles", distKm: 39 }
+    { iata: "MEX", label: "Mexico City Benito Juárez", distKm: 11, size: "large", runwayM: 7852 },
+    { iata: "NLU", label: "Felipe Ángeles", distKm: 39, size: "large", runwayM: 12500 }
   ],
   "Miami": [
-    { iata: "MIA", label: "Miami", distKm: 6 }
+    { iata: "MIA", label: "Miami", distKm: 6, size: "large", runwayM: 12643 }
   ],
   "Miami Beach": [
-    { iata: "MIA", label: "Miami", distKm: 17 }
+    { iata: "MIA", label: "Miami", distKm: 17, size: "large", runwayM: 12643 }
   ],
   "Milan": [
-    { iata: "LIN", label: "Milano Linate", distKm: 7 },
-    { iata: "MXP", label: "Milan Malpensa", distKm: 40 }
+    { iata: "LIN", label: "Milano Linate", distKm: 7, size: "large", runwayM: 2442 },
+    { iata: "MXP", label: "Milan Malpensa", distKm: 40, size: "large", runwayM: 7840 }
   ],
   "Milas": [
-    { iata: "BJV", label: "Milas Bodrum", distKm: 23 }
+    { iata: "BJV", label: "Milas Bodrum", distKm: 23, size: "large", runwayM: 5940 }
   ],
   "Mitzpe Ramon": [
-    { iata: "ETM", label: "Ramon", distKm: 100 },
-    { iata: "AAC", label: "El Arish", distKm: 106 },
-    { iata: "AQJ", label: "King Hussein", distKm: 113 }
+    { iata: "ETM", label: "Ramon", distKm: 100, size: "large", runwayM: 3600 },
+    { iata: "AAC", label: "El Arish", distKm: 106, size: "large", runwayM: 6038 },
+    { iata: "AQJ", label: "King Hussein", distKm: 113, size: "large", runwayM: 3004 }
   ],
   "Miyako Island": [
-    { iata: "MMY", label: "Miyako", distKm: 7 },
-    { iata: "SHI", label: "Shimojishima", distKm: 14 }
+    { iata: "MMY", label: "Miyako", distKm: 7, size: "medium", runwayM: 1999 },
+    { iata: "SHI", label: "Shimojishima", distKm: 14, size: "medium", runwayM: 3000 }
   ],
   "Mnemba": [
-    { iata: "ZNZ", label: "Abeid Amani Karume", distKm: 48 }
+    { iata: "ZNZ", label: "Abeid Amani Karume", distKm: 48, size: "large", runwayM: 3022 }
   ],
   "Molatedi": [
-    { iata: "GBE", label: "Sir Seretse Khama", distKm: 48 }
+    { iata: "GBE", label: "Sir Seretse Khama", distKm: 48, size: "large", runwayM: 4000 }
   ],
   "Moltrasio": [
-    { iata: "LUG", label: "Lugano", distKm: 22 }
+    { iata: "LUG", label: "Lugano", distKm: 22, size: "medium", runwayM: 1415 }
   ],
   "Mont-Peleron": [
-    { iata: "GVA", label: "Geneva", distKm: 61 },
-    { iata: "BRN", label: "Bern", distKm: 70 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 83 }
+    { iata: "GVA", label: "Geneva", distKm: 61, size: "large", runwayM: 3900 },
+    { iata: "BRN", label: "Bern", distKm: 70, size: "medium", runwayM: 3695 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 83, size: "medium", runwayM: 2475 }
   ],
   "Montalcino": [
-    { iata: "FLR", label: "Florence, Peretola", distKm: 82 },
-    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 89 },
-    { iata: "EBA", label: "Marina di Campo", distKm: 103 }
+    { iata: "FLR", label: "Florence, Peretola", distKm: 82, size: "large", runwayM: 1560 },
+    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 89, size: "large", runwayM: 2199 },
+    { iata: "EBA", label: "Marina di Campo", distKm: 103, size: "medium", runwayM: 949 }
   ],
   "Monte Carlo": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 19 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 19, size: "large", runwayM: 5591 }
   ],
   "Montecito": [
-    { iata: "SBA", label: "Santa Barbara", distKm: 19 }
+    { iata: "SBA", label: "Santa Barbara", distKm: 19, size: "medium", runwayM: 4394 }
   ],
   "Montego Bay": [
-    { iata: "MBJ", label: "Sangster", distKm: 29 }
+    { iata: "MBJ", label: "Sangster", distKm: 29, size: "large", runwayM: 3060 }
   ],
   "Montreal": [
-    { iata: "YHU", label: "Montréal / Saint-Hubert Metropolitan", distKm: 13 },
-    { iata: "YUL", label: "Montreal / Pierre Elliott Trudeau", distKm: 13 },
-    { iata: "YMX", label: "Montreal Mirabel", distKm: 41 }
+    { iata: "YHU", label: "Montréal / Saint-Hubert Metropolitan", distKm: 13, size: "medium", runwayM: 4438 },
+    { iata: "YUL", label: "Montreal / Pierre Elliott Trudeau", distKm: 13, size: "large", runwayM: 6279 },
+    { iata: "YMX", label: "Montreal Mirabel", distKm: 41, size: "medium", runwayM: 6356 }
   ],
   "Montreux": [
-    { iata: "GVA", label: "Geneva", distKm: 65 },
-    { iata: "BRN", label: "Bern", distKm: 69 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 84 }
+    { iata: "GVA", label: "Geneva", distKm: 65, size: "large", runwayM: 3900 },
+    { iata: "BRN", label: "Bern", distKm: 69, size: "medium", runwayM: 3695 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 84, size: "medium", runwayM: 2475 }
   ],
   "Moscow": [
-    { iata: "VKO", label: "Vnukovo", distKm: 16 },
-    { iata: "SVO", label: "Sheremetyevo", distKm: 28 },
-    { iata: "DME", label: "Domodedovo", distKm: 55 },
-    { iata: "ZIA", label: "Zhukovsky", distKm: 60 }
+    { iata: "VKO", label: "Vnukovo", distKm: 16, size: "large", runwayM: 6560 },
+    { iata: "SVO", label: "Sheremetyevo", distKm: 28, size: "large", runwayM: 10450 },
+    { iata: "DME", label: "Domodedovo", distKm: 55, size: "large", runwayM: 5870 },
+    { iata: "ZIA", label: "Zhukovsky", distKm: 60, size: "large", runwayM: 4600 }
   ],
   "Moskito Island": [
-    { iata: "VIJ", label: "Virgin Gorda", distKm: 9 },
-    { iata: "EIS", label: "Terrance B. Lettsome", distKm: 18 }
+    { iata: "VIJ", label: "Virgin Gorda", distKm: 9, size: "medium", runwayM: 945 },
+    { iata: "EIS", label: "Terrance B. Lettsome", distKm: 18, size: "large", runwayM: 1415 }
   ],
   "Mossman": [
-    { iata: "CNS", label: "Cairns", distKm: 63 }
+    { iata: "CNS", label: "Cairns", distKm: 63, size: "large", runwayM: 3197 }
   ],
   "Moyo Island": [
-    { iata: "SWQ", label: "Sultan Muhammad Kaharuddin III", distKm: 27 }
+    { iata: "SWQ", label: "Sultan Muhammad Kaharuddin III", distKm: 27, size: "small", runwayM: 1800 }
   ],
   "Muang Muang Krabi": [
-    { iata: "KBV", label: "Krabi", distKm: 27 }
+    { iata: "KBV", label: "Krabi", distKm: 27, size: "large", runwayM: 3000 }
   ],
   "Mumbai": [
-    { iata: "BOM", label: "Chhatrapati Shivaji Maharaj", distKm: 15 }
+    { iata: "BOM", label: "Chhatrapati Shivaji Maharaj", distKm: 15, size: "large", runwayM: 6380 }
   ],
   "Munich": [
-    { iata: "MUC", label: "Munich", distKm: 28 }
+    { iata: "MUC", label: "Munich", distKm: 28, size: "large", runwayM: 8000 }
   ],
   "Muravandhoo": [
-    { iata: "DRV", label: "Dharavandhoo", distKm: 54 },
-    { iata: "NMF", label: "Maafaru", distKm: 62 },
-    { iata: "FND", label: "Funadhoo", distKm: 72 }
+    { iata: "DRV", label: "Dharavandhoo", distKm: 54, size: "small", runwayM: 1189 },
+    { iata: "NMF", label: "Maafaru", distKm: 62, size: "medium", runwayM: 2850 },
+    { iata: "FND", label: "Funadhoo", distKm: 72, size: "small", runwayM: 0 }
   ],
   "Muscat": [
-    { iata: "MCT", label: "Muscat", distKm: 18 }
+    { iata: "MCT", label: "Muscat", distKm: 18, size: "large", runwayM: 8080 }
   ],
   "Mykonos Town": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 2 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 2, size: "medium", runwayM: 1902 }
   ],
   "Namiri Plains": [
-    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 23 }
+    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 23, size: "medium", runwayM: 1052 }
   ],
   "Nanjing": [
-    { iata: "NKG", label: "Nanjing Lukou", distKm: 35 }
+    { iata: "NKG", label: "Nanjing Lukou", distKm: 35, size: "large", runwayM: 7200 }
   ],
   "Napa Valley": [
-    { iata: "CCR", label: "Buchanan Field", distKm: 35 }
+    { iata: "CCR", label: "Buchanan Field", distKm: 35, size: "medium", runwayM: 4624 }
   ],
   "Naples": [
-    { iata: "NAP", label: "Naples", distKm: 7 }
+    { iata: "NAP", label: "Naples", distKm: 7, size: "large", runwayM: 2628 }
   ],
   "Nassau": [
-    { iata: "NAS", label: "Lynden Pindling", distKm: 8 }
+    { iata: "NAS", label: "Lynden Pindling", distKm: 8, size: "large", runwayM: 5982 }
   ],
   "Natales": [
-    { iata: "PNT", label: "Lieutenant Julio Gallardo", distKm: 2 },
-    { iata: "RYO", label: "28 de Noviembre", distKm: 24 }
+    { iata: "PNT", label: "Lieutenant Julio Gallardo", distKm: 2, size: "medium", runwayM: 1764 },
+    { iata: "RYO", label: "28 de Noviembre", distKm: 24, size: "small", runwayM: 1932 }
   ],
   "Necker Island": [
-    { iata: "VIJ", label: "Virgin Gorda", distKm: 11 },
-    { iata: "EIS", label: "Terrance B. Lettsome", distKm: 21 }
+    { iata: "VIJ", label: "Virgin Gorda", distKm: 11, size: "medium", runwayM: 945 },
+    { iata: "EIS", label: "Terrance B. Lettsome", distKm: 21, size: "large", runwayM: 1415 }
   ],
   "Neuvecelle": [
-    { iata: "GVA", label: "Geneva", distKm: 41 }
+    { iata: "GVA", label: "Geneva", distKm: 41, size: "large", runwayM: 3900 }
   ],
   "New Delhi": [
-    { iata: "DEL", label: "Indira Gandhi", distKm: 15 },
-    { iata: "HDO", label: "Hindon / Hindon Air Force Station", distKm: 17 }
+    { iata: "DEL", label: "Indira Gandhi", distKm: 15, size: "large", runwayM: 15453 },
+    { iata: "HDO", label: "Hindon / Hindon Air Force Station", distKm: 17, size: "small", runwayM: 2743 }
   ],
   "New Orleans": [
-    { iata: "MSY", label: "Louis Armstrong New Orleans", distKm: 20 }
+    { iata: "MSY", label: "Louis Armstrong New Orleans", distKm: 20, size: "large", runwayM: 5214 }
   ],
   "New York": [
-    { iata: "LGA", label: "LaGuardia", distKm: 10 },
-    { iata: "EWR", label: "Newark Liberty", distKm: 17 },
-    { iata: "JFK", label: "John F. Kennedy", distKm: 22 }
+    { iata: "LGA", label: "LaGuardia", distKm: 10, size: "large", runwayM: 4268 },
+    { iata: "EWR", label: "Newark Liberty", distKm: 17, size: "large", runwayM: 8451 },
+    { iata: "JFK", label: "John F. Kennedy", distKm: 22, size: "large", runwayM: 13713 }
   ],
   "Newport Coast": [
-    { iata: "SNA", label: "John Wayne Orange County", distKm: 10 }
+    { iata: "SNA", label: "John Wayne Orange County", distKm: 10, size: "large", runwayM: 2617 }
   ],
   "Nice": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 7 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 7, size: "large", runwayM: 5591 }
   ],
   "Nihiwatu Beach": [
-    { iata: "TMC", label: "Tambolaka", distKm: 44 }
+    { iata: "TMC", label: "Tambolaka", distKm: 44, size: "small", runwayM: 1800 }
   ],
   "Nikiti": [
-    { iata: "SKG", label: "Thessaloniki Macedonia", distKm: 65 }
+    { iata: "SKG", label: "Thessaloniki Macedonia", distKm: 65, size: "large", runwayM: 5850 }
   ],
   "Nikko": [
-    { iata: "FKS", label: "Fukushima", distKm: 99 },
-    { iata: "IBR", label: "Ibaraki", distKm: 103 },
-    { iata: "NRT", label: "Narita", distKm: 134 }
+    { iata: "FKS", label: "Fukushima", distKm: 99, size: "medium", runwayM: 2500 },
+    { iata: "IBR", label: "Ibaraki", distKm: 103, size: "large", runwayM: 5400 },
+    { iata: "NRT", label: "Narita", distKm: 134, size: "large", runwayM: 6500 }
   ],
   "Ninh Van Bay": [
-    { iata: "CXR", label: "Cam Ranh / Cam Ranh Air Base", distKm: 41 }
+    { iata: "CXR", label: "Cam Ranh / Cam Ranh Air Base", distKm: 41, size: "large", runwayM: 6096 }
   ],
   "North Island": [
-    { iata: "SEZ", label: "Seychelles", distKm: 44 },
-    { iata: "PRI", label: "Praslin Island", distKm: 50 }
+    { iata: "SEZ", label: "Seychelles", distKm: 44, size: "large", runwayM: 2987 },
+    { iata: "PRI", label: "Praslin Island", distKm: 50, size: "medium", runwayM: 1316 }
   ],
   "Nusa Dua": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 10 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 10, size: "large", runwayM: 2984 }
   ],
   "Obbürgen": [
-    { iata: "ZRH", label: "Zürich", distKm: 53 },
-    { iata: "BRN", label: "Bern", distKm: 67 }
+    { iata: "ZRH", label: "Zürich", distKm: 53, size: "large", runwayM: 9808 },
+    { iata: "BRN", label: "Bern", distKm: 67, size: "medium", runwayM: 3695 }
   ],
   "Oia": [
-    { iata: "JTR", label: "Santorini", distKm: 10 }
+    { iata: "JTR", label: "Santorini", distKm: 10, size: "large", runwayM: 2197 }
   ],
   "Okavango Delta": [
-    { iata: "MUB", label: "Maun", distKm: 100 },
-    { iata: "SWX", label: "Shakawe", distKm: 145 }
+    { iata: "MUB", label: "Maun", distKm: 100, size: "large", runwayM: 2000 },
+    { iata: "SWX", label: "Shakawe", distKm: 145, size: "small", runwayM: 1860 }
   ],
   "Olhuveli": [
-    { iata: "TMF", label: "Thimarafushi", distKm: 58 }
+    { iata: "TMF", label: "Thimarafushi", distKm: 58, size: "small", runwayM: 0 }
   ],
   "Ornos": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 3 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 3, size: "medium", runwayM: 1902 }
   ],
   "Osaka": [
-    { iata: "ITM", label: "Osaka Itami", distKm: 12 },
-    { iata: "KIX", label: "Kansai", distKm: 37 }
+    { iata: "ITM", label: "Osaka Itami", distKm: 12, size: "large", runwayM: 4827 },
+    { iata: "KIX", label: "Kansai", distKm: 37, size: "large", runwayM: 7500 }
   ],
   "Oslo": [
-    { iata: "OSL", label: "Oslo-Gardermoen", distKm: 38 }
+    { iata: "OSL", label: "Oslo-Gardermoen", distKm: 38, size: "large", runwayM: 6550 }
   ],
   "Palermo": [
-    { iata: "PMO", label: "Falcone-Borsellino", distKm: 25 }
+    { iata: "PMO", label: "Falcone-Borsellino", distKm: 25, size: "large", runwayM: 5400 }
   ],
   "Palm Beach": [
-    { iata: "PBI", label: "President Donald J. Trump", distKm: 7 }
+    { iata: "PBI", label: "President Donald J. Trump", distKm: 7, size: "large", runwayM: 6141 }
   ],
   "Palma de Mallorca": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 12 }
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 12, size: "large", runwayM: 6270 }
   ],
   "Palmetto Bluff": [
-    { iata: "HHH", label: "Hilton Head", distKm: 18 }
+    { iata: "HHH", label: "Hilton Head", distKm: 18, size: "medium", runwayM: 1524 }
   ],
   "Pamalican Island": [
-    { iata: "CYU", label: "Cuyo", distKm: 67 }
+    { iata: "CYU", label: "Cuyo", distKm: 67, size: "small", runwayM: 0 }
   ],
   "Pamushana": [
-    { iata: "VPY", label: "Chimoio", distKm: 266 },
-    { iata: "PHW", label: "Hendrik Van Eck", distKm: 329 },
-    { iata: "BEW", label: "Beira", distKm: 346 }
+    { iata: "VPY", label: "Chimoio", distKm: 266, size: "medium", runwayM: 2400 },
+    { iata: "PHW", label: "Hendrik Van Eck", distKm: 329, size: "medium", runwayM: 1369 },
+    { iata: "BEW", label: "Beira", distKm: 346, size: "large", runwayM: 2400 }
   ],
   "Papas Beach": [
-    { iata: "JTR", label: "Santorini", distKm: 33 },
-    { iata: "JNX", label: "Naxos Island National", distKm: 44 },
-    { iata: "PAS", label: "Paros National", distKm: 44 }
+    { iata: "JTR", label: "Santorini", distKm: 33, size: "large", runwayM: 2197 },
+    { iata: "JNX", label: "Naxos Island National", distKm: 44, size: "small", runwayM: 900 },
+    { iata: "PAS", label: "Paros National", distKm: 44, size: "small", runwayM: 1400 }
   ],
   "Paphos": [
-    { iata: "PFO", label: "Paphos", distKm: 7 }
+    { iata: "PFO", label: "Paphos", distKm: 7, size: "large", runwayM: 2700 }
   ],
   "Paradise Island": [
-    { iata: "NAS", label: "Lynden Pindling", distKm: 16 }
+    { iata: "NAS", label: "Lynden Pindling", distKm: 16, size: "large", runwayM: 5982 }
   ],
   "Paris": [
-    { iata: "ORY", label: "Paris-Orly", distKm: 16 },
-    { iata: "CDG", label: "Charles de Gaulle", distKm: 24 }
+    { iata: "ORY", label: "Paris-Orly", distKm: 16, size: "large", runwayM: 9370 },
+    { iata: "CDG", label: "Charles de Gaulle", distKm: 24, size: "large", runwayM: 14255 }
   ],
   "Park City": [
-    { iata: "SLC", label: "Salt Lake City", distKm: 46 },
-    { iata: "PVU", label: "Provo", distKm: 51 }
+    { iata: "SLC", label: "Salt Lake City", distKm: 46, size: "large", runwayM: 11732 },
+    { iata: "PVU", label: "Provo", distKm: 51, size: "medium", runwayM: 4642 }
   ],
   "Paro": [
-    { iata: "PBH", label: "Paro", distKm: 8 }
+    { iata: "PBH", label: "Paro", distKm: 8, size: "large", runwayM: 2265 }
   ],
   "Patong": [
-    { iata: "HKT", label: "Phuket", distKm: 26 }
+    { iata: "HKT", label: "Phuket", distKm: 26, size: "large", runwayM: 3100 }
   ],
   "Perez Zeledón": [
-    { iata: "XQP", label: "Quepos Managua", distKm: 62 },
-    { iata: "GLF", label: "Golfito", distKm: 87 },
-    { iata: "LIO", label: "Limón", distKm: 92 }
+    { iata: "XQP", label: "Quepos Managua", distKm: 62, size: "medium", runwayM: 1100 },
+    { iata: "GLF", label: "Golfito", distKm: 87, size: "medium", runwayM: 1400 },
+    { iata: "LIO", label: "Limón", distKm: 92, size: "medium", runwayM: 1800 }
   ],
   "Perthshire": [
-    { iata: "EDI", label: "Edinburgh", distKm: 44 },
-    { iata: "DND", label: "Dundee", distKm: 49 },
-    { iata: "GLA", label: "Glasgow", distKm: 62 }
+    { iata: "EDI", label: "Edinburgh", distKm: 44, size: "large", runwayM: 2558 },
+    { iata: "DND", label: "Dundee", distKm: 49, size: "medium", runwayM: 1400 },
+    { iata: "GLA", label: "Glasgow", distKm: 62, size: "large", runwayM: 2661 }
   ],
   "Perugia": [
-    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 32 }
+    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 32, size: "large", runwayM: 2199 }
   ],
   "Petit Anse bay": [
-    { iata: "SEZ", label: "Seychelles", distKm: 11 }
+    { iata: "SEZ", label: "Seychelles", distKm: 11, size: "large", runwayM: 2987 }
   ],
   "Philadelphia": [
-    { iata: "PHL", label: "Philadelphia", distKm: 11 }
+    { iata: "PHL", label: "Philadelphia", distKm: 11, size: "large", runwayM: 10059 }
   ],
   "Philipsburg": [
-    { iata: "MSO", label: "Missoula Montana", distKm: 85 },
-    { iata: "BTM", label: "Bert Mooney", distKm: 86 },
-    { iata: "HLN", label: "Helena", distKm: 124 }
+    { iata: "MSO", label: "Missoula Montana", distKm: 85, size: "medium", runwayM: 2896 },
+    { iata: "BTM", label: "Bert Mooney", distKm: 86, size: "medium", runwayM: 4297 },
+    { iata: "HLN", label: "Helena", distKm: 124, size: "medium", runwayM: 5069 }
   ],
   "Phnom Penh": [
-    { iata: "KTI", label: "Techo", distKm: 24 }
+    { iata: "KTI", label: "Techo", distKm: 24, size: "large", runwayM: 4000 }
   ],
   "Phoenix": [
-    { iata: "PHX", label: "Phoenix Sky Harbor", distKm: 10 }
+    { iata: "PHX", label: "Phoenix Sky Harbor", distKm: 10, size: "large", runwayM: 9018 }
   ],
   "Pine Cay": [
-    { iata: "NCA", label: "North Caicos", distKm: 17 },
-    { iata: "PLS", label: "Providenciales", distKm: 21 }
+    { iata: "NCA", label: "North Caicos", distKm: 17, size: "medium", runwayM: 1294 },
+    { iata: "PLS", label: "Providenciales", distKm: 21, size: "large", runwayM: 2804 }
   ],
   "Platis Gialos Beach": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 2 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 2, size: "medium", runwayM: 1902 }
   ],
   "Playa del Carmen": [
-    { iata: "CZM", label: "Cozumel", distKm: 21 }
+    { iata: "CZM", label: "Cozumel", distKm: 21, size: "large", runwayM: 2700 }
   ],
   "Porto Ercole": [
-    { iata: "EBA", label: "Marina di Campo", distKm: 89 },
-    { iata: "FCO", label: "Rome-Fiumicino Leonardo da Vinci", distKm: 108 },
-    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 133 }
+    { iata: "EBA", label: "Marina di Campo", distKm: 89, size: "medium", runwayM: 949 },
+    { iata: "FCO", label: "Rome-Fiumicino Leonardo da Vinci", distKm: 108, size: "large", runwayM: 11104 },
+    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 133, size: "large", runwayM: 2202 }
   ],
   "Portofino": [
-    { iata: "GOA", label: "Genoa Cristoforo Colombo", distKm: 32 }
+    { iata: "GOA", label: "Genoa Cristoforo Colombo", distKm: 32, size: "large", runwayM: 2915 }
   ],
   "Portonovi": [
-    { iata: "TIV", label: "Tivat", distKm: 11 }
+    { iata: "TIV", label: "Tivat", distKm: 11, size: "medium", runwayM: 2502 }
   ],
   "Positano": [
-    { iata: "NAP", label: "Naples", distKm: 34 },
-    { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 35 }
+    { iata: "NAP", label: "Naples", distKm: 34, size: "large", runwayM: 2628 },
+    { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 35, size: "medium", runwayM: 1962 }
   ],
   "Poste De Flacq": [
-    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 31 }
+    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 31, size: "large", runwayM: 3370 }
   ],
   "Prague": [
-    { iata: "PRG", label: "Václav Havel Prague", distKm: 12 }
+    { iata: "PRG", label: "Václav Havel Prague", distKm: 12, size: "large", runwayM: 6965 }
   ],
   "Princeville": [
-    { iata: "LIH", label: "Lihue", distKm: 32 }
+    { iata: "LIH", label: "Lihue", distKm: 32, size: "large", runwayM: 3962 }
   ],
   "Providenciales": [
-    { iata: "PLS", label: "Providenciales", distKm: 12 }
+    { iata: "PLS", label: "Providenciales", distKm: 12, size: "large", runwayM: 2804 }
   ],
   "Psarou": [
-    { iata: "JMK", label: "Mykonos Island National", distKm: 2 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 2, size: "medium", runwayM: 1902 }
   ],
   "Puigpunyent": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 20 }
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 20, size: "large", runwayM: 6270 }
   ],
   "Puligny-Montrachet": [
-    { iata: "DIJ", label: "Dijon Longvic", distKm: 44 },
-    { iata: "DLE", label: "Dole Tavaux", distKm: 52 }
+    { iata: "DIJ", label: "Dijon Longvic", distKm: 44, size: "medium", runwayM: 3600 },
+    { iata: "DLE", label: "Dole Tavaux", distKm: 52, size: "medium", runwayM: 2231 }
   ],
   "Punakha": [
-    { iata: "PBH", label: "Paro", distKm: 45 }
+    { iata: "PBH", label: "Paro", distKm: 45, size: "large", runwayM: 2265 }
   ],
   "Punta Mita": [
-    { iata: "PVR", label: "Puerto Vallarta", distKm: 31 }
+    { iata: "PVR", label: "Puerto Vallarta", distKm: 31, size: "large", runwayM: 3100 }
   ],
   "Pylos": [
-    { iata: "KLX", label: "Kalamata", distKm: 31 }
+    { iata: "KLX", label: "Kalamata", distKm: 31, size: "medium", runwayM: 6000 }
   ],
   "Queenstown": [
-    { iata: "ZQN", label: "Queenstown", distKm: 10 }
+    { iata: "ZQN", label: "Queenstown", distKm: 10, size: "large", runwayM: 2781 }
   ],
   "Quintana Roo": [
-    { iata: "CZM", label: "Cozumel", distKm: 24 }
+    { iata: "CZM", label: "Cozumel", distKm: 24, size: "large", runwayM: 2700 }
   ],
   "Quito": [
-    { iata: "UIO", label: "Mariscal Sucre", distKm: 21 }
+    { iata: "UIO", label: "Mariscal Sucre", distKm: 21, size: "large", runwayM: 4098 }
   ],
   "Ramatuelle": [
-    { iata: "LTT", label: "La Môle", distKm: 14 }
+    { iata: "LTT", label: "La Môle", distKm: 14, size: "small", runwayM: 1071 }
   ],
   "Rancho Santa Fe": [
-    { iata: "CLD", label: "McClellan-Palomar", distKm: 18 }
+    { iata: "CLD", label: "McClellan-Palomar", distKm: 18, size: "medium", runwayM: 1493 }
   ],
   "Randheli": [
-    { iata: "NMF", label: "Maafaru", distKm: 20 }
+    { iata: "NMF", label: "Maafaru", distKm: 20, size: "medium", runwayM: 2850 }
   ],
   "Rangali Island": [
-    { iata: "VAM", label: "Villa Maamigili", distKm: 20 }
+    { iata: "VAM", label: "Villa Maamigili", distKm: 20, size: "medium", runwayM: 1800 }
   ],
   "Ravello": [
-    { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 25 },
-    { iata: "NAP", label: "Naples", distKm: 38 }
+    { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 25, size: "medium", runwayM: 1962 },
+    { iata: "NAP", label: "Naples", distKm: 38, size: "large", runwayM: 2628 }
   ],
   "Reethi Rah Island": [
-    { iata: "MLE", label: "Velana", distKm: 41 }
+    { iata: "MLE", label: "Velana", distKm: 41, size: "large", runwayM: 3400 }
   ],
   "Rendezvous Bay": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 7 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 11 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 15 }
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 7, size: "medium", runwayM: 1665 },
+    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 11, size: "medium", runwayM: 1200 },
+    { iata: "SXM", label: "Princess Juliana", distKm: 15, size: "large", runwayM: 2300 }
   ],
   "Reykjavik": [
-    { iata: "RKV", label: "Reykjavík", distKm: 2 },
-    { iata: "KEF", label: "Keflavik", distKm: 37 }
+    { iata: "RKV", label: "Reykjavík", distKm: 2, size: "medium", runwayM: 2796 },
+    { iata: "KEF", label: "Keflavik", distKm: 37, size: "large", runwayM: 6119 }
   ],
   "Rio de Janeiro": [
-    { iata: "SDU", label: "Santos Dumont", distKm: 8 },
-    { iata: "RRJ", label: "Jacarepaguá - Roberto Marinho", distKm: 19 },
-    { iata: "GIG", label: "Rio Galeão - Tom Jobim", distKm: 20 }
+    { iata: "SDU", label: "Santos Dumont", distKm: 8, size: "large", runwayM: 2583 },
+    { iata: "RRJ", label: "Jacarepaguá - Roberto Marinho", distKm: 19, size: "medium", runwayM: 900 },
+    { iata: "GIG", label: "Rio Galeão - Tom Jobim", distKm: 20, size: "large", runwayM: 7180 }
   ],
   "Rio Negro": [
-    { iata: "BRC", label: "Teniente Luis Candelaria", distKm: 33 }
+    { iata: "BRC", label: "Teniente Luis Candelaria", distKm: 33, size: "large", runwayM: 2348 }
   ],
   "Rio San Juan": [
-    { iata: "AZS", label: "Samaná El Catey", distKm: 54 },
-    { iata: "POP", label: "Gregorio Luperon", distKm: 58 },
-    { iata: "STI", label: "Cibao", distKm: 69 }
+    { iata: "AZS", label: "Samaná El Catey", distKm: 54, size: "medium", runwayM: 3000 },
+    { iata: "POP", label: "Gregorio Luperon", distKm: 58, size: "medium", runwayM: 3081 },
+    { iata: "STI", label: "Cibao", distKm: 69, size: "large", runwayM: 2620 }
   ],
   "Rippon": [
-    { iata: "LBA", label: "Leeds Bradford", distKm: 28 }
+    { iata: "LBA", label: "Leeds Bradford", distKm: 28, size: "large", runwayM: 2250 }
   ],
   "Riviera Maya": [
-    { iata: "CZM", label: "Cozumel", distKm: 28 },
-    { iata: "CUN", label: "Cancún", distKm: 32 }
+    { iata: "CZM", label: "Cozumel", distKm: 28, size: "large", runwayM: 2700 },
+    { iata: "CUN", label: "Cancún", distKm: 32, size: "large", runwayM: 6300 }
   ],
   "Riyadh": [
-    { iata: "RUH", label: "King Khalid", distKm: 30 }
+    { iata: "RUH", label: "King Khalid", distKm: 30, size: "large", runwayM: 8410 }
   ],
   "Rome": [
-    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 15 },
-    { iata: "FCO", label: "Rome-Fiumicino Leonardo da Vinci", distKm: 22 }
+    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 15, size: "large", runwayM: 2202 },
+    { iata: "FCO", label: "Rome-Fiumicino Leonardo da Vinci", distKm: 22, size: "large", runwayM: 11104 }
   ],
   "Roquebrune-Cap-Martin": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 21 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 21, size: "large", runwayM: 5591 }
   ],
   "Rovinj": [
-    { iata: "PUY", label: "Pula", distKm: 30 }
+    { iata: "PUY", label: "Pula", distKm: 30, size: "large", runwayM: 2950 }
   ],
   "Ruhengeri": [
-    { iata: "KXO", label: "Kisoro", distKm: 28 },
-    { iata: "GOM", label: "Goma", distKm: 40 }
+    { iata: "KXO", label: "Kisoro", distKm: 28, size: "small", runwayM: 1200 },
+    { iata: "GOM", label: "Goma", distKm: 40, size: "large", runwayM: 2955 }
   ],
   "Rutherford": [
-    { iata: "STS", label: "Charles M. Schulz Sonoma County", distKm: 35 }
+    { iata: "STS", label: "Charles M. Schulz Sonoma County", distKm: 35, size: "medium", runwayM: 3415 }
   ],
   "Sabi Sand Reserve": [
-    { iata: "SZK", label: "Skukuza", distKm: 12 }
+    { iata: "SZK", label: "Skukuza", distKm: 12, size: "medium", runwayM: 1550 }
   ],
   "Saint-Tropez": [
-    { iata: "LTT", label: "La Môle", distKm: 14 }
+    { iata: "LTT", label: "La Môle", distKm: 14, size: "small", runwayM: 1071 }
   ],
   "Salzburg": [
-    { iata: "SZG", label: "Salzburg", distKm: 19 }
+    { iata: "SZG", label: "Salzburg", distKm: 19, size: "large", runwayM: 2750 }
   ],
   "San Francisco": [
-    { iata: "OAK", label: "Oakland San Francisco Bay", distKm: 18 },
-    { iata: "SFO", label: "San Francisco", distKm: 19 }
+    { iata: "OAK", label: "Oakland San Francisco Bay", distKm: 18, size: "large", runwayM: 7792 },
+    { iata: "SFO", label: "San Francisco", distKm: 19, size: "large", runwayM: 12059 }
   ],
   "San Jose del Cabo": [
-    { iata: "SJD", label: "Los Cabos", distKm: 15 },
-    { iata: "CSW", label: "Cabo San Lucas", distKm: 25 }
+    { iata: "SJD", label: "Los Cabos", distKm: 15, size: "large", runwayM: 3000 },
+    { iata: "CSW", label: "Cabo San Lucas", distKm: 25, size: "medium", runwayM: 2133 }
   ],
   "San Miguel de Allende": [
-    { iata: "QRO", label: "Querétaro Intercontinental", distKm: 66 },
-    { iata: "BJX", label: "Guanajuato", distKm: 77 }
+    { iata: "QRO", label: "Querétaro Intercontinental", distKm: 66, size: "large", runwayM: 3500 },
+    { iata: "BJX", label: "Guanajuato", distKm: 77, size: "large", runwayM: 3500 }
   ],
   "San Remo": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 48 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 48, size: "large", runwayM: 5591 }
   ],
   "Sant Joan de Labritja": [
-    { iata: "IBZ", label: "Ibiza", distKm: 29 }
+    { iata: "IBZ", label: "Ibiza", distKm: 29, size: "large", runwayM: 2800 }
   ],
   "Sant Josep de Sa Talaia": [
-    { iata: "IBZ", label: "Ibiza", distKm: 16 }
+    { iata: "IBZ", label: "Ibiza", distKm: 16, size: "large", runwayM: 2800 }
   ],
   "Santa Fe": [
-    { iata: "SAF", label: "Santa Fe", distKm: 20 }
+    { iata: "SAF", label: "Santa Fe", distKm: 20, size: "medium", runwayM: 6396 }
   ],
   "Santa Monica": [
-    { iata: "LAX", label: "Los Angeles", distKm: 10 },
-    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 17 }
+    { iata: "LAX", label: "Los Angeles", distKm: 10, size: "large", runwayM: 13343 },
+    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 17, size: "medium", runwayM: 1489 }
   ],
   "Santiago": [
-    { iata: "SCL", label: "Comodoro Arturo Merino Benítez", distKm: 16 }
+    { iata: "SCL", label: "Comodoro Arturo Merino Benítez", distKm: 16, size: "large", runwayM: 7500 }
   ],
   "Sanya": [
-    { iata: "SYX", label: "Sanya Phoenix", distKm: 23 }
+    { iata: "SYX", label: "Sanya Phoenix", distKm: 23, size: "large", runwayM: 3400 }
   ],
   "Sao Goncalo do Amarante": [
-    { iata: "FOR", label: "Pinto Martins", distKm: 51 }
+    { iata: "FOR", label: "Pinto Martins", distKm: 51, size: "large", runwayM: 2755 }
   ],
   "Sao Paulo": [
-    { iata: "CGH", label: "Congonhas-Deputado Freitas Nobre", distKm: 8 },
-    { iata: "GRU", label: "São Paulo/Guarulhos-Governor André Franco Montoro", distKm: 24 }
+    { iata: "CGH", label: "Congonhas-Deputado Freitas Nobre", distKm: 8, size: "large", runwayM: 3435 },
+    { iata: "GRU", label: "São Paulo/Guarulhos-Governor André Franco Montoro", distKm: 24, size: "large", runwayM: 6700 }
   ],
   "Savannah": [
-    { iata: "SAV", label: "Savannah Hilton Head", distKm: 13 }
+    { iata: "SAV", label: "Savannah Hilton Head", distKm: 13, size: "large", runwayM: 4984 }
   ],
   "Scottsdale": [
-    { iata: "PHX", label: "Phoenix Sky Harbor", distKm: 36 },
-    { iata: "AZA", label: "Mesa Gateway", distKm: 51 }
+    { iata: "PHX", label: "Phoenix Sky Harbor", distKm: 36, size: "large", runwayM: 9018 },
+    { iata: "AZA", label: "Mesa Gateway", distKm: 51, size: "medium", runwayM: 9114 }
   ],
   "Sea Island": [
-    { iata: "BQK", label: "Brunswick Golden Isles", distKm: 14 }
+    { iata: "BQK", label: "Brunswick Golden Isles", distKm: 14, size: "medium", runwayM: 2439 }
   ],
   "Seattle": [
-    { iata: "BFI", label: "King County - Boeing Field", distKm: 9 },
-    { iata: "SEA", label: "Seattle-Tacoma", distKm: 18 },
-    { iata: "PAE", label: "Seattle Paine Field", distKm: 33 }
+    { iata: "BFI", label: "King County - Boeing Field", distKm: 9, size: "medium", runwayM: 4181 },
+    { iata: "SEA", label: "Seattle-Tacoma", distKm: 18, size: "large", runwayM: 9091 },
+    { iata: "PAE", label: "Seattle Paine Field", distKm: 33, size: "medium", runwayM: 3662 }
   ],
   "Seoul": [
-    { iata: "GMP", label: "Seoul Gimpo", distKm: 16 },
-    { iata: "ICN", label: "Incheon", distKm: 48 }
+    { iata: "GMP", label: "Seoul Gimpo", distKm: 16, size: "large", runwayM: 6800 },
+    { iata: "ICN", label: "Incheon", distKm: 48, size: "large", runwayM: 15250 }
   ],
   "Serengeti": [
-    { iata: "SEU", label: "Seronera", distKm: 27 }
+    { iata: "SEU", label: "Seronera", distKm: 27, size: "small", runwayM: 2280 }
   ],
   "Sesriem": [
-    { iata: "LUD", label: "Luderitz", distKm: 222 },
-    { iata: "WVB", label: "Walvis Bay", distKm: 237 },
-    { iata: "ERS", label: "Eros", distKm: 270 }
+    { iata: "LUD", label: "Luderitz", distKm: 222, size: "medium", runwayM: 2997 },
+    { iata: "WVB", label: "Walvis Bay", distKm: 237, size: "large", runwayM: 3500 },
+    { iata: "ERS", label: "Eros", distKm: 270, size: "medium", runwayM: 3255 }
   ],
   "Seven Mile Beach": [
-    { iata: "GCM", label: "Owen Roberts", distKm: 5 }
+    { iata: "GCM", label: "Owen Roberts", distKm: 5, size: "large", runwayM: 2398 }
   ],
   "Seville": [
-    { iata: "SVQ", label: "Seville", distKm: 10 }
+    { iata: "SVQ", label: "Seville", distKm: 10, size: "large", runwayM: 3362 }
   ],
   "Shanghai": [
-    { iata: "SHA", label: "Shanghai Hongqiao", distKm: 13 },
-    { iata: "PVG", label: "Shanghai Pudong", distKm: 33 }
+    { iata: "SHA", label: "Shanghai Hongqiao", distKm: 13, size: "large", runwayM: 6700 },
+    { iata: "PVG", label: "Shanghai Pudong", distKm: 33, size: "large", runwayM: 18400 }
   ],
   "Sharm El Sheikh": [
-    { iata: "SSH", label: "Sharm El Sheikh", distKm: 2 }
+    { iata: "SSH", label: "Sharm El Sheikh", distKm: 2, size: "large", runwayM: 6162 }
   ],
   "Shenzhen": [
-    { iata: "SZX", label: "Shenzhen Bao'an", distKm: 29 }
+    { iata: "SZX", label: "Shenzhen Bao'an", distKm: 29, size: "large", runwayM: 10800 }
   ],
   "Sidemen Valley": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 43 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 43, size: "large", runwayM: 2984 }
   ],
   "Singapore": [
-    { iata: "XSP", label: "Seletar", distKm: 15 },
-    { iata: "SIN", label: "Singapore Changi", distKm: 18 }
+    { iata: "XSP", label: "Seletar", distKm: 15, size: "medium", runwayM: 1836 },
+    { iata: "SIN", label: "Singapore Changi", distKm: 18, size: "large", runwayM: 8000 }
   ],
   "Skukuza Rest Camp": [
-    { iata: "SZK", label: "Skukuza", distKm: 4 }
+    { iata: "SZK", label: "Skukuza", distKm: 4, size: "medium", runwayM: 1550 }
   ],
   "Sonop Farm": [
-    { iata: "LUD", label: "Luderitz", distKm: 162 }
+    { iata: "LUD", label: "Luderitz", distKm: 162, size: "medium", runwayM: 2997 }
   ],
   "Sorrento": [
-    { iata: "NAP", label: "Naples", distKm: 30 }
+    { iata: "NAP", label: "Naples", distKm: 30, size: "large", runwayM: 2628 }
   ],
   "Sourfriere": [
-    { iata: "UVF", label: "Hewanorra", distKm: 16 },
-    { iata: "SLU", label: "George F. L. Charles", distKm: 23 }
+    { iata: "UVF", label: "Hewanorra", distKm: 16, size: "large", runwayM: 2744 },
+    { iata: "SLU", label: "George F. L. Charles", distKm: 23, size: "medium", runwayM: 1748 }
   ],
   "Spanish Town": [
-    { iata: "VIJ", label: "Virgin Gorda", distKm: 2 },
-    { iata: "EIS", label: "Terrance B. Lettsome", distKm: 11 }
+    { iata: "VIJ", label: "Virgin Gorda", distKm: 2, size: "medium", runwayM: 945 },
+    { iata: "EIS", label: "Terrance B. Lettsome", distKm: 11, size: "large", runwayM: 1415 }
   ],
   "St. Andrews": [
-    { iata: "DND", label: "Dundee", distKm: 18 }
+    { iata: "DND", label: "Dundee", distKm: 18, size: "medium", runwayM: 1400 }
   ],
   "St. Barthelemy": [
-    { iata: "SBH", label: "St. Jean", distKm: 1 }
+    { iata: "SBH", label: "St. Jean", distKm: 1, size: "medium", runwayM: 646 }
   ],
   "St. James": [
-    { iata: "BGI", label: "Grantley Adams", distKm: 19 }
+    { iata: "BGI", label: "Grantley Adams", distKm: 19, size: "large", runwayM: 3353 }
   ],
   "St. Moritz": [
-    { iata: "LUG", label: "Lugano", distKm: 91 },
-    { iata: "BGY", label: "Il Caravaggio", distKm: 92 },
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 112 }
+    { iata: "LUG", label: "Lugano", distKm: 91, size: "medium", runwayM: 1415 },
+    { iata: "BGY", label: "Il Caravaggio", distKm: 92, size: "large", runwayM: 3588 },
+    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 112, size: "medium", runwayM: 2265 }
   ],
   "Stockholm": [
-    { iata: "BMA", label: "Stockholm-Bromma", distKm: 8 },
-    { iata: "ARN", label: "Stockholm-Arlanda", distKm: 36 }
+    { iata: "BMA", label: "Stockholm-Bromma", distKm: 8, size: "medium", runwayM: 1668 },
+    { iata: "ARN", label: "Stockholm-Arlanda", distKm: 36, size: "large", runwayM: 8301 }
   ],
   "Stresa": [
-    { iata: "LUG", label: "Lugano", distKm: 33 },
-    { iata: "MXP", label: "Milan Malpensa", distKm: 33 }
+    { iata: "LUG", label: "Lugano", distKm: 33, size: "medium", runwayM: 1415 },
+    { iata: "MXP", label: "Milan Malpensa", distKm: 33, size: "large", runwayM: 7840 }
   ],
   "Sunningdale": [
-    { iata: "LHR", label: "London Heathrow", distKm: 13 }
+    { iata: "LHR", label: "London Heathrow", distKm: 13, size: "large", runwayM: 7559 }
   ],
   "Sunny Isles Beach": [
-    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 15 },
-    { iata: "MIA", label: "Miami", distKm: 23 }
+    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 15, size: "large", runwayM: 5181 },
+    { iata: "MIA", label: "Miami", distKm: 23, size: "large", runwayM: 12643 }
   ],
   "Surfers Paradise": [
-    { iata: "OOL", label: "Gold Coast", distKm: 18 }
+    { iata: "OOL", label: "Gold Coast", distKm: 18, size: "large", runwayM: 3074 }
   ],
   "Surfside": [
-    { iata: "MIA", label: "Miami", distKm: 19 },
-    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 22 }
+    { iata: "MIA", label: "Miami", distKm: 19, size: "large", runwayM: 12643 },
+    { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 22, size: "large", runwayM: 5181 }
   ],
   "Sydney": [
-    { iata: "SYD", label: "Sydney Kingsford Smith", distKm: 10 }
+    { iata: "SYD", label: "Sydney Kingsford Smith", distKm: 10, size: "large", runwayM: 8930 }
   ],
   "Taipei": [
-    { iata: "TSA", label: "Taipei Songshan", distKm: 1 }
+    { iata: "TSA", label: "Taipei Songshan", distKm: 1, size: "large", runwayM: 2605 }
   ],
   "Tangier": [
-    { iata: "TNG", label: "Tangier Ibn Battuta", distKm: 11 }
+    { iata: "TNG", label: "Tangier Ibn Battuta", distKm: 11, size: "large", runwayM: 3500 }
   ],
   "Taormina": [
-    { iata: "REG", label: "Reggio Calabria", distKm: 40 },
-    { iata: "CTA", label: "Catania-Fontanarossa", distKm: 47 }
+    { iata: "REG", label: "Reggio Calabria", distKm: 40, size: "medium", runwayM: 3695 },
+    { iata: "CTA", label: "Catania-Fontanarossa", distKm: 47, size: "large", runwayM: 2435 }
   ],
   "Te Awanga": [
-    { iata: "NPE", label: "Hawke's Bay", distKm: 26 }
+    { iata: "NPE", label: "Hawke's Bay", distKm: 26, size: "medium", runwayM: 2969 }
   ],
   "Tel Aviv": [
-    { iata: "TLV", label: "Ben Gurion", distKm: 13 }
+    { iata: "TLV", label: "Ben Gurion", distKm: 13, size: "large", runwayM: 9946 }
   ],
   "Tenerife South": [
-    { iata: "TFS", label: "Tenerife Sur", distKm: 17 }
+    { iata: "TFS", label: "Tenerife Sur", distKm: 17, size: "large", runwayM: 3200 }
   ],
   "Tepic-Puerto Vallarta": [
-    { iata: "PVR", label: "Puerto Vallarta", distKm: 34 }
+    { iata: "PVR", label: "Puerto Vallarta", distKm: 34, size: "large", runwayM: 3100 }
   ],
   "Teton Village": [
-    { iata: "JAC", label: "Jackson Hole", distKm: 7 }
+    { iata: "JAC", label: "Jackson Hole", distKm: 7, size: "medium", runwayM: 1920 }
   ],
   "Thalang": [
-    { iata: "HKT", label: "Phuket", distKm: 18 }
+    { iata: "HKT", label: "Phuket", distKm: 18, size: "large", runwayM: 3100 }
   ],
   "Thiladhoo Island": [
-    { iata: "DRV", label: "Dharavandhoo", distKm: 12 }
+    { iata: "DRV", label: "Dharavandhoo", distKm: 12, size: "small", runwayM: 1189 }
   ],
   "Tokyo": [
-    { iata: "HND", label: "Tokyo Haneda", distKm: 14 }
+    { iata: "HND", label: "Tokyo Haneda", distKm: 14, size: "large", runwayM: 11360 }
   ],
   "Torno": [
-    { iata: "LUG", label: "Lugano", distKm: 23 }
+    { iata: "LUG", label: "Lugano", distKm: 23, size: "medium", runwayM: 1415 }
   ],
   "Toronto": [
-    { iata: "YTZ", label: "Billy Bishop Toronto City", distKm: 2 },
-    { iata: "YYZ", label: "Toronto Pearson", distKm: 19 }
+    { iata: "YTZ", label: "Billy Bishop Toronto City", distKm: 2, size: "medium", runwayM: 2110 },
+    { iata: "YYZ", label: "Toronto Pearson", distKm: 19, size: "large", runwayM: 15226 }
   ],
   "Torres Del Paine": [
-    { iata: "RYO", label: "28 de Noviembre", distKm: 75 },
-    { iata: "PNT", label: "Lieutenant Julio Gallardo", distKm: 78 },
-    { iata: "FTE", label: "El Calafate - Commander Armando Tola", distKm: 86 }
+    { iata: "RYO", label: "28 de Noviembre", distKm: 75, size: "small", runwayM: 1932 },
+    { iata: "PNT", label: "Lieutenant Julio Gallardo", distKm: 78, size: "medium", runwayM: 1764 },
+    { iata: "FTE", label: "El Calafate - Commander Armando Tola", distKm: 86, size: "medium", runwayM: 2550 }
   ],
   "Tourrettes": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 40 },
-    { iata: "LTT", label: "La Môle", distKm: 47 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 40, size: "large", runwayM: 5591 },
+    { iata: "LTT", label: "La Môle", distKm: 47, size: "small", runwayM: 1071 }
   ],
   "Tragaki Beach": [
-    { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 9 }
+    { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 9, size: "medium", runwayM: 2228 }
   ],
   "Trancoso": [
-    { iata: "BPS", label: "Porto Seguro", distKm: 20 }
+    { iata: "BPS", label: "Porto Seguro", distKm: 20, size: "large", runwayM: 2000 }
   ],
   "Tremezzina": [
-    { iata: "LUG", label: "Lugano", distKm: 25 }
+    { iata: "LUG", label: "Lugano", distKm: 25, size: "medium", runwayM: 1415 }
   ],
   "Trondheim": [
-    { iata: "TRD", label: "Trondheim, Værnes", distKm: 26 }
+    { iata: "TRD", label: "Trondheim, Værnes", distKm: 26, size: "large", runwayM: 2759 }
   ],
   "Truckee": [
-    { iata: "TKF", label: "Truckee Tahoe", distKm: 6 }
+    { iata: "TKF", label: "Truckee Tahoe", distKm: 6, size: "medium", runwayM: 3551 }
   ],
   "Tswalu Kalahari Reserve": [
-    { iata: "SIS", label: "Sishen", distKm: 69 }
+    { iata: "SIS", label: "Sishen", distKm: 69, size: "medium", runwayM: 1740 }
   ],
   "Turtle Island": [
-    { iata: "YAS", label: "Yasawa Island", distKm: 30 }
+    { iata: "YAS", label: "Yasawa Island", distKm: 30, size: "small", runwayM: 594 }
   ],
   "Ubud": [
-    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 31 }
+    { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 31, size: "large", runwayM: 2984 }
   ],
   "Udaipur": [
-    { iata: "UDR", label: "Maharana Pratap", distKm: 22 }
+    { iata: "UDR", label: "Maharana Pratap", distKm: 22, size: "medium", runwayM: 2281 }
   ],
   "Uluru-Kata Tjuta National Park": [
-    { iata: "AYQ", label: "Ayers Rock Connellan", distKm: 8 }
+    { iata: "AYQ", label: "Ayers Rock Connellan", distKm: 8, size: "medium", runwayM: 2599 }
   ],
   "Ummahat Islands": [
-    { iata: "RSI", label: "Red Sea", distKm: 34 }
+    { iata: "RSI", label: "Red Sea", distKm: 34, size: "large", runwayM: 3700 }
   ],
   "Val d'Isere": [
-    { iata: "TRN", label: "Turin", distKm: 59 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 87 },
-    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 88 }
+    { iata: "TRN", label: "Turin", distKm: 59, size: "large", runwayM: 3300 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 87, size: "medium", runwayM: 2475 },
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 88, size: "medium", runwayM: 2020 }
   ],
   "Vallee": [
-    { iata: "FSC", label: "Figari Sud-Corse", distKm: 12 }
+    { iata: "FSC", label: "Figari Sud-Corse", distKm: 12, size: "large", runwayM: 2480 }
   ],
   "Vancouver": [
-    { iata: "YVR", label: "Vancouver", distKm: 11 }
+    { iata: "YVR", label: "Vancouver", distKm: 11, size: "large", runwayM: 8760 }
   ],
   "Velaa": [
-    { iata: "NMF", label: "Maafaru", distKm: 29 },
-    { iata: "FND", label: "Funadhoo", distKm: 38 }
+    { iata: "NMF", label: "Maafaru", distKm: 29, size: "medium", runwayM: 2850 },
+    { iata: "FND", label: "Funadhoo", distKm: 38, size: "small", runwayM: 0 }
   ],
   "Vence": [
-    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 12 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 12, size: "large", runwayM: 5591 }
   ],
   "Venice": [
-    { iata: "VCE", label: "Venice Marco Polo", distKm: 8 }
+    { iata: "VCE", label: "Venice Marco Polo", distKm: 8, size: "large", runwayM: 6080 }
   ],
   "Versailles": [
-    { iata: "ORY", label: "Paris-Orly", distKm: 19 }
+    { iata: "ORY", label: "Paris-Orly", distKm: 19, size: "large", runwayM: 9370 }
   ],
   "Vevey": [
-    { iata: "GVA", label: "Geneva", distKm: 62 },
-    { iata: "BRN", label: "Bern", distKm: 71 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 83 }
+    { iata: "GVA", label: "Geneva", distKm: 62, size: "large", runwayM: 3900 },
+    { iata: "BRN", label: "Bern", distKm: 71, size: "medium", runwayM: 3695 },
+    { iata: "NCY", label: "Annecy Meythet", distKm: 83, size: "medium", runwayM: 2475 }
   ],
   "Vienna": [
-    { iata: "VIE", label: "Vienna", distKm: 18 }
+    { iata: "VIE", label: "Vienna", distKm: 18, size: "large", runwayM: 7100 }
   ],
   "Vinh Hy Village": [
-    { iata: "CXR", label: "Cam Ranh / Cam Ranh Air Base", distKm: 32 }
+    { iata: "CXR", label: "Cam Ranh / Cam Ranh Air Base", distKm: 32, size: "large", runwayM: 6096 }
   ],
   "Vitznau": [
-    { iata: "ZRH", label: "Zürich", distKm: 50 }
+    { iata: "ZRH", label: "Zürich", distKm: 50, size: "large", runwayM: 9808 }
   ],
   "Voavah": [
-    { iata: "DRV", label: "Dharavandhoo", distKm: 19 }
+    { iata: "DRV", label: "Dharavandhoo", distKm: 19, size: "small", runwayM: 1189 }
   ],
   "Vommuli Island": [
-    { iata: "VAM", label: "Villa Maamigili", distKm: 62 },
-    { iata: "TMF", label: "Thimarafushi", distKm: 84 }
+    { iata: "VAM", label: "Villa Maamigili", distKm: 62, size: "medium", runwayM: 1800 },
+    { iata: "TMF", label: "Thimarafushi", distKm: 84, size: "small", runwayM: 0 }
   ],
   "Vouliagmeni": [
-    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 21 }
+    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 21, size: "large", runwayM: 7800 }
   ],
   "Wanship": [
-    { iata: "SLC", label: "Salt Lake City", distKm: 45 },
-    { iata: "OGD", label: "Ogden Hinckley", distKm: 64 }
+    { iata: "SLC", label: "Salt Lake City", distKm: 45, size: "large", runwayM: 11732 },
+    { iata: "OGD", label: "Ogden Hinckley", distKm: 64, size: "medium", runwayM: 4054 }
   ],
   "Warsaw": [
-    { iata: "WAW", label: "Warsaw Chopin", distKm: 9 },
-    { iata: "WMI", label: "Warsaw Modlin", distKm: 34 }
+    { iata: "WAW", label: "Warsaw Chopin", distKm: 9, size: "large", runwayM: 6490 },
+    { iata: "WMI", label: "Warsaw Modlin", distKm: 34, size: "large", runwayM: 2500 }
   ],
   "Washington": [
-    { iata: "IAD", label: "Washington Dulles", distKm: 66 },
-    { iata: "CHO", label: "Charlottesville Albemarle", distKm: 69 },
-    { iata: "SHD", label: "Shenandoah Valley", distKm: 81 }
+    { iata: "IAD", label: "Washington Dulles", distKm: 66, size: "large", runwayM: 13076 },
+    { iata: "CHO", label: "Charlottesville Albemarle", distKm: 69, size: "medium", runwayM: 2073 },
+    { iata: "SHD", label: "Shenandoah Valley", distKm: 81, size: "medium", runwayM: 1829 }
   ],
   "Washington D.C.": [
-    { iata: "DCA", label: "Ronald Reagan Washington National", distKm: 4 }
+    { iata: "DCA", label: "Ronald Reagan Washington National", distKm: 4, size: "large", runwayM: 5295 }
   ],
   "Washington, D.C.": [
-    { iata: "DCA", label: "Ronald Reagan Washington National", distKm: 6 }
+    { iata: "DCA", label: "Ronald Reagan Washington National", distKm: 6, size: "large", runwayM: 5295 }
   ],
   "Watch Hill": [
-    { iata: "WST", label: "Westerly State", distKm: 6 }
+    { iata: "WST", label: "Westerly State", distKm: 6, size: "medium", runwayM: 2429 }
   ],
   "West End": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 14 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 16 }
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10, size: "medium", runwayM: 1665 },
+    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 14, size: "medium", runwayM: 1200 },
+    { iata: "SXM", label: "Princess Juliana", distKm: 16, size: "large", runwayM: 2300 }
   ],
   "West Hollywood": [
-    { iata: "BUR", label: "Hollywood Burbank/Bob Hope", distKm: 12 },
-    { iata: "LAX", label: "Los Angeles", distKm: 17 },
-    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 19 }
+    { iata: "BUR", label: "Hollywood Burbank/Bob Hope", distKm: 12, size: "large", runwayM: 3867 },
+    { iata: "LAX", label: "Los Angeles", distKm: 17, size: "large", runwayM: 13343 },
+    { iata: "HHR", label: "Jack Northrop Field Hawthorne", distKm: 19, size: "medium", runwayM: 1489 }
   ],
   "Whistler": [
-    { iata: "YVR", label: "Vancouver", distKm: 104 },
-    { iata: "YPW", label: "Powell River", distKm: 115 },
-    { iata: "YXX", label: "Abbotsford", distKm: 128 }
+    { iata: "YVR", label: "Vancouver", distKm: 104, size: "large", runwayM: 8760 },
+    { iata: "YPW", label: "Powell River", distKm: 115, size: "medium", runwayM: 1106 },
+    { iata: "YXX", label: "Abbotsford", distKm: 128, size: "medium", runwayM: 4550 }
   ],
   "Williamsburg": [
-    { iata: "PHF", label: "Newport News Williamsburg", distKm: 24 }
+    { iata: "PHF", label: "Newport News Williamsburg", distKm: 24, size: "medium", runwayM: 4428 }
   ],
   "Yangon": [
-    { iata: "RGN", label: "Yangon", distKm: 16 }
+    { iata: "RGN", label: "Yangon", distKm: 16, size: "large", runwayM: 3414 }
   ],
   "Yao Noi": [
-    { iata: "HKT", label: "Phuket", distKm: 34 },
-    { iata: "KBV", label: "Krabi", distKm: 40 }
+    { iata: "HKT", label: "Phuket", distKm: 34, size: "large", runwayM: 3100 },
+    { iata: "KBV", label: "Krabi", distKm: 40, size: "large", runwayM: 3000 }
   ],
   "Zanzibar": [
-    { iata: "ZNZ", label: "Abeid Amani Karume", distKm: 8 }
+    { iata: "ZNZ", label: "Abeid Amani Karume", distKm: 8, size: "large", runwayM: 3022 }
   ],
   "Zermatt": [
-    { iata: "MXP", label: "Milan Malpensa", distKm: 87 },
-    { iata: "LUG", label: "Lugano", distKm: 90 },
-    { iata: "TRN", label: "Turin", distKm: 91 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 87, size: "large", runwayM: 7840 },
+    { iata: "LUG", label: "Lugano", distKm: 90, size: "medium", runwayM: 1415 },
+    { iata: "TRN", label: "Turin", distKm: 91, size: "large", runwayM: 3300 }
   ],
   "Zurich": [
-    { iata: "ZRH", label: "Zürich", distKm: 10 }
+    { iata: "ZRH", label: "Zürich", distKm: 10, size: "large", runwayM: 9808 }
   ],
 };
 
@@ -1757,6 +1765,24 @@ const LOOKUP: Record<string, CityAirport[]> = Object.fromEntries(
 export function getAirportsForCity(city: string): CityAirport[] {
   if (!city) return [];
   return LOOKUP[normalizeCityKey(city)] ?? [];
+}
+
+const SIZE_ORDER: Record<CityAirport["size"], number> = { large: 0, medium: 1, small: 2 };
+
+/** The single airport to preselect when something needs one code for a city
+ * (e.g. the Flights page resolving a destination handed over from Hotels).
+ * Favours the biggest airport, not the closest: New York's nearest to the
+ * hotel centroid is LaGuardia, but the gateway a traveller expects is JFK.
+ * Distance only breaks ties. */
+export function pickPrimaryAirportForCity(city: string): CityAirport | null {
+  const airports = getAirportsForCity(city);
+  if (airports.length === 0) return null;
+  return [...airports].sort(
+    (a, b) =>
+      SIZE_ORDER[a.size] - SIZE_ORDER[b.size] ||
+      b.runwayM - a.runwayM ||
+      a.distKm - b.distKm
+  )[0];
 }
 
 const IATA_TO_CITY: Record<string, string> = (() => {

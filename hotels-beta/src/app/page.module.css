@@ -121,19 +121,17 @@
   opacity: 0.6;
 }
 
+/* Single row: the checkbox and "Flights from {city}" sit on one line, so this
+   is no longer a column stacking a label over a separate origin line. */
 .flightsCheckWrap {
   position: relative;
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
+  align-items: center;
   line-height: 1.2;
 }
 
-.homeAirportLine {
-  padding-left: 1.55rem;
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.62);
+.flightsCheckLabel {
+  white-space: nowrap;
 }
 
 .airportNameButton {
@@ -401,9 +399,15 @@
   padding-right: 4px;
 }
 
+/* Same cap as .smallCardsList above, so the two summary panes stay the same
+   height instead of the flights column stretching the row to fit however many
+   airport x cabin blocks the destination produced. */
 .flightDetailList {
   display: grid;
   gap: 1.1rem;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .airportBlock {

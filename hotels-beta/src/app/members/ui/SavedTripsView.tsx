@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
-import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
+import { pickPrimaryAirportForCity } from "@/lib/cityAirports";
 import { DEFAULT_TRIPS } from "@/lib/members/defaults";
 import {
   deleteSavedTripBrowser,
@@ -52,14 +52,13 @@ function notesKey(tripId: string) {
   return `oltra_trip_notes_${tripId}`;
 }
 
+// Resolved through the curated hotel-city -> airport mapping (its main
+// gateway), not by prefix-scanning airport labels: those labels are display
+// strings, and the full airport list is ~4k entries where a bare prefix match
+// would happily pick a same-named field on the other side of the world.
 function cityToIata(city: string): string {
   if (!city) return "";
-  const lower = city.trim().toLowerCase();
-  for (const opt of AIRPORT_OPTIONS) {
-    const cityPart = opt.label.split("·")[1]?.trim().toLowerCase() ?? "";
-    if (cityPart.startsWith(lower)) return opt.value;
-  }
-  return "";
+  return pickPrimaryAirportForCity(city)?.iata ?? "";
 }
 
 function parseRoute(route: string): { from: string; to: string } {

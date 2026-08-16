@@ -12,8 +12,9 @@ export type SmallCardAvailability =
   | {
       status: "available";
       currency: string;
-      dailyRate: number;
-      landingURL?: string;
+      /** Whole-stay total, matching the Hotels page's result cards — not a
+       * nightly rate (which is what the old Agoda source returned). */
+      pricePerStay: number;
     }
   | { status: "unavailable" }
   | { status: "no-id" }
@@ -35,27 +36,14 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     if (!availability) return null;
     if (availability.status === "available") {
       return (
-        <div className="flex w-[100px] shrink-0 flex-col items-center gap-1">
-          {availability.landingURL ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(availability.landingURL, "_blank", "noopener,noreferrer");
-              }}
-              className="oltra-button-primary w-full"
-              style={{ height: "26px", minHeight: "26px", fontSize: "0.66rem", letterSpacing: "0.18em", padding: "0 12px" }}
-            >
-              BOOK
-            </button>
-          ) : null}
+        <div className="flex w-[100px] shrink-0 flex-col items-center justify-center">
           <div className="w-full text-center">
             <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
               {availability.currency}{" "}
-              {Math.round(availability.dailyRate).toLocaleString()}
+              {Math.round(availability.pricePerStay).toLocaleString()}
             </div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-              / night
+            <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
+              total stay
             </div>
           </div>
         </div>
@@ -64,14 +52,14 @@ export default function HotelSmallCard({ hotel, href, availability }: Props) {
     if (availability.status === "loading") {
       return (
         <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
-          Checking Agoda…
+          Checking availability…
         </div>
       );
     }
     if (availability.status === "unavailable") {
       return (
         <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
-          Not available on Agoda
+          No availability
         </div>
       );
     }

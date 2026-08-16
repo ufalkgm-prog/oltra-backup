@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { HotelRecord } from "@/lib/directus";
+import type { RatehawkHeadline } from "@/lib/ratehawk/types";
+import { guessResidencyFromLocale } from "@/lib/countries";
 import { getAirportsForCity } from "@/lib/cityAirports";
 import { normalizeOffers, type Itinerary, type FlightLeg } from "@/lib/flights/duffelNormalizer";
 import HotelSmallCard, { type SmallCardAvailability } from "@/components/hotels/HotelSmallCard";
@@ -25,6 +27,7 @@ type Props = {
   toDate: string;
   adults: number;
   kids: number;
+  bedrooms: number;
   hasFullStayDetails: boolean;
   hotelsHref: string;
   flightsHref: string;
@@ -54,8 +57,8 @@ function formatPrice(value: number, currency: string): string {
   return `${symbol}${Math.round(value).toLocaleString()}`;
 }
 
-function getAgodaId(hotel: HotelRecord): number | null {
-  const raw = (hotel as any).agoda_hotel_id;
+function getRatehawkHid(hotel: HotelRecord): number | null {
+  const raw = hotel.ratehawk_hid;
   if (!raw) return null;
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -95,6 +98,7 @@ export default function LandingSummary({
   toDate,
   adults,
   kids,
+  bedrooms,
   hasFullStayDetails,
   hotelsHref,
   flightsHref,
@@ -228,9 +232,21 @@ export default function LandingSummary({
     [hotelSummary]
   );
 
+  // Residency is required by the Ratehawk endpoints and is auto-detected from
+  // the browser locale rather than asked for (see CLAUDE.md §39). Set in an
+  // effect, not at init, so the server and first client render agree.
+  const [residency, setResidency] = useState("");
+  useEffect(() => {
+    setResidency((prev) => prev || guessResidencyFromLocale());
+  }, []);
+
+  // Prices come from Ratehawk, matching the Hotels page (§30). This used to
+  // call Agoda's batch endpoint, which is why the cards showed no prices at
+  // all: the Hotels page moved to Ratehawk and these hotels are matched by
+  // `ratehawk_hid`, not by the Agoda ids this page was still keying off.
   useEffect(() => {
     if (!showHotels) return;
-    if (!hasFullStayDetails) {
+    if (!hasFullStayDetails || !residency) {
       setAvailabilityById({});
       return;
     }
@@ -240,8 +256,8 @@ export default function LandingSummary({
     }
 
     const withIds = visibleHotels
-      .map((h) => ({ directusId: String(h.id), agodaHotelId: getAgodaId(h) }))
-      .filter((x): x is { directusId: string; agodaHotelId: number } => x.agodaHotelId !== null);
+      .map((h) => ({ directusId: String(h.id), hid: getRatehawkHid(h) }))
+      .filter((x): x is { directusId: string; hid: number } => x.hid !== null);
 
     if (withIds.length === 0) {
       const map: Record<string, SmallCardAvailability> = {};
@@ -254,33 +270,31 @@ export default function LandingSummary({
 
     const initial: Record<string, SmallCardAvailability> = {};
     for (const h of visibleHotels) {
-      const id = getAgodaId(h);
-      initial[String(h.id)] = id ? { status: "loading" } : { status: "no-id" };
+      initial[String(h.id)] = getRatehawkHid(h)
+        ? { status: "loading" }
+        : { status: "no-id" };
     }
     setAvailabilityById(initial);
 
-    fetch("/api/agoda/availability/batch", {
+    fetch("/api/ratehawk/availability/batch", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        hotelIds: withIds.map((x) => x.agodaHotelId),
+        hids: withIds.map((x) => x.hid),
         checkInDate: fromDate,
         checkOutDate: toDate,
         currency: "EUR",
+        residency,
         adults,
         kids,
         childrenAges: [],
+        rooms: bedrooms,
       }),
     })
       .then(async (res) => {
         const json = (await res.json()) as {
           ok?: boolean;
-          results?: Array<{
-            hotelId: number;
-            dailyRate: number;
-            currency: string;
-            landingURL?: string;
-          }>;
+          results?: Array<{ hid: number; headline: RatehawkHeadline }>;
         };
         if (cancelled) return;
         if (!res.ok || !json.ok) {
@@ -289,26 +303,21 @@ export default function LandingSummary({
           setAvailabilityById(next);
           return;
         }
-        const agodaToDirectus = new Map(withIds.map((x) => [x.agodaHotelId, x.directusId]));
+        const hidToDirectus = new Map(withIds.map((x) => [x.hid, x.directusId]));
         const next: Record<string, SmallCardAvailability> = {};
         for (const h of visibleHotels) {
-          const aid = getAgodaId(h);
-          if (!aid) {
-            next[String(h.id)] = { status: "no-id" };
-            continue;
-          }
-          next[String(h.id)] = { status: "unavailable" };
+          next[String(h.id)] = getRatehawkHid(h)
+            ? { status: "unavailable" }
+            : { status: "no-id" };
         }
         for (const r of json.results ?? []) {
-          const dId = agodaToDirectus.get(r.hotelId);
-          if (dId) {
-            next[dId] = {
-              status: "available",
-              currency: r.currency,
-              dailyRate: r.dailyRate,
-              landingURL: r.landingURL,
-            };
-          }
+          const dId = hidToDirectus.get(Number(r.hid));
+          if (!dId || !r.headline) continue;
+          next[dId] = {
+            status: "available",
+            currency: r.headline.currency,
+            pricePerStay: r.headline.pricePerStay,
+          };
         }
         setAvailabilityById(next);
       })
@@ -322,7 +331,17 @@ export default function LandingSummary({
     return () => {
       cancelled = true;
     };
-  }, [showHotels, hasFullStayDetails, visibleHotels, fromDate, toDate, adults, kids]);
+  }, [
+    showHotels,
+    hasFullStayDetails,
+    residency,
+    visibleHotels,
+    fromDate,
+    toDate,
+    adults,
+    kids,
+    bedrooms,
+  ]);
 
   const handleBookFlight = useCallback(async (offerId: string) => {
     try {

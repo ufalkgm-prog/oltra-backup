@@ -55,3 +55,4 @@ scripts/ratehawk/output/
 
 # Airports (large third-party dataset, re-downloaded by the build script)
 scripts/airports/airports.csv
+scripts/airports/runways.csv

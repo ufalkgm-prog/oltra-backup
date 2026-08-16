@@ -2,10 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
-import {
-  AIRPORT_OPTIONS,
-  type AirportOption,
-} from "@/lib/airportOptions";
+import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { DEFAULT_MEMBER_PROFILE } from "@/lib/members/defaults";
 import type { MemberBirthday, MemberProfile } from "@/lib/members/types";
 import {
@@ -151,22 +148,14 @@ const MONTH_OPTIONS: Option[] = [
   { value: "Dec", label: "Dec" },
 ];
 
+// A stored profile value is either already a IATA code or free text from an
+// older save. The full airport dataset is no longer imported here (it is ~4k
+// entries, loaded on demand by AirportAutocomplete), so free text is left
+// as-is for the user to re-pick rather than fuzzily matched.
 function normalizeAirportValue(value: string): string {
   const raw = value.trim();
   if (!raw) return "";
-
-  const directMatch = AIRPORT_OPTIONS.find(
-    (airport: AirportOption) =>
-      airport.value.toLowerCase() === raw.toLowerCase()
-  );
-
-  if (directMatch) return directMatch.value;
-
-  const labelMatch = AIRPORT_OPTIONS.find((airport: AirportOption) =>
-    airport.label.toLowerCase().includes(raw.toLowerCase())
-  );
-
-  return labelMatch?.value ?? raw;
+  return /^[a-z]{3}$/i.test(raw) ? raw.toUpperCase() : raw;
 }
 
 function parsePhone(phone: string): { code: string; number: string } {
@@ -253,26 +242,6 @@ export default function PersonalInformationView() {
     () => !profilesEqual(profile, savedProfile),
     [profile, savedProfile]
   );
-
-  const homeAirportOptions = useMemo<Option[]>(() => {
-    const currentValue = profile.homeAirport.trim();
-
-    const airportOptions: Option[] = AIRPORT_OPTIONS.map(
-      (airport: AirportOption) => ({
-        value: airport.value,
-        label: airport.label,
-      })
-    );
-
-    if (
-      !currentValue ||
-      airportOptions.some((airport: Option) => airport.value === currentValue)
-    ) {
-      return airportOptions;
-    }
-
-    return [{ value: currentValue, label: currentValue }, ...airportOptions];
-  }, [profile.homeAirport]);
 
   useEffect(() => {
     let active = true;
@@ -536,15 +505,14 @@ export default function PersonalInformationView() {
               />
             </div>
 
+            {/* A type-ahead, not a select: the airport list is ~4k entries
+                now, which is unusable as a dropdown. Same component the
+                Flights and landing pages use. */}
             <div className="members-form-field">
-              <label className="oltra-label">HOME AIRPORT</label>
-              <OltraSelect
-                name="homeAirport"
+              <AirportAutocomplete
+                label="HOME AIRPORT"
                 value={profile.homeAirport}
-                placeholder="Home airport"
-                options={homeAirportOptions}
-                align="left"
-                onValueChange={(value) => updateField("homeAirport", value)}
+                onChange={(code) => updateField("homeAirport", code)}
               />
             </div>
 
