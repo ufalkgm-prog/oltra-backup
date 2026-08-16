@@ -1,0 +1,884 @@
+[
+  {
+    "applied_at": "2026-08-16T18:36:11.341Z",
+    "id": "1008",
+    "hotel_name": "Angama Amboseli",
+    "before": "Against the backdrop of Mount Kilimajaro, this intimate tented safari camp let's you become one with nature in style ",
+    "after": "Against the backdrop of Mount Kilimanjaro, this intimate tented safari camp lets you become one with nature in style"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:11.476Z",
+    "id": "1020",
+    "hotel_name": "Kasbah Tamadot",
+    "before": "Amazing hotel in the Altas Mountains not far from Marrakech",
+    "after": "Amazing hotel in the Atlas Mountains not far from Marrakech"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:11.611Z",
+    "id": "1024",
+    "hotel_name": "Palais Ronsard",
+    "before": "Palacial glamour on the outskirts of Marrakech, beautifully appointed in every aspect, excellent spa and pool facilities and excellent restaurant options",
+    "after": "Palatial glamour on the outskirts of Marrakech, beautifully appointed in every aspect, excellent spa and pool facilities and excellent restaurant options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:11.738Z",
+    "id": "1028",
+    "hotel_name": "Kisawa Mozambique",
+    "before": "Secluded island sanctuary with 12 beautiful and cozy seaside villas ",
+    "after": "Secluded island sanctuary with 12 beautiful and cozy seaside villas"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:11.866Z",
+    "id": "1030",
+    "hotel_name": "Sonop",
+    "before": "Beatiful tented dessert escape with excellent facilities",
+    "after": "Beautiful tented desert escape with excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.013Z",
+    "id": "1032",
+    "hotel_name": "Wilderness Bisate",
+    "before": "Beautiful thatched forest villas in a dramatic rainforest setting ensure a one-with-nature experience and sutnning valley views",
+    "after": "Beautiful thatched forest villas in a dramatic rainforest setting ensure a one-with-nature experience and stunning valley views"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.150Z",
+    "id": "1033",
+    "hotel_name": "One&Only Gorilla's Nest, Rwanda",
+    "before": "Beautiful wildlife escape onj the edge of a Africa's oldest national park, with beautiful villas, ",
+    "after": "Beautiful wildlife escape on the edge of Africa's oldest national park, with beautiful villas"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.292Z",
+    "id": "1037",
+    "hotel_name": "Constance Lemuria",
+    "before": "Beautiful hotel in astonishing secluded setting ",
+    "after": "Beautiful hotel in astonishing secluded setting"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.431Z",
+    "id": "1043",
+    "hotel_name": "&Beyond Tengile River Lodge",
+    "before": "Amazing riverside saferi lodge with richly appointed pool suites, spa and beautifully designed interiors throughout",
+    "after": "Amazing riverside safari lodge with richly appointed pool suites, spa and beautifully designed interiors throughout"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.549Z",
+    "id": "1048",
+    "hotel_name": "Loapi Tented Camp",
+    "before": "Six extraordinary glass and steel pavillions with fully stocked bars, plunge pools and private butler and chef surrounded by open svannah",
+    "after": "Six extraordinary glass and steel pavilions with fully stocked bars, plunge pools and private butler and chef surrounded by open savannah"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.666Z",
+    "id": "1050",
+    "hotel_name": "Mateya Safari Lodge",
+    "before": "Beautiful setting, pool suite accomodation and excellent dining and spa facilities",
+    "after": "Beautiful setting, pool suite accommodation and excellent dining and spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.784Z",
+    "id": "1063",
+    "hotel_name": "Singita Sabora Tented Camp ",
+    "before": "Authentic luxury tented camp ",
+    "after": "Authentic luxury tented camp"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:12.910Z",
+    "id": "1066",
+    "hotel_name": "Amankora ",
+    "before": "Tranquil and authentic luxury hideaway in the Himalayas with stunning views and excellent faciiites",
+    "after": "Tranquil and authentic luxury hideaway in the Himalayas with stunning views and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.044Z",
+    "id": "1087",
+    "hotel_name": "Rosewood Hong Kong",
+    "before": "Stylish and fresh design, absollutely stunning views, amazing spa and excellent dining options",
+    "after": "Stylish and fresh design, absolutely stunning views, amazing spa and excellent dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.169Z",
+    "id": "1089",
+    "hotel_name": "Mandarin Oriental, The Landmark",
+    "before": "Designer spa hotel in the middle of the businesss district",
+    "after": "Designer spa hotel in the middle of the business district"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.305Z",
+    "id": "1093",
+    "hotel_name": "The Peninsula Beijing",
+    "before": "Contmporary luxury in the heart of the city",
+    "after": "Contemporary luxury in the heart of the city"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.436Z",
+    "id": "1100",
+    "hotel_name": "The Ritz-Carlton, Shanghai",
+    "before": "Great views, rooftop terrace and excelletn dining and spa facilities",
+    "after": "Great views, rooftop terrace and excellent dining and spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.558Z",
+    "id": "1101",
+    "hotel_name": "The Sanya EDITION",
+    "before": "Modern design coupled with organic tranquility ",
+    "after": "Modern design coupled with organic tranquility"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.690Z",
+    "id": "1102",
+    "hotel_name": "The Shanghai EDITION",
+    "before": "Simplistic luxury, Michelin dining and stunning views ",
+    "after": "Simplistic luxury, Michelin dining and stunning views"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.825Z",
+    "id": "1103",
+    "hotel_name": "The St. Regis Beijing ",
+    "before": "Traditional luxury in the business and shopping ara of the city",
+    "after": "Traditional luxury in the business and shopping area of the city"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:13.959Z",
+    "id": "1114",
+    "hotel_name": "The Oberoi New Delhi ",
+    "before": "Beautiful views, multiple dining options and excellent spa facilties",
+    "after": "Beautiful views, multiple dining options and excellent spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:14.096Z",
+    "id": "1117",
+    "hotel_name": "Amankila",
+    "before": "Stunning waterfront property with beautiful pool suites, excellent dining and breathtaking views ",
+    "after": "Stunning waterfront property with beautiful pool suites, excellent dining and breathtaking views"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:14.220Z",
+    "id": "1127",
+    "hotel_name": "Nihi Sumba",
+    "before": "Exclusive tropical luxury resort set on stunning stretch of beach ",
+    "after": "Exclusive tropical luxury resort set on stunning stretch of beach"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:14.343Z",
+    "id": "1129",
+    "hotel_name": "Raffles Bali",
+    "before": "Beatiful hillside villa resort with impressive views",
+    "after": "Beautiful hillside villa resort with impressive views"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:14.469Z",
+    "id": "1137",
+    "hotel_name": "Bulgari Tokyo",
+    "before": "Pristine Bulgari luxury with tunning city views",
+    "after": "Pristine Bulgari luxury with stunning city views"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:14.599Z",
+    "id": "1138",
+    "hotel_name": "Four Seasons Hotel Tokyo at Otemachi",
+    "before": "Ecxcellent facilities, amazing views and excellent dining options including roof terrace",
+    "after": "Excellent facilities, amazing views and excellent dining options including roof terrace"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:14.738Z",
+    "id": "1151",
+    "hotel_name": "The Datai Langkawi",
+    "before": "The beautiful resort tugged away in a mountainside rainforest offers excellent facilities and multiple dining options",
+    "after": "The beautiful resort tucked away in a mountainside rainforest offers excellent facilities and multiple dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:14.876Z",
+    "id": "1158",
+    "hotel_name": "COMO Cocoa Island",
+    "before": "Overwater accomodation and great spa facilities",
+    "after": "Overwater accommodation and great spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.008Z",
+    "id": "1171",
+    "hotel_name": "One&Only Reethi Rah",
+    "before": "Absolutely stunning setting and design of this villa resort amd all relevant services",
+    "after": "Absolutely stunning setting and design of this villa resort and all relevant services"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.150Z",
+    "id": "1172",
+    "hotel_name": "Patina Maldives",
+    "before": "Contemporary villa resort with low key ambience and extraordinary dining options ",
+    "after": "Contemporary villa resort with low key ambience and extraordinary dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.286Z",
+    "id": "1178",
+    "hotel_name": "The St. Regis Maldives Vommuli Resort",
+    "before": "Pristine contemprorary villa resort with 5 restaurants and a stunning bar",
+    "after": "Pristine contemporary villa resort with 5 restaurants and a stunning bar"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.419Z",
+    "id": "1179",
+    "hotel_name": "The Nautilus Maldives",
+    "before": "Fresh organic design, tranquil ambience and excellent facilities ",
+    "after": "Fresh organic design, tranquil ambience and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.547Z",
+    "id": "1182",
+    "hotel_name": "The Strand Yangon",
+    "before": "Classig luxury, great dining and excellent facilities in the centre of Yangon",
+    "after": "Classic luxury, great dining and excellent facilities in the centre of Yangon"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.666Z",
+    "id": "1186",
+    "hotel_name": "Capella Singapore",
+    "before": "Stunning property and elequent design with all desired serviced locates on Sentosa Island with direct access to beach",
+    "after": "Stunning property and elegant design with all desired services, located on Sentosa Island with direct access to beach"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.793Z",
+    "id": "1187",
+    "hotel_name": "Four Seasons Hotel Singapore ",
+    "before": "Great ambience, Micheling dining and excellent facilities",
+    "after": "Great ambience, Michelin dining and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:15.931Z",
+    "id": "1192",
+    "hotel_name": "137 Pillars Suites & Residences Bangkok",
+    "before": "Beautiful hotel with graet facilities and amazing rooftop infinity pool",
+    "after": "Beautiful hotel with great facilities and amazing rooftop infinity pool"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.077Z",
+    "id": "1194",
+    "hotel_name": "Anantara Koh Yao Yai Resort & Villas",
+    "before": "Beautifullt designed suites and villas, and stunning views from this hotel located on a small island off Phuket in the stunning Phang Nga Bay",
+    "after": "Beautifully designed suites and villas, and stunning views from this hotel located on a small island off Phuket in the stunning Phang Nga Bay"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.197Z",
+    "id": "1202",
+    "hotel_name": "Chiva-Som Hua Hin",
+    "before": "Serene and tranquil beachfront wellness eascape",
+    "after": "Serene and tranquil beachfront wellness escape"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.330Z",
+    "id": "1203",
+    "hotel_name": "COMO Point Yamu",
+    "before": "Design hotel in stunning setting and with excellent faciliites",
+    "after": "Design hotel in stunning setting and with excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.463Z",
+    "id": "1215",
+    "hotel_name": "Rosewood Phuket",
+    "before": "Amazing property with beautiful views of Tri Trang Bay, beautifully appointed pavillions and suites, elaborate wellness, spa and pool facilities and excellent dining options",
+    "after": "Amazing property with beautiful views of Tri Trang Bay, beautifully appointed pavilions and suites, elaborate wellness, spa and pool facilities and excellent dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.589Z",
+    "id": "1223",
+    "hotel_name": "The Siam",
+    "before": "Authentic oriental architecture and serene design coupled with excellent facilities  ",
+    "after": "Authentic oriental architecture and serene design coupled with excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.717Z",
+    "id": "1237",
+    "hotel_name": "Cap Juluca",
+    "before": "Beautiful villas on pristine white beach, excellent dining options and spa facilities ",
+    "after": "Beautiful villas on pristine white beach, excellent dining options and spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.839Z",
+    "id": "1241",
+    "hotel_name": "The Branson Beach Estate",
+    "before": "Four stunning estates sleeping 18-22 persons perched on the cliff-sides of this beautiful small island off the coast of Virgin Gorda, private chef and excellent facilties and activitie",
+    "after": "Four stunning estates sleeping 18-22 persons perched on the cliff-sides of this beautiful small island off the coast of Virgin Gorda, private chef and excellent facilities and activities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:16.960Z",
+    "id": "1243",
+    "hotel_name": "Rosewood Little Dix Bay",
+    "before": "Beautifully set, sugged in among the tress in a stunning cove, several dining options and spa",
+    "after": "Beautifully set, snug in among the trees in a stunning cove, several dining options and spa"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.082Z",
+    "id": "1247",
+    "hotel_name": "Excellence Oyster Bay",
+    "before": "Perfect spot in Montego Bay, great ocean views, beautiful beach, elaborate pool and spa facilities, and excellent resturants",
+    "after": "Perfect spot in Montego Bay, great ocean views, beautiful beach, elaborate pool and spa facilities, and excellent restaurants"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.206Z",
+    "id": "1261",
+    "hotel_name": "Jumby Bay Island",
+    "before": "Unique private island resort with all level of accomodation, family friendly, beautiful nature and views and multiple dining options",
+    "after": "Unique private island resort with all level of accommodation, family friendly, beautiful nature and views and multiple dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.327Z",
+    "id": "1274",
+    "hotel_name": "Palais Coburg",
+    "before": "Historic palacial luxury, great spa with pools and Michelin dining",
+    "after": "Historic palatial luxury, great spa with pools and Michelin dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.453Z",
+    "id": "1276",
+    "hotel_name": "Almyra",
+    "before": "Minimalistic stylish design, magnificant views and excellent facilities",
+    "after": "Minimalistic stylish design, magnificent views and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.588Z",
+    "id": "1287",
+    "hotel_name": "Four Seasons Hotel Hampshire",
+    "before": "Calssic countryside spa and family luxury",
+    "after": "Classic countryside spa and family luxury"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.716Z",
+    "id": "1289",
+    "hotel_name": "Grantley Hall",
+    "before": "Classical English countryside castle with alle thebells and whistles, beautiful interior design, great facilities and several dining options",
+    "after": "Classical English countryside castle with all the bells and whistles, beautiful interior design, great facilities and several dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.840Z",
+    "id": "1296",
+    "hotel_name": "Raffles London at The OWO",
+    "before": "Stunning hotel at the century old Old War Office offering beautiful spa and a rich choice of excellent restaurants",
+    "after": "Stunning hotel at the Old War Office offering beautiful spa and a rich choice of excellent restaurants"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:17.966Z",
+    "id": "1308",
+    "hotel_name": "The Langham London",
+    "before": "Classic luxury hotel with excelletn facilities",
+    "after": "Classic luxury hotel with excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.101Z",
+    "id": "1312",
+    "hotel_name": "Airelles Château de Versailles - Le Grand Contrôle",
+    "before": "Fairytale setting in Le Grand Contrôle within the grounds of Chateuax de Versailles, Micheling dining by Alain Ducasse, exceptional Valmont spa facilities and direct access ot the French gardens of Domaine de Versailles",
+    "after": "Fairytale setting in Le Grand Contrôle within the grounds of Chateaux de Versailles, Michelin dining by Alain Ducasse, exceptional Valmont spa facilities and direct access to the French gardens of Domaine de Versailles"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.227Z",
+    "id": "1316",
+    "hotel_name": "Airelles Val d'Isère",
+    "before": "Perfect location in one of Europe's best ski resorts, amazing views, great ambience, in-house ski shop, beautiful interior design, excellent dining and exceptional spa facilties",
+    "after": "Perfect location in one of Europe's best ski resorts, amazing views, great ambience, in-house ski shop, beautiful interior design, excellent dining and exceptional spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.360Z",
+    "id": "1319",
+    "hotel_name": "Cap Estel ",
+    "before": "Cozy designer luxury ",
+    "after": "Cozy designer luxury"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.497Z",
+    "id": "1328",
+    "hotel_name": "Fleur de Loire",
+    "before": "Tranquility and Micheling dining in this stylish yet cozy Loire Valley hotel",
+    "after": "Tranquility and Michelin dining in this stylish yet cozy Loire Valley hotel"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.628Z",
+    "id": "1330",
+    "hotel_name": "Grand Hôtel du Cap Ferrat",
+    "before": "Classic luxury in beatiful setting",
+    "after": "Classic luxury in beautiful setting"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.746Z",
+    "id": "1331",
+    "hotel_name": "Hameau Albert 1er",
+    "before": "Luxury alpine spa and culinary excellence ",
+    "after": "Luxury alpine spa and culinary excellence"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.867Z",
+    "id": "1337",
+    "hotel_name": "Byblos Saint-Tropez",
+    "before": "Very trendy hotel with great restaturants and nightlife in the centre of town ",
+    "after": "Very trendy hotel with great restaurants and nightlife in the centre of town"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:18.996Z",
+    "id": "1342",
+    "hotel_name": "Hotel Le Lana",
+    "before": "Contemporary luxury and excellent facilites",
+    "after": "Contemporary luxury and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:19.123Z",
+    "id": "1350",
+    "hotel_name": "La Réserve Ramatuelle ",
+    "before": "Beautiful provence hotel with panoramic ocean views  close to Saint-Tropez and Pampelonne beach",
+    "after": "Beautiful provence hotel with panoramic ocean views close to Saint-Tropez and Pampelonne beach"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:19.254Z",
+    "id": "1358",
+    "hotel_name": "Les Fermes de Marie",
+    "before": "Cury alpine lluxury with several gourmet dining options, excellent spa facilties and both chalets and rooms/suites",
+    "after": "Cosy alpine luxury with several gourmet dining options, excellent spa facilities and both chalets and rooms/suites"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:19.373Z",
+    "id": "1362",
+    "hotel_name": "Hôtel Madame Rêve",
+    "before": "Traditional meets design in this centrally located historical building offering excellent indoor and outdoor facilities ",
+    "after": "Traditional meets design in this centrally located historical building offering excellent indoor and outdoor facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:19.513Z",
+    "id": "1364",
+    "hotel_name": "Ritz Paris ",
+    "before": "One of the most coveted hotels in the world and for good reason, newly refurbished it impecable interior design and Michelin dining",
+    "after": "One of the most coveted hotels in the world and for good reason, newly refurbished with impeccable interior design and Michelin dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:19.656Z",
+    "id": "1365",
+    "hotel_name": "Saint James Paris",
+    "before": "Historical splendor stylishly revived in a truly fashinating art deco style, beautiful private garden and excellent dining",
+    "after": "Historical splendor stylishly revived in a truly fascinating art deco style, beautiful private garden and excellent dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:19.779Z",
+    "id": "1382",
+    "hotel_name": "Amirandes",
+    "before": "Beautiful design, great setting, lots of acitivities and several dining options",
+    "after": "Beautiful design, great setting, lots of activities and several dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:19.899Z",
+    "id": "1394",
+    "hotel_name": "Elounda Beach Hotel & Villas",
+    "before": "Family friendly classis spa luxury with excellent dining options",
+    "after": "Family friendly classic spa luxury with excellent dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.026Z",
+    "id": "1396",
+    "hotel_name": "Four Seasons Astir Palace Hotel Athens",
+    "before": "Great location on the Athens Riviera on the outskirts of the city, stylish design, magnificent views and excellent faciliites",
+    "after": "Great location on the Athens Riviera on the outskirts of the city, stylish design, magnificent views and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.159Z",
+    "id": "1412",
+    "hotel_name": "One&Only Kéa Island",
+    "before": "Stunning all villa resort with magnificent sea views and beautifully appointed villas ",
+    "after": "Stunning all villa resort with magnificent sea views and beautifully appointed villas"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.279Z",
+    "id": "1423",
+    "hotel_name": "Aman Venice",
+    "before": "Designer luxury meets hisotrical grandeur in this amazing hotel",
+    "after": "Designer luxury meets historical grandeur in this amazing hotel"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.420Z",
+    "id": "1445",
+    "hotel_name": "Grand Hotel Quisisana",
+    "before": "Truly amazing hotel with outstanding fecilities and dining",
+    "after": "Truly amazing hotel with outstanding facilities and dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.542Z",
+    "id": "1452",
+    "hotel_name": "Hotel Eden Rome",
+    "before": "Classic luxury with a contemporary twist offering great views from rooftop Micheling star restaurant",
+    "after": "Classic luxury with a contemporary twist offering great views from rooftop Michelin star restaurant"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.665Z",
+    "id": "1453",
+    "hotel_name": "Hotel Hermitage Cervinia",
+    "before": "Classical alpine luxury with Michelin dining ",
+    "after": "Classical alpine luxury with Michelin dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.804Z",
+    "id": "1464",
+    "hotel_name": "Palazzo Manfredi",
+    "before": "Beautiful designer hotel with magnificanet views of the Colosseum and Michelin rooftop dining",
+    "after": "Beautiful designer hotel with magnificent views of the Colosseum and Michelin rooftop dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:20.932Z",
+    "id": "1465",
+    "hotel_name": "Palazzo Parigi Hotel & Grand Spa",
+    "before": "Palacial grandeur with amazing suite views, beautiful pool and spa, excellent dining and a private garden",
+    "after": "Palatial grandeur with amazing suite views, beautiful pool and spa, excellent dining and a private garden"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:21.062Z",
+    "id": "1466",
+    "hotel_name": "Palazzo Venart Luxury Hotel",
+    "before": "18 amazing 16th century rooms and suites, restored impecably, Michelin dining and beautiful courtyard ",
+    "after": "18 amazing 16th century rooms and suites, restored impeccably, Michelin dining and beautiful courtyard"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:21.205Z",
+    "id": "1469",
+    "hotel_name": "Portrait Firenze",
+    "before": "Beautiful and cozy design hotel on the banks of the Arno river with first row view to Ponte Vecchio bridge and several affiliated restaurants nearby ",
+    "after": "Beautiful and cozy design hotel on the banks of the Arno river with first row view to Ponte Vecchio bridge and several affiliated restaurants nearby"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:21.344Z",
+    "id": "1484",
+    "hotel_name": "The St. Regis Venice",
+    "before": "Stunning avantgarde design throughout, beautiful canalside dining and terraces, great central location",
+    "after": "Stunning Avant-garde design throughout, beautiful canalside dining and terraces, great central location"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:21.466Z",
+    "id": "1487",
+    "hotel_name": "Villa Igiea",
+    "before": "Homely, beautifully restored pallazo with stunning views on the Gulf of Palermo",
+    "after": "Homely, beautifully restored palazzo with stunning views on the Gulf of Palermo"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:21.601Z",
+    "id": "1496",
+    "hotel_name": "Hotel Okura Amsterdam",
+    "before": "Stylish contemporary hotel with great restaruants",
+    "after": "Stylish contemporary hotel with great restaurants"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:21.727Z",
+    "id": "1498",
+    "hotel_name": "Britannia Hotel",
+    "before": "Avantgarde marvel in the beautiful little oceanside town of Trondheim, stylish yet cozy, excellent dining and spa",
+    "after": "Avant-garde marvel in the beautiful little oceanside town of Trondheim, stylish yet cozy, excellent dining and spa"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:21.874Z",
+    "id": "1514",
+    "hotel_name": "Bahia del Duque",
+    "before": "Beautiful property with great ambience and axcellent facilities",
+    "after": "Beautiful property with great ambience and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.007Z",
+    "id": "1523",
+    "hotel_name": "Gran Hotel Miramar",
+    "before": "Moroccan inspired palacial design, stylish rooms, beautiful spa and several dining options",
+    "after": "Moroccan inspired palatial design, stylish rooms, beautiful spa and several dining options"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.133Z",
+    "id": "1533",
+    "hotel_name": "Sant Francesc Hotel Singular",
+    "before": "Beutiful and tranquil boutique hotel with roof terrace pool and dining",
+    "after": "Beautiful and tranquil boutique hotel with roof terrace pool and dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.267Z",
+    "id": "1540",
+    "hotel_name": "Grand Hotel Stockholm",
+    "before": "Classic luxury mixed with contemporaru design in central location on the canal with excellent spa and dining facilities",
+    "after": "Classic luxury mixed with contemporary design in central location on the canal with excellent spa and dining facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.391Z",
+    "id": "1542",
+    "hotel_name": "Baur au Lac",
+    "before": "Historical splendor, beautiful design, excellent setting and Michelin dining ",
+    "after": "Historical splendor, beautiful design, excellent setting and Michelin dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.516Z",
+    "id": "1549",
+    "hotel_name": "Grand Hotel Kronenhof ",
+    "before": "Iconic luxury hotel inc beautiful secluded setting and with great dining and spa ficilities",
+    "after": "Iconic luxury hotel in a beautiful secluded setting and with great dining and spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.645Z",
+    "id": "1555",
+    "hotel_name": "Gstaad Palace ",
+    "before": "Classic alpine luxury at its best with all the facilities that go wiht it",
+    "after": "Classic alpine luxury at its best with all the facilities that go with it"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.772Z",
+    "id": "1557",
+    "hotel_name": "Kulm Hotel St. Moritz",
+    "before": "Cozy luxury, great spa, stunning views and Micheling dining",
+    "after": "Cozy luxury, great spa, stunning views and Michelin dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:22.906Z",
+    "id": "1559",
+    "hotel_name": "La Réserve Eden au Lac Zurich",
+    "before": "This majestic lakeside building houses an astinishing yacht club-like designer hotel with two excellent restaurants, one offering terrace dining",
+    "after": "This majestic lakeside building houses an astonishing yacht club-like designer hotel with two excellent restaurants, one offering terrace dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.049Z",
+    "id": "1562",
+    "hotel_name": "LeCrans Hotel & Spa",
+    "before": "Beautiful resort, great setting with stuning views, cozy ambience, Michelin dining and impressive spa facilities",
+    "after": "Beautiful resort, great setting with stunning views, cozy ambience, Michelin dining and impressive spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.175Z",
+    "id": "1566",
+    "hotel_name": "Riffelalp Resort 2222m",
+    "before": "Secluded setting on the mountain, stunning Matterhorn views, great ambience and excellent facilities ",
+    "after": "Secluded setting on the mountain, stunning Matterhorn views, great ambience and excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.305Z",
+    "id": "1586",
+    "hotel_name": "The Peninsula Istanbul",
+    "before": "Majestic property on the banks of the Bosphorus with excellent facilities ",
+    "after": "Majestic property on the banks of the Bosphorus with excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.444Z",
+    "id": "1594",
+    "hotel_name": "Banyan Tree AlUla",
+    "before": "Otherworldly location and views from this tented villa resurt in the Ashar Valley desert in Saudi Arabia",
+    "after": "Otherworldly location and views from this tented villa resort in the Ashar Valley desert in Saudi Arabia"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.582Z",
+    "id": "1595",
+    "hotel_name": "Our Habitas AlUla",
+    "before": "Like landing on the Mars in style, this resort offers an otherworldly nature experience and magnificant spa and wellness facilities",
+    "after": "Like landing on the Mars in style, this resort offers an otherworldly nature experience and magnificent spa and wellness facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.711Z",
+    "id": "1600",
+    "hotel_name": "Jumeirah Burj Al Arab",
+    "before": "The pinnacle of opulence, amazing desing and great dining",
+    "after": "The pinnacle of opulence, amazing design and great dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.848Z",
+    "id": "1604",
+    "hotel_name": "Mandarin Oriental, Jumeira Dubai",
+    "before": "Lavish luxury, stylins design, magnificent city and ocean views coupled with multiple dining venues and full spa facilities",
+    "after": "Lavish luxury, stylish design, magnificent city and ocean views coupled with multiple dining venues and full spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:23.969Z",
+    "id": "1633",
+    "hotel_name": "Four Seasons Resort Punta Mita",
+    "before": "Beautiful bechfront setting with excellent spa and dining facilities",
+    "after": "Beautiful beachfront setting with excellent spa and dining facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:24.134Z",
+    "id": "1636",
+    "hotel_name": "Las Ventanas al Paraiso ",
+    "before": "Refined cozyness in amazing setting with great views and excellent dining and facilities",
+    "after": "Refined coziness in amazing setting with great views and excellent dining and facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:24.287Z",
+    "id": "1637",
+    "hotel_name": "Maroma",
+    "before": "Beurtiful and cozy beachfront sanctuary",
+    "after": "Beautiful and cozy beachfront sanctuary"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:24.469Z",
+    "id": "1656",
+    "hotel_name": "Amangiri",
+    "before": "Remarkable minimalistic desert resot in dramatic setting",
+    "after": "Remarkable minimalistic desert resort in dramatic setting"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:24.634Z",
+    "id": "1661",
+    "hotel_name": "Bellagio Resort & Casino",
+    "before": "A Vegas hallmark with alle the trimmings",
+    "after": "A Vegas hallmark with all the trimmings"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:24.789Z",
+    "id": "1664",
+    "hotel_name": "Bishop's Lodge",
+    "before": "Authentic and cozy hotel with beautifulle appointed rooma and suites and excellent dining and spa facilities",
+    "after": "Authentic and cozy hotel with beautifully appointed rooms and suites and excellent dining and spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:24.918Z",
+    "id": "1669",
+    "hotel_name": "Four Seasons Hotel at The Surf Club",
+    "before": "Stylish design on the beach ",
+    "after": "Stylish design on the beach"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:25.099Z",
+    "id": "1681",
+    "hotel_name": "Four Seasons Resort Scottsdale ",
+    "before": "Tranquil golf resort in a beutiful desert setting with great views",
+    "after": "Tranquil golf resort in a beautiful desert setting with great views"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:25.257Z",
+    "id": "1699",
+    "hotel_name": "Nobu Hotel Miami Beach",
+    "before": "Stylish organic interior design, multiple pools, villa accomodation option and amazing dining",
+    "after": "Stylish organic interior design, multiple pools, villa accommodation option and amazing dining"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:25.451Z",
+    "id": "1710",
+    "hotel_name": "Stanly Ranch",
+    "before": "The homely yet stylish way to experience Napa in a resort that resembles a small village with beautiful villas and suites ",
+    "after": "The homely yet stylish way to experience Napa in a resort that resembles a small village with beautiful villas and suites"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:25.613Z",
+    "id": "1711",
+    "hotel_name": "The American Club",
+    "before": "Historic lodge with great ambience and an abundance of activies around the Kohler village",
+    "after": "Historic lodge with great ambience and an abundance of activities around the Kohler village"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:25.812Z",
+    "id": "1716",
+    "hotel_name": "The Broadmoor",
+    "before": "Traditional and cozy luxury hotel with excellent facilities ",
+    "after": "Traditional and cozy luxury hotel with excellent facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:25.966Z",
+    "id": "1723",
+    "hotel_name": "The Greenwich Hotel",
+    "before": "Traditional luxury and Europan charm featuring Italian dining, spa, pool and gym",
+    "after": "Traditional luxury and European charm featuring Italian dining, spa, pool and gym"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:26.161Z",
+    "id": "1726",
+    "hotel_name": "The Inn at Mattei's Tavern",
+    "before": "Stunning countryside escape at the heart of Los Olivos offering social dining and multiple outdoor acitivities",
+    "after": "Stunning countryside escape at the heart of Los Olivos offering social dining and multiple outdoor activities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:26.459Z",
+    "id": "1727",
+    "hotel_name": "The Langham Boston",
+    "before": "Traditonal five star hotel in the city centre",
+    "after": "Traditional five star hotel in the city centre"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:26.666Z",
+    "id": "1728",
+    "hotel_name": "The Langham Chicago",
+    "before": "Posh deisgn, beautiful views and five star spa",
+    "after": "Posh design, beautiful views and five star spa"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:26.817Z",
+    "id": "1738",
+    "hotel_name": "The Peninsula Beverly Hills ",
+    "before": "Award winning, traditional luxy hotel in central location",
+    "after": "Award winning, traditional luxury hotel in central location"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:26.950Z",
+    "id": "1739",
+    "hotel_name": "The Peninsula Chicago ",
+    "before": "Great dining and spa/wellnes in city centre",
+    "after": "Great dining and spa/wellness in city centre"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:27.165Z",
+    "id": "1760",
+    "hotel_name": "The St. Regis New York ",
+    "before": "Beautiful suites and stylish classic design in this Manhattan landmark ",
+    "after": "Beautiful suites and stylish classic design in this Manhattan landmark"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:27.333Z",
+    "id": "1762",
+    "hotel_name": "The Umstead Hotel and Spa",
+    "before": "Straditional lakeside spa luxury",
+    "after": "Traditional lakeside spa luxury"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:27.483Z",
+    "id": "1770",
+    "hotel_name": "Wequassett Resort & Golf Club",
+    "before": "Classical Cape Cod luxury with great facilitie",
+    "after": "Classical Cape Cod luxury with great facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:27.672Z",
+    "id": "1771",
+    "hotel_name": "Wildflower Farms",
+    "before": "Extraordinary homely luxury in the countryside cabins offering excllent dining, pool, spa and family fun",
+    "after": "Extraordinary homely luxury in the countryside cabins offering excellent dining, pool, spa and family fun"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:27.859Z",
+    "id": "1775",
+    "hotel_name": "Awasi Mendoza",
+    "before": "Understated eco-friendly luxury resort  in  Mendoza wine country with a cozy and authentic ambience",
+    "after": "Understated eco-friendly luxury resort in Mendoza wine country with a cozy and authentic ambience"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:28.010Z",
+    "id": "1779",
+    "hotel_name": "Copacabana Palace",
+    "before": "Majestic property overlooking Copacabana Beach offering great views, Michelin dining and excellent spa facilties",
+    "after": "Majestic property overlooking Copacabana Beach offering great views, Michelin dining and excellent spa facilities"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:28.177Z",
+    "id": "1782",
+    "hotel_name": "Hotel das Cataratas",
+    "before": "Set on the cliffs overlooking the magical Ihuazu waterfalls, this hotel offers a unique combination of old world charm and nature experiences",
+    "after": "Set on the cliffs overlooking the magical Iguazu waterfalls, this hotel offers a unique combination of old world charm and nature experiences"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:28.334Z",
+    "id": "1797",
+    "hotel_name": "Longitude 131°",
+    "before": "Sixteen beautiful tented pavillions set in the Australian outback with stunning views of Ayers Rock and The Olgas",
+    "after": "Sixteen beautiful tented pavilions set in the Australian outback with stunning views of Ayers Rock and The Olgas"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:28.477Z",
+    "id": "1802",
+    "hotel_name": "Laucala Island",
+    "before": "Tranquil understated luxury huts with great views embedded in rich vegitation",
+    "after": "Tranquil understated luxury huts with great views embedded in rich vegetation"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:28.631Z",
+    "id": "1803",
+    "hotel_name": "Kokomo Private Island Fiji",
+    "before": "Absolutely stunning island hideaway, great facilities and magnificant villas and residences",
+    "after": "Absolutely stunning island hideaway, great facilities and magnificent villas and residences"
+  },
+  {
+    "applied_at": "2026-08-16T18:36:28.783Z",
+    "id": "1807",
+    "hotel_name": "Rosewood Cape Kidnappers",
+    "before": "Unique lodge hotel in amazing secluse location",
+    "after": "Unique lodge hotel in amazing secluded location"
+  }
+]
