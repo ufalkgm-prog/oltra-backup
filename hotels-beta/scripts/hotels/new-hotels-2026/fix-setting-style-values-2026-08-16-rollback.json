@@ -68,5 +68,12 @@
     "previous": "Riverfront",
     "applied": "Riverside",
     "hotel": "Clayoquot Wilderness Lodge"
+  },
+  {
+    "id": "1461",
+    "field": "primary_setting",
+    "previous": "Waterfront",
+    "applied": "Lakeside",
+    "hotel": "Mandarin Oriental, Lago di Como"
   }
 ]

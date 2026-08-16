@@ -10,8 +10,14 @@
  *
  * Changes (agreed with Ulrik 2026-08-16):
  *   - secondary_style "184" -> null on 8 hotels (junk data — a number in a style column)
- *   - primary_setting "Lakefront"  -> "Waterfront" (id 1461)
+ *   - primary_setting "Lakefront"  -> "Lakeside"  (id 1461)
  *   - secondary_setting "Riverfront" -> "Riverside" (id 1839)
+ *
+ * id 1461 (Mandarin Oriental, Lago di Como) was first written as "Waterfront", then corrected to
+ * "Lakeside" — it is a lake hotel and its own setting[] tag array already reads ["Lakeside"], so
+ * "Waterfront" left the two layers disagreeing. Its `from` therefore accepts either the original
+ * "Lakefront" or the intermediate "Waterfront", so this script converges on the same end state
+ * whether it is re-run against pristine data or against the already-patched collection.
  *
  * "Riverside" itself is left alone everywhere — it is a canonical taxonomy value (a live choice
  * on the setting field, 29 hotels carry it in their setting[] tag arrays), not drift.
@@ -41,7 +47,8 @@ if (!DIRECTUS_TOKEN) throw new Error("Missing env DIRECTUS_TOKEN");
 
 const APPLY = process.argv.includes("--confirm");
 
-// id, field, the value we expect to find, and what it becomes.
+// id, field, the value(s) we expect to find (a string, or an array when a row has already been
+// patched once), and what it becomes.
 const CHANGES = [
   { id: "1151", field: "secondary_style", from: "184", to: null, hotel: "The Datai Langkawi" },
   { id: "1441", field: "secondary_style", from: "184", to: null, hotel: "Grand Hotel a Villa Feltrinelli" },
@@ -51,7 +58,7 @@ const CHANGES = [
   { id: "1724", field: "secondary_style", from: "184", to: null, hotel: "The Hay-Adams" },
   { id: "1733", field: "secondary_style", from: "184", to: null, hotel: "The Lodge at Torrey Pines" },
   { id: "1745", field: "secondary_style", from: "184", to: null, hotel: "The Ritz-Carlton, Bachelor Gulch" },
-  { id: "1461", field: "primary_setting", from: "Lakefront", to: "Waterfront", hotel: "Mandarin Oriental, Lago di Como" },
+  { id: "1461", field: "primary_setting", from: ["Lakefront", "Waterfront"], to: "Lakeside", hotel: "Mandarin Oriental, Lago di Como" },
   { id: "1839", field: "secondary_setting", from: "Riverfront", to: "Riverside", hotel: "Clayoquot Wilderness Lodge" },
 ];
 
@@ -114,10 +121,11 @@ async function main() {
       }
 
       // Guard against acting on a value that has moved since this list was compiled.
-      if (String(stored).trim() !== from) {
+      const accepted = Array.isArray(from) ? from : [from];
+      if (!accepted.includes(String(stored).trim())) {
         mismatched += 1;
         console.warn(
-          `SKIP  id=${id} ${field} — expected ${JSON.stringify(from)}, found ${JSON.stringify(stored)} (${hotel})`
+          `SKIP  id=${id} ${field} — expected ${accepted.map((v) => JSON.stringify(v)).join(" or ")}, found ${JSON.stringify(stored)} (${hotel})`
         );
         continue;
       }
@@ -141,8 +149,11 @@ async function main() {
 
   if (APPLY && rollback.length > 0) {
     const out = path.join(__dirname, "fix-setting-style-values-2026-08-16-rollback.json");
-    fs.writeFileSync(out, JSON.stringify(rollback, null, 2));
-    console.log(`\nRollback record written to ${out}`);
+    // Append rather than overwrite: a re-run only reports the rows it actually changed, so
+    // writing fresh would discard the previous run's record of the rows it skipped as correct.
+    const existing = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, "utf8")) : [];
+    fs.writeFileSync(out, JSON.stringify([...existing, ...rollback], null, 2));
+    console.log(`\nRollback record appended to ${out} (${existing.length + rollback.length} entries total)`);
   }
 
   console.log("");
