@@ -303,6 +303,13 @@ export default function FlightsView({ searchParams }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(true);
   const [searchError, setSearchError] = useState<string | null>(null);
+  // Set when the member arrived here from a saved trip's Book button. Nothing
+  // re-prices the saved offer yet (booking isn't wired, §32), so this is shown
+  // on arrival rather than only when a change is detected - see the note on
+  // buildFlightBookUrl in SavedTripsView.
+  const [rebookNotice, setRebookNotice] = useState(
+    () => normalizeParam(searchParams.rebook) === "flight"
+  );
   const [detailFlight, setDetailFlight] = useState<FlightLeg | null>(null);
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
   const [saveStateByOffer, setSaveStateByOffer] = useState<Record<string, string>>({});
@@ -1107,8 +1114,24 @@ export default function FlightsView({ searchParams }: Props) {
               </div>
             </div>
 
+            {rebookNotice && (
+              <div className={styles.rebookNotice}>
+                The flight saved to your trip is no longer bookable at its saved
+                price — fares are only held for a short time. Your original
+                search has been restored below; please select a new flight.
+                <button
+                  type="button"
+                  className={styles.rebookNoticeDismiss}
+                  onClick={() => setRebookNotice(false)}
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             {searchError && (
-              <div className="oltra-output" style={{ color: "var(--oltra-accent, #f87171)", padding: "12px 0" }}>
+              <div className="oltra-output" style={{ color: "var(--oltra-error-text)", padding: "12px 0" }}>
                 {searchError}
               </div>
             )}

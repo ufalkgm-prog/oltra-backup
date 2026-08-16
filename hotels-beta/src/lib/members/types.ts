@@ -26,6 +26,21 @@ export type RoomSelectionEntry = {
   currency: string;
 };
 
+/* ---------------------------------------------------------------------------
+ * Booking details below are ANTICIPATED, not yet stored.
+ *
+ * None of these fields has a column in the member_trip_* tables today - hotel
+ * and flight booking are not wired (CLAUDE.md §32: the ETG handoff is still
+ * blocked) and restaurants have no booking flow at all. They are declared here
+ * so the itinerary document can lay out the real thing now and simply start
+ * filling in once booking lands; every one of them renders as "To be
+ * confirmed" until then.
+ *
+ * Adding them to the database is deliberately NOT done here: it belongs with
+ * the booking work that will actually populate them, so the columns match
+ * whatever the provider returns rather than what was guessed months earlier.
+ * ------------------------------------------------------------------------- */
+
 export type SavedHotel = {
   id: string;
   name: string;
@@ -37,6 +52,13 @@ export type SavedHotel = {
   thumbnail: string;
   hasOverlapWarning?: boolean;
   roomSelection?: RoomSelectionEntry[] | null;
+  /** Anticipated - see note above. */
+  bookingReference?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  boardBasis?: string | null;
 };
 
 export type SavedRestaurant = {
@@ -47,6 +69,12 @@ export type SavedRestaurant = {
   status: "confirmed" | "pending" | "saved";
   thumbnail: string;
   hasOverlapWarning?: boolean;
+  /** Anticipated - see note above. */
+  bookingReference?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  reservedAt?: string | null;
+  partySize?: number | null;
 };
 
 export type SavedFlight = {
@@ -55,9 +83,20 @@ export type SavedFlight = {
   timing: string;
   cabin: string;
   departAt?: string;
+  arriveAt?: string;
   status: "confirmed" | "pending" | "saved";
   thumbnail: string;
   hasOverlapWarning?: boolean;
+  /** Anticipated - see note above. */
+  bookingReference?: string | null;
+  flightNumber?: string | null;
+  airline?: string | null;
+  departureAirport?: string | null;
+  departureTerminal?: string | null;
+  arrivalAirport?: string | null;
+  arrivalTerminal?: string | null;
+  baggageAllowance?: string | null;
+  seat?: string | null;
 };
 
 export type SavedTrip = {

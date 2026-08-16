@@ -11,6 +11,7 @@ import {
   seedSavedTripsIfEmptyBrowser,
 } from "@/lib/members/db";
 import type { SavedTrip } from "@/lib/members/types";
+import TripItineraryDocument from "./TripItineraryDocument";
 
 type TripItemCard = {
   id: string;
@@ -123,6 +124,12 @@ function buildFlightBookUrl(
   if (kids > 0) params.set("kids", String(kids));
   params.set("tripType", "oneway");
   params.set("include_flights", "1");
+  // Booking a saved flight can't reuse the stored offer: Duffel offers expire
+  // within hours, so by the time a trip is revisited the price has almost
+  // certainly moved or the fare is gone. Rather than fail at the booking step,
+  // the member lands back on Flights with their original search restored and a
+  // notice explaining they need to pick again. See rebookNotice in FlightsView.
+  params.set("rebook", "flight");
   return `/flights?${params.toString()}`;
 }
 
@@ -132,6 +139,7 @@ export default function SavedTripsView() {
   const [currentNotes, setCurrentNotes] = useState("");
   const [warningItemId, setWarningItemId] = useState<string | null>(null);
   const [tripPendingDelete, setTripPendingDelete] = useState<SavedTrip | null>(null);
+  const [showItinerary, setShowItinerary] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -317,6 +325,14 @@ export default function SavedTripsView() {
 
           <button
             type="button"
+            className="oltra-button-primary members-action-button"
+            onClick={() => setShowItinerary(true)}
+          >
+            Itinerary
+          </button>
+
+          <button
+            type="button"
             className="oltra-button-secondary members-action-button"
             onClick={() => setTripPendingDelete(selectedTrip)}
           >
@@ -355,6 +371,13 @@ export default function SavedTripsView() {
           />
         </div>
       </section>
+
+      {showItinerary ? (
+        <TripItineraryDocument
+          trip={selectedTrip}
+          onClose={() => setShowItinerary(false)}
+        />
+      ) : null}
 
       {warningItemId ? (
         <section className="oltra-glass members-warning-panel">

@@ -31,6 +31,7 @@ import {
   fetchTripChoicesBrowser,
   getMemberActionAccessBrowser,
 } from "@/lib/members/db";
+import { MAX_TRIPS_PER_MEMBER, TRIP_LIMIT_MESSAGE, isTripLimitError } from "@/lib/members/tripLimits";
 import type { HotelRecord } from "@/lib/directus";
 import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
@@ -706,6 +707,7 @@ export default function HotelsView(props: {
   const [showTripPicker, setShowTripPicker] = useState(false);
   const [favoriteHotelIds, setFavoriteHotelIds] = useState<Set<string>>(new Set());
   const [newTripName, setNewTripName] = useState("");
+  const tripLimitReached = tripChoices.length >= MAX_TRIPS_PER_MEMBER;
   const [creatingTrip, setCreatingTrip] = useState(false);
 
   const [fromValue, setFromValue] = useState(normalizeParam(searchParams.from));
@@ -1925,7 +1927,9 @@ async function handleCreateTripAndAddHotel() {
   } catch (error) {
     const message = error instanceof Error ? error.message.toLowerCase() : "";
 
-    if (
+    if (isTripLimitError(error)) {
+      setMemberActionError(TRIP_LIMIT_MESSAGE);
+    } else if (
       message.includes("auth") ||
       message.includes("login") ||
       message.includes("sign in") ||
@@ -3077,7 +3081,10 @@ async function handleCreateTripAndAddHotel() {
                               </div>
                             )}
 
-                            <div className="mt-3 border-t border-[var(--oltra-field-border)] pt-3">
+                            <div
+                              className="mt-3 border-t border-[var(--oltra-field-border)] pt-3"
+                              title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
+                            >
                               <div className="oltra-subheader">Create new trip</div>
 
                               <div className="mt-2 flex flex-col gap-2">
@@ -3090,16 +3097,24 @@ async function handleCreateTripAndAddHotel() {
                                   }}
                                   placeholder="Trip name"
                                   className="oltra-input"
+                                  disabled={tripLimitReached}
                                 />
 
                                 <button
                                   type="button"
                                   onClick={handleCreateTripAndAddHotel}
-                                  disabled={creatingTrip || !newTripName.trim()}
+                                  disabled={creatingTrip || !newTripName.trim() || tripLimitReached}
                                   className="oltra-dropdown-item"
+                                  title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
                                 >
                                   {creatingTrip ? "Creating..." : "Create new trip"}
                                 </button>
+
+                                {tripLimitReached ? (
+                                  <div className="text-[12px] leading-snug text-[color:var(--oltra-text-muted)]">
+                                    {TRIP_LIMIT_MESSAGE}
+                                  </div>
+                                ) : null}
                               </div>
                             </div>
                           </div>

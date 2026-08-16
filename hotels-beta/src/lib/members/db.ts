@@ -8,6 +8,7 @@ import type {
   RoomSelectionEntry,
   SavedTrip,
 } from "./types";
+import { MAX_TRIPS_PER_MEMBER, TripLimitError } from "./tripLimits";
 
 type ProfileUpsert = Database["public"]["Tables"]["member_profiles"]["Insert"];
 type FamilyInsert =
@@ -431,6 +432,7 @@ function mapSavedTrips(
         timing: item.timing ?? "",
         cabin: item.cabin ?? "",
         departAt: item.depart_at ?? undefined,
+        arriveAt: item.arrive_at ?? undefined,
         status: (item.status as "confirmed" | "pending" | "saved") ?? "saved",
         thumbnail: item.thumbnail ?? "/images/hero-lp.jpg",
         hasOverlapWarning: item.has_overlap_warning ?? false,
@@ -862,6 +864,17 @@ export async function createTripBrowser(input?: {
   if (userError || !user) {
     throw new Error("Not authenticated");
   }
+
+  // The real guard for the per-member trip cap - the pickers also disable
+  // their create control, but this is what actually holds when they don't
+  // (stale count, second tab, direct call).
+  const { count, error: countError } = await supabase
+    .from("member_trips")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  if (countError) throw countError;
+  if ((count ?? 0) >= MAX_TRIPS_PER_MEMBER) throw new TripLimitError();
 
   const payload: TripInsert = {
     user_id: user.id,

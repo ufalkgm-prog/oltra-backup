@@ -896,3 +896,202 @@
     grid-template-columns: 1fr;
   }
 }
+/* ---------------------------------------------------------------------------
+   Trip itinerary document
+   --------------------------------------------------------------------------- */
+
+.itinerary-overlay {
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.itinerary-modal {
+  width: min(860px, calc(100vw - 48px));
+  max-width: none;
+  margin: 24px 0;
+}
+
+.itinerary-modal__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--oltra-field-border);
+}
+
+.itinerary-modal__toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.itinerary-document__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--oltra-text-primary);
+}
+
+/* The "key info in a short intro" block: a dense two-column fact list rather
+   than prose, so the whole trip is legible at a glance before the day-by-day
+   detail starts. */
+.itinerary-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 6px 20px;
+  margin: 12px 0 0;
+}
+
+.itinerary-fact {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.itinerary-fact dt {
+  flex: 0 0 auto;
+  min-width: 96px;
+  color: var(--oltra-text-muted);
+}
+
+.itinerary-fact dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--oltra-text-primary);
+}
+
+.itinerary-day {
+  margin-top: 22px;
+}
+
+.itinerary-day__heading {
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--oltra-field-border);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--oltra-text-primary);
+}
+
+.itinerary-entry {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.itinerary-entry + .itinerary-entry {
+  border-top: 1px solid var(--oltra-field-border);
+}
+
+.itinerary-entry__time {
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--oltra-text-primary);
+}
+
+.itinerary-entry__kind {
+  margin-top: 2px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oltra-text-muted);
+}
+
+.itinerary-entry__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--oltra-text-primary);
+}
+
+.itinerary-entry__subtitle {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--oltra-text-muted);
+}
+
+.itinerary-entry__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2px 20px;
+  margin: 8px 0 0;
+}
+
+.itinerary-document__footer {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--oltra-field-border);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--oltra-text-muted);
+}
+
+/* Print / Save as PDF. Everything except the document itself is hidden, and
+   the document is re-laid-out for paper: black on white (a dark glass panel
+   prints as a wall of ink), no page-break through an entry or a day heading.
+   This is what makes the PDF - no PDF library involved, per CLAUDE.md §2. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .itinerary-document,
+  .itinerary-document * {
+    visibility: visible;
+  }
+
+  .itinerary-document {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    padding: 0;
+    color: #000;
+    background: #fff;
+  }
+
+  .itinerary-modal__toolbar {
+    display: none;
+  }
+
+  .itinerary-document__title,
+  .itinerary-entry__time,
+  .itinerary-entry__title,
+  .itinerary-day__heading,
+  .itinerary-fact dd {
+    color: #000;
+  }
+
+  .itinerary-fact dt,
+  .itinerary-entry__kind,
+  .itinerary-entry__subtitle,
+  .itinerary-document__footer {
+    color: #444;
+  }
+
+  .itinerary-day__heading,
+  .itinerary-entry + .itinerary-entry,
+  .itinerary-document__footer {
+    border-color: #ccc;
+  }
+
+  .itinerary-day {
+    break-inside: avoid-page;
+  }
+
+  .itinerary-entry {
+    break-inside: avoid;
+  }
+
+  .itinerary-day__heading {
+    break-after: avoid;
+  }
+}

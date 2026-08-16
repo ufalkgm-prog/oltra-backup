@@ -709,6 +709,36 @@
   color: var(--oltra-text-primary);
 }
 
+/* Shown when a member arrives from a saved trip's Book button. */
+.rebookNotice {
+  position: relative;
+  margin-bottom: 12px;
+  padding: 10px 34px 10px 14px;
+  border-radius: var(--oltra-radius-md);
+  border: 1px solid rgba(255, 138, 113, 0.4);
+  background: rgba(255, 138, 113, 0.1);
+  color: var(--oltra-text-primary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.rebookNoticeDismiss {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--oltra-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.rebookNoticeDismiss:hover {
+  color: var(--oltra-text-primary);
+}
+
 .modalBackdrop {
   position: fixed;
   inset: 0;
