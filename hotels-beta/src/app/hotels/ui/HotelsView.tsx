@@ -679,7 +679,10 @@ export default function HotelsView(props: {
     const rank = (h: HotelRecord) => {
       const availability = ratehawkResultAvailability[String(h.id)];
       if (availability?.status === "available" && availability.headline) return 0;
-      if (availability?.status === "unavailable") return 2;
+      // Passive sits above sold-out: it isn't a dead end, the guest can still
+      // book on the hotel's own site.
+      if (h.ratehawk_status === "passive") return 2;
+      if (availability?.status === "unavailable") return 3;
       return 1;
     };
     // Array.prototype.sort is stable, so hotels of equal rank keep the
@@ -1780,7 +1783,11 @@ export default function HotelsView(props: {
       return;
     }
 
+    // Passive hotels are excluded from the request entirely - Ratehawk cannot
+    // price them for any date, so asking is pure latency (and ~17% of the
+    // published inventory).
     const hotelsWithRatehawkHids = visibleHotels
+      .filter((hotel) => hotel.ratehawk_status !== "passive")
       .map((hotel) => ({
         directusId: String(hotel.id),
         hid: getRatehawkHidForHotel(hotel),
@@ -2426,8 +2433,11 @@ async function handleCreateTripAndAddHotel() {
                   const cardAvailable =
                     ratehawkCardAvailability?.status === "available" &&
                     Boolean(ratehawkCardAvailability.headline);
+                  // Passive is a stored property fact, not a live result, so it
+                  // takes precedence over whatever the batch check returned.
+                  const cardPassive = h.ratehawk_status === "passive";
                   const cardUnavailable =
-                    ratehawkCardAvailability?.status === "unavailable";
+                    !cardPassive && ratehawkCardAvailability?.status === "unavailable";
 
                   return (
                     <button
@@ -2469,7 +2479,26 @@ async function handleCreateTripAndAddHotel() {
                           </div>
 
                           <div className="mt-2">
-                            {ratehawkResultAvailabilityLoading ? (
+                            {cardPassive ? (
+                              /* Never bookable through Ratehawk for any date -
+                                 "No availability" would wrongly read as "sold
+                                 out for your dates". */
+                              h.www ? (
+                                <a
+                                  href={h.www}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="hotel-availability-note block hover:underline"
+                                >
+                                  Check availability on website
+                                </a>
+                              ) : (
+                                <div className="hotel-availability-note">
+                                  Check availability on website
+                                </div>
+                              )
+                            ) : ratehawkResultAvailabilityLoading ? (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
                                 Checking availability...
                               </div>

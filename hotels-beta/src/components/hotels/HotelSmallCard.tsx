@@ -43,7 +43,18 @@ export default function HotelSmallCard({
   const hasPhoto = hasHotelPhotos(hotel);
   const nameAndLocation = [hotel.city, hotel.country].filter(Boolean).join(" · ");
 
+  // A stored property fact, checked before any live result: Ratehawk never
+  // sells this hotel, so "No availability" would wrongly read as "sold out".
+  const isPassive = hotel.ratehawk_status === "passive";
+
   const rightBlock = (() => {
+    if (isPassive) {
+      return (
+        <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+          Check availability on website
+        </div>
+      );
+    }
     if (!availability) return null;
     if (availability.status === "available") {
       return (

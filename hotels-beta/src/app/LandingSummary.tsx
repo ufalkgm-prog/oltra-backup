@@ -278,7 +278,11 @@ export default function LandingSummary({
       return;
     }
 
+    // Passive hotels are left out of the request - Ratehawk cannot price them
+    // for any date, so the card shows "Check availability on website" instead
+    // and asking would be pure latency.
     const withIds = visibleHotels
+      .filter((h) => h.ratehawk_status !== "passive")
       .map((h) => ({ directusId: String(h.id), hid: getRatehawkHid(h) }))
       .filter((x): x is { directusId: string; hid: number } => x.hid !== null);
 

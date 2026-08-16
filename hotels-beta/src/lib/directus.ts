@@ -213,6 +213,11 @@ export type HotelRecord = {
   booking_notes?: string | null;
   agoda_hotel_id?: string | number | null;
   ratehawk_hid?: number | null;
+  /** Whether the hotel is sellable through Ratehawk at all — set offline by
+   * scripts/ratehawk/probe-ratehawk-status.mjs, not by a live check. "passive"
+   * means never bookable there for any date, which is a different thing from a
+   * live search returning no rooms for the chosen dates. */
+  ratehawk_status?: "active" | "passive" | "not_integrated" | null;
 };
 
 export async function getHotels(query: DirectusQuery): Promise<HotelRecord[]> {

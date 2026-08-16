@@ -2755,4 +2755,129 @@ content into this file.
 
 ---
 
+## 42. RATEHAWK HOTEL STATUS — ACTIVE / PASSIVE / NOT INTEGRATED (2026-08-16)
+
+### The problem
+
+Hotels Ratehawk cannot price showed **"No availability"**, which reads as "sold out
+for your dates". For a large minority of the roster that is simply wrong: the
+property is not sold through Ratehawk at all and never will be, for any date.
+
+### It is not a sandbox artefact — verified, not assumed
+
+The obvious suspicion (§26: the key is a "Sandbox Key", albeit against the live
+production host) was tested before any code was written. Probing the whole published
+inventory across four windows: **664 active · 136 passive · 53 not integrated**.
+
+The passive set is almost entirely safari lodges, private islands and remote luxury —
+Singita, &Beyond, Wilderness, Londolozi, Sabi Sabi, Royal Malewane, Mombo, North
+Island, Kisawa, Aman Bhutan, Ritz Paris. Those are exactly the properties that sell
+direct or via specialist agents rather than through bedbanks. A sandbox restriction
+would not selectively exclude *those* while returning rates for hundreds of city
+hotels on the same key. **Going live will not change this; do not wait for it.**
+
+### The probe-design trap — read this before re-running
+
+The intuitive design ("probe dates well into the future so nothing is merely sold
+out") **gives the wrong answer**. Measured 2026-08-16:
+
+| Check-in | Hotels with rates (of 800 probeable) |
+|---|---|
+| 2026-09-30 | 570 |
+| 2026-11-14 | 561 |
+| 2027-01-13 | 559 |
+| 2027-05-13 | 567 |
+| **2027-10-05** | **96** ← collapse |
+
+A window ~14 months out returns almost nothing, because most hotels have not loaded
+inventory that far ahead. Probing far out measures *how far ahead rates are loaded*,
+not whether a hotel is on Ratehawk.
+
+Several windows are still needed: each individually sits near 560, well below the 664
+bookable on at least one — roughly 100 hotels are merely sold out on any given window
+and a single probe would mislabel them. `probe-ratehawk-status.mjs` generates its
+windows from *today* (+45/+90/+150/+270 days) so this can't creep back as the file
+ages.
+
+### Field
+
+`ratehawk_status` on `hotels` — `select-dropdown`, `allowOther: false`, values
+`active` / `passive` / `not_integrated`.
+
+Deliberately **not** the pre-existing free-text `status_notes` (unused,
+`interface: null`). §40 records what unconstrained text fields do here —
+`primary_setting` drifted into "Private island"/"Private Island" variants needing a
+cleanup script. A value the app branches on must not be free text.
+
+`not_integrated` = no `ratehawk_hid` **or** no `ratehawk_image_1` (36 have no hid;
+17 more have a hid but no images).
+
+### Scripts (`hotels-beta/scripts/ratehawk/`)
+
+* `probe-ratehawk-status.mjs` — **read-only**, writes a JSON report. Batches hids 300
+  at a time (§32 limit) through `/search/serp/hotels/`, so the entire inventory is
+  ~12 requests total, not one per hotel. `--only`, `--windows`, `--out`. A failed
+  request throws rather than being read as "no rates" — that would silently mark
+  hotels passive.
+* `add-ratehawk-status-field.mjs` — one-shot, idempotent, schema snapshots either
+  side per §32.
+* `apply-ratehawk-status-2026-08-16.mjs` — dry-run by default, `--confirm` to write.
+  Unlike the `apply-award-review-*` scripts it is **not** a hardcoded one-time
+  record: it reads whatever `--report` it is given, so the quarterly re-probe reuses
+  it as-is.
+
+### App behaviour
+
+`ratehawk_status` is in `HotelRecord` and both bulk field lists (`hotels/page.tsx`,
+`page.tsx`). A passive hotel:
+
+* shows **"Check availability on website"** (linked to `www` on the Hotels page)
+  instead of "No availability" — `.hotel-availability-note`, deliberately neutral
+  rather than the error-toned `.hotel-availability-pill`;
+* is **excluded from the availability batch request** on both the Hotels page and the
+  landing summary — ~17% fewer hids per call, and no waiting on a price that cannot
+  exist;
+* sorts **between** available and sold-out, not with sold-out — it isn't a dead end.
+
+### Cadence and caveats
+
+* **Re-probe quarterly — see §43 for the schedule and next due date.** A passive
+  hotel can start distributing. ~12 requests.
+* **`active` means "bookable at least once", not "bookable now".** A live "No
+  availability" is still correct for an active hotel on sold-out dates — the stored
+  status and the live check are complementary, not alternatives.
+* Probe occupancy is 2 adults / 1 room, residency `gb`. A property selling only
+  family rooms could in principle be misfiled; not observed.
+
+---
+
+## 43. RECURRING DATA MAINTENANCE — SCHEDULE
+
+Data that goes stale on a clock rather than when someone changes something. Nothing
+here runs automatically; each is a manual re-run. **When you run one, update its "last
+run" and "next due" below** — that is the only record.
+
+| What | Interval | Last run | Next due | How |
+|---|---|---|---|---|
+| Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests, a few minutes) |
+| Ratehawk static content — full dump (§32) | Weekly | — never run | when the offline sync is built | `hotel/info/dump` |
+| Ratehawk static content — incremental (§32) | Daily | — never run | when the offline sync is built | `retrieve-hotel-incremental-dump` |
+| Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
+| City → airport mapping (§37/§38) | When the hotel roster's city list changes | 2026-08-14 | on demand | `build-city-airports.mjs` |
+| Airport options list (§39) | With the above | 2026-08-16 | on demand | `build-airport-options.mjs` |
+
+Notes:
+
+* **Ratehawk status is the one with a real clock on it.** The other Ratehawk rows are
+  ETG certification requirements for a sync that does not exist yet (§32 TODO) — they
+  are listed so they aren't forgotten, not because they are overdue.
+* Award refreshes are event-driven, not calendar-driven: T+L published its 2026 list
+  on 2026-07-07, a week before that session happened to check. Annually is a
+  reminder to *look*, not a deadline.
+* The two airport builds are triggered by data changes, not time. Re-run them after
+  any meaningful batch of new hotels (e.g. a promotion out of `oltra-agents`, §41),
+  or destinations will resolve to the wrong nearest airport.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
