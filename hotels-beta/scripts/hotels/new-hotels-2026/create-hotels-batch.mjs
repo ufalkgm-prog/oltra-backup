@@ -224,6 +224,12 @@ function buildCreatePayload(row) {
     awards: toPgArrayLiteral(row.awards),
     setting: toPgArrayLiteral(row.setting),
     style: toPgArrayLiteral(row.style),
+    // Editorial single-select companions to the setting/style tag arrays above —
+    // plain nullable text columns, not taxonomy-validated.
+    primary_setting: normalizeText(row.primary_setting),
+    secondary_setting: normalizeText(row.secondary_setting),
+    primary_style: normalizeText(row.primary_style),
+    secondary_style: normalizeText(row.secondary_style),
     best50: row.best50,
     cn: row.cn,
     forbes5: row.forbes5,
@@ -231,6 +237,11 @@ function buildCreatePayload(row) {
     telegraph: row.telegraph,
     tl100: row.tl100,
     aaa5d: row.aaa5d,
+    // Coordinates are Postgres numeric, NOT integers — do not Math.trunc these the way
+    // editor_rank / ext_points / total_rooms_suites_villas above are truncated. Dropping the
+    // decimals would move a hotel by up to ~100km. Null must stay null (0 is a valid coordinate).
+    lat: row.lat == null ? null : Number(row.lat),
+    lng: row.lng == null ? null : Number(row.lng),
     www: normalizeText(row.www),
     insta: normalizeText(row.insta),
   };
