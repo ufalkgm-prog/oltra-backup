@@ -2553,4 +2553,84 @@ similar one-time fix script:
 
 ---
 
+## 41. WHERE DATA WORK LIVES — THE `oltra-agents` REPO (2026-08-16)
+
+### Read this before generating any hotel or restaurant content
+
+**New hotel and new restaurant records are researched, generated and staged in
+a separate repo, `oltra-agents` — not here.** This repo holds the application
+code, the import/matching scripts, and the schema conventions. The data
+retrieval and the workflow around it (what to add, researched content, review
+state, handover notes) lives in `oltra-agents`.
+
+Sibling checkout, alongside this one:
+
+```
+oltra-beta/     <- application code, scripts, schema conventions (this repo)
+oltra-agents/   <- data retrieval, content generation, staging, workflow state
+```
+
+**Check `oltra-agents` first.** A 2026-08-16 session was one step away from
+researching and drafting editorial content for 34 brand-delta hotels that had
+already been fully staged there the day before — descriptions, taxonomy,
+coordinates, award flags and all. The work looks missing from inside this repo,
+because the inputs it needs are not in this repo.
+
+### Layout (`oltra-agents/agents/`)
+
+| Path | Holds |
+|---|---|
+| `database-agent/hotels/pending/` | staged hotel records ready for review/import |
+| `database-agent/hotels/flagged/` | per-hotel issues needing a human call |
+| `database-agent/restaurants/pending/` | same, for restaurants |
+| `database-agent/restaurants/flagged/` | same, for restaurants |
+| `code-agent/tasks/`, `code-agent/completed/` | code task briefs |
+| `marketing-agent/briefs/`, `drafts/` | marketing copy |
+| `monitoring-agent/reports/` | monitoring output |
+
+Convention: **everything lands in `pending/` or `flagged/` first, and the path
+from staging to live runs through Ulrik.** Nothing there is authorised for
+import into Directus by virtue of existing.
+
+### What is staged as of 2026-08-16
+
+* `database-agent/hotels/pending/new-hotels-2026-08-15.json` — **32 hotel
+  records, ids 3001–3032**, from the brand-delta audit (the audit itself and
+  the include/exclude decisions live in this repo, on the unmerged
+  `brand-delta-audit-2026-08-15` branch: 34 approved, 2 later excluded —
+  Danieli, not yet open, and Six Senses Courchevel, residences). All 32 pass
+  `validateRow()` in `create-hotels-batch.mjs` unmodified, carry all six
+  columns added in §40, and use affiliation strings that exactly match existing
+  DB spellings. Not imported — verified read-only 2026-08-16.
+* `database-agent/hotels/pending/etg-match-2026-08-15.json` — Ratehawk/ETG
+  `hid` matches for those same 32 (24 confirmed, 8 unresolved),
+  `written_to_directus: false`.
+* `database-agent/hotels/flagged/` — 215 per-hotel findings (mostly
+  `url-redirected` / `url-blocked-by-bot-protection`).
+* Restaurant folders exist but are empty as of this date.
+
+**Import-order gotcha for that batch**: `published` tracks the ETG match
+exactly — the 24 hotels with a confirmed `hid` are `published: true`, the 8
+unresolved are `false`. But the `hid` lives in the *second* file, and the hotel
+records themselves carry no `ratehawk_hid`. Creating from the hotel file alone
+would put 24 hotels live with no hid and no images — "No availability" per §30,
+no photo, and excluded from the Featured Mode pool per §6. Create → write
+`ratehawk_hid` → backfill images, or create unpublished and flip afterwards.
+
+### `oltra-agents` has its own rules — do not carry habits across
+
+It has its own `CLAUDE.md` that governs work there, and it is **stricter than
+this one**: read-only by default, with three protected actions (removing,
+overwriting, editing existing content) each requiring a specific literal
+keyword in Ulrik's own instruction before they are permitted. Synonyms,
+implication, prior authorisation and "the usual process" explicitly do not
+count. Read that file before doing anything there beyond reading.
+
+That file also states: *"Do not merge, copy, or move content between the two."*
+This section is a **pointer**, deliberately — enough to stop a future session
+rediscovering the split or duplicating staged work. Do not copy `oltra-agents`
+content into this file.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
