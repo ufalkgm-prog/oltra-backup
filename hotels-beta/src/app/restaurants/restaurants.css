@@ -44,7 +44,9 @@
 }
 
 .restaurants-sidebar__count {
-  margin: 18px 0 4px;
+  /* 12px, not 18px: the type filter moved up onto the city row, so the pane
+     below it comes up too. */
+  margin: 12px 0 4px;
   padding-left: 0;
   font-size: 12px;
   line-height: 1.4;
@@ -360,8 +362,26 @@
   color: var(--oltra-text-muted);
 }
 
-.restaurants-sidebar__type-filter {
-  margin-top: 16px;
+/* City + Restaurant type on one row, equal width. The city lookup's dropdown
+   is absolutely positioned inside .restaurants-city-lookup, so it is unaffected
+   by the narrower column. */
+.restaurants-sidebar__filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.restaurants-sidebar__filter {
+  min-width: 0;
+}
+
+/* The member's own favourites, in the same sage the active buttons use. */
+.restaurant-favorite-mark {
+  margin-right: 6px;
+  color: var(--oltra-favorite-mark);
+  font-size: 0.85em;
+  line-height: 1;
 }
 
 .restaurants-type-pills {

@@ -242,6 +242,12 @@ export type Database = {
           external_flight_id: string | null
           has_overlap_warning: boolean
           id: string
+          adults: number | null
+          destination_arrive_at: string | null
+          kids: number | null
+          price_amount: number | null
+          price_currency: string | null
+          return_depart_at: string | null
           route: string | null
           status: string | null
           thumbnail: string | null
@@ -258,6 +264,12 @@ export type Database = {
           external_flight_id?: string | null
           has_overlap_warning?: boolean
           id?: string
+          adults?: number | null
+          destination_arrive_at?: string | null
+          kids?: number | null
+          price_amount?: number | null
+          price_currency?: string | null
+          return_depart_at?: string | null
           route?: string | null
           status?: string | null
           thumbnail?: string | null
@@ -274,6 +286,12 @@ export type Database = {
           external_flight_id?: string | null
           has_overlap_warning?: boolean
           id?: string
+          adults?: number | null
+          destination_arrive_at?: string | null
+          kids?: number | null
+          price_amount?: number | null
+          price_currency?: string | null
+          return_depart_at?: string | null
           route?: string | null
           status?: string | null
           thumbnail?: string | null
@@ -301,6 +319,12 @@ export type Database = {
           hotel_directus_id: string
           hotel_name: string | null
           id: string
+          adults: number | null
+          children_ages: Json | null
+          kids: number | null
+          price_amount: number | null
+          price_currency: string | null
+          rooms: number | null
           location: string | null
           room_selection: Json | null
           status: string | null
@@ -318,6 +342,12 @@ export type Database = {
           hotel_directus_id: string
           hotel_name?: string | null
           id?: string
+          adults?: number | null
+          children_ages?: Json | null
+          kids?: number | null
+          price_amount?: number | null
+          price_currency?: string | null
+          rooms?: number | null
           location?: string | null
           room_selection?: Json | null
           status?: string | null
@@ -335,6 +365,12 @@ export type Database = {
           hotel_directus_id?: string
           hotel_name?: string | null
           id?: string
+          adults?: number | null
+          children_ages?: Json | null
+          kids?: number | null
+          price_amount?: number | null
+          price_currency?: string | null
+          rooms?: number | null
           location?: string | null
           room_selection?: Json | null
           status?: string | null

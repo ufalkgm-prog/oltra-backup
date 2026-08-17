@@ -555,7 +555,8 @@ export default function LandingSummary({
                       label="SAVE"
                       compact
                       align="right"
-                      className="oltra-button-secondary w-full"
+                      /* --xs matches the BOOK button rendered inside the card. */
+                      className="oltra-button-secondary oltra-button--xs w-full"
                     />
                   )}
                 />

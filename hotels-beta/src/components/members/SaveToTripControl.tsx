@@ -38,7 +38,14 @@ type Props = {
   /** Open the panel upward - for controls near the bottom of a scroll pane. */
   dropUp?: boolean;
   disabled?: boolean;
+  /** Confirm the save on the trigger itself ("Saved", italic, for a few
+   * seconds) instead of printing a line of text under it. For surfaces where a
+   * text confirmation would reflow the layout - the flights price cards sit in
+   * a fixed-height grid. Errors still print, since they need to be read. */
+  confirmInTrigger?: boolean;
 };
+
+const SAVED_FLASH_MS = 2500;
 
 export default function SaveToTripControl({
   onSave,
@@ -49,8 +56,10 @@ export default function SaveToTripControl({
   align = "left",
   dropUp = false,
   disabled = false,
+  confirmInTrigger = false,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [trips, setTrips] = useState<Array<{ id: string; name: string; label: string }>>([]);
   const [tripsLoaded, setTripsLoaded] = useState(false);
   const [newTripName, setNewTripName] = useState("");
@@ -91,6 +100,18 @@ export default function SaveToTripControl({
     return () => window.clearTimeout(timer);
   }, [message, error]);
 
+  useEffect(() => {
+    if (!justSaved) return;
+    const timer = window.setTimeout(() => setJustSaved(false), SAVED_FLASH_MS);
+    return () => window.clearTimeout(timer);
+  }, [justSaved]);
+
+  /** One place to land a successful save, so the two save paths can't drift. */
+  function reportSaved(text: string) {
+    if (confirmInTrigger) setJustSaved(true);
+    else setMessage(text);
+  }
+
   async function handleToggle() {
     setMessage("");
     setError("");
@@ -112,7 +133,7 @@ export default function SaveToTripControl({
     try {
       const result = await onSave(tripId);
       setOpen(false);
-      setMessage(result?.message ?? "Saved to trip.");
+      reportSaved(result?.message ?? "Saved to trip.");
     } catch (err) {
       const text = err instanceof Error ? err.message.toLowerCase() : "";
       if (
@@ -146,7 +167,7 @@ export default function SaveToTripControl({
       setNewTripName("");
       const result = await onSave(created.id);
       setOpen(false);
-      setMessage(result?.message ?? "Saved to new trip.");
+      reportSaved(result?.message ?? "Saved to new trip.");
     } catch (err) {
       if (isTripLimitError(err)) {
         setError(TRIP_LIMIT_MESSAGE);
@@ -250,11 +271,12 @@ export default function SaveToTripControl({
         }}
         disabled={disabled || busy}
         className={className}
+        style={justSaved ? { fontStyle: "italic" } : undefined}
       >
-        {busy ? "SAVING..." : label}
+        {justSaved ? "Saved" : busy ? "SAVING..." : label}
       </button>
 
-      {message || error ? (
+      {error || (message && !confirmInTrigger) ? (
         <div className="mt-1 text-[11px] leading-snug text-[color:var(--oltra-text-muted)]">
           {error || message}
         </div>

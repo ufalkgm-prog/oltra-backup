@@ -623,10 +623,11 @@ export default function PersonalInformationView() {
           </div>
         </section>
 
-        <section className="oltra-glass members-section">
-          <div className="members-section__header members-section__header--row">
-            <div className="oltra-label">ADDITIONAL FAMILY MEMBERS</div>
-
+        {/* No panel and no heading here - just the button and the cards it
+            creates. The glass section around them read as a second, mostly
+            empty box for a member with no family members saved. */}
+        <div className="members-family-block">
+          <div className="members-family-block__actions">
             <button
               type="button"
               className="oltra-button-primary members-action-button"
@@ -705,7 +706,7 @@ export default function PersonalInformationView() {
               </div>
             ))}
           </div>
-        </section>
+        </div>
       </div>
 
       {showLeavePrompt ? (

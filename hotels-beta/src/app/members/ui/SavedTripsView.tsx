@@ -9,8 +9,13 @@ import {
   deleteSavedTripItemBrowser,
   fetchSavedTripsBrowser,
   seedSavedTripsIfEmptyBrowser,
+  updateTripItemPriceBrowser,
 } from "@/lib/members/db";
 import type { SavedTrip } from "@/lib/members/types";
+import { buildTripWarnings } from "@/lib/members/tripWarnings";
+import { guessResidencyFromLocale } from "@/lib/countries";
+import { normalizeOffers } from "@/lib/flights/duffelNormalizer";
+import type { CabinClass } from "@duffel/api/types";
 import TripItineraryDocument from "./TripItineraryDocument";
 
 type TripItemCard = {
@@ -25,6 +30,45 @@ type TripItemCard = {
   hasOverlapWarning?: boolean;
   bookUrl?: string;
   roomsSummary?: string;
+  priceLabel?: string;
+  priceCurrency?: string;
+  /** Set when the item can be re-priced against its live source. */
+  refresh?: RefreshTarget;
+};
+
+/* What "Update price and availability" needs to re-run the original query.
+ * Hotels go back to Ratehawk, flights to Duffel. */
+type RefreshTarget =
+  | {
+      kind: "hotel";
+      hotelDirectusId: string;
+      checkIn: string;
+      checkOut: string;
+      rooms: number;
+      adults: number;
+      kids: number;
+      childrenAges: number[];
+    }
+  | {
+      kind: "flight";
+      origin: string;
+      destination: string;
+      departureDate: string;
+      cabinClass: CabinClass;
+      adults: number;
+      children: number;
+    };
+
+type RefreshState = {
+  status: "loading" | "done" | "error";
+  message?: string;
+};
+
+const CABIN_CLASS_BY_LABEL: Record<string, CabinClass> = {
+  economy: "economy",
+  "premium economy": "premium_economy",
+  business: "business",
+  first: "first",
 };
 
 function summarizeRoomSelection(
@@ -34,6 +78,60 @@ function summarizeRoomSelection(
   return roomSelection
     .map((room) => `${room.quantity}× ${room.roomName}`)
     .join(", ");
+}
+
+/* Price stored on the item at save time. Falls back to summing the saved room
+ * picks for hotels saved before price_amount existed. */
+function formatSavedPrice(
+  amount: number | null | undefined,
+  currency: string | null | undefined,
+  suffix: string
+): string | undefined {
+  if (!amount || !currency) return undefined;
+  return `${currency} ${Math.round(amount).toLocaleString()} ${suffix}`;
+}
+
+/* The guests and rooms actually saved with this hotel, e.g. "2 adults, 1 child
+ * · 2 rooms". Returns undefined when the hotel was saved without a search, so
+ * the card falls back to the trip's own travellers line. */
+function describeStayParty(
+  item: SavedTrip["hotels"][number]
+): string | undefined {
+  const parts: string[] = [];
+
+  if (item.adults) {
+    parts.push(`${item.adults} adult${item.adults === 1 ? "" : "s"}`);
+  }
+  if (item.kids) {
+    const ages = item.childrenAges?.length
+      ? ` (${item.childrenAges.join(", ")})`
+      : "";
+    parts.push(`${item.kids} child${item.kids === 1 ? "" : "ren"}${ages}`);
+  }
+
+  const guests = parts.join(", ");
+  const rooms = item.rooms
+    ? `${item.rooms} room${item.rooms === 1 ? "" : "s"}`
+    : "";
+
+  if (!guests && !rooms) return undefined;
+  return [guests, rooms].filter(Boolean).join(" · ");
+}
+
+function summarizeRoomPrice(
+  roomSelection: SavedTrip["hotels"][number]["roomSelection"]
+): string | undefined {
+  if (!roomSelection?.length) return undefined;
+  const currency = roomSelection[0]?.currency;
+  if (!currency) return undefined;
+  // Mixed currencies would make a single total meaningless - skip rather than
+  // add numbers that are not comparable.
+  if (roomSelection.some((room) => room.currency !== currency)) return undefined;
+  const total = roomSelection.reduce(
+    (sum, room) => sum + room.pricePerStay * room.quantity,
+    0
+  );
+  return formatSavedPrice(total, currency, "total stay");
 }
 
 function statusLabel(status: "confirmed" | "pending" | "saved") {
@@ -140,6 +238,9 @@ export default function SavedTripsView() {
   const [warningItemId, setWarningItemId] = useState<string | null>(null);
   const [tripPendingDelete, setTripPendingDelete] = useState<SavedTrip | null>(null);
   const [showItinerary, setShowItinerary] = useState(false);
+  const [refreshStates, setRefreshStates] = useState<
+    Record<string, RefreshState>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -189,6 +290,11 @@ export default function SavedTripsView() {
     [trips]
   );
 
+  const tripWarnings = useMemo(
+    () => (selectedTrip ? buildTripWarnings(selectedTrip) : []),
+    [selectedTrip]
+  );
+
   function handleNotesChange(value: string) {
     setCurrentNotes(value);
     if (selectedTripId) {
@@ -235,6 +341,123 @@ export default function SavedTripsView() {
     }
   }
 
+  /* Re-runs the original supplier query for one saved item and stores the
+   * answer, replacing the flat number captured at save time. Hotels re-price
+   * exactly (same property, same dates); flights cannot - a Duffel offer is
+   * short-lived, so this is the cheapest fare on that route/date/cabin now,
+   * and the card says so rather than implying the saved fare still stands. */
+  async function refreshItemPrice(
+    section: "hotels" | "flights",
+    item: TripItemCard
+  ) {
+    const target = item.refresh;
+    if (!target) return;
+
+    setRefreshStates((prev) => ({ ...prev, [item.id]: { status: "loading" } }));
+
+    function fail(message: string) {
+      setRefreshStates((prev) => ({
+        ...prev,
+        [item.id]: { status: "error", message },
+      }));
+    }
+
+    async function store(amount: number, currency: string, message: string) {
+      await updateTripItemPriceBrowser({
+        table: section === "hotels" ? "member_trip_hotels" : "member_trip_flights",
+        itemId: item.id,
+        priceAmount: amount,
+        priceCurrency: currency,
+      });
+      setTrips((prev) =>
+        prev.map((trip) => ({
+          ...trip,
+          [section]: trip[section].map((entry) =>
+            entry.id === item.id
+              ? { ...entry, priceAmount: amount, priceCurrency: currency }
+              : entry
+          ),
+        }))
+      );
+      setRefreshStates((prev) => ({
+        ...prev,
+        [item.id]: { status: "done", message },
+      }));
+    }
+
+    try {
+      if (target.kind === "hotel") {
+        const res = await fetch("/api/members/hotel-price", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            hotelDirectusId: target.hotelDirectusId,
+            checkInDate: target.checkIn,
+            checkOutDate: target.checkOut,
+            // Re-priced in the currency the saved figure is in, so the two are
+            // directly comparable.
+            currency: item.priceCurrency || "EUR",
+            residency: guessResidencyFromLocale(),
+            adults: target.adults,
+            kids: target.kids,
+            childrenAges: target.childrenAges,
+            rooms: target.rooms,
+          }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          status?: string;
+          priceAmount?: number;
+          priceCurrency?: string;
+          error?: string;
+        };
+
+        if (!data?.ok) return fail(data?.error ?? "Could not check availability.");
+        if (data.status === "not_sold")
+          return fail("Not sold through our supplier — check the hotel's own site.");
+        if (data.status === "unavailable" || !data.priceAmount)
+          return fail("No availability for these dates.");
+
+        await store(data.priceAmount, data.priceCurrency ?? "EUR", "Updated just now");
+        return;
+      }
+
+      const res = await fetch("/api/flights/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          origin: target.origin,
+          destination: target.destination,
+          departureDate: target.departureDate,
+          adults: target.adults,
+          children: target.children,
+          cabinClass: target.cabinClass,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; offers?: unknown[] };
+      if (!data?.ok) return fail("Could not check fares.");
+
+      const itineraries = normalizeOffers(
+        (data.offers ?? []) as Parameters<typeof normalizeOffers>[0],
+        "one-way"
+      );
+      const cheapest = itineraries.reduce<(typeof itineraries)[number] | null>(
+        (best, candidate) =>
+          !best || candidate.priceEur < best.priceEur ? candidate : best,
+        null
+      );
+      if (!cheapest) return fail("No fares found for this route and date.");
+
+      await store(
+        cheapest.priceEur,
+        cheapest.currency,
+        "Cheapest on this route now"
+      );
+    } catch {
+      fail("Could not reach the supplier.");
+    }
+  }
+
   function handleBook(itemId: string, bookUrl?: string, hasOverlapWarning?: boolean) {
     if (hasOverlapWarning) {
       setWarningItemId(itemId);
@@ -275,26 +498,72 @@ export default function SavedTripsView() {
     primary: item.name,
     secondary: item.location,
     meta: item.stay,
-    travelers,
     status: statusLabel(item.status),
     thumbnail: item.thumbnail,
     hasPhoto: Boolean(item.thumbnail) && item.thumbnail !== "/images/hero-lp.jpg",
     hasOverlapWarning: item.hasOverlapWarning,
     bookUrl: buildHotelBookUrl(item.name, item.checkIn, item.checkOut, travelers),
     roomsSummary: summarizeRoomSelection(item.roomSelection),
+    priceLabel:
+      formatSavedPrice(item.priceAmount, item.priceCurrency, "total stay") ??
+      summarizeRoomPrice(item.roomSelection),
+    priceCurrency: item.priceCurrency ?? item.roomSelection?.[0]?.currency,
+    // The item's own saved guests/rooms win; the trip-level travellers label is
+    // only a fallback for hotels saved before those were stored.
+    travelers: describeStayParty(item) ?? travelers,
+    refresh:
+      item.hotelDirectusId && item.checkIn && item.checkOut
+        ? {
+            kind: "hotel",
+            hotelDirectusId: item.hotelDirectusId,
+            checkIn: item.checkIn,
+            checkOut: item.checkOut,
+            rooms: item.rooms ?? 1,
+            adults: item.adults ?? parseTravelersAdults(travelers),
+            kids: item.kids ?? parseTravelersKids(travelers),
+            childrenAges: item.childrenAges ?? [],
+          }
+        : undefined,
   }));
 
-  const flightItems: TripItemCard[] = selectedTrip.flights.map((item) => ({
-    id: item.id,
-    primary: item.route,
-    secondary: item.cabin,
-    meta: item.timing,
-    travelers,
-    status: statusLabel(item.status),
-    thumbnail: item.thumbnail,
-    hasOverlapWarning: item.hasOverlapWarning,
-    bookUrl: buildFlightBookUrl(item.route, item.timing, item.departAt, item.cabin, travelers),
-  }));
+  const flightItems: TripItemCard[] = selectedTrip.flights.map((item) => {
+    // Both ends resolve through the curated city -> gateway airport map, the
+    // same one buildFlightBookUrl uses. If either fails to resolve there is
+    // nothing to search, so the item simply gets no refresh control.
+    const { from: fromCity, to: toCity } = parseRoute(item.route);
+    const origin = cityToIata(fromCity) || fromCity.trim().toUpperCase();
+    const destination = cityToIata(toCity);
+    const departureDate = item.departAt
+      ? item.departAt.slice(0, 10)
+      : parseDateFromTiming(item.timing);
+
+    return {
+      id: item.id,
+      primary: item.route,
+      secondary: item.cabin,
+      meta: item.timing,
+      travelers,
+      status: statusLabel(item.status),
+      thumbnail: item.thumbnail,
+      hasOverlapWarning: item.hasOverlapWarning,
+      bookUrl: buildFlightBookUrl(item.route, item.timing, item.departAt, item.cabin, travelers),
+      priceLabel: formatSavedPrice(item.priceAmount, item.priceCurrency, "total"),
+      priceCurrency: item.priceCurrency ?? undefined,
+      refresh:
+        origin && destination && departureDate
+          ? {
+              kind: "flight",
+              origin,
+              destination,
+              departureDate,
+              cabinClass:
+                CABIN_CLASS_BY_LABEL[item.cabin.trim().toLowerCase()] ?? "economy",
+              adults: parseTravelersAdults(travelers),
+              children: parseTravelersKids(travelers),
+            }
+          : undefined,
+    };
+  });
 
   const restaurantItems: TripItemCard[] = selectedTrip.restaurants.map((item) => ({
     id: item.id,
@@ -333,12 +602,27 @@ export default function SavedTripsView() {
 
           <button
             type="button"
-            className="oltra-button-secondary members-action-button"
+            className="members-text-danger-action"
             onClick={() => setTripPendingDelete(selectedTrip)}
           >
             Delete trip
           </button>
         </div>
+
+        {/* Directly under the trip, above everything they refer to. Soft: they
+            never block saving or booking. */}
+        {tripWarnings.length ? (
+          <div className="members-trip-warnings">
+            {tripWarnings.map((warning) => (
+              <p className="members-trip-warning" key={warning.id}>
+                <span className="members-trip-warning__label">
+                  Important note:
+                </span>{" "}
+                {warning.message}
+              </p>
+            ))}
+          </div>
+        ) : null}
 
         <div className="members-form-field members-trip-notes-field">
           <label className="oltra-label">TRIP NOTES</label>
@@ -351,15 +635,22 @@ export default function SavedTripsView() {
         </div>
 
         <div className="members-trip-columns">
+          {/* Only hotels keep a thumbnail - the flight and restaurant ones
+              were a generic placeholder image carrying no information. */}
           <TripSection
             title="HOTELS"
             items={hotelItems}
+            showThumb
+            refreshStates={refreshStates}
+            onRefreshPrice={(item) => refreshItemPrice("hotels", item)}
             onDelete={(id) => deleteTripItem("hotels", id)}
             onBook={handleBook}
           />
           <TripSection
             title="FLIGHTS"
             items={flightItems}
+            refreshStates={refreshStates}
+            onRefreshPrice={(item) => refreshItemPrice("flights", item)}
             onDelete={(id) => deleteTripItem("flights", id)}
             onBook={handleBook}
           />
@@ -375,6 +666,7 @@ export default function SavedTripsView() {
       {showItinerary ? (
         <TripItineraryDocument
           trip={selectedTrip}
+          notes={currentNotes}
           onClose={() => setShowItinerary(false)}
         />
       ) : null}
@@ -450,11 +742,17 @@ export default function SavedTripsView() {
 function TripSection({
   title,
   items,
+  showThumb = false,
+  refreshStates,
+  onRefreshPrice,
   onDelete,
   onBook,
 }: {
   title: string;
   items: TripItemCard[];
+  showThumb?: boolean;
+  refreshStates?: Record<string, RefreshState>;
+  onRefreshPrice?: (item: TripItemCard) => void;
   onDelete: (itemId: string) => void;
   onBook: (itemId: string, bookUrl?: string, hasOverlapWarning?: boolean) => void;
 }) {
@@ -469,16 +767,18 @@ function TripSection({
           items.map((item) => (
             <article key={item.id} className="members-item members-trip-item">
               <div className="members-item__layout">
-                {item.hasPhoto === false ? (
-                  <div className="members-item__thumb members-item__thumb--placeholder">
-                    Photos coming soon
-                  </div>
-                ) : (
-                  <div
-                    className="members-item__thumb"
-                    style={{ backgroundImage: `url(${item.thumbnail})` }}
-                  />
-                )}
+                {showThumb ? (
+                  item.hasPhoto === false ? (
+                    <div className="members-item__thumb members-item__thumb--placeholder">
+                      Photos coming soon
+                    </div>
+                  ) : (
+                    <div
+                      className="members-item__thumb"
+                      style={{ backgroundImage: `url(${item.thumbnail})` }}
+                    />
+                  )
+                ) : null}
 
                 <div className="members-item__content">
                   <div className="members-item__top">
@@ -501,6 +801,39 @@ function TripSection({
                     <div className="members-item__meta">{item.roomsSummary}</div>
                   ) : null}
 
+                  {item.priceLabel ? (
+                    <div className="members-item__price">{item.priceLabel}</div>
+                  ) : null}
+
+                  {/* The saved price is a flat number from save time, so the
+                      only way it moves is if the member asks. */}
+                  {item.refresh && onRefreshPrice ? (
+                    <div className="members-item__price-refresh">
+                      <button
+                        type="button"
+                        className="members-text-action"
+                        disabled={refreshStates?.[item.id]?.status === "loading"}
+                        onClick={() => onRefreshPrice(item)}
+                      >
+                        {refreshStates?.[item.id]?.status === "loading"
+                          ? "Checking..."
+                          : "Update price and availability"}
+                      </button>
+
+                      {refreshStates?.[item.id]?.message ? (
+                        <div
+                          className={
+                            refreshStates[item.id].status === "error"
+                              ? "members-item__refresh-note members-item__refresh-note--error"
+                              : "members-item__refresh-note"
+                          }
+                        >
+                          {refreshStates[item.id].message}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   {item.hasOverlapWarning ? (
                     <div className="members-item__warning">
                       Warning: overlaps another saved date range.
@@ -517,7 +850,7 @@ function TripSection({
                     </button>
                     <button
                       type="button"
-                      className="oltra-button-secondary members-action-button"
+                      className="members-text-danger-action"
                       onClick={() => onDelete(item.id)}
                     >
                       Delete

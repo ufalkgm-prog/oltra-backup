@@ -21,7 +21,8 @@ import {
   readGuestSelection,
   type GuestSelection,
 } from "@/lib/guests";
-import { RESIDENCY_COUNTRIES, guessResidencyFromLocale } from "@/lib/countries";
+import { guessResidencyFromLocale } from "@/lib/countries";
+import ResidencyPicker from "@/components/site/ResidencyPicker";
 import type { HotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import {
   addFavoriteHotelBrowser,
@@ -72,6 +73,21 @@ type ViewMode = "details" | "map" | "featured";
 
 /** Images shown side by side in the featured strip. */
 const FEATURED_IMAGE_COUNT = 3;
+
+/** Pulls an image into the browser cache ahead of time. Resolves on error too
+ * - a warm cache is an optimisation, never a reason to hold up the revolver. */
+function preloadImage(url: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve();
+      return;
+    }
+    const img = new window.Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+    img.src = url;
+  });
+}
 
 type RatehawkResultAvailability =
   | { status: "available"; headline: RatehawkHeadline }
@@ -964,7 +980,17 @@ export default function HotelsView(props: {
       try {
         const list = await fetchFavoriteHotelsBrowser();
         if (!active) return;
-        setFavoriteHotelIds(new Set(list.map((f) => f.id)));
+        // hotelDirectusId, not id: `id` is the favourite row's own uuid, which
+        // can never equal a hotel id - so "ALREADY IN FAVOURITES" never showed
+        // and the same hotel could be favourited twice.
+        setFavoriteHotelIds(
+          new Set(
+            list
+              .map((f) => f.hotelDirectusId)
+              .filter((id): id is string => Boolean(id))
+              .map(String)
+          )
+        );
       } catch {
         // not critical
       }
@@ -1463,53 +1489,87 @@ export default function HotelsView(props: {
   // route the detail panel uses. Cached by hotel id: the revolver returns to
   // hotels it has already shown, and the arrows make that common.
   const featuredImagesCacheRef = useRef<Map<string, string[]>>(new Map());
-  const [featuredExtraImages, setFeaturedExtraImages] = useState<string[]>([]);
+  // Tagged with the hotel it belongs to: without the id, a hotel whose fetch
+  // is still in flight would render the previous hotel's images for a frame.
+  const [featuredExtraImages, setFeaturedExtraImages] = useState<{
+    id: string;
+    urls: string[];
+  }>({ id: "", urls: [] });
   const featuredHotelId = (featuredHotel as HotelRecord).id;
 
-  useEffect(() => {
-    const hotel = featuredHotel as HotelRecord;
-    const key = String(hotel.id ?? "");
-    if (!key || !hotel.ratehawk_image_1) {
-      setFeaturedExtraImages([]);
-      return;
-    }
+  // Resolves one hotel's strip URLs and waits for the browser to actually
+  // fetch them, so a later render can paint them in the same frame it swaps
+  // the text. Cached by hotel id - the revolver returns to hotels it has
+  // already shown, and the arrows make that common.
+  const loadFeaturedImages = useCallback(
+    async (hotel: HotelRecord | undefined): Promise<string[]> => {
+      const key = String(hotel?.id ?? "");
+      if (!key || !hotel?.ratehawk_image_1) return [];
 
-    const cached = featuredImagesCacheRef.current.get(key);
-    if (cached) {
-      setFeaturedExtraImages(cached);
-      return;
-    }
+      const cached = featuredImagesCacheRef.current.get(key);
+      if (cached) return cached;
 
-    let cancelled = false;
-    fetch(`/api/hotels/${key}/ratehawk-images`)
-      .then((res) => res.json())
-      .then((data: { ok?: boolean; images?: { url: string }[] }) => {
-        if (cancelled || !data?.ok) return;
+      try {
+        const res = await fetch(`/api/hotels/${key}/ratehawk-images`);
+        const data = (await res.json()) as {
+          ok?: boolean;
+          images?: { url: string }[];
+        };
+        if (!data?.ok) return [];
         const urls = (data.images ?? [])
           .slice(0, FEATURED_IMAGE_COUNT)
           .map((image) => resolveRatehawkUrl(image.url, RATEHAWK_FULL_SIZE));
         featuredImagesCacheRef.current.set(key, urls);
-        setFeaturedExtraImages(urls);
-      })
-      .catch(() => {
-        if (!cancelled) setFeaturedExtraImages([]);
-      });
+        await Promise.all(urls.map(preloadImage));
+        return urls;
+      } catch {
+        return [];
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const key = String(featuredHotelId ?? "");
+    let cancelled = false;
+
+    void loadFeaturedImages(featuredHotel as HotelRecord).then((urls) => {
+      if (!cancelled) setFeaturedExtraImages({ id: key, urls });
+    });
+
+    // Warm the *next* hotel in the revolver during the current one's 5s dwell.
+    // This is what makes the swap atomic: by the time the index advances, the
+    // three URLs are in the cache (read synchronously below, in the same
+    // render that changes the text) and the bytes are in the browser's, so
+    // the images and the detail box change together instead of the strip
+    // showing one image and then popping to three.
+    const nextIndex = featuredCycleRef.current[0];
+    if (typeof nextIndex === "number") {
+      void loadFeaturedImages(featuredHotels[nextIndex] as HotelRecord);
+    }
 
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [featuredHotelId]);
+  }, [featuredHotelId, featuredHotels, loadFeaturedImages]);
 
   // Agoda hotels already carry up to 5 images in the bulk fetch, so they need
   // no extra request. Whatever is available is shown - 1, 2 or 3 - rather than
   // padding the row with repeats.
   const featuredStripImages = useMemo(() => {
+    const key = String(featuredHotelId ?? "");
+    // Cache first, and synchronously: the state below only lands a render
+    // later, which is exactly the gap that made the strip lag the text.
+    const fromRoute =
+      (key ? featuredImagesCacheRef.current.get(key) : undefined) ??
+      (featuredExtraImages.id === key ? featuredExtraImages.urls : []);
+
     const fromSet = getHotelImageSet(featuredHotel as HotelRecord).slice(
       0,
       FEATURED_IMAGE_COUNT
     );
-    if (featuredExtraImages.length > fromSet.length) return featuredExtraImages;
+    if (fromRoute.length > fromSet.length) return fromRoute;
     return fromSet.length ? fromSet : [PLACEHOLDERS[0]];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [featuredHotelId, featuredExtraImages]);
@@ -1578,6 +1638,12 @@ export default function HotelsView(props: {
   }, [ratehawkRooms.rooms, roomSelection]);
 
   const roomSelectionCurrency = ratehawkRooms.rooms[0]?.currency ?? activeCurrency;
+
+  // Falls back to the headline combo (N copies of the cheapest qualifying
+  // room) when the member saves without touching the quantity steppers.
+  const selectedHotelHeadlineTotal = ratehawkRooms.headline
+    ? ratehawkRooms.headline.pricePerStay * ratehawkRooms.headline.rooms
+    : null;
 
   const selectedRoomSelectionEntries = useMemo(() => {
     return ratehawkRooms.rooms
@@ -1959,6 +2025,18 @@ export default function HotelsView(props: {
         checkIn: fromValue || null,
         checkOut: toValue || null,
         roomSelection: selectedRoomSelectionEntries,
+        // The search behind the price, so Saved trips can re-run it. Null
+        // when the member never filled it in - saving a hotel with no dates,
+        // rooms or guests is allowed, and then there is no price either.
+        rooms: bedroomsValue ? Number(bedroomsValue) : null,
+        adults: hasGuestDetails ? guestSelection.adults : null,
+        kids: hasGuestDetails ? guestSelection.kids : null,
+        childrenAges: getChildrenAgesFromSearchParams(),
+        // The headline total is stored alongside the room picks so Saved
+        // trips can show a price even for a hotel saved without choosing
+        // rooms. Indicative only - rates are re-fetched live at booking.
+        priceAmount: roomSelectionTotal > 0 ? roomSelectionTotal : selectedHotelHeadlineTotal,
+        priceCurrency: roomSelectionCurrency,
       });
 
       if (result.status === "already_exists") {
@@ -2029,6 +2107,12 @@ async function handleCreateTripAndAddHotel() {
       checkIn: fromValue || null,
       checkOut: toValue || null,
       roomSelection: selectedRoomSelectionEntries,
+      rooms: bedroomsValue ? Number(bedroomsValue) : null,
+      adults: hasGuestDetails ? guestSelection.adults : null,
+      kids: hasGuestDetails ? guestSelection.kids : null,
+      childrenAges: getChildrenAgesFromSearchParams(),
+      priceAmount: roomSelectionTotal > 0 ? roomSelectionTotal : selectedHotelHeadlineTotal,
+      priceCurrency: roomSelectionCurrency,
     });
 
     setNewTripName("");
@@ -2262,24 +2346,26 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   </div>
 
-                  {/* No user-facing control here on purpose - residency-based
-                      rate differences from ETG/Ratehawk are marginal (spot-
-                      checked live: 0-3% depending on the specific hotel, most
-                      hotels show no difference at all) and not something a
-                      guest should have to treat as a search prerequisite.
-                      Silently auto-detected from browser locale (see
-                      guessResidencyFromLocale effect below) and still sent
-                      on every Ratehawk request - just not exposed as a
-                      pickable field on this page. A precise "what country are
-                      you booking from" prompt belongs at actual booking time
-                      (not built yet - booking flow is still blocked, see
-                      CLAUDE.md §32), so for now this is purely informational. */}
+                  {/* Deliberately not a labelled form field beside Guests and
+                      Bedrooms - residency-based rate differences from
+                      ETG/Ratehawk are marginal (spot-checked live: 0-3%
+                      depending on the specific hotel, most hotels show no
+                      difference at all), so it reads as a correctable
+                      assumption rather than a search prerequisite. Still
+                      auto-detected from browser locale (see the
+                      guessResidencyFromLocale effect above) and still sent on
+                      every Ratehawk request; changing it here re-prices
+                      immediately, because both availability effects list
+                      residencyValue in their dependencies. */}
                   {residencyValue ? (
-                    <div className="md:col-span-12 -mt-1 text-[11px] text-[color:var(--oltra-text-muted)]">
-                      Prices assume booking from{" "}
-                      {RESIDENCY_COUNTRIES.find((c) => c.code === residencyValue)?.label ??
-                        residencyValue}
-                      .
+                    <div
+                      className="md:col-span-12 -mt-1 text-[11px] text-[color:var(--oltra-text-muted)]"
+                      data-oltra-control="true"
+                    >
+                      <ResidencyPicker
+                        value={residencyValue}
+                        onChange={setResidencyValue}
+                      />
                     </div>
                   ) : null}
                 </>
@@ -2590,7 +2676,13 @@ async function handleCreateTripAndAddHotel() {
                (This replaced a full-bleed hero with both boxes floated on top
                of it.) */
             <div className="flex flex-col gap-4">
-              <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+              {/* Same 3-column track and gap as the image strip below, so the
+                  search box lines up with image 1 and the detail box with
+                  image 3; the middle column is deliberately left empty. The
+                  min-height matches the images' h-[300px] - it is on the
+                  container rather than the children so both boxes stay equal
+                  to each other even if the search form ever grows past it. */}
+              <div className="grid gap-3 sm:grid-cols-3 sm:min-h-[300px]">
               <div className="flex flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-4">
                 <form
                   action="/hotels"
@@ -2664,12 +2756,10 @@ async function handleCreateTripAndAddHotel() {
                 </form>
               </div>
 
-              {/* Slimmer than before - name and location share a line, and the
-                  awards sit under them - so this stays the same height as the
-                  search box beside it rather than driving the row taller. */}
+              {/* Third column, matching image 3's width and height. */}
               <a
                 href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
-                className="flex cursor-pointer flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)]"
+                className="flex cursor-pointer flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)] sm:col-start-3"
               >
                 <div className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--oltra-text-muted)]">
                   Featured hotel

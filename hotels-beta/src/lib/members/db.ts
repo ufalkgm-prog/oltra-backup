@@ -223,6 +223,7 @@ export async function saveMemberProfileBrowser(
 function mapFavoriteHotel(row: FavoriteHotelRow): FavoriteHotel {
   return {
     id: row.id,
+    hotelDirectusId: row.hotel_directus_id,
     name: row.hotel_name ?? "",
     location: row.location ?? "",
     meta: row.meta ?? "",
@@ -233,6 +234,7 @@ function mapFavoriteHotel(row: FavoriteHotelRow): FavoriteHotel {
 function mapFavoriteRestaurant(row: FavoriteRestaurantRow): FavoriteRestaurant {
   return {
     id: row.id,
+    restaurantDirectusId: row.restaurant_directus_id,
     name: row.restaurant_name ?? "",
     location: row.location ?? "",
     meta: row.meta ?? "",
@@ -286,6 +288,59 @@ export async function fetchFavoriteRestaurantsBrowser(): Promise<
   if (error) throw error;
 
   return (data ?? []).map(mapFavoriteRestaurant);
+}
+
+/* The Directus ids of the member's favourite restaurants, for marking them on
+ * the Restaurants page. Deliberately separate from
+ * fetchFavoriteRestaurantsBrowser: that one maps rows for the Members area and
+ * returns the favourite row's own uuid as `id`, which can never be matched
+ * against a restaurant. */
+export async function fetchFavoriteRestaurantDirectusIdsBrowser(): Promise<
+  string[]
+> {
+  const supabase = createBrowserClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from("member_favorite_restaurants")
+    .select("restaurant_directus_id")
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+
+  return (data ?? [])
+    .map((row) => row.restaurant_directus_id)
+    .filter((id): id is string => Boolean(id));
+}
+
+/* Writes back a re-checked price ("Update price and availability" in Saved
+ * trips). The saved figure is a flat number captured at save time, so a
+ * refresh replaces it rather than layering a second, live price beside it. */
+export async function updateTripItemPriceBrowser(input: {
+  table: "member_trip_hotels" | "member_trip_flights";
+  itemId: string;
+  priceAmount: number | null;
+  priceCurrency: string | null;
+}): Promise<void> {
+  const supabase = createBrowserClient();
+
+  const { error } = await supabase
+    .from(input.table)
+    .update({
+      price_amount: input.priceAmount,
+      price_currency: input.priceCurrency,
+    })
+    .eq("id", input.itemId);
+
+  if (error) throw error;
 }
 
 export async function deleteFavoriteHotelBrowser(id: string): Promise<void> {
@@ -403,6 +458,7 @@ function mapSavedTrips(
       .filter((item) => item.trip_id === trip.id)
       .map((item) => ({
         id: item.id,
+        hotelDirectusId: item.hotel_directus_id,
         name: item.hotel_name ?? "",
         location: item.location ?? "",
         stay: item.stay_label ?? "",
@@ -412,6 +468,12 @@ function mapSavedTrips(
         thumbnail: item.thumbnail ?? "/images/hero-lp.jpg",
         hasOverlapWarning: item.has_overlap_warning ?? false,
         roomSelection: (item.room_selection as RoomSelectionEntry[] | null) ?? null,
+        rooms: item.rooms ?? null,
+        adults: item.adults ?? null,
+        kids: item.kids ?? null,
+        childrenAges: (item.children_ages as number[] | null) ?? null,
+        priceAmount: item.price_amount ?? null,
+        priceCurrency: item.price_currency ?? null,
       })),
     restaurants: restaurants
       .filter((item) => item.trip_id === trip.id)
@@ -435,6 +497,12 @@ function mapSavedTrips(
         arriveAt: item.arrive_at ?? undefined,
         status: (item.status as "confirmed" | "pending" | "saved") ?? "saved",
         thumbnail: item.thumbnail ?? "/images/hero-lp.jpg",
+        destinationArriveAt: item.destination_arrive_at ?? null,
+        returnDepartAt: item.return_depart_at ?? null,
+        adults: item.adults ?? null,
+        kids: item.kids ?? null,
+        priceAmount: item.price_amount ?? null,
+        priceCurrency: item.price_currency ?? null,
         hasOverlapWarning: item.has_overlap_warning ?? false,
       })),
   }));
@@ -959,6 +1027,15 @@ export async function addHotelToTripBrowser(input: {
   checkIn?: string | null;
   checkOut?: string | null;
   roomSelection?: RoomSelectionEntry[] | null;
+  /** The search behind the price. Omitted when the member saved the hotel
+   * without filling in dates, rooms or guests. */
+  rooms?: number | null;
+  adults?: number | null;
+  kids?: number | null;
+  childrenAges?: number[] | null;
+  /** Total stay price as shown at save time - indicative, not a held rate. */
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
 }): Promise<AddHotelToTripUiResult> {
   const supabase = createBrowserClient();
 
@@ -1009,6 +1086,12 @@ export async function addHotelToTripBrowser(input: {
     check_out: input.checkOut || null,
     has_overlap_warning: overlapWarning,
     room_selection: input.roomSelection?.length ? input.roomSelection : null,
+    rooms: input.rooms ?? null,
+    adults: input.adults ?? null,
+    kids: input.kids ?? null,
+    children_ages: input.childrenAges?.length ? input.childrenAges : null,
+    price_amount: input.priceAmount ?? null,
+    price_currency: input.priceCurrency || null,
   };
 
   const { error } = await supabase.from("member_trip_hotels").insert(payload);
@@ -1094,6 +1177,13 @@ export async function addFlightToTripBrowser(input: {
   arriveAt?: string | null;
   externalFlightId?: string | null;
   thumbnail?: string | null;
+  destinationArriveAt?: string | null;
+  returnDepartAt?: string | null;
+  adults?: number | null;
+  kids?: number | null;
+  /** Total itinerary price as shown at save time - indicative, not a held fare. */
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
 }): Promise<{ status: "added" | "already_exists" }> {
   const supabase = createBrowserClient();
 
@@ -1129,6 +1219,12 @@ export async function addFlightToTripBrowser(input: {
     status: "saved",
     thumbnail: input.thumbnail || null,
     has_overlap_warning: false,
+    destination_arrive_at: input.destinationArriveAt || null,
+    return_depart_at: input.returnDepartAt || null,
+    adults: input.adults ?? null,
+    kids: input.kids ?? null,
+    price_amount: input.priceAmount ?? null,
+    price_currency: input.priceCurrency || null,
   };
 
   const { error } = await supabase.from("member_trip_flights").insert(payload);

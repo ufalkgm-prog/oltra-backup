@@ -414,6 +414,42 @@
   padding-right: 10px;
 }
 
+/* The two header rows already carry a 13px pane inset, and `padding: 0 13px`
+   is a shorthand - so plain .withScrollGutter either lost to it (.paneHeader,
+   declared later, which silently dropped the gutter entirely) or beat it
+   (.columnHeadersOneWay, declared earlier, which dropped the 13px inset and
+   shoved the Total price header 13px out of line with the price cards below).
+   Compound selectors so neither can win by declaration order: 13px inset +
+   10px scrollbar. */
+.paneHeader.withScrollGutter,
+.columnHeadersOneWay.withScrollGutter {
+  padding-right: 23px;
+}
+
+/* Sits directly above the Airlines dropdown it drives. */
+.preferredOnlyToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--oltra-text-secondary);
+  cursor: pointer;
+}
+
+.preferredOnlyToggle:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* A parenthetical on a column heading - reads as support text, not a second
+   label. */
+.columnLabelNote {
+  text-transform: none;
+  letter-spacing: 0.04em;
+  color: var(--oltra-text-muted);
+}
+
 .multiResultsScroller {
   overflow-x: auto;
   padding-bottom: 2px;
@@ -1109,9 +1145,21 @@
   border-color: rgba(255, 255, 255, 0.35);
 }
 
+/* Grid, not flex: the two cells must be exactly equal, and flex sized them by
+   content instead (measured 63.2px BOOK vs 49.6px SAVE - "BOOK" is wider at
+   this size/letter-spacing, and the row is only ~119px so there was never
+   enough slack for flex-grow to even them out). minmax(0,1fr) also stops the
+   automatic minimum size from re-expanding a cell. SaveToTripControl renders
+   its trigger inside a positioning wrapper, so the wrapper - not the button -
+   is the grid item; the button fills it via width:100%. */
 .priceCardButtonRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 6px;
+}
+
+.priceCardButtonRow > div {
+  min-width: 0;
 }
 
 .bookButtonActive,
@@ -1129,7 +1177,7 @@
 }
 
 .savePillButton {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   height: 24px;
   border-radius: var(--oltra-radius-sm, 6px);

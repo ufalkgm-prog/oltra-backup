@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   buildTripItinerary,
   itineraryToPlainText,
   type ItineraryEntry,
 } from "@/lib/members/buildItinerary";
+import { buildTripWarnings } from "@/lib/members/tripWarnings";
 import type { SavedTrip } from "@/lib/members/types";
 
 const KIND_LABEL: Record<ItineraryEntry["kind"], string> = {
@@ -43,14 +45,39 @@ function EntryBlock({ entry }: { entry: ItineraryEntry }) {
 
 export default function TripItineraryDocument({
   trip,
+  notes,
   onClose,
 }: {
   trip: SavedTrip;
+  /** The trip's own notes, carried through to the printed/emailed document. */
+  notes?: string;
   onClose: () => void;
 }) {
   const itinerary = useMemo(() => buildTripItinerary(trip), [trip]);
+  const warnings = useMemo(() => buildTripWarnings(trip), [trip]);
 
   const isEmpty = itinerary.days.length === 0 && itinerary.unscheduled.length === 0;
+  const trimmedNotes = (notes ?? "").trim();
+
+  // Rendered through a portal to document.body. Inside the page tree it sat in
+  // .oltra-page__content, which is position:relative + z-index:1 and therefore
+  // its own stacking context - so the overlay's z-index:700 could not lift it
+  // above the fixed site header (z-index 30 in a sibling context). This modal
+  // is top-aligned, unlike the centred confirm dialogs that share the overlay
+  // class, so its toolbar landed under the header band and Close was
+  // unclickable. Same createPortal pattern the Hotels lightbox already uses.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Escape closes it too - a document this tall can be scrolled well past the
+  // Close button.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   // Print is also how a PDF gets made: every browser's print dialog offers
   // "Save as PDF", so this needs no PDF library (and CLAUDE.md §2 rules out
@@ -66,15 +93,24 @@ export default function TripItineraryDocument({
   // needing a backend, and it goes away when real mail sending lands.
   function handleSend() {
     const subject = `Itinerary — ${itinerary.tripName}`;
-    const body = itineraryToPlainText(itinerary);
+    const sections = [itineraryToPlainText(itinerary)];
+    if (warnings.length) {
+      sections.push(
+        warnings.map((w) => `Important note: ${w.message}`).join("\n")
+      );
+    }
+    if (trimmedNotes) sections.push(`Trip notes\n${trimmedNotes}`);
+    const body = sections.join("\n\n");
     window.location.href = `mailto:?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(body)}`;
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="members-leave-overlay itinerary-overlay">
-      <div className="oltra-glass oltra-panel itinerary-modal">
+      <div className="oltra-panel itinerary-modal">
         <div className="itinerary-modal__toolbar">
           <div className="oltra-label">Itinerary</div>
           <div className="itinerary-modal__toolbar-actions">
@@ -115,6 +151,19 @@ export default function TripItineraryDocument({
             </dl>
           </header>
 
+          {warnings.length ? (
+            <section className="itinerary-warnings">
+              {warnings.map((warning) => (
+                <p className="itinerary-warning" key={warning.id}>
+                  <span className="itinerary-warning__label">
+                    Important note:
+                  </span>{" "}
+                  {warning.message}
+                </p>
+              ))}
+            </section>
+          ) : null}
+
           {isEmpty ? (
             <div className="members-empty">
               Nothing saved to this trip yet.
@@ -139,12 +188,20 @@ export default function TripItineraryDocument({
             </section>
           ) : null}
 
+          {trimmedNotes ? (
+            <section className="itinerary-day itinerary-notes">
+              <h3 className="itinerary-day__heading">Trip notes</h3>
+              <p className="itinerary-notes__body">{trimmedNotes}</p>
+            </section>
+          ) : null}
+
           <footer className="itinerary-document__footer">
             Booking references, flight numbers, terminals and baggage
             allowances appear here once each item is booked.
           </footer>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

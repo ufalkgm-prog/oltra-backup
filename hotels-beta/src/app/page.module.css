@@ -474,7 +474,12 @@
   margin-left: auto;
 }
 
+/* Fixed width so BOOK and SAVE match exactly. Content sizing left them 3px
+   apart ("BOOK" is wider than "SAVE" at this letter-spacing), and the Save
+   control sits inside its own positioning wrapper, so there is no shared
+   flex track to even them out. */
 .flightBookButton {
+  width: 72px;
   min-width: 0;
   height: 26px;
   padding: 0 12px;

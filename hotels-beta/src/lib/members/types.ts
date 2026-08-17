@@ -43,6 +43,8 @@ export type RoomSelectionEntry = {
 
 export type SavedHotel = {
   id: string;
+  /** The hotel's Directus id - needed to re-check price and availability. */
+  hotelDirectusId?: string | null;
   name: string;
   location: string;
   stay: string;
@@ -52,6 +54,16 @@ export type SavedHotel = {
   thumbnail: string;
   hasOverlapWarning?: boolean;
   roomSelection?: RoomSelectionEntry[] | null;
+  /** The search behind the saved price, so it can be re-run later. All
+   * optional: a hotel can be saved with no dates, rooms or guests, and then
+   * has no price either. */
+  rooms?: number | null;
+  adults?: number | null;
+  kids?: number | null;
+  childrenAges?: number[] | null;
+  /** Total stay price shown at save time. Indicative - not a held rate. */
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
   /** Anticipated - see note above. */
   bookingReference?: string | null;
   address?: string | null;
@@ -87,6 +99,16 @@ export type SavedFlight = {
   status: "confirmed" | "pending" | "saved";
   thumbnail: string;
   hasOverlapWarning?: boolean;
+  /** Arrival at the destination. Distinct from arriveAt, which on a return
+   * itinerary is the arrival back home - both legs are one saved row. */
+  destinationArriveAt?: string | null;
+  /** Departure from the destination on a return itinerary; null one-way. */
+  returnDepartAt?: string | null;
+  adults?: number | null;
+  kids?: number | null;
+  /** Total itinerary price shown at save time. Indicative - not a held fare. */
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
   /** Anticipated - see note above. */
   bookingReference?: string | null;
   flightNumber?: string | null;
@@ -113,6 +135,9 @@ export type SavedTrip = {
 
 export type FavoriteHotel = {
   id: string;
+  /** The hotel's Directus id, for looking up live data (photos). Optional:
+   * seeded demo favourites have no real hotel behind them. */
+  hotelDirectusId?: string | null;
   name: string;
   location: string;
   meta: string;
@@ -121,6 +146,8 @@ export type FavoriteHotel = {
 
 export type FavoriteRestaurant = {
   id: string;
+  /** The restaurant's Directus id - see FavoriteHotel.hotelDirectusId. */
+  restaurantDirectusId?: string | null;
   name: string;
   location: string;
   meta: string;

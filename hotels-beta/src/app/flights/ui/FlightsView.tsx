@@ -5,7 +5,7 @@ import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import { mergeHotelFlightSearch, readHotelFlightSearch } from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
-import { addFlightToTripBrowser } from "@/lib/members/db";
+import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members/db";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import { type Itinerary, type FlightLeg, type AirlineRef, normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
@@ -334,6 +334,7 @@ export default function FlightsView({ searchParams }: Props) {
     async (tripId: string, itinerary: Itinerary): Promise<SaveToTripResult> => {
       const outSeg0 = itinerary.outbound.segments[0];
       const outLastSeg = itinerary.outbound.segments[itinerary.outbound.segments.length - 1];
+      const inSeg0 = itinerary.inbound?.segments[0];
       const inLastSeg = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
       const route = `${itinerary.outbound.originCode} → ${outLastSeg?.destinationName || itinerary.outbound.destinationCode}`;
       const timing = `${formatDisplayDate(outSeg0?.departIso?.slice(0, 10) ?? '')} · ${itinerary.outbound.departTime} → ${itinerary.outbound.arriveTime}`;
@@ -345,12 +346,24 @@ export default function FlightsView({ searchParams }: Props) {
         departAt: outSeg0?.departIso ?? null,
         arriveAt: (inLastSeg ?? outLastSeg)?.arriveIso ?? null,
         externalFlightId: itinerary.offerId,
+        // Both ends of the stay, kept separate from arriveAt (which is the
+        // arrival back home on a return itinerary). The trip warnings compare
+        // these against the hotel dates.
+        destinationArriveAt: outLastSeg?.arriveIso ?? null,
+        returnDepartAt: inSeg0?.departIso ?? null,
+        adults: search.adults,
+        kids: search.children,
+        // Stored in the offer's own currency, exactly as shown. Indicative
+        // only - fares are not held, and Saved trips re-books through a fresh
+        // search (see the rebook flow in buildFlightBookUrl).
+        priceAmount: itinerary.priceEur,
+        priceCurrency: itinerary.currency,
       });
       return {
         message: result.status === 'already_exists' ? 'Already in that trip.' : 'Saved to trip.',
       };
     },
-    [search.cabin]
+    [search.cabin, search.adults, search.children]
   );
 
   useEffect(() => {
@@ -432,6 +445,44 @@ export default function FlightsView({ searchParams }: Props) {
     () => [...new Set(itineraries.flatMap(item => item.slices.map(l => l.airline)))].sort(),
     [itineraries]
   );
+
+  // The member's saved preferred airlines (Members > Personal information),
+  // which had no effect anywhere until now.
+  const [preferredAirlines, setPreferredAirlines] = useState<string[]>([]);
+  const [preferredOnly, setPreferredOnly] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const profile = await fetchMemberProfileBrowser();
+        if (!active || !profile) return;
+        setPreferredAirlines(
+          (profile.preferredAirline ?? "")
+            .split(",")
+            .map(name => name.trim())
+            .filter(Boolean)
+        );
+      } catch {
+        // Logged out, or no profile saved - the filter just stays unavailable.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Duffel's carrier names and the profile's picklist do not always agree
+  // exactly ("Swiss" vs "Swiss International Air Lines"), so match on
+  // containment either way rather than string equality.
+  const preferredAirlinesInResults = useMemo(() => {
+    if (!preferredAirlines.length) return [];
+    const wanted = preferredAirlines.map(name => name.toLowerCase());
+    return allAirlines.filter(airline => {
+      const actual = airline.toLowerCase();
+      return wanted.some(name => actual.includes(name) || name.includes(actual));
+    });
+  }, [allAirlines, preferredAirlines]);
 
   const layoverAirportMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -690,11 +741,26 @@ export default function FlightsView({ searchParams }: Props) {
   }, []);
 
   function toggleAirline(airline: string) {
+    // Picking airlines by hand means the selection is no longer "just my
+    // preferred ones", so the shortcut above unticks itself.
+    setPreferredOnly(false);
     setFilters(current => ({
       ...current,
       airlines: current.airlines.includes(airline)
         ? current.airlines.filter(v => v !== airline)
         : [...current.airlines, airline],
+    }));
+  }
+
+  /* "Preferred airlines only" is a shortcut over the existing Airlines filter
+   * rather than a separate matching rule - it just narrows the selection to
+   * the member's preferred carriers that actually fly this route, so both
+   * controls can never disagree about what is shown. */
+  function togglePreferredOnly(next: boolean) {
+    setPreferredOnly(next);
+    setFilters(current => ({
+      ...current,
+      airlines: next ? preferredAirlinesInResults : allAirlines,
     }));
   }
 
@@ -1039,6 +1105,25 @@ export default function FlightsView({ searchParams }: Props) {
                 </div>
               )}
 
+              {allAirlines.length > 0 && preferredAirlines.length > 0 && (
+                <label
+                  className={styles.preferredOnlyToggle}
+                  title={
+                    preferredAirlinesInResults.length
+                      ? `Show only ${preferredAirlinesInResults.join(", ")}`
+                      : "None of your preferred airlines fly this route"
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    checked={preferredOnly}
+                    disabled={!preferredAirlinesInResults.length}
+                    onChange={e => togglePreferredOnly(e.target.checked)}
+                  />
+                  Preferred airlines only
+                </label>
+              )}
+
               {allAirlines.length > 0 && (
                 <MultiSelectDropdown
                   label="Airlines"
@@ -1134,7 +1219,7 @@ export default function FlightsView({ searchParams }: Props) {
               ) : isOneWay ? (
                 <>
                   <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
-                    Departure
+                    Departure <span className={styles.columnLabelNote}>(total flight price from)</span>
                   </div>
 
                   <div className={styles.pinnedStack}>
@@ -1212,12 +1297,10 @@ export default function FlightsView({ searchParams }: Props) {
                               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
                               className={`${styles.selectCard} ${styles.selectCardRow} ${isSelected ? styles.selectCardActive : ""}`}
                             >
-                              <FlightCardContent
-                                flight={flight}
-                                onInfo={setDetailFlight}
-                                onDeselect={isSelected ? handleDeselectOutbound : undefined}
-                                deselectLabel="Deselect departure flight"
-                              />
+                              {/* No deselect here - it belongs only to the
+                                  Selected row above, so the list stays a
+                                  plain list of choices. */}
+                              <FlightCardContent flight={flight} onInfo={setDetailFlight} />
                               {it ? <InlinePrice priceEur={it.priceEur} currency={it.currency} showFrom={false} /> : null}
                             </div>
                           );
@@ -1230,7 +1313,7 @@ export default function FlightsView({ searchParams }: Props) {
                 <>
                   <div className={styles.splitPanes}>
                     <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
-                      Departure
+                      Departure <span className={styles.columnLabelNote}>(total flight price from)</span>
                     </div>
                     <div className={`${styles.columnHeadersOneWay} ${returnHasGutter ? styles.withScrollGutter : ""}`}>
                       <div className={styles.columnLabel}>Return</div>
@@ -1314,12 +1397,7 @@ export default function FlightsView({ searchParams }: Props) {
                                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setSelectedOutboundId(flight.id); }}
                                 className={`${styles.selectCard} ${styles.selectCardRow} ${isSelected ? styles.selectCardActive : ""}`}
                               >
-                                <FlightCardContent
-                                  flight={flight}
-                                  onInfo={setDetailFlight}
-                                  onDeselect={isSelected ? handleDeselectOutbound : undefined}
-                                  deselectLabel="Deselect departure flight"
-                                />
+                                <FlightCardContent flight={flight} onInfo={setDetailFlight} />
                                 {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} showFrom /> : null}
                               </div>
                             );
@@ -1366,8 +1444,6 @@ export default function FlightsView({ searchParams }: Props) {
                                               flight={item.inbound}
                                               matchTier={tier}
                                               onInfo={setDetailFlight}
-                                              onDeselect={isSelected ? handleDeselectReturn : undefined}
-                                              deselectLabel="Deselect return flight"
                                             />
                                           ) : null}
                                         </div>
@@ -1994,6 +2070,7 @@ function PriceCard({
               label="SAVE"
               compact
               align="right"
+              confirmInTrigger
               className={styles.savePillButton}
             />
           ) : (

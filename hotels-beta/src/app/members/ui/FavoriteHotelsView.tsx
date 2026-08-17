@@ -8,8 +8,15 @@ import {
   fetchFavoriteHotelsBrowser,
   seedFavoriteHotelsIfEmptyBrowser,
 } from "@/lib/members/db";
+import {
+  RATEHAWK_THUMB_SIZE,
+  resolveRatehawkUrl,
+} from "@/lib/hotels/cardHelpers";
 
 const FALLBACK_HOTEL_IMAGE = "/images/hero-lp.jpg";
+
+/** How many thumbnails fill out the right-hand side of a card. */
+const STRIP_IMAGE_COUNT = 5;
 
 function getHotelImage(item: FavoriteHotel): string | null {
   const thumbnail = item.thumbnail?.trim();
@@ -26,6 +33,13 @@ export default function FavoriteHotelsView() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  // Directus id -> resolved thumbnail urls. The favourite row only stores one
+  // thumbnail, so the strip comes from the same per-hotel image route the
+  // Hotels page uses (§29 - the bulk hotel fetch deliberately carries only
+  // ratehawk_image_1).
+  const [stripsByHotelId, setStripsByHotelId] = useState<
+    Record<string, string[]>
+  >({});
 
   useEffect(() => {
     let active = true;
@@ -55,6 +69,42 @@ export default function FavoriteHotelsView() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const ids = items
+      .map((item) => item.hotelDirectusId)
+      .filter((id): id is string => Boolean(id));
+    if (!ids.length) return;
+
+    let active = true;
+
+    void Promise.all(
+      ids.map(async (id) => {
+        try {
+          const res = await fetch(`/api/hotels/${id}/ratehawk-images`);
+          const data = (await res.json()) as {
+            ok?: boolean;
+            images?: { url: string }[];
+          };
+          if (!data?.ok) return [id, []] as const;
+          return [
+            id,
+            (data.images ?? [])
+              .slice(0, STRIP_IMAGE_COUNT)
+              .map((image) => resolveRatehawkUrl(image.url, RATEHAWK_THUMB_SIZE)),
+          ] as const;
+        } catch {
+          return [id, []] as const;
+        }
+      })
+    ).then((entries) => {
+      if (active) setStripsByHotelId(Object.fromEntries(entries));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [items]);
 
   async function handleDelete(id: string) {
     try {
@@ -87,22 +137,22 @@ export default function FavoriteHotelsView() {
       <div className="members-section__body">
         {items.length ? (
           items.map((item) => {
-            const imageUrl = getHotelImage(item);
+            const fallbackImage = getHotelImage(item);
+            const strip = item.hotelDirectusId
+              ? stripsByHotelId[item.hotelDirectusId] ?? []
+              : [];
+            // Until the strip resolves (or for a hotel with no Ratehawk
+            // images) fall back to the one thumbnail saved with the favourite.
+            const images = strip.length
+              ? strip
+              : fallbackImage
+                ? [fallbackImage]
+                : [];
 
             return (
               <article key={item.id} className="members-item">
-                <div className="members-item__layout">
-                  {imageUrl ? (
-                    <div
-                      className="members-item__thumb"
-                      style={{ backgroundImage: `url(${imageUrl})` }}
-                    />
-                  ) : (
-                    <div className="members-item__thumb members-item__thumb--placeholder">
-                      Photos coming soon
-                    </div>
-                  )}
-
+                {/* Text first, images filling out the card to its right. */}
+                <div className="members-favorite-layout">
                   <div className="members-item__content">
                     <div className="members-item__title">{item.name}</div>
                     <div className="members-item__location">{item.location}</div>
@@ -125,6 +175,24 @@ export default function FavoriteHotelsView() {
                       </button>
                     </div>
                   </div>
+
+                  {images.length ? (
+                    <div className="members-favorite-strip">
+                      {images.map((url, index) => (
+                        <div
+                          key={`${item.id}-${index}`}
+                          className="members-favorite-strip__image"
+                          style={{ backgroundImage: `url(${url})` }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="members-favorite-strip">
+                      <div className="members-favorite-strip__image members-favorite-strip__image--placeholder">
+                        Photos coming soon
+                      </div>
+                    </div>
+                  )}
                 </div>
               </article>
             );

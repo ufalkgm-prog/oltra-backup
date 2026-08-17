@@ -22,9 +22,24 @@ import {
   addFavoriteRestaurantBrowser,
   addRestaurantToTripBrowser,
   createTripBrowser,
+  fetchFavoriteRestaurantDirectusIdsBrowser,
   fetchTripChoicesBrowser,
 } from "@/lib/members/db";
 import { MAX_TRIPS_PER_MEMBER, TRIP_LIMIT_MESSAGE, isTripLimitError } from "@/lib/members/tripLimits";
+
+/* Green star on a restaurant the member has already favourited - shown on both
+ * the list row and the selected-restaurant card. */
+function FavoriteMark() {
+  return (
+    <span
+      className="restaurant-favorite-mark"
+      title="In your favourites"
+      aria-label="In your favourites"
+    >
+      ★
+    </span>
+  );
+}
 
 type HotelPin = {
   id: string | number;
@@ -112,12 +127,40 @@ export default function RestaurantsMapView({
   const tripLimitReached = tripChoices.length >= MAX_TRIPS_PER_MEMBER;
 
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
+  const [favoriteRestaurantIds, setFavoriteRestaurantIds] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     setCityInput(city);
     setShowCityOptions(false);
     setSelectedType("All");
   }, [city]);
+
+  // Marks the member's favourites in the list and the detail card. Keyed on the
+  // Directus id, not the favourite row's own uuid.
+  useEffect(() => {
+    if (!isMemberLoggedIn) {
+      setFavoriteRestaurantIds(new Set());
+      return;
+    }
+
+    let active = true;
+
+    async function loadFavorites() {
+      try {
+        const ids = await fetchFavoriteRestaurantDirectusIdsBrowser();
+        if (active) setFavoriteRestaurantIds(new Set(ids));
+      } catch {
+        // Not critical - the page works fine without the markers.
+      }
+    }
+
+    void loadFavorites();
+    return () => {
+      active = false;
+    };
+  }, [isMemberLoggedIn]);
 
   // If the user landed on /restaurants without an explicit ?city= param,
   // try saved hotel/flight search → member home airport → leave default (Paris).
@@ -365,6 +408,9 @@ export default function RestaurantsMapView({
         thumbnail: "/images/hero-lp.jpg",
       });
 
+      setFavoriteRestaurantIds((prev) =>
+        new Set(prev).add(String(selectedRestaurant.id))
+      );
       setMemberActionMessage("Restaurant added to favourites.");
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
@@ -750,6 +796,9 @@ export default function RestaurantsMapView({
     <div className="restaurants-layout">
       <aside className="oltra-glass oltra-panel restaurants-sidebar">
         <div className="restaurants-sidebar__intro">
+          {/* City and Restaurant type share one row at equal width. */}
+          <div className="restaurants-sidebar__filters">
+          <div className="restaurants-sidebar__filter">
           <div className="oltra-label restaurants-sidebar__label">CITY</div>
 
           <div
@@ -816,7 +865,9 @@ export default function RestaurantsMapView({
             )}
           </div>
 
-          <div className="restaurants-sidebar__type-filter">
+          </div>
+
+          <div className="restaurants-sidebar__filter">
             <div className="oltra-label restaurants-sidebar__label">RESTAURANT TYPE</div>
             <OltraSelect
               name="restaurant_type"
@@ -829,6 +880,7 @@ export default function RestaurantsMapView({
               ).map((type) => ({ value: type, label: type }))}
               onValueChange={(v) => setSelectedType(v as RestaurantType)}
             />
+          </div>
           </div>
 
           <p className="restaurants-sidebar__count">
@@ -857,6 +909,9 @@ export default function RestaurantsMapView({
                   className={`oltra-output restaurant-row${active ? " is-active" : ""}`}
                 >
                   <div className="restaurant-row__title">
+                    {favoriteRestaurantIds.has(String(restaurant.id)) ? (
+                      <FavoriteMark />
+                    ) : null}
                     {restaurant.restaurant_name}
                   </div>
                   <div className="restaurant-row__meta">
@@ -876,6 +931,9 @@ export default function RestaurantsMapView({
 
             <article className="oltra-output restaurant-detail-card">
               <h2 className="restaurant-detail-card__title">
+                {favoriteRestaurantIds.has(String(selectedRestaurant.id)) ? (
+                  <FavoriteMark />
+                ) : null}
                 {selectedRestaurant.restaurant_name}
               </h2>
 

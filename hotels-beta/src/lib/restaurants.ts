@@ -134,6 +134,28 @@ export async function getRestaurantCities(): Promise<string[]> {
   return Array.from(cityMap.values()).sort((a, b) => a.localeCompare(b));
 }
 
+/* Full records for a set of ids - used by Members > Favorite restaurants,
+ * which stores only a name and a location label per favourite and needs the
+ * same editorial text the Restaurants page shows. */
+export async function getRestaurantsByIds(
+  ids: string[]
+): Promise<RestaurantRecord[]> {
+  const wanted = ids.map((id) => String(id).trim()).filter(Boolean);
+  if (!wanted.length) return [];
+
+  const params = new URLSearchParams({
+    fields: buildRestaurantFields(),
+    "filter[id][_in]": wanted.join(","),
+    limit: "-1",
+  });
+
+  const rows = await directusFetchJson<DirectusRestaurantRow[]>(
+    `/items/restaurants?${params.toString()}`
+  );
+
+  return (rows ?? []).map(normalizeRestaurant);
+}
+
 export async function getRestaurantsByCity(city: string): Promise<RestaurantRecord[]> {
   const requestedCity = normalizeText(city);
   if (!requestedCity) return [];

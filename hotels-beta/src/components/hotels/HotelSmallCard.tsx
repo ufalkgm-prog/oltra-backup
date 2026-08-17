@@ -102,19 +102,19 @@ export default function HotelSmallCard({
     );
   })();
 
-  // The card itself is a link, so these have to stop propagation rather than
-  // rely on being outside it.
-  const smallButtonStyle = {
-    height: "24px",
-    minHeight: "24px",
-    fontSize: "0.62rem",
-    letterSpacing: "0.16em",
-    padding: "0 6px",
-  } as const;
-
+  // The card itself is a link, so everything in the actions column has to
+  // cancel the anchor's navigation. stopPropagation alone is not enough:
+  // it stops listeners from firing but the browser still runs the anchor's
+  // default action for a click anywhere in its subtree. That is why saving a
+  // hotel from a trip-picker row used to navigate to the hotel - the picker
+  // panel stopped propagation but never called preventDefault. Doing it once
+  // here covers the picker panel too, since it renders inside this column.
   const actions =
     bookingHref || renderSaveControl ? (
-      <div className="mt-1.5 flex w-full flex-col gap-1.5">
+      <div
+        className="mt-1.5 flex w-full flex-col gap-1.5"
+        onClick={(e) => e.preventDefault()}
+      >
         {bookingHref ? (
           <button
             type="button"
@@ -123,8 +123,10 @@ export default function HotelSmallCard({
               e.stopPropagation();
               window.open(bookingHref, "_blank", "noopener,noreferrer");
             }}
-            className="oltra-button-primary w-full"
-            style={smallButtonStyle}
+            /* Sizing lives in .oltra-button--xs, not an inline style: the Save
+               control beside it is rendered by the caller, and the two have to
+               match. */
+            className="oltra-button-primary oltra-button--xs w-full"
           >
             BOOK
           </button>

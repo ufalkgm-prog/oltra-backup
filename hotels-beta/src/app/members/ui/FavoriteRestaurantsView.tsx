@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DEFAULT_FAVORITE_RESTAURANTS } from "@/lib/members/defaults";
 import type { FavoriteRestaurant } from "@/lib/members/types";
 import {
@@ -8,12 +8,21 @@ import {
   fetchFavoriteRestaurantsBrowser,
   seedFavoriteRestaurantsIfEmptyBrowser,
 } from "@/lib/members/db";
+import type { RestaurantRecord } from "@/app/restaurants/types";
+import {
+  buildAwardsLabel,
+  buildAddressLabel,
+} from "@/app/restaurants/utils";
 
 export default function FavoriteRestaurantsView() {
   const [items, setItems] = useState<FavoriteRestaurant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  // The favourite row stores only a name, a location label and a meta line.
+  // The editorial text shown on the Restaurants page lives in Directus, so it
+  // is fetched here by id - see /api/restaurants/by-ids.
+  const [records, setRecords] = useState<Record<string, RestaurantRecord>>({});
 
   useEffect(() => {
     let active = true;
@@ -44,6 +53,57 @@ export default function FavoriteRestaurantsView() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const ids = items
+      .map((item) => item.restaurantDirectusId)
+      .filter((id): id is string => Boolean(id));
+    if (!ids.length) return;
+
+    let active = true;
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/restaurants/by-ids", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          restaurants?: RestaurantRecord[];
+        };
+        if (!active || !data?.ok) return;
+        setRecords(
+          Object.fromEntries(
+            (data.restaurants ?? []).map((r) => [String(r.id), r])
+          )
+        );
+      } catch {
+        // The cards still render from the stored name/location/meta.
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [items]);
+
+  // Grouped by city so a member with favourites in several places reads them
+  // city by city rather than in save order.
+  const sortedItems = useMemo(() => {
+    function cityOf(item: FavoriteRestaurant): string {
+      const record = item.restaurantDirectusId
+        ? records[item.restaurantDirectusId]
+        : undefined;
+      return (record?.city ?? item.location ?? "").trim();
+    }
+
+    return [...items].sort(
+      (a, b) =>
+        cityOf(a).localeCompare(cityOf(b)) || a.name.localeCompare(b.name)
+    );
+  }, [items, records]);
 
   async function handleDelete(id: string) {
     try {
@@ -76,14 +136,67 @@ export default function FavoriteRestaurantsView() {
         </div>
       ) : null}
 
-      <div className="members-section__body">
-        {items.length ? (
-          items.map((item) => (
-            <article key={item.id} className="members-item">
+      <div className="members-favorite-restaurant-grid">
+        {sortedItems.length ? (
+          sortedItems.map((item) => {
+            const record = item.restaurantDirectusId
+              ? records[item.restaurantDirectusId]
+              : undefined;
+
+            const address = record ? buildAddressLabel(record) : "";
+            const awards = record ? buildAwardsLabel(record) : "";
+            const meta = record
+              ? [record.cuisine, record.restaurant_setting, record.restaurant_style]
+                  .filter(Boolean)
+                  .join(" · ")
+              : item.meta;
+
+            return (
+              <article key={item.id} className="members-item">
                 <div className="members-item__content">
                   <div className="members-item__title">{item.name}</div>
-                  <div className="members-item__location">{item.location}</div>
-                  <div className="members-item__meta">{item.meta}</div>
+                  <div className="members-item__location">
+                    {address || item.location}
+                  </div>
+
+                  {record?.www || record?.insta ? (
+                    <div className="members-favorite-restaurant__links">
+                      {record.www ? (
+                        <a href={record.www} target="_blank" rel="noreferrer">
+                          Website
+                        </a>
+                      ) : null}
+                      {record.www && record.insta ? <span>·</span> : null}
+                      {record.insta ? (
+                        <a href={record.insta} target="_blank" rel="noreferrer">
+                          Instagram
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {meta ? <div className="members-item__meta">{meta}</div> : null}
+                  {awards ? <div className="members-item__meta">{awards}</div> : null}
+
+                  {record?.highlights ? (
+                    <p className="members-favorite-restaurant__highlights">
+                      {record.highlights}
+                    </p>
+                  ) : null}
+
+                  {record?.description
+                    ? record.description
+                        .split(/\n+/)
+                        .filter(Boolean)
+                        .map((para, index) => (
+                          <p
+                            key={index}
+                            className="members-favorite-restaurant__description"
+                          >
+                            {para}
+                          </p>
+                        ))
+                    : null}
 
                   <div className="members-item__actions">
                     <button
@@ -101,8 +214,9 @@ export default function FavoriteRestaurantsView() {
                     </button>
                   </div>
                 </div>
-            </article>
-          ))
+              </article>
+            );
+          })
         ) : (
           <div className="members-empty">No favorite restaurants yet.</div>
         )}

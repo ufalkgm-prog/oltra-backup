@@ -358,12 +358,32 @@ export function pickPrimaryAirportForCity(city: string): CityAirport | null {
 }
 
 const IATA_TO_CITY: Record<string, string> = (() => {
-  const map: Record<string, string> = {};
+  // Nearest wins, not first-seen. Several cities can list the same airport -
+  // Heathrow is a "nearest airport" for London (13km) but also for Eynsham
+  // Park (77km), Sunningdale and Hampshire - and object key order is
+  // alphabetical, so first-seen resolved LHR to "Eynsham Park". That name
+  // then surfaced as "Flights from Eynsham Park" on the landing page and as
+  // the Flights page route header.
+  // Rank: a city named in the airport's own label wins ("London Heathrow" ->
+  // London), then nearest. Nearest alone is not enough - Heathrow's centroid
+  // is 13km from Sunningdale and 22km from London, so pure distance answers
+  // "Sunningdale", and first-seen (the original) answered "Eynsham Park"
+  // because object keys are alphabetical. Both surfaced to users as "Flights
+  // from Eynsham Park" and as the Flights page route header.
+  const best: Record<string, { city: string; distKm: number; named: boolean }> = {};
   for (const [city, airports] of Object.entries(CITY_AIRPORTS)) {
     for (const airport of airports) {
-      if (!(airport.iata in map)) map[airport.iata] = city;
+      const named = airport.label.toLowerCase().includes(city.toLowerCase());
+      const current = best[airport.iata];
+      const better =
+        !current ||
+        (named && !current.named) ||
+        (named === current.named && airport.distKm < current.distKm);
+      if (better) best[airport.iata] = { city, distKm: airport.distKm, named };
     }
   }
+  const map: Record<string, string> = {};
+  for (const [iata, entry] of Object.entries(best)) map[iata] = entry.city;
   return map;
 })();
 
