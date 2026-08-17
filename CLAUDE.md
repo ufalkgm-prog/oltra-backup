@@ -615,7 +615,16 @@ Three views rendered in the same panel:
 
 * **login** — email + password; LOG IN button is `oltra-button-primary` only when email is valid (has `@`, `.`, letters before/between/after) AND password non-empty; CREATE NEW ACCOUNT and CONTINUE WITH GOOGLE always primary; no Facebook
 * **signup** — email, password (≥7 chars, must contain letters and numbers), confirm password; Supabase `signUp` handles duplicate-email detection natively
-* **forgot** — email field; email sending deferred until Vercel deployment (Vercel server function); shows placeholder message for now
+* **forgot** — email field; **sends for real** as of 2026-08-17 via
+  `supabase.auth.resetPasswordForEmail`. The old "deferred until Vercel
+  deployment (server function)" note was based on a wrong premise — Supabase
+  sends this itself from the browser, so nothing was ever blocking it. See §46
+  for the two Supabase config prerequisites (redirect URL allow-list, and
+  custom SMTP: the built-in mailer is rate-limited and not for production).
+* **reset** — SET A NEW PASSWORD, entered via the `PASSWORD_RECOVERY` auth
+  event when the member returns from the emailed link. Same strength rules as
+  signup. Without this view the link landed on a form that could do nothing
+  with the recovery session.
 
 ### SiteHeader greeting
 
@@ -3201,13 +3210,156 @@ editorial record, and the ids only exist client-side),
 
 ### Not verified
 
-**The entire Members section has never been seen working.** `/members/*`
-requires an account login that session automation cannot perform, and the
-schema only landed at the end of this session. Saved trips, the itinerary, both
-favourites views and the trip warnings are code- and logic-verified only. The
-restaurant favourite star is in the same position — the styling was confirmed,
-the data path was not. First person to log in should exercise: save a hotel
-with dates and rooms, save a flight, then open Saved trips.
+**Superseded — see §46.** This section originally recorded that the entire
+Members area had never been seen working, because `/members/*` needs an account
+login that session automation cannot perform. That was resolved on 2026-08-17:
+Ulrik logged in himself in the Claude-in-Chrome tab and handed over the
+authenticated session, which is the workaround whenever member-gated UI needs
+verifying. Everything listed here has since been exercised against a real
+profile — and doing so found four bugs that were invisible against seeded data.
+
+---
+
+## 46. SECOND UI PASS, VERIFIED AGAINST A REAL MEMBER (2026-08-17)
+
+Commits **`643df9f`** and **`3b39b24`**, both pushed to `main`. A second
+feedback round on §45's work, plus password reset and the review UI. The
+important part of this section is not the fix list — it is *why* several items
+in §45 were reported as done when they were not.
+
+### Verifying member-gated UI: Ulrik hands over the session
+
+`/members/*` needs an account login, and session automation must never type
+credentials. The workaround, used successfully here: **Ulrik logs in himself in
+the Claude-in-Chrome tab and says when he is in**; the session cookie lives in
+that tab, so the authenticated pages can be driven from there afterwards. Use
+this whenever member-gated UI needs real verification.
+
+It is worth the setup. Four bugs were found this way that were invisible
+against the seeded demo data, and none would have been caught by `tsc`.
+
+### Measure the DOM, do not read screenshots
+
+§45 shipped three alignment "fixes" that were not fixes. All three were caught
+by reading `getBoundingClientRect()` instead of looking at a picture, and two
+had been reported as done twice.
+
+* **Grid track geometry, not padding.** The Flights header row was never inset
+  the way `.pinnedRow` is, so the two grids resolved *different track widths*
+  (282.8px vs 269px). Padding on a header label only moves text **inside** a
+  track; it cannot move the track. Departure merely looked correct because it
+  is left-aligned and its 13px happened to land on the card. Fixed by giving
+  the header row the same 13px inset (`.splitPanesHeader`), after which every
+  column lines up by construction. **Two rounds of padding tweaks preceded
+  this and both made it worse.** If two grids must align, give them the same
+  geometry — do not compensate per element.
+* **Equal-looking is not equal.** Flights Book/Save were 63.2px vs 49.6px:
+  flex sizes by content and the row was too narrow for `flex-grow` to even
+  them out. Anything that must be exactly equal should be a grid track
+  (`minmax(0,1fr)`), not a flex child.
+* **A block wrapper adds baseline space.** With the widths fixed, Save still
+  sat 2px low — `SaveToTripControl` renders its trigger inside a positioning
+  wrapper, and an inline-level button in a block leaves descender space.
+  `display: flex` on the wrapper.
+
+### Directus: one bad id fails the whole `_in` filter
+
+Favourite-hotel highlights silently never appeared, while calling the same
+endpoint by hand worked. **Directus rejects the entire `_in` filter if any
+value cannot be cast to bigint**, so a single placeholder id from a seeded demo
+row was failing the lookup for every real record in the batch. Both
+`/api/hotels/by-ids` and `/api/restaurants/by-ids` now drop non-numeric ids
+before querying. The restaurants route had the identical exposure and would
+have failed the same way on the first real favourite.
+
+### Removing a child from a fixed-column grid
+
+`.members-item__layout` is `84px minmax(0,1fr)`. §45 removed the thumbnail from
+flight and restaurant trip cards, which left their content as the *first*
+child — rendering inside the 84px thumbnail track and wrapping one word per
+line. A `--no-thumb` modifier gives those cards a single full-width column.
+
+### Trip pickers — one rule, three implementations
+
+The picker exists three times (`SaveToTripControl` for landing + flights, and
+bespoke copies inside `HotelsView` and `RestaurantsMapView`).
+`getCreateTripBlockedReason()` in `lib/members/tripLimits.ts` is now the single
+rule for empty name / duplicate name / 8-trip cap.
+
+**The control stays clickable when blocked rather than being `disabled`** — a
+disabled button fires no click, so it can never say why, and an empty-name save
+previously just closed the panel with no feedback. The reason renders *inside
+the picker*; it was first wired to a shared status line elsewhere in the pane,
+where it was set correctly and nobody would ever see it.
+
+### Itinerary and PDF
+
+* Every fact whose value was still "To be confirmed" is dropped. Almost nothing
+  beyond the basics exists until a trip is booked, and printing a row of filler
+  per field buried the real values.
+* **Checking the printed output is a separate act from checking the modal.**
+  Trick used: flip every `@media print` block's `conditionText` to `screen` via
+  CSSOM, then screenshot. That revealed two faults the on-screen view could not
+  show — `repeat(auto-fit, …)` fact grids spreading into six columns edge to
+  edge (squeezing the date into four lines), and no page margins at all. Fixed
+  with two fixed columns and `@page { margin: 14mm }`.
+
+### Warnings live in exactly one place
+
+Trip warnings appear only in the **Editor notes** box under Trip notes — always
+present, showing "All good but prices may have changed since your last save"
+when clean. Card-level warning text was removed (`has_overlap_warning` still
+gates the Book confirm step). Warnings use `--oltra-error-text` (#ff8a71), the
+faded red already chosen in §35; the cards had been using a separate amber,
+which is why they read as two systems.
+
+### Password reset (commit `3b39b24`)
+
+The handler only set a placeholder, with a comment deferring the send to a
+Vercel server function. **That premise was wrong** — Supabase sends this from
+the browser, so nothing was blocking it. Now calls
+`resetPasswordForEmail`, keeping the neutral "if an account exists" wording so
+the form cannot be used to discover which addresses are registered.
+
+Sending alone is half a feature: the emailed link returns to `/login` with a
+recovery session, which the old form could do nothing with. A **SET A NEW
+PASSWORD** view now handles the `PASSWORD_RECOVERY` event.
+
+**Two config prerequisites, both outside the code and both untested:** `/login`
+must be in Supabase → Authentication → URL Configuration → Redirect URLs (for
+localhost *and* the Vercel URL), and the built-in mailer is heavily
+rate-limited and not for production — real use needs custom SMTP. Testing used
+a non-existent address deliberately: sending a reset to a real person is
+outward-facing and is Ulrik's call, so **the last hop (mail actually arriving)
+has never been confirmed.**
+
+### Review ratings
+
+Six dropdowns became one row per criterion with five stars, stacked. **Stored
+values are unchanged** (`not_observed` or `"1"`–`"5"`), so scoring, validation
+and submission behave exactly as before — only the control changed. Clicking
+the current score again returns the row to Not observed, which is the default
+and otherwise unreachable once a rating is set; each row prints its own value
+so that state is legible rather than implied.
+
+### Other
+
+Login notes no longer use a green found nowhere else in the design system —
+informational text is primary, problems are the faded red. Landing Book/Save
+are one size across both panes (84×22). Destination suggestions order cities,
+then countries, then hotels. The Restaurants type dropdown had explicitly
+opted out of the shared hover-close (`closeOnHoverOutside={false}`). The
+featured hotel card is as tall as its three lines need rather than 300px.
+Favourite hotels show highlights read live rather than stored, so the text
+stays current when an editor revises it.
+
+### A timing trap when verifying transient UI
+
+The Flights save flashes "Saved" in italic for 2.5s. Two separate checks read
+the button *after* the flash had expired and concluded it was broken. A
+`MutationObserver` recording label + `fontStyle` across the click captured the
+real sequence: `SAVE → Saving... → Saved (italic) → SAVE`. **For anything
+transient, record it; do not sample it.**
 
 ---
 
