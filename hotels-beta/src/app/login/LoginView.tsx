@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type View = "login" | "signup" | "forgot";
+type View = "login" | "signup" | "forgot" | "reset";
 
 function isValidEmail(email: string): boolean {
   const at = email.indexOf("@");
@@ -30,6 +30,22 @@ export default function LoginView() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Arriving from the emailed reset link: Supabase puts a recovery session in
+  // place and fires this event, which is the only signal that the visitor is
+  // here to set a new password rather than log in.
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setError("");
+        setMessage("");
+        setPassword("");
+        setConfirmPassword("");
+        setView("reset");
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [supabase]);
 
   const loginEnabled = isValidEmail(email) && password.length > 0;
 
@@ -83,12 +99,56 @@ export default function LoginView() {
   async function handleForgotPassword(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setMessage("");
     if (!isValidEmail(email)) {
       setError("Please enter a valid email address.");
       return;
     }
-    // Email sending via Vercel server function — deferred until deployment.
-    setMessage("If an account exists for this address, a reset link will be sent once email is enabled.");
+
+    // Supabase sends this itself - no server function needed, which is what
+    // the old "deferred until deployment" placeholder was waiting for. The
+    // link returns here with a recovery session; see the PASSWORD_RECOVERY
+    // listener below, which switches to the set-a-new-password view.
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    // Deliberately does not confirm whether the address is registered.
+    setMessage(
+      "If an account exists for this address, a reset link is on its way. Check your spam folder too."
+    );
+  }
+
+  async function handleSetNewPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!isValidNewPassword(password)) {
+      setError("Password must be at least 7 characters and include letters and numbers.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setMessage("Password updated.");
+    window.location.assign(next);
   }
 
   async function handleOAuth() {
@@ -142,7 +202,7 @@ export default function LoginView() {
                   />
                 </div>
 
-                {error ? <div className="members-note">{error}</div> : null}
+                {error ? <div className="members-note members-note--error">{error}</div> : null}
 
                 <div className="members-login-panel__top-actions">
                   <button
@@ -225,7 +285,7 @@ export default function LoginView() {
                   />
                 </div>
 
-                {error ? <div className="members-note">{error}</div> : null}
+                {error ? <div className="members-note members-note--error">{error}</div> : null}
                 {message ? <div className="members-note members-note--success">{message}</div> : null}
 
                 <div className="members-login-panel__top-actions">
@@ -248,6 +308,46 @@ export default function LoginView() {
                 </div>
               </form>
             </>
+          ) : view === "reset" ? (
+            <>
+              <div className="oltra-label members-login-panel__title">SET A NEW PASSWORD</div>
+              <form onSubmit={handleSetNewPassword} className="members-form-stack members-login-panel__form">
+                <div className="members-form-field">
+                  <label className="oltra-label">NEW PASSWORD</label>
+                  <input
+                    className="oltra-input"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className="members-form-field">
+                  <label className="oltra-label">CONFIRM NEW PASSWORD</label>
+                  <input
+                    className="oltra-input"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                {error ? <div className="members-note members-note--error">{error}</div> : null}
+                {message ? <div className="members-note members-note--success">{message}</div> : null}
+
+                <div className="members-login-panel__top-actions">
+                  <button
+                    type="submit"
+                    className="oltra-button-primary members-action-button"
+                    disabled={loading}
+                  >
+                    {loading ? "Saving…" : "SAVE PASSWORD"}
+                  </button>
+                </div>
+              </form>
+            </>
           ) : (
             <>
               <div className="oltra-label members-login-panel__title">FORGOT PASSWORD</div>
@@ -263,7 +363,7 @@ export default function LoginView() {
                   />
                 </div>
 
-                {error ? <div className="members-note">{error}</div> : null}
+                {error ? <div className="members-note members-note--error">{error}</div> : null}
                 {message ? <div className="members-note members-note--success">{message}</div> : null}
 
                 <div className="members-login-panel__top-actions">
@@ -272,7 +372,7 @@ export default function LoginView() {
                     className="oltra-button-primary members-action-button"
                     disabled={loading}
                   >
-                    SEND RESET LINK
+                    {loading ? "Sending…" : "SEND RESET LINK"}
                   </button>
 
                   <button

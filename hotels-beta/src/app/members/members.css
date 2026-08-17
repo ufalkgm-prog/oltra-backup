@@ -785,6 +785,55 @@
   flex-wrap: wrap;
 }
 
+/* Stacked review rows: label, five stars, current value. */
+.members-rating-rows {
+  display: grid;
+  gap: 10px;
+}
+
+.members-rating-row {
+  display: grid;
+  /* Label, then stars immediately beside it - a 1fr label column pushed the
+     stars to the far edge of the panel, away from what they score. */
+  grid-template-columns: 180px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.members-rating-row__label {
+  margin: 0;
+}
+
+.members-rating-row__stars {
+  display: flex;
+  gap: 2px;
+}
+
+.members-star {
+  border: 0;
+  background: transparent;
+  padding: 0 2px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--oltra-text-disabled);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.members-star.is-on {
+  color: var(--oltra-text-primary);
+}
+
+.members-star:hover {
+  color: var(--oltra-text-primary);
+}
+
+.members-rating-row__value {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: var(--oltra-text-muted);
+}
+
 .members-rating-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

@@ -31,18 +31,6 @@ const TYPE_OPTIONS: Option[] = [
   { value: "restaurant", label: "Restaurant" },
 ];
 
-const RATING_OPTIONS: Option[] = [
-  {
-    value: "not_observed",
-    label: "Not observed",
-    selectedLabel: "Not observed",
-  },
-  { value: "1", label: "1 - lowest", selectedLabel: "1" },
-  { value: "2", label: "2", selectedLabel: "2" },
-  { value: "3", label: "3", selectedLabel: "3" },
-  { value: "4", label: "4", selectedLabel: "4" },
-  { value: "5", label: "5 - highest", selectedLabel: "5" },
-];
 
 const HOTEL_RATING_FIELDS = [
   "Overall",
@@ -335,25 +323,59 @@ export default function ReviewView({
           </div>
         </div>
 
+        {/* One row per criterion, stars stacked underneath each other. The
+            values are unchanged - "not_observed" or "1".."5" - so scoring,
+            validation and submission all behave exactly as before; only the
+            control changed from a dropdown to stars. Clicking the current
+            score again returns the row to Not observed, which is the default
+            and the only way back. */}
         <div
           className={[
-            "members-rating-grid",
+            "members-rating-rows",
             !canCompleteReview ? "members-form-disabled" : "",
           ].join(" ")}
         >
-          {ratingFields.map((field) => (
-            <div key={field} className="members-form-field">
-              <label className="oltra-label">{field.toUpperCase()}</label>
-              <OltraSelect
-                name={`reviewRating${field}`}
-                value={ratings[field]}
-                placeholder="Rate 1-5"
-                options={RATING_OPTIONS}
-                align="left"
-                onValueChange={(value) => handleRatingChange(field, value)}
-              />
-            </div>
-          ))}
+          {ratingFields.map((field) => {
+            const current = ratings[field];
+            const score = current === "not_observed" ? 0 : Number(current) || 0;
+
+            return (
+              <div key={field} className="members-rating-row">
+                <span className="oltra-label members-rating-row__label">
+                  {field.toUpperCase()}
+                </span>
+
+                <div
+                  className="members-rating-row__stars"
+                  role="radiogroup"
+                  aria-label={field}
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      role="radio"
+                      aria-checked={score === n}
+                      aria-label={`${field}: ${n} out of 5`}
+                      className={`members-star${score >= n ? " is-on" : ""}`}
+                      onClick={() =>
+                        handleRatingChange(
+                          field,
+                          score === n ? "not_observed" : String(n)
+                        )
+                      }
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+
+                <span className="members-rating-row__value">
+                  {score ? `${score}/5` : "Not observed"}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         <div

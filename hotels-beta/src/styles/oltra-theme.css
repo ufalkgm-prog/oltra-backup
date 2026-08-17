@@ -1343,8 +1343,16 @@ details > summary::-webkit-details-marker {
   font-style: italic;
 }
 
+/* Informational feedback reads as ordinary copy - the green it used to use was
+   a colour the design system does not otherwise have, and it made routine
+   confirmations look like a separate state. Problems use the theme's faded
+   red instead. */
 .members-note--success {
-  color: rgba(160, 220, 160, 0.9);
+  color: var(--oltra-text-primary);
+}
+
+.members-note--error {
+  color: var(--oltra-error-text);
 }
 
 @media (max-width: 640px) {
