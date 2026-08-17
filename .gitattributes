@@ -1,0 +1,13 @@
+# Normalise text files to LF in the index, whatever wrote them on disk.
+#
+# Without this, git stores exactly the bytes it is given (core.autocrlf is
+# false here), so any tool that writes CRLF turns a small edit into a
+# whole-file diff. That is not hypothetical: 23 source files were silently
+# converted to CRLF by editing scripts before this was added, because Python's
+# text mode translates "\n" to os.linesep on write. Scripts should still pass
+# newline="" when writing tracked files, but this makes the repo immune either
+# way rather than relying on everyone remembering.
+#
+# Binaries are detected automatically by `text=auto`, so images and the
+# Ratehawk .zst dumps are left alone.
+* text=auto eol=lf
