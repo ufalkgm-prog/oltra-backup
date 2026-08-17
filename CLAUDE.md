@@ -706,6 +706,20 @@ gh api repos/ufalkgm-prog/oltra-backup/commits/main --jq '.sha'
 
 Both SHAs should match.
 
+**On Ulrik's Windows machine the first command 404s** (2026-08-17) while the
+backup one works and `git` pushes to that same repo fine. That is an
+authorization gap on the `gh` token for the primary repo — `git` uses Windows
+Credential Manager, `gh` its own keyring token — not a missing repo or disabled
+Actions. Use the git protocol instead, which needs no API access:
+
+```bash
+git ls-remote origin refs/heads/main
+git ls-remote https://github.com/ufalkgm-prog/oltra-backup.git refs/heads/main
+```
+
+Verified in sync this way on 2026-08-17. `gh auth refresh -h github.com` would
+likely clear the 404 if the API is wanted.
+
 ---
 
 ## 19. HOTEL DATA BACKFILL — IN PROGRESS (started 2026-05-22)
@@ -3068,6 +3082,132 @@ fixes, so any phrase containing a typo could never match; and Directus returns
 `id` as a **string**, so a number-keyed lookup silently matched nothing —
 including silencing the "did not match" warning. A no-op that reports success
 is the dangerous shape.
+
+---
+
+## 45. UI PASS + SAVED-TRIP SCHEMA (2026-08-17)
+
+Commit **`5556444`**, pushed to `main`. A page-by-page UI list from Ulrik across
+Landing, Hotels, Flights, Restaurants and Members, plus the schema it needed.
+Listed here as a rollback map (per §33) and, more usefully, as a record of the
+root causes — several recur by category.
+
+### Members schema — 12 columns, applied 2026-08-17
+
+`hotels-beta/scripts/members/2026-08-17-add-trip-item-prices.sql`, run in the
+Supabase SQL Editor against the **Members** project (§31), all nullable, all
+`add column if not exists`:
+
+| Table | Columns |
+|---|---|
+| `member_trip_hotels` | `price_amount`, `price_currency`, `rooms`, `adults`, `kids`, `children_ages` |
+| `member_trip_flights` | `price_amount`, `price_currency`, `adults`, `kids`, `destination_arrive_at`, `return_depart_at` |
+
+**There is no Directus step, and this is worth stating because it is the
+natural assumption.** Directus is a CMS layer over the *Hotel database*
+project; the `member_trip_*` tables live in the Members project, which Directus
+has no connection to. The app reads and writes them directly via supabase-js
+under RLS. Nothing to mirror.
+
+**`destination_arrive_at` is not `arrive_at`.** A return itinerary is saved as
+one row, so `arrive_at` is the arrival *back home*; `destination_arrive_at` is
+the outbound's final segment and `return_depart_at` is the departure from the
+destination (null one-way). Anything comparing a flight against a hotel date
+must use the new pair, or it compares the wrong end of the trip. Recorded as a
+column comment in Postgres as well.
+
+Two failed attempts preceded the successful run, both worth recognising:
+* Nothing appeared, and a PostgREST probe returned raw `42703` from Postgres.
+  A stale schema cache gives `PGRST204`/`PGRST100` instead, so `42703` proves
+  the DDL genuinely never ran.
+* The next attempt errored `42701: column "room_selection" already exists` —
+  a column this script never mentions. The §30 snippet was in the editor
+  instead. **`add column if not exists` cannot raise `42701`, so that error is
+  proof the wrong SQL is loaded**, and naming a real table proves the project
+  selection was right.
+
+### Behaviour worth knowing
+
+* **Saved prices are flat numbers captured at save time**, never recomputed on
+  render. "Update price and availability" in Saved trips re-runs the real
+  supplier query and writes the answer back. Hotels re-price exactly (same
+  property, dates, rooms, guests, child ages) via a new server route,
+  `/api/members/hotel-price`, which resolves `ratehawk_hid` server-side so it
+  is never handed to the browser, and short-circuits on `ratehawk_status:
+  passive` (§42). **Flights cannot re-price exactly** — a Duffel offer is
+  short-lived — so the refresh returns the cheapest fare on that route/date/
+  cabin now and the card says so rather than implying the saved fare stands.
+* **Trip warnings** (`src/lib/members/tripWarnings.ts`): overlapping hotels,
+  a flight landing after the room starts (with sharper wording when it lands
+  the next day after 09:00), party-size mismatch, and nights with no room.
+  Cross-checks 2–4 run only when a trip has both hotels and flights. Timestamps
+  are read as written (regex on the ISO string), never converted — "did I land
+  after check-in" is a question about local time at the airport. Verified
+  against 10 scenarios in Node, including back-to-back hotels which must *not*
+  warn.
+* **`travelers_label` is written by nothing except the demo seed data**, so it
+  is null on every real trip. That is why the party-size check needed passenger
+  columns on flights rather than parsing that label.
+
+### Root causes found by auditing the finished work in the browser
+
+Four defects, two of them in work already reported as done. The audit is the
+reason they were caught; measuring the DOM rather than reading screenshots is
+the reason they were caught *precisely*.
+
+* **`getCityForAirportIata` resolved LHR to "Eynsham Park".** The reverse map
+  was first-seen over object keys (alphabetical) and four hotel cities list
+  Heathrow. Nearest-wins alone does not fix it either — Heathrow is 13km from
+  Sunningdale and 22km from London. Now: a city named in the airport's own
+  label wins, then nearest. Surfaced as "Flights from Eynsham Park" and as the
+  Flights route header, and the same function feeds the cross-page session.
+  **Fixed in both `scripts/airports/build-city-airports.mjs` and the generated
+  `src/lib/cityAirports.ts` — regenerating from the script alone would not have
+  been enough if only one had been edited.**
+* **CSS-module class vs global class is a specificity tie**, so declaration
+  order decides. This bit twice: `.flightBookButton`'s `height` silently loses
+  to `.oltra-button-*`, and the Flights column headers' `padding` shorthand vs
+  the gutter class's `padding-right` resolved *differently for each header*.
+  Use compound selectors (`.a.b`) when a modifier must win.
+* **Equal-looking buttons were not equal.** Flex sized them by content and the
+  row was too narrow for `flex-grow` to even them out (BOOK 63.2px vs SAVE
+  49.6px). Fixed with a grid at `minmax(0,1fr)`. Anything that must be exactly
+  equal should be a grid track, not flex.
+* **The residency search box sits inside the Hotels `<form>`**, so typing a
+  country name fired the form's `onChange` and reset every result card to
+  "Select dates". Fixed with `stopPropagation` in the input's handler.
+
+### Also fixed
+
+* Saving a hotel from a landing card navigated to that hotel: the card is an
+  `<a>` and the picker renders inside it, and **`stopPropagation` does not
+  cancel an anchor's default action** — only `preventDefault` does.
+* The itinerary would not close. It sits in `.oltra-page__content`, which is
+  `position: relative; z-index: 1` and therefore its own stacking context, so
+  the overlay's `z-index: 700` could never rise above the fixed header
+  (z-index 30, sibling context). It is top-aligned, unlike the centred confirm
+  dialogs sharing that overlay class, so its toolbar landed under the header
+  band. Now portalled to `document.body`, the pattern the Hotels lightbox uses.
+* Hotels favourites were keyed on the favourite row's uuid rather than the
+  hotel's Directus id, so "ALREADY IN FAVOURITES" could never appear.
+
+### New files
+
+`src/components/site/ResidencyPicker.tsx`, `src/lib/members/tripWarnings.ts`,
+`src/app/api/members/hotel-price/route.ts`,
+`src/app/api/restaurants/by-ids/route.ts` (Favorite restaurants needs the full
+editorial record, and the ids only exist client-side),
+`scripts/members/2026-08-17-add-trip-item-prices.sql`.
+
+### Not verified
+
+**The entire Members section has never been seen working.** `/members/*`
+requires an account login that session automation cannot perform, and the
+schema only landed at the end of this session. Saved trips, the itinerary, both
+favourites views and the trip warnings are code- and logic-verified only. The
+restaurant favourite star is in the same position — the styling was confirmed,
+the data path was not. First person to log in should exercise: save a hotel
+with dates and rooms, save a flight, then open Saved trips.
 
 ---
 
