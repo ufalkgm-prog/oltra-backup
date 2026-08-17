@@ -1049,7 +1049,7 @@ Add Ratehawk (Emerging Travel Group / ETG) as a booking data source, following t
 * **Host**: `https://api.ratehawk.com` is the current production host as of a 2026-07-14 partner email (moved from the legacy `https://api.worldota.net`, which still works identically — same paths, same credentials, just the old domain). Both hosts authenticate successfully with our key; `api.ratehawk.com` is the one to standardize on going forward.
 * **Important caveat — this is a "Sandbox Key" per ETG's onboarding email, but it authenticates against the live production host, not an isolated sandbox subdomain.** (A dedicated `api-sandbox.worldota.net` host exists per ETG's public docs, but our specific key returns `401 incorrect_credentials` there — it's simply not provisioned for that tier.) ETG's own email explicitly warns: test *bookings* are treated as real orders and must be manually cancelled. Read-only content endpoints (used so far) carry no such risk.
 * Confirmed working test call: `POST /api/b2b/v3/hotel/info/` with body `{"hid": 8473727, "language": "en"}` → returns ETG's fixture "Test Hotel (Do Not Book) test" in Tegucigalpa, Honduras. Use `hid` (integer), not `id` (string slug) — the numeric id from the onboarding email is a `hid`.
-* **Content API v1** (`/api/content/v1/hotel_ids_by_filter/`, `/api/content/v1/hotel_content_by_ids/` — filter-by-country/region, avoids downloading the full global dump) is **not enabled** for this key (`403 endpoint_not_found`, `is_active: false`). Would need to be requested from ETG support (`apisupport@ratehawk.com`) if we want it later — it's the documented alternative to the full dump approach.
+* **Content API v1** (`/api/content/v1/hotel_ids_by_filter/`, `/api/content/v1/hotel_content_by_ids/` — filter-by-country/region, avoids downloading the full global dump) is **not enabled** for this key (`403 endpoint_not_found`, `is_active: false`). Would need to be requested from ETG support (`apisupport@ratehawk.com`) if we want it later — it's the documented alternative to the full dump approach. **Re-verified live 2026-08-17 and scoped precisely in §32** — the 403 covers only `/api/content/v1/*`; `hotel/info/`, `hotel/info/dump/` and `hotel/info/incremental_dump/` all return 200 on the same key.
 * Docs at `docs.emergingtravel.com` block direct fetch (403, same bot-protection pattern as other sites noted in §25) — use web search against the docs domain to extract specifics instead; a Wayback Machine fallback (used successfully for other blocked sites in §25) did **not** work here, this tool's WebFetch refuses `web.archive.org` outright.
 
 ### Data pipeline built this session (all in `hotels-beta/scripts/ratehawk/`)
@@ -1393,13 +1393,43 @@ format); if what's in the code differs, the code wins and the discrepancy should
 noted rather than "corrected."
 
 Sandbox key: RateHawk Backoffice → Settings → API tab. One key covers search,
-booking and content — no separate content key exists. **Note the nuance vs. §26**:
-this key returned `403 endpoint_not_found` / `is_active: false` on the Content
-API v1 endpoints (`hotel_ids_by_filter`, `hotel_content_by_ids`) — that's an
-account/contract enablement gap, not evidence of a separate "content key" the
-account is missing. The full-dump endpoint (`hotel/info/dump`) and single-hotel
-`hotel/info` both work fine on this same key. Worth re-testing Content API v1
-once/if ETG confirms the contract covers it.
+booking and content — no separate content key exists.
+
+#### What this key actually reaches — retested live 2026-08-17
+
+The 403 below had been **carried forward unverified from §26 (2026-08-06) until
+2026-08-17** — §32's original wording restated it as a "nuance vs. §26" rather
+than a retest, and no committed script ever called those endpoints (the
+`diagnose-rg-ext.mjs` run that repeated the claim only ever hit `/hotel/info/`
+and `/search/hp/`). Retested live on 2026-08-17 against both hosts, HTTP Basic,
+the key currently in `hotels-beta/.env.local` — the claim held, but its **scope
+was narrower than §26 and §32 implied**:
+
+| Endpoint | `api.ratehawk.com` | `api.worldota.net` | Rate limit |
+|---|---|---|---|
+| `POST /api/b2b/v3/hotel/info/` | **200 ok** | **200 ok** | 30 req / 60s |
+| `POST /api/b2b/v3/hotel/info/dump/` | **200 ok** | **200 ok** | 5 req / 60s |
+| `POST /api/b2b/v3/hotel/info/incremental_dump/` | **200 ok** | **200 ok** | 5 req / 60s |
+| `POST /api/content/v1/hotel_ids_by_filter/` | **403** `endpoint_not_found` | **403** | — (`is_active: false`) |
+| `POST /api/content/v1/hotel_content_by_ids/` | **403** `endpoint_not_found` | **403** | — (`is_active: false`) |
+
+**The 403 applies only to `/api/content/v1/*` — ETG's separate Content API
+product. It does not apply to the content endpoints inside b2b v3**, all three
+of which are live on this key. Read the two as distinct things; the older
+shorthand "Content API is 403 for our key" reads as if static content generally
+were unavailable, and that is wrong.
+
+The 403 body is an entitlement signal, not a bad path or bad auth — the failing
+endpoints report `is_active: false` with `requests_number: 0` / `remaining: 0`,
+where the working ones report `is_active: true` with the real limits above. So
+the ask to ETG is a provisioning question ("is `/api/content/v1/*` in scope for
+AFF-392026?"), not a bug report. Each response also carries a `request_id` ETG
+support can trace, and the `key_id` in the same `debug` block.
+
+Dump freshness confirmed in the same run: full dump `last_update`
+2026-08-10T21:08:04Z (weekly, as documented), incremental `last_update`
+2026-08-17T00:56:52Z — **the daily incremental is genuinely running for our
+key**, not just reachable. Metadata only was read; neither file was downloaded.
 
 Never mix keys, IDs or static content across environments.
 
@@ -1420,10 +1450,17 @@ Prebook call (`h-…` → `p-…`) is new scope from this section, still pending
 BLOCKED handoff question above before it's worth building.
 
 ### Static content
-- Retrieve hotel dump weekly; Retrieve hotel incremental dump daily.
-- Content API is for scheduled offline sync into Supabase/Directus **only** —
+- Retrieve hotel dump weekly; Retrieve hotel incremental dump daily. **Both are
+  live on our key** (200, 5 req/60s each — see the credentials table above), so
+  the offline-sync requirement below is satisfiable today.
+- Static content is for scheduled offline sync into Supabase/Directus **only** —
   never called during a live user search. Explicitly checked at certification.
+  (ETG's Best Practices phrase this in terms of their Content API; the rule is
+  about *when* static content is fetched, not *which* endpoint supplies it.)
 - Use `updated_since` on Retrieve hotel IDs by filter for incremental updates.
+  **Not available to us** — that endpoint is `/api/content/v1/*`, which isn't
+  provisioned on our key. The `hotel/info/incremental_dump/` daily feed is the
+  route we have.
 - Region IDs from the regions' dump or hotel dump.
 
 ### Display rules (all certification-checked)
@@ -1586,10 +1623,18 @@ above — do a cleanup pass on these before certification, not now.
   legitimate schema candidate. The actual sync script that populates these 4
   fields and writes `ratehawk_static_synced_at` is separate follow-up work,
   not done yet — this section only added the columns.
-- **Content API v1 returns 403 for our key** (see Hosts and credentials
-  above). ETG Best Practices assumes Content API for static sync, so this may
-  block the item above until resolved. Ulrik is raising it with Valeriy
-  Korobov.
+
+  **Not blocked by the Content API 403** (corrected 2026-08-17 — the earlier
+  entry here claimed it might be). `/hotel/info/dump/` and
+  `/hotel/info/incremental_dump/` both return 200 on our key, so the weekly +
+  daily pipeline in §26/§28 already satisfies the certification requirement on
+  its own. Nothing about this item is waiting on ETG.
+- **Content API v1 (`/api/content/v1/*`) is not provisioned on our key** —
+  403 `endpoint_not_found`, `is_active: false`, zero rate limit; verified live
+  2026-08-17 (see the endpoint table under Hosts and credentials). This is a
+  **cost optimisation, not a blocker**: it would let the offline sync filter by
+  country/region instead of streaming the ~2.8 GB global dump, cutting
+  processing cost and time. Ulrik is raising provisioning with Valeriy Korobov.
 
 ### Contacts
 Valeriy Korobov (integration) — apisupport@ratehawk.com
