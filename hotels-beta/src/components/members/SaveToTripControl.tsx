@@ -6,6 +6,7 @@ import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import {
   MAX_TRIPS_PER_MEMBER,
   TRIP_LIMIT_MESSAGE,
+  getCreateTripBlockedReason,
   isTripLimitError,
 } from "@/lib/members/tripLimits";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
@@ -75,6 +76,12 @@ export default function SaveToTripControl({
   });
 
   const limitReached = trips.length >= MAX_TRIPS_PER_MEMBER;
+
+  const createBlockedReason = getCreateTripBlockedReason({
+    name: newTripName,
+    existingNames: trips.map((trip) => trip.name),
+    tripCount: trips.length,
+  });
 
   // Trips are loaded when the panel first opens rather than on mount: this
   // control renders once per card on the landing page, and fetching a trip list
@@ -241,12 +248,24 @@ export default function SaveToTripControl({
                   disabled={limitReached || busy}
                 />
 
+                {/* Deliberately not `disabled`: a disabled button fires no
+                    click, so it can never say why. Reads as inactive, and
+                    explains itself when pressed. */}
                 <button
                   type="button"
-                  onClick={() => void handleCreateAndSave()}
-                  disabled={busy || !newTripName.trim() || limitReached}
-                  className="oltra-dropdown-item"
-                  title={limitReached ? TRIP_LIMIT_MESSAGE : undefined}
+                  onClick={() => {
+                    if (createBlockedReason) {
+                      setError(createBlockedReason);
+                      return;
+                    }
+                    void handleCreateAndSave();
+                  }}
+                  disabled={busy}
+                  aria-disabled={Boolean(createBlockedReason)}
+                  className={`oltra-dropdown-item${
+                    createBlockedReason ? " oltra-dropdown-item--inactive" : ""
+                  }`}
+                  title={createBlockedReason ?? undefined}
                 >
                   {busy ? "Saving..." : "Create new trip"}
                 </button>

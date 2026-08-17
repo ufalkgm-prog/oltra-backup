@@ -1114,13 +1114,15 @@ export default function FlightsView({ searchParams }: Props) {
                       : "None of your preferred airlines fly this route"
                   }
                 >
+                  {/* Text left, matching the "Airlines" label it sits above;
+                      tick box hard right. */}
+                  <span>Preferred airlines only</span>
                   <input
                     type="checkbox"
                     checked={preferredOnly}
                     disabled={!preferredAirlinesInResults.length}
                     onChange={e => togglePreferredOnly(e.target.checked)}
                   />
-                  Preferred airlines only
                 </label>
               )}
 
@@ -1301,7 +1303,7 @@ export default function FlightsView({ searchParams }: Props) {
                                   Selected row above, so the list stays a
                                   plain list of choices. */}
                               <FlightCardContent flight={flight} onInfo={setDetailFlight} />
-                              {it ? <InlinePrice priceEur={it.priceEur} currency={it.currency} showFrom={false} /> : null}
+                              {it ? <InlinePrice priceEur={it.priceEur} currency={it.currency} /> : null}
                             </div>
                           );
                         });
@@ -1311,7 +1313,7 @@ export default function FlightsView({ searchParams }: Props) {
                 </>
               ) : (
                 <>
-                  <div className={styles.splitPanes}>
+                  <div className={`${styles.splitPanes} ${styles.splitPanesHeader}`}>
                     <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
                       Departure <span className={styles.columnLabelNote}>(total flight price from)</span>
                     </div>
@@ -1398,7 +1400,7 @@ export default function FlightsView({ searchParams }: Props) {
                                 className={`${styles.selectCard} ${styles.selectCardRow} ${isSelected ? styles.selectCardActive : ""}`}
                               >
                                 <FlightCardContent flight={flight} onInfo={setDetailFlight} />
-                                {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} showFrom /> : null}
+                                {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} /> : null}
                               </div>
                             );
                           });
@@ -1669,7 +1671,6 @@ function MultipleResults({
   const N = searchLegs.length;
   const compact = N >= 4;
   const allSelected = activeLegIndex >= N;
-  const isLastStep = activeLegIndex === N - 1;
   const gridCols = `repeat(${N}, minmax(0, 1fr)) 140px`;
 
   // Each leg column (up to the fixed max of 5, per addMultiCityLeg) scrolls
@@ -1758,7 +1759,7 @@ function MultipleResults({
                         className={`${styles.selectCard} ${price ? styles.selectCardRow : ""} ${compact ? styles.selectCardCompact : ""} ${colSelected === legOpt.id ? styles.selectCardActive : ""}`}
                       >
                         <FlightCardContent flight={legOpt} onInfo={onInfo} compact={compact} />
-                        {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} showFrom={!isLastStep} /> : null}
+                        {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} /> : null}
                       </div>
                     );
                   })
@@ -1846,19 +1847,17 @@ function MultiPinnedRow({
   );
 }
 
-// The amount is always a whole-itinerary price, never a per-leg one - Duffel
-// prices a return/multi-city offer as a single ticket (CLAUDE.md §7B), so the
-// label spells that out. `showFrom` distinguishes the two cases: on a card
-// whose remaining legs aren't picked yet the figure is the cheapest total
-// across every compatible combination ("from"); once the itinerary is fully
-// determined it's the exact total.
-function InlinePrice({ priceEur, currency, showFrom }: { priceEur: number; currency: string; showFrom: boolean }) {
+// Amount only. The label this used to carry ("Total flight price from:") now
+// lives once in the Departure column heading instead of being repeated on
+// every card - which is also what frees the vertical room for the info button
+// to sit above the price rather than beside it.
+//
+// The figure is always a whole-itinerary price, never a per-leg one: Duffel
+// prices a return/multi-city offer as a single ticket (CLAUDE.md §7B).
+function InlinePrice({ priceEur, currency }: { priceEur: number; currency: string }) {
   const { currency: displayCurrency, format } = useCurrency();
   return (
     <span className={styles.inlinePrice}>
-      <span className={styles.inlinePriceLabel}>
-        {showFrom ? "Total flight price from:" : "Total flight price:"}
-      </span>
       <span className={styles.inlinePriceAmount}>{displayCurrency} {format(priceEur, currency)}</span>
     </span>
   );

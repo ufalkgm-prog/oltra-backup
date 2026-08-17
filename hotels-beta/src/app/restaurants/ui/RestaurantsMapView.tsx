@@ -25,7 +25,12 @@ import {
   fetchFavoriteRestaurantDirectusIdsBrowser,
   fetchTripChoicesBrowser,
 } from "@/lib/members/db";
-import { MAX_TRIPS_PER_MEMBER, TRIP_LIMIT_MESSAGE, isTripLimitError } from "@/lib/members/tripLimits";
+import {
+  MAX_TRIPS_PER_MEMBER,
+  TRIP_LIMIT_MESSAGE,
+  getCreateTripBlockedReason,
+  isTripLimitError,
+} from "@/lib/members/tripLimits";
 
 /* Green star on a restaurant the member has already favourited - shown on both
  * the list row and the selected-restaurant card. */
@@ -125,6 +130,14 @@ export default function RestaurantsMapView({
   const [newTripName, setNewTripName] = useState("");
   const [creatingTrip, setCreatingTrip] = useState(false);
   const tripLimitReached = tripChoices.length >= MAX_TRIPS_PER_MEMBER;
+
+  const [tripPickerNotice, setTripPickerNotice] = useState("");
+
+  const createTripBlockedReason = getCreateTripBlockedReason({
+    name: newTripName,
+    existingNames: tripChoices.map((trip) => trip.name),
+    tripCount: tripChoices.length,
+  });
 
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
   const [favoriteRestaurantIds, setFavoriteRestaurantIds] = useState<Set<string>>(
@@ -874,7 +887,6 @@ export default function RestaurantsMapView({
               value={selectedType}
               placeholder="All"
               align="left"
-              closeOnHoverOutside={false}
               options={RESTAURANT_TYPES.filter(
                 (type) => type === "All" || availableTypes.has(type)
               ).map((type) => ({ value: type, label: type }))}
@@ -1059,15 +1071,32 @@ export default function RestaurantsMapView({
                             disabled={tripLimitReached}
                           />
 
+                          {/* Stays clickable when blocked so it can say why. */}
                           <button
                             type="button"
-                            onClick={handleCreateTripAndAddRestaurant}
-                            disabled={creatingTrip || tripLimitReached}
-                            className="oltra-dropdown-item"
-                            title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
+                            onClick={() => {
+                              if (createTripBlockedReason) {
+                                setTripPickerNotice(createTripBlockedReason);
+                                return;
+                              }
+                              setTripPickerNotice("");
+                              handleCreateTripAndAddRestaurant();
+                            }}
+                            disabled={creatingTrip}
+                            aria-disabled={Boolean(createTripBlockedReason)}
+                            className={`oltra-dropdown-item${
+                              createTripBlockedReason ? " oltra-dropdown-item--inactive" : ""
+                            }`}
+                            title={createTripBlockedReason ?? undefined}
                           >
                             {creatingTrip ? "Creating..." : "Create new trip"}
                           </button>
+
+                          {tripPickerNotice ? (
+                            <div className="text-[12px] leading-snug text-[color:var(--oltra-error-text)]">
+                              {tripPickerNotice}
+                            </div>
+                          ) : null}
 
                           {tripLimitReached ? (
                             <div className="text-[12px] leading-snug text-[color:var(--oltra-text-muted)]">

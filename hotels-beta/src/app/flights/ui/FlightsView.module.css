@@ -414,25 +414,35 @@
   padding-right: 10px;
 }
 
-/* The two header rows already carry a 13px pane inset, and `padding: 0 13px`
-   is a shorthand - so plain .withScrollGutter either lost to it (.paneHeader,
-   declared later, which silently dropped the gutter entirely) or beat it
-   (.columnHeadersOneWay, declared earlier, which dropped the 13px inset and
-   shoved the Total price header 13px out of line with the price cards below).
-   Compound selectors so neither can win by declaration order: 13px inset +
-   10px scrollbar. */
-.paneHeader.withScrollGutter,
-.columnHeadersOneWay.withScrollGutter {
+/* Inside the header row the inset comes from .splitPanesHeader, so the gutter
+   is exactly the scrollbar width - the same 10px the pinned row's own wrapper
+   gets. Compound selectors so this cannot lose to the padding shorthands on
+   .paneHeader / .columnHeadersOneWay by declaration order. */
+.splitPanesHeader .paneHeader.withScrollGutter,
+.splitPanesHeader .columnHeadersOneWay.withScrollGutter {
+  padding-right: 10px;
+}
+
+/* Standalone (one-way) Departure header: no .splitPanesHeader above it, so it
+   keeps its own 13px inset and needs the scrollbar added on top. */
+.paneHeader.withScrollGutter {
   padding-right: 23px;
 }
 
-/* Sits directly above the Airlines dropdown it drives. */
+/* Sits directly above the Airlines dropdown it drives, so its text shares that
+   label's left edge and typography; the tick box is pushed to the right edge
+   of the same column. */
 .preferredOnlyToggle {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
+  width: 100%;
+  margin-bottom: 2px;
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--oltra-text-secondary);
   cursor: pointer;
 }
@@ -442,11 +452,10 @@
   cursor: not-allowed;
 }
 
-/* A parenthetical on a column heading - reads as support text, not a second
-   label. */
+/* A parenthetical on a column heading. Capitalised with the heading - it is
+   the only place this label now appears, since the cards no longer repeat it. */
 .columnLabelNote {
-  text-transform: none;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--oltra-text-muted);
 }
 
@@ -618,9 +627,10 @@
   min-width: 0;
 }
 
-/* 24px = the card's own 14px right padding + the 10px flex gap, so the pills
-   sit flush with the right edge of the flight-info block. */
-.selectCardRow > .infoButton,
+/* The deselect pill still sits left of the price lane (24px = the card's own
+   14px right padding + the 10px flex gap, so it lines up with the right edge
+   of the flight-info block). The info button no longer does: with the price
+   label gone there is room for it directly above the amount. */
 .selectCardRow > .deselectButton {
   right: calc(var(--flight-price-lane) + 24px);
 }
@@ -629,8 +639,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: flex-end;
   flex-shrink: 0;
   width: var(--flight-price-lane, auto);
+  /* Clears the info pill, which now sits at the top of this same lane. */
+  padding-top: 18px;
   text-align: right;
 }
 
@@ -662,6 +675,24 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 140px;
   gap: var(--oltra-gap-md);
   align-items: start;
+}
+
+/* The header row must be inset by the same 13px .pinnedRow uses, because the
+   two grids have to resolve identical track boundaries. Padding on an
+   individual header label only moves text *inside* a track - it cannot move
+   the track - which is why Departure (left-aligned, so its 13px happened to
+   land on the card) looked right while Return sat 13px off and Total price
+   was a centred 140px track computed from the wrong outer width. Measured
+   before this: header tracks 282.8px, pinned tracks 269px. */
+.splitPanesHeader {
+  padding: 0 13px;
+}
+
+/* The row now supplies the inset; a second one here would double it. */
+.splitPanesHeader .paneHeader,
+.splitPanesHeader .columnHeadersOneWay {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .paneHeader {
@@ -1159,6 +1190,7 @@
 }
 
 .priceCardButtonRow > div {
+  display: flex;
   min-width: 0;
 }
 

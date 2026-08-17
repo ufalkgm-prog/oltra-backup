@@ -602,27 +602,12 @@ export default function SavedTripsView() {
 
           <button
             type="button"
-            className="members-text-danger-action"
+            className="members-text-danger-action members-trip-delete"
             onClick={() => setTripPendingDelete(selectedTrip)}
           >
             Delete trip
           </button>
         </div>
-
-        {/* Directly under the trip, above everything they refer to. Soft: they
-            never block saving or booking. */}
-        {tripWarnings.length ? (
-          <div className="members-trip-warnings">
-            {tripWarnings.map((warning) => (
-              <p className="members-trip-warning" key={warning.id}>
-                <span className="members-trip-warning__label">
-                  Important note:
-                </span>{" "}
-                {warning.message}
-              </p>
-            ))}
-          </div>
-        ) : null}
 
         <div className="members-form-field members-trip-notes-field">
           <label className="oltra-label">TRIP NOTES</label>
@@ -632,6 +617,23 @@ export default function SavedTripsView() {
             onChange={(e) => handleNotesChange(e.target.value)}
             placeholder="Add notes for this trip..."
           />
+        </div>
+
+        {/* Always present, directly under the notes and above the columns it
+            refers to. Soft: nothing here blocks saving or booking. */}
+        <div className="members-editor-notes">
+          <div className="oltra-label">EDITOR NOTES</div>
+          {tripWarnings.length ? (
+            tripWarnings.map((warning) => (
+              <p className="members-editor-note is-warning" key={warning.id}>
+                {warning.message}
+              </p>
+            ))
+          ) : (
+            <p className="members-editor-note">
+              All good but prices may have changed since your last save
+            </p>
+          )}
         </div>
 
         <div className="members-trip-columns">
@@ -766,7 +768,11 @@ function TripSection({
         {items.length ? (
           items.map((item) => (
             <article key={item.id} className="members-item members-trip-item">
-              <div className="members-item__layout">
+              <div
+                className={`members-item__layout${
+                  showThumb ? "" : " members-item__layout--no-thumb"
+                }`}
+              >
                 {showThumb ? (
                   item.hasPhoto === false ? (
                     <div className="members-item__thumb members-item__thumb--placeholder">
@@ -834,11 +840,10 @@ function TripSection({
                     </div>
                   ) : null}
 
-                  {item.hasOverlapWarning ? (
-                    <div className="members-item__warning">
-                      Warning: overlaps another saved date range.
-                    </div>
-                  ) : null}
+                  {/* No warning text on the card: every warning belongs in the
+                      Editor notes box under Trip notes, so there is one place
+                      to read them. hasOverlapWarning still gates the confirm
+                      step on Book. */}
 
                   <div className="members-item__actions">
                     <button

@@ -460,7 +460,7 @@ export default function LandingSummary({
           </span>
           <button
             type="button"
-            className={`oltra-button-primary ${styles.flightBookButton}`}
+            className={`oltra-button-primary oltra-button--xs ${styles.flightBookButton}`}
             onClick={() => handleBookFlight(flight.offerId)}
           >
             BOOK
@@ -471,7 +471,7 @@ export default function LandingSummary({
             label="SAVE"
             compact
             align="right"
-            className={`oltra-button-secondary ${styles.flightBookButton}`}
+            className={`oltra-button-secondary oltra-button--xs ${styles.flightBookButton}`}
           />
         </div>
         <div className={styles.flightLegsGrid}>

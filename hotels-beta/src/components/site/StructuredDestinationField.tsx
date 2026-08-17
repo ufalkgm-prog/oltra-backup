@@ -184,10 +184,15 @@ const ALL_TYPES: SuggestionType[] = [
   "setting",
 ];
 
+/* Cities first, then countries, then hotels, then the rest. Typing two letters
+ * usually means "where", not "which property" - a city match is the more
+ * likely intent, and hotel names are the longest list so they used to bury
+ * everything else. Drives both the group order in the panel and, through it,
+ * the Landing and Hotels destination fields alike. */
 const GROUP_ORDER: SuggestionType[] = [
-  "hotel",
   "city",
   "country",
+  "hotel",
   "region",
   "purpose",
   "setting",

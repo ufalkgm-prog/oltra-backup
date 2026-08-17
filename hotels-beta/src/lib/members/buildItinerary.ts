@@ -226,7 +226,7 @@ export function buildTripItinerary(trip: SavedTrip): TripItinerary {
       ? dayHeading(days[0].date)
       : `${dayHeading(days[0].date)} – ${dayHeading(days[days.length - 1].date)}`;
 
-  return {
+  return dropUnknownFacts({
     tripName: trip.name || "Trip",
     destination: trip.destination,
     period: trip.period,
@@ -241,6 +241,32 @@ export function buildTripItinerary(trip: SavedTrip): TripItinerary {
     ],
     days,
     unscheduled,
+  });
+}
+
+/* Strips every fact whose value is still "To be confirmed".
+ *
+ * Almost nothing beyond the booking basics exists until a trip is actually
+ * booked - flight number, terminals, baggage, seat, board basis, phone,
+ * booking reference - and printing a row of "To be confirmed" for each one
+ * buried the handful of real values in filler. A field that has no answer
+ * yet is simply not shown. Applied once here so the printed document and the
+ * plain-text mail body stay identical. */
+function dropUnknownFacts(itinerary: TripItinerary): TripItinerary {
+  const keep = (facts: ItineraryFact[]) =>
+    facts.filter((fact) => fact.value && fact.value !== TBC);
+
+  const cleanEntries = (entries: ItineraryEntry[]) =>
+    entries.map((entry) => ({ ...entry, facts: keep(entry.facts) }));
+
+  return {
+    ...itinerary,
+    summaryFacts: keep(itinerary.summaryFacts),
+    days: itinerary.days.map((day) => ({
+      ...day,
+      entries: cleanEntries(day.entries),
+    })),
+    unscheduled: cleanEntries(itinerary.unscheduled),
   };
 }
 

@@ -40,6 +40,11 @@ export default function FavoriteHotelsView() {
   const [stripsByHotelId, setStripsByHotelId] = useState<
     Record<string, string[]>
   >({});
+  // Highlights are not stored on the favourite row - read live so the text
+  // stays current if an editor revises it. See /api/hotels/by-ids.
+  const [detailsByHotelId, setDetailsByHotelId] = useState<
+    Record<string, { highlights: string | null; affiliation: string | null }>
+  >({});
 
   useEffect(() => {
     let active = true;
@@ -77,6 +82,35 @@ export default function FavoriteHotelsView() {
     if (!ids.length) return;
 
     let active = true;
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/hotels/by-ids", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          hotels?: Array<{
+            id: string | number;
+            highlights: string | null;
+            affiliation: string | null;
+          }>;
+        };
+        if (!active || !data?.ok) return;
+        setDetailsByHotelId(
+          Object.fromEntries(
+            (data.hotels ?? []).map((h) => [
+              String(h.id),
+              { highlights: h.highlights, affiliation: h.affiliation },
+            ])
+          )
+        );
+      } catch {
+        // Cards still render from the stored name/location/meta.
+      }
+    })();
 
     void Promise.all(
       ids.map(async (id) => {
@@ -148,6 +182,9 @@ export default function FavoriteHotelsView() {
               : fallbackImage
                 ? [fallbackImage]
                 : [];
+            const detail = item.hotelDirectusId
+              ? detailsByHotelId[item.hotelDirectusId]
+              : undefined;
 
             return (
               <article key={item.id} className="members-item">
@@ -156,7 +193,16 @@ export default function FavoriteHotelsView() {
                   <div className="members-item__content">
                     <div className="members-item__title">{item.name}</div>
                     <div className="members-item__location">{item.location}</div>
-                    <div className="members-item__meta">{item.meta}</div>
+                    {detail?.affiliation || item.meta ? (
+                      <div className="members-item__meta">
+                        {detail?.affiliation || item.meta}
+                      </div>
+                    ) : null}
+                    {detail?.highlights ? (
+                      <p className="members-favorite-highlights">
+                        {detail.highlights}
+                      </p>
+                    ) : null}
 
                     <div className="members-item__actions">
                       <button

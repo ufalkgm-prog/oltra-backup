@@ -32,7 +32,12 @@ import {
   fetchTripChoicesBrowser,
   getMemberActionAccessBrowser,
 } from "@/lib/members/db";
-import { MAX_TRIPS_PER_MEMBER, TRIP_LIMIT_MESSAGE, isTripLimitError } from "@/lib/members/tripLimits";
+import {
+  MAX_TRIPS_PER_MEMBER,
+  TRIP_LIMIT_MESSAGE,
+  getCreateTripBlockedReason,
+  isTripLimitError,
+} from "@/lib/members/tripLimits";
 import type { HotelRecord } from "@/lib/directus";
 import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
@@ -731,6 +736,14 @@ export default function HotelsView(props: {
   const [favoriteHotelIds, setFavoriteHotelIds] = useState<Set<string>>(new Set());
   const [newTripName, setNewTripName] = useState("");
   const tripLimitReached = tripChoices.length >= MAX_TRIPS_PER_MEMBER;
+
+  const [tripPickerNotice, setTripPickerNotice] = useState("");
+
+  const createTripBlockedReason = getCreateTripBlockedReason({
+    name: newTripName,
+    existingNames: tripChoices.map((trip) => trip.name),
+    tripCount: tripChoices.length,
+  });
   const [creatingTrip, setCreatingTrip] = useState(false);
 
   const [fromValue, setFromValue] = useState(normalizeParam(searchParams.from));
@@ -2678,11 +2691,11 @@ async function handleCreateTripAndAddHotel() {
             <div className="flex flex-col gap-4">
               {/* Same 3-column track and gap as the image strip below, so the
                   search box lines up with image 1 and the detail box with
-                  image 3; the middle column is deliberately left empty. The
-                  min-height matches the images' h-[300px] - it is on the
-                  container rather than the children so both boxes stay equal
-                  to each other even if the search form ever grows past it. */}
-              <div className="grid gap-3 sm:grid-cols-3 sm:min-h-[300px]">
+                  image 3; the middle column is deliberately left empty.
+                  No min-height: the row is only as tall as the detail box's
+                  three lines need, and the search box stretches to match it
+                  rather than both being padded out to the images' 300px. */}
+              <div className="grid items-stretch gap-3 sm:grid-cols-3">
               <div className="flex flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-4">
                 <form
                   action="/hotels"
@@ -3365,15 +3378,33 @@ async function handleCreateTripAndAddHotel() {
                                   disabled={tripLimitReached}
                                 />
 
+                                {/* Stays clickable when blocked so it can say
+                                    why - see getCreateTripBlockedReason. */}
                                 <button
                                   type="button"
-                                  onClick={handleCreateTripAndAddHotel}
-                                  disabled={creatingTrip || !newTripName.trim() || tripLimitReached}
-                                  className="oltra-dropdown-item"
-                                  title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
+                                  onClick={() => {
+                                    if (createTripBlockedReason) {
+                                      setTripPickerNotice(createTripBlockedReason);
+                                      return;
+                                    }
+                                    setTripPickerNotice("");
+                                    handleCreateTripAndAddHotel();
+                                  }}
+                                  disabled={creatingTrip}
+                                  aria-disabled={Boolean(createTripBlockedReason)}
+                                  className={`oltra-dropdown-item${
+                                    createTripBlockedReason ? " oltra-dropdown-item--inactive" : ""
+                                  }`}
+                                  title={createTripBlockedReason ?? undefined}
                                 >
                                   {creatingTrip ? "Creating..." : "Create new trip"}
                                 </button>
+
+                                {tripPickerNotice ? (
+                                  <div className="text-[12px] leading-snug text-[color:var(--oltra-error-text)]">
+                                    {tripPickerNotice}
+                                  </div>
+                                ) : null}
 
                                 {tripLimitReached ? (
                                   <div className="text-[12px] leading-snug text-[color:var(--oltra-text-muted)]">

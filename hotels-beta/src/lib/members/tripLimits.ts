@@ -19,3 +19,30 @@ export class TripLimitError extends Error {
 export function isTripLimitError(error: unknown): boolean {
   return error instanceof TripLimitError || (error as Error)?.name === "TripLimitError";
 }
+
+export const TRIP_NAME_REQUIRED_MESSAGE = "Input a name in the name field.";
+export const TRIP_NAME_DUPLICATE_MESSAGE = "That trip name already exists.";
+
+/* Why a "create new trip" click cannot go through, or null when it can.
+ *
+ * Shared because the trip picker exists in three separate implementations -
+ * SaveToTripControl (landing + flights), and the bespoke pickers inside
+ * HotelsView and RestaurantsMapView - and the rule has to read the same in all
+ * of them. The control stays clickable rather than being `disabled`: a
+ * disabled button fires no click, so it can never explain itself, and an
+ * empty-name click used to just close the panel with no feedback at all. */
+export function getCreateTripBlockedReason(input: {
+  name: string;
+  existingNames: string[];
+  tripCount: number;
+}): string | null {
+  if (input.tripCount >= MAX_TRIPS_PER_MEMBER) return TRIP_LIMIT_MESSAGE;
+
+  const trimmed = input.name.trim();
+  if (!trimmed) return TRIP_NAME_REQUIRED_MESSAGE;
+
+  const taken = input.existingNames.some(
+    (existing) => existing.trim().toLowerCase() === trimmed.toLowerCase()
+  );
+  return taken ? TRIP_NAME_DUPLICATE_MESSAGE : null;
+}

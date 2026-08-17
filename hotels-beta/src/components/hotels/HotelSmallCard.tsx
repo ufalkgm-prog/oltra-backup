@@ -96,7 +96,7 @@ export default function HotelSmallCard({
       );
     }
     return (
-      <div className="w-[100px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+      <div className="w-[84px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
         Select dates
       </div>
     );
@@ -166,7 +166,7 @@ export default function HotelSmallCard({
         ) : null}
       </div>
 
-      <div className="flex w-[100px] shrink-0 flex-col justify-center">
+      <div className="flex w-[84px] shrink-0 flex-col justify-center">
         {rightBlock}
         {actions}
       </div>

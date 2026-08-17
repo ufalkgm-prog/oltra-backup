@@ -474,17 +474,15 @@
   margin-left: auto;
 }
 
-/* Fixed width so BOOK and SAVE match exactly. Content sizing left them 3px
-   apart ("BOOK" is wider than "SAVE" at this letter-spacing), and the Save
-   control sits inside its own positioning wrapper, so there is no shared
-   flex track to even them out. */
+/* Fixed width so BOOK and SAVE match exactly - content sizing left them 3px
+   apart, and the Save control sits inside its own positioning wrapper so there
+   is no shared flex track to even them out. Height/type come from
+   .oltra-button--xs, which the hotel pane's pair also carries, so all four
+   buttons across both panes are one size. */
 .flightBookButton {
-  width: 72px;
+  width: 84px;
   min-width: 0;
-  height: 26px;
-  padding: 0 12px;
-  font-size: 0.66rem;
-  letter-spacing: 0.18em;
+  padding: 0 6px;
 }
 
 .flightLegsGrid {
