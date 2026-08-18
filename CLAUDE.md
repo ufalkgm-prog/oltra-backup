@@ -2,9 +2,29 @@
 
 ## 0. REPOSITORY STRUCTURE
 
-All application code lives in the `/workspaces/oltra-beta/hotels-beta/` subdirectory. The repo root (`/workspaces/oltra-beta/`) contains only top-level config (CLAUDE.md, GitHub workflows, etc.).
+All application code lives in the `hotels-beta/` subdirectory. The repo root contains only top-level config (CLAUDE.md, GitHub workflows, etc.).
 
 **Git paths must be relative to the repo root**, so always use `hotels-beta/src/...` when staging files — e.g. `git add hotels-beta/src/app/hotels/ui/HotelsView.tsx`.
+
+### Where the checkouts live
+
+| | |
+|---|---|
+| This repo | `C:\Users\ufalk\dev\oltra-beta` |
+| App code | `C:\Users\ufalk\dev\oltra-beta\hotels-beta` |
+| Sibling data repo (§41) | `C:\Users\ufalk\dev\oltra-agents` |
+
+Development moved from a GitHub Codespace to Windows. **Any `/workspaces/oltra-beta/...` path elsewhere in this file is a historical record of that era, not a current location** — those sections are left as they were written, since rewriting them would falsify the account of what happened at the time.
+
+### Two sibling checkouts — use absolute paths
+
+`oltra-beta` and `oltra-agents` each have their own `CLAUDE.md`, and §41's is deliberately stricter. Neither file's rules should be applied to the other repo, so reading the wrong one is a real failure, not a cosmetic one.
+
+As of 2026-08-18 `~/.bashrc` on this machine contains `cd /c/Users/ufalk/dev/oltra-agents`, which Git Bash runs for **non-interactive** shells too — so a shell opened by a tool starts in the wrong repo even when the tool was started in this one, and a bare `CLAUDE.md` then resolves to the wrong file. The fix is to guard it (`case $- in *i*) cd ... ;; esac`); until that is applied:
+
+* check `pwd` before trusting a relative path, and prefer absolute paths;
+* prefer edits that **fail loudly** on a wrong-file match (anchor-text assertions) over ones that silently no-op (`sed -i`) — this is what caught the mistake on 2026-08-18;
+* the PowerShell tool is unaffected and starts in the correct directory.
 
 ---
 
@@ -1459,6 +1479,22 @@ Never mix keys, IDs or static content across environments.
 **Sandbox and test bookings are treated as real orders.** Do not execute any
 booking call without explicit confirmation from Ulrik in-session.
 
+### ETG source IPs
+
+Supplied by ETG on 17 Aug 2026 (Sofia Kamalova, Integration Launch Specialist)
+as the addresses to whitelist on our side:
+
+* `95.213.146.120/29`
+* `5.8.78.64/29`
+* Cloudflare's published ranges — https://www.cloudflare.com/en-gb/ips/
+
+**Only relevant if ETG calls us, i.e. webhooks.** Whether we receive any is
+still open, pending the white-label handoff answer in BLOCKED above — so there
+is no action here yet. If a webhook endpoint is ever IP-restricted, the two
+`/29` blocks are the meaningful ones; the Cloudflare list covers anything
+hosted behind Cloudflare and is far too broad to serve as a real control on
+its own.
+
 ### Flow (our scope)
 Search by hotel IDs / region / geo → Retrieve hotelpage → Prebook from hotelpage
 step → [handoff to ZenHotels checkout — mechanism TBC]
@@ -1658,6 +1694,19 @@ above — do a cleanup pass on these before certification, not now.
   **cost optimisation, not a blocker**: it would let the offline sync filter by
   country/region instead of streaming the ~2.8 GB global dump, cutting
   processing cost and time. Ulrik is raising provisioning with Valeriy Korobov.
+- **Decide where the static-content sync runs — Railway, not Vercel.** The full
+  dump is ~2.8 GB and processing it does not fit inside a serverless function's
+  execution limit, so it belongs on Railway alongside Directus. Railway also
+  gives a stable outbound IP, which matters if ETG requires IP whitelisting;
+  Vercel serverless egress rotates by default. Settle this before building the
+  sync job, not after.
+- **Whether IP whitelisting is mandatory for affiliate partners is an open
+  question with ETG** (asked 17 Aug 2026). ETG's Pre-Certification Checklist
+  lists "we use dynamic IP addresses" as a valid answer, so it may not apply to
+  us at all — which would remove one of the two reasons above for preferring
+  Railway (the execution-limit reason stands regardless). Supersedes the flat
+  "IP whitelisting is mandatory on ETG's side" line under Certification
+  deliverables, which predates the checklist.
 
 ### Contacts
 Valeriy Korobov (integration) — apisupport@ratehawk.com
