@@ -1428,6 +1428,12 @@ follows this — `RATEHAWK_API_URL` is read from env with a fallback to
 `https://api.ratehawk.com`, matching ETG's stated production host below. No
 change needed.
 
+**As of 2026-08-19 the app no longer calls `api.ratehawk.com` directly from
+deployed environments** — `RATEHAWK_API_URL` points at the Railway forwarding
+proxy, which holds the ETG credentials and gives ETG a fixed set of source IPs
+to whitelist. **See §47.** Local dev still calls ETG directly. The single-config-
+value rule is what made that a one-variable change.
+
 Host configuration was established during live API testing — treat the working
 values already in the codebase and existing §26 as authoritative. Do not
 change them based on documentation alone. For reference, ETG's stated production
@@ -1700,13 +1706,21 @@ above — do a cleanup pass on these before certification, not now.
   gives a stable outbound IP, which matters if ETG requires IP whitelisting;
   Vercel serverless egress rotates by default. Settle this before building the
   sync job, not after.
-- **Whether IP whitelisting is mandatory for affiliate partners is an open
-  question with ETG** (asked 17 Aug 2026). ETG's Pre-Certification Checklist
-  lists "we use dynamic IP addresses" as a valid answer, so it may not apply to
-  us at all — which would remove one of the two reasons above for preferring
-  Railway (the execution-limit reason stands regardless). Supersedes the flat
-  "IP whitelisting is mandatory on ETG's side" line under Certification
-  deliverables, which predates the checklist.
+- ~~**Whether IP whitelisting is mandatory for affiliate partners is an open
+  question with ETG** (asked 17 Aug 2026).~~ **Answered 2026-08-19: it is
+  mandatory.** ETG's Pre-Certification Checklist listing "we use dynamic IP
+  addresses" as a valid answer turned out not to apply to us. Resolved by the
+  Railway forwarding proxy — **see §47**, which now also settles the
+  "where does the sync run" bullet above in Railway's favour on both counts.
+- **No chunking at ETG's 300-hotels-per-request limit** in
+  `src/app/api/ratehawk/availability/batch/route.ts` — it forwards whatever
+  `hids` array it is given. Does not bite today: the Hotels results list sends
+  ≤50 hids (results mode caps at 50) and the landing summary ≤40. Would bite if
+  either cap is raised or a region-wide search is added.
+- **No explicit ETG `timeout` parameter** on `/search/serp/*/` and `/search/hp/`
+  requests; §32 recommends 30 s. Note this is the *ETG-side* search timeout, and
+  is distinct from the HTTP client timeouts added with §47 (35 s Vercel→proxy,
+  30 s proxy→ETG), which are already in place.
 
 ### Contacts
 Valeriy Korobov (integration) — apisupport@ratehawk.com
@@ -3409,6 +3423,148 @@ the button *after* the flash had expired and concluded it was broken. A
 `MutationObserver` recording label + `fontStyle` across the click captured the
 real sequence: `SAVE → Saving... → Saved (italic) → SAVE`. **For anything
 transient, record it; do not sample it.**
+
+---
+
+## 47. ETG FORWARDING PROXY ON RAILWAY (2026-08-19)
+
+### Why
+
+ETG confirmed IP whitelisting is **mandatory** (this closes the open question
+recorded in §32's TODO list). Vercel serverless egress rotates, so ETG calls
+needed a fixed origin. Railway (Pro, EU West) assigns a service three static
+outbound IPs at no extra cost, and Directus already runs there — so Railway was
+already a hard dependency on every hotel page load and this adds no new failure
+domain.
+
+```
+browser → Vercel route → lib/ratehawk/availability.ts → Railway proxy → ETG
+                         (all parsing stays here)       (creds live here)
+```
+
+**Measured before choosing this** (read-only probes, 2026-08-19): ETG
+`/search/serp/hotels/` ~2 990 ms and flat from 10 to 40 hids; `/search/hp/` +
+`/hotel/info/` in parallel ~1 200 ms; a warm Railway round trip ~55–65 ms. The
+added hop is ~2% of a search, and a long-lived Railway process keeps TLS warm to
+ETG (57 ms warm vs 104 ms cold) where Vercel serverless re-handshakes per cold
+instance. The alternative considered and rejected was Vercel's paid static IPs at
+$100/month, which would not have avoided Railway anyway — the §32 static sync
+cannot run on serverless regardless of IPs.
+
+### The service — `etg-proxy/`
+
+Top-level directory in this repo, sibling to `hotels-beta/`. Railway's root
+directory is set to `etg-proxy`; Vercel's is still `hotels-beta`, so the Vercel
+build is unaffected. Zero dependencies (`node:http` + global `fetch`), per §2.
+
+It forwards the request body byte-for-byte and returns the upstream status and
+body unmodified. It is deliberately **not** verbatim in one respect: it strips any
+inbound `Authorization` and injects its own, so Vercel never holds the ETG key.
+
+**Only three paths are proxied** — `/api/b2b/v3/search/serp/hotels/`,
+`/api/b2b/v3/search/hp/`, `/api/b2b/v3/hotel/info/`. Everything else is 404.
+**This allowlist is load-bearing, not tidiness.** An open forwarder holding our
+credentials would let anyone with the shared secret reach any ETG endpoint,
+including the booking endpoints §32 marks BLOCKED — and per §26 our key hits
+ETG's live production host, where test bookings are real orders needing manual
+cancellation. Do not add paths to it casually.
+
+`GET /healthz` is unauthenticated and cannot reach ETG. The service exits at boot
+if any required env var is missing, so a misconfiguration fails the Railway
+healthcheck loudly rather than serving errors under load.
+
+### Auth
+
+Vercel sends `x-oltra-proxy-secret`. The proxy compares it in constant time
+against a SHA-256 digest of `PROXY_SHARED_SECRET` (hashing both sides first, so
+the comparison leaks neither content nor length). Missing or wrong → 401, before
+any ETG call. Transport is public HTTPS — Railway's private networking is
+project-internal, so Vercel must use the public `*.up.railway.app` domain.
+
+| Variable | Railway | Vercel | Local `.env.local` |
+|---|---|---|---|
+| `RATEHAWK_KEY` / `RATEHAWK_KEY_ID` | ✅ | ❌ | ✅ |
+| `PROXY_SHARED_SECRET` | ✅ | — | — |
+| `RATEHAWK_PROXY_SECRET` | — | ✅ | ❌ |
+| `RATEHAWK_API_URL` | — | Railway URL | `https://api.ratehawk.com` |
+
+**Set `RATEHAWK_PROXY_SECRET` on Vercel's Production and Preview only, never
+Development** — `vercel env pull` writes Development values into `.env.local` and
+would silently flip local dev into proxy mode. Same for the `RATEHAWK_API_URL`
+override.
+
+### Two modes, selected by env vars alone
+
+`ratehawkPost()` in `availability.ts` branches on whether
+`RATEHAWK_PROXY_SECRET` is set:
+
+* **proxy mode** — sends the secret header, no `Authorization`.
+* **direct mode** — sends HTTP Basic, exactly as before. This is what local dev
+  uses, so local work is never gated on Railway being up.
+
+`assertRatehawkConfig()` now requires *either* ETG credentials or a proxy secret.
+Nothing else changed: the three routes, `groupRoomOptions`,
+`computeHeadlinePrice`, `matchRoomImages` and every caller are untouched.
+
+**When ETG start enforcing**, calls from Ulrik's machine get rejected too — both
+local dev and `scripts/ratehawk/probe-ratehawk-status.mjs` (§43), which calls
+`/search/serp/hotels/` directly. Either whitelist that IP with ETG or flip to
+proxy mode (two env vars locally; the probe script already reads
+`RATEHAWK_API_URL` but would also need the secret header). Deliberately deferred,
+not overlooked.
+
+### Failure behaviour — fail fast, no retry
+
+No automatic retry, by decision: serp already takes ~3 s so a retry doubles the
+worst case with the user waiting, ETG rate-limits, and the UI already has an
+explicit user-driven retry. **Verified**: with the proxy down the batch route
+returns 500 in ~38 ms and the existing error states render —
+`COULDN'T CHECK — TAP TO RETRY`, `Couldn't check availability`, `Could not load
+room options.` None of them claims the hotel is unavailable, preserving the §42
+distinction.
+
+`ratehawkPost()` previously passed **no timeout at all**. Now 35 s
+Vercel→proxy against 30 s proxy→ETG, so the proxy always fails first and returns
+a real status rather than leaving Vercel on a dangling socket. Distinct from the
+ETG-side `timeout` request parameter, still a §32 TODO.
+
+### Deployment and the static IPs
+
+Service Settings → **Networking** → **Enable Static IPs**. The three IPv4
+addresses appear in that same section immediately, before redeploying; copy them,
+then redeploy to activate. CLI: `railway outbound-network static-ip status
+--service <name>`. Send them to **Sofia Kamalova** (Integration Launch
+Specialist), who handles whitelisting — not Valeriy.
+
+Also: Settings → Deploy → healthcheck `/healthz`, and **App Sleeping must stay
+off** — with no retry, a cold start on the first search after an idle period
+surfaces to the user as a failed availability check.
+
+Three caveats worth not getting wrong:
+
+* **Moving the service to another region changes the IPs.** Fix EU West before
+  notifying ETG.
+* **Static IPs are per service, not per project.** A future static-sync service
+  (§32 TODO) needs its own *Enable Static IPs* toggle, may be assigned different
+  addresses, and those must be sent to ETG too. It will call
+  `/hotel/info/dump/` and `/hotel/info/incremental_dump/` directly rather than
+  through this proxy — those are not on the allowlist.
+* Railway does not guarantee the addresses are *dedicated* — they may be shared
+  with other Railway customers. Fine for a whitelist, but don't describe them to
+  ETG as dedicated.
+
+### Verified 2026-08-19
+
+Against a locally-run proxy with real ETG credentials: healthz 200; no secret and
+wrong secret both 401; `/hotel/prebook/` and `/order/booking/form/` both 404 with
+a valid secret (booking endpoints unreachable by construction); GET on an
+allowlisted path 405; a >1 MB body a clean 413. All three allowlisted endpoints
+returned real ETG data. End-to-end through `next dev` with `RATEHAWK_KEY`
+blanked, proving proxy mode needs no ETG credentials on the app side: batch
+availability returned a real headline price and the detail route returned 7
+matched rooms, with the proxy log confirming all traffic went through it.
+`tsc --noEmit` and `npm run lint` clean. **Not verified**: anything on Railway
+itself — the deploy, the static IPs, and the browser UI are still to be done.
 
 ---
 

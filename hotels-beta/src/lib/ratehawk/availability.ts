@@ -10,17 +10,57 @@ import type {
 
 const RATEHAWK_KEY = process.env.RATEHAWK_KEY?.trim();
 const RATEHAWK_KEY_ID = process.env.RATEHAWK_KEY_ID?.trim();
+const RATEHAWK_PROXY_SECRET = process.env.RATEHAWK_PROXY_SECRET?.trim();
 const RATEHAWK_API_URL = (
   process.env.RATEHAWK_API_URL?.trim() || "https://api.ratehawk.com"
 ).replace(/\/+$/, "");
 
+// Two modes, selected purely by which env vars are present (CLAUDE.md §47):
+//
+//   proxy mode  - RATEHAWK_PROXY_SECRET set. RATEHAWK_API_URL points at the
+//                 Railway forwarding proxy, which holds the ETG credentials and
+//                 injects the Basic header itself, so deployed environments never
+//                 hold the ETG key. This is what gives ETG a fixed set of source
+//                 IPs to whitelist, which Vercel's rotating egress cannot.
+//   direct mode - no proxy secret. Talks straight to ETG with HTTP Basic, exactly
+//                 as before. This is what local dev uses, so local work is never
+//                 gated on Railway being up.
+//
+// The proxy secret is deliberately NOT set on Vercel's Development environment:
+// `vercel env pull` writes Development values into .env.local and would silently
+// flip local dev into proxy mode.
+const USE_PROXY = Boolean(RATEHAWK_PROXY_SECRET);
+
+// Must exceed the proxy's own 30s ETG timeout so the proxy always fails first and
+// returns a real status code, rather than leaving this side holding a dangling
+// socket until the platform's function limit. Distinct from the ETG-side `timeout`
+// request parameter, which we do not send yet (§32 TODO).
+const RATEHAWK_TIMEOUT_MS = 35_000;
+
 function assertRatehawkConfig() {
-  if (!RATEHAWK_KEY) throw new Error("Missing env RATEHAWK_KEY");
-  if (!RATEHAWK_KEY_ID) throw new Error("Missing env RATEHAWK_KEY_ID");
+  if (USE_PROXY) return;
+  if (!RATEHAWK_KEY) {
+    throw new Error("Missing env RATEHAWK_KEY (or RATEHAWK_PROXY_SECRET to route via the ETG proxy)");
+  }
+  if (!RATEHAWK_KEY_ID) {
+    throw new Error("Missing env RATEHAWK_KEY_ID (or RATEHAWK_PROXY_SECRET to route via the ETG proxy)");
+  }
 }
 
 function authHeader(): string {
   return "Basic " + Buffer.from(`${RATEHAWK_KEY_ID}:${RATEHAWK_KEY}`).toString("base64");
+}
+
+function requestHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  if (USE_PROXY) {
+    headers["x-oltra-proxy-secret"] = RATEHAWK_PROXY_SECRET as string;
+  } else {
+    headers.Authorization = authHeader();
+  }
+
+  return headers;
 }
 
 export function buildGuestsArray(
@@ -57,12 +97,10 @@ async function ratehawkPost<T>(path: string, body: unknown): Promise<T> {
 
   const response = await fetch(`${RATEHAWK_API_URL}${path}`, {
     method: "POST",
-    headers: {
-      Authorization: authHeader(),
-      "Content-Type": "application/json",
-    },
+    headers: requestHeaders(),
     body: JSON.stringify(body),
     cache: "no-store",
+    signal: AbortSignal.timeout(RATEHAWK_TIMEOUT_MS),
   });
 
   const text = await response.text();
