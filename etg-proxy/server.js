@@ -44,6 +44,23 @@ const MAX_BODY_BYTES = 1024 * 1024;
 // leaving Vercel holding a dangling socket.
 const ETG_TIMEOUT_MS = 30_000;
 
+// GET /whoami reports the outbound IP this service actually presents, so the
+// addresses sent to ETG can be confirmed empirically rather than taken from
+// Railway's Networking panel on trust. It touches neither ETG nor the ETG
+// credentials, and sits behind the same shared secret as the forwarding paths.
+//
+// Railway load-balances outbound traffic over three IPs, so a single call only
+// reveals one — the observed set is accumulated across calls and returned each
+// time. That set lives in process memory, so it resets on redeploy and would be
+// per-replica if the service is ever scaled beyond one.
+const IP_ECHO_URLS = [
+  "https://api.ipify.org?format=json", // -> {"ip":"..."}
+  "https://checkip.amazonaws.com", // -> plain text
+];
+const IP_ECHO_TIMEOUT_MS = 5_000;
+const seenEgressIps = new Set();
+let whoamiCalls = 0;
+
 // Fail at boot rather than per-request: a misconfigured service should fail its
 // Railway healthcheck immediately and visibly, not serve 500s under load.
 for (const [name, value] of [
@@ -69,6 +86,31 @@ function secretMatches(provided) {
   if (typeof provided !== "string" || provided.length === 0) return false;
   const digest = createHash("sha256").update(provided).digest();
   return timingSafeEqual(digest, SECRET_DIGEST);
+}
+
+async function lookupEgressIp() {
+  const errors = [];
+
+  for (const url of IP_ECHO_URLS) {
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(IP_ECHO_TIMEOUT_MS),
+      });
+      if (!response.ok) {
+        errors.push(`${url} -> HTTP ${response.status}`);
+        continue;
+      }
+
+      const text = (await response.text()).trim();
+      const ip = text.startsWith("{") ? JSON.parse(text).ip : text;
+      if (ip) return { ip, source: url };
+      errors.push(`${url} -> empty response`);
+    } catch (error) {
+      errors.push(`${url} -> ${error?.name}: ${error?.message}`);
+    }
+  }
+
+  throw new Error(errors.join("; "));
 }
 
 function sendJson(res, status, payload) {
@@ -129,6 +171,35 @@ const server = createServer(async (req, res) => {
   if (!secretMatches(Array.isArray(provided) ? provided[0] : provided)) {
     console.warn(`401 ${req.method} ${path} — bad or missing shared secret`);
     sendJson(res, 401, { ok: false, error: "Unauthorized." });
+    return;
+  }
+
+  // Below the auth gate above, so /whoami is behind the same timing-safe shared
+  // secret as the forwarding paths. Returns before the ETG allowlist, and makes
+  // no ETG call and no use of the ETG credentials.
+  if (path === "/whoami") {
+    if (req.method !== "GET") {
+      sendJson(res, 405, { ok: false, error: "Method not allowed." });
+      return;
+    }
+
+    try {
+      const { ip, source } = await lookupEgressIp();
+      whoamiCalls += 1;
+      seenEgressIps.add(ip);
+
+      sendJson(res, 200, {
+        ok: true,
+        ip,
+        source,
+        calls: whoamiCalls,
+        distinctSeen: [...seenEgressIps].sort(),
+      });
+      console.log(`200 GET /whoami ${Date.now() - startedAt}ms — ${ip} (${seenEgressIps.size} distinct so far)`);
+    } catch (error) {
+      console.error(`502 GET /whoami ${Date.now() - startedAt}ms — ${error?.message}`);
+      sendJson(res, 502, { ok: false, error: "Could not determine outbound IP." });
+    }
     return;
   }
 

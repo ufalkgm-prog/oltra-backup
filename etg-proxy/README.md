@@ -31,6 +31,24 @@ manually cancelled.
 
 `GET /healthz` is unauthenticated and cannot reach ETG.
 
+`GET /whoami` reports the outbound IP this service actually presents, so the
+addresses given to ETG can be confirmed rather than trusted. It sits behind the
+same shared secret as the forwarding paths and touches neither ETG nor the ETG
+credentials. **Call it ~10 times** — Railway load-balances outbound traffic over
+three IPs, so one call only reveals one; the response accumulates the distinct
+set seen so far.
+
+```bash
+for i in $(seq 1 10); do
+  curl -s https://<service>.up.railway.app/whoami \
+    -H "x-oltra-proxy-secret: $PROXY_SHARED_SECRET"
+  echo
+done
+```
+
+The accumulated set lives in process memory, so it resets on redeploy and would
+be per-replica if the service is ever scaled past one.
+
 ## Environment variables
 
 | Variable | Purpose |
@@ -74,7 +92,11 @@ Missing or wrong → `401`, before any ETG call is made.
    addresses appear in that same section immediately, before redeploying. Copy
    them, then redeploy to activate.
    CLI alternative: `railway outbound-network static-ip status --service <name>`.
-5. Send those three addresses to ETG (Sofia Kamalova, Integration Launch
+5. **Confirm them with `GET /whoami` before telling ETG anything** (see above).
+   The panel is a claim; `/whoami` is what the service actually presents. Three
+   wrong addresses is a slow failure to unwind — ETG whitelist them, calls still
+   get rejected, and it reads as an integration bug rather than a bad IP list.
+6. Send the confirmed addresses to ETG (Sofia Kamalova, Integration Launch
    Specialist), who handles whitelisting.
 
 ### Caveats worth not getting wrong

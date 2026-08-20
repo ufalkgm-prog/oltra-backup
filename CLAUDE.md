@@ -3473,6 +3473,35 @@ cancellation. Do not add paths to it casually.
 if any required env var is missing, so a misconfiguration fails the Railway
 healthcheck loudly rather than serving errors under load.
 
+### `GET /whoami` — confirm the static IPs, don't trust the panel
+
+Reports the outbound IP the service **actually presents**. Behind the same
+timing-safe shared secret as the forwarding paths; touches neither ETG nor the
+ETG credentials.
+
+**Call it ~10 times.** Railway load-balances outbound traffic across the three
+IPs, so a single call only ever reveals one. The response accumulates the
+distinct set seen so far (`distinctSeen`), so repeated calls converge on all
+three without any manual bookkeeping. That set is in process memory — it resets
+on redeploy, and would be per-replica if the service is ever scaled past one.
+
+```bash
+for i in $(seq 1 10); do
+  curl -s https://<service>.up.railway.app/whoami \
+    -H "x-oltra-proxy-secret: $PROXY_SHARED_SECRET"; echo
+done
+```
+
+Two points where this is the required step, not an optional one:
+
+* **Before sending ETG any addresses.** Railway's Networking panel is a claim;
+  `/whoami` is the observed reality. Three wrong addresses unwind slowly — ETG
+  whitelist them, calls still get rejected, and it presents as an integration
+  bug rather than a bad IP list.
+* **After any region change or Railway maintenance.** Moving region reassigns
+  the IPs (see the caveats below), and the addresses are not guaranteed
+  dedicated. Re-run `/whoami` and re-notify ETG if the set has moved.
+
 ### Auth
 
 Vercel sends `x-oltra-proxy-secret`. The proxy compares it in constant time
@@ -3533,8 +3562,9 @@ ETG-side `timeout` request parameter, still a §32 TODO.
 Service Settings → **Networking** → **Enable Static IPs**. The three IPv4
 addresses appear in that same section immediately, before redeploying; copy them,
 then redeploy to activate. CLI: `railway outbound-network static-ip status
---service <name>`. Send them to **Sofia Kamalova** (Integration Launch
-Specialist), who handles whitelisting — not Valeriy.
+--service <name>`. **Confirm them with `/whoami` first** (above), then send the
+confirmed set to **Sofia Kamalova** (Integration Launch Specialist), who handles
+whitelisting — not Valeriy.
 
 Also: Settings → Deploy → healthcheck `/healthz`, and **App Sleeping must stay
 off** — with no retry, a cold start on the first search after an idle period
@@ -3559,7 +3589,9 @@ Against a locally-run proxy with real ETG credentials: healthz 200; no secret an
 wrong secret both 401; `/hotel/prebook/` and `/order/booking/form/` both 404 with
 a valid secret (booking endpoints unreachable by construction); GET on an
 allowlisted path 405; a >1 MB body a clean 413. All three allowlisted endpoints
-returned real ETG data. End-to-end through `next dev` with `RATEHAWK_KEY`
+returned real ETG data. `/whoami` 401s without the secret and with a wrong one,
+405s on POST, and returns the caller's real egress IP with a valid secret —
+locally that is one address, since the three-IP set only exists on Railway. End-to-end through `next dev` with `RATEHAWK_KEY`
 blanked, proving proxy mode needs no ETG credentials on the app side: batch
 availability returned a real headline price and the detail route returned 7
 matched rooms, with the proxy log confirming all traffic went through it.
