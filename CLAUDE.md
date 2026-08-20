@@ -3560,11 +3560,22 @@ ETG-side `timeout` request parameter, still a §32 TODO.
 ### Deployment and the static IPs
 
 Service Settings → **Networking** → **Enable Static IPs**. The three IPv4
-addresses appear in that same section immediately, before redeploying; copy them,
-then redeploy to activate. CLI: `railway outbound-network static-ip status
---service <name>`. **Confirm them with `/whoami` first** (above), then send the
-confirmed set to **Sofia Kamalova** (Integration Launch Specialist), who handles
-whitelisting — not Valeriy.
+addresses appear in that same section immediately, before redeploying — but
+**the toggle does not take effect until the service is redeployed.** Copy the
+addresses, redeploy, and only then are they actually in use. CLI: `railway
+outbound-network static-ip status --service <name>`.
+
+Enabled 2026-08-20, EU West:
+
+```
+208.77.244.241
+152.55.184.241
+152.55.185.190
+```
+
+**Confirm them with `/whoami` first** (above), then send the confirmed set to
+**Sofia Kamalova** (Integration Launch Specialist), who handles whitelisting —
+not Valeriy.
 
 Also: Settings → Deploy → healthcheck `/healthz`, and **App Sleeping must stay
 off** — with no retry, a cold start on the first search after an idle period
