@@ -36,6 +36,7 @@ yarn-error.log*
 # Credential file kept outside the repo (see CLAUDE.md) — ignored here as a
 # safety net in case a copy ever lands back in the repo root.
 GitHub token.txt
+Railway key.txt
 
 *.tsbuildinfo
 next-env.d.ts
