@@ -3479,20 +3479,38 @@ Reports the outbound IP the service **actually presents**. Behind the same
 timing-safe shared secret as the forwarding paths; touches neither ETG nor the
 ETG credentials.
 
-**Call it ~10 times.** Railway load-balances outbound traffic across the three
-IPs, so a single call only ever reveals one. The response accumulates the
-distinct set seen so far (`distinctSeen`), so repeated calls converge on all
-three without any manual bookkeeping. That set is in process memory — it resets
-on redeploy, and would be per-replica if the service is ever scaled past one.
-
 ```bash
-for i in $(seq 1 10); do
-  curl -s https://<service>.up.railway.app/whoami \
-    -H "x-oltra-proxy-secret: $PROXY_SHARED_SECRET"; echo
-done
+curl -s https://<service>.up.railway.app/whoami \
+  -H "x-oltra-proxy-secret: $PROXY_SHARED_SECRET"
 ```
 
-Two points where this is the required step, not an optional one:
+**Enabling the toggle is not enough — the service must be redeployed before the
+static IPs take effect.** This is the single thing to get right here, and it
+cost real debugging time on 2026-08-20. The Networking panel lists the three
+addresses the moment the toggle is flipped, which reads as if they are already
+live; they are not. Until a redeploy, `/whoami` returns **an address that is
+not in Railway's listed set at all** — so the natural conclusion is that the
+static-IP feature is broken or that `/whoami` is lying, when in fact the
+deploy simply predates the toggle. If the observed address is not one of the
+three, redeploy before investigating anything else.
+
+**One call returns one address, and that is correct.** Railway assigns an
+outbound address **per instance**, not per request — it does not rotate across
+the three on successive calls. A single instance therefore reports the same
+address consistently, and repeated calls will not enumerate the other two.
+Seeing one stable address is the expected result, not a partial one.
+
+*(The `distinctSeen` accumulator in the response is a leftover from the earlier,
+wrong assumption that traffic rotated per request. It is harmless, but do not
+read a single-entry `distinctSeen` as evidence that anything is missing — and
+do not loop the call ~10 times expecting it to converge on all three, which is
+what an earlier version of this section incorrectly advised.)*
+
+All three addresses come from Railway's Networking panel; `/whoami` confirms
+that the deployed service is genuinely presenting from that set, which is the
+part the panel cannot tell you.
+
+Two points where this check is required, not optional:
 
 * **Before sending ETG any addresses.** Railway's Networking panel is a claim;
   `/whoami` is the observed reality. Three wrong addresses unwind slowly — ETG
@@ -3521,6 +3539,21 @@ project-internal, so Vercel must use the public `*.up.railway.app` domain.
 Development** — `vercel env pull` writes Development values into `.env.local` and
 would silently flip local dev into proxy mode. Same for the `RATEHAWK_API_URL`
 override.
+
+**Cutover confirmed 2026-08-20** — the table above is the verified live state,
+not the intended one:
+
+* `RATEHAWK_PROXY_SECRET` and `RATEHAWK_API_URL` are set on **Production and
+  Preview only**. Development is deliberately empty, per the rule above.
+* `RATEHAWK_KEY` and `RATEHAWK_KEY_ID` are **removed from Vercel entirely** —
+  not blanked, not left on an unused environment. Vercel no longer holds the
+  ETG credentials in any form; the proxy is the only place they exist outside
+  Ulrik's machine.
+* Local `.env.local` is **unchanged and still in direct mode** — it keeps the
+  ETG credentials and points `RATEHAWK_API_URL` at `https://api.ratehawk.com`,
+  so local dev talks to ETG directly and is not gated on Railway being up.
+  (Which also means local dev is the thing that breaks once ETG start
+  enforcing the whitelist — see the note at the end of "Two modes" below.)
 
 ### Two modes, selected by env vars alone
 
@@ -3557,15 +3590,17 @@ Vercel→proxy against 30 s proxy→ETG, so the proxy always fails first and ret
 a real status rather than leaving Vercel on a dangling socket. Distinct from the
 ETG-side `timeout` request parameter, still a §32 TODO.
 
-### Deployment and the static IPs
+### Deployment and the static IPs — live since 2026-08-20
 
 Service Settings → **Networking** → **Enable Static IPs**. The three IPv4
 addresses appear in that same section immediately, before redeploying — but
-**the toggle does not take effect until the service is redeployed.** Copy the
-addresses, redeploy, and only then are they actually in use. CLI: `railway
-outbound-network static-ip status --service <name>`.
+**the toggle does not take effect until the service is redeployed**, and until
+it does, the service still egresses from an address outside the listed set.
+See the `/whoami` section above; that gap is where the debugging time went.
+CLI: `railway outbound-network static-ip status --service <name>`.
 
-Enabled 2026-08-20, EU West:
+**Region: EU West (Amsterdam).** Fixed before the addresses were sent — moving
+region reassigns them.
 
 ```
 208.77.244.241
@@ -3573,9 +3608,9 @@ Enabled 2026-08-20, EU West:
 152.55.185.190
 ```
 
-**Confirm them with `/whoami` first** (above), then send the confirmed set to
-**Sofia Kamalova** (Integration Launch Specialist), who handles whitelisting —
-not Valeriy.
+Confirmed via `/whoami` against the redeployed service, then **sent to Sofia
+Kamalova (Integration Launch Specialist) on 2026-08-20** — she handles
+whitelisting, not Valeriy. Re-notify her if the set ever moves.
 
 Also: Settings → Deploy → healthcheck `/healthz`, and **App Sleeping must stay
 off** — with no retry, a cold start on the first search after an idle period
@@ -3606,8 +3641,20 @@ locally that is one address, since the three-IP set only exists on Railway. End-
 blanked, proving proxy mode needs no ETG credentials on the app side: batch
 availability returned a real headline price and the detail route returned 7
 matched rooms, with the proxy log confirming all traffic went through it.
-`tsc --noEmit` and `npm run lint` clean. **Not verified**: anything on Railway
-itself — the deploy, the static IPs, and the browser UI are still to be done.
+`tsc --noEmit` and `npm run lint` clean.
+
+### Verified 2026-08-20 — deployed
+
+The Railway items §47 originally left open are now confirmed: the service is
+deployed in EU West (Amsterdam), static IPs are enabled **and redeployed** so
+the three addresses above are genuinely in use (confirmed via `/whoami`, not
+just the Networking panel), and the Vercel cutover is live with the ETG
+credentials removed from Vercel altogether — see the env-var section above for
+the verified per-environment state.
+
+Ulrik checked the production browser UI against the deployed proxy the same
+day, so the cutover is confirmed end to end — at the service/config layer and
+in the running app — and §47 has no open verification items left.
 
 ---
 
