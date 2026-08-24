@@ -22,7 +22,7 @@ const ETG_KEY = process.env.RATEHAWK_KEY?.trim();
 const ETG_KEY_ID = process.env.RATEHAWK_KEY_ID?.trim();
 const SHARED_SECRET = process.env.PROXY_SHARED_SECRET?.trim();
 
-// Exactly the three endpoints the app calls. Everything else is 404.
+// Exactly the endpoints we call. Everything else is 404.
 //
 // This allowlist is the most important control in this file. An open forwarder
 // holding our credentials would let anyone who obtained the shared secret reach
@@ -30,10 +30,19 @@ const SHARED_SECRET = process.env.PROXY_SHARED_SECRET?.trim();
 // BLOCKED. Per §26 our key hits ETG's live production host, where test bookings
 // are treated as real orders and must be manually cancelled. The allowlist makes
 // that unreachable by construction rather than by discipline.
+//
+// Adding a path is therefore a deliberate act, not housekeeping. The test each
+// one has to pass: is it read-only, and does admitting it leave every BLOCKED
+// endpoint just as unreachable? `hotel_content_by_ids` passes — it returns
+// static hotel content and creates nothing. Its purpose is the opposite of
+// widening: it lets the offline static sync (§32) egress from the three Railway
+// IPs ETG has already whitelisted, instead of standing up a second service with
+// a second set of addresses to get approved.
 const ALLOWED_PATHS = new Set([
   "/api/b2b/v3/search/serp/hotels/",
   "/api/b2b/v3/search/hp/",
   "/api/b2b/v3/hotel/info/",
+  "/api/content/v1/hotel_content_by_ids/",
 ]);
 
 const SECRET_HEADER = "x-oltra-proxy-secret";

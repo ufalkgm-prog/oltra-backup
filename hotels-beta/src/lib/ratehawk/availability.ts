@@ -1,4 +1,5 @@
 import "server-only";
+import { getItems } from "@/lib/directus";
 import type {
   RatehawkCancellationPolicy,
   RatehawkGroupedRoom,
@@ -230,12 +231,52 @@ type RawRoomGroup = {
   images_ext?: { url: string; category_slug?: string | null }[];
 };
 
-export async function fetchRatehawkRoomImages(hid: number): Promise<RawRoomGroup[]> {
-  const json = await ratehawkPost<{ data?: { room_groups?: RawRoomGroup[] } }>(
-    "/api/b2b/v3/hotel/info/",
-    { hid, language: "en" }
-  );
-  return json.data?.room_groups ?? [];
+// Shape stored in hotels.ratehawk_room_groups by the offline sync
+// (etg-static-sync/sync.js). Trimmed to exactly what RawRoomGroup needs —
+// see that file for what was dropped and why.
+type StoredRoomGroup = {
+  name: string | null;
+  rg_ext?: RgExt | null;
+  images?: string[] | null;
+};
+
+/**
+ * Room-group static data for a hotel, read from Directus rather than ETG.
+ *
+ * This used to be `fetchRatehawkRoomImages()`, which called
+ * `/api/b2b/v3/hotel/info/` live on every hotel-detail view. That was two
+ * problems at once: ETG grade "static content fetched during a live search" as
+ * a certification failure, and `/hotel/info/` is capped at 30 requests / 60s on
+ * our key — a site-wide ceiling of 30 hotel-detail views per minute across all
+ * users. See CLAUDE.md §32.
+ *
+ * The matcher downstream is untouched and cannot behave differently: stored
+ * `rg_ext` was verified field-by-field identical to `/hotel/info/` across
+ * 33,519 of 33,519 room groups.
+ *
+ * Returns [] for a hotel the sync has not reached yet, or one ETG has no room
+ * groups for (24 of 853 legitimately have none). Rooms then render without
+ * images — the same behaviour those hotels already had, not a new failure mode.
+ */
+export async function loadRatehawkRoomGroups(hid: number): Promise<RawRoomGroup[]> {
+  const rows = await getItems<{ ratehawk_room_groups?: StoredRoomGroup[] | null }>("hotels", {
+    filter: { ratehawk_hid: { _eq: hid } },
+    fields: ["ratehawk_room_groups"],
+    limit: 1,
+  });
+
+  const stored = rows[0]?.ratehawk_room_groups;
+  if (!Array.isArray(stored)) return [];
+
+  // The sync stores plain URLs; RawRoomGroup wants ETG's images_ext shape.
+  // category_slug is null by design — it was "unspecified" on every room image
+  // sampled and is never rendered (hotel-level image categories are separate
+  // and unaffected).
+  return stored.map((group) => ({
+    name: group.name ?? "",
+    rg_ext: group.rg_ext ?? undefined,
+    images_ext: (group.images ?? []).map((url) => ({ url, category_slug: null })),
+  }));
 }
 
 type RawSerpHotel = { hid: number; rates?: RawRate[] };

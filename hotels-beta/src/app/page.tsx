@@ -157,6 +157,9 @@ export default async function HomePage({
 
     const hotelsAll = await getHotels({
       fields: [
+        // Bulk list — fetched for every hotel in one request. Never add
+        // `ratehawk_room_groups` or ratehawk_image_2..50; both are read
+        // per-hotel on demand. See CLAUDE.md §29 and §32.
         "id",
         "hotel_name",
         "city",

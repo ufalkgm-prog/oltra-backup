@@ -49,6 +49,9 @@ function normalizeCity(city: string): string {
 
 export async function buildInspireCities(): Promise<InspireCity[]> {
   const hotels = (await getHotels({
+    // Bulk list — fetched for every hotel in one request. Never add
+    // `ratehawk_room_groups` or ratehawk_image_2..50; both are read per-hotel
+    // on demand. See CLAUDE.md §29 and §32.
     fields: [
       "id",
       "hotel_name",

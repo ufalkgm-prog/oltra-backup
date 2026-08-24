@@ -1092,12 +1092,12 @@ Add Ratehawk (Emerging Travel Group / ETG) as a booking data source, following t
 * **Host**: `https://api.ratehawk.com` is the current production host as of a 2026-07-14 partner email (moved from the legacy `https://api.worldota.net`, which still works identically — same paths, same credentials, just the old domain). Both hosts authenticate successfully with our key; `api.ratehawk.com` is the one to standardize on going forward.
 * **Important caveat — this is a "Sandbox Key" per ETG's onboarding email, but it authenticates against the live production host, not an isolated sandbox subdomain.** (A dedicated `api-sandbox.worldota.net` host exists per ETG's public docs, but our specific key returns `401 incorrect_credentials` there — it's simply not provisioned for that tier.) ETG's own email explicitly warns: test *bookings* are treated as real orders and must be manually cancelled. Read-only content endpoints (used so far) carry no such risk.
 * Confirmed working test call: `POST /api/b2b/v3/hotel/info/` with body `{"hid": 8473727, "language": "en"}` → returns ETG's fixture "Test Hotel (Do Not Book) test" in Tegucigalpa, Honduras. Use `hid` (integer), not `id` (string slug) — the numeric id from the onboarding email is a `hid`.
-* **Content API v1** (`/api/content/v1/hotel_ids_by_filter/`, `/api/content/v1/hotel_content_by_ids/` — filter-by-country/region, avoids downloading the full global dump) is **not enabled** for this key (`403 endpoint_not_found`, `is_active: false`). Would need to be requested from ETG support (`apisupport@ratehawk.com`) if we want it later — it's the documented alternative to the full dump approach. **Re-verified live 2026-08-17 and scoped precisely in §32** — the 403 covers only `/api/content/v1/*`; `hotel/info/`, `hotel/info/dump/` and `hotel/info/incremental_dump/` all return 200 on the same key.
+* **Content API v1** (`/api/content/v1/filter_values`, `/api/content/v1/hotel_ids_by_filter/`, `/api/content/v1/hotel_content_by_ids/` — filter by country, fetch content by hid, avoids downloading the full global dump) was **not enabled** for this key when the pipeline below was built (`403 endpoint_not_found`, `is_active: false`; re-verified 2026-08-17), which is why that pipeline streams the 2.8 GB dump. **ETG enabled it on 2026-08-24** — all three endpoints now 200 / `is_active: true`, and `hotel_content_by_ids` is the preferred static-content source going forward. See §32 for the verified limits, the field comparison against `/hotel/info/`, and the measured cost of a full-roster sync. The dump pipeline below still works and is kept as a fallback.
 * Docs at `docs.emergingtravel.com` block direct fetch (403, same bot-protection pattern as other sites noted in §25) — use web search against the docs domain to extract specifics instead; a Wayback Machine fallback (used successfully for other blocked sites in §25) did **not** work here, this tool's WebFetch refuses `web.archive.org` outright.
 
 ### Data pipeline built this session (all in `hotels-beta/scripts/ratehawk/`)
 
-Since Content API v1 isn't available, the working approach is ETG's **full hotel dump** endpoint:
+Content API v1 wasn't available when this was built (it is now — see above), so the working approach here is ETG's **full hotel dump** endpoint:
 
 1. `POST /api/b2b/v3/hotel/info/dump/` with `{"inventory": "all", "language": "en"}` → returns a signed S3 URL (`partner_feed__en_v3.jsonl.zst`, ~1hr expiry) + `last_update` timestamp. This is ETG's **entire global partner inventory**, not scoped to us — confirmed size **2,797,718,014 bytes (~2.8GB) compressed**, reportedly 20GB+ decompressed. Updated weekly by ETG; there's also a documented incremental/daily-diff dump endpoint (`retrieve-hotel-incremental-dump`) not yet used.
 2. Downloaded to `scripts/ratehawk/partner_feed__en_v3.jsonl.zst` (gitignored — see below). Format: newline-delimited JSON, Zstandard-compressed. **Node 24's built-in `zlib` module has native Zstandard streaming support** (`createZstdDecompress`) — no new npm dependency needed, consistent with this project's scripts convention.
@@ -1444,41 +1444,108 @@ noted rather than "corrected."
 Sandbox key: RateHawk Backoffice → Settings → API tab. One key covers search,
 booking and content — no separate content key exists.
 
-#### What this key actually reaches — retested live 2026-08-17
+#### What this key actually reaches — Content API enabled 2026-08-24
 
-The 403 below had been **carried forward unverified from §26 (2026-08-06) until
-2026-08-17** — §32's original wording restated it as a "nuance vs. §26" rather
-than a retest, and no committed script ever called those endpoints (the
-`diagnose-rg-ext.mjs` run that repeated the claim only ever hit `/hotel/info/`
-and `/search/hp/`). Retested live on 2026-08-17 against both hosts, HTTP Basic,
-the key currently in `hotels-beta/.env.local` — the claim held, but its **scope
-was narrower than §26 and §32 implied**:
+**ETG enabled Content API v1 on our key** (Sofia Kamalova, 24 Aug 2026),
+verified live the same day against `api.ratehawk.com` with the key in
+`hotels-beta/.env.local`. It had been 403 `endpoint_not_found` /
+`is_active: false` on every prior check (§26 2026-08-06, retested 2026-08-17);
+that is now history, not current state.
 
-| Endpoint | `api.ratehawk.com` | `api.worldota.net` | Rate limit |
-|---|---|---|---|
-| `POST /api/b2b/v3/hotel/info/` | **200 ok** | **200 ok** | 30 req / 60s |
-| `POST /api/b2b/v3/hotel/info/dump/` | **200 ok** | **200 ok** | 5 req / 60s |
-| `POST /api/b2b/v3/hotel/info/incremental_dump/` | **200 ok** | **200 ok** | 5 req / 60s |
-| `POST /api/content/v1/hotel_ids_by_filter/` | **403** `endpoint_not_found` | **403** | — (`is_active: false`) |
-| `POST /api/content/v1/hotel_content_by_ids/` | **403** `endpoint_not_found` | **403** | — (`is_active: false`) |
+| Endpoint | Status | `is_active` | Rate limit (our key) | Docs say |
+|---|---|---|---|---|
+| `GET /api/content/v1/filter_values` | **200 ok** | `true` | 30 req / 60s | 60 QPM |
+| `POST /api/content/v1/hotel_ids_by_filter/` | **200 ok** | `true` | 30 req / 60s | 60 QPM |
+| `POST /api/content/v1/hotel_content_by_ids/` | **200 ok** | `true` | 30 req / 60s | 1200 QPM, max 100 hids/request |
+| `POST /api/b2b/v3/hotel/info/` | **200 ok** | `true` | 30 req / 60s | — |
+| `POST /api/b2b/v3/hotel/info/dump/` | **200 ok** | `true` | 5 req / 60s | — |
+| `POST /api/b2b/v3/hotel/info/incremental_dump/` | **200 ok** | `true` | 5 req / 60s | — |
 
-**The 403 applies only to `/api/content/v1/*` — ETG's separate Content API
-product. It does not apply to the content endpoints inside b2b v3**, all three
-of which are live on this key. Read the two as distinct things; the older
-shorthand "Content API is 403 for our key" reads as if static content generally
-were unavailable, and that is wrong.
+**The real per-key limit is what `debug.api_endpoint` reports, not what the docs
+say** — the docs advertise 1200 QPM for `hotel_content_by_ids` and our key
+returns `requests_number: 30`. Read the limit off the response, don't trust the
+published figure.
 
-The 403 body is an entitlement signal, not a bad path or bad auth — the failing
-endpoints report `is_active: false` with `requests_number: 0` / `remaining: 0`,
-where the working ones report `is_active: true` with the real limits above. So
-the ask to ETG is a provisioning question ("is `/api/content/v1/*` in scope for
-AFF-392026?"), not a bug report. Each response also carries a `request_id` ETG
-support can trace, and the `key_id` in the same `debug` block.
+**A 524 is not a 403 — do not read it as "still not enabled".** The first probe
+this session came back Cloudflare `524: A timeout occurred` after 100s with no
+ETG `debug` block, which looks like a failure but is the opposite: the request
+reached ETG and the *backend* took too long. Cause was the request body —
+`hotel_ids_by_filter` takes `country` / `kind` / `star_rating` / `serp_filter` /
+`updated_since` / `supplier_type` / `preferable` / `top`, **and nothing else**.
+There is no `limit`, no `region_id`, no `inventory`; unknown keys are silently
+ignored rather than rejected, so a body of `{inventory, limit, region_id}` is an
+unfiltered global query over ~3.16M hotels and times out at Cloudflare's 100s
+edge. Any real filter answers in ~1–7s.
 
-Dump freshness confirmed in the same run: full dump `last_update`
-2026-08-10T21:08:04Z (weekly, as documented), incremental `last_update`
-2026-08-17T00:56:52Z — **the daily incremental is genuinely running for our
-key**, not just reachable. Metadata only was read; neither file was downloaded.
+`country` takes ETG's own integer country ids (Monaco 120, France 59, Botswana
+22, Egypt 52, UK 190 — 234 total), **not** ISO codes. Get them from
+`filter_values`, which is a **GET** with no body, unlike everything else here.
+Its response also carries the valid `kind` (17 values) and `star_rating` lists.
+
+#### `hotel_content_by_ids` vs `/hotel/info/` — same data, one omission
+
+Compared field-by-field on three hotels (Wilderness Mombo `hid` 13347937, Four
+Seasons Cairo Nile Plaza 7855756, the ETG test hotel 8473727): **36 keys from
+`/hotel/info/`, 35 from `hotel_content_by_ids`, zero differing values on the 35
+shared keys.** The single omission is the top-level `images` array — the one
+§28 already established is deprecated and byte-identical to `images_ext`. Its
+absence costs nothing.
+
+**`rg_ext` is present and identical**, which is the part the room-image matching
+in `availability.ts` depends on (§32 Display rules, §28): every room group
+carries it, and field-by-field it matches `/hotel/info/` exactly (2/2, 19/19,
+13/13 room groups across the three hotels; 33,519/33,519 across the full
+roster). Room-group `images`/`images_ext`, `room_group_id`, `name_struct`,
+`room_amenities`, `size`, `metapolicy_struct` and `metapolicy_extra_info` are
+all present too. So swapping the static source is a source change only — no
+change to `matchRoomImages()`/`rgExtEquals()`.
+
+Request body is `{hids: [Int], language: "en"}`. **`ids` (the legacy string
+form) is marked deprecated** — use `hids`, which is what we already store in
+`hotels.ratehawk_hid`, so no id translation is needed anywhere.
+
+#### What this means for the static sync (§32 TODO) — measured, not estimated
+
+Pulled the entire matched roster on 2026-08-24, read-only, nothing written:
+
+| | |
+|---|---|
+| Our hotels with a `ratehawk_hid` | 853 |
+| Returned by Content API | **853 — zero missing** |
+| Requests (100 hids/batch, the hard cap) | **9** |
+| Wall time, sequential | **8.5 s** |
+| Payload | 58.7 MB JSON |
+| Room groups / room images covered | 33,519 / 160,972 |
+
+101 hids returns `400 invalid_params`, `hids should not be greater than 100`.
+
+**This is now the preferred source for the static sync, replacing the full
+dump.** The dump is ~2.8 GB compressed and ~10 minutes of streaming to reach the
+same 853 hotels; this is 9 requests and 8.5 seconds, and fits inside the 30
+req/60s window with room to spare. It also removes the reason §32 gave for
+needing Railway *for the sync specifically* — 9 requests and 59 MB fit a
+serverless function comfortably. (The proxy and its static IPs in §47 are a
+separate matter and unaffected; a sync running anywhere other than behind those
+IPs still has to be whitelisted with ETG.)
+
+`updated_since` on `hotel_ids_by_filter` works, so incremental refresh is
+available — but it returns **hids across all of ETG's inventory matching the
+filter**, not just ours (France alone: 199,074 hotels total, 40,152 updated
+since 2026-08-01, 30,230 since 2026-08-17). Intersect that against our 853
+locally and re-pull only the overlap. Given a full refresh is 8.5 seconds, the
+incremental path is an optimisation we may simply not need.
+
+**The offline-sync rule still applies unchanged.** ETG's own docs on this
+endpoint are explicit: *"Do not call this endpoint during live user search
+sessions or when displaying hotel lists. This endpoint is intended exclusively
+for scheduled, offline content synchronization."* Same rule as before, and the
+existing live `/hotel/info/` call per hotel-page request is still the
+certification problem it always was.
+
+Dump freshness, checked in the same run (metadata only, neither file
+downloaded): full dump `last_update` 2026-08-18T06:56:03Z, incremental
+2026-08-24T01:24:07Z — both still current, so the dump route stays available as
+a fallback.
 
 Never mix keys, IDs or static content across environments.
 
@@ -1515,17 +1582,21 @@ Prebook call (`h-…` → `p-…`) is new scope from this section, still pending
 BLOCKED handoff question above before it's worth building.
 
 ### Static content
-- Retrieve hotel dump weekly; Retrieve hotel incremental dump daily. **Both are
-  live on our key** (200, 5 req/60s each — see the credentials table above), so
-  the offline-sync requirement below is satisfiable today.
+- **Built 2026-08-24 — `etg-static-sync/`, see §48.** Daily job, Content API
+  `hotel_content_by_ids`, 853 hotels in 9 requests / 8.5 s, versus ~2.8 GB and
+  ~10 minutes for the full dump. The dump (weekly) and incremental dump (daily)
+  are still live on our key (200, 5 req/60s each) and remain a fallback.
 - Static content is for scheduled offline sync into Supabase/Directus **only** —
   never called during a live user search. Explicitly checked at certification.
   (ETG's Best Practices phrase this in terms of their Content API; the rule is
   about *when* static content is fetched, not *which* endpoint supplies it.)
+  **The live path no longer calls ETG for static data at all** — the only
+  remaining `/hotel/info/` references under `src/` are comments.
 - Use `updated_since` on Retrieve hotel IDs by filter for incremental updates.
-  **Not available to us** — that endpoint is `/api/content/v1/*`, which isn't
-  provisioned on our key. The `hotel/info/incremental_dump/` daily feed is the
-  route we have.
+  **Available since 2026-08-24** — but it returns matching hids across all of
+  ETG's inventory, not just ours, so intersect locally. With a full refresh at
+  8.5 s we may not need it at all. `hotel/info/incremental_dump/` remains the
+  alternative.
 - Region IDs from the regions' dump or hotel dump.
 
 ### Display rules (all certification-checked)
@@ -1656,14 +1727,12 @@ above — do a cleanup pass on these before certification, not now.
 - Enforce the Limits and timeouts above (300 hotels/request, 9 rooms/rate,
   6 adults + 4 children/room, 30-night max stay, 730-day advance window) —
   none are enforced in the search form today.
-- **Static content is fetched live, not synced offline.**
-  `fetchRatehawkRoomImages()` in `availability.ts` calls `/api/b2b/v3/hotel/info/`
-  live on every hotel-page request. ETG Best Practices requires static content
-  to be synced offline and cached, never called during a live user search —
-  this is a graded certification point, and it's also a real latency and
-  rate-limit risk on hotel pages as-is. Needs moving to a scheduled sync into
-  Supabase/Directus (same shape as the existing weekly/incremental dump
-  pipeline in §26/§28) rather than a per-request call.
+- ~~**Static content is fetched live, not synced offline.**~~ **Resolved
+  2026-08-24 — see §48.** `fetchRatehawkRoomImages()` called
+  `/api/b2b/v3/hotel/info/` live on every hotel-page request; it is now
+  `loadRatehawkRoomGroups()`, reading synced content from Directus. Besides the
+  graded certification point, that live call was a site-wide ceiling of 30
+  hotel-detail views per minute (`/hotel/info/` is 30 req/60s on our key).
 
   **Schema for this landed 2026-08-10** (data sync itself has not — this was
   additive schema only, approved and created via
@@ -1685,27 +1754,20 @@ above — do a cleanup pass on these before certification, not now.
   `/hotel/info/` (hotel-level static content), not on live `/search/hp/`
   rates — unlike taxes/cancellation (§32 Display rules), which are genuinely
   live per-search pricing data and must never be cached, metapolicy was a
-  legitimate schema candidate. The actual sync script that populates these 4
-  fields and writes `ratehawk_static_synced_at` is separate follow-up work,
-  not done yet — this section only added the columns.
-
-  **Not blocked by the Content API 403** (corrected 2026-08-17 — the earlier
-  entry here claimed it might be). `/hotel/info/dump/` and
-  `/hotel/info/incremental_dump/` both return 200 on our key, so the weekly +
-  daily pipeline in §26/§28 already satisfies the certification requirement on
-  its own. Nothing about this item is waiting on ETG.
-- **Content API v1 (`/api/content/v1/*`) is not provisioned on our key** —
-  403 `endpoint_not_found`, `is_active: false`, zero rate limit; verified live
-  2026-08-17 (see the endpoint table under Hosts and credentials). This is a
-  **cost optimisation, not a blocker**: it would let the offline sync filter by
-  country/region instead of streaming the ~2.8 GB global dump, cutting
-  processing cost and time. Ulrik is raising provisioning with Valeriy Korobov.
-- **Decide where the static-content sync runs — Railway, not Vercel.** The full
-  dump is ~2.8 GB and processing it does not fit inside a serverless function's
-  execution limit, so it belongs on Railway alongside Directus. Railway also
-  gives a stable outbound IP, which matters if ETG requires IP whitelisting;
-  Vercel serverless egress rotates by default. Settle this before building the
-  sync job, not after.
+  legitimate schema candidate. **The sync that populates these 4 fields was
+  built 2026-08-24 — see §48**, which also adds 4 more (check-in/out times,
+  is_closed, deleted).
+- ~~**Content API v1 (`/api/content/v1/*`) is not provisioned on our key.**~~
+  **Resolved 2026-08-24** — ETG enabled it (Sofia Kamalova); verified live the
+  same day, all three endpoints 200 / `is_active: true`. See the endpoint table
+  under Hosts and credentials.
+- ~~**Decide where the static-content sync runs.**~~ **Settled 2026-08-24:
+  Railway — see §48.** Content API removed the original argument (a 2.8 GB dump
+  stream cannot run inside a serverless execution limit; 9 requests / 8.5 s / 59
+  MB fits comfortably), leaving IP whitelisting as the only reason — and it is
+  decisive on its own, since ETG confirmed whitelisting is mandatory (§47) and
+  Vercel egress rotates. The sync egresses through the existing etg-proxy rather
+  than standing up a second set of static IPs to get whitelisted.
 - ~~**Whether IP whitelisting is mandatory for affiliate partners is an open
   question with ETG** (asked 17 Aug 2026).~~ **Answered 2026-08-19: it is
   mandatory.** ETG's Pre-Certification Checklist listing "we use dynamic IP
@@ -3056,17 +3118,16 @@ run" and "next due" below** — that is the only record.
 | What | Interval | Last run | Next due | How |
 |---|---|---|---|---|
 | Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests, a few minutes) |
-| Ratehawk static content — full dump (§32) | Weekly | — never run | when the offline sync is built | `hotel/info/dump` |
-| Ratehawk static content — incremental (§32) | Daily | — never run | when the offline sync is built | `retrieve-hotel-incremental-dump` |
+| Ratehawk static content (§48) | Daily | 2026-08-24 | automatic (Railway cron) | `etg-static-sync` — no manual step; check the Railway run log if room images go missing |
 | Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
 | City → airport mapping (§37/§38) | When the hotel roster's city list changes | 2026-08-14 | on demand | `build-city-airports.mjs` |
 | Airport options list (§39) | With the above | 2026-08-16 | on demand | `build-airport-options.mjs` |
 
 Notes:
 
-* **Ratehawk status is the one with a real clock on it.** The other Ratehawk rows are
-  ETG certification requirements for a sync that does not exist yet (§32 TODO) — they
-  are listed so they aren't forgotten, not because they are overdue.
+* **Ratehawk status is the one needing a human to remember it.** The static-content
+  row runs itself on Railway's cron and is listed so that its existence, and where to
+  look when it fails, are on the record — not because anyone has to trigger it.
 * Award refreshes are event-driven, not calendar-driven: T+L published its 2026 list
   on 2026-07-07, a week before that session happened to check. Annually is a
   reminder to *look*, not a deadline.
@@ -3461,13 +3522,25 @@ It forwards the request body byte-for-byte and returns the upstream status and
 body unmodified. It is deliberately **not** verbatim in one respect: it strips any
 inbound `Authorization` and injects its own, so Vercel never holds the ETG key.
 
-**Only three paths are proxied** — `/api/b2b/v3/search/serp/hotels/`,
-`/api/b2b/v3/search/hp/`, `/api/b2b/v3/hotel/info/`. Everything else is 404.
+**Only four paths are proxied** — `/api/b2b/v3/search/serp/hotels/`,
+`/api/b2b/v3/search/hp/`, `/api/b2b/v3/hotel/info/`, and (since 2026-08-24)
+`/api/content/v1/hotel_content_by_ids/`. Everything else is 404.
 **This allowlist is load-bearing, not tidiness.** An open forwarder holding our
 credentials would let anyone with the shared secret reach any ETG endpoint,
 including the booking endpoints §32 marks BLOCKED — and per §26 our key hits
 ETG's live production host, where test bookings are real orders needing manual
 cancellation. Do not add paths to it casually.
+
+**The test a new path has to pass**, since one was added: is it read-only, and
+does admitting it leave every BLOCKED endpoint just as unreachable?
+`hotel_content_by_ids` passes — it returns static hotel content and creates
+nothing. Its purpose is the opposite of widening: it lets the §48 static sync
+egress from the three already-whitelisted Railway IPs instead of standing up a
+second service with a second set of addresses for ETG to approve. Note the
+sibling `hotel_ids_by_filter` was deliberately **not** added — the sync does a
+full refresh and never calls it. Verified after the change that
+`/hotel/prebook/`, `/order/booking/form/` and `hotel_ids_by_filter` all still
+404 with a valid secret.
 
 `GET /healthz` is unauthenticated and cannot reach ETG. The service exits at boot
 if any required env var is missing, so a misconfiguration fails the Railway
@@ -3655,6 +3728,174 @@ the verified per-environment state.
 Ulrik checked the production browser UI against the deployed proxy the same
 day, so the cutover is confirmed end to end — at the service/config layer and
 in the running app — and §47 has no open verification items left.
+
+---
+
+## 48. ETG STATIC-CONTENT SYNC — OFFLINE, AND OFF THE HOT PATH (2026-08-24)
+
+### What this closes
+
+`/api/ratehawk/availability` called ETG's `/api/b2b/v3/hotel/info/` live on every
+hotel-detail view, to get the room-group static data `matchRoomImages()` needs.
+Two problems, and the second is the one that would have bitten first:
+
+1. ETG grade "static content fetched during a live user search" as a
+   certification failure — their docs are explicit that it must be synced
+   offline.
+2. `/hotel/info/` is **30 requests / 60 s on our key**, so that call was a
+   site-wide ceiling of 30 hotel-detail views per minute across all users. It
+   had not bitten only because traffic is low.
+
+Now: a daily Railway job writes ETG static content into Directus, and the
+availability route reads from there. Room-matching logic is untouched.
+
+### Directus fields
+
+The 4 from §32 (created 2026-08-10, empty until now) are joined by 4 more,
+created 2026-08-24 via `scripts/ratehawk/add-ratehawk-content-flag-fields.mjs`
+— additive only, before/after `GET /schema/snapshot` diffed to confirm exactly
+4 additions, 0 modifications, 0 removals.
+
+| Field | Type | ETG source |
+|---|---|---|
+| `ratehawk_room_groups` | json | trimmed `room_groups[]` |
+| `ratehawk_metapolicy_struct` | json | `metapolicy_struct` |
+| `ratehawk_metapolicy_extra_info` | text | `metapolicy_extra_info` |
+| `ratehawk_static_synced_at` | timestamp | stamped by the job |
+| `ratehawk_check_in_time` | string | `check_in_time` |
+| `ratehawk_check_out_time` | string | `check_out_time` |
+| `ratehawk_is_closed` | boolean | `is_closed` |
+| `ratehawk_deleted` | boolean | `deleted` |
+
+`null` on any of them means **never synced**, which is not the same as a real
+`false` or a real empty list.
+
+**The times are strings, not a Directus `time` column.** 4 of 853 hotels report
+`"00:00:00"`, which almost certainly means "unspecified" rather than a real
+midnight check-in; a `time` column would launder that into a legitimate-looking
+value. Storing the raw string keeps the ambiguity visible, and matches the house
+habit of reading timestamps as written (§45).
+
+**`is_closed`/`deleted` are deliberately not folded into `ratehawk_status`**
+(§42). That field is a quarterly live-rate verdict; these are daily content
+flags. One shared column would let the daily job overwrite the quarterly one.
+Both are advisory — the sync never changes `published` on their strength.
+
+Validation on first run: the single `is_closed = true` across all 853 is Four
+Seasons Resort The Biltmore Santa Barbara (id 1682), genuinely closed and
+already `published: false`. The flag agreed with reality on day one.
+
+### `add-ratehawk-content-flag-fields.mjs` — and a wrong claim it inherited
+
+**Directus answers a duplicate field with `400 INVALID_PAYLOAD`, not `409`** —
+verified live 2026-08-24. Both `add-ratehawk-static-content-fields.mjs` and
+`add-ratehawk-image-fields.mjs` check only for 409, and their headers (and §28 /
+§32) describe them as "409-safe, safe to re-run". They are not: re-running
+either prints `FAILED` on fields that are perfectly fine. Harmless in effect,
+but it makes a clean re-run look like a broken one. The new script checks for
+both and re-runs silently; the two older ones are unfixed and still misreport.
+
+### The trimmed `ratehawk_room_groups` shape
+
+Exactly the three keys `RawRoomGroup` declares in `availability.ts`:
+`{name, rg_ext, images: string[]}`. Dropped, each measured on live data rather
+than assumed:
+
+* room-group `images` — byte-identical to `images_ext[].url`, 36.9% of
+  room-group bytes
+* `category_slug` on room images — `"unspecified"` on 51,838 of 51,838 sampled,
+  never rendered
+* `name_struct`, `room_amenities`, `size` — never read (`size` is feature-gated
+  and always null on our account, §30)
+* `room_group_id` — ETG's deprecated linkage; `matchRoomImages()` never reads it
+
+18.9 MB stored for 853 hotels, from a 58.7 MB raw response. Per hotel p50 11.8
+KB / p95 153 KB / max 367 KB.
+
+### The job — `etg-static-sync/`
+
+Top-level directory, sibling to `etg-proxy/`; Railway root directory is set per
+service so the Vercel build is unaffected. Zero dependencies (§2). Daily on
+Railway's cron. Flags: `--dry-run`, `--only <hid>` (repeatable), `--limit <n>`.
+
+Per run: load every hotel with a `ratehawk_hid` → batch 100 hids (ETG's hard
+cap; 101 returns `400 invalid_params`) through the proxy to
+`hotel_content_by_ids` → trim → compare against what is stored → PATCH only what
+actually changed → stamp `ratehawk_static_synced_at` on every row in the run,
+once, at the end.
+
+Points that matter if this is ever rewritten:
+
+* **`data` comes back as a flat array and is NOT in request order.** Verified
+  live: `[8473727, 7855756]` returned 7855756 first. Join on `hid`, never on
+  position — the same class of bug §28 warns about.
+* **Compare canonically, never by raw `JSON.stringify`.** Key order differs
+  between what we send and what Directus returns. Same lesson as `rg_ext` (§32),
+  which is why the diff sorts keys recursively.
+* **Change detection is the expensive half, not the fetch.** The 9 ETG requests
+  take ~8.5 s; 853 Directus PATCHes take ~3 minutes. ETG content is stable, so
+  after the first run most days write nothing — measured: an immediate second
+  run reported **0 of 853 changed** and finished in 11.1 s.
+* **The timestamp is stamped separately from content**, so per-row freshness
+  stays meaningful without rewriting 19 MB daily.
+* **A failed batch aborts the run before anything is stamped**, so a partial
+  sync surfaces as stale timestamps rather than a silent mix. No retry — the
+  same fail-fast posture as the proxy (§47). Stored content is never deleted on
+  a failed fetch, and a hid we asked for and didn't get back is reported, not
+  overwritten with nulls.
+* Local runs use direct mode (ETG credentials, no proxy), deployment uses proxy
+  mode — same env-var selection as `availability.ts` (§47), so a local sync is
+  not gated on Railway being up.
+
+### The read path
+
+`fetchRatehawkRoomImages()` → **`loadRatehawkRoomGroups()`**, renamed because it
+no longer fetches from ETG; leaving the old name would have misled. It reads
+`ratehawk_room_groups` from Directus filtered on `ratehawk_hid` and maps stored
+`images: string[]` back to `images_ext: [{url, category_slug: null}]`, so
+`RawRoomGroup` is unchanged and `matchRoomImages()` / `rgExtEquals()` /
+`groupRoomOptions()` are untouched.
+
+Unsynced or room-group-less hotels return `[]` and render rooms without images —
+what those hotels already did. 24 of 853 legitimately have zero room groups.
+
+**Never add `ratehawk_room_groups` to a bulk hotel field list** — ~19 MB across
+the roster, and the Hotels page fetches every published hotel in one request.
+Guard comments sit in `HotelRecord` (`src/lib/directus.ts`) and above all three
+bulk `fields` lists (`hotels/page.tsx`, `page.tsx`,
+`lib/inspire/buildInspireCities.ts`), which is where someone adding a field
+would actually be looking.
+
+### Verified 2026-08-24
+
+* Schema — snapshot diff shows exactly the 4 additions, nothing modified;
+  re-running the script now reports "already exists" cleanly.
+* Single hotel — synced Four Seasons Cairo Nile Plaza (`hid` 7855756) and
+  compared the stored blob against a live `/hotel/info/` call for the same hid:
+  all 7 fields match, 19/19 room groups, 82/82 images.
+* Full run — 853/853 returned, 0 missing, 852 written (the 1 unchanged being
+  Cairo from the single-hotel run, which is its own small proof that change
+  detection works). Immediate re-run: 0 changed.
+* Read path — `tsc --noEmit` and `npm run lint` clean. Then the assertion that
+  actually proves nothing user-visible changed: the same
+  `/api/ratehawk/availability` request run against the old code (via
+  `git stash`) and the new one returned **the same 11 rooms with byte-identical
+  `images[]` on all 11**. The only difference is `category: "unspecified"` →
+  `null`, the deliberately dropped field — and it accounts for the entire
+  405-byte response-size delta exactly (45 images × 9 bytes).
+* No live ETG static call remains: the only `/hotel/info/` hits under `src/` are
+  comments.
+
+### Not done — deployment
+
+The Railway service itself has **not** been created: no `etg-static-sync`
+service, no cron schedule, no env vars set there. The code is verified locally
+end to end (direct mode against ETG, and through a locally-run proxy), but
+nothing runs on a schedule yet. Deploying it needs: new service with root
+directory `etg-static-sync`, `DIRECTUS_URL`/`DIRECTUS_TOKEN`/
+`RATEHAWK_API_URL`/`RATEHAWK_PROXY_SECRET` set, cron schedule, and **no static
+IP toggle of its own** — it egresses through `etg-proxy`, which is the whole
+reason the allowlist gained a path rather than a second service being stood up.
 
 ---
 

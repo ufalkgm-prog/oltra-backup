@@ -82,6 +82,10 @@ const hasMeaningfulFilters = Boolean(
     selected.styles.length
 );
 
+// This list is fetched for EVERY published hotel in one request (limit: -1), so
+// a field added here is paid for ~870 times per page load. Never add
+// `ratehawk_room_groups` (~19 MB across the roster) or ratehawk_image_2..50 —
+// both are read per-hotel on demand instead. See CLAUDE.md §29 and §32.
 const hotelFields = [
   "id",
   "hotel_name",

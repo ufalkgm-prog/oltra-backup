@@ -202,6 +202,13 @@ export type HotelRecord = {
   // Hero-only fields from the Ratehawk backfill (CLAUDE.md §28) — the full
   // ratehawk_image_1..50 set is fetched on demand, see
   // src/app/api/hotels/[id]/ratehawk-images/route.ts
+  //
+  // NEVER add `ratehawk_room_groups` here or to any bulk hotel field list. It
+  // holds the synced ETG room-group blob — ~19 MB across the roster, p95 153 KB
+  // for a single hotel — and the Hotels page fetches every published hotel in
+  // one request. It is read one hotel at a time by loadRatehawkRoomGroups() in
+  // src/lib/ratehawk/availability.ts, and nowhere else. Same reasoning that
+  // kept ratehawk_image_2..50 out of this type (§29).
   ratehawk_image_1?: string | null;
   ratehawk_image_1_category?: string | null;
 

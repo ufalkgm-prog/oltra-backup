@@ -3,7 +3,7 @@ import {
   buildGuestsArray,
   computeHeadlinePrice,
   fetchRatehawkHotelpage,
-  fetchRatehawkRoomImages,
+  loadRatehawkRoomGroups,
   groupRoomOptions,
 } from "@/lib/ratehawk/availability";
 import { isValidResidencyCode } from "@/lib/countries";
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
         currency,
         residency,
       }),
-      fetchRatehawkRoomImages(hid),
+      loadRatehawkRoomGroups(hid),
     ]);
 
     const groupedRooms = groupRoomOptions(rates, roomGroups);

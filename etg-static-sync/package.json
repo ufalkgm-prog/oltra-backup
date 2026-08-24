@@ -1,0 +1,13 @@
+{
+  "name": "oltra-etg-static-sync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Daily offline sync of ETG static hotel content into Directus",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node sync.js"
+  }
+}
