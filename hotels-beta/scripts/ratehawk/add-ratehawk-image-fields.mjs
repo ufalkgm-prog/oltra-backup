@@ -2,7 +2,7 @@
 // CLAUDE.md §27 for the documented ETG size-token whitelist) and
 // ratehawk_image_1_category..50_category (category_slug) to the hotels
 // collection. Additive schema only, never touches existing data.
-// Safe to re-run — field creation 409s if it already exists.
+// Safe to re-run — an existing field is reported as "already exists" and skipped.
 //
 // Usage: DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/ratehawk/add-ratehawk-image-fields.mjs
 import dotenv from "dotenv";
@@ -26,9 +26,17 @@ async function api(path, body, method = "POST") {
   return { status: res.status, ok: res.ok, data };
 }
 
+// Directus answers a duplicate field with 400 INVALID_PAYLOAD and an "already
+// exists" message, NOT 409 — verified live 2026-08-24 (CLAUDE.md §48). Checking
+// only for 409 made a perfectly clean re-run print FAILED on all 100 fields.
+function isAlreadyExists(status, data) {
+  if (status === 409) return true;
+  return status === 400 && data?.errors?.some((e) => /already exists/i.test(e?.message ?? ""));
+}
+
 async function createField(field, schema, meta = {}) {
   const { status, data } = await api("/fields/hotels", { field, type: schema.type, schema, meta });
-  if (status === 409) {
+  if (isAlreadyExists(status, data)) {
     console.log(`  already exists: ${field}`);
   } else if (!status.toString().startsWith("2")) {
     console.error(`  FAILED: ${field}`, data?.errors);

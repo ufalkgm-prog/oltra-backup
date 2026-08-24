@@ -1218,7 +1218,7 @@ Completed phase 1 of §27 ("Hotel images from Ratehawk") for the 829 hotels conf
 
 Added `ratehawk_image_1` … `ratehawk_image_50` (Directus `string`, the image URL) and `ratehawk_image_1_category` … `ratehawk_image_50_category` (Directus `string`, the `category_slug`, e.g. `exterior`, `guest_rooms`, `pool`) to the `hotels` collection. **Deliberately not a `json`-type array field** (that was the first draft of this plan) — flat numbered fields stay editable/browsable in the Directus admin UI, where a JSON blob would be opaque. **Deliberately not capped at a smaller number either** — the true per-hotel max is 50, and since these are just URL strings there's no real cost to keeping all of them; capping would silently drop real editorial value (a pool/spa shot sorted late in Ratehawk's list). No category-priority curation or truncation logic — every image Ratehawk returns for a hotel gets a slot, in Ratehawk's own native order.
 
-Script: `hotels-beta/scripts/ratehawk/add-ratehawk-image-fields.mjs` (idempotent, 409-safe re-run, same `createField` pattern as `scripts/restaurants/create-restaurants-collection.mjs`).
+Script: `hotels-beta/scripts/ratehawk/add-ratehawk-image-fields.mjs` (idempotent — an existing field is skipped, see §48 on why that is a 400 and not a 409 — same `createField` pattern as `scripts/restaurants/create-restaurants-collection.mjs`).
 
 ### Data source and pipeline
 
@@ -3785,15 +3785,24 @@ Validation on first run: the single `is_closed = true` across all 853 is Four
 Seasons Resort The Biltmore Santa Barbara (id 1682), genuinely closed and
 already `published: false`. The flag agreed with reality on day one.
 
-### `add-ratehawk-content-flag-fields.mjs` — and a wrong claim it inherited
+### A duplicate field is a 400, not a 409 — fixed everywhere 2026-08-24
 
-**Directus answers a duplicate field with `400 INVALID_PAYLOAD`, not `409`** —
-verified live 2026-08-24. Both `add-ratehawk-static-content-fields.mjs` and
-`add-ratehawk-image-fields.mjs` check only for 409, and their headers (and §28 /
-§32) describe them as "409-safe, safe to re-run". They are not: re-running
-either prints `FAILED` on fields that are perfectly fine. Harmless in effect,
-but it makes a clean re-run look like a broken one. The new script checks for
-both and re-runs silently; the two older ones are unfixed and still misreport.
+**Directus answers a duplicate field with `400 INVALID_PAYLOAD` and an "already
+exists" message, not `409`** — verified live. Every field-creation script here
+had inherited a `status === 409` check and a header calling itself "409-safe",
+so a perfectly clean re-run printed `FAILED` on every field it skipped — 100 of
+them in the image script's case. Harmless in effect, but a clean re-run that
+looks broken is the kind of thing that gets "investigated" for an hour.
+
+All three now share an `isAlreadyExists(status, data)` helper accepting both
+codes: `add-ratehawk-content-flag-fields.mjs`,
+`add-ratehawk-static-content-fields.mjs`, `add-ratehawk-image-fields.mjs`.
+Confirmed by re-running all three against the live instance — 0 `FAILED` lines.
+Any future field-creation script should copy that helper rather than the old
+409-only shape, which still exists in
+`scripts/restaurants/create-restaurants-collection.mjs` — left alone as a
+run-once/archive script, and untested here (its field path would misreport the
+same way; whether *collection* creation really answers 409 was never checked).
 
 ### The trimmed `ratehawk_room_groups` shape
 
