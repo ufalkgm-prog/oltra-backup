@@ -248,6 +248,26 @@ const checkAvailability = tool({
     additionalProperties: false,
   }),
   async execute(input) {
+    // The supplier rejects a past check-in outright, and the whole batch fails
+    // with it. Catching it here turns a dead end into something the model can
+    // act on — it gets told the year is wrong rather than that availability is
+    // down, which is what the visitor was previously shown.
+    const today = new Date().toISOString().slice(0, 10);
+    if (input.checkIn < today) {
+      return asUntrustedData("availability", {
+        error: "check-in is in the past",
+        today,
+        received: input.checkIn,
+        fix: "Re-run with the next occurrence of that month, not one already past.",
+      });
+    }
+    if (input.checkOut <= input.checkIn) {
+      return asUntrustedData("availability", {
+        error: "check-out must be after check-in",
+        received: { checkIn: input.checkIn, checkOut: input.checkOut },
+      });
+    }
+
     const ids = input.ids.slice(0, MAX_AVAILABILITY_IDS);
     if (!ids.length) return asUntrustedData("availability", { hotels: [] });
 

@@ -39,6 +39,12 @@ function reject(status: number, error: string) {
   return Response.json({ error }, { status });
 }
 
+/** Server-side "today", so relative dates resolve correctly. */
+function todayNote(): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return `Today's date is ${today}. Resolve every relative date against it — a bare month or season means its next occurrence, never one already past.`;
+}
+
 export async function POST(req: Request) {
   if (process.env.NEXT_PUBLIC_AI_CHAT_ENABLED !== "1") {
     return reject(404, "Not found");
@@ -119,7 +125,19 @@ export async function POST(req: Request) {
   // 5. The conversation.
   const result = streamText({
     model: anthropic(CHAT_MODEL),
-    system: SYSTEM_PROMPT,
+    // Two system blocks, not one string. The cache breakpoint sits on the
+    // stable prompt; today's date follows it, uncached. Appending the date to
+    // the prompt itself would invalidate the cached prefix for every user every
+    // day — and the call-level cacheControl this replaces cached the LAST
+    // block, which would have been the volatile one, so the cache never hit.
+    instructions: [
+      {
+        role: "system" as const,
+        content: SYSTEM_PROMPT,
+        providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
+      },
+      { role: "system" as const, content: todayNote() },
+    ],
     // Repaired, not trusted: a history carrying a tool call with no result is
     // rejected outright, and the client cannot always avoid persisting one.
     messages: dropUnansweredToolCalls(await convertToModelMessages(trimmed)),
@@ -135,14 +153,6 @@ export async function POST(req: Request) {
     },
     stopWhen: stepCountIs(MAX_TOOL_STEPS),
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    providerOptions: {
-      anthropic: {
-        // The system prompt is byte-stable, so it caches. Verify with
-        // usage.cache_read_input_tokens — a persistent zero means something
-        // volatile has leaked into the prefix.
-        cacheControl: { type: "ephemeral" },
-      },
-    },
     onError({ error }) {
       console.error("[ai chat]", error);
     },
