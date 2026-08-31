@@ -4051,9 +4051,13 @@ duplicates gone.
 
 ### Status
 
-**Unmerged.** Branch `ai-chat`, commit `dc5f729`, pushed. `main` does not have
+**Unmerged.** Branch `ai-chat`, head `901bcc2`, pushed. `main` does not have
 it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
 production invisibly — the flag gates both the UI and the route.
+
+Four commits: `dc5f729` the feature, `0ade44c` this section, `c738913` three
+bugs found by using it in a browser, `901bcc2` the frame rework and the flight-
+row extraction.
 
 A second way into the hero search: describe the trip in prose, get curated
 hotels or flights back in the existing cards with an editorial line above them.
@@ -4104,6 +4108,7 @@ refactoring and must not be:
 | The AI mark is positioned by a wrapper in `LandingSearchPanel`, not by `StructuredDestinationField` | That component is shared with the Hotels page, which must not grow a toggle |
 | `api/ai/hotels` duplicates much of `api/hotels/by-ids` | The latter serves Members favourites; nothing about this feature should be able to change what Favourites renders |
 | The serif face loads in `lib/ai/fonts.ts`, not `layout.tsx` + a theme token | A global token would reach every page |
+| `FlightResultRow` sits in `src/app/`, not `src/components/` | The classes it uses live in the landing page's own CSS module. Moving it "properly" means either making those styles global or importing a page stylesheet from a shared component |
 
 Outside the landing page the whole feature is **18 lines across three files,
 none of it markup**: an `ids` key in `hotelFilters.ts`, its parsing in
@@ -4189,6 +4194,95 @@ installed `.d.ts`, not recalled:
   (instances × cap) — a cost backstop, not a control. The Console cap is the
   only hard stop. Swap the Map for Upstash if the site ever opens past
   `/beta-login`.
+
+### Three bugs that only a browser found (`c738913`)
+
+Every one passed `tsc`, lint and the production build, and two of them made
+essentially *every* query fail. They surfaced the moment Ulrik opened the page.
+
+**1. One unreachable domain in the web-search allow-list broke every request.**
+`cntraveler.com` and `travelandleisure.com` block Anthropic's crawler, and the
+API rejects the **whole request** at validation over it:
+`400 The following domains are not accessible to our user agent`. So a query
+that would never have searched the web failed too, and it presented as "the AI
+is broken" rather than "web search is unavailable". Predictable in hindsight —
+§25 already records both as bot-blocked. Every domain in that list is now
+verified individually, and `lib/ai/config.ts` carries the warning.
+
+**2. Every second turn failed.** `presentResults` had no `execute`, so its tool
+call produced no `tool_result`, and the API refuses any history containing an
+unanswered `tool_use`. The first answer therefore poisoned the conversation.
+
+**3. A failed turn left the user's message orphaned**, so the next request
+replayed it — the model answered a stale question alongside the new one, and a
+retry showed the same message twice.
+
+The lasting change is #2's real fix: **the route does not trust the history the
+browser sends.** `lib/ai/sanitiseHistory.ts` strips orphaned tool calls before
+each request, because the client cannot always avoid persisting one — the loop
+can stop at `MAX_TOOL_STEPS` mid-call, or a stream can fail part-way. Without
+it a conversation breaks *permanently* and reloading does not help, since the
+history lives in sessionStorage. It also heals conversations poisoned before
+the fix, which were already in real browsers.
+
+There is also a **Clear** control, which the panel originally had no equivalent
+of at all — a stale exchange could persist across reloads with no way out.
+
+### Frames are the structured search's, not lookalikes (`901bcc2`)
+
+The first version rendered hotels in an invented card grid at a different size,
+with a rationale line under each card. Results from the chat and results from
+the search bar are the same hotels shown for the same reason, so they now use
+the same `.summaryColumn` panel, the same `.smallCardsList` scroll box and the
+same `HotelSmallCard`.
+
+**The per-card rationale lines went with that grid.** They were in the original
+brief, but the real card has no slot for one, and keeping them meant keeping
+the lookalike frame. The editorial voice lives in the framing line above.
+
+One deliberate difference: an answer with **hotels and no flights** takes the
+whole row, with cards two-up inside a *single* scroll container so the pair
+scrolls together. With flights present it reverts to the two-panel grid.
+
+`FlightResultRow` was **extracted, not reimplemented** — it owns the row markup,
+`FlightDetailCard`, `formatPrice`, `formatDurationMinutes` and the
+best-price/fastest selection (including the rule that the two rows are never the
+same itinerary). Both callers use it, so `LandingSummary` shed 126 lines. Book
+and save live *inside* the component rather than being passed in: they are
+self-contained, and handlers supplied by two call sites are how two copies
+drift apart.
+
+`AskResults` runs **one** Duffel search for the route the concierge already
+chose, rather than the structured summary's per-airport × per-cabin fan-out —
+which also sidesteps the cost concern §38 records, where a multi-hub
+destination fires six parallel searches.
+
+The chat thread caps at 320px and scrolls rather than growing and pushing
+results down the page; answers use the full panel width, and only the visitor's
+own turns stay narrow and right-aligned.
+
+### What testing this actually taught
+
+The probes that "verified against the live model" passed *because they bypassed
+the route* — they exercised the prompt and tools directly, so they never hit
+request validation or a persisted multi-turn history. Both classes of bug lived
+exactly in the gap those probes skipped. **For this feature, a green
+`tsc`/lint/build and a passing model probe are not evidence that it works;
+someone has to use it in a browser.**
+
+Two operational notes from the same session: running `npm run build` while
+`npm run dev` is live corrupts `.next` and the dev server starts throwing
+`MODULE_NOT_FOUND` (the §34 flakiness — stop dev, `rm -rf .next`, restart), and
+`form_input` on a React-controlled field sets the DOM value without firing
+React's `onChange`, so the state stays empty and the form submits blank.
+
+### Still unexercised
+
+The flights path compiles and the structured teaser still renders, but no
+concierge query has yet produced flight results, so the Best price / Fastest
+rows — and Book and Save inside them — have not been seen rendering from an AI
+answer. Nor has the members-only session gate been walked end to end, which
+needs a real login (§46).
 
 ### Deliberately not built
 
