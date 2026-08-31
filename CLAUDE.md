@@ -4051,14 +4051,14 @@ duplicates gone.
 
 ### Status
 
-**Unmerged, PR #7 open.** Branch `ai-chat`, head `9bd3902`. `main` does not
+**Unmerged, PR #7 open.** Branch `ai-chat`, head `fae4160`. `main` does not
 have it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
 production invisibly — the flag gates both the UI and the route.
 
-Eight commits. The feature is `dc5f729`; everything after it is either this
+Ten commits. The feature is `dc5f729`; everything after it is either this
 section or a fix found by using the thing in a browser — `c738913`, `901bcc2`,
-`9935fb2`, `9bd3902`. That ratio is the point, and the "What testing taught"
-subsection below is the part to read before assuming this is finished.
+`9935fb2`, `9bd3902`, `fae4160`. That ratio is the point, and the "What testing
+taught" subsection below is what to read before assuming this is finished.
 
 A second way into the hero search: describe the trip in prose, get curated
 hotels or flights back in the existing cards with an editorial line above them.
@@ -4283,6 +4283,16 @@ working software. Where a value crosses a boundary — model to tool, tool to
 store, store to card — assume nothing tells you when it fails to arrive, and go
 and look.
 
+**A prompt change is a code change, and it regresses like one.** Two of the
+last fixes were caused by the fix before them. Tightening for brevity produced
+"your own message should be either empty or a single short question", which the
+model read as permission to ask *instead of* showing results — so it resolved
+the dates, replied with one helpful sentence, and rendered no cards at all.
+Nothing failed; there was simply no `presentResults` call, which is invisible
+unless you notice `/api/chat` was not followed by `/api/ai/hotels`. Treat
+wording in `systemPrompt.ts` as behaviour under test: after editing it, run a
+real query in the browser and check the tool actually fired.
+
 Two operational notes from the same session: running `npm run build` while
 `npm run dev` is live corrupts `.next` and the dev server starts throwing
 `MODULE_NOT_FOUND` (the §34 flakiness — stop dev, `rm -rf .next`, restart), and
@@ -4353,6 +4363,25 @@ on the page, so it read as two replies to one question. The framing line is now
 stated to *be* the answer: when `presentResults` is called, the model's own
 message must be empty or a single short question. Measured after: 13 words in
 the thread, the substance once, above the cards.
+
+### Show first, never ask instead (`fae4160`)
+
+Asked for "the Middle-East in the second week of February, 4 people in two
+rooms", the concierge resolved the dates and replied *"I've used 8-15 February;
+happy to shift the dates or narrow to one country"* — with no cards. It had
+never called `presentResults`.
+
+Caused by the previous commit's own wording (see the prompt-regression note
+above). The rule is now explicit: **show first, and a question never replaces
+results.** A named destination plus a rough when is enough — choose sensible
+dates, run the search, show what you found, and state the dates used in one
+clause *in the framing line, with the results*. Clarifying questions are only
+for when nothing can be shown at all (no destination, or a month too vague for
+any date); everything else is asked afterwards.
+
+Verified on the same prompt: 8 hotels shown, stay carried through as 2027-02-08
+to 2027-02-15 for 4 adults in 2 rooms, dates stated in the framing, one short
+question after.
 
 ### Still unexercised
 
