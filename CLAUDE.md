@@ -4047,4 +4047,155 @@ duplicates gone.
 
 ---
 
+## 50. AI CONCIERGE ON THE LANDING PAGE (2026-08-31, branch `ai-chat`)
+
+### Status
+
+**Unmerged.** Branch `ai-chat`, commit `dc5f729`, pushed. `main` does not have
+it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
+production invisibly — the flag gates both the UI and the route.
+
+A second way into the hero search: describe the trip in prose, get curated
+hotels or flights back in the existing cards with an editorial line above them.
+Discovery and steering only. It never books, never takes payment, never becomes
+merchant of record, and every tool it can reach is read-only.
+
+### The one design decision that matters
+
+**The no-prices rule is structural, not a prompt promise.** `checkAvailability`
+and `searchFlights` fetch real rates, use them to rank and to test any ceiling
+the visitor named, then **discard the amount**. The model receives
+`{available, priceRank, withinBudget}` and never a figure, so it cannot leak a
+price it was never given — under any framing, including direct pressure. Every
+number on screen is fetched by the card from the same batch route the
+structured search uses.
+
+If a future change hands the model a raw amount "just for context", that
+guarantee is gone and the prompt becomes the only defence. Don't.
+
+### Route — `src/app/api/chat/route.ts`
+
+Holds `ANTHROPIC_API_KEY` and nothing else does. Guard order is deliberate:
+
+1. **Flag** — 404 when off.
+2. **Session** — members-only; deliberately before the key check, so an
+   unauthenticated caller learns nothing about our configuration.
+3. **Rate limit** — per-user daily, in-memory.
+4. **Input caps** — message length, turns kept.
+5. **Triage** — `claude-haiku-4-5` classifies travel / probe / other before any
+   Opus spend. It is also a *second independent judgement*: a jailbreak that
+   talks the main model round still has to pass a classifier with no tools and
+   no history. It **fails open** on error — the main model's own instructions
+   are the real defence, and refusing everyone during a transient outage is
+   worse. A decline streams back as a normal assistant message, not a JSON
+   error, so the client has one code path.
+
+Conversation model `claude-opus-5`. Web search is Anthropic's own server-side
+`web_search_20260209` with `maxUses` enforced upstream and a domain allow-list
+— no new vendor, no extra key.
+
+### Containment — read before "tidying" any of this
+
+Ulrik's constraint was **landing page only**. Three things look like they want
+refactoring and must not be:
+
+| Looks wrong | Why it is that way |
+|---|---|
+| The AI mark is positioned by a wrapper in `LandingSearchPanel`, not by `StructuredDestinationField` | That component is shared with the Hotels page, which must not grow a toggle |
+| `api/ai/hotels` duplicates much of `api/hotels/by-ids` | The latter serves Members favourites; nothing about this feature should be able to change what Favourites renders |
+| The serif face loads in `lib/ai/fonts.ts`, not `layout.tsx` + a theme token | A global token would reach every page |
+
+Outside the landing page the whole feature is **18 lines across three files,
+none of it markup**: an `ids` key in `hotelFilters.ts`, its parsing in
+`hotels/page.tsx`, and four lines in `HotelsView.tsx` (`selected.ids` in the
+type and in `hasMeaningfulFilters`, plus `"ids"` in both `HiddenPreserveParams`
+exclude lists). Two `export` keywords were added in
+`lib/ratehawk/availability.ts` so `ratePrice`/`RawSerpHotel` could be reused
+rather than duplicated.
+
+**Both HotelsView lines are load-bearing**, found by testing: without
+`hasMeaningfulFilters`, an ids-only handoff falls through to *featured mode* and
+silently ignores the recommendation; without the exclude entries, a new search
+run from the Hotels page re-appends the stale `ids` and pins the user inside the
+AI subset with no way out.
+
+### Tools
+
+All read-only. `searchHotels`, `getHotelDetails`, `checkAvailability`,
+`searchFlights`, `nearestAirport`, `webSearch`, plus `presentResults` — which
+is not a data tool but how the model hands the UI a structured result set. The
+client reads that tool call rather than parsing hotel names out of prose, which
+would break the moment the model phrased something differently.
+
+Tool results are wrapped in `<untrusted-data>` markers and the prompt says so:
+supplier free-text may contain sentences that look like commands.
+
+`nearestAirport` costs nothing — `cityAirports.ts` (§37/§38) already covers all
+514 hotel cities. **Do not add a Google Places call for this.**
+`checkAvailability` skips `ratehawk_status: "passive"` hotels (§42) — they never
+price, so asking is pure latency against a rate-limited supplier.
+
+### The defect live testing caught
+
+The model opened by inventing plausible taxonomy tags — `"quiet"`,
+`"secluded"`, `"wellness"` — matched nothing, and spent **two extra tool round
+trips** recovering. On every query, silently, with no error anywhere.
+
+Fixed with `lib/ai/taxonomy.ts`: the 22 setting / 20 style / 37 activity values
+mirrored from Directus and declared as JSON Schema `enum`s, which makes an
+invalid tag impossible rather than discouraged. 3 calls became 2, and the first
+call was correct. Safe to hardcode because §44 locked those fields with
+`allowOther: false`; refresh from `GET /fields/hotels/{field}` if they ever
+move, since a stale entry here silently matches nothing.
+
+**This is the general lesson: a tool parameter whose valid values are a closed
+set should be an `enum`, not a described string.**
+
+### Verified against the live model
+
+8/8 refusal probes held — system-prompt extraction (direct, and via a
+"I'm a developer" pretext), other members' data, restaurants, an uncovered
+destination, direct price pressure, off-topic, and booking-plus-discount. **No
+price figure in any response.** A real tool loop returned three genuine
+published Lake Como hotels, found via the traveller-facing `area` field (§3),
+with rationales about character rather than cost.
+
+**Not verified: the live UI, and the members-only session gate end to end** —
+both need a real member login, which session automation cannot perform (§46:
+Ulrik logs in and hands over the tab).
+
+### AI SDK v7 — where training priors are wrong
+
+Installed `ai@7` + `@ai-sdk/anthropic@4` + `@ai-sdk/react`. Verified against the
+installed `.d.ts`, not recalled:
+
+* `useChat` is in **`@ai-sdk/react`**, not `ai`.
+* Tool params are **`inputSchema`**, not `parameters`.
+* **`convertToModelMessages` is async** — await it.
+* `useChat` does not manage input; the caller owns the text state and calls
+  `sendMessage({ text })`.
+* `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'`.
+* `buildGuestsArray(adults, kids, ages, rooms)` takes four positional
+  arguments, not an object.
+
+### Prerequisites
+
+* `ANTHROPIC_API_KEY` — server-only, never `NEXT_PUBLIC`. On Vercel: Sensitive,
+  **Preview and Production** (Preview included, or the preview cannot answer).
+* `NEXT_PUBLIC_AI_CHAT_ENABLED` — public flag, inlined at build time, so
+  flipping it needs a redeploy.
+* **A spend cap and usage alerts in the Anthropic Console.** The in-memory rate
+  limiter is per serverless instance, so the real ceiling is
+  (instances × cap) — a cost backstop, not a control. The Console cap is the
+  only hard stop. Swap the Map for Upstash if the site ever opens past
+  `/beta-login`.
+
+### Deliberately not built
+
+Restaurants on the landing page (dining questions redirect to `/restaurants`
+and name nothing), chat on Restaurants or Inspire, any booking/payment/write
+tool, fine-tuning, pgvector, and any markup on prices.
+
+---
+
 This document serves as the baseline context for all future OLTRA development sessions.
