@@ -33,6 +33,19 @@ type PresentInput = {
     returnDate?: string;
     cabin?: string;
   };
+  stay?: {
+    checkIn?: string;
+    checkOut?: string;
+    adults?: number;
+    kids?: number;
+    rooms?: number;
+  };
+  destination?: {
+    city?: string;
+    area?: string;
+    adminRegion?: string;
+    country?: string;
+  };
 };
 
 /** Pulls the newest presentResults call out of the message list. The model
@@ -42,6 +55,7 @@ type PresentInput = {
 function readLatestPresentation(messages: UIMessage[]): {
   framing: string;
   results: AiResultSet;
+  query: Partial<AiQueryState>;
 } | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i];
@@ -60,8 +74,31 @@ function readLatestPresentation(messages: UIMessage[]): {
         if (entry?.id != null && entry.reason) rationales[String(entry.id)] = entry.reason;
       }
 
+      // The stay is what makes the cards price themselves. Without it they
+      // render with no figure at all, however complete the answer looked.
+      const stay = input.stay ?? {};
+      const dest = input.destination ?? {};
+      const query: Partial<AiQueryState> = {
+        ...(stay.checkIn ? { from: stay.checkIn } : {}),
+        ...(stay.checkOut ? { to: stay.checkOut } : {}),
+        ...(typeof stay.adults === "number" ? { adults: Math.max(1, stay.adults) } : {}),
+        ...(typeof stay.kids === "number" ? { kids: Math.max(0, stay.kids) } : {}),
+        ...(typeof stay.rooms === "number" ? { bedrooms: Math.max(1, stay.rooms) } : {}),
+        ...(dest.city || dest.area || dest.adminRegion || dest.country
+          ? {
+              destination: {
+                city: dest.city ?? "",
+                area: dest.area ?? "",
+                adminRegion: dest.adminRegion ?? "",
+                country: dest.country ?? "",
+              },
+            }
+          : {}),
+      };
+
       return {
         framing: input.framing,
+        query,
         results: {
           hotelIds: (input.hotelIds ?? []).filter((id) => Number.isFinite(id)),
           rationales,
@@ -163,14 +200,20 @@ export default function AskPanel() {
     if (!presentation) return;
     if (presentation.framing === framing) return;
 
+    // Merge what the model reported on top of the vertical. Previously the
+    // hotel branch set only the vertical, so dates and occupancy never reached
+    // the store — and AskResults skips pricing entirely without dates, which is
+    // why cards appeared with no figure even when the visitor had given
+    // everything needed.
     const nextQuery: Partial<AiQueryState> = presentation.results.flights
       ? {
           vertical: "flights",
           origin: presentation.results.flights.origin,
           from: presentation.results.flights.departureDate,
           to: presentation.results.flights.returnDate,
+          ...presentation.query,
         }
-      : { vertical: "hotels" };
+      : { vertical: "hotels", ...presentation.query };
 
     setPresentation(presentation.framing, presentation.results, nextQuery);
   }, [messages, framing, persistMessages, setPresentation]);

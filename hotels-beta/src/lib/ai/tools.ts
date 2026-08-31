@@ -443,6 +443,19 @@ const presentResults = tool({
       returnDate?: string;
       cabin?: string;
     };
+    stay?: {
+      checkIn?: string;
+      checkOut?: string;
+      adults?: number;
+      kids?: number;
+      rooms?: number;
+    };
+    destination?: {
+      city?: string;
+      area?: string;
+      adminRegion?: string;
+      country?: string;
+    };
   }>({
     type: "object",
     properties: {
@@ -477,6 +490,34 @@ const presentResults = tool({
           cabin: { type: "string" },
         },
         required: ["origin", "destination", "departureDate"],
+        additionalProperties: false,
+      },
+      // The stay these results are for. WITHOUT THIS THE CARDS SHOW NO PRICE:
+      // pricing needs check-in, check-out and occupancy, and nothing else in
+      // the answer carries them. Fill it in whenever the visitor has given or
+      // implied dates, even loosely — the same values you passed to
+      // checkAvailability.
+      stay: {
+        type: "object",
+        properties: {
+          checkIn: { type: "string", description: "yyyy-mm-dd" },
+          checkOut: { type: "string", description: "yyyy-mm-dd" },
+          adults: { type: "number" },
+          kids: { type: "number" },
+          rooms: { type: "number" },
+        },
+        additionalProperties: false,
+      },
+      // Where these results are, so the page can offer "see all hotels in X"
+      // and hand the destination on.
+      destination: {
+        type: "object",
+        properties: {
+          city: { type: "string" },
+          area: { type: "string" },
+          adminRegion: { type: "string" },
+          country: { type: "string" },
+        },
         additionalProperties: false,
       },
     },
