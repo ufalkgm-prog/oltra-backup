@@ -52,6 +52,7 @@ scripts/agoda/output/
 scripts/ratehawk/*.zst
 scripts/ratehawk/*.jsonl
 scripts/ratehawk/output/
+scripts/hotels/geo-2026/output/
 
 # Airports (large third-party dataset, re-downloaded by the build script)
 scripts/airports/airports.csv

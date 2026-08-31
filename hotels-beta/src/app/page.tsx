@@ -48,9 +48,11 @@ function joinWithAnd(items: string[]): string {
 
 function buildHotelsHeaderLabel(count: number, sp: SearchParams): string {
   const city = cleanLabel(normalizeParam(sp.city));
+  const state = cleanLabel(normalizeParam(sp.state));
+  const adminRegion = cleanLabel(normalizeParam(sp.admin_region));
   const country = cleanLabel(normalizeParam(sp.country));
   const region = cleanLabel(normalizeParam(sp.region));
-  const location = city || country || region;
+  const location = city || state || adminRegion || country || region;
 
   const settingValues = normalizeParam(sp.settings)
     .split(",")
@@ -120,6 +122,8 @@ export default async function HomePage({
   const destinationKeys = [
     "q",
     "city",
+    "state",
+    "admin_region",
     "country",
     "region",
     "local_area",
@@ -138,7 +142,16 @@ export default async function HomePage({
     Boolean(fromDate) && Boolean(toDate) && guests.adults > 0 && Boolean(bedrooms);
 
   const metaHotels = await getHotels({
-    fields: ["hotel_name", "city", "country", "region", "activities", "setting"],
+    fields: [
+      "hotel_name",
+      "city",
+      "state_province_county_island",
+      "admin_region",
+      "country",
+      "region",
+      "activities",
+      "setting",
+    ],
     filter: { published: { _eq: true } },
     limit: -1,
   });

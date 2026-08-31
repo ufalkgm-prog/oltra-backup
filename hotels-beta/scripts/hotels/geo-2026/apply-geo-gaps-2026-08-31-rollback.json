@@ -1,0 +1,5858 @@
+[
+  {
+    "id": 1004,
+    "hotel_name": "Four Seasons Hotel Cairo at Nile Plaza",
+    "country": "Egypt",
+    "city": "Cairo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Cairo Governorate",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:41.210Z"
+  },
+  {
+    "id": 1005,
+    "hotel_name": "Four Seasons Hotel Cairo at The First Residence",
+    "country": "Egypt",
+    "city": "Cairo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Cairo Governorate",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:41.414Z"
+  },
+  {
+    "id": 1012,
+    "hotel_name": "The St. Regis Le Morne Resort, Mauritius",
+    "country": "Mauritius",
+    "city": "Le Morne Peninsula",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Rivière Noire District",
+      "state_province_county_island": "Le Morne"
+    },
+    "applied_at": "2026-08-31T14:43:41.621Z"
+  },
+  {
+    "id": 1013,
+    "hotel_name": "One&Only Le Saint Geran, Mauritius",
+    "country": "Mauritius",
+    "city": "Poste De Flacq",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Flacq District",
+      "state_province_county_island": "East Coast"
+    },
+    "applied_at": "2026-08-31T14:43:41.842Z"
+  },
+  {
+    "id": 1014,
+    "hotel_name": "Royal Palm Beachcomber Luxury",
+    "country": "Mauritius",
+    "city": "Grand Baie",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Rivière du Rempart District",
+      "state_province_county_island": "North Coast"
+    },
+    "applied_at": "2026-08-31T14:43:42.067Z"
+  },
+  {
+    "id": 1015,
+    "hotel_name": "The Residence Mauritius",
+    "country": "Mauritius",
+    "city": "Belle Mare",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Flacq District",
+      "state_province_county_island": "East Coast"
+    },
+    "applied_at": "2026-08-31T14:43:42.286Z"
+  },
+  {
+    "id": 1016,
+    "hotel_name": "Amanjena",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:42.504Z"
+  },
+  {
+    "id": 1017,
+    "hotel_name": "El Fenn",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:42.713Z"
+  },
+  {
+    "id": 1018,
+    "hotel_name": "Fairmont Royal Palm Marrakech",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:42.926Z"
+  },
+  {
+    "id": 1019,
+    "hotel_name": "Four Seasons Resort Marrakech",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:43.128Z"
+  },
+  {
+    "id": 1020,
+    "hotel_name": "Kasbah Tamadot",
+    "country": "Morocco",
+    "city": "Asni",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": "Atlas Mountains"
+    },
+    "applied_at": "2026-08-31T14:43:43.322Z"
+  },
+  {
+    "id": 1021,
+    "hotel_name": "La Mamounia",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:43.536Z"
+  },
+  {
+    "id": 1022,
+    "hotel_name": "Mandarin Oriental, Marrakech",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:43.748Z"
+  },
+  {
+    "id": 1023,
+    "hotel_name": "Nobu Marrakech",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:44.017Z"
+  },
+  {
+    "id": 1024,
+    "hotel_name": "Palais Ronsard",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:44.229Z"
+  },
+  {
+    "id": 1026,
+    "hotel_name": "Royal Mansour",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:44.453Z"
+  },
+  {
+    "id": 1027,
+    "hotel_name": "The Oberoi Marrakech",
+    "country": "Morocco",
+    "city": "Marrakech",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Marrakech-Safi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:44.680Z"
+  },
+  {
+    "id": 1045,
+    "hotel_name": "Ellerman House",
+    "country": "South Africa",
+    "city": "Cape Town",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Western Cape",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:44.926Z"
+  },
+  {
+    "id": 1048,
+    "hotel_name": "Loapi Tented Camp",
+    "country": "South Africa",
+    "city": "Tswalu Kalahari Reserve",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Northern Cape",
+      "state_province_county_island": "Kalahari"
+    },
+    "applied_at": "2026-08-31T14:43:45.139Z"
+  },
+  {
+    "id": 1050,
+    "hotel_name": "Mateya Safari Lodge",
+    "country": "South Africa",
+    "city": "Molatedi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North West",
+      "state_province_county_island": "Madikwe Game Reserve"
+    },
+    "applied_at": "2026-08-31T14:43:45.338Z"
+  },
+  {
+    "id": 1051,
+    "hotel_name": "One&Only Cape Town",
+    "country": "South Africa",
+    "city": "Cape Town",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Western Cape",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:45.533Z"
+  },
+  {
+    "id": 1056,
+    "hotel_name": "The Silo",
+    "country": "South Africa",
+    "city": "Cape Town",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Western Cape",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:45.742Z"
+  },
+  {
+    "id": 1066,
+    "hotel_name": "Amankora",
+    "country": "Bhutan",
+    "city": "Paro",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Paro District",
+      "state_province_county_island": "Paro Valley"
+    },
+    "applied_at": "2026-08-31T14:43:45.944Z"
+  },
+  {
+    "id": 1067,
+    "hotel_name": "COMO Uma Paro",
+    "country": "Bhutan",
+    "city": "Paro",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Paro District",
+      "state_province_county_island": "Paro Valley"
+    },
+    "applied_at": "2026-08-31T14:43:46.132Z"
+  },
+  {
+    "id": 1073,
+    "hotel_name": "Altira Macau",
+    "country": "China",
+    "city": "Macau",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Macau",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:46.319Z"
+  },
+  {
+    "id": 1074,
+    "hotel_name": "Summer Palace Hotel Beijing",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:46.505Z"
+  },
+  {
+    "id": 1075,
+    "hotel_name": "Amanyangyun",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:46.723Z"
+  },
+  {
+    "id": 1076,
+    "hotel_name": "Banyan Tree Shanghai On The Bund",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:46.944Z"
+  },
+  {
+    "id": 1077,
+    "hotel_name": "Bulgari Hotel Beijing",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:47.147Z"
+  },
+  {
+    "id": 1078,
+    "hotel_name": "Bulgari Hotel Shanghai",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:47.359Z"
+  },
+  {
+    "id": 1079,
+    "hotel_name": "Four Seasons Hotel Beijing",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:47.559Z"
+  },
+  {
+    "id": 1080,
+    "hotel_name": "Regent Shanghai",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:47.747Z"
+  },
+  {
+    "id": 1082,
+    "hotel_name": "Mandarin Oriental, Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:48.070Z"
+  },
+  {
+    "id": 1084,
+    "hotel_name": "The Ritz-Carlton, Nanjing",
+    "country": "China",
+    "city": "Nanjing",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Jiangsu",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:48.283Z"
+  },
+  {
+    "id": 1085,
+    "hotel_name": "Rosewood Beijing",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:48.485Z"
+  },
+  {
+    "id": 1087,
+    "hotel_name": "Rosewood Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:48.669Z"
+  },
+  {
+    "id": 1089,
+    "hotel_name": "Mandarin Oriental, The Landmark",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:48.894Z"
+  },
+  {
+    "id": 1090,
+    "hotel_name": "The Langham Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:49.100Z"
+  },
+  {
+    "id": 1091,
+    "hotel_name": "The Murray Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:49.311Z"
+  },
+  {
+    "id": 1093,
+    "hotel_name": "The Peninsula Beijing",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:49.529Z"
+  },
+  {
+    "id": 1094,
+    "hotel_name": "The Peninsula Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:49.737Z"
+  },
+  {
+    "id": 1095,
+    "hotel_name": "The Peninsula Shanghai",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:49.952Z"
+  },
+  {
+    "id": 1096,
+    "hotel_name": "The PuLi Hotel & Spa",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:50.154Z"
+  },
+  {
+    "id": 1097,
+    "hotel_name": "The PuXuan Hotel & Spa",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:50.348Z"
+  },
+  {
+    "id": 1098,
+    "hotel_name": "The Ritz-Carlton, Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:50.540Z"
+  },
+  {
+    "id": 1099,
+    "hotel_name": "The Ritz-Carlton, Macau",
+    "country": "China",
+    "city": "Macau",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Macau",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:50.736Z"
+  },
+  {
+    "id": 1100,
+    "hotel_name": "The Ritz-Carlton, Shanghai",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:50.953Z"
+  },
+  {
+    "id": 1101,
+    "hotel_name": "The Sanya EDITION",
+    "country": "China",
+    "city": "Hainan Island",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hainan",
+      "state_province_county_island": "Hainan Island"
+    },
+    "applied_at": "2026-08-31T14:43:51.141Z"
+  },
+  {
+    "id": 1102,
+    "hotel_name": "The Shanghai EDITION",
+    "country": "China",
+    "city": "Shanghai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Shanghai Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:51.338Z"
+  },
+  {
+    "id": 1103,
+    "hotel_name": "The St. Regis Beijing",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:51.528Z"
+  },
+  {
+    "id": 1104,
+    "hotel_name": "Upper House Chengdu",
+    "country": "China",
+    "city": "Chengdu",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Sichuan",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:51.751Z"
+  },
+  {
+    "id": 1105,
+    "hotel_name": "Four Seasons Hotel Hangzhou at West Lake",
+    "country": "China",
+    "city": "Hangzhou",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Zhejiang",
+      "state_province_county_island": "West Lake"
+    },
+    "applied_at": "2026-08-31T14:43:51.954Z"
+  },
+  {
+    "id": 1106,
+    "hotel_name": "Four Seasons Hotel Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:52.167Z"
+  },
+  {
+    "id": 1107,
+    "hotel_name": "The Hari Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:52.378Z"
+  },
+  {
+    "id": 1109,
+    "hotel_name": "Four Seasons Hotel Mumbai",
+    "country": "India",
+    "city": "Mumbai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Maharashtra",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:52.574Z"
+  },
+  {
+    "id": 1111,
+    "hotel_name": "Taj Lake Palace, Udaipur",
+    "country": "India",
+    "city": "Udaipur",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Rajasthan",
+      "state_province_county_island": "Udaipur"
+    },
+    "applied_at": "2026-08-31T14:43:52.760Z"
+  },
+  {
+    "id": 1112,
+    "hotel_name": "The Oberoi Amarvilâs",
+    "country": "India",
+    "city": "Agra",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Uttar Pradesh",
+      "state_province_county_island": "Agra"
+    },
+    "applied_at": "2026-08-31T14:43:52.989Z"
+  },
+  {
+    "id": 1113,
+    "hotel_name": "The Oberoi Mumbai",
+    "country": "India",
+    "city": "Mumbai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Maharashtra",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:53.191Z"
+  },
+  {
+    "id": 1114,
+    "hotel_name": "The Oberoi New Delhi",
+    "country": "India",
+    "city": "New Delhi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Delhi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:53.396Z"
+  },
+  {
+    "id": 1124,
+    "hotel_name": "Four Seasons Hotel Jakarta",
+    "country": "Indonesia",
+    "city": "Jakarta",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Jakarta",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:53.601Z"
+  },
+  {
+    "id": 1126,
+    "hotel_name": "Mandarin Oriental, Jakarta",
+    "country": "Indonesia",
+    "city": "Jakarta",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Jakarta",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:53.808Z"
+  },
+  {
+    "id": 1128,
+    "hotel_name": "Park Hyatt Jakarta",
+    "country": "Indonesia",
+    "city": "Jakarta",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Jakarta",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:54.054Z"
+  },
+  {
+    "id": 1133,
+    "hotel_name": "The Langham Jakarta",
+    "country": "Indonesia",
+    "city": "Jakarta",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Jakarta",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:54.288Z"
+  },
+  {
+    "id": 1136,
+    "hotel_name": "Aman Tokyo",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:54.490Z"
+  },
+  {
+    "id": 1137,
+    "hotel_name": "Bulgari Tokyo",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:54.695Z"
+  },
+  {
+    "id": 1138,
+    "hotel_name": "Four Seasons Hotel Tokyo at Otemachi",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:54.921Z"
+  },
+  {
+    "id": 1139,
+    "hotel_name": "Grand Hyatt Tokyo",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:55.158Z"
+  },
+  {
+    "id": 1140,
+    "hotel_name": "Hotel The Mitsui Kyoto",
+    "country": "Japan",
+    "city": "Kyoto",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kyoto Prefecture",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:55.403Z"
+  },
+  {
+    "id": 1141,
+    "hotel_name": "The Peninsula Tokyo",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:55.605Z"
+  },
+  {
+    "id": 1142,
+    "hotel_name": "The Ritz-Carlton, Kyoto",
+    "country": "Japan",
+    "city": "Kyoto",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kyoto Prefecture",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:55.810Z"
+  },
+  {
+    "id": 1143,
+    "hotel_name": "The Ritz-Carlton, Nikko",
+    "country": "Japan",
+    "city": "Nikko",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tochigi Prefecture",
+      "state_province_county_island": "Nikko"
+    },
+    "applied_at": "2026-08-31T14:43:56.058Z"
+  },
+  {
+    "id": 1144,
+    "hotel_name": "The Ritz-Carlton, Tokyo",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:56.260Z"
+  },
+  {
+    "id": 1145,
+    "hotel_name": "The St. Regis Osaka",
+    "country": "Japan",
+    "city": "Osaka",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Osaka Prefecture",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:56.442Z"
+  },
+  {
+    "id": 1146,
+    "hotel_name": "The Tokyo Toranomon EDITION",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:56.641Z"
+  },
+  {
+    "id": 1147,
+    "hotel_name": "The Windsor Hotel TOYA",
+    "country": "Japan",
+    "city": "Hokkaido",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hokkaido",
+      "state_province_county_island": "Hokkaido"
+    },
+    "applied_at": "2026-08-31T14:43:56.868Z"
+  },
+  {
+    "id": 1148,
+    "hotel_name": "Mandarin Oriental, Tokyo",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:57.077Z"
+  },
+  {
+    "id": 1149,
+    "hotel_name": "Park Hyatt Kyoto",
+    "country": "Japan",
+    "city": "Kyoto",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kyoto Prefecture",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:57.272Z"
+  },
+  {
+    "id": 1150,
+    "hotel_name": "Mandarin Oriental, Kuala Lumpur",
+    "country": "Malaysia",
+    "city": "Kuala Lumpur",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kuala Lumpur",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:57.477Z"
+  },
+  {
+    "id": 1151,
+    "hotel_name": "The Datai Langkawi",
+    "country": "Malaysia",
+    "city": "Langkawi",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kedah",
+      "state_province_county_island": "Langkawi"
+    },
+    "applied_at": "2026-08-31T14:43:57.673Z"
+  },
+  {
+    "id": 1152,
+    "hotel_name": "The Ritz-Carlton, Kuala Lumpur",
+    "country": "Malaysia",
+    "city": "Kuala Lumpur",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kuala Lumpur",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:57.868Z"
+  },
+  {
+    "id": 1153,
+    "hotel_name": "The RuMa Hotel and Residences",
+    "country": "Malaysia",
+    "city": "Kuala Lumpur",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kuala Lumpur",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:58.061Z"
+  },
+  {
+    "id": 1154,
+    "hotel_name": "The St. Regis Kuala Lumpur",
+    "country": "Malaysia",
+    "city": "Kuala Lumpur",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kuala Lumpur",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:43:58.279Z"
+  },
+  {
+    "id": 1155,
+    "hotel_name": "Anantara Kihavah Maldives Villas",
+    "country": "Maldives",
+    "city": "Kihavah",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Baa Atoll",
+      "state_province_county_island": "Baa Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:58.477Z"
+  },
+  {
+    "id": 1157,
+    "hotel_name": "Cheval Blanc Randheli",
+    "country": "Maldives",
+    "city": "Randheli",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Noonu Atoll",
+      "state_province_county_island": "Noonu Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:58.675Z"
+  },
+  {
+    "id": 1158,
+    "hotel_name": "COMO Cocoa Island",
+    "country": "Maldives",
+    "city": "Cocoa Island",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kaafu Atoll",
+      "state_province_county_island": "South Malé Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:58.890Z"
+  },
+  {
+    "id": 1159,
+    "hotel_name": "COMO Maalifushi",
+    "country": "Maldives",
+    "city": "Maalifushi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Thaa Atoll",
+      "state_province_county_island": "Thaa Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:59.094Z"
+  },
+  {
+    "id": 1162,
+    "hotel_name": "Four Seasons Private Island at Voavah",
+    "country": "Maldives",
+    "city": "Voavah",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Baa Atoll",
+      "state_province_county_island": "Baa Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:59.292Z"
+  },
+  {
+    "id": 1165,
+    "hotel_name": "Gili Lankanfushi Maldives",
+    "country": "Maldives",
+    "city": "Lankanfushi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kaafu Atoll",
+      "state_province_county_island": "North Malé Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:59.504Z"
+  },
+  {
+    "id": 1168,
+    "hotel_name": "JOALI Maldives",
+    "country": "Maldives",
+    "city": "Muravandhoo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Raa Atoll",
+      "state_province_county_island": "Raa Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:59.711Z"
+  },
+  {
+    "id": 1178,
+    "hotel_name": "The St. Regis Maldives Vommuli Resort",
+    "country": "Maldives",
+    "city": "Vommuli Island",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Dhaalu Atoll",
+      "state_province_county_island": "Dhaalu Atoll"
+    },
+    "applied_at": "2026-08-31T14:43:59.943Z"
+  },
+  {
+    "id": 1180,
+    "hotel_name": "The Ritz-Carlton, Maldives, Fari Islands",
+    "country": "Maldives",
+    "city": "Fari Islands Archipelago",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Kaafu Atoll",
+      "state_province_county_island": "North Malé Atoll"
+    },
+    "applied_at": "2026-08-31T14:44:00.145Z"
+  },
+  {
+    "id": 1181,
+    "hotel_name": "Velaa Private Island",
+    "country": "Maldives",
+    "city": "Velaa",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Noonu Atoll",
+      "state_province_county_island": "Noonu Atoll"
+    },
+    "applied_at": "2026-08-31T14:44:00.343Z"
+  },
+  {
+    "id": 1182,
+    "hotel_name": "The Strand Yangon",
+    "country": "Myanmar",
+    "city": "Yangon",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Yangon Region",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:00.527Z"
+  },
+  {
+    "id": 1184,
+    "hotel_name": "Solaire Resort Entertainment City - Sky Tower",
+    "country": "Philippines",
+    "city": "Manila",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Metro Manila",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:00.816Z"
+  },
+  {
+    "id": 1185,
+    "hotel_name": "The Peninsula Manila",
+    "country": "Philippines",
+    "city": "Manila",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Metro Manila",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:01.023Z"
+  },
+  {
+    "id": 1186,
+    "hotel_name": "Capella Singapore",
+    "country": "Singapore",
+    "city": "Singapore",
+    "source": "per-hotel",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Singapore",
+      "state_province_county_island": "Sentosa Island"
+    },
+    "applied_at": "2026-08-31T14:44:01.239Z"
+  },
+  {
+    "id": 1187,
+    "hotel_name": "Four Seasons Hotel Singapore",
+    "country": "Singapore",
+    "city": "Singapore",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Singapore",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:01.456Z"
+  },
+  {
+    "id": 1188,
+    "hotel_name": "Mandarin Oriental, Singapore",
+    "country": "Singapore",
+    "city": "Singapore",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Singapore",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:01.662Z"
+  },
+  {
+    "id": 1189,
+    "hotel_name": "Raffles Singapore",
+    "country": "Singapore",
+    "city": "Singapore",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Singapore",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:01.879Z"
+  },
+  {
+    "id": 1190,
+    "hotel_name": "The Ritz-Carlton, Millenia Singapore",
+    "country": "Singapore",
+    "city": "Singapore",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Singapore",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:02.086Z"
+  },
+  {
+    "id": 1191,
+    "hotel_name": "Paradise Hotel Busan",
+    "country": "South Korea",
+    "city": "Haeundae-gu",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Busan",
+      "state_province_county_island": "Haeundae"
+    },
+    "applied_at": "2026-08-31T14:44:02.348Z"
+  },
+  {
+    "id": 1192,
+    "hotel_name": "137 Pillars Suites & Residences Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:02.557Z"
+  },
+  {
+    "id": 1195,
+    "hotel_name": "Anantara Golden Triangle Elephant Camp & Resort",
+    "country": "Thailand",
+    "city": "Chiang Rai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Chiang Rai Province",
+      "state_province_county_island": "Golden Triangle"
+    },
+    "applied_at": "2026-08-31T14:44:02.768Z"
+  },
+  {
+    "id": 1197,
+    "hotel_name": "Anantara Riverside Bangkok Resort",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:02.973Z"
+  },
+  {
+    "id": 1198,
+    "hotel_name": "Avani+ Riverside Bangkok Hotel",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:03.192Z"
+  },
+  {
+    "id": 1199,
+    "hotel_name": "Banyan Tree Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:03.400Z"
+  },
+  {
+    "id": 1201,
+    "hotel_name": "Capella Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:03.596Z"
+  },
+  {
+    "id": 1202,
+    "hotel_name": "Chiva-Som Hua Hin",
+    "country": "Thailand",
+    "city": "Hua Hin",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Prachuap Khiri Khan Province",
+      "state_province_county_island": "Hua Hin"
+    },
+    "applied_at": "2026-08-31T14:44:03.812Z"
+  },
+  {
+    "id": 1204,
+    "hotel_name": "Four Seasons Hotel Bangkok at Chao Phraya River",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:04.012Z"
+  },
+  {
+    "id": 1205,
+    "hotel_name": "Four Seasons Resort Chiang Mai",
+    "country": "Thailand",
+    "city": "Chiang Mai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Chiang Mai Province",
+      "state_province_county_island": "Chiang Mai"
+    },
+    "applied_at": "2026-08-31T14:44:04.210Z"
+  },
+  {
+    "id": 1207,
+    "hotel_name": "Four Seasons Tented Camp Golden Triangle",
+    "country": "Thailand",
+    "city": "Chiang Rai",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Chiang Rai Province",
+      "state_province_county_island": "Golden Triangle"
+    },
+    "applied_at": "2026-08-31T14:44:04.424Z"
+  },
+  {
+    "id": 1208,
+    "hotel_name": "Hotel Muse Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:04.630Z"
+  },
+  {
+    "id": 1210,
+    "hotel_name": "Mandarin Oriental, Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:04.858Z"
+  },
+  {
+    "id": 1214,
+    "hotel_name": "Rosewood Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:05.064Z"
+  },
+  {
+    "id": 1218,
+    "hotel_name": "SO/ Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:05.262Z"
+  },
+  {
+    "id": 1221,
+    "hotel_name": "The Okura Prestige Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:05.466Z"
+  },
+  {
+    "id": 1222,
+    "hotel_name": "The Peninsula Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:05.663Z"
+  },
+  {
+    "id": 1223,
+    "hotel_name": "The Siam",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:05.863Z"
+  },
+  {
+    "id": 1224,
+    "hotel_name": "The St. Regis Bangkok",
+    "country": "Thailand",
+    "city": "Bangkok",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bangkok",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:06.058Z"
+  },
+  {
+    "id": 1228,
+    "hotel_name": "Capella Hanoi",
+    "country": "Vietnam",
+    "city": "Hanoi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hanoi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:06.263Z"
+  },
+  {
+    "id": 1229,
+    "hotel_name": "Four Seasons Resort the Nam Hai",
+    "country": "Vietnam",
+    "city": "Hoi An",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Quang Nam Province",
+      "state_province_county_island": "Hoi An"
+    },
+    "applied_at": "2026-08-31T14:44:06.462Z"
+  },
+  {
+    "id": 1230,
+    "hotel_name": "InterContinental Danang Sun Peninsula Resort",
+    "country": "Vietnam",
+    "city": "Da Nang",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Da Nang",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:06.761Z"
+  },
+  {
+    "id": 1231,
+    "hotel_name": "Park Hyatt Saigon",
+    "country": "Vietnam",
+    "city": "Ho Chi Minh City",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Ho Chi Minh City",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:07.049Z"
+  },
+  {
+    "id": 1234,
+    "hotel_name": "Six Senses Ninh Van Bay",
+    "country": "Vietnam",
+    "city": "Ninh Van Bay",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Khanh Hoa Province",
+      "state_province_county_island": "Ninh Van Bay"
+    },
+    "applied_at": "2026-08-31T14:44:07.254Z"
+  },
+  {
+    "id": 1235,
+    "hotel_name": "The Reverie Saigon",
+    "country": "Vietnam",
+    "city": "Ho Chi Minh City",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Ho Chi Minh City",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:07.631Z"
+  },
+  {
+    "id": 1236,
+    "hotel_name": "Sandy Lane",
+    "country": "Barbados",
+    "city": "St. James",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint James",
+      "state_province_county_island": "West Coast"
+    },
+    "applied_at": "2026-08-31T14:44:07.886Z"
+  },
+  {
+    "id": 1244,
+    "hotel_name": "The Ritz-Carlton, Grand Cayman",
+    "country": "Cayman Islands",
+    "city": "Seven Mile Beach",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Grand Cayman",
+      "state_province_county_island": "Seven Mile Beach"
+    },
+    "applied_at": "2026-08-31T14:44:08.166Z"
+  },
+  {
+    "id": 1245,
+    "hotel_name": "Amanera",
+    "country": "Dominican Republic",
+    "city": "Rio San Juan",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "María Trinidad Sánchez",
+      "state_province_county_island": "Playa Grande"
+    },
+    "applied_at": "2026-08-31T14:44:08.382Z"
+  },
+  {
+    "id": 1246,
+    "hotel_name": "Silversands Grand Anse",
+    "country": "Grenada",
+    "city": "Grand Anse Beach",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint George Parish",
+      "state_province_county_island": "Grand Anse"
+    },
+    "applied_at": "2026-08-31T14:44:08.609Z"
+  },
+  {
+    "id": 1247,
+    "hotel_name": "Excellence Oyster Bay",
+    "country": "Jamaica",
+    "city": "Montego Bay",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint James Parish",
+      "state_province_county_island": "Montego Bay"
+    },
+    "applied_at": "2026-08-31T14:44:08.870Z"
+  },
+  {
+    "id": 1248,
+    "hotel_name": "Cheval Blanc St-Barth",
+    "country": "St. Barthelemy",
+    "city": "St. Barthelemy",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint Barthélemy",
+      "state_province_county_island": "St. Barths"
+    },
+    "applied_at": "2026-08-31T14:44:09.126Z"
+  },
+  {
+    "id": 1249,
+    "hotel_name": "Eden Rock St Barths",
+    "country": "St. Barthelemy",
+    "city": "St. Barthelemy",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint Barthélemy",
+      "state_province_county_island": "St. Barths"
+    },
+    "applied_at": "2026-08-31T14:44:09.340Z"
+  },
+  {
+    "id": 1250,
+    "hotel_name": "Fouquet's Saint-Barth",
+    "country": "St. Barthelemy",
+    "city": "Gustavia",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint Barthélemy",
+      "state_province_county_island": "St. Barths"
+    },
+    "applied_at": "2026-08-31T14:44:09.555Z"
+  },
+  {
+    "id": 1251,
+    "hotel_name": "Rosewood Le Guanahani St. Barth",
+    "country": "St. Barthelemy",
+    "city": "Grand Cul-de-sac",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint Barthélemy",
+      "state_province_county_island": "St. Barths"
+    },
+    "applied_at": "2026-08-31T14:44:09.847Z"
+  },
+  {
+    "id": 1252,
+    "hotel_name": "Sugar Beach",
+    "country": "St. Lucia",
+    "city": "Sourfriere",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Soufrière District",
+      "state_province_county_island": "Soufrière"
+    },
+    "applied_at": "2026-08-31T14:44:10.083Z"
+  },
+  {
+    "id": 1253,
+    "hotel_name": "La Samanna",
+    "country": "St. Martin",
+    "city": "Marigot",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Saint Martin",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:10.331Z"
+  },
+  {
+    "id": 1256,
+    "hotel_name": "Amanyara",
+    "country": "Turks & Caicos Islands",
+    "city": "Providenciales",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Caicos Islands",
+      "state_province_county_island": "Providenciales"
+    },
+    "applied_at": "2026-08-31T14:44:10.616Z"
+  },
+  {
+    "id": 1257,
+    "hotel_name": "COMO Parrot Cay",
+    "country": "Turks & Caicos Islands",
+    "city": "Providenciales",
+    "source": "per-hotel",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Caicos Islands",
+      "state_province_county_island": "Parrot Cay"
+    },
+    "applied_at": "2026-08-31T14:44:10.831Z"
+  },
+  {
+    "id": 1258,
+    "hotel_name": "Grace Bay Club",
+    "country": "Turks & Caicos Islands",
+    "city": "Providenciales",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Caicos Islands",
+      "state_province_county_island": "Providenciales"
+    },
+    "applied_at": "2026-08-31T14:44:11.085Z"
+  },
+  {
+    "id": 1259,
+    "hotel_name": "Pine Cay - Turks and Caicos",
+    "country": "Turks & Caicos Islands",
+    "city": "Pine Cay",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Caicos Islands",
+      "state_province_county_island": "Pine Cay"
+    },
+    "applied_at": "2026-08-31T14:44:11.323Z"
+  },
+  {
+    "id": 1260,
+    "hotel_name": "The Shore Club",
+    "country": "Turks & Caicos Islands",
+    "city": "Providenciales",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Caicos Islands",
+      "state_province_county_island": "Providenciales"
+    },
+    "applied_at": "2026-08-31T14:44:11.557Z"
+  },
+  {
+    "id": 1262,
+    "hotel_name": "Four Seasons Resort Papagayo, Costa Rica",
+    "country": "Costa Rica",
+    "city": "Guanacaste",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Guanacaste Province",
+      "state_province_county_island": "Guanacaste"
+    },
+    "applied_at": "2026-08-31T14:44:11.767Z"
+  },
+  {
+    "id": 1265,
+    "hotel_name": "Nayara Springs",
+    "country": "Costa Rica",
+    "city": "Arenal",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Alajuela Province",
+      "state_province_county_island": "Arenal"
+    },
+    "applied_at": "2026-08-31T14:44:11.983Z"
+  },
+  {
+    "id": 1266,
+    "hotel_name": "Nayara Tented Camp",
+    "country": "Costa Rica",
+    "city": "Arenal",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Alajuela Province",
+      "state_province_county_island": "Arenal"
+    },
+    "applied_at": "2026-08-31T14:44:12.191Z"
+  },
+  {
+    "id": 1267,
+    "hotel_name": "Dorado Beach, a Ritz-Carlton Reserve",
+    "country": "Puerto Rico",
+    "city": "Dorado",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Dorado",
+      "state_province_county_island": "Dorado Beach"
+    },
+    "applied_at": "2026-08-31T14:44:12.444Z"
+  },
+  {
+    "id": 1268,
+    "hotel_name": "Almhof Schneider",
+    "country": "Austria",
+    "city": "Lech Am Arlberg",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vorarlberg",
+      "state_province_county_island": "Arlberg"
+    },
+    "applied_at": "2026-08-31T14:44:12.645Z"
+  },
+  {
+    "id": 1269,
+    "hotel_name": "Aurelio Lech",
+    "country": "Austria",
+    "city": "Lech Am Arlberg",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vorarlberg",
+      "state_province_county_island": "Arlberg"
+    },
+    "applied_at": "2026-08-31T14:44:12.844Z"
+  },
+  {
+    "id": 1270,
+    "hotel_name": "Hotel Post Lech Arlberg",
+    "country": "Austria",
+    "city": "Lech Am Arlberg",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vorarlberg",
+      "state_province_county_island": "Arlberg"
+    },
+    "applied_at": "2026-08-31T14:44:13.053Z"
+  },
+  {
+    "id": 1271,
+    "hotel_name": "Hotel Motto",
+    "country": "Austria",
+    "city": "Vienna",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vienna",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:13.261Z"
+  },
+  {
+    "id": 1272,
+    "hotel_name": "Hotel Sacher Wien",
+    "country": "Austria",
+    "city": "Vienna",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vienna",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:13.476Z"
+  },
+  {
+    "id": 1273,
+    "hotel_name": "Kristiania Lech",
+    "country": "Austria",
+    "city": "Lech Am Arlberg",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vorarlberg",
+      "state_province_county_island": "Arlberg"
+    },
+    "applied_at": "2026-08-31T14:44:13.677Z"
+  },
+  {
+    "id": 1274,
+    "hotel_name": "Palais Coburg",
+    "country": "Austria",
+    "city": "Vienna",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vienna",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:13.872Z"
+  },
+  {
+    "id": 1275,
+    "hotel_name": "Villa Dubrovnik",
+    "country": "Croatia",
+    "city": "Dubrovnik",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Dubrovnik-Neretva County",
+      "state_province_county_island": "Dalmatia"
+    },
+    "applied_at": "2026-08-31T14:44:14.063Z"
+  },
+  {
+    "id": 1276,
+    "hotel_name": "Almyra",
+    "country": "Cyprus",
+    "city": "Paphos",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Paphos District",
+      "state_province_county_island": "Paphos"
+    },
+    "applied_at": "2026-08-31T14:44:14.265Z"
+  },
+  {
+    "id": 1277,
+    "hotel_name": "Andaz Prague",
+    "country": "Czech Republic",
+    "city": "Prague",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Prague",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:14.465Z"
+  },
+  {
+    "id": 1278,
+    "hotel_name": "Four Seasons Hotel Prague",
+    "country": "Czech Republic",
+    "city": "Prague",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Prague",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:14.661Z"
+  },
+  {
+    "id": 1279,
+    "hotel_name": "Hotel d'Angleterre Copenhagen",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Capital Region",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:14.850Z"
+  },
+  {
+    "id": 1280,
+    "hotel_name": "Hotel Sanders",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Capital Region",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:15.049Z"
+  },
+  {
+    "id": 1281,
+    "hotel_name": "1 Hotel Mayfair",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:15.244Z"
+  },
+  {
+    "id": 1283,
+    "hotel_name": "Bulgari Hotel London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:15.438Z"
+  },
+  {
+    "id": 1284,
+    "hotel_name": "Chateau Denmark",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:15.702Z"
+  },
+  {
+    "id": 1285,
+    "hotel_name": "Claridge's",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:15.893Z"
+  },
+  {
+    "id": 1286,
+    "hotel_name": "Corinthia Hotel London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:16.094Z"
+  },
+  {
+    "id": 1287,
+    "hotel_name": "Four Seasons Hotel Hampshire",
+    "country": "United Kingdom",
+    "city": "Hampshire",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hampshire",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:16.287Z"
+  },
+  {
+    "id": 1288,
+    "hotel_name": "Four Seasons Hotel London at Park Lane",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:16.496Z"
+  },
+  {
+    "id": 1290,
+    "hotel_name": "Hotel 41",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:16.717Z"
+  },
+  {
+    "id": 1292,
+    "hotel_name": "Mandarin Oriental Hyde Park, London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:16.914Z"
+  },
+  {
+    "id": 1293,
+    "hotel_name": "ME London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:17.096Z"
+  },
+  {
+    "id": 1294,
+    "hotel_name": "NoMad London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:17.307Z"
+  },
+  {
+    "id": 1295,
+    "hotel_name": "One Aldwych",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:17.546Z"
+  },
+  {
+    "id": 1296,
+    "hotel_name": "Raffles London at The OWO",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:17.752Z"
+  },
+  {
+    "id": 1297,
+    "hotel_name": "Rosewood London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:17.951Z"
+  },
+  {
+    "id": 1298,
+    "hotel_name": "Rusacks St Andrews",
+    "country": "United Kingdom",
+    "city": "St. Andrews",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Scotland",
+      "state_province_county_island": "Fife"
+    },
+    "applied_at": "2026-08-31T14:44:18.162Z"
+  },
+  {
+    "id": 1299,
+    "hotel_name": "Shangri-La The Shard, London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:18.358Z"
+  },
+  {
+    "id": 1300,
+    "hotel_name": "St. Pancras London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:18.562Z"
+  },
+  {
+    "id": 1301,
+    "hotel_name": "The Berkeley",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:18.758Z"
+  },
+  {
+    "id": 1302,
+    "hotel_name": "The Connaught",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:19.003Z"
+  },
+  {
+    "id": 1303,
+    "hotel_name": "The Dorchester",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:19.206Z"
+  },
+  {
+    "id": 1304,
+    "hotel_name": "The Franklin, London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:19.406Z"
+  },
+  {
+    "id": 1306,
+    "hotel_name": "The Goring",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:19.626Z"
+  },
+  {
+    "id": 1307,
+    "hotel_name": "The Lanesborough",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:19.839Z"
+  },
+  {
+    "id": 1308,
+    "hotel_name": "The Langham London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:20.105Z"
+  },
+  {
+    "id": 1309,
+    "hotel_name": "The London EDITION",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:20.329Z"
+  },
+  {
+    "id": 1310,
+    "hotel_name": "The Peninsula London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:20.546Z"
+  },
+  {
+    "id": 1311,
+    "hotel_name": "The Ritz London",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:20.755Z"
+  },
+  {
+    "id": 1334,
+    "hotel_name": "Le Royal Deauville",
+    "country": "France",
+    "city": "Deauville",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Normandy",
+      "state_province_county_island": "Normandy"
+    },
+    "applied_at": "2026-08-31T14:44:20.976Z"
+  },
+  {
+    "id": 1338,
+    "hotel_name": "Hotel Chais Monnet & Spa",
+    "country": "France",
+    "city": "Cognac",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Nouvelle-Aquitaine",
+      "state_province_county_island": "Cognac"
+    },
+    "applied_at": "2026-08-31T14:44:21.205Z"
+  },
+  {
+    "id": 1346,
+    "hotel_name": "Hotel Royal",
+    "country": "France",
+    "city": "Neuvecelle",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Haute-Savoie",
+      "state_province_county_island": "Lake Geneva"
+    },
+    "applied_at": "2026-08-31T14:44:21.401Z"
+  },
+  {
+    "id": 1358,
+    "hotel_name": "Les Fermes de Marie",
+    "country": "France",
+    "city": "Megeve",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Haute-Savoie",
+      "state_province_county_island": "French Alps"
+    },
+    "applied_at": "2026-08-31T14:44:21.611Z"
+  },
+  {
+    "id": 1371,
+    "hotel_name": "Villa La Coste",
+    "country": "France",
+    "city": "Le Puy-Sainte-Réparade",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Provence-Alpes-Côte d'Azur",
+      "state_province_county_island": "Provence"
+    },
+    "applied_at": "2026-08-31T14:44:21.807Z"
+  },
+  {
+    "id": 1372,
+    "hotel_name": "Althoff Grandhotel Schloss Bensberg",
+    "country": "Germany",
+    "city": "Cologne",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North Rhine-Westphalia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:22.011Z"
+  },
+  {
+    "id": 1373,
+    "hotel_name": "Brenners Park-Hotel & Spa",
+    "country": "Germany",
+    "city": "Baden-Baden",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Baden-Württemberg",
+      "state_province_county_island": "Black Forest"
+    },
+    "applied_at": "2026-08-31T14:44:22.230Z"
+  },
+  {
+    "id": 1374,
+    "hotel_name": "Das Stue",
+    "country": "Germany",
+    "city": "Berlin",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Berlin",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:22.451Z"
+  },
+  {
+    "id": 1375,
+    "hotel_name": "Excelsior Hotel Ernst",
+    "country": "Germany",
+    "city": "Cologne",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North Rhine-Westphalia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:22.640Z"
+  },
+  {
+    "id": 1376,
+    "hotel_name": "Fairmont Hotel Vier Jahreszeiten",
+    "country": "Germany",
+    "city": "Hamburg",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hamburg",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:22.845Z"
+  },
+  {
+    "id": 1377,
+    "hotel_name": "Hotel de Rome",
+    "country": "Germany",
+    "city": "Berlin",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Berlin",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:23.076Z"
+  },
+  {
+    "id": 1378,
+    "hotel_name": "Schloss Elmau",
+    "country": "Germany",
+    "city": "Elmau",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bavaria",
+      "state_province_county_island": "Bavarian Alps"
+    },
+    "applied_at": "2026-08-31T14:44:23.276Z"
+  },
+  {
+    "id": 1379,
+    "hotel_name": "The Fontenay Hamburg",
+    "country": "Germany",
+    "city": "Hamburg",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hamburg",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:23.461Z"
+  },
+  {
+    "id": 1380,
+    "hotel_name": "The Ritz-Carlton, Berlin",
+    "country": "Germany",
+    "city": "Berlin",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Berlin",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:23.678Z"
+  },
+  {
+    "id": 1398,
+    "hotel_name": "Hotel Grande Bretagne",
+    "country": "Greece",
+    "city": "Athens",
+    "source": "per-hotel",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Attica",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:23.903Z"
+  },
+  {
+    "id": 1411,
+    "hotel_name": "One&Only Aesthesis, Athenian Riviera",
+    "country": "Greece",
+    "city": "Athens",
+    "source": "per-hotel",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Attica",
+      "state_province_county_island": "Athens Riviera"
+    },
+    "applied_at": "2026-08-31T14:44:24.142Z"
+  },
+  {
+    "id": 1415,
+    "hotel_name": "Four Seasons Hotel Gresham Palace Budapest",
+    "country": "Hungary",
+    "city": "Budapest",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Budapest",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:24.344Z"
+  },
+  {
+    "id": 1416,
+    "hotel_name": "Matild Palace",
+    "country": "Hungary",
+    "city": "Budapest",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Budapest",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:24.561Z"
+  },
+  {
+    "id": 1417,
+    "hotel_name": "The Reykjavik EDITION",
+    "country": "Iceland",
+    "city": "Reykjavik",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Capital Region",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:24.767Z"
+  },
+  {
+    "id": 1422,
+    "hotel_name": "Anantara The Marker Dublin",
+    "country": "Ireland",
+    "city": "Dublin",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "County Dublin",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:24.961Z"
+  },
+  {
+    "id": 1423,
+    "hotel_name": "Aman Venice",
+    "country": "Italy",
+    "city": "Venice",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Veneto",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:25.157Z"
+  },
+  {
+    "id": 1424,
+    "hotel_name": "Anantara Palazzo Naiadi Rome",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:25.374Z"
+  },
+  {
+    "id": 1425,
+    "hotel_name": "Baglioni Hotel Regina Rome",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:25.579Z"
+  },
+  {
+    "id": 1427,
+    "hotel_name": "Hotel Cipriani",
+    "country": "Italy",
+    "city": "Venice",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Veneto",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:25.786Z"
+  },
+  {
+    "id": 1431,
+    "hotel_name": "Bulgari Hotel Roma",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:26.028Z"
+  },
+  {
+    "id": 1438,
+    "hotel_name": "Four Seasons Hotel Firenze",
+    "country": "Italy",
+    "city": "Florence",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tuscany",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:26.253Z"
+  },
+  {
+    "id": 1441,
+    "hotel_name": "Grand Hotel a Villa Feltrinelli",
+    "country": "Italy",
+    "city": "Gargnano",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lombardy",
+      "state_province_county_island": "Lake Garda"
+    },
+    "applied_at": "2026-08-31T14:44:26.511Z"
+  },
+  {
+    "id": 1443,
+    "hotel_name": "Grand Hotel Excelsior Vittoria",
+    "country": "Italy",
+    "city": "Sorrento",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Campania",
+      "state_province_county_island": "Amalfi Coast"
+    },
+    "applied_at": "2026-08-31T14:44:26.759Z"
+  },
+  {
+    "id": 1444,
+    "hotel_name": "Grand Hotel Fasano",
+    "country": "Italy",
+    "city": "Gardone Riviera",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lombardy",
+      "state_province_county_island": "Lake Garda"
+    },
+    "applied_at": "2026-08-31T14:44:26.972Z"
+  },
+  {
+    "id": 1447,
+    "hotel_name": "Grand Hotel Tremezzo",
+    "country": "Italy",
+    "city": "Tremezzina",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lombardy",
+      "state_province_county_island": "Lake Como"
+    },
+    "applied_at": "2026-08-31T14:44:27.203Z"
+  },
+  {
+    "id": 1448,
+    "hotel_name": "Grand Hotel Vesuvio",
+    "country": "Italy",
+    "city": "Naples",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Campania",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:27.416Z"
+  },
+  {
+    "id": 1450,
+    "hotel_name": "Hotel de la Ville",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:27.616Z"
+  },
+  {
+    "id": 1451,
+    "hotel_name": "Hotel de Russie",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:27.825Z"
+  },
+  {
+    "id": 1452,
+    "hotel_name": "Hotel Eden Rome",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:28.083Z"
+  },
+  {
+    "id": 1453,
+    "hotel_name": "Hotel Hermitage Cervinia",
+    "country": "Italy",
+    "city": "Cervinia",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Aosta Valley",
+      "state_province_county_island": "Italian Alps"
+    },
+    "applied_at": "2026-08-31T14:44:28.295Z"
+  },
+  {
+    "id": 1455,
+    "hotel_name": "Hotel Splendide Royal",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:28.489Z"
+  },
+  {
+    "id": 1458,
+    "hotel_name": "Il Sereno Lago di Como",
+    "country": "Italy",
+    "city": "Torno",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lombardy",
+      "state_province_county_island": "Lake Como"
+    },
+    "applied_at": "2026-08-31T14:44:28.701Z"
+  },
+  {
+    "id": 1461,
+    "hotel_name": "Mandarin Oriental, Lago di Como",
+    "country": "Italy",
+    "city": "Blevio",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lombardy",
+      "state_province_county_island": "Lake Como"
+    },
+    "applied_at": "2026-08-31T14:44:28.935Z"
+  },
+  {
+    "id": 1463,
+    "hotel_name": "Miramonti",
+    "country": "Italy",
+    "city": "Merano",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "South Tyrol",
+      "state_province_county_island": "South Tyrol"
+    },
+    "applied_at": "2026-08-31T14:44:29.150Z"
+  },
+  {
+    "id": 1464,
+    "hotel_name": "Palazzo Manfredi",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:29.337Z"
+  },
+  {
+    "id": 1466,
+    "hotel_name": "Palazzo Venart Luxury Hotel",
+    "country": "Italy",
+    "city": "Venice",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Veneto",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:29.542Z"
+  },
+  {
+    "id": 1468,
+    "hotel_name": "Passalacqua",
+    "country": "Italy",
+    "city": "Moltrasio",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lombardy",
+      "state_province_county_island": "Lake Como"
+    },
+    "applied_at": "2026-08-31T14:44:29.759Z"
+  },
+  {
+    "id": 1469,
+    "hotel_name": "Portrait Firenze",
+    "country": "Italy",
+    "city": "Florence",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tuscany",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:29.998Z"
+  },
+  {
+    "id": 1470,
+    "hotel_name": "Portrait Roma",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:30.230Z"
+  },
+  {
+    "id": 1471,
+    "hotel_name": "Principe Forte dei Marmi",
+    "country": "Italy",
+    "city": "Forte dei Marmi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tuscany",
+      "state_province_county_island": "Versilia"
+    },
+    "applied_at": "2026-08-31T14:44:30.421Z"
+  },
+  {
+    "id": 1473,
+    "hotel_name": "Royal Hotel, Sanremo",
+    "country": "Italy",
+    "city": "San Remo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Liguria",
+      "state_province_county_island": "Italian Riviera"
+    },
+    "applied_at": "2026-08-31T14:44:30.623Z"
+  },
+  {
+    "id": 1474,
+    "hotel_name": "San Clemente Palace Venice",
+    "country": "Italy",
+    "city": "Venice",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Veneto",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:30.830Z"
+  },
+  {
+    "id": 1476,
+    "hotel_name": "Six Senses Rome",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:31.021Z"
+  },
+  {
+    "id": 1479,
+    "hotel_name": "The Gritti Palace",
+    "country": "Italy",
+    "city": "Venice",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Veneto",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:31.231Z"
+  },
+  {
+    "id": 1480,
+    "hotel_name": "Hassler Roma",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:31.423Z"
+  },
+  {
+    "id": 1481,
+    "hotel_name": "The Place Firenze",
+    "country": "Italy",
+    "city": "Florence",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tuscany",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:31.607Z"
+  },
+  {
+    "id": 1482,
+    "hotel_name": "The Rome EDITION",
+    "country": "Italy",
+    "city": "Rome",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:31.815Z"
+  },
+  {
+    "id": 1483,
+    "hotel_name": "The St. Regis Florence",
+    "country": "Italy",
+    "city": "Florence",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tuscany",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:32.010Z"
+  },
+  {
+    "id": 1484,
+    "hotel_name": "The St. Regis Venice",
+    "country": "Italy",
+    "city": "Venice",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Veneto",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:32.207Z"
+  },
+  {
+    "id": 1485,
+    "hotel_name": "Villa Cora",
+    "country": "Italy",
+    "city": "Florence",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tuscany",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:32.402Z"
+  },
+  {
+    "id": 1486,
+    "hotel_name": "Villa d'Este",
+    "country": "Italy",
+    "city": "Cernobbio",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lombardy",
+      "state_province_county_island": "Lake Como"
+    },
+    "applied_at": "2026-08-31T14:44:32.606Z"
+  },
+  {
+    "id": 1488,
+    "hotel_name": "Villa e Palazzo Aminta",
+    "country": "Italy",
+    "city": "Stresa",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Piedmont",
+      "state_province_county_island": "Lake Maggiore"
+    },
+    "applied_at": "2026-08-31T14:44:32.814Z"
+  },
+  {
+    "id": 1489,
+    "hotel_name": "Hôtel de Paris Monte Carlo",
+    "country": "Monaco",
+    "city": "Monte Carlo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Monaco",
+      "state_province_county_island": "Monte Carlo"
+    },
+    "applied_at": "2026-08-31T14:44:33.006Z"
+  },
+  {
+    "id": 1490,
+    "hotel_name": "Hôtel Hermitage Monte Carlo",
+    "country": "Monaco",
+    "city": "Monte Carlo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Monaco",
+      "state_province_county_island": "Monte Carlo"
+    },
+    "applied_at": "2026-08-31T14:44:33.219Z"
+  },
+  {
+    "id": 1491,
+    "hotel_name": "Hôtel Métropole Monte-Carlo",
+    "country": "Monaco",
+    "city": "Monte Carlo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Monaco",
+      "state_province_county_island": "Monte Carlo"
+    },
+    "applied_at": "2026-08-31T14:44:33.446Z"
+  },
+  {
+    "id": 1492,
+    "hotel_name": "Aman Sveti Stefan",
+    "country": "Montenegro",
+    "city": "Sveti Stefan",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Budva Municipality",
+      "state_province_county_island": "Budva Riviera"
+    },
+    "applied_at": "2026-08-31T14:44:33.640Z"
+  },
+  {
+    "id": 1494,
+    "hotel_name": "Mandarin Oriental, Conservatorium",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North Holland",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:33.861Z"
+  },
+  {
+    "id": 1495,
+    "hotel_name": "De L’Europe Amsterdam",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North Holland",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:34.064Z"
+  },
+  {
+    "id": 1496,
+    "hotel_name": "Hotel Okura Amsterdam",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North Holland",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:34.263Z"
+  },
+  {
+    "id": 1497,
+    "hotel_name": "Sofitel Legend The Grand Amsterdam Hotel",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North Holland",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:34.461Z"
+  },
+  {
+    "id": 1498,
+    "hotel_name": "Britannia Hotel",
+    "country": "Norway",
+    "city": "Trondheim",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Trøndelag",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:34.666Z"
+  },
+  {
+    "id": 1499,
+    "hotel_name": "Sommerro",
+    "country": "Norway",
+    "city": "Oslo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Oslo",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:34.867Z"
+  },
+  {
+    "id": 1500,
+    "hotel_name": "The Thief, Oslo",
+    "country": "Norway",
+    "city": "Oslo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Oslo",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:35.081Z"
+  },
+  {
+    "id": 1501,
+    "hotel_name": "Raffles Europejski Warsaw",
+    "country": "Poland",
+    "city": "Warsaw",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Masovian Voivodeship",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:35.271Z"
+  },
+  {
+    "id": 1505,
+    "hotel_name": "Barvikha Hotel & Spa",
+    "country": "Russia",
+    "city": "Moscow",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Moscow",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:35.480Z"
+  },
+  {
+    "id": 1512,
+    "hotel_name": "Square Nine Hotel Belgrade",
+    "country": "Serbia",
+    "city": "Belgrade",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Belgrade",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:35.675Z"
+  },
+  {
+    "id": 1519,
+    "hotel_name": "Cotton House Hotel",
+    "country": "Spain",
+    "city": "Barcelona",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Catalonia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:35.878Z"
+  },
+  {
+    "id": 1520,
+    "hotel_name": "El Palace Barcelona",
+    "country": "Spain",
+    "city": "Barcelona",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Catalonia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:36.093Z"
+  },
+  {
+    "id": 1522,
+    "hotel_name": "Four Seasons Hotel Madrid",
+    "country": "Spain",
+    "city": "Madrid",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Community of Madrid",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:36.295Z"
+  },
+  {
+    "id": 1523,
+    "hotel_name": "Gran Hotel Miramar",
+    "country": "Spain",
+    "city": "Malaga",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Andalusia",
+      "state_province_county_island": "Costa del Sol"
+    },
+    "applied_at": "2026-08-31T14:44:36.500Z"
+  },
+  {
+    "id": 1525,
+    "hotel_name": "Hotel Alfonso XIII",
+    "country": "Spain",
+    "city": "Seville",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Andalusia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:36.687Z"
+  },
+  {
+    "id": 1526,
+    "hotel_name": "Hotel Arts Barcelona",
+    "country": "Spain",
+    "city": "Barcelona",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Catalonia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:36.894Z"
+  },
+  {
+    "id": 1528,
+    "hotel_name": "Mandarin Oriental, Barcelona",
+    "country": "Spain",
+    "city": "Barcelona",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Catalonia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:37.090Z"
+  },
+  {
+    "id": 1529,
+    "hotel_name": "Mandarin Oriental, Ritz Madrid",
+    "country": "Spain",
+    "city": "Madrid",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Community of Madrid",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:37.284Z"
+  },
+  {
+    "id": 1530,
+    "hotel_name": "Marbella Club",
+    "country": "Spain",
+    "city": "Marbella",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Andalusia",
+      "state_province_county_island": "Costa del Sol"
+    },
+    "applied_at": "2026-08-31T14:44:37.474Z"
+  },
+  {
+    "id": 1531,
+    "hotel_name": "Puente Romano Marbella",
+    "country": "Spain",
+    "city": "Marbella",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Andalusia",
+      "state_province_county_island": "Costa del Sol"
+    },
+    "applied_at": "2026-08-31T14:44:37.674Z"
+  },
+  {
+    "id": 1532,
+    "hotel_name": "Rosewood Villa Magna",
+    "country": "Spain",
+    "city": "Madrid",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Community of Madrid",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:37.883Z"
+  },
+  {
+    "id": 1536,
+    "hotel_name": "The Barcelona EDITION",
+    "country": "Spain",
+    "city": "Barcelona",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Catalonia",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:38.076Z"
+  },
+  {
+    "id": 1537,
+    "hotel_name": "The Madrid EDITION",
+    "country": "Spain",
+    "city": "Madrid",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Community of Madrid",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:38.282Z"
+  },
+  {
+    "id": 1539,
+    "hotel_name": "URSO Hotel & Spa",
+    "country": "Spain",
+    "city": "Madrid",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Community of Madrid",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:38.463Z"
+  },
+  {
+    "id": 1540,
+    "hotel_name": "Grand Hotel Stockholm",
+    "country": "Sweden",
+    "city": "Stockholm",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Stockholm County",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:38.661Z"
+  },
+  {
+    "id": 1541,
+    "hotel_name": "Badrutt's Palace",
+    "country": "Switzerland",
+    "city": "St. Moritz",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Graubünden",
+      "state_province_county_island": "Engadin"
+    },
+    "applied_at": "2026-08-31T14:44:38.863Z"
+  },
+  {
+    "id": 1542,
+    "hotel_name": "Baur au Lac",
+    "country": "Switzerland",
+    "city": "Zurich",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Zurich",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:39.077Z"
+  },
+  {
+    "id": 1543,
+    "hotel_name": "Beau Rivage Palace",
+    "country": "Switzerland",
+    "city": "Lausanne",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vaud",
+      "state_province_county_island": "Lake Geneva"
+    },
+    "applied_at": "2026-08-31T14:44:39.265Z"
+  },
+  {
+    "id": 1544,
+    "hotel_name": "Bürgenstock Hotel & Alpine Spa",
+    "country": "Switzerland",
+    "city": "Obbürgen",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Nidwalden",
+      "state_province_county_island": "Lake Lucerne"
+    },
+    "applied_at": "2026-08-31T14:44:39.454Z"
+  },
+  {
+    "id": 1545,
+    "hotel_name": "Carlton Hotel St. Moritz",
+    "country": "Switzerland",
+    "city": "St. Moritz",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Graubünden",
+      "state_province_county_island": "Engadin"
+    },
+    "applied_at": "2026-08-31T14:44:39.659Z"
+  },
+  {
+    "id": 1546,
+    "hotel_name": "Fairmont Le Montreux Palace",
+    "country": "Switzerland",
+    "city": "Montreux",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vaud",
+      "state_province_county_island": "Lake Geneva"
+    },
+    "applied_at": "2026-08-31T14:44:39.844Z"
+  },
+  {
+    "id": 1547,
+    "hotel_name": "Four Seasons Hotel des Bergues",
+    "country": "Switzerland",
+    "city": "Geneva",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Geneva",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:40.074Z"
+  },
+  {
+    "id": 1548,
+    "hotel_name": "Grand Hôtel du Lac",
+    "country": "Switzerland",
+    "city": "Vevey",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vaud",
+      "state_province_county_island": "Lake Geneva"
+    },
+    "applied_at": "2026-08-31T14:44:40.304Z"
+  },
+  {
+    "id": 1549,
+    "hotel_name": "Grand Hotel Kronenhof",
+    "country": "Switzerland",
+    "city": "St. Moritz",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Graubünden",
+      "state_province_county_island": "Engadin"
+    },
+    "applied_at": "2026-08-31T14:44:40.523Z"
+  },
+  {
+    "id": 1550,
+    "hotel_name": "Grand Hotel Les Trois Rois",
+    "country": "Switzerland",
+    "city": "Basel",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Basel-Stadt",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:40.760Z"
+  },
+  {
+    "id": 1551,
+    "hotel_name": "Grand Hotel National",
+    "country": "Switzerland",
+    "city": "Lucerne",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lucerne",
+      "state_province_county_island": "Lake Lucerne"
+    },
+    "applied_at": "2026-08-31T14:44:40.976Z"
+  },
+  {
+    "id": 1553,
+    "hotel_name": "Grand Hotel Zermatterhof",
+    "country": "Switzerland",
+    "city": "Zermatt",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Valais",
+      "state_province_county_island": "Zermatt"
+    },
+    "applied_at": "2026-08-31T14:44:41.196Z"
+  },
+  {
+    "id": 1554,
+    "hotel_name": "Grand Resort Bad Ragaz",
+    "country": "Switzerland",
+    "city": "Bad Ragaz",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "St. Gallen",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:41.396Z"
+  },
+  {
+    "id": 1555,
+    "hotel_name": "Gstaad Palace",
+    "country": "Switzerland",
+    "city": "Gstaad",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bern",
+      "state_province_county_island": "Gstaad"
+    },
+    "applied_at": "2026-08-31T14:44:41.580Z"
+  },
+  {
+    "id": 1556,
+    "hotel_name": "Hotel d'Angleterre Geneva",
+    "country": "Switzerland",
+    "city": "Geneva",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Geneva",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:41.778Z"
+  },
+  {
+    "id": 1557,
+    "hotel_name": "Kulm Hotel St. Moritz",
+    "country": "Switzerland",
+    "city": "St. Moritz",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Graubünden",
+      "state_province_county_island": "Engadin"
+    },
+    "applied_at": "2026-08-31T14:44:42.001Z"
+  },
+  {
+    "id": 1558,
+    "hotel_name": "La Réserve Genève Hotel & Spa",
+    "country": "Switzerland",
+    "city": "Geneva",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Geneva",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:42.217Z"
+  },
+  {
+    "id": 1559,
+    "hotel_name": "La Réserve Eden au Lac Zurich",
+    "country": "Switzerland",
+    "city": "Zurich",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Zurich",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:42.442Z"
+  },
+  {
+    "id": 1560,
+    "hotel_name": "Lausanne Palace",
+    "country": "Switzerland",
+    "city": "Lausanne",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vaud",
+      "state_province_county_island": "Lake Geneva"
+    },
+    "applied_at": "2026-08-31T14:44:42.657Z"
+  },
+  {
+    "id": 1561,
+    "hotel_name": "Le Mirador Resort & Spa",
+    "country": "Switzerland",
+    "city": "Mont-Peleron",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Vaud",
+      "state_province_county_island": "Lake Geneva"
+    },
+    "applied_at": "2026-08-31T14:44:42.876Z"
+  },
+  {
+    "id": 1562,
+    "hotel_name": "LeCrans Hotel & Spa",
+    "country": "Switzerland",
+    "city": "Crans-Montana",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Valais",
+      "state_province_county_island": "Crans-Montana"
+    },
+    "applied_at": "2026-08-31T14:44:43.106Z"
+  },
+  {
+    "id": 1563,
+    "hotel_name": "Mandarin Oriental Palace, Luzern",
+    "country": "Switzerland",
+    "city": "Lucerne",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lucerne",
+      "state_province_county_island": "Lake Lucerne"
+    },
+    "applied_at": "2026-08-31T14:44:43.298Z"
+  },
+  {
+    "id": 1564,
+    "hotel_name": "Mont Cervin Palace",
+    "country": "Switzerland",
+    "city": "Zermatt",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Valais",
+      "state_province_county_island": "Zermatt"
+    },
+    "applied_at": "2026-08-31T14:44:43.496Z"
+  },
+  {
+    "id": 1565,
+    "hotel_name": "Park Hotel Vitznau",
+    "country": "Switzerland",
+    "city": "Vitznau",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lucerne",
+      "state_province_county_island": "Lake Lucerne"
+    },
+    "applied_at": "2026-08-31T14:44:43.704Z"
+  },
+  {
+    "id": 1566,
+    "hotel_name": "Riffelalp Resort 2222m",
+    "country": "Switzerland",
+    "city": "Zermatt",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Valais",
+      "state_province_county_island": "Zermatt"
+    },
+    "applied_at": "2026-08-31T14:44:43.914Z"
+  },
+  {
+    "id": 1567,
+    "hotel_name": "Six Senses Crans Montana",
+    "country": "Switzerland",
+    "city": "Crans-Montana",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Valais",
+      "state_province_county_island": "Crans-Montana"
+    },
+    "applied_at": "2026-08-31T14:44:44.156Z"
+  },
+  {
+    "id": 1568,
+    "hotel_name": "Suvretta House",
+    "country": "Switzerland",
+    "city": "St. Moritz",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Graubünden",
+      "state_province_county_island": "Engadin"
+    },
+    "applied_at": "2026-08-31T14:44:44.392Z"
+  },
+  {
+    "id": 1569,
+    "hotel_name": "The Alpina Gstaad",
+    "country": "Switzerland",
+    "city": "Gstaad",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bern",
+      "state_province_county_island": "Gstaad"
+    },
+    "applied_at": "2026-08-31T14:44:44.594Z"
+  },
+  {
+    "id": 1570,
+    "hotel_name": "The Chedi Andermatt",
+    "country": "Switzerland",
+    "city": "Andermatt",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Uri",
+      "state_province_county_island": "Swiss Alps"
+    },
+    "applied_at": "2026-08-31T14:44:44.805Z"
+  },
+  {
+    "id": 1571,
+    "hotel_name": "The Dolder Grand",
+    "country": "Switzerland",
+    "city": "Zurich",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Zurich",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:45.008Z"
+  },
+  {
+    "id": 1572,
+    "hotel_name": "THE VIEW Lugano",
+    "country": "Switzerland",
+    "city": "Lugano",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Ticino",
+      "state_province_county_island": "Lake Lugano"
+    },
+    "applied_at": "2026-08-31T14:44:45.245Z"
+  },
+  {
+    "id": 1573,
+    "hotel_name": "The Woodward",
+    "country": "Switzerland",
+    "city": "Geneva",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Geneva",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:45.461Z"
+  },
+  {
+    "id": 1574,
+    "hotel_name": "Tschuggen Grand Hotel",
+    "country": "Switzerland",
+    "city": "Arosa",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Graubünden",
+      "state_province_county_island": "Swiss Alps"
+    },
+    "applied_at": "2026-08-31T14:44:45.697Z"
+  },
+  {
+    "id": 1575,
+    "hotel_name": "Victoria-Jungfrau Grand Hotel & Spa",
+    "country": "Switzerland",
+    "city": "Interlaken",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Bern",
+      "state_province_county_island": "Bernese Oberland"
+    },
+    "applied_at": "2026-08-31T14:44:45.884Z"
+  },
+  {
+    "id": 1576,
+    "hotel_name": "Hotel Villa Honegg",
+    "country": "Switzerland",
+    "city": "Honegg",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Nidwalden",
+      "state_province_county_island": "Lake Lucerne"
+    },
+    "applied_at": "2026-08-31T14:44:46.129Z"
+  },
+  {
+    "id": 1577,
+    "hotel_name": "Widder Hotel",
+    "country": "Switzerland",
+    "city": "Zurich",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Zurich",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:46.334Z"
+  },
+  {
+    "id": 1578,
+    "hotel_name": "Hotel Des Indes",
+    "country": "Netherlands",
+    "city": "Den Haag",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "South Holland",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:46.520Z"
+  },
+  {
+    "id": 1579,
+    "hotel_name": "Ciragan Palace Kempinski",
+    "country": "Turkey",
+    "city": "Istanbul",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Istanbul Province",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:46.731Z"
+  },
+  {
+    "id": 1580,
+    "hotel_name": "D Maris Bay",
+    "country": "Turkey",
+    "city": "Marmaris",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Muğla Province",
+      "state_province_county_island": "Datça Peninsula"
+    },
+    "applied_at": "2026-08-31T14:44:46.977Z"
+  },
+  {
+    "id": 1581,
+    "hotel_name": "Four Seasons Hotel Istanbul at the Bosphorus",
+    "country": "Turkey",
+    "city": "Istanbul",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Istanbul Province",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:47.216Z"
+  },
+  {
+    "id": 1586,
+    "hotel_name": "The Peninsula Istanbul",
+    "country": "Turkey",
+    "city": "Istanbul",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Istanbul Province",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:47.407Z"
+  },
+  {
+    "id": 1587,
+    "hotel_name": "Beresheet Hotel",
+    "country": "Israel",
+    "city": "Mitzpe Ramon",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Southern District",
+      "state_province_county_island": "Negev Desert"
+    },
+    "applied_at": "2026-08-31T14:44:47.613Z"
+  },
+  {
+    "id": 1588,
+    "hotel_name": "Mamilla Hotel",
+    "country": "Israel",
+    "city": "Jerusalem",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Jerusalem District",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:47.813Z"
+  },
+  {
+    "id": 1590,
+    "hotel_name": "The Setai, Tel Aviv",
+    "country": "Israel",
+    "city": "Tel Aviv",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tel Aviv District",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:48.025Z"
+  },
+  {
+    "id": 1591,
+    "hotel_name": "Alila Jabal Akhdar",
+    "country": "Oman",
+    "city": "Jabal Akhdar",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Ad Dakhiliyah Governorate",
+      "state_province_county_island": "Jabal Akhdar"
+    },
+    "applied_at": "2026-08-31T14:44:48.235Z"
+  },
+  {
+    "id": 1593,
+    "hotel_name": "Rosewood Doha",
+    "country": "Qatar",
+    "city": "Doha",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Doha Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:48.437Z"
+  },
+  {
+    "id": 1594,
+    "hotel_name": "Banyan Tree AlUla",
+    "country": "Saudi Arabia",
+    "city": "Ashar Valley",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Medina Province",
+      "state_province_county_island": "AlUla"
+    },
+    "applied_at": "2026-08-31T14:44:48.639Z"
+  },
+  {
+    "id": 1598,
+    "hotel_name": "Atlantis The Royal Dubai",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:48.859Z"
+  },
+  {
+    "id": 1599,
+    "hotel_name": "Bulgari Resort Dubai",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:49.046Z"
+  },
+  {
+    "id": 1600,
+    "hotel_name": "Jumeirah Burj Al Arab",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:49.239Z"
+  },
+  {
+    "id": 1601,
+    "hotel_name": "Four Seasons Hotel Abu Dhabi at Al Maryah Island",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:49.431Z"
+  },
+  {
+    "id": 1602,
+    "hotel_name": "Four Seasons Resort Dubai at Jumeirah Beach",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:49.627Z"
+  },
+  {
+    "id": 1603,
+    "hotel_name": "Emirates Palace Mandarin Oriental Abu Dhabi",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:49.857Z"
+  },
+  {
+    "id": 1604,
+    "hotel_name": "Mandarin Oriental, Jumeira Dubai",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:50.079Z"
+  },
+  {
+    "id": 1605,
+    "hotel_name": "One&Only Royal Mirage, Dubai",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:50.279Z"
+  },
+  {
+    "id": 1606,
+    "hotel_name": "One&Only The Palm, Dubai",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:50.480Z"
+  },
+  {
+    "id": 1607,
+    "hotel_name": "Park Hyatt Abu Dhabi Hotel and Villas",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:50.684Z"
+  },
+  {
+    "id": 1608,
+    "hotel_name": "Qasr Al Sarab Desert Resort by Anantara",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:50.880Z"
+  },
+  {
+    "id": 1610,
+    "hotel_name": "Rosewood Abu Dhabi",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:51.119Z"
+  },
+  {
+    "id": 1611,
+    "hotel_name": "The Dubai EDITION",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:51.347Z"
+  },
+  {
+    "id": 1612,
+    "hotel_name": "The Lana",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:51.700Z"
+  },
+  {
+    "id": 1613,
+    "hotel_name": "The Ritz-Carlton Abu Dhabi, Grand Canal",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:51.895Z"
+  },
+  {
+    "id": 1614,
+    "hotel_name": "The Ritz-Carlton, Ras Al Khaimah, Al Wadi Desert",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:52.096Z"
+  },
+  {
+    "id": 1615,
+    "hotel_name": "The St. Regis Abu Dhabi",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:52.296Z"
+  },
+  {
+    "id": 1616,
+    "hotel_name": "The St. Regis Saadiyat Island Resort",
+    "country": "United Arab Emirates",
+    "city": "Abu Dhabi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Abu Dhabi",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:52.490Z"
+  },
+  {
+    "id": 1617,
+    "hotel_name": "W Dubai - Mina Seyahi",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:52.706Z"
+  },
+  {
+    "id": 1648,
+    "hotel_name": "The St. Regis Mexico City",
+    "country": "Mexico",
+    "city": "Mexico City",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Mexico City",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:52.914Z"
+  },
+  {
+    "id": 1737,
+    "hotel_name": "The Ocean Club",
+    "country": "Bahamas",
+    "city": "Paradise Island",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "New Providence",
+      "state_province_county_island": "Paradise Island"
+    },
+    "applied_at": "2026-08-31T14:44:53.115Z"
+  },
+  {
+    "id": 1778,
+    "hotel_name": "Carmel Taiba Exclusive Resort",
+    "country": "Brazil",
+    "city": "Sao Goncalo do Amarante",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Ceará",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:53.360Z"
+  },
+  {
+    "id": 1779,
+    "hotel_name": "Copacabana Palace",
+    "country": "Brazil",
+    "city": "Rio de Janeiro",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Rio de Janeiro",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:53.757Z"
+  },
+  {
+    "id": 1780,
+    "hotel_name": "Emiliano Rio",
+    "country": "Brazil",
+    "city": "Rio de Janeiro",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Rio de Janeiro",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:53.987Z"
+  },
+  {
+    "id": 1782,
+    "hotel_name": "Hotel das Cataratas",
+    "country": "Brazil",
+    "city": "Iguazu National Park",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Paraná",
+      "state_province_county_island": "Iguazu Falls"
+    },
+    "applied_at": "2026-08-31T14:44:54.220Z"
+  },
+  {
+    "id": 1783,
+    "hotel_name": "Hotel Fasano Rio de Janeiro",
+    "country": "Brazil",
+    "city": "Rio de Janeiro",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Rio de Janeiro",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:54.467Z"
+  },
+  {
+    "id": 1784,
+    "hotel_name": "Rosewood Sao Paulo",
+    "country": "Brazil",
+    "city": "Sao Paulo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "São Paulo",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:54.673Z"
+  },
+  {
+    "id": 1787,
+    "hotel_name": "The Singular Santiago",
+    "country": "Chile",
+    "city": "Santiago",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Santiago Metropolitan Region",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:54.888Z"
+  },
+  {
+    "id": 1789,
+    "hotel_name": "Casa Gangotena",
+    "country": "Equador",
+    "city": "Quito",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Pichincha Province",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:55.107Z"
+  },
+  {
+    "id": 1790,
+    "hotel_name": "Galapagos Safari Camp",
+    "country": "Equador",
+    "city": "Galapagos",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Galápagos Province",
+      "state_province_county_island": "Galápagos Islands"
+    },
+    "applied_at": "2026-08-31T14:44:55.299Z"
+  },
+  {
+    "id": 1791,
+    "hotel_name": "Mashpi Lodge",
+    "country": "Equador",
+    "city": "Mashpi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Pichincha Province",
+      "state_province_county_island": "Chocó Cloud Forest"
+    },
+    "applied_at": "2026-08-31T14:44:55.506Z"
+  },
+  {
+    "id": 1792,
+    "hotel_name": "Miraflores Park",
+    "country": "Peru",
+    "city": "Lima",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lima Region",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:55.696Z"
+  },
+  {
+    "id": 1793,
+    "hotel_name": "Fasano Punta del Este",
+    "country": "Uruguay",
+    "city": "Maldonado",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Maldonado Department",
+      "state_province_county_island": "Punta del Este"
+    },
+    "applied_at": "2026-08-31T14:44:55.898Z"
+  },
+  {
+    "id": 1795,
+    "hotel_name": "Capella Sydney",
+    "country": "Australia",
+    "city": "Sydney",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "New South Wales",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:56.110Z"
+  },
+  {
+    "id": 1796,
+    "hotel_name": "Crown Towers Melbourne",
+    "country": "Australia",
+    "city": "Melbourne",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Victoria",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:56.362Z"
+  },
+  {
+    "id": 1797,
+    "hotel_name": "Longitude 131°",
+    "country": "Australia",
+    "city": "Uluru-Kata Tjuta National Park",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Northern Territory",
+      "state_province_county_island": "Uluru"
+    },
+    "applied_at": "2026-08-31T14:44:56.567Z"
+  },
+  {
+    "id": 1798,
+    "hotel_name": "Emirates Wolgan Valley",
+    "country": "Australia",
+    "city": "Wolgan Valley",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "New South Wales",
+      "state_province_county_island": "Blue Mountains"
+    },
+    "applied_at": "2026-08-31T14:44:56.770Z"
+  },
+  {
+    "id": 1806,
+    "hotel_name": "The St. Regis Bora Bora Resort",
+    "country": "French Polynesia",
+    "city": "Bora Bora",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Leeward Islands",
+      "state_province_county_island": "Bora Bora"
+    },
+    "applied_at": "2026-08-31T14:44:56.968Z"
+  },
+  {
+    "id": 1811,
+    "hotel_name": "Upper House Hong Kong",
+    "country": "China",
+    "city": "Hong Kong",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Hong Kong",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:57.179Z"
+  },
+  {
+    "id": 1813,
+    "hotel_name": "Mandarin Oriental, Qianmen",
+    "country": "China",
+    "city": "Beijing",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Beijing Municipality",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:57.416Z"
+  },
+  {
+    "id": 1814,
+    "hotel_name": "Jumeirah Marsa Al Arab",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Emirate of Dubai",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:57.615Z"
+  },
+  {
+    "id": 1815,
+    "hotel_name": "Hotel Il Pellicano",
+    "country": "Italy",
+    "city": "Porto Ercole",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tuscany",
+      "state_province_county_island": "Monte Argentario"
+    },
+    "applied_at": "2026-08-31T14:44:57.842Z"
+  },
+  {
+    "id": 1816,
+    "hotel_name": "The Emory",
+    "country": "United Kingdom",
+    "city": "London",
+    "source": "sibling",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Greater London",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:58.045Z"
+  },
+  {
+    "id": 1819,
+    "hotel_name": "Janu Tokyo",
+    "country": "Japan",
+    "city": "Tokyo",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tokyo Metropolis",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:58.251Z"
+  },
+  {
+    "id": 1823,
+    "hotel_name": "Grand Park Hotel Rovinj",
+    "country": "Croatia",
+    "city": "Rovinj",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Istria County",
+      "state_province_county_island": "Istria"
+    },
+    "applied_at": "2026-08-31T14:44:58.438Z"
+  },
+  {
+    "id": 1827,
+    "hotel_name": "Villa Mabrouka",
+    "country": "Morocco",
+    "city": "Tangier",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Tanger-Tetouan-Al Hoceima",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:58.625Z"
+  },
+  {
+    "id": 1832,
+    "hotel_name": "Rosewood Amsterdam",
+    "country": "Netherlands",
+    "city": "Amsterdam",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "North Holland",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:58.815Z"
+  },
+  {
+    "id": 1836,
+    "hotel_name": "Palazzo Fiuggi",
+    "country": "Italy",
+    "city": "Fiuggi",
+    "source": "proposed",
+    "from": {
+      "admin_region": null,
+      "state_province_county_island": null
+    },
+    "to": {
+      "admin_region": "Lazio",
+      "state_province_county_island": null
+    },
+    "applied_at": "2026-08-31T14:44:59.029Z"
+  }
+]

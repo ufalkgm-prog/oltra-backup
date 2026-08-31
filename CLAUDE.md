@@ -3120,8 +3120,8 @@ run" and "next due" below** — that is the only record.
 | Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests, a few minutes) |
 | Ratehawk static content (§48) | Daily | 2026-08-24 | automatic (Railway cron) | `etg-static-sync` — no manual step; check the Railway run log if room images go missing |
 | Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
-| City → airport mapping (§37/§38) | When the hotel roster's city list changes | 2026-08-14 | on demand | `build-city-airports.mjs` |
-| Airport options list (§39) | With the above | 2026-08-16 | on demand | `build-airport-options.mjs` |
+| City → airport mapping (§37/§38) | When the hotel roster's city list changes | 2026-08-31 | on demand | `build-city-airports.mjs` |
+| Airport options list (§39) | With the above | 2026-08-31 | on demand | `build-airport-options.mjs` |
 
 Notes:
 

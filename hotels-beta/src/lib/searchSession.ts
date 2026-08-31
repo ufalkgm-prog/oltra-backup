@@ -1,6 +1,11 @@
 export type SharedTravelSearch = {
   q?: string;
   city?: string;
+  /** Directus `state_province_county_island` — Hotels-page only; the Flights
+   * page has no equivalent field and simply carries it through untouched. */
+  state?: string;
+  /** Directus `admin_region` — same Hotels-only treatment as `state`. */
+  admin_region?: string;
   country?: string;
   region?: string;
   from?: string;

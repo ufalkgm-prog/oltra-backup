@@ -13,6 +13,7 @@ export const HOTEL_FILTER_FIELDS = {
   region: "region",
   country: "country",
   state: "state_province_county_island",
+  admin_region: "admin_region",
   city: "city",
   local_area: "local_area",
 } as const;
@@ -54,6 +55,7 @@ export function buildHotelsDirectusFilter(
     ["region", HOTEL_FILTER_FIELDS.region],
     ["country", HOTEL_FILTER_FIELDS.country],
     ["state", HOTEL_FILTER_FIELDS.state],
+    ["admin_region", HOTEL_FILTER_FIELDS.admin_region],
     ["city", HOTEL_FILTER_FIELDS.city],
     ["local_area", HOTEL_FILTER_FIELDS.local_area],
   ];

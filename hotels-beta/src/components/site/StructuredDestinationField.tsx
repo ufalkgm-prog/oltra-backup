@@ -95,6 +95,19 @@ function buildInitialTokens(
     out.push({ type: "city", label: city, value: city });
   }
 
+  const state = normalizeParam(searchParams.state);
+  if (state && dataset.hotels.some((hotel) => hotel.state === state)) {
+    out.push({ type: "state", label: state, value: state });
+  }
+
+  const adminRegion = normalizeParam(searchParams.admin_region);
+  if (
+    adminRegion &&
+    dataset.hotels.some((hotel) => hotel.admin_region === adminRegion)
+  ) {
+    out.push({ type: "admin_region", label: adminRegion, value: adminRegion });
+  }
+
   const country = normalizeParam(searchParams.country);
   if (country && dataset.hotels.some((hotel) => hotel.country === country)) {
     out.push({ type: "country", label: country, value: country });
@@ -143,6 +156,8 @@ function helperPrompt(tokens: Token[]): string {
   const last = tokens[tokens.length - 1];
 
   if (last.type === "city") return "Add setting or purpose";
+  if (last.type === "state") return "Add city or purpose";
+  if (last.type === "admin_region") return "Add city or purpose";
   if (last.type === "country") return "Add city or purpose";
   if (last.type === "region") return "Add city or setting";
   if (last.type === "purpose") return "Add city or country";
@@ -158,6 +173,15 @@ function typeLabel(type: SuggestionType): string {
       return "Hotel";
     case "city":
       return "City";
+    case "state":
+      // Directus `state_province_county_island` — states, provinces, counties
+      // and islands alike, so a neutral label. "Region" is taken: it means
+      // continent in this dataset.
+      return "Area";
+    case "admin_region":
+      // Directus `admin_region` — the administrative unit (Lombardy, Valais).
+      // Broader than "Area", narrower than "Country".
+      return "State / Province";
     case "country":
       return "Country";
     case "region":
@@ -178,6 +202,8 @@ function uniq(values: string[]): string[] {
 const ALL_TYPES: SuggestionType[] = [
   "hotel",
   "city",
+  "state",
+  "admin_region",
   "country",
   "region",
   "purpose",
@@ -191,6 +217,8 @@ const ALL_TYPES: SuggestionType[] = [
  * the Landing and Hotels destination fields alike. */
 const GROUP_ORDER: SuggestionType[] = [
   "city",
+  "state",
+  "admin_region",
   "country",
   "hotel",
   "region",
@@ -205,6 +233,8 @@ function getExternalSyncKey(
   return JSON.stringify({
     q: normalizeParam(searchParams.q),
     city: normalizeParam(searchParams.city),
+    state: normalizeParam(searchParams.state),
+    admin_region: normalizeParam(searchParams.admin_region),
     country: normalizeParam(searchParams.country),
     region: normalizeParam(searchParams.region),
     activities: listFromParam(searchParams.activities),
@@ -216,23 +246,31 @@ function getExternalSyncKey(
 function getVisibleTypes(tokens: Token[], allowedTypes: SuggestionType[]) {
   const hasHotel = tokens.some((token) => token.type === "hotel");
   const hasCity = tokens.some((token) => token.type === "city");
+  const hasState = tokens.some((token) => token.type === "state");
+  const hasAdminRegion = tokens.some((token) => token.type === "admin_region");
   const hasCountry = tokens.some((token) => token.type === "country");
 
-  return allowedTypes.filter((type) => {
-    if (hasHotel && (type === "city" || type === "country" || type === "region")) {
-      return false;
-    }
+  // Geography narrows hotel > city > state (traveller area) > admin_region >
+  // country > region (continent). Picking one level hides every broader one,
+  // since they can only be redundant. Note `state` and `admin_region` often
+  // hold the same value (Tuscany, Bali) — that is intended, and the narrower
+  // of the two wins.
+  const BROADER: Record<string, SuggestionType[]> = {
+    hotel: ["city", "state", "admin_region", "country", "region"],
+    city: ["state", "admin_region", "country", "region"],
+    state: ["admin_region", "country", "region"],
+    admin_region: ["country", "region"],
+    country: ["region"],
+  };
 
-    if (hasCity && (type === "country" || type === "region")) {
-      return false;
-    }
+  const hidden = new Set<SuggestionType>();
+  if (hasHotel) BROADER.hotel.forEach((t) => hidden.add(t));
+  if (hasCity) BROADER.city.forEach((t) => hidden.add(t));
+  if (hasState) BROADER.state.forEach((t) => hidden.add(t));
+  if (hasAdminRegion) BROADER.admin_region.forEach((t) => hidden.add(t));
+  if (hasCountry) BROADER.country.forEach((t) => hidden.add(t));
 
-    if (hasCountry && type === "region") {
-      return false;
-    }
-
-    return true;
-  });
+  return allowedTypes.filter((type) => !hidden.has(type));
 }
 
 export default function StructuredDestinationField({
@@ -274,6 +312,8 @@ export default function StructuredDestinationField({
     const q = normalizeParam(searchParams.q).trim();
     const hasStructured =
       normalizeParam(searchParams.city) ||
+      normalizeParam(searchParams.state) ||
+      normalizeParam(searchParams.admin_region) ||
       normalizeParam(searchParams.country) ||
       normalizeParam(searchParams.region) ||
       listFromParam(searchParams.activities).length > 0 ||
@@ -299,6 +339,10 @@ export default function StructuredDestinationField({
             return hotel.hotel_name === token.value;
           case "city":
             return hotel.city === token.value;
+          case "state":
+            return hotel.state === token.value;
+          case "admin_region":
+            return hotel.admin_region === token.value;
           case "country":
             return hotel.country === token.value;
           case "region":
@@ -400,6 +444,32 @@ export default function StructuredDestinationField({
     }
 
     if (
+      visibleTypes.includes("state") &&
+      !selectedTypes.has("state")
+    ) {
+      items.push(
+        ...uniq(activeHotels.map((hotel) => hotel.state)).map((value) => ({
+          type: "state" as const,
+          label: value,
+          value,
+        }))
+      );
+    }
+
+    if (
+      visibleTypes.includes("admin_region") &&
+      !selectedTypes.has("admin_region")
+    ) {
+      items.push(
+        ...uniq(activeHotels.map((hotel) => hotel.admin_region)).map((value) => ({
+          type: "admin_region" as const,
+          label: value,
+          value,
+        }))
+      );
+    }
+
+    if (
       visibleTypes.includes("country") &&
       !selectedTypes.has("country")
     ) {
@@ -485,6 +555,8 @@ export default function StructuredDestinationField({
   }, [suggestions, visibleTypes]);
 
   const cityToken = tokens.find((token) => token.type === "city");
+  const stateToken = tokens.find((token) => token.type === "state");
+  const adminRegionToken = tokens.find((token) => token.type === "admin_region");
   const countryToken = tokens.find((token) => token.type === "country");
   const regionToken = tokens.find((token) => token.type === "region");
   const hotelToken = tokens.find((token) => token.type === "hotel");
@@ -712,6 +784,12 @@ export default function StructuredDestinationField({
         value={hotelToken?.value ?? (tokens.length === 0 ? typedValue : "")}
       />
       <input type="hidden" name="city" value={cityToken?.value ?? ""} />
+      <input type="hidden" name="state" value={stateToken?.value ?? ""} />
+      <input
+        type="hidden"
+        name="admin_region"
+        value={adminRegionToken?.value ?? ""}
+      />
       <input type="hidden" name="country" value={countryToken?.value ?? ""} />
       <input type="hidden" name="region" value={regionToken?.value ?? ""} />
       <input

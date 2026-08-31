@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1252,
+    "hotel_name": "Sugar Beach",
+    "field": "city",
+    "from": "Sourfriere",
+    "to": "Soufrière",
+    "applied_at": "2026-08-31T14:50:21.033Z"
+  },
+  {
+    "id": 1789,
+    "hotel_name": "Casa Gangotena",
+    "field": "country",
+    "from": "Equador",
+    "to": "Ecuador",
+    "applied_at": "2026-08-31T14:50:21.266Z"
+  },
+  {
+    "id": 1790,
+    "hotel_name": "Galapagos Safari Camp",
+    "field": "country",
+    "from": "Equador",
+    "to": "Ecuador",
+    "applied_at": "2026-08-31T14:50:21.482Z"
+  },
+  {
+    "id": 1791,
+    "hotel_name": "Mashpi Lodge",
+    "field": "country",
+    "from": "Equador",
+    "to": "Ecuador",
+    "applied_at": "2026-08-31T14:50:21.693Z"
+  }
+]

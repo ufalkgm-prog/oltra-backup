@@ -118,6 +118,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Aspen": [
     { iata: "ASE", label: "Aspen-Pitkin County", distKm: 6, size: "medium", runwayM: 2440 }
   ],
+  "Aswan": [
+    { iata: "ASW", label: "Aswan", distKm: 15, size: "large", runwayM: 3402 }
+  ],
   "Athens": [
     { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 19, size: "large", runwayM: 7800 }
   ],
@@ -179,6 +182,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Bath": [
     { iata: "BRS", label: "Bristol", distKm: 28, size: "large", runwayM: 2011 }
+  ],
+  "Beau Champ": [
+    { iata: "MRU", label: "Sir Seewoosagur Ramgoolam", distKm: 20, size: "large", runwayM: 3370 }
   ],
   "Beaulieu-Sur-Mer": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 11, size: "large", runwayM: 5591 }
@@ -617,7 +623,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "LGW", label: "London Gatwick", distKm: 51, size: "large", runwayM: 5878 }
   ],
   "Hangzhou": [
-    { iata: "HGH", label: "Hangzhou Xiaoshan", distKm: 29, size: "large", runwayM: 7000 }
+    { iata: "HGH", label: "Hangzhou Xiaoshan", distKm: 31, size: "large", runwayM: 7000 }
   ],
   "Hanoi": [
     { iata: "HAN", label: "Noi Bai", distKm: 22, size: "large", runwayM: 7000 }
@@ -796,6 +802,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Kyoto": [
     { iata: "ITM", label: "Osaka Itami", distKm: 39, size: "large", runwayM: 4827 }
+  ],
+  "La Baule": [
+    { iata: "SNR", label: "Saint-Nazaire-Montoir", distKm: 20, size: "medium", runwayM: 2400 }
   ],
   "La Croix-Valmer": [
     { iata: "LTT", label: "La Môle", distKm: 9, size: "small", runwayM: 1071 }
@@ -1148,6 +1157,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Newport Coast": [
     { iata: "SNA", label: "John Wayne Orange County", distKm: 10, size: "large", runwayM: 2617 }
   ],
+  "Ngala Private Game Reserve": [
+    { iata: "HDS", label: "Eastgate / Air Force Base Hoedspruit", distKm: 27, size: "medium", runwayM: 6106 }
+  ],
   "Nice": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 7, size: "large", runwayM: 5591 }
   ],
@@ -1264,6 +1276,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "MSO", label: "Missoula Montana", distKm: 85, size: "medium", runwayM: 2896 },
     { iata: "BTM", label: "Bert Mooney", distKm: 86, size: "medium", runwayM: 4297 },
     { iata: "HLN", label: "Helena", distKm: 124, size: "medium", runwayM: 5069 }
+  ],
+  "Phinda Private Game Reserve": [
+    { iata: "MZQ", label: "Mkuze", distKm: 35, size: "medium", runwayM: 1850 }
   ],
   "Phnom Penh": [
     { iata: "KTI", label: "Techo", distKm: 24, size: "large", runwayM: 4000 }
@@ -1513,7 +1528,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Sorrento": [
     { iata: "NAP", label: "Naples", distKm: 30, size: "large", runwayM: 2628 }
   ],
-  "Sourfriere": [
+  "Soufrière": [
     { iata: "UVF", label: "Hewanorra", distKm: 16, size: "large", runwayM: 2744 },
     { iata: "SLU", label: "George F. L. Charles", distKm: 23, size: "medium", runwayM: 1748 }
   ],
@@ -1526,6 +1541,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "St. Barthelemy": [
     { iata: "SBH", label: "St. Jean", distKm: 1, size: "medium", runwayM: 646 }
+  ],
+  "St. David": [
+    { iata: "GND", label: "Maurice Bishop", distKm: 12, size: "large", runwayM: 2744 }
   ],
   "St. James": [
     { iata: "BGI", label: "Grantley Adams", distKm: 19, size: "large", runwayM: 3353 }
@@ -1563,6 +1581,10 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Taipei": [
     { iata: "TSA", label: "Taipei Songshan", distKm: 1, size: "large", runwayM: 2605 }
   ],
+  "Tangalle": [
+    { iata: "HRI", label: "Mattala Rajapaksa", distKm: 49, size: "medium", runwayM: 3500 },
+    { iata: "KCT", label: "Koggala", distKm: 51, size: "medium", runwayM: 958 }
+  ],
   "Tangier": [
     { iata: "TNG", label: "Tangier Ibn Battuta", distKm: 11, size: "large", runwayM: 3500 }
   ],
@@ -1580,7 +1602,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "TFS", label: "Tenerife Sur", distKm: 17, size: "large", runwayM: 3200 }
   ],
   "Tepic-Puerto Vallarta": [
-    { iata: "PVR", label: "Puerto Vallarta", distKm: 34, size: "large", runwayM: 3100 }
+    { iata: "PVR", label: "Puerto Vallarta", distKm: 35, size: "large", runwayM: 3100 }
   ],
   "Teton Village": [
     { iata: "JAC", label: "Jackson Hole", distKm: 7, size: "medium", runwayM: 1920 }

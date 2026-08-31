@@ -1,0 +1,215 @@
+{
+  "_meta": {
+    "generated": "2026-08-31",
+    "what": "Step 4 — proposals for the 366 hotels that had no state_province_county_island value, and so got nothing from the step-3 split. Keyed by 'Country||City'. PROPOSAL ONLY.",
+    "rules": "Same rules as step 3: admin_region always; traveller area blank for a major city (city already does the job); both may hold the same value where the admin unit is also what a traveller types.",
+    "tier1": "96 hotels are not listed here — another hotel in the same country+city was classified at step 3, so they copy that pair verbatim. 0 conflicts. The builder resolves them.",
+    "perHotel": "Overrides where one city needs more than one answer."
+  },
+  "cities": {
+    "Australia||Melbourne": { "admin": "Victoria", "area": "", "note": "Major city." },
+    "Australia||Uluru-Kata Tjuta National Park": { "admin": "Northern Territory", "area": "Uluru" },
+    "Australia||Wolgan Valley": { "admin": "New South Wales", "area": "Blue Mountains" },
+
+    "Austria||Lech Am Arlberg": { "admin": "Vorarlberg", "area": "Arlberg", "note": "4 hotels." },
+
+    "Bahamas||Paradise Island": { "admin": "New Providence", "area": "Paradise Island" },
+    "Barbados||St. James": { "admin": "Saint James", "area": "West Coast", "note": "Sandy Lane. Marketed as the Platinum Coast; 'West Coast' is the plainer name." },
+    "Bhutan||Paro": { "admin": "Paro District", "area": "Paro Valley" },
+
+    "Brazil||Iguazu National Park": { "admin": "Paraná", "area": "Iguazu Falls" },
+    "Brazil||Rio de Janeiro": { "admin": "Rio de Janeiro", "area": "", "note": "Major city." },
+    "Brazil||Sao Goncalo do Amarante": { "admin": "Ceará", "area": "", "note": "No established traveller area." },
+    "Brazil||Sao Paulo": { "admin": "São Paulo", "area": "", "note": "Major city." },
+
+    "Cayman Islands||Seven Mile Beach": { "admin": "Grand Cayman", "area": "Seven Mile Beach" },
+
+    "China||Chengdu": { "admin": "Sichuan", "area": "" },
+    "China||Hainan Island": { "admin": "Hainan", "area": "Hainan Island" },
+    "China||Hong Kong": { "admin": "Hong Kong", "area": "", "note": "10 hotels, major city. Kowloon / Hong Kong Island sit in local_area." },
+    "China||Macau": { "admin": "Macau", "area": "" },
+    "China||Nanjing": { "admin": "Jiangsu", "area": "" },
+    "China||Shanghai": { "admin": "Shanghai Municipality", "area": "", "note": "8 hotels, major city." },
+
+    "Costa Rica||Arenal": { "admin": "Alajuela Province", "area": "Arenal" },
+    "Costa Rica||Guanacaste": { "admin": "Guanacaste Province", "area": "Guanacaste" },
+
+    "Croatia||Dubrovnik": { "admin": "Dubrovnik-Neretva County", "area": "Dalmatia" },
+    "Croatia||Rovinj": { "admin": "Istria County", "area": "Istria" },
+
+    "Cyprus||Paphos": { "admin": "Paphos District", "area": "Paphos" },
+    "Czech Republic||Prague": { "admin": "Prague", "area": "", "note": "Major city." },
+    "Denmark||Copenhagen": { "admin": "Capital Region", "area": "", "note": "Major city." },
+    "Dominican Republic||Rio San Juan": { "admin": "María Trinidad Sánchez", "area": "Playa Grande" },
+    "Egypt||Cairo": { "admin": "Cairo Governorate", "area": "", "note": "Major city." },
+
+    "Equador||Galapagos": { "admin": "Galápagos Province", "area": "Galápagos Islands", "note": "The COUNTRY is misspelled in Directus — 'Equador' should be 'Ecuador'. Out of scope here; flagged separately." },
+    "Equador||Mashpi": { "admin": "Pichincha Province", "area": "Chocó Cloud Forest" },
+    "Equador||Quito": { "admin": "Pichincha Province", "area": "" },
+
+    "France||Cognac": { "admin": "Nouvelle-Aquitaine", "area": "Cognac" },
+    "France||Deauville": { "admin": "Normandy", "area": "Normandy" },
+    "France||Le Puy-Sainte-Réparade": { "admin": "Provence-Alpes-Côte d'Azur", "area": "Provence", "note": "Villa La Coste." },
+    "France||Megeve": { "admin": "Haute-Savoie", "area": "French Alps" },
+    "France||Neuvecelle": { "admin": "Haute-Savoie", "area": "Lake Geneva", "note": "Hotel Royal, above Évian." },
+
+    "Germany||Baden-Baden": { "admin": "Baden-Württemberg", "area": "Black Forest" },
+    "Germany||Berlin": { "admin": "Berlin", "area": "", "note": "Major city." },
+    "Germany||Cologne": { "admin": "North Rhine-Westphalia", "area": "" },
+    "Germany||Elmau": { "admin": "Bavaria", "area": "Bavarian Alps" },
+    "Germany||Hamburg": { "admin": "Hamburg", "area": "", "note": "Major city." },
+
+    "Greece||Athens": { "admin": "Attica", "area": "", "note": "Split within the city — see per-hotel: Grande Bretagne is central Athens, One&Only Aesthesis is the Athens Riviera." },
+    "Grenada||Grand Anse Beach": { "admin": "Saint George Parish", "area": "Grand Anse" },
+    "Hungary||Budapest": { "admin": "Budapest", "area": "", "note": "Major city." },
+    "Iceland||Reykjavik": { "admin": "Capital Region", "area": "", "note": "Major city." },
+
+    "India||Agra": { "admin": "Uttar Pradesh", "area": "Agra" },
+    "India||Mumbai": { "admin": "Maharashtra", "area": "", "note": "Major city." },
+    "India||New Delhi": { "admin": "Delhi", "area": "", "note": "Major city." },
+    "India||Udaipur": { "admin": "Rajasthan", "area": "Udaipur" },
+
+    "Indonesia||Jakarta": { "admin": "Jakarta", "area": "", "note": "Major city." },
+    "Ireland||Dublin": { "admin": "County Dublin", "area": "", "note": "Major city." },
+
+    "Israel||Jerusalem": { "admin": "Jerusalem District", "area": "" },
+    "Israel||Mitzpe Ramon": { "admin": "Southern District", "area": "Negev Desert" },
+    "Israel||Tel Aviv": { "admin": "Tel Aviv District", "area": "" },
+
+    "Italy||Blevio": { "admin": "Lombardy", "area": "Lake Como" },
+    "Italy||Cernobbio": { "admin": "Lombardy", "area": "Lake Como" },
+    "Italy||Moltrasio": { "admin": "Lombardy", "area": "Lake Como" },
+    "Italy||Torno": { "admin": "Lombardy", "area": "Lake Como" },
+    "Italy||Tremezzina": { "admin": "Lombardy", "area": "Lake Como" },
+    "Italy||Gardone Riviera": { "admin": "Lombardy", "area": "Lake Garda" },
+    "Italy||Gargnano": { "admin": "Lombardy", "area": "Lake Garda" },
+    "Italy||Stresa": { "admin": "Piedmont", "area": "Lake Maggiore" },
+    "Italy||Cervinia": { "admin": "Aosta Valley", "area": "Italian Alps" },
+    "Italy||Fiuggi": { "admin": "Lazio", "area": "", "note": "No established traveller area." },
+    "Italy||Forte dei Marmi": { "admin": "Tuscany", "area": "Versilia" },
+    "Italy||Merano": { "admin": "South Tyrol", "area": "South Tyrol" },
+    "Italy||Naples": { "admin": "Campania", "area": "", "note": "Major city." },
+    "Italy||Porto Ercole": { "admin": "Tuscany", "area": "Monte Argentario", "note": "Il Pellicano." },
+    "Italy||Rome": { "admin": "Lazio", "area": "", "note": "12 hotels, major city." },
+    "Italy||San Remo": { "admin": "Liguria", "area": "Italian Riviera" },
+    "Italy||Sorrento": { "admin": "Campania", "area": "Amalfi Coast", "note": "Strictly the Sorrentine Peninsula, but sold and searched as the Amalfi Coast." },
+
+    "Jamaica||Montego Bay": { "admin": "Saint James Parish", "area": "Montego Bay" },
+
+    "Japan||Hokkaido": { "admin": "Hokkaido", "area": "Hokkaido" },
+    "Japan||Nikko": { "admin": "Tochigi Prefecture", "area": "Nikko" },
+    "Japan||Osaka": { "admin": "Osaka Prefecture", "area": "", "note": "Major city." },
+    "Japan||Tokyo": { "admin": "Tokyo Metropolis", "area": "", "note": "9 hotels, major city." },
+
+    "Malaysia||Kuala Lumpur": { "admin": "Kuala Lumpur", "area": "", "note": "Major city." },
+
+    "Maldives||Cocoa Island": { "admin": "Kaafu Atoll", "area": "South Malé Atoll" },
+    "Maldives||Kihavah": { "admin": "Baa Atoll", "area": "Baa Atoll" },
+    "Maldives||Lankanfushi": { "admin": "Kaafu Atoll", "area": "North Malé Atoll" },
+    "Maldives||Maalifushi": { "admin": "Thaa Atoll", "area": "Thaa Atoll" },
+    "Maldives||Muravandhoo": { "admin": "Raa Atoll", "area": "Raa Atoll" },
+    "Maldives||Randheli": { "admin": "Noonu Atoll", "area": "Noonu Atoll" },
+    "Maldives||Velaa": { "admin": "Noonu Atoll", "area": "Noonu Atoll" },
+    "Maldives||Voavah": { "admin": "Baa Atoll", "area": "Baa Atoll" },
+    "Maldives||Vommuli Island": { "admin": "Dhaalu Atoll", "area": "Dhaalu Atoll" },
+
+    "Mauritius||Belle Mare": { "admin": "Flacq District", "area": "East Coast" },
+    "Mauritius||Poste De Flacq": { "admin": "Flacq District", "area": "East Coast" },
+    "Mauritius||Grand Baie": { "admin": "Rivière du Rempart District", "area": "North Coast" },
+    "Mauritius||Le Morne Peninsula": { "admin": "Rivière Noire District", "area": "Le Morne" },
+
+    "Mexico||Mexico City": { "admin": "Mexico City", "area": "", "note": "Major city." },
+    "Monaco||Monte Carlo": { "admin": "Monaco", "area": "Monte Carlo", "note": "3 hotels. Monaco has no sub-unit above the ward." },
+    "Montenegro||Sveti Stefan": { "admin": "Budva Municipality", "area": "Budva Riviera" },
+
+    "Morocco||Asni": { "admin": "Marrakech-Safi", "area": "Atlas Mountains", "note": "Kasbah Tamadot." },
+    "Morocco||Marrakech": { "admin": "Marrakech-Safi", "area": "", "note": "10 hotels, major city. First Moroccan vocabulary in the DB." },
+    "Morocco||Tangier": { "admin": "Tanger-Tetouan-Al Hoceima", "area": "" },
+
+    "Myanmar||Yangon": { "admin": "Yangon Region", "area": "" },
+
+    "Netherlands||Amsterdam": { "admin": "North Holland", "area": "", "note": "5 hotels, major city." },
+    "Netherlands||Den Haag": { "admin": "South Holland", "area": "" },
+
+    "Norway||Oslo": { "admin": "Oslo", "area": "", "note": "Major city." },
+    "Norway||Trondheim": { "admin": "Trøndelag", "area": "" },
+
+    "Oman||Jabal Akhdar": { "admin": "Ad Dakhiliyah Governorate", "area": "Jabal Akhdar" },
+    "Peru||Lima": { "admin": "Lima Region", "area": "", "note": "Major city." },
+    "Philippines||Manila": { "admin": "Metro Manila", "area": "", "note": "Major city." },
+    "Poland||Warsaw": { "admin": "Masovian Voivodeship", "area": "", "note": "Major city." },
+    "Puerto Rico||Dorado": { "admin": "Dorado", "area": "Dorado Beach" },
+    "Russia||Moscow": { "admin": "Moscow", "area": "", "note": "Major city." },
+    "Saudi Arabia||Ashar Valley": { "admin": "Medina Province", "area": "AlUla", "note": "Matches the step-3 decision for the same place." },
+    "Serbia||Belgrade": { "admin": "Belgrade", "area": "", "note": "Major city." },
+
+    "Singapore||Singapore": { "admin": "Singapore", "area": "", "note": "City-state. Capella is on Sentosa — see per-hotel." },
+
+    "South Africa||Cape Town": { "admin": "Western Cape", "area": "", "note": "Major city." },
+    "South Africa||Molatedi": { "admin": "North West", "area": "Madikwe Game Reserve" },
+    "South Africa||Tswalu Kalahari Reserve": { "admin": "Northern Cape", "area": "Kalahari" },
+
+    "South Korea||Haeundae-gu": { "admin": "Busan", "area": "Haeundae" },
+
+    "Spain||Barcelona": { "admin": "Catalonia", "area": "", "note": "5 hotels, major city." },
+    "Spain||Malaga": { "admin": "Andalusia", "area": "Costa del Sol" },
+    "Spain||Marbella": { "admin": "Andalusia", "area": "Costa del Sol" },
+    "Spain||Seville": { "admin": "Andalusia", "area": "" },
+
+    "St. Barthelemy||Grand Cul-de-sac": { "admin": "Saint Barthélemy", "area": "St. Barths" },
+    "St. Barthelemy||Gustavia": { "admin": "Saint Barthélemy", "area": "St. Barths" },
+    "St. Barthelemy||St. Barthelemy": { "admin": "Saint Barthélemy", "area": "St. Barths", "note": "City field repeats the country for these two." },
+
+    "St. Lucia||Sourfriere": { "admin": "Soufrière District", "area": "Soufrière", "note": "The CITY is misspelled in Directus — 'Sourfriere' should be 'Soufrière'. Flagged, not fixed here." },
+    "St. Martin||Marigot": { "admin": "Saint Martin", "area": "", "note": "La Samanna, French side." },
+    "Sweden||Stockholm": { "admin": "Stockholm County", "area": "", "note": "Major city." },
+
+    "Switzerland||Andermatt": { "admin": "Uri", "area": "Swiss Alps" },
+    "Switzerland||Arosa": { "admin": "Graubünden", "area": "Swiss Alps" },
+    "Switzerland||Bad Ragaz": { "admin": "St. Gallen", "area": "" },
+    "Switzerland||Basel": { "admin": "Basel-Stadt", "area": "", "note": "Major city." },
+    "Switzerland||Crans-Montana": { "admin": "Valais", "area": "Crans-Montana" },
+    "Switzerland||Geneva": { "admin": "Geneva", "area": "", "note": "4 hotels, major city." },
+    "Switzerland||Gstaad": { "admin": "Bern", "area": "Gstaad" },
+    "Switzerland||Honegg": { "admin": "Nidwalden", "area": "Lake Lucerne" },
+    "Switzerland||Interlaken": { "admin": "Bern", "area": "Bernese Oberland" },
+    "Switzerland||Lausanne": { "admin": "Vaud", "area": "Lake Geneva" },
+    "Switzerland||Lucerne": { "admin": "Lucerne", "area": "Lake Lucerne" },
+    "Switzerland||Lugano": { "admin": "Ticino", "area": "Lake Lugano" },
+    "Switzerland||Mont-Peleron": { "admin": "Vaud", "area": "Lake Geneva" },
+    "Switzerland||Montreux": { "admin": "Vaud", "area": "Lake Geneva" },
+    "Switzerland||Obbürgen": { "admin": "Nidwalden", "area": "Lake Lucerne" },
+    "Switzerland||St. Moritz": { "admin": "Graubünden", "area": "Engadin", "note": "5 hotels." },
+    "Switzerland||Vevey": { "admin": "Vaud", "area": "Lake Geneva" },
+    "Switzerland||Vitznau": { "admin": "Lucerne", "area": "Lake Lucerne" },
+    "Switzerland||Zermatt": { "admin": "Valais", "area": "Zermatt" },
+
+    "Thailand||Chiang Mai": { "admin": "Chiang Mai Province", "area": "Chiang Mai" },
+    "Thailand||Chiang Rai": { "admin": "Chiang Rai Province", "area": "Golden Triangle" },
+    "Thailand||Hua Hin": { "admin": "Prachuap Khiri Khan Province", "area": "Hua Hin" },
+
+    "Turkey||Marmaris": { "admin": "Muğla Province", "area": "Datça Peninsula", "note": "D Maris Bay sits on the Datça peninsula rather than in Marmaris town." },
+
+    "Turks & Caicos Islands||Pine Cay": { "admin": "Caicos Islands", "area": "Pine Cay" },
+    "Turks & Caicos Islands||Providenciales": { "admin": "Caicos Islands", "area": "Providenciales", "note": "COMO Parrot Cay is on its own island — see per-hotel." },
+
+    "United Arab Emirates||Abu Dhabi": { "admin": "Emirate of Abu Dhabi", "area": "", "note": "8 hotels, major city." },
+
+    "United Kingdom||Hampshire": { "admin": "Hampshire", "area": "" },
+    "United Kingdom||St. Andrews": { "admin": "Scotland", "area": "Fife", "note": "Matches the Old Course decision at step 3." },
+
+    "Uruguay||Maldonado": { "admin": "Maldonado Department", "area": "Punta del Este" },
+
+    "Vietnam||Da Nang": { "admin": "Da Nang", "area": "" },
+    "Vietnam||Hanoi": { "admin": "Hanoi", "area": "", "note": "Major city." },
+    "Vietnam||Ho Chi Minh City": { "admin": "Ho Chi Minh City", "area": "", "note": "Major city." },
+    "Vietnam||Hoi An": { "admin": "Quang Nam Province", "area": "Hoi An" },
+    "Vietnam||Ninh Van Bay": { "admin": "Khanh Hoa Province", "area": "Ninh Van Bay" }
+  },
+  "perHotel": {
+    "1398": { "area": "", "note": "Hotel Grande Bretagne — central Athens, on Syntagma. Major city, so no area." },
+    "1411": { "area": "Athens Riviera", "note": "One&Only Aesthesis — Glyfada, on the Athens Riviera, not the centre." },
+    "1186": { "area": "Sentosa Island", "note": "Capella Singapore is on Sentosa, not the main island." },
+    "1257": { "area": "Parrot Cay", "note": "COMO Parrot Cay is on its own cay; its city field says Providenciales." }
+  }
+}

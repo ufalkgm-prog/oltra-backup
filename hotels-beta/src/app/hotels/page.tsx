@@ -42,6 +42,10 @@ const q = normalizeParam(resolvedSearchParams.q).trim();
 
 const country = listFromParam(resolvedSearchParams.country);
 const city = expandCityAliases(listFromParam(resolvedSearchParams.city));
+// `state` maps to Directus `state_province_county_island` — see
+// HOTEL_FILTER_FIELDS in lib/hotelFilters.
+const state = listFromParam(resolvedSearchParams.state);
+const admin_region = listFromParam(resolvedSearchParams.admin_region);
 const region = listFromParam(resolvedSearchParams.region);
 const local_area = listFromParam(resolvedSearchParams.local_area);
 const affiliation = listFromParam(resolvedSearchParams.affiliation);
@@ -51,12 +55,21 @@ const settings = listFromParam(resolvedSearchParams.settings);
 const styles = listFromParam(resolvedSearchParams.styles);
 
 const landing_handoff =
-  q || country.length || city.length || region.length ? "1" : "";
+  q ||
+  country.length ||
+  city.length ||
+  state.length ||
+  admin_region.length ||
+  region.length
+    ? "1"
+    : "";
 
 const selected = {
   q,
   country,
   city,
+  state,
+  admin_region,
   region,
   local_area,
   affiliation,
@@ -66,13 +79,15 @@ const selected = {
   styles,
   filters_open: normalizeParam(resolvedSearchParams.filters_open),
   search_submitted: normalizeParam(resolvedSearchParams.search_submitted),
-  landing_handoff: q || country.length || city.length || region.length ? "1" : "",
+  landing_handoff,
 };
 
 const hasMeaningfulFilters = Boolean(
   q ||
     selected.country.length ||
     selected.city.length ||
+    selected.state.length ||
+    selected.admin_region.length ||
     selected.region.length ||
     selected.local_area.length ||
     selected.affiliation.length ||
@@ -140,6 +155,7 @@ const metaFields = [
   "region",
   "country",
   "state_province_county_island",
+  "admin_region",
   "city",
   "local_area",
   "activities",

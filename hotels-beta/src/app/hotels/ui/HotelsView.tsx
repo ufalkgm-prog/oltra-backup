@@ -245,6 +245,8 @@ function hasHotelSearchContext(params: PageSearchParams): boolean {
   return Boolean(
     normalizeParam(params.q) ||
       normalizeParam(params.city) ||
+      normalizeParam(params.state) ||
+      normalizeParam(params.admin_region) ||
       normalizeParam(params.country) ||
       normalizeParam(params.region) ||
       normalizeParam(params.from) ||
@@ -525,6 +527,8 @@ function formHasMeaningfulSearchInput(form: HTMLFormElement): boolean {
   const keys = [
     "q",
     "city",
+    "state",
+    "admin_region",
     "country",
     "region",
     "local_area",
@@ -576,6 +580,8 @@ export default function HotelsView(props: {
     q: string;
     country: string[];
     city: string[];
+    state: string[];
+    admin_region: string[];
     region: string[];
     local_area: string[];
     affiliation: string[];
@@ -596,6 +602,8 @@ export default function HotelsView(props: {
       selected.q ||
         selected.country.length ||
         selected.city.length ||
+        selected.state.length ||
+        selected.admin_region.length ||
         selected.region.length ||
         selected.local_area.length ||
         selected.affiliation.length ||
@@ -860,6 +868,8 @@ export default function HotelsView(props: {
 
     if (saved.q) params.set("q", saved.q);
     if (saved.city) params.set("city", saved.city);
+    if (saved.state) params.set("state", saved.state);
+    if (saved.admin_region) params.set("admin_region", saved.admin_region);
     if (saved.country) params.set("country", saved.country);
     if (saved.region) params.set("region", saved.region);
     if (saved.from) params.set("from", saved.from);
@@ -892,6 +902,8 @@ export default function HotelsView(props: {
     mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
       city: normalizeParam(searchParams.city),
+      state: normalizeParam(searchParams.state),
+      admin_region: normalizeParam(searchParams.admin_region),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
       from: fromValue,
@@ -1977,6 +1989,8 @@ export default function HotelsView(props: {
     mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
       city: normalizeParam(searchParams.city),
+      state: normalizeParam(searchParams.state),
+      admin_region: normalizeParam(searchParams.admin_region),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
       from: fromValue,
@@ -2239,6 +2253,8 @@ async function handleCreateTripAndAddHotel() {
                 excludeKeys={[
                   "q",
                   "city",
+                  "state",
+                  "admin_region",
                   "country",
                   "region",
                   "activities",
@@ -2722,6 +2738,8 @@ async function handleCreateTripAndAddHotel() {
                     excludeKeys={[
                       "q",
                       "city",
+                      "state",
+                      "admin_region",
                       "country",
                       "region",
                       "activities",

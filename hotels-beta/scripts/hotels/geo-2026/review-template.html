@@ -1,0 +1,650 @@
+<title>Geography Split Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* Single-surface by intent: this is an internal OLTRA tool and it uses the
+     product's own palette (CLAUDE.md 35 final palette) rather than a theme of
+     its own. Every colour is painted explicitly so the page holds on either
+     host ground. */
+  :root {
+    --bg: #2c3634;
+    --panel: #374240;
+    --recessed: #232c2a;
+    --border: #3e4947;
+    --border-soft: #34403d;
+    --text: #f5f2ec;
+    --muted: #cbd0cb;
+    --dim: #8f9a96;
+    --accent: #7ba079;
+    --accent-ink: #232c2a;
+    --fix: #ff8a71;
+    --split: #e0965a;
+    --ask: #cbb26a;
+    --merge: #86a6b6;
+    --r-lg: 6px;
+    --r-md: 4px;
+    --r-sm: 2px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* ---------- masthead ---------- */
+
+  .masthead { padding: 44px 0 26px; border-bottom: 1px solid var(--border); }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin: 0 0 10px;
+  }
+
+  h1 {
+    font-family: Newsreader, Georgia, serif;
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 1.1;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .standfirst code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--recessed);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 1px 5px;
+  }
+
+  /* ---------- tally ---------- */
+
+  .tally {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 10px;
+    margin: 26px 0 0;
+  }
+
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    border-left: 3px solid var(--stripe, var(--border));
+  }
+
+  .stat b {
+    display: block;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 22px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--stripe, var(--text));
+  }
+
+  .stat span {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  .stat em { display: block; font-style: normal; font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* ---------- controls ---------- */
+
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  button {
+    font: inherit;
+    font-size: 12px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 5px 11px;
+    cursor: pointer;
+  }
+
+  button:hover { color: var(--text); border-color: var(--dim); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  button[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  .search {
+    flex: 1 1 190px;
+    min-width: 150px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--recessed);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 6px 10px;
+  }
+
+  .search::placeholder { color: var(--dim); }
+  .search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  .primary:hover { color: var(--accent-ink); filter: brightness(1.08); }
+
+  .count-live {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+
+  /* ---------- country sections ---------- */
+
+  .country { margin-top: 34px; }
+
+  .country > h2 {
+    font-family: Newsreader, Georgia, serif;
+    font-weight: 500;
+    font-size: 21px;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .country > h2 small {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rows { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+
+  /* ---------- one value row ---------- */
+
+  .row {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--stripe);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+  }
+
+  .row[data-state="reject"] { opacity: 0.55; }
+  .row[data-state="override"] { border-color: var(--accent); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .cell-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 3px;
+  }
+
+  .val {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .val.cleared { color: var(--dim); font-style: italic; }
+  .val.same { color: var(--muted); }
+
+  .cities {
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 5px;
+    line-height: 1.45;
+  }
+
+  .chip {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--stripe);
+    border: 1px solid var(--stripe);
+    border-radius: var(--r-sm);
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+
+  .hotels {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    margin-top: 6px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .note {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 78ch;
+  }
+
+  .note strong { color: var(--fix); font-weight: 600; }
+
+  .actions { display: flex; gap: 6px; margin-top: 11px; flex-wrap: wrap; align-items: center; }
+
+  .verdict {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 2px;
+  }
+
+  .row[data-state="reject"] .verdict { color: var(--fix); }
+
+  .editor { display: none; gap: 10px; margin-top: 11px; flex-wrap: wrap; }
+  .row[data-editing="1"] .editor { display: flex; }
+
+  .editor label { flex: 1 1 210px; min-width: 0; }
+  .editor .cell-label { margin-bottom: 4px; }
+
+  .editor input {
+    width: 100%;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--recessed);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 6px 9px;
+  }
+
+  .editor input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ---------- export ---------- */
+
+  .export { margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--border); }
+  .export h2 { font-family: Newsreader, Georgia, serif; font-weight: 500; font-size: 21px; margin: 0 0 6px; }
+  .export p { color: var(--muted); margin: 0 0 12px; max-width: 66ch; }
+
+  textarea {
+    width: 100%;
+    min-height: 190px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--recessed);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px;
+    resize: vertical;
+  }
+
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .empty { color: var(--dim); font-size: 13px; padding: 26px 0; }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Step 2 &middot; value-level triage</p>
+    <h1>Geography Split Review</h1>
+    <p class="standfirst">
+      Every distinct value currently in <code>state_province_county_island</code>, and where each
+      one lands once the column splits into <code>admin_region</code> (the administrative unit)
+      and a traveller-facing area. Nothing is written to Directus from this page &mdash; every row
+      starts <em>agreed</em>, and you only touch the ones you'd change.
+    </p>
+    <div class="tally" id="tally"></div>
+  </header>
+
+  <div class="controls">
+    <div class="filters" id="filters"></div>
+    <input class="search" id="search" type="search" placeholder="Filter by value, country or city&hellip;" aria-label="Filter rows">
+    <span class="count-live" id="countLive"></span>
+  </div>
+
+  <main id="list"></main>
+
+  <section class="export">
+    <h2>Your changes</h2>
+    <p>
+      Only rows you edited or rejected appear here &mdash; everything else is taken as agreed.
+      Copy this back into the session and I'll apply it.
+    </p>
+    <div class="actions" style="margin-bottom: 12px;">
+      <button class="primary" id="copyBtn" type="button">Copy changes</button>
+      <button id="resetBtn" type="button">Reset all decisions</button>
+      <span class="count-live" id="overrideCount" style="margin-left: 0;"></span>
+    </div>
+    <textarea id="out" readonly aria-label="Your changes as JSON"></textarea>
+  </section>
+</div>
+
+<script>
+  const DATA = /*__DATA__*/ null;
+
+  const STORE = "oltra_geo_split_review_v1";
+  const STATUS = {
+    clean: { label: "clean", color: "var(--dim)", blurb: "Applies to every hotel under the value" },
+    ask:   { label: "your call", color: "var(--ask)", blurb: "Needs a decision from you" },
+    split: { label: "split", color: "var(--split)", blurb: "Hotels differ &mdash; resolved per hotel at step 4" },
+    fix:   { label: "wrong data", color: "var(--fix)", blurb: "The value in Directus today is incorrect" },
+    merge: { label: "merge", color: "var(--merge)", blurb: "Duplicate folded into another value" }
+  };
+  const ORDER = ["fix", "ask", "split", "merge", "clean"];
+
+  let decisions = {};
+  try { decisions = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { decisions = {}; }
+
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify(decisions)); } catch (e) { /* private window */ }
+  }
+
+  let filter = "all";
+  let query = "";
+
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function proposal(row) {
+    const d = decisions[row.k];
+    if (d && d.action === "override") {
+      return { admin: d.admin, area: d.area, overridden: true };
+    }
+    return { admin: row.admin, area: row.area, overridden: false };
+  }
+
+  function stateOf(k) {
+    const d = decisions[k];
+    return d ? d.action : "accept";
+  }
+
+  /* ---------- tally ---------- */
+
+  function renderTally() {
+    const byStatus = {};
+    let hotels = 0;
+    for (const r of DATA.rows) {
+      byStatus[r.status] = (byStatus[r.status] || 0) + 1;
+      hotels += r.count;
+    }
+    const cards = [
+      '<div class="stat" style="--stripe: var(--text)"><b>' + DATA.rows.length + '</b><span>values</span><em>across ' + hotels + ' hotels</em></div>'
+    ];
+    for (const s of ORDER) {
+      if (!byStatus[s]) continue;
+      cards.push(
+        '<div class="stat" style="--stripe: ' + STATUS[s].color + '"><b>' + byStatus[s] + '</b><span>' +
+        STATUS[s].label + '</span><em>' + STATUS[s].blurb + '</em></div>'
+      );
+    }
+    document.getElementById("tally").innerHTML = cards.join("");
+  }
+
+  /* ---------- filters ---------- */
+
+  function renderFilters() {
+    const opts = [
+      ["all", "All"],
+      ["attention", "Needs a look"],
+      ["fix", "Wrong data"],
+      ["ask", "Your call"],
+      ["split", "Split"],
+      ["merge", "Merge"],
+      ["clean", "Clean"],
+      ["touched", "Changed by you"]
+    ];
+    document.getElementById("filters").innerHTML = opts.map(([v, l]) =>
+      '<button type="button" data-filter="' + v + '" aria-pressed="' + (filter === v) + '">' + l + "</button>"
+    ).join("");
+  }
+
+  function visible(row) {
+    if (filter === "attention" && !["fix", "ask", "split"].includes(row.status)) return false;
+    if (filter === "touched" && stateOf(row.k) === "accept") return false;
+    if (!["all", "attention", "touched"].includes(filter) && row.status !== filter) return false;
+    if (query) {
+      const hay = (row.country + " " + row.value + " " + row.admin + " " + row.area + " " +
+        row.cities.join(" ") + " " + (row.note || "")).toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  }
+
+  /* ---------- rows ---------- */
+
+  function renderRow(row) {
+    const p = proposal(row);
+    const state = stateOf(row.k);
+    const s = STATUS[row.status];
+
+    const areaHtml = p.area
+      ? '<div class="val' + (p.area === row.value ? " same" : "") + '">' + esc(p.area) + "</div>"
+      : '<div class="val cleared">cleared &mdash; city covers it</div>';
+
+    const note = row.note
+      ? '<div class="note">' + esc(row.note)
+          .replace(/(REAL DATA ERROR|A FLORIDA CITY|BRAND NAME)/g, "<strong>$1</strong>") + "</div>"
+      : "";
+
+    return '' +
+      '<article class="row" data-k="' + esc(row.k) + '" data-state="' + state + '" data-editing="0" style="--stripe: ' + s.color + '">' +
+        '<div class="grid">' +
+          '<div>' +
+            '<div class="cell-label">Now</div>' +
+            '<div class="val">' + esc(row.value) + "</div>" +
+            (row.cities.length ? '<div class="cities">' + esc(row.cities.slice(0, 5).join(" &middot; ")) +
+              (row.cities.length > 5 ? " &middot; +" + (row.cities.length - 5) + " more" : "") + "</div>" : "") +
+          "</div>" +
+          '<div>' +
+            '<div class="cell-label">admin_region</div>' +
+            '<div class="val">' + esc(p.admin) + "</div>" +
+          "</div>" +
+          '<div>' +
+            '<div class="cell-label">Traveller area</div>' +
+            areaHtml +
+          "</div>" +
+          '<div>' +
+            '<span class="chip">' + s.label + "</span>" +
+            '<div class="hotels">' + row.count + (row.count === 1 ? " hotel" : " hotels") + "</div>" +
+          "</div>" +
+        "</div>" +
+        note +
+        '<div class="editor">' +
+          '<label><div class="cell-label">admin_region</div><input data-f="admin" value="' + esc(p.admin) + '"></label>' +
+          '<label><div class="cell-label">Traveller area (blank = clear)</div><input data-f="area" value="' + esc(p.area) + '"></label>' +
+        "</div>" +
+        '<div class="actions">' +
+          '<span class="verdict">' + (state === "accept" ? "Agreed" : state === "override" ? "Changed" : "Rejected") + "</span>" +
+          '<button type="button" data-act="edit">' + (state === "override" ? "Edit again" : "Change") + "</button>" +
+          '<button type="button" data-act="reject">' + (state === "reject" ? "Un-reject" : "Reject") + "</button>" +
+          (state !== "accept" ? '<button type="button" data-act="undo">Back to agreed</button>' : "") +
+        "</div>" +
+      "</article>";
+  }
+
+  function render() {
+    const shown = DATA.rows.filter(visible);
+    const byCountry = new Map();
+    for (const r of shown) {
+      if (!byCountry.has(r.country)) byCountry.set(r.country, []);
+      byCountry.get(r.country).push(r);
+    }
+
+    const html = [];
+    for (const [country, rows] of byCountry) {
+      const hotels = rows.reduce((n, r) => n + r.count, 0);
+      html.push(
+        '<section class="country"><h2>' + esc(country) +
+        "<small>" + rows.length + (rows.length === 1 ? " value" : " values") + " &middot; " + hotels +
+        (hotels === 1 ? " hotel" : " hotels") + "</small></h2>" +
+        '<div class="rows">' + rows.map(renderRow).join("") + "</div></section>"
+      );
+    }
+
+    document.getElementById("list").innerHTML =
+      html.length ? html.join("") : '<p class="empty">Nothing matches that filter.</p>';
+
+    document.getElementById("countLive").textContent =
+      shown.length + " of " + DATA.rows.length + " shown";
+
+    renderExport();
+  }
+
+  /* ---------- export ---------- */
+
+  function renderExport() {
+    const out = [];
+    for (const row of DATA.rows) {
+      const d = decisions[row.k];
+      if (!d) continue;
+      if (d.action === "reject") out.push({ k: row.k, action: "reject" });
+      else if (d.action === "override") out.push({ k: row.k, action: "override", admin: d.admin, area: d.area });
+    }
+    document.getElementById("out").value = out.length
+      ? JSON.stringify(out, null, 2)
+      : "[]\n\n// No changes yet — every value is taken as agreed.";
+    document.getElementById("overrideCount").textContent =
+      out.length + (out.length === 1 ? " change" : " changes");
+  }
+
+  /* ---------- events ---------- */
+
+  document.getElementById("filters").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-filter]");
+    if (!b) return;
+    filter = b.dataset.filter;
+    renderFilters();
+    render();
+  });
+
+  document.getElementById("search").addEventListener("input", (e) => {
+    query = e.target.value.trim().toLowerCase();
+    render();
+  });
+
+  document.getElementById("list").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-act]");
+    if (!b) return;
+    const article = b.closest(".row");
+    const k = article.dataset.k;
+    const act = b.dataset.act;
+
+    if (act === "edit") {
+      if (article.dataset.editing === "1") {
+        const admin = article.querySelector('input[data-f="admin"]').value.trim();
+        const area = article.querySelector('input[data-f="area"]').value.trim();
+        const row = DATA.rows.find((r) => r.k === k);
+        if (admin === row.admin && area === row.area) delete decisions[k];
+        else decisions[k] = { action: "override", admin, area };
+        save();
+        render();
+      } else {
+        article.dataset.editing = "1";
+        b.textContent = "Save";
+        article.querySelector('input[data-f="admin"]').focus();
+      }
+      return;
+    }
+
+    if (act === "reject") {
+      if (stateOf(k) === "reject") delete decisions[k];
+      else decisions[k] = { action: "reject" };
+    } else if (act === "undo") {
+      delete decisions[k];
+    }
+    save();
+    render();
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", async (e) => {
+    const ta = document.getElementById("out");
+    try {
+      await navigator.clipboard.writeText(ta.value);
+      e.target.textContent = "Copied";
+    } catch (err) {
+      ta.focus();
+      ta.select();
+      e.target.textContent = "Press Cmd/Ctrl+C";
+    }
+    setTimeout(() => { e.target.textContent = "Copy changes"; }, 2200);
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    decisions = {};
+    save();
+    render();
+  });
+
+  renderTally();
+  renderFilters();
+  render();
+</script>

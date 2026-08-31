@@ -253,7 +253,15 @@ function buildCreatePayload(row) {
     published: row.published,
     country: normalizeText(row.country),
     region: normalizeText(row.region),
+    // The traveller-facing area (Lake Como, Amalfi Coast, Zermatt) - NOT the
+    // administrative unit, which is admin_region below. The two were split
+    // 2026-08-31; see CLAUDE.md 3. Leave blank for a major city, where `city`
+    // already does the job.
     state_province_county_island: normalizeText(row.state_province_county_island),
+    // The administrative unit (Lombardy, Valais, Kyoto Prefecture). May
+    // legitimately hold the same value as the area above where the admin unit
+    // is also what a traveller types - Tuscany, Bali, Sicily.
+    admin_region: normalizeText(row.admin_region),
     city: normalizeText(row.city),
     local_area: normalizeText(row.local_area),
     affiliation: normalizeText(row.affiliation),
