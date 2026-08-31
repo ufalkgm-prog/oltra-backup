@@ -753,8 +753,14 @@
 /* Wraps the destination field so the AI mark can sit at its right edge without
    StructuredDestinationField (shared with the Hotels page) knowing about it. */
 .destinationWithAi {
+  /* Plain block on purpose. The field's own .destinationField sets
+     `align-self: start`, which in a flex or grid container collapses it to
+     content width — in a block container it fills, as it did before the
+     wrapper existed. */
   position: relative;
+  display: block;
   min-width: 0;
+  align-self: start;
 }
 
 .aiMarkSlot {
@@ -960,4 +966,25 @@
   justify-content: space-between;
   gap: 0.8rem;
   padding-bottom: 0.7rem;
+}
+
+/* Clears the conversation and its result set. Present once there is something
+   to clear — without it a stale exchange persists across reloads with no way
+   out, and the model keeps answering old questions alongside new ones. */
+.askReset {
+  flex: 0 0 auto;
+  padding: 0 0.9rem;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oltra-text-muted);
+  background: transparent;
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-md);
+  cursor: pointer;
+}
+
+.askReset:hover {
+  color: var(--oltra-text-primary);
+  border-color: var(--oltra-button-inactive-border);
 }

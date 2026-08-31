@@ -446,7 +446,7 @@ export default function LandingSearchPanel({
       >
 
         <div className={styles.searchGrid}>
-          <div className={`${styles.landingField} ${styles.destinationWithAi}`}>
+          <div className={styles.destinationWithAi}>
           <StructuredDestinationField
             label="Destination / purpose"
             placeholder="Type first 2 letters of hotel, city, country, or purpose"
@@ -457,7 +457,7 @@ export default function LandingSearchPanel({
               setDestinationState(state);
               scheduleAutoSubmit();
             }}
-            wrapperClassName={styles.destinationField}
+            wrapperClassName={`${styles.landingField} ${styles.destinationField}`}
             busy={isPending}
           />
             {aiEnabled ? (

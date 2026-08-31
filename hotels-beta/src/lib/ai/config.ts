@@ -58,15 +58,35 @@ export const MAX_AVAILABILITY_IDS = 40;
  * weather windows, seasonality, whether a route is seasonal. It is not a
  * general search engine, and it must never be the source of a price or an
  * availability claim. Domains are allow-listed rather than blocked so the
- * surface stays small and predictable. */
+ * surface stays small and predictable.
+ *
+ * EVERY DOMAIN HERE MUST BE CRAWLABLE BY ANTHROPIC. A site that blocks the
+ * crawler is rejected at request validation with
+ * `400 The following domains are not accessible to our user agent`, which
+ * fails the WHOLE request — so one bad entry breaks every query, not just the
+ * ones that would have searched. This list was verified empirically, one
+ * domain at a time.
+ *
+ * cntraveler.com and travelandleisure.com were in the first version and are
+ * exactly the two that fail. In hindsight that was predictable: CLAUDE.md §25
+ * already records both as bot-blocked (T+L returns 402 to a plain fetch,
+ * Condé Nast needs its embedded JSON scraped). They were the wrong kind of
+ * source for this anyway — editorial "best of" lists, where we should be
+ * recommending our own inventory rather than someone else's.
+ *
+ * If you add a domain, verify it first. */
 export const WEB_SEARCH_ALLOWED_DOMAINS = [
+  // Reference
   "wikipedia.org",
   "britannica.com",
+  "nationalgeographic.com",
+  // Climate and seasonality — the main reason this tool exists
   "weatherspark.com",
+  "climatestotravel.com",
   "timeanddate.com",
   "worldweatheronline.com",
+  "weather.com",
+  "metoffice.gov.uk",
+  // Aviation
   "iata.org",
-  "cntraveler.com",
-  "travelandleisure.com",
-  "nationalgeographic.com",
 ];

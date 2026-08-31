@@ -12,6 +12,7 @@ import { conciergeTools } from "@/lib/ai/tools";
 import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
 import { consumeRateLimit } from "@/lib/ai/rateLimit";
 import { triageMessage } from "@/lib/ai/triage";
+import { dropUnansweredToolCalls } from "@/lib/ai/sanitiseHistory";
 import {
   CHAT_MODEL,
   MAX_MESSAGE_CHARS,
@@ -119,7 +120,9 @@ export async function POST(req: Request) {
   const result = streamText({
     model: anthropic(CHAT_MODEL),
     system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(trimmed),
+    // Repaired, not trusted: a history carrying a tool call with no result is
+    // rejected outright, and the client cannot always avoid persisting one.
+    messages: dropUnansweredToolCalls(await convertToModelMessages(trimmed)),
     tools: {
       ...conciergeTools,
       // Anthropic's own server-side search. maxUses is enforced upstream, so

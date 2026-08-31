@@ -463,8 +463,15 @@ const presentResults = tool({
     required: ["framing"],
     additionalProperties: false,
   }),
-  // No execute: the client reads the tool call itself and renders from it.
-  // Returning a value would only add tokens.
+  // The client renders from this tool call's INPUT, not its output — but the
+  // tool still needs an execute. Without one the call has no tool_result, and
+  // the Anthropic API rejects any later turn whose history contains an
+  // unanswered tool_use ("Tool result is missing for tool call ..."). That made
+  // every second turn in a conversation fail. The acknowledgement is
+  // deliberately tiny; it exists to close the loop, not to inform the model.
+  async execute() {
+    return "shown";
+  },
 });
 
 export const conciergeTools = {

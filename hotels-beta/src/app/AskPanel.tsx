@@ -81,6 +81,22 @@ function readLatestPresentation(messages: UIMessage[]): {
   return null;
 }
 
+/** The route answers a rejection with `{error}` and a real reason — not
+ * signed in, daily limit reached, message too long. The AI SDK surfaces the
+ * response body as the Error's message, so pull the reason back out and show
+ * it. Falling back to a generic "try again" for a 401 told a signed-out
+ * visitor to retry something that could never succeed. */
+function errorMessage(error: Error | undefined): string {
+  const generic = "I couldn't answer that just now. Please try again.";
+  if (!error?.message) return generic;
+  try {
+    const parsed = JSON.parse(error.message) as { error?: unknown };
+    return typeof parsed.error === "string" && parsed.error ? parsed.error : generic;
+  } catch {
+    return generic;
+  }
+}
+
 function messageText(message: UIMessage): string {
   return message.parts
     .filter((part): part is { type: "text"; text: string } => part.type === "text")
@@ -96,6 +112,7 @@ export default function AskPanel() {
     query,
     setMessages: persistMessages,
     setPresentation,
+    clear,
     ready,
   } = useAiSearch();
 
@@ -103,9 +120,30 @@ export default function AskPanel() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const seededRef = useRef(false);
 
-  const { messages, sendMessage, status, error, setMessages, stop } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
-  });
+  const { messages, sendMessage, status, error, setMessages, stop, clearError } =
+    useChat({
+      transport: new DefaultChatTransport({ api: "/api/chat" }),
+    });
+
+  // A failed turn leaves the user's message in the list with no reply. Left
+  // there it is not just cosmetic: the next request replays it, so the model
+  // answers the old question alongside the new one, and a retry shows the same
+  // message twice. Drop it, and let the error line carry the explanation.
+  useEffect(() => {
+    if (!error) return;
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      return last?.role === "user" ? prev.slice(0, -1) : prev;
+    });
+  }, [error, setMessages]);
+
+  function startOver() {
+    stop();
+    clearError();
+    setMessages([]);
+    setDraft("");
+    clear();
+  }
 
   // Restore the conversation once the store has hydrated from sessionStorage,
   // so navigating away and back does not lose the exchange.
@@ -175,9 +213,7 @@ export default function AskPanel() {
           {busy ? <div className={styles.askThinking}>Thinking…</div> : null}
 
           {error ? (
-            <div className={styles.askError}>
-              I couldn&apos;t answer that just now. Please try again.
-            </div>
+            <div className={styles.askError}>{errorMessage(error)}</div>
           ) : null}
         </div>
       ) : null}
@@ -192,6 +228,11 @@ export default function AskPanel() {
           autoComplete="off"
           disabled={busy}
         />
+        {hasConversation && !busy ? (
+          <button type="button" className={styles.askReset} onClick={startOver}>
+            Start over
+          </button>
+        ) : null}
         {busy ? (
           <button type="button" className={styles.askStop} onClick={() => stop()}>
             Stop
