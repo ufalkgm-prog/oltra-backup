@@ -787,14 +787,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  max-height: min(46vh, 420px);
+  /* Scrolls past this instead of pushing the results further and further
+     down the page. */
+  max-height: 320px;
   overflow-y: auto;
   padding-right: 4px;
 }
 
 .askTurnUser,
 .askTurnAgent {
-  max-width: 74ch;
   font-size: 14px;
   line-height: 1.55;
   border-radius: var(--oltra-radius-md);
@@ -803,13 +804,17 @@
 
 .askTurnUser {
   align-self: flex-end;
+  max-width: 74ch;
   background: var(--oltra-field-bg);
   border: 1px solid var(--oltra-field-border);
   color: var(--oltra-text-primary);
 }
 
+/* Answers use the full width of the panel — they carry the reasoning, and
+   wrapping them into a narrow column wasted most of the row. */
 .askTurnAgent {
-  align-self: flex-start;
+  align-self: stretch;
+  width: 100%;
   color: var(--oltra-text-primary);
   padding-left: 0;
 }
@@ -899,14 +904,13 @@
   flex-direction: column;
   gap: 0.9rem;
   padding-top: 0.4rem;
-  border-top: 1px solid var(--oltra-border-subtle);
 }
 
 /* The editorial voice. Serif, and deliberately larger than the sans-serif
    cards below it — this is the concierge speaking, not UI chrome. */
 .askFraming {
   margin: 0;
-  max-width: 62ch;
+  max-width: 74ch;
   font-size: 20px;
   line-height: 1.4;
   color: var(--oltra-text-primary);
@@ -919,37 +923,31 @@
   color: var(--oltra-text-muted);
 }
 
-.askCardGrid {
+/* Hotels with no flights alongside: the panel takes the whole row rather than
+   leaving the flights half empty. Its card list then runs two-up (below). */
+.askResultsFull {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
 }
 
-.askCardCell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  min-width: 0;
+/* Two columns inside ONE scroll container, so the pair scrolls together
+   rather than as two independent lists. Inherits max-height and overflow from
+   .smallCardsList, which is why the cards keep their normal size. */
+.askCardsTwoCol {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.8rem;
 }
 
-/* Supplied by the model. Character and fit only — never a price. */
-.askRationale {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--oltra-text-muted);
-}
-
-.askActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  align-items: center;
-  padding-top: 0.2rem;
+@media (max-width: 900px) {
+  .askCardsTwoCol {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* The way back to a full search, so the AI subset is never a dead end. */
 .askEscape {
+  justify-self: start;
   font-size: 13px;
   color: var(--oltra-text-muted);
   text-decoration: underline;
@@ -960,6 +958,8 @@
   color: var(--oltra-text-primary);
 }
 
+/* Header of the Ask panel: the label, and the AI mark in its active state so
+   the way back to Search mode stays where the visitor last saw it. */
 .aiHeaderRow {
   display: flex;
   align-items: center;
@@ -968,23 +968,30 @@
   padding-bottom: 0.7rem;
 }
 
-/* Clears the conversation and its result set. Present once there is something
-   to clear — without it a stale exchange persists across reloads with no way
-   out, and the model keeps answering old questions alongside new ones. */
-.askReset {
+/* Clears the conversation and its result set. Sits beside Ask and mirrors its
+   geometry exactly, in the theme's error red against Ask's sage — the pairing
+   is the point, so both are filled rather than one being an outline. Present
+   only when there is something to clear. */
+.askClear {
   flex: 0 0 auto;
-  padding: 0 0.9rem;
-  font-size: 12px;
-  letter-spacing: 0.06em;
+  min-width: 84px;
+  padding: 0 1rem;
+  font-size: 13px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--oltra-text-muted);
-  background: transparent;
-  border: 1px solid var(--oltra-field-border);
+  font-weight: 600;
   border-radius: var(--oltra-radius-md);
+  background: var(--oltra-error-text);
+  border: 1px solid var(--oltra-error-text);
+  color: var(--oltra-field-bg);
   cursor: pointer;
 }
 
-.askReset:hover {
-  color: var(--oltra-text-primary);
-  border-color: var(--oltra-button-inactive-border);
+.askClear:hover {
+  filter: brightness(1.06);
+}
+
+.askClear:focus-visible {
+  outline: 2px solid var(--oltra-error-text);
+  outline-offset: 2px;
 }

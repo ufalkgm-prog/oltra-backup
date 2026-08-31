@@ -228,11 +228,6 @@ export default function AskPanel() {
           autoComplete="off"
           disabled={busy}
         />
-        {hasConversation && !busy ? (
-          <button type="button" className={styles.askReset} onClick={startOver}>
-            Start over
-          </button>
-        ) : null}
         {busy ? (
           <button type="button" className={styles.askStop} onClick={() => stop()}>
             Stop
@@ -247,6 +242,11 @@ export default function AskPanel() {
             Ask
           </button>
         )}
+        {hasConversation && !busy ? (
+          <button type="button" className={styles.askClear} onClick={startOver}>
+            Clear
+          </button>
+        ) : null}
       </form>
 
       {!hasConversation ? (

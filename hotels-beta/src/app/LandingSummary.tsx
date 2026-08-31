@@ -7,10 +7,11 @@ import type { RatehawkHeadline } from "@/lib/ratehawk/types";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import { getAirportsForCity } from "@/lib/cityAirports";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
+import { addHotelToTripBrowser } from "@/lib/members/db";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
-import { addFlightToTripBrowser, addHotelToTripBrowser } from "@/lib/members/db";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
-import { normalizeOffers, type Itinerary, type FlightLeg } from "@/lib/flights/duffelNormalizer";
+import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
+import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
 import HotelSmallCard, { type SmallCardAvailability } from "@/components/hotels/HotelSmallCard";
 import styles from "./page.module.css";
 
@@ -49,20 +50,6 @@ const CABINS: { key: CabinKey; label: string }[] = [
   { key: "business", label: "Business" },
 ];
 
-function formatDurationMinutes(total: number): string {
-  if (!Number.isFinite(total) || total <= 0) return "—";
-  const h = Math.floor(total / 60);
-  const m = Math.round(total % 60);
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
-}
-
-function formatPrice(value: number, currency: string): string {
-  if (!Number.isFinite(value) || value <= 0) return "—";
-  const symbol =
-    currency === "EUR" ? "€" : currency === "USD" ? "$" : currency === "GBP" ? "£" : `${currency} `;
-  return `${symbol}${Math.round(value).toLocaleString()}`;
-}
-
 // buildBookingLink returns null unless a hotel has booking_provider configured,
 // and as of 2026-08-16 none of the 853 published hotels does (see CLAUDE.md
 // §23 - the booking fields were never populated), so on its own it would mean
@@ -87,28 +74,6 @@ function getRatehawkHid(hotel: HotelRecord): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-function FlightDetailCard({ flight }: { flight: FlightLeg }) {
-  const airlineLabel = flight.airlines.length
-    ? flight.airlines.map((a) => a.name).join(" + ")
-    : flight.airline;
-
-  return (
-    <div className={styles.flightCardInner}>
-      <div className={styles.flightCardTimes}>
-        <span className={styles.flightCardTime}>{flight.departTime}</span>
-        <span className={styles.flightCardArrow}>→</span>
-        <span className={styles.flightCardTime}>{flight.arriveTime}</span>
-        <span className={styles.flightCardDuration}>
-          Duration: {formatDurationMinutes(flight.durationMinutes)}
-        </span>
-      </div>
-      <div className={styles.flightCardMeta}>{airlineLabel}</div>
-      {flight.stopSummary ? (
-        <div className={styles.flightCardStops}>{flight.stopSummary}</div>
-      ) : null}
-    </div>
-  );
-}
 
 export default function LandingSummary({
   hotelSummary,
@@ -212,15 +177,7 @@ export default function LandingSummary({
               setFlightResults((prev) => ({ ...prev, [key]: { status: "empty" } }));
               return;
             }
-            const byPrice = [...itineraries].sort((a, b) => a.priceEur - b.priceEur);
-            const byDuration = [...itineraries].sort((a, b) => {
-              const ad = a.outbound.durationMinutes + (a.inbound?.durationMinutes ?? 0);
-              const bd = b.outbound.durationMinutes + (b.inbound?.durationMinutes ?? 0);
-              return ad - bd;
-            });
-            const bestPrice = byPrice[0] ?? null;
-            const fastest =
-              byDuration[0]?.id !== bestPrice?.id ? byDuration[0] ?? null : byDuration[1] ?? null;
+            const { bestPrice, fastest } = pickHeadlineItineraries(itineraries);
             setFlightResults((prev) => ({
               ...prev,
               [key]: { status: "ready", bestPrice, fastest, isOneWay },
@@ -398,27 +355,6 @@ export default function LandingSummary({
     [fromDate, toDate]
   );
 
-  const handleSaveFlight = useCallback(
-    async (tripId: string, itinerary: Itinerary): Promise<SaveToTripResult> => {
-      const out = itinerary.outbound;
-      const lastOut = out.segments[out.segments.length - 1];
-      const lastIn = itinerary.inbound?.segments[itinerary.inbound.segments.length - 1];
-      const result = await addFlightToTripBrowser({
-        tripId,
-        route: `${out.originCode} → ${lastOut?.destinationName || out.destinationCode}`,
-        timing: `${out.segments[0]?.departIso?.slice(0, 10) ?? ""} · ${out.departTime} → ${out.arriveTime}`,
-        cabin: "",
-        departAt: out.segments[0]?.departIso ?? null,
-        arriveAt: (lastIn ?? lastOut)?.arriveIso ?? null,
-        externalFlightId: itinerary.offerId,
-      });
-      return {
-        message: result.status === "already_exists" ? "Already in that trip." : "Saved to trip.",
-      };
-    },
-    []
-  );
-
   const tripDefaults = useMemo(
     () => ({
       destination: destinationCity || null,
@@ -427,22 +363,9 @@ export default function LandingSummary({
     [destinationCity, fromDate, toDate]
   );
 
-  const handleBookFlight = useCallback(async (offerId: string) => {
-    try {
-      const res = await fetch("/api/flights/book-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ offerId }),
-      });
-      const data = await res.json();
-      if (data.ok && data.url) {
-        window.open(data.url, "_blank", "noopener");
-      }
-    } catch {
-      /* swallow */
-    }
-  }, []);
-
+  // The row itself lives in FlightResultRow so the AI concierge renders
+  // flights in exactly this frame rather than a lookalike. Book and save are
+  // owned there too.
   function renderFlightRow(
     key: string,
     label: string,
@@ -450,35 +373,14 @@ export default function LandingSummary({
     isOneWay: boolean
   ) {
     if (!flight) return null;
-
     return (
-      <div className={styles.flightDetailRow} key={key}>
-        <div className={styles.flightRowLegend}>
-          <span className={styles.flightLineLabel}>{label}</span>
-          <span className={styles.flightRowPrice}>
-            {formatPrice(flight.priceEur, flight.currency)}
-          </span>
-          <button
-            type="button"
-            className={`oltra-button-primary oltra-button--xs ${styles.flightBookButton}`}
-            onClick={() => handleBookFlight(flight.offerId)}
-          >
-            BOOK
-          </button>
-          <SaveToTripControl
-            onSave={(tripId) => handleSaveFlight(tripId, flight)}
-            newTripDefaults={tripDefaults}
-            label="SAVE"
-            compact
-            align="right"
-            className={`oltra-button-secondary oltra-button--xs ${styles.flightBookButton}`}
-          />
-        </div>
-        <div className={styles.flightLegsGrid}>
-          <FlightDetailCard flight={flight.outbound} />
-          {!isOneWay && flight.inbound ? <FlightDetailCard flight={flight.inbound} /> : null}
-        </div>
-      </div>
+      <FlightResultRow
+        key={key}
+        label={label}
+        flight={flight}
+        isOneWay={isOneWay}
+        tripDefaults={tripDefaults}
+      />
     );
   }
 
