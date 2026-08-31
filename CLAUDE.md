@@ -80,16 +80,49 @@ Strict rules:
 
 > Schema migrated 2026-06: `hotelid` was removed (use `id`), `editor_rank_13` → `editor_rank`, the old double-underscore state field → single underscore, and `activities`/`awards`/`settings`/`styles` went from M2M relations to flat multiselect tag fields (`setting`/`style` are now **singular**). See section 4 for the taxonomy details.
 
+> Geography split 2026-08-31: `admin_region` was added, and
+> `state_province_county_island` was narrowed to hold only the traveller-facing
+> area. Every one of the 903 rows was reclassified — see the five-field table
+> below, and §49 for how it was done.
+
 Key fields:
 
 * id (bigint, primary key)
 * hotel_name
-* country
-* region
-* city
-* local_area
-* state_province_county_island
 * affiliation
+
+Geography — five fields, each with one meaning. Getting these confused is the
+mistake the 2026-08-31 split exists to prevent:
+
+| Field | Holds | Examples |
+|---|---|---|
+| `region` | Continent. 10 fixed values. | Europe, Africa, Asia |
+| `country` | Country. | Italy, Switzerland |
+| `admin_region` | The **administrative** unit — state, province, canton, prefecture, emirate, governorate, county. **Never null** (all 903 rows populated). | Lombardy, Valais, Kyoto Prefecture, Emirate of Dubai |
+| `state_province_county_island` | The **traveller-facing area** — what someone would type into a search box. **Null for a major city**, where `city` already does the job. 470 of 903 populated. | Lake Como, Amalfi Coast, Engadin, Masai Mara |
+| `city` | Town, or for a lodge the reserve/area name. | Cernobbio, Sabi Sand Reserve |
+
+Three things that look like bugs and aren't:
+
+* **`admin_region` and `state_province_county_island` may hold the same value.**
+  Intended, wherever the administrative unit is also what a traveller types —
+  Tuscany, Bali, Sicily, Rajasthan. Not duplication to clean up.
+* **`region` means continent, not region.** A user searching "Tuscany" is
+  matching the traveller-area field, not this one.
+* **A major city's traveller area is deliberately empty.** Rome, Tokyo,
+  Shanghai, Marrakech, Geneva, Hong Kong all carry an `admin_region` and no
+  area. Filling it would only repeat `city`.
+
+Both fields are searchable levels in the destination dropdown on the landing
+and hotels pages (`StructuredDestinationField`), which narrows
+hotel > city > area > admin_region > country > region — each level hides the
+broader ones. `local_area` is **not** searchable: it holds neighbourhoods
+(Mayfair, Kowloon, Spanish Steps), not areas.
+
+Both are plain `text` with `interface: null`, i.e. unconstrained. §44 records
+what unconstrained text fields do here, and this one had already drifted into
+holding `Giorgia`, `Boca Raton` on a Turkish hotel, and a country name.
+Locking them to a choice list is a deferred follow-up, not a decision taken.
 
 Editorial:
 
@@ -3905,6 +3938,112 @@ directory `etg-static-sync`, `DIRECTUS_URL`/`DIRECTUS_TOKEN`/
 `RATEHAWK_API_URL`/`RATEHAWK_PROXY_SECRET` set, cron schedule, and **no static
 IP toggle of its own** — it egresses through `etg-proxy`, which is the whole
 reason the allowlist gained a path rather than a second service being stood up.
+
+---
+
+## 49. HOTEL GEOGRAPHY SPLIT — `admin_region` + TRAVELLER AREA (2026-08-31)
+
+Commit `90f4287` (this repo) and `b1e9294` (`oltra-agents`). §3 carries the
+resulting field definitions; this section is the how and the rollback map.
+
+### What prompted it
+
+Adding `state_province_county_island` to the destination dropdown surfaced that
+the column held two different ideas at once — administrative units (Tuscany,
+Canton of Zurich, Beijing Municipality) beside traveller-facing areas (Amalfi
+Coast, Riviera Maya, Kruger National Park) — and that 366 of 903 rows were
+blank, so searching "Tuscany" returned 3 hotels.
+
+Ulrik's call: keep both ideas, in separate fields. `admin_region` for the
+administrative unit, `state_province_county_island` narrowed to the traveller
+area, major cities getting an admin region and no area.
+
+### Order it ran in, and why that order
+
+1. **Clean the source first.** The existing values were the input to everything
+   downstream, so propagating them before fixing them would have multiplied the
+   errors rather than the good data.
+2. **Triage 223 *values*, not 903 rows.** One decision per distinct value
+   resolved 537 hotels. Reviewing per-hotel at this stage would have been ~4×
+   the work for the same answer.
+3. Apply the split.
+4. **Then** the 366 blanks, per hotel, since they had no value to key on.
+5. Apply, verify against a fresh read.
+
+### Scripts (`hotels-beta/scripts/hotels/geo-2026/`)
+
+| Script | Does |
+|---|---|
+| `add-admin-region-field.mjs` | Schema. Snapshots before/after, diffed to confirm 1 addition / 0 modified |
+| `export-geo-values.mjs` | Read-only. Distinct values with countries, cities, counts |
+| `export-geo-gaps.mjs` | Read-only. The unclassified hotels, with any classified sibling in the same city |
+| `build-geo-review.mjs` / `build-gap-review.mjs` | Render the two review pages from the proposals |
+| `apply-geo-split-2026-08-31.mjs` | Writes. The 537-row split |
+| `apply-geo-gaps-2026-08-31.mjs` | Writes. The 366-row fill |
+| `fix-geo-typos-2026-08-31.mjs` | Writes. `Equador`→`Ecuador`, `Sourfriere`→`Soufrière` |
+
+All three apply scripts: dry-run by default, `--confirm` to write, re-read each
+row before patching, **appending** rollback records (§40). Proposals live in
+`geo-triage-2026-08-31.json` and `geo-gap-proposal-2026-08-31.json` — one-time
+records of a reviewed session, same as the `apply-award-review-*` pattern.
+Copy them for a future round; don't edit them.
+
+### Results
+
+903/903 hotels carry an `admin_region` (291 distinct); 470 carry a traveller
+area (222 distinct, down from 223 mixed-meaning values). 8 wrong values and 14
+duplicates gone.
+
+### Traps worth not repeating
+
+* **An apply script keyed on a value it overwrites is not idempotent, and the
+  second failure mode is worse than the first.** `apply-geo-split` looks rows up
+  by their pre-split value. After a run, 130 of 537 no longer resolved — a loud
+  abort. But some re-resolved to the *wrong* entry: Mandarin Oriental Cortina
+  ends up `area="Dolomites"`, which matches the Italy||Dolomites row whose admin
+  is South Tyrol — right for Alta Badia, wrong for Cortina, which is Veneto. A
+  re-run would have silently corrupted it. Fixed by making the **rollback record**
+  the authority on what is already applied, checked before any lookup.
+* **A value-level decision cannot be applied blindly to every hotel under it.**
+  39 hotels needed per-hotel handling: two Portofino properties filed under the
+  Amalfi Coast (Liguria, wrong coast), Chablé Yucatán among eight Quintana Roo
+  properties, Kruger lodges spanning Limpopo and Mpumalanga, Six Senses Yao Noi
+  in Phang Nga rather than Phuket. The review notes named each one; the apply
+  script encodes them as an explicit `PER_HOTEL` table rather than fixing them
+  in a later pass.
+* **Python's text-mode write flips line endings.** Editing `AGENT.md` produced
+  1373 insertions on a 1338-line file — every line, CRLF. Use
+  `newline=""` on both read and write, and check `git diff --stat` looks
+  proportionate to the edit before trusting it.
+* **Stripping accents to dodge shell encoding is a data downgrade.** The first
+  triage draft wrote `Mahe` over the DB's correct `Mahé`. Caught in the dry run.
+* **Geography values are join keys, not display strings.** The two typo fixes
+  each required a code change in the same pass: `country-map.mjs` and
+  `oltra-countries.json` for the country (a mismatch there silently drops a
+  country from the Ratehawk dump filter — §26), `cityAirports.ts` for the city
+  (keyed on the exact `hotels.city` string).
+
+### Found along the way, fixed
+
+* **Sri Lanka was absent from `country-map.mjs` entirely** — the silent-drop case
+  §26 warns about, affecting Amanwella (id 3003). Country code confirmed as `LK`
+  against ETG's own Content API response, not assumed from ISO.
+* **`cityAirports.ts` predated 7 published-hotel cities** (Aswan, Beau Champ, La
+  Baule, Ngala, Phinda, St. David, Tangalle), which resolved to no airport in the
+  landing flight teaser. Regenerated: 507 → 514 cities, 0 removed. The 21
+  remaining unkeyed cities are all **unpublished** hotels, which the generator
+  excludes by design — they pick up airports when published and the build re-runs.
+
+### Not done
+
+* **Neither field is locked to a choice list.** Both are `text` /
+  `interface: null`. §44's lesson is that cleaning without locking resets the
+  clock — and this column had already drifted into `Giorgia`, `Boca Raton` and a
+  country name. Deferred deliberately: `admin_region` is a bounded vocabulary and
+  a good candidate; traveller areas will keep growing. ~290 choices is a long
+  dropdown and every new destination would need a schema edit.
+* **`local_area` is untouched** and still holds neighbourhoods. Ulrik flagged a
+  separate pass for it; that is where a major city's missing area detail belongs.
 
 ---
 
