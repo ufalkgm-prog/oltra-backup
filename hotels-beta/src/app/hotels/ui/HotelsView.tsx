@@ -582,6 +582,9 @@ export default function HotelsView(props: {
     city: string[];
     state: string[];
     admin_region: string[];
+    /** Set only by the AI concierge handoff (`?ids=`), which pins the page to
+     * exactly the properties it recommended. Empty for every normal search. */
+    ids: string[];
     region: string[];
     local_area: string[];
     affiliation: string[];
@@ -604,6 +607,7 @@ export default function HotelsView(props: {
         selected.city.length ||
         selected.state.length ||
         selected.admin_region.length ||
+        selected.ids.length ||
         selected.region.length ||
         selected.local_area.length ||
         selected.affiliation.length ||
@@ -2255,6 +2259,7 @@ async function handleCreateTripAndAddHotel() {
                   "city",
                   "state",
                   "admin_region",
+                  "ids",
                   "country",
                   "region",
                   "activities",
@@ -2740,6 +2745,7 @@ async function handleCreateTripAndAddHotel() {
                       "city",
                       "state",
                       "admin_region",
+                      "ids",
                       "country",
                       "region",
                       "activities",

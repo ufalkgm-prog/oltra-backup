@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import GuestSelector from "@/components/site/GuestSelector";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
+import AiModeToggle from "@/components/site/AiModeToggle";
+import AskPanel from "./AskPanel";
+import { useAiSearch, queryStateToParams } from "@/lib/ai/aiSearchStore";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
 import { mergeHotelFlightSearch } from "@/lib/searchSession";
@@ -84,6 +87,13 @@ export default function LandingSearchPanel({
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // The AI concierge is hidden entirely unless the flag is on. Next inlines
+  // this at build time, so it cannot be flipped without a redeploy — which is
+  // the point: the feature can ship to production and stay invisible.
+  const aiEnabled = process.env.NEXT_PUBLIC_AI_CHAT_ENABLED === "1";
+  const [askMode, setAskMode] = useState(false);
+  const { query: aiQuery, ready: aiReady } = useAiSearch();
 
   const [effectiveSearchParams, setEffectiveSearchParams] =
     useState<PageSearchParams>(initialSearchParams);
@@ -394,6 +404,37 @@ export default function LandingSearchPanel({
     }, 220);
   }
 
+  if (aiEnabled && askMode) {
+    return (
+      <div
+        className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}
+      >
+        <div className={styles.aiHeaderRow}>
+          <span className="oltra-label">Ask the concierge</span>
+          <AiModeToggle
+            active
+            onToggle={() => {
+              // Toggling off back-fills Search mode from whatever the
+              // conversation established, then hands over. Switching modes
+              // never recomputes on its own — this is a real navigation, the
+              // same one the search button performs.
+              setAskMode(false);
+              if (!aiReady) return;
+              const params = queryStateToParams(aiQuery);
+              const qs = params.toString();
+              if (qs) {
+                startTransition(() => {
+                  router.push(`/?${qs}`, { scroll: false });
+                });
+              }
+            }}
+          />
+        </div>
+        <AskPanel />
+      </div>
+    );
+  }
+
   return (
     <div className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}>
       <form
@@ -405,6 +446,7 @@ export default function LandingSearchPanel({
       >
 
         <div className={styles.searchGrid}>
+          <div className={`${styles.landingField} ${styles.destinationWithAi}`}>
           <StructuredDestinationField
             label="Destination / purpose"
             placeholder="Type first 2 letters of hotel, city, country, or purpose"
@@ -415,9 +457,15 @@ export default function LandingSearchPanel({
               setDestinationState(state);
               scheduleAutoSubmit();
             }}
-            wrapperClassName={`${styles.landingField} ${styles.destinationField}`}
+            wrapperClassName={styles.destinationField}
             busy={isPending}
           />
+            {aiEnabled ? (
+              <div className={styles.aiMarkSlot}>
+                <AiModeToggle active={false} onToggle={() => setAskMode(true)} />
+              </div>
+            ) : null}
+          </div>
 
           <div className={styles.dateRangeField}>
             <DateRangePicker

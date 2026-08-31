@@ -1,0 +1,47 @@
+/* Small italic AI mark. Uses the live theme tokens (CLAUDE.md §35) rather than
+   literals, so it moves with the palette. Recessed like a field chip when
+   inactive, sage-filled when on — the same on/off language the buttons use. */
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-sm);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-text-muted);
+  cursor: pointer;
+  transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+
+.mark:hover {
+  color: var(--oltra-text-primary);
+  border-color: var(--oltra-button-inactive-border);
+}
+
+.mark:focus-visible {
+  outline: 2px solid var(--oltra-button-active-bg);
+  outline-offset: 2px;
+}
+
+.markActive {
+  background: var(--oltra-button-active-bg);
+  border-color: var(--oltra-button-active-bg);
+  color: var(--oltra-button-active-text);
+}
+
+.markActive:hover {
+  color: var(--oltra-button-active-text);
+  border-color: var(--oltra-button-active-bg);
+}
+
+.glyph {
+  font-style: italic;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}

@@ -5,6 +5,7 @@ import { buildHotelsDirectusFilter, filterHotelsByTags } from "@/lib/hotelFilter
 import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { readGuestSelection } from "@/lib/guests";
 import LandingSearchPanel from "./LandingSearchPanel";
+import { AiSearchProvider } from "@/lib/ai/aiSearchStore";
 import LandingSummary from "./LandingSummary";
 import styles from "./page.module.css";
 
@@ -249,10 +250,12 @@ export default async function HomePage({
 
       <main className={styles.landingPage}>
         <section className={styles.heroPanel}>
-          <LandingSearchPanel
-            initialSearchParams={resolvedSearchParams}
-            dataset={dataset}
-          />
+          <AiSearchProvider>
+            <LandingSearchPanel
+              initialSearchParams={resolvedSearchParams}
+              dataset={dataset}
+            />
+          </AiSearchProvider>
 
           {submitted && hasDestination ? (
             <LandingSummary

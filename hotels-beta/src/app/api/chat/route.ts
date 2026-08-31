@@ -1,0 +1,149 @@
+import { anthropic } from "@ai-sdk/anthropic";
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  stepCountIs,
+  streamText,
+  type UIMessage,
+} from "ai";
+import { createClient } from "@/lib/supabase/server";
+import { conciergeTools } from "@/lib/ai/tools";
+import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
+import { consumeRateLimit } from "@/lib/ai/rateLimit";
+import { triageMessage } from "@/lib/ai/triage";
+import {
+  CHAT_MODEL,
+  MAX_MESSAGE_CHARS,
+  MAX_OUTPUT_TOKENS,
+  MAX_TOOL_STEPS,
+  MAX_TURNS,
+  MAX_WEB_SEARCHES,
+  WEB_SEARCH_ALLOWED_DOMAINS,
+} from "@/lib/ai/config";
+
+/* The concierge chat route.
+ *
+ * This is the proxy: ANTHROPIC_API_KEY is read here and nowhere else, and never
+ * reaches the browser — the same posture the Directus and Ratehawk credentials
+ * follow. The browser talks only to this route.
+ *
+ * Order matters. Session, then rate limit, then input caps, then a cheap triage
+ * pass — every rejection happens before any spend on the conversation model. */
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+function reject(status: number, error: string) {
+  return Response.json({ error }, { status });
+}
+
+export async function POST(req: Request) {
+  if (process.env.NEXT_PUBLIC_AI_CHAT_ENABLED !== "1") {
+    return reject(404, "Not found");
+  }
+
+  // 1. Session gate. Members-only at launch, and deliberately the first check
+  //    after the flag: an unauthenticated caller should learn nothing about our
+  //    configuration, so the missing-key case is answered below it.
+  let userId: string;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return reject(401, "Please sign in to use the concierge.");
+    userId = data.user.id;
+  } catch {
+    return reject(401, "Please sign in to use the concierge.");
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error("[ai chat] ANTHROPIC_API_KEY is not set");
+    return reject(503, "The concierge is unavailable right now.");
+  }
+
+  // 2. Rate limit.
+  const limit = consumeRateLimit(userId);
+  if (!limit.allowed) {
+    return Response.json(
+      { error: "You've reached today's limit for the concierge." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((limit.resetAt - Date.now()) / 1000)) } }
+    );
+  }
+
+  // 3. Input caps.
+  let messages: UIMessage[];
+  try {
+    const body = (await req.json()) as { messages?: UIMessage[] };
+    messages = Array.isArray(body.messages) ? body.messages : [];
+  } catch {
+    return reject(400, "Invalid request.");
+  }
+  if (!messages.length) return reject(400, "Nothing to answer.");
+
+  const latest = messages[messages.length - 1];
+  const latestText = (latest?.parts ?? [])
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
+    .join(" ")
+    .trim();
+
+  if (latest?.role !== "user" || !latestText) return reject(400, "Nothing to answer.");
+  if (latestText.length > MAX_MESSAGE_CHARS) {
+    return reject(413, "That message is a little long — could you shorten it?");
+  }
+
+  // Keep the tail. A landing-page exchange that outgrows this is better
+  // restarted than silently compacted into something the visitor can't see.
+  const trimmed = messages.slice(-MAX_TURNS);
+
+  // 4. Cheap triage before any conversation-model spend.
+  //
+  //    A decline is streamed back as a normal assistant message rather than a
+  //    JSON error, so the client has one code path and the visitor sees a
+  //    reply rather than a failure. It costs nothing beyond the Haiku call.
+  const verdict = await triageMessage(latestText);
+  if (verdict.allow === false) {
+    return createUIMessageStreamResponse({
+      stream: createUIMessageStream({
+        execute({ writer }) {
+          const id = "refusal";
+          writer.write({ type: "text-start", id });
+          writer.write({ type: "text-delta", id, delta: verdict.reply });
+          writer.write({ type: "text-end", id });
+        },
+      }),
+    });
+  }
+
+  // 5. The conversation.
+  const result = streamText({
+    model: anthropic(CHAT_MODEL),
+    system: SYSTEM_PROMPT,
+    messages: await convertToModelMessages(trimmed),
+    tools: {
+      ...conciergeTools,
+      // Anthropic's own server-side search. maxUses is enforced upstream, so
+      // the model cannot exceed the cap even if it tries, and the allow-list
+      // keeps this a travel-reference tool rather than a general web search.
+      web_search: anthropic.tools.webSearch_20260209({
+        maxUses: MAX_WEB_SEARCHES,
+        allowedDomains: WEB_SEARCH_ALLOWED_DOMAINS,
+      }),
+    },
+    stopWhen: stepCountIs(MAX_TOOL_STEPS),
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
+    providerOptions: {
+      anthropic: {
+        // The system prompt is byte-stable, so it caches. Verify with
+        // usage.cache_read_input_tokens — a persistent zero means something
+        // volatile has leaked into the prefix.
+        cacheControl: { type: "ephemeral" },
+      },
+    },
+    onError({ error }) {
+      console.error("[ai chat]", error);
+    },
+  });
+
+  return result.toUIMessageStreamResponse();
+}

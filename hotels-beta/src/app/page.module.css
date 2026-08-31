@@ -744,3 +744,220 @@
     min-width: 0;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   AI concierge (Ask mode). Landing page only — nothing here is imported by
+   another page, and the feature is gated behind NEXT_PUBLIC_AI_CHAT_ENABLED.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Wraps the destination field so the AI mark can sit at its right edge without
+   StructuredDestinationField (shared with the Hotels page) knowing about it. */
+.destinationWithAi {
+  position: relative;
+  min-width: 0;
+}
+
+.aiMarkSlot {
+  position: absolute;
+  right: 10px;
+  /* Clears the field's own label row, so the mark lines up with the input
+     box rather than the caption above it. */
+  top: 27px;
+  z-index: 31;
+}
+
+/* ── Ask mode ─────────────────────────────────────────────────────────── */
+
+.askPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* Grows with the exchange. max-height keeps a very long conversation from
+   pushing the results off-screen entirely; the page still scrolls normally. */
+.askThread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.askTurnUser,
+.askTurnAgent {
+  max-width: 74ch;
+  font-size: 14px;
+  line-height: 1.55;
+  border-radius: var(--oltra-radius-md);
+  padding: 0.55rem 0.8rem;
+}
+
+.askTurnUser {
+  align-self: flex-end;
+  background: var(--oltra-field-bg);
+  border: 1px solid var(--oltra-field-border);
+  color: var(--oltra-text-primary);
+}
+
+.askTurnAgent {
+  align-self: flex-start;
+  color: var(--oltra-text-primary);
+  padding-left: 0;
+}
+
+.askThinking {
+  font-size: 13px;
+  color: var(--oltra-text-muted);
+  font-style: italic;
+}
+
+.askError {
+  font-size: 13px;
+  color: var(--oltra-error-text);
+}
+
+.askForm {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.askInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  font-size: 15px;
+  color: var(--oltra-text-primary);
+  background: var(--oltra-field-bg);
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-md);
+}
+
+.askInput::placeholder {
+  color: var(--oltra-text-placeholder);
+}
+
+.askInput:focus-visible {
+  outline: 2px solid var(--oltra-button-active-bg);
+  outline-offset: 1px;
+}
+
+.askSend,
+.askStop {
+  flex: 0 0 auto;
+  min-width: 84px;
+  padding: 0 1rem;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--oltra-radius-md);
+  cursor: pointer;
+}
+
+.askSend {
+  background: var(--oltra-button-active-bg);
+  border: 1px solid var(--oltra-button-active-bg);
+  color: var(--oltra-button-active-text);
+  font-weight: 600;
+}
+
+.askSend:disabled {
+  background: transparent;
+  border-color: var(--oltra-button-inactive-border);
+  color: var(--oltra-text-muted);
+  cursor: default;
+}
+
+.askStop {
+  background: transparent;
+  border: 1px solid var(--oltra-button-inactive-border);
+  color: var(--oltra-text-primary);
+}
+
+.askHint {
+  margin: 0;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--oltra-text-muted);
+}
+
+/* ── Results ──────────────────────────────────────────────────────────── */
+
+.askResults {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--oltra-border-subtle);
+}
+
+/* The editorial voice. Serif, and deliberately larger than the sans-serif
+   cards below it — this is the concierge speaking, not UI chrome. */
+.askFraming {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--oltra-text-primary);
+  text-wrap: balance;
+}
+
+.askResultsNote {
+  margin: 0;
+  font-size: 13px;
+  color: var(--oltra-text-muted);
+}
+
+.askCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+
+.askCardCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/* Supplied by the model. Character and fit only — never a price. */
+.askRationale {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--oltra-text-muted);
+}
+
+.askActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+  padding-top: 0.2rem;
+}
+
+/* The way back to a full search, so the AI subset is never a dead end. */
+.askEscape {
+  font-size: 13px;
+  color: var(--oltra-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.askEscape:hover {
+  color: var(--oltra-text-primary);
+}
+
+.aiHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding-bottom: 0.7rem;
+}

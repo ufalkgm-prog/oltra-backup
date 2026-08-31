@@ -279,7 +279,7 @@ export async function loadRatehawkRoomGroups(hid: number): Promise<RawRoomGroup[
   }));
 }
 
-type RawSerpHotel = { hid: number; rates?: RawRate[] };
+export type RawSerpHotel = { hid: number; rates?: RawRate[] };
 
 export async function fetchRatehawkSerpBatch(input: {
   hids: number[];
@@ -355,7 +355,7 @@ function primaryPaymentType(rate: RawRate): RawPaymentType | undefined {
   return rate.payment_options?.payment_types?.[0];
 }
 
-function ratePrice(rate: RawRate): { amount: number; currency: string } | null {
+export function ratePrice(rate: RawRate): { amount: number; currency: string } | null {
   const paymentType = primaryPaymentType(rate);
   const amount = Number(paymentType?.show_amount);
   if (!paymentType?.show_currency_code || !Number.isFinite(amount)) return null;

@@ -16,6 +16,9 @@ export const HOTEL_FILTER_FIELDS = {
   admin_region: "admin_region",
   city: "city",
   local_area: "local_area",
+  // Primary keys, for the AI concierge handoff (`/hotels?ids=1002,1426`).
+  // Inert unless the param is present, so no existing behaviour changes.
+  ids: "id",
 } as const;
 
 export type HotelFilterKey = keyof typeof HOTEL_FILTER_FIELDS;
@@ -59,6 +62,14 @@ export function buildHotelsDirectusFilter(
     ["city", HOTEL_FILTER_FIELDS.city],
     ["local_area", HOTEL_FILTER_FIELDS.local_area],
   ];
+
+  // Digits only: these are bigint primary keys and Directus rejects the whole
+  // `_in` filter if any value cannot be cast, so one junk id would fail the
+  // lookup for every real one in the batch (CLAUDE.md 46).
+  const ids = parseList(searchParams.ids).filter((id) => /^[0-9]+$/.test(id));
+  if (ids.length) {
+    and.push({ [HOTEL_FILTER_FIELDS.ids]: { _in: ids } });
+  }
 
   for (const [key, field] of scalarMappings) {
     const values = parseList(searchParams[key]);

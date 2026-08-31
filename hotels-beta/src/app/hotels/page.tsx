@@ -46,6 +46,11 @@ const city = expandCityAliases(listFromParam(resolvedSearchParams.city));
 // HOTEL_FILTER_FIELDS in lib/hotelFilters.
 const state = listFromParam(resolvedSearchParams.state);
 const admin_region = listFromParam(resolvedSearchParams.admin_region);
+// Set by the AI concierge handoff. Restricts the page to exactly the properties
+// it recommended; absent for every normal search.
+const ids = listFromParam(resolvedSearchParams.ids).filter((id) =>
+  /^[0-9]+$/.test(id)
+);
 const region = listFromParam(resolvedSearchParams.region);
 const local_area = listFromParam(resolvedSearchParams.local_area);
 const affiliation = listFromParam(resolvedSearchParams.affiliation);
@@ -60,6 +65,7 @@ const landing_handoff =
   city.length ||
   state.length ||
   admin_region.length ||
+  ids.length ||
   region.length
     ? "1"
     : "";
@@ -70,6 +76,7 @@ const selected = {
   city,
   state,
   admin_region,
+  ids,
   region,
   local_area,
   affiliation,
@@ -88,6 +95,7 @@ const hasMeaningfulFilters = Boolean(
     selected.city.length ||
     selected.state.length ||
     selected.admin_region.length ||
+    selected.ids.length ||
     selected.region.length ||
     selected.local_area.length ||
     selected.affiliation.length ||
