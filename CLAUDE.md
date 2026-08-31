@@ -4051,14 +4051,14 @@ duplicates gone.
 
 ### Status
 
-**Unmerged, PR #7 open.** Branch `ai-chat`, head `9935fb2`. `main` does not
+**Unmerged, PR #7 open.** Branch `ai-chat`, head `9bd3902`. `main` does not
 have it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
 production invisibly — the flag gates both the UI and the route.
 
-Six commits: `dc5f729` the feature, `0ade44c` this section, `c738913` three
-bugs found by using it in a browser, `901bcc2` the frame rework and the
-flight-row extraction, `fba603a` this section again, `9935fb2` dates and answer
-length.
+Eight commits. The feature is `dc5f729`; everything after it is either this
+section or a fix found by using the thing in a browser — `c738913`, `901bcc2`,
+`9935fb2`, `9bd3902`. That ratio is the point, and the "What testing taught"
+subsection below is the part to read before assuming this is finished.
 
 A second way into the hero search: describe the trip in prose, get curated
 hotels or flights back in the existing cards with an editorial line above them.
@@ -4275,6 +4275,14 @@ exactly in the gap those probes skipped. **For this feature, a green
 `tsc`/lint/build and a passing model probe are not evidence that it works;
 someone has to use it in a browser.**
 
+Four separate rounds of bugs were found that way, and the pattern held every
+time: **the failure was silent.** No exception, no red state, nothing in the
+console — a request that 400s at validation, a conversation that breaks
+permanently one turn later, a card that renders with no price. Each looked like
+working software. Where a value crosses a boundary — model to tool, tool to
+store, store to card — assume nothing tells you when it fails to arrive, and go
+and look.
+
 Two operational notes from the same session: running `npm run build` while
 `npm run dev` is live corrupts `.next` and the dev server starts throwing
 `MODULE_NOT_FOUND` (the §34 flakiness — stop dev, `rm -rf .next`, restart), and
@@ -4315,6 +4323,36 @@ first, short bullets, ~60 words, no preamble, at most one follow-up question.
 Measured on the same two turns afterwards: 84 and 114 words, bullets throughout,
 no narration. Verbosity is not self-correcting — it needs an explicit word
 budget and an explicit ban on preamble.
+
+### The stay never reached the cards (`9bd3902`)
+
+Cards rendered with **no price** even when the visitor had given dates, guests
+and rooms. Nothing was broken in the obvious sense: the model extracted all
+three correctly and passed them to `checkAvailability`. But `presentResults`
+had no fields for them, so they had nowhere to go afterwards — `AskPanel` set
+only `{ vertical: "hotels" }`, `AskResults` skips pricing entirely without
+dates, and every card fell through to `status: "idle"`. No price, no error, no
+signal of any kind. The answer looked complete *because* the model had done its
+part.
+
+`presentResults` now reports the `stay` and `destination` it based the answer
+on, and its tool description says outright that omitting the stay means the
+cards show no price. Verified end to end: "second week of February, 4 people in
+two rooms" resolves to `checkIn 2027-02-08`, `checkOut 2027-02-15`, 4 adults,
+2 rooms.
+
+Two things came free, both previously broken for the same reason: the
+"see all hotels in X" escape and the `/hotels` handoff now carry a destination
+instead of an empty one, and toggling AI off back-fills the Search fields with
+dates, guests and rooms — which §4.5 of the brief required and which had never
+actually worked.
+
+**Say it once.** The same answer was appearing twice — as prose in the thread
+and again as the framing line above the cards, which render in different places
+on the page, so it read as two replies to one question. The framing line is now
+stated to *be* the answer: when `presentResults` is called, the model's own
+message must be empty or a single short question. Measured after: 13 words in
+the thread, the substance once, above the cards.
 
 ### Still unexercised
 
