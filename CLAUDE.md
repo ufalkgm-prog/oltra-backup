@@ -4051,13 +4051,14 @@ duplicates gone.
 
 ### Status
 
-**Unmerged.** Branch `ai-chat`, head `901bcc2`, pushed. `main` does not have
-it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
+**Unmerged, PR #7 open.** Branch `ai-chat`, head `9935fb2`. `main` does not
+have it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
 production invisibly — the flag gates both the UI and the route.
 
-Four commits: `dc5f729` the feature, `0ade44c` this section, `c738913` three
-bugs found by using it in a browser, `901bcc2` the frame rework and the flight-
-row extraction.
+Six commits: `dc5f729` the feature, `0ade44c` this section, `c738913` three
+bugs found by using it in a browser, `901bcc2` the frame rework and the
+flight-row extraction, `fba603a` this section again, `9935fb2` dates and answer
+length.
 
 A second way into the hero search: describe the trip in prose, get curated
 hotels or flights back in the existing cards with an editorial line above them.
@@ -4179,6 +4180,10 @@ installed `.d.ts`, not recalled:
 * **`convertToModelMessages` is async** — await it.
 * `useChat` does not manage input; the caller owns the text state and calls
   `sendMessage({ text })`.
+* **`role: "system"` is rejected inside `messages`.** It goes through
+  `instructions`, which accepts a string, one system message, or an **array** of
+  them — and `system` is deprecated in favour of it. The array form is what
+  makes a stable cached prefix plus a volatile suffix possible at all.
 * `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'`.
 * `buildGuestsArray(adults, kids, ages, rooms)` takes four positional
   arguments, not an object.
@@ -4275,6 +4280,41 @@ Two operational notes from the same session: running `npm run build` while
 `MODULE_NOT_FOUND` (the §34 flakiness — stop dev, `rm -rf .next`, restart), and
 `form_input` on a React-controlled field sets the DOM value without firing
 React's `onChange`, so the state stays empty and the form submits blank.
+
+### Dates, and answer length (`9935fb2`)
+
+**Nothing told the model what day it is**, so it assumed the current year.
+Asked about February on 31 August 2026 it sent Ratehawk `checkin 2026-02-16` —
+seven months past — and the supplier rejected the whole batch with
+`checkin date must be current or future date`. The model reported that to the
+visitor as "the live availability service isn't responding", which reads like an
+outage rather than a wrong year. Nothing in the stack was down.
+
+Today's date is now supplied on every request, and the prompt says a bare month
+means its **next** occurrence. Verified: February resolves to 2027 and "third
+week" to the 15th–22nd, with the model stating which dates it used.
+
+**Where the date lives matters.** `instructions` is an array of two system
+blocks: the stable prompt carrying the `cacheControl` breakpoint, then the date,
+uncached. Two traps avoided:
+
+- Appending the date to the prompt string would invalidate the cached prefix for
+  every user, every day.
+- The call-level `cacheControl` this replaced caches the **last** cacheable
+  block — which would have been the volatile date. The cache would have missed
+  on every request while looking correctly configured. If
+  `usage.cache_read_input_tokens` is persistently zero, check this first.
+
+`checkAvailability` also **rejects a past check-in itself** and tells the model
+the year is wrong. Prompt guidance alone leaves the same dead end whenever the
+model slips; the guard means a past date cannot reach the supplier.
+
+**Answers were far too long** — 180–230 words of prose, opening with narration
+("Let me see what we cover in Thailand."). The prompt now asks for the answer
+first, short bullets, ~60 words, no preamble, at most one follow-up question.
+Measured on the same two turns afterwards: 84 and 114 words, bullets throughout,
+no narration. Verbosity is not self-correcting — it needs an explicit word
+budget and an explicit ban on preamble.
 
 ### Still unexercised
 
