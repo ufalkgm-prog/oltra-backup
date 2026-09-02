@@ -1,35 +1,55 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 export default function BetaLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  /* Full page load, not router.replace().
+   *
+   * The soft navigation could hang indefinitely: the client router may still
+   * hold a cached RSC entry for "/" from before the cookie existed — which was
+   * the middleware redirect back to this page — so it bounced, never committed,
+   * and `loading` was only ever cleared on the failure branch. The button sat
+   * on "…" forever and read as a rejected password.
+   *
+   * A document request re-runs middleware with the new cookie and cannot use
+   * that cache. There is no client state worth preserving across this gate, so
+   * the soft navigation bought nothing. */
   async function handleSubmit() {
     if (!password || loading) return;
     setLoading(true);
     setError(false);
+    setFailed(false);
 
-    const res = await fetch("/api/beta-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    try {
+      const res = await fetch("/api/beta-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
 
-    if (res.ok) {
-      router.replace("/");
-    } else {
+      if (res.ok) {
+        window.location.assign("/");
+        return; // leave `loading` set: the page is being replaced
+      }
+
       setError(true);
       setPassword("");
+      setLoading(false);
+      inputRef.current?.focus();
+    } catch {
+      // A network failure previously left the button spinning with no message,
+      // because nothing reset `loading` outside the password-wrong branch.
+      setFailed(true);
       setLoading(false);
       inputRef.current?.focus();
     }
@@ -92,7 +112,7 @@ export default function BetaLoginPage() {
           }}
         />
 
-        {error && (
+        {(error || failed) && (
           <p
             style={{
               color: "rgba(220,80,80,0.8)",
@@ -102,7 +122,7 @@ export default function BetaLoginPage() {
               margin: 0,
             }}
           >
-            Incorrect password
+            {error ? "Incorrect password" : "Couldn't reach the site — try again"}
           </p>
         )}
 
