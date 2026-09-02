@@ -26,7 +26,7 @@ export default function AiModeToggle({ active, onToggle }: Props) {
       className={`${styles.mark} ${active ? styles.markActive : ""}`}
       onClick={() => onToggle(!active)}
     >
-      <span className={styles.glyph}>AI</span>
+      <span className={styles.glyph}>Ask AI</span>
     </button>
   );
 }

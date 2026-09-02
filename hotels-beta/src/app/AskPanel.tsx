@@ -6,7 +6,6 @@ import { DefaultChatTransport, isToolUIPart, getToolName, type UIMessage } from 
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { voiceFont } from "@/lib/ai/fonts";
 import type { AiQueryState, AiResultSet } from "@/lib/ai/types";
-import AskResults from "./AskResults";
 import styles from "./page.module.css";
 
 /* Ask mode: the conversation, and the results it produces.
@@ -145,8 +144,6 @@ export default function AskPanel() {
   const {
     messages: stored,
     framing,
-    results,
-    query,
     setMessages: persistMessages,
     setPresentation,
     clear,
@@ -236,8 +233,8 @@ export default function AskPanel() {
 
   return (
     <div className={styles.askPanel}>
-      {hasConversation ? (
-        <div className={styles.askThread} ref={scrollRef}>
+      {hasConversation || framing ? (
+        <div className={styles.askScroll} ref={scrollRef}>
           {messages.map((message) => {
             const text = messageText(message);
             if (!text.trim()) return null;
@@ -257,6 +254,10 @@ export default function AskPanel() {
 
           {error ? (
             <div className={styles.askError}>{errorMessage(error)}</div>
+          ) : null}
+
+          {framing ? (
+            <p className={`${styles.askFraming} ${voiceFont.className}`}>{framing}</p>
           ) : null}
         </div>
       ) : null}
@@ -292,15 +293,6 @@ export default function AskPanel() {
         ) : null}
       </form>
 
-      {!hasConversation ? (
-        <p className={`${styles.askHint} ${voiceFont.className}`}>
-          Describe the trip — a place, a month, a mood — and I&apos;ll find what we have.
-        </p>
-      ) : null}
-
-      {results.hotelIds.length || results.flights ? (
-        <AskResults framing={framing} results={results} query={query} />
-      ) : null}
     </div>
   );
 }

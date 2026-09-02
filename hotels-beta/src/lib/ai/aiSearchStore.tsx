@@ -51,6 +51,10 @@ const EMPTY: Persisted = {
 
 type AiSearchContextValue = Persisted & {
   ready: boolean;
+  /** Ask mode replaces the structured search AND its results, so the summary
+   * below needs to know. Not persisted: a reload should land on Search. */
+  askMode: boolean;
+  setAskMode: (on: boolean) => void;
   setQuery: (patch: Partial<AiQueryState>) => void;
   setPresentation: (framing: string, results: AiResultSet, query: Partial<AiQueryState>) => void;
   setMessages: (messages: UIMessage[]) => void;
@@ -82,6 +86,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   // server/client mismatch — the same trap the residency auto-detect hit.
   const [state, setState] = useState<Persisted>(EMPTY);
   const [ready, setReady] = useState(false);
+  const [askMode, setAskMode] = useState(false);
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -156,8 +161,8 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AiSearchContextValue>(
-    () => ({ ...state, ready, setQuery, setPresentation, setMessages, clear }),
-    [state, ready, setQuery, setPresentation, setMessages, clear]
+    () => ({ ...state, ready, askMode, setAskMode, setQuery, setPresentation, setMessages, clear }),
+    [state, ready, askMode, setQuery, setPresentation, setMessages, clear]
   );
 
   return <AiSearchContext.Provider value={value}>{children}</AiSearchContext.Provider>;

@@ -766,9 +766,14 @@
 .aiMarkSlot {
   position: absolute;
   right: 10px;
-  /* Clears the field's own label row, so the mark lines up with the input
-     box rather than the caption above it. */
-  top: 27px;
+  /* Anchored to the BOTTOM, not the top. The wrapper's bottom edge and the
+     input box's bottom edge are the same line (measured), so a box of the
+     control's height pinned there covers exactly the input row and centres the
+     mark on it. A `top` offset had to guess past the label and was 5px out. */
+  bottom: 0;
+  height: var(--oltra-control-height, 34px);
+  display: flex;
+  align-items: center;
   z-index: 31;
 }
 
@@ -783,13 +788,14 @@
 
 /* Grows with the exchange. max-height keeps a very long conversation from
    pushing the results off-screen entirely; the page still scrolls normally. */
-.askThread {
+/* The transcript AND the answer live in here together, so neither can grow the
+   panel — it scrolls internally and the input row below stays where it is.
+   Previously the answer sat outside this box and pushed everything down. */
+.askScroll {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  /* Scrolls past this instead of pushing the results further and further
-     down the page. */
-  max-height: 320px;
+  height: 300px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -840,7 +846,7 @@
 .askInput {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 44px;
+  min-height: 38px;
   padding: 0 0.9rem;
   font-size: 15px;
   color: var(--oltra-text-primary);
@@ -862,6 +868,7 @@
 .askStop {
   flex: 0 0 auto;
   min-width: 84px;
+  min-height: 38px;
   padding: 0 1rem;
   font-size: 13px;
   letter-spacing: 0.08em;
@@ -975,6 +982,7 @@
 .askClear {
   flex: 0 0 auto;
   min-width: 84px;
+  min-height: 38px;
   padding: 0 1rem;
   font-size: 13px;
   letter-spacing: 0.08em;
@@ -994,4 +1002,14 @@
 .askClear:focus-visible {
   outline: 2px solid var(--oltra-error-text);
   outline-offset: 2px;
+}
+
+/* Ask mode is two frames, not one: the conversation panel, then the results
+   panel below it — matching how the structured search panel and its summary
+   relate. */
+.askStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
 }

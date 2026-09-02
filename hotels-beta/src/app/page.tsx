@@ -6,6 +6,7 @@ import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { readGuestSelection } from "@/lib/guests";
 import LandingSearchPanel from "./LandingSearchPanel";
 import { AiSearchProvider } from "@/lib/ai/aiSearchStore";
+import AskModeGate from "./AskModeGate";
 import LandingSummary from "./LandingSummary";
 import styles from "./page.module.css";
 
@@ -250,32 +251,36 @@ export default async function HomePage({
 
       <main className={styles.landingPage}>
         <section className={styles.heroPanel}>
+          {/* The provider wraps the summary too, so Ask mode can hide it — the
+              two are alternative views of the same results area, not layers. */}
           <AiSearchProvider>
             <LandingSearchPanel
               initialSearchParams={resolvedSearchParams}
               dataset={dataset}
             />
-          </AiSearchProvider>
 
-          {submitted && hasDestination ? (
-            <LandingSummary
-              hotelSummary={hotelSummary}
-              hotelHeaderLabel={hotelHeaderLabel}
-              includeHotels={includeHotels}
-              includeFlights={includeFlights}
-              origin={origin}
-              destinationCity={destinationCity}
-              fromDate={fromDate}
-              toDate={toDate}
-              adults={guests.adults}
-              kids={guests.kids}
-              bedrooms={Math.max(1, Number(bedrooms) || 1)}
-              hasFullStayDetails={hasFullStayDetails}
-              hotelsHref={hotelsHref}
-              flightsHref={flightsHref}
-              narrowSuggestion={narrowSuggestion}
-            />
-          ) : null}
+            {submitted && hasDestination ? (
+              <AskModeGate>
+                <LandingSummary
+                  hotelSummary={hotelSummary}
+                  hotelHeaderLabel={hotelHeaderLabel}
+                  includeHotels={includeHotels}
+                  includeFlights={includeFlights}
+                  origin={origin}
+                  destinationCity={destinationCity}
+                  fromDate={fromDate}
+                  toDate={toDate}
+                  adults={guests.adults}
+                  kids={guests.kids}
+                  bedrooms={Math.max(1, Number(bedrooms) || 1)}
+                  hasFullStayDetails={hasFullStayDetails}
+                  hotelsHref={hotelsHref}
+                  flightsHref={flightsHref}
+                  narrowSuggestion={narrowSuggestion}
+                />
+              </AskModeGate>
+            ) : null}
+          </AiSearchProvider>
         </section>
       </main>
     </PageShell>

@@ -8,6 +8,7 @@ import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AiModeToggle from "@/components/site/AiModeToggle";
 import AskPanel from "./AskPanel";
+import AskResults from "./AskResults";
 import { useAiSearch, queryStateToParams } from "@/lib/ai/aiSearchStore";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
@@ -92,8 +93,7 @@ export default function LandingSearchPanel({
   // this at build time, so it cannot be flipped without a redeploy — which is
   // the point: the feature can ship to production and stay invisible.
   const aiEnabled = process.env.NEXT_PUBLIC_AI_CHAT_ENABLED === "1";
-  const [askMode, setAskMode] = useState(false);
-  const { query: aiQuery, ready: aiReady } = useAiSearch();
+  const { query: aiQuery, ready: aiReady, askMode, setAskMode } = useAiSearch();
 
   const [effectiveSearchParams, setEffectiveSearchParams] =
     useState<PageSearchParams>(initialSearchParams);
@@ -406,11 +406,12 @@ export default function LandingSearchPanel({
 
   if (aiEnabled && askMode) {
     return (
-      <div
-        className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}
-      >
+      <div className={styles.askStack}>
+        <div
+          className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}
+        >
         <div className={styles.aiHeaderRow}>
-          <span className="oltra-label">Ask the concierge</span>
+          <span className="oltra-label">AI concierge</span>
           <AiModeToggle
             active
             onToggle={() => {
@@ -431,6 +432,11 @@ export default function LandingSearchPanel({
           />
         </div>
         <AskPanel />
+        </div>
+
+        {/* Its own frame, outside the AI panel — the same relationship
+            LandingSummary has to the search panel in the structured layout. */}
+        <AskResults />
       </div>
     );
   }

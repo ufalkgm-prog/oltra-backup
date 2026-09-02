@@ -7,11 +7,10 @@ import HotelSmallCard, {
 } from "@/components/hotels/HotelSmallCard";
 import type { HotelRecord } from "@/lib/directus";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
-import { queryStateToParams } from "@/lib/ai/aiSearchStore";
-import { voiceFont } from "@/lib/ai/fonts";
+import { queryStateToParams, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
 import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
-import type { AiHotelCard, AiQueryState, AiResultSet } from "@/lib/ai/types";
+import type { AiHotelCard } from "@/lib/ai/types";
 import styles from "./page.module.css";
 
 /* The results region below the conversation.
@@ -32,13 +31,11 @@ import styles from "./page.module.css";
  * availability figure is fetched here and rendered by the card, exactly as the
  * structured search does it — the model never sees those numbers. */
 
-type Props = {
-  framing: string;
-  results: AiResultSet;
-  query: AiQueryState;
-};
-
-export default function AskResults({ framing, results, query }: Props) {
+/* No props: it reads the shared store directly, so it can sit outside the AI
+ * panel as its own frame — the same relationship LandingSummary has to the
+ * search panel in the structured layout. */
+export default function AskResults() {
+  const { results, query } = useAiSearch();
   const [hotels, setHotels] = useState<AiHotelCard[]>([]);
   const [availability, setAvailability] = useState<Record<string, SmallCardAvailability>>({});
   const [loading, setLoading] = useState(false);
@@ -255,7 +252,8 @@ export default function AskResults({ framing, results, query }: Props) {
   const showFlights = Boolean(results.flights);
   const hotelsOnly = showHotels && !showFlights;
 
-  if (!showHotels && !showFlights && !framing) return null;
+  // Nothing to frame yet — the panel above carries the conversation.
+  if (!showHotels && !showFlights) return null;
 
   const hotelCardParams = (name: string) => {
     const p = new URLSearchParams();
@@ -270,10 +268,6 @@ export default function AskResults({ framing, results, query }: Props) {
 
   return (
     <section className={styles.askResults}>
-      {framing ? (
-        <p className={`${styles.askFraming} ${voiceFont.className}`}>{framing}</p>
-      ) : null}
-
       {loading ? <p className={styles.askResultsNote}>Gathering those…</p> : null}
 
       <div className={hotelsOnly ? styles.askResultsFull : styles.summaryGrid}>

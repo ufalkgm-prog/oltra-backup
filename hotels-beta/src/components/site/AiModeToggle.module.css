@@ -1,25 +1,26 @@
-/* Small italic AI mark. Uses the live theme tokens (CLAUDE.md §35) rather than
-   literals, so it moves with the palette. Recessed like a field chip when
-   inactive, sage-filled when on — the same on/off language the buttons use. */
+/* Small "Ask AI" mark. Uses the live theme tokens (CLAUDE.md §35)
+   rather than literals, so it moves with the palette.
 
+   Sage-filled in both states — it is the way in to the feature, so it reads as
+   an action rather than a disabled chip. Active differs only by staying filled
+   while the panel is open. */
 .mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 30px;
-  height: 20px;
-  padding: 0 7px;
-  border: 1px solid var(--oltra-field-border);
+  height: 22px;
+  padding: 0 10px;
+  border: 1px solid var(--oltra-button-active-bg);
   border-radius: var(--oltra-radius-sm);
-  background: var(--oltra-field-bg);
-  color: var(--oltra-text-muted);
+  background: var(--oltra-button-active-bg);
+  color: var(--oltra-button-active-text);
   cursor: pointer;
-  transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease;
+  transition: filter 120ms ease;
 }
 
 .mark:hover {
-  color: var(--oltra-text-primary);
-  border-color: var(--oltra-button-inactive-border);
+  filter: brightness(1.08);
 }
 
 .mark:focus-visible {
@@ -34,14 +35,16 @@
 }
 
 .markActive:hover {
-  color: var(--oltra-button-active-text);
-  border-color: var(--oltra-button-active-bg);
+  filter: brightness(1.08);
 }
 
+/* Matches the shared button type (.oltra-button-primary): regular weight,
+   upright, uppercase, wide tracking. Only the size is reduced, because this
+   sits inside a 34px field rather than standing on its own. */
 .glyph {
-  font-style: italic;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   line-height: 1;
 }
