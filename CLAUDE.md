@@ -4051,14 +4051,19 @@ duplicates gone.
 
 ### Status
 
-**Unmerged, PR #7 open.** Branch `ai-chat`, head `fae4160`. `main` does not
+**Unmerged, PR #7 open.** Branch `ai-chat`, head `794c705`. `main` does not
 have it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
 production invisibly — the flag gates both the UI and the route.
 
-Ten commits. The feature is `dc5f729`; everything after it is either this
+Fourteen commits. The feature is `dc5f729`; everything after it is either this
 section or a fix found by using the thing in a browser — `c738913`, `901bcc2`,
-`9935fb2`, `9bd3902`, `fae4160`. That ratio is the point, and the "What testing
-taught" subsection below is what to read before assuming this is finished.
+`9935fb2`, `9bd3902`, `fae4160`, `c864f68`, `794c705`. That ratio is the point,
+and the "What testing taught" subsection below is what to read before assuming
+this is finished.
+
+One commit on the branch is **not** part of the feature: `58dc6eb` fixes the
+beta-login hang and touches a file that is on `main` too. It was kept separate
+so it can be cherry-picked there independently of PR #7 — see below.
 
 A second way into the hero search: describe the trip in prose, get curated
 hotels or flights back in the existing cards with an editorial line above them.
@@ -4275,8 +4280,8 @@ exactly in the gap those probes skipped. **For this feature, a green
 `tsc`/lint/build and a passing model probe are not evidence that it works;
 someone has to use it in a browser.**
 
-Four separate rounds of bugs were found that way, and the pattern held every
-time: **the failure was silent.** No exception, no red state, nothing in the
+Six separate rounds of bugs were found that way — the layout rounds below
+included — and the pattern held every time: **the failure was silent.** No exception, no red state, nothing in the
 console — a request that 400s at validation, a conversation that breaks
 permanently one turn later, a card that renders with no price. Each looked like
 working software. Where a value crosses a boundary — model to tool, tool to
@@ -4382,6 +4387,104 @@ any date); everything else is asked afterwards.
 Verified on the same prompt: 8 hotels shown, stay carried through as 2027-02-08
 to 2027-02-15 for 4 adults in 2 rooms, dates stated in the framing, one short
 question after.
+
+### Ask mode replaces the search, and its results (`c864f68`)
+
+Reported as "Clear leaves the result frames behind". Clear was working. The
+frames still on screen were the **structured** landing summary, rendering from
+`?city=…&submitted=1` in the URL — server-driven, outside the provider, and
+knowing nothing about Ask mode. Switching to Ask therefore stacked three result
+regions: the AI panel, the AI's results, and the previous search underneath.
+Clear removed the first two and left the third, which reads as Clear being
+broken.
+
+Ask mode now replaces the structured search **and its results**: `askMode`
+moved into the shared store, the provider wraps the summary too, and
+`AskModeGate` returns `null` while Ask is on. **The URL is deliberately left
+untouched**, so toggling back to Search restores the previous results exactly —
+nothing is recomputed and nothing is lost.
+
+The rest of that pass: results became their own frame below the AI panel, the
+way `LandingSummary` sits below the search panel (`AskResults` reads the store
+directly rather than taking props, so it no longer has to be nested); the
+transcript and the answer share **one** fixed-height scroll region, so neither
+can grow the panel — the answer had been moved outside that box in the previous
+pass, which is why the frame kept expanding; the answer sits between the ask and
+the next ask box, where it reads as the reply; the only suggestion is the
+input's placeholder.
+
+**Anchor a floating mark to the edge it must line up with, not to the one above
+it.** The "Ask AI" mark used a `top` offset that had to guess past the label,
+and measured 5px low. Measurement showed the wrapper's *bottom* edge is exactly
+the input's bottom edge, so bottom-anchoring centres it on the input row by
+construction — and cannot drift when the label or the row changes.
+
+### Panel parity, a real toggle, and answer-before-question (`794c705`)
+
+The single "Ask AI" mark was the way in and, in AI mode, the only way out —
+nothing said what pressing it would do, or that you were in a mode at all.
+Replaced with a two-segment **Classic search / AI mode** toggle in the Inspire
+map's C/F shape, bottom-right on both modes, with the Hotels/Flights checkbox
+text treatment so the row reads as one set of controls. `inline-grid` with
+`1fr` columns so both halves size to the wider label — flex could not do that
+without hardcoding a width per label, and the first attempt was clipped because
+the label needed 211px in a 170px column under `overflow: hidden`.
+
+**`box-sizing: border-box` means `min-height` does not include padding.** The
+AI panel measured 4px shorter than the classic one: `min-height: 34` plus
+`padding-top: 4` measures **34**, not 38. The bottom row's `min-height` now
+carries the padding.
+
+The input took the classic field's format and its focus treatment — a lift in
+surface and border, not a coloured ring — and the conversation grows and then
+scrolls at 300px rather than pushing the results down the page.
+
+Buttons now use the shared classes outright: Ask is the standard active/passive
+pair (`.oltra-button-primary` when there is something to send,
+`.oltra-button-secondary` when not), Stop is secondary, and Clear keeps the
+faded red used for warnings (§35/§46) — the one button that leaves the sage
+pair, because it is destructive. Its label had been invisible:
+`color: var(--oltra-field-bg)`, a dark field colour over a red fill. Now white,
+since the theme has no red-button standard. **Written as a compound selector**
+(`.askAction.askClear`) so it beats `.oltra-button-secondary` regardless of
+stylesheet order — a single class would only tie on specificity and lose to load
+order, the same trap §45 records for CSS-module-vs-global classes. Typography
+and geometry are left entirely to the shared classes, so all three match every
+other button on the site.
+
+Two traps from that edit, both cheap to repeat:
+
+* **A substring match ate the rule it was meant to spare.** Removing the stale
+  `.askClear` block by locating `".askClear {"` also matched
+  `".askAction.askClear {"`, which contains it — so the replacement rule was
+  deleted along with the thing it replaced. Anchor on the full selector.
+* **`getComputedStyle` from the extension's isolated world can be stale.** It
+  reported Ask as transparent/secondary with the correct class attached, while a
+  byte-identical clone in the same parent rendered sage. The screenshot was
+  right and the API was wrong. When measurement contradicts an identical
+  control, look at the pixels.
+
+Prompt change in the same commit: the answer now comes before any follow-up
+question. Asked for the Middle East in February the concierge had resolved the
+dates, replied with one helpful sentence, and rendered no cards — nothing
+failed, there was simply no `presentResults` call.
+
+### The beta-login hang (`58dc6eb`) — not part of this feature
+
+Entering the correct password left the button on "…" forever, which reads as a
+rejected password. It was not: the POST returned 200 and the cookie was set.
+`router.replace("/")` is a **soft** navigation, and the client router could
+still hold a cached RSC entry for `/` from before the cookie existed — so the
+gate never re-ran. `window.location.assign("/")` forces a document request. A
+login gate has nothing to gain from a soft navigation anyway.
+
+A dropped connection now shows a message rather than spinning silently: nothing
+reset `loading` outside the wrong-password branch, so a network failure looked
+identical to a hang.
+
+**This file is on `main` too.** It is kept as its own commit so it can be
+cherry-picked there independently of PR #7 — an outstanding decision, not an
+oversight.
 
 ### Still unexercised
 
