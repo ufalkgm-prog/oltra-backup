@@ -1,50 +1,52 @@
-/* Small "Ask AI" mark. Uses the live theme tokens (CLAUDE.md §35)
-   rather than literals, so it moves with the palette.
+/* Classic search / AI mode toggle.
+ *
+ * Same shape as the Inspire map's C/F unit switch (.oltra-temp-controls__unit
+ * in oltra-theme.css): a pill-bordered pair with the active side filled by a
+ * surface lift. Reusing that shape means the site has one segmented-control
+ * idiom rather than two.
+ *
+ * The TEXT, though, follows the Hotels/Flights checkbox labels beside it —
+ * 0.95rem, primary colour, sentence case, not uppercase — so the whole row
+ * reads as one set of controls.
+ */
 
-   Sage-filled in both states — it is the way in to the feature, so it reads as
-   an action rather than a disabled chip. Active differs only by staying filled
-   while the panel is open. */
-.mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-  height: 22px;
-  padding: 0 10px;
-  border: 1px solid var(--oltra-button-active-bg);
-  border-radius: var(--oltra-radius-sm);
-  background: var(--oltra-button-active-bg);
-  color: var(--oltra-button-active-text);
+/* Grid, not flex, so the two halves are equal: 1fr columns on a shrink-to-fit
+   box both size to the WIDER label, which flex could not do without hardcoding
+   a width per label. */
+.toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 1fr);
+  border: 1px solid var(--oltra-border-medium);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.segment {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--oltra-text-muted);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  padding: 4px 14px;
+  text-align: center;
+  white-space: nowrap;
   cursor: pointer;
-  transition: filter 120ms ease;
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
-.mark:hover {
-  filter: brightness(1.08);
+.segment:hover {
+  color: var(--oltra-text-primary);
 }
 
-.mark:focus-visible {
+.segment:focus-visible {
   outline: 2px solid var(--oltra-button-active-bg);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
-.markActive {
-  background: var(--oltra-button-active-bg);
-  border-color: var(--oltra-button-active-bg);
-  color: var(--oltra-button-active-text);
-}
-
-.markActive:hover {
-  filter: brightness(1.08);
-}
-
-/* Matches the shared button type (.oltra-button-primary): regular weight,
-   upright, uppercase, wide tracking. Only the size is reduced, because this
-   sits inside a 34px field rather than standing on its own. */
-.glyph {
-  font-size: 0.68rem;
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  line-height: 1;
+.segmentActive {
+  background: var(--oltra-surface-lift-strong);
+  color: var(--oltra-text-primary);
+  cursor: default;
 }

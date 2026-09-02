@@ -410,11 +410,22 @@ export default function LandingSearchPanel({
         <div
           className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}
         >
-        <div className={styles.aiHeaderRow}>
-          <span className="oltra-label">AI concierge</span>
+        {/* Mirrors the classic panel's structure exactly — a labelled field row
+            and a bottom row, in a grid with the same 16px gap — so an empty AI
+            panel is the same height as the search panel. */}
+        <div className={styles.askFieldWrap}>
+          <div className={styles.askField}>
+            <span className="oltra-label">AI concierge</span>
+            <AskPanel />
+          </div>
+
+        {/* Same corner as the classic panel's toggle, so it does not move
+            between modes. */}
+        <div className={styles.askBottomRow}>
           <AiModeToggle
             active
-            onToggle={() => {
+            onToggle={(on) => {
+              if (on) return;
               // Toggling off back-fills Search mode from whatever the
               // conversation established, then hands over. Switching modes
               // never recomputes on its own — this is a real navigation, the
@@ -431,7 +442,7 @@ export default function LandingSearchPanel({
             }}
           />
         </div>
-        <AskPanel />
+        </div>
         </div>
 
         {/* Its own frame, outside the AI panel — the same relationship
@@ -452,7 +463,6 @@ export default function LandingSearchPanel({
       >
 
         <div className={styles.searchGrid}>
-          <div className={styles.destinationWithAi}>
           <StructuredDestinationField
             label="Destination / purpose"
             placeholder="Type first 2 letters of hotel, city, country, or purpose"
@@ -466,12 +476,6 @@ export default function LandingSearchPanel({
             wrapperClassName={`${styles.landingField} ${styles.destinationField}`}
             busy={isPending}
           />
-            {aiEnabled ? (
-              <div className={styles.aiMarkSlot}>
-                <AiModeToggle active={false} onToggle={() => setAskMode(true)} />
-              </div>
-            ) : null}
-          </div>
 
           <div className={styles.dateRangeField}>
             <DateRangePicker
@@ -618,6 +622,11 @@ export default function LandingSearchPanel({
             </div>
           </div>
 
+          {aiEnabled ? (
+            <div className={styles.modeToggleSlot}>
+              <AiModeToggle active={false} onToggle={(on) => setAskMode(on)} />
+            </div>
+          ) : null}
         </div>
       </form>
     </div>

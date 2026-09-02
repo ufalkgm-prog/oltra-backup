@@ -316,7 +316,9 @@
 }
 
 .includeLeft {
-  grid-column: 1 / 4;
+  /* Was 1 / 4. Narrowed to leave the last two columns for the mode toggle,
+     which needs ~210px and was being clipped inside a single 170px column. */
+  grid-column: 1 / 3;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -750,33 +752,6 @@
    another page, and the feature is gated behind NEXT_PUBLIC_AI_CHAT_ENABLED.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Wraps the destination field so the AI mark can sit at its right edge without
-   StructuredDestinationField (shared with the Hotels page) knowing about it. */
-.destinationWithAi {
-  /* Plain block on purpose. The field's own .destinationField sets
-     `align-self: start`, which in a flex or grid container collapses it to
-     content width — in a block container it fills, as it did before the
-     wrapper existed. */
-  position: relative;
-  display: block;
-  min-width: 0;
-  align-self: start;
-}
-
-.aiMarkSlot {
-  position: absolute;
-  right: 10px;
-  /* Anchored to the BOTTOM, not the top. The wrapper's bottom edge and the
-     input box's bottom edge are the same line (measured), so a box of the
-     control's height pinned there covers exactly the input row and centres the
-     mark on it. A `top` offset had to guess past the label and was 5px out. */
-  bottom: 0;
-  height: var(--oltra-control-height, 34px);
-  display: flex;
-  align-items: center;
-  z-index: 31;
-}
-
 /* ── Ask mode ─────────────────────────────────────────────────────────── */
 
 .askPanel {
@@ -795,7 +770,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  height: 300px;
+  /* max-height, not height: the panel grows with the exchange and only starts
+     scrolling once it reaches the cap. A fixed height opened the panel at full
+     size on the very first turn. */
+  max-height: 300px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -843,163 +821,61 @@
   min-width: 0;
 }
 
+/* Matches the classic destination field exactly — same height token, radius,
+   border, background and font — so the two modes read as the same control.
+   It previously had its own size and a green focus ring, which nothing else on
+   the page uses. */
 .askInput {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 38px;
-  padding: 0 0.9rem;
-  font-size: 15px;
+  min-height: var(--oltra-control-height);
+  height: var(--oltra-control-height);
+  padding: 5px 10px;
+  font-family: var(--oltra-font-sans);
+  font-size: 0.95rem;
   color: var(--oltra-text-primary);
   background: var(--oltra-field-bg);
   border: 1px solid var(--oltra-field-border);
   border-radius: var(--oltra-radius-md);
+  outline: none;
 }
 
 .askInput::placeholder {
   color: var(--oltra-text-placeholder);
 }
 
-.askInput:focus-visible {
-  outline: 2px solid var(--oltra-button-active-bg);
-  outline-offset: 1px;
+/* Same highlight as the classic field: a lift in surface and border, not a
+   coloured ring. */
+.askInput:focus {
+  background: var(--oltra-field-bg-strong);
+  border-color: var(--oltra-border-medium);
 }
 
-.askSend,
-.askStop {
+/* Geometry only — Ask, Stop and Clear all wear the shared button classes
+   (.oltra-button-primary / -secondary) so they match every other button on the
+   site, active and passive. */
+.askAction {
   flex: 0 0 auto;
   min-width: 84px;
-  min-height: 38px;
-  padding: 0 1rem;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: var(--oltra-radius-md);
-  cursor: pointer;
 }
 
-.askSend {
-  background: var(--oltra-button-active-bg);
-  border: 1px solid var(--oltra-button-active-bg);
-  color: var(--oltra-button-active-text);
-  font-weight: 600;
-}
-
-.askSend:disabled {
-  background: transparent;
-  border-color: var(--oltra-button-inactive-border);
-  color: var(--oltra-text-muted);
-  cursor: default;
-}
-
-.askStop {
-  background: transparent;
-  border: 1px solid var(--oltra-button-inactive-border);
-  color: var(--oltra-text-primary);
-}
-
-.askHint {
-  margin: 0;
-  font-size: 15px;
-  font-style: italic;
-  color: var(--oltra-text-muted);
-}
-
-/* ── Results ──────────────────────────────────────────────────────────── */
-
-.askResults {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  padding-top: 0.4rem;
-}
-
-/* The editorial voice. Serif, and deliberately larger than the sans-serif
-   cards below it — this is the concierge speaking, not UI chrome. */
-.askFraming {
-  margin: 0;
-  max-width: 74ch;
-  font-size: 20px;
-  line-height: 1.4;
-  color: var(--oltra-text-primary);
-  text-wrap: balance;
-}
-
-.askResultsNote {
-  margin: 0;
-  font-size: 13px;
-  color: var(--oltra-text-muted);
-}
-
-/* Hotels with no flights alongside: the panel takes the whole row rather than
-   leaving the flights half empty. Its card list then runs two-up (below). */
-.askResultsFull {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-}
-
-/* Two columns inside ONE scroll container, so the pair scrolls together
-   rather than as two independent lists. Inherits max-height and overflow from
-   .smallCardsList, which is why the cards keep their normal size. */
-.askCardsTwoCol {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem 0.8rem;
-}
-
-@media (max-width: 900px) {
-  .askCardsTwoCol {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* The way back to a full search, so the AI subset is never a dead end. */
-.askEscape {
-  justify-self: start;
-  font-size: 13px;
-  color: var(--oltra-text-muted);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.askEscape:hover {
-  color: var(--oltra-text-primary);
-}
-
-/* Header of the Ask panel: the label, and the AI mark in its active state so
-   the way back to Search mode stays where the visitor last saw it. */
-.aiHeaderRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding-bottom: 0.7rem;
-}
-
-/* Clears the conversation and its result set. Sits beside Ask and mirrors its
-   geometry exactly, in the theme's error red against Ask's sage — the pairing
-   is the point, so both are filled rather than one being an outline. Present
-   only when there is something to clear. */
-.askClear {
-  flex: 0 0 auto;
-  min-width: 84px;
-  min-height: 38px;
-  padding: 0 1rem;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 600;
-  border-radius: var(--oltra-radius-md);
+/* Clear is destructive, so it is the one button that leaves the sage pair: the
+   faded red already used for warnings (§35/§46), with white text. Written as a
+   compound selector so it beats .oltra-button-secondary regardless of which
+   stylesheet loads first — a single .askClear would only tie on specificity.
+   Typography is left to the shared class, so it matches Ask exactly. */
+.askAction.askClear {
   background: var(--oltra-error-text);
-  border: 1px solid var(--oltra-error-text);
-  color: var(--oltra-field-bg);
-  cursor: pointer;
+  border-color: var(--oltra-error-text);
+  color: #ffffff;
 }
 
-.askClear:hover {
+.askAction.askClear:hover {
+  color: #ffffff;
   filter: brightness(1.06);
 }
 
-.askClear:focus-visible {
+.askAction.askClear:focus-visible {
   outline: 2px solid var(--oltra-error-text);
   outline-offset: 2px;
 }
@@ -1012,4 +888,52 @@
   flex-direction: column;
   gap: 1rem;
   min-width: 0;
+}
+
+/* The mode toggle on the checkbox row: last grid column, pushed right, and
+   centred on the same line as the Hotels / Flights labels so the row reads as
+   one set of controls. */
+.modeToggleSlot {
+  grid-column: 3 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .modeToggleSlot {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+/* Mirrors .searchForm: two rows, 16px apart. With .askField sized like the
+   destination field (label 19px directly above a 34px control) and the bottom
+   row matching .includeRow, an empty AI panel is exactly the height of the
+   classic one. */
+.askFieldWrap {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Label sits directly on the control, no gap — same as the destination
+   field's own wrapper. */
+.askField {
+  display: block;
+  min-width: 0;
+}
+
+/* Bottom row of the AI panel: empty on the left, toggle on the right —
+   the same position it occupies on the classic checkbox row. */
+/* 38px total: a 34px control row plus .includeRow's 4px top padding. The
+   min-height has to include the padding — box-sizing is border-box, so
+   min-height:34 + padding:4 measures 34, not 38, which is what left the AI
+   panel 4px shorter than the classic one. */
+.askBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 38px;
+  padding-top: 4px;
 }

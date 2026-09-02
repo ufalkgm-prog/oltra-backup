@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isToolUIPart, getToolName, type UIMessage } from "ai";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
-import { voiceFont } from "@/lib/ai/fonts";
 import type { AiQueryState, AiResultSet } from "@/lib/ai/types";
 import styles from "./page.module.css";
 
@@ -231,14 +230,31 @@ export default function AskPanel() {
 
   const hasConversation = messages.length > 0;
 
+  // The framing line is the answer, so it has to come BEFORE the model's
+  // follow-up question rather than after it — reading "would you prefer X?"
+  // and only then the answer is backwards. It belongs immediately above the
+  // last assistant turn, which is where that question lives.
+  const lastAssistantIndex = (() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].role === "assistant" && messageText(messages[i]).trim()) return i;
+    }
+    return -1;
+  })();
+
+  const framingBlock = framing ? (
+    <p key="framing" className={styles.askFraming}>
+      {framing}
+    </p>
+  ) : null;
+
   return (
     <div className={styles.askPanel}>
       {hasConversation || framing ? (
         <div className={styles.askScroll} ref={scrollRef}>
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             const text = messageText(message);
             if (!text.trim()) return null;
-            return (
+            const row = (
               <div
                 key={message.id}
                 className={
@@ -248,16 +264,24 @@ export default function AskPanel() {
                 {text}
               </div>
             );
+            return index === lastAssistantIndex ? (
+              <Fragment key={message.id}>
+                {framingBlock}
+                {row}
+              </Fragment>
+            ) : (
+              row
+            );
           })}
+
+          {/* No assistant turn to sit above (the model said nothing beyond the
+              results), so the answer stands alone at the end. */}
+          {framing && lastAssistantIndex === -1 ? framingBlock : null}
 
           {busy ? <div className={styles.askThinking}>Thinking…</div> : null}
 
           {error ? (
             <div className={styles.askError}>{errorMessage(error)}</div>
-          ) : null}
-
-          {framing ? (
-            <p className={`${styles.askFraming} ${voiceFont.className}`}>{framing}</p>
           ) : null}
         </div>
       ) : null}
@@ -273,13 +297,21 @@ export default function AskPanel() {
           disabled={busy}
         />
         {busy ? (
-          <button type="button" className={styles.askStop} onClick={() => stop()}>
+          <button
+            type="button"
+            className={`oltra-button-secondary ${styles.askAction}`}
+            onClick={() => stop()}
+          >
             Stop
           </button>
         ) : (
+          /* Standard active/passive pair: primary while there is something to
+             send, secondary when there is not. */
           <button
             type="submit"
-            className={styles.askSend}
+            className={`${
+              draft.trim() ? "oltra-button-primary" : "oltra-button-secondary"
+            } ${styles.askAction}`}
             disabled={!draft.trim()}
             aria-label="Send"
           >
@@ -287,7 +319,11 @@ export default function AskPanel() {
           </button>
         )}
         {hasConversation && !busy ? (
-          <button type="button" className={styles.askClear} onClick={startOver}>
+          <button
+            type="button"
+            className={`oltra-button-secondary ${styles.askAction} ${styles.askClear}`}
+            onClick={startOver}
+          >
             Clear
           </button>
         ) : null}

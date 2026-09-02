@@ -2,31 +2,42 @@
 
 import styles from "./AiModeToggle.module.css";
 
-/* The mode mark: a small italic "AI" sitting at the right edge of the
- * destination field.
+/* The mode toggle: Classic search / AI mode.
  *
- * It is rendered by the landing page's own wrapper, not by
- * StructuredDestinationField — that component is shared with the Hotels page,
- * which must not grow a toggle. Nothing here knows about the field it sits
- * over; positioning is the wrapper's job. */
+ * Two segments, both always visible, the current one filled — the same shape
+ * as the Inspire map's C/F switch, so the site has one segmented-control idiom.
+ * Its text matches the Hotels/Flights checkbox labels it sits beside.
+ *
+ * It replaced a single "Ask AI" mark that lived inside the destination field.
+ * That worked as a way *in*, but in AI mode the same mark was the only way out
+ * and read as the thing that had got you there — nothing said what pressing it
+ * would do, or that you were in a mode at all. */
 
 type Props = {
+  /** True when AI mode is active. */
   active: boolean;
   onToggle: (next: boolean) => void;
 };
 
 export default function AiModeToggle({ active, onToggle }: Props) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={active}
-      aria-label={active ? "Switch back to search" : "Ask the concierge"}
-      title={active ? "Back to search" : "Ask the concierge"}
-      className={`${styles.mark} ${active ? styles.markActive : ""}`}
-      onClick={() => onToggle(!active)}
-    >
-      <span className={styles.glyph}>Ask AI</span>
-    </button>
+    <div className={styles.toggle} role="group" aria-label="Search mode">
+      <button
+        type="button"
+        aria-pressed={!active}
+        className={`${styles.segment} ${!active ? styles.segmentActive : ""}`}
+        onClick={() => onToggle(false)}
+      >
+        Classic search
+      </button>
+      <button
+        type="button"
+        aria-pressed={active}
+        className={`${styles.segment} ${active ? styles.segmentActive : ""}`}
+        onClick={() => onToggle(true)}
+      >
+        AI mode
+      </button>
+    </div>
   );
 }
