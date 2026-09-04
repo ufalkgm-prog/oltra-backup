@@ -39,6 +39,10 @@ type Persisted = {
   query: AiQueryState;
   results: AiResultSet;
   framing: string;
+  /* The one short question that follows the answer. It arrives inside
+   * presentResults rather than as a message of its own: that message cost a
+   * whole extra model round trip. */
+  followUp: string;
   messages: UIMessage[];
 };
 
@@ -46,6 +50,7 @@ const EMPTY: Persisted = {
   query: EMPTY_QUERY_STATE,
   results: EMPTY_RESULT_SET,
   framing: "",
+  followUp: "",
   messages: [],
 };
 
@@ -56,7 +61,13 @@ type AiSearchContextValue = Persisted & {
   askMode: boolean;
   setAskMode: (on: boolean) => void;
   setQuery: (patch: Partial<AiQueryState>) => void;
-  setPresentation: (framing: string, results: AiResultSet, query: Partial<AiQueryState>) => void;
+  /** `results` is a patch, not a replacement — see setPresentation below. */
+  setPresentation: (
+    framing: string,
+    followUp: string,
+    results: Partial<AiResultSet>,
+    query: Partial<AiQueryState>
+  ) => void;
   setMessages: (messages: UIMessage[]) => void;
   clear: () => void;
 };
@@ -73,6 +84,7 @@ function read(): Persisted {
       query: { ...EMPTY_QUERY_STATE, ...(parsed.query ?? {}) },
       results: { ...EMPTY_RESULT_SET, ...(parsed.results ?? {}) },
       framing: parsed.framing ?? "",
+      followUp: parsed.followUp ?? "",
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
     };
   } catch {
@@ -118,7 +130,12 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setPresentation = useCallback(
-    (framing: string, results: AiResultSet, query: Partial<AiQueryState>) => {
+    (
+      framing: string,
+      followUp: string,
+      results: Partial<AiResultSet>,
+      query: Partial<AiQueryState>
+    ) => {
       // Flagged here, mirrored in the effect below. The mirror cannot live
       // inside the updater: React runs updaters during the render phase, and
       // saveHotelFlightSearch dispatches a synchronous window event that
@@ -130,7 +147,19 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       setState((prev) => ({
         ...prev,
         framing,
-        results,
+        followUp,
+        // Merged, not replaced. A turn that answers only the flights half of a
+        // trip says nothing about hotels, and replacing wholesale wiped the
+        // hotel cards off the page the moment the visitor answered a follow-up
+        // question. A facet the model did not speak to keeps its previous
+        // value; an explicitly empty one (`hotelIds: []`) still clears it.
+        results: {
+          hotelIds: results.hotelIds ?? prev.results.hotelIds,
+          rationales: results.rationales
+            ? { ...prev.results.rationales, ...results.rationales }
+            : prev.results.rationales,
+          flights: results.flights ?? prev.results.flights,
+        },
         query: {
           ...prev.query,
           ...query,

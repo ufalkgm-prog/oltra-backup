@@ -10,7 +10,7 @@ import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
 import { queryStateToParams, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
 import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
-import type { AiHotelCard } from "@/lib/ai/types";
+import type { AiFlightLeg, AiHotelCard } from "@/lib/ai/types";
 import styles from "./page.module.css";
 
 /* The results region below the conversation.
@@ -31,6 +31,138 @@ import styles from "./page.module.css";
  * availability figure is fetched here and rendered by the card, exactly as the
  * structured search does it — the model never sees those numbers. */
 
+/** The concierge speaks Duffel's cabin values; the Flights page's `cabin` param
+ * takes its own display labels. */
+const FLIGHTS_PAGE_CABIN: Record<string, string> = {
+  economy: "Economy",
+  premium_economy: "Premium Economy",
+  business: "Business",
+  first: "First",
+};
+
+const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+
+function legDateLabel(iso: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  const [y, m, d] = iso.split("-").map(Number);
+  return MONTH_DAY.format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/* One journey: its own header, its own fare search, its own Best price and
+ * Fastest rows.
+ *
+ * A component per leg rather than a map of states in the parent, so each owns
+ * its hooks and one slow route cannot hold up another — the same reason the
+ * structured summary gives each airport its own block (§38). Stacking them is
+ * also what makes an open jaw expressible at all: fly into Nice, home out of
+ * Marseille is two blocks, not one route with a return date. */
+function FlightLegPanel({
+  leg,
+  adults,
+  kids,
+  tripDefaults,
+}: {
+  leg: AiFlightLeg;
+  adults: number;
+  kids: number;
+  tripDefaults: { destination: string | null; periodLabel: string | null };
+}) {
+  type FlightState =
+    | { status: "loading" }
+    | { status: "empty" }
+    | { status: "error" }
+    | { status: "ready"; bestPrice: Itinerary | null; fastest: Itinerary | null; isOneWay: boolean };
+  const [state, setState] = useState<FlightState>({ status: "loading" });
+
+  const isOneWay = !leg.returnDate;
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ status: "loading" });
+
+    fetch("/api/flights/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        origin: leg.origin,
+        destination: leg.destination,
+        departureDate: leg.departureDate,
+        returnDate: leg.returnDate || undefined,
+        adults: Math.max(1, adults),
+        children: Math.max(0, kids),
+        cabinClass: leg.cabin || "economy",
+      }),
+    })
+      .then((res) => res.json())
+      .then((json: { ok?: boolean; offers?: unknown[] }) => {
+        if (cancelled) return;
+        if (!json.ok) {
+          setState({ status: "error" });
+          return;
+        }
+        const itineraries = normalizeOffers(
+          (json.offers ?? []) as never,
+          isOneWay ? "one-way" : "return"
+        );
+        if (!itineraries.length) {
+          setState({ status: "empty" });
+          return;
+        }
+        const { bestPrice, fastest } = pickHeadlineItineraries(itineraries);
+        setState({ status: "ready", bestPrice, fastest, isOneWay });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "error" });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [leg.origin, leg.destination, leg.departureDate, leg.returnDate, leg.cabin, adults, kids, isOneWay]);
+
+  return (
+    <div className={styles.askFlightLeg}>
+      <div className={styles.askFlightLegHead}>
+        <span className={styles.askFlightLegRoute}>
+          {leg.origin} &rarr; {leg.destination}
+        </span>
+        <span className={styles.askFlightLegDate}>
+          {legDateLabel(leg.departureDate)}
+          {leg.returnDate ? ` – ${legDateLabel(leg.returnDate)}` : ""}
+        </span>
+      </div>
+
+      {state.status === "loading" ? (
+        <div className={styles.summaryLine}>Checking fares…</div>
+      ) : null}
+      {state.status === "empty" ? (
+        <div className={styles.summaryLine}>
+          No flights found on that route for those dates.
+        </div>
+      ) : null}
+      {state.status === "error" ? (
+        <div className={styles.summaryLine}>Couldn&apos;t check fares just now.</div>
+      ) : null}
+      {state.status === "ready" ? (
+        <div className={styles.flightDetailList}>
+          <FlightResultRow
+            label="Best price"
+            flight={state.bestPrice}
+            isOneWay={state.isOneWay}
+            tripDefaults={tripDefaults}
+          />
+          <FlightResultRow
+            label="Fastest"
+            flight={state.fastest}
+            isOneWay={state.isOneWay}
+            tripDefaults={tripDefaults}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /* No props: it reads the shared store directly, so it can sit outside the AI
  * panel as its own frame — the same relationship LandingSummary has to the
  * search panel in the structured layout. */
@@ -39,14 +171,6 @@ export default function AskResults() {
   const [hotels, setHotels] = useState<AiHotelCard[]>([]);
   const [availability, setAvailability] = useState<Record<string, SmallCardAvailability>>({});
   const [loading, setLoading] = useState(false);
-
-  type FlightState =
-    | { status: "idle" }
-    | { status: "loading" }
-    | { status: "empty" }
-    | { status: "error" }
-    | { status: "ready"; bestPrice: Itinerary | null; fastest: Itinerary | null; isOneWay: boolean };
-  const [flights, setFlights] = useState<FlightState>({ status: "idle" });
 
   const idKey = results.hotelIds.join(",");
 
@@ -150,64 +274,6 @@ export default function AskResults() {
     };
   }, [hotels, query.from, query.to, query.adults, query.kids, query.bedrooms, query.currency, query.childrenAges]);
 
-  // One route, because the concierge has already chosen the airport — unlike
-  // the structured summary, which fans out across every airport serving the
-  // destination. Same endpoint, same normaliser, same best/fastest selection.
-  const flightKey = results.flights
-    ? `${results.flights.origin}|${results.flights.destination}|${results.flights.departureDate}|${results.flights.returnDate}|${results.flights.cabin}`
-    : "";
-
-  useEffect(() => {
-    const f = results.flights;
-    if (!f?.origin || !f?.destination || !f?.departureDate) {
-      setFlights({ status: "idle" });
-      return;
-    }
-
-    let cancelled = false;
-    setFlights({ status: "loading" });
-    const isOneWay = !f.returnDate;
-
-    fetch("/api/flights/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        origin: f.origin,
-        destination: f.destination,
-        departureDate: f.departureDate,
-        returnDate: f.returnDate || undefined,
-        adults: Math.max(1, query.adults),
-        children: Math.max(0, query.kids),
-        cabinClass: f.cabin || "economy",
-      }),
-    })
-      .then((res) => res.json())
-      .then((json: { ok?: boolean; offers?: unknown[] }) => {
-        if (cancelled) return;
-        if (!json.ok) {
-          setFlights({ status: "error" });
-          return;
-        }
-        const itineraries = normalizeOffers(
-          (json.offers ?? []) as never,
-          isOneWay ? "one-way" : "return"
-        );
-        if (!itineraries.length) {
-          setFlights({ status: "empty" });
-          return;
-        }
-        const { bestPrice, fastest } = pickHeadlineItineraries(itineraries);
-        setFlights({ status: "ready", bestPrice, fastest, isOneWay });
-      })
-      .catch(() => {
-        if (!cancelled) setFlights({ status: "error" });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [flightKey, results.flights, query.adults, query.kids]);
-
   const hotelsHref = useMemo(() => {
     const params = queryStateToParams(query);
     if (results.hotelIds.length) params.set("ids", results.hotelIds.join(","));
@@ -221,11 +287,34 @@ export default function AskResults() {
     return `/hotels?${params.toString()}`;
   }, [query]);
 
+  // More than one journey hands off as multi-city, which is precisely what
+  // that mode on the Flights page is for — an open jaw flattened into a return
+  // would send the traveller home from an airport they are not in.
   const flightsHref = useMemo(() => {
     const params = queryStateToParams(query);
-    if (results.flights) {
-      params.set("origin", results.flights.origin);
-      params.set("tripType", results.flights.returnDate ? "return" : "oneway");
+    const legs = results.flights;
+    const first = legs[0];
+    if (!first) return `/flights?${params.toString()}`;
+
+    params.set("origin", first.origin);
+    params.set("cabin", FLIGHTS_PAGE_CABIN[first.cabin] ?? "Economy");
+
+    if (legs.length > 1) {
+      params.set("tripType", "multiple");
+      // The form takes at most 5, and only searches when every leg is
+      // complete — so send whole legs, and no more than it can hold.
+      legs.slice(0, 5).forEach((leg, i) => {
+        params.set(`leg${i + 1}`, `${leg.origin}-${leg.destination}-${leg.departureDate}`);
+      });
+      // The single depart/return pair means nothing for a multi-city trip, and
+      // leaving the hotel stay in them shows dates that belong to a room.
+      params.delete("from");
+      params.delete("to");
+    } else {
+      params.set("tripType", first.returnDate ? "return" : "oneway");
+      params.set("from", first.departureDate);
+      if (first.returnDate) params.set("to", first.returnDate);
+      else params.delete("to");
     }
     return `/flights?${params.toString()}`;
   }, [query, results.flights]);
@@ -249,7 +338,7 @@ export default function AskResults() {
     query.destination.country;
 
   const showHotels = results.hotelIds.length > 0;
-  const showFlights = Boolean(results.flights);
+  const showFlights = results.flights.length > 0;
   const hotelsOnly = showHotels && !showFlights;
 
   // Nothing to frame yet — the panel above carries the conversation.
@@ -324,7 +413,7 @@ export default function AskResults() {
           >
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
-                Flights {results.flights?.origin} → {results.flights?.destination}
+                {results.flights.length > 1 ? "Flights" : `Flights ${results.flights[0].origin} → ${results.flights[0].destination}`}
               </div>
               <Link
                 href={flightsHref}
@@ -334,35 +423,21 @@ export default function AskResults() {
                 Go to flights
               </Link>
             </div>
-            {flights.status === "loading" ? (
-              <div className={styles.summaryLine}>Checking fares…</div>
-            ) : null}
-            {flights.status === "empty" ? (
-              <div className={styles.summaryLine}>
-                No flights found on that route for those dates.
-              </div>
-            ) : null}
-            {flights.status === "error" ? (
-              <div className={styles.summaryLine}>
-                Couldn&apos;t check fares just now.
-              </div>
-            ) : null}
-            {flights.status === "ready" ? (
-              <div className={styles.flightDetailList}>
-                <FlightResultRow
-                  label="Best price"
-                  flight={flights.bestPrice}
-                  isOneWay={flights.isOneWay}
+
+            {/* One block per journey, stacked. With a single leg this reads
+                exactly as it did before; with two it is how an open jaw gets
+                shown at all. */}
+            <div className={styles.askFlightLegs}>
+              {results.flights.map((leg) => (
+                <FlightLegPanel
+                  key={`${leg.origin}-${leg.destination}-${leg.departureDate}-${leg.returnDate}`}
+                  leg={leg}
+                  adults={query.adults}
+                  kids={query.kids}
                   tripDefaults={tripDefaults}
                 />
-                <FlightResultRow
-                  label="Fastest"
-                  flight={flights.fastest}
-                  isOneWay={flights.isOneWay}
-                  tripDefaults={tripDefaults}
-                />
-              </div>
-            ) : null}
+              ))}
+            </div>
           </div>
         ) : null}
       </div>

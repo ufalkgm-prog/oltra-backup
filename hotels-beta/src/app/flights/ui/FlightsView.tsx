@@ -113,7 +113,10 @@ function hasFlightSearchParams(searchParams: PageSearchParams): boolean {
       normalizeParam(searchParams.from) ||
       normalizeParam(searchParams.to) ||
       normalizeParam(searchParams.adults) ||
-      normalizeParam(searchParams.kids)
+      normalizeParam(searchParams.kids) ||
+      // A multi-city handoff is a real search even if it carries nothing else,
+      // and must not be quietly replaced by the last stored one.
+      normalizeParam(searchParams.leg1)
   );
 }
 
@@ -143,6 +146,34 @@ function resolveAirportCode(value: string): string {
   return pickPrimaryAirportForCity(trimmed)?.iata ?? "";
 }
 
+/** Multi-city legs arrive as `leg1`…`leg5`, each `ORIGIN-DEST-YYYY-MM-DD`
+ * (e.g. `leg1=CPH-NCE-2026-09-08`). One regex rather than splitting on "-",
+ * which the date is full of.
+ *
+ * This is how an open jaw crosses into this page — fly into Nice, home out of
+ * Marseille is not a return trip, and squeezing it into one it would send the
+ * traveller back from the wrong airport. Legs stop at MAX_MULTI_CITY_LEGS
+ * because the form does; a search is only valid when every leg is complete, so
+ * the array is trimmed to what actually arrived rather than padded with blanks.
+ */
+const LEG_PARAM = /^([A-Za-z]{3})-([A-Za-z]{3})-(\d{4}-\d{2}-\d{2})$/;
+const MAX_MULTI_CITY_LEGS = 5;
+
+function readLegParams(searchParams: PageSearchParams): MultiCityLeg[] {
+  const legs: MultiCityLeg[] = [];
+  for (let i = 1; i <= MAX_MULTI_CITY_LEGS; i += 1) {
+    const match = LEG_PARAM.exec(normalizeParam(searchParams[`leg${i}`]));
+    if (!match) break;
+    legs.push({
+      id: `multi-${i}`,
+      from: match[1].toUpperCase(),
+      to: match[2].toUpperCase(),
+      date: match[3],
+    });
+  }
+  return legs;
+}
+
 function buildInitialSearch(searchParams: PageSearchParams): SearchState {
   const saved =
     typeof window !== "undefined" && !hasFlightSearchParams(searchParams)
@@ -166,10 +197,25 @@ function buildInitialSearch(searchParams: PageSearchParams): SearchState {
     ? (cabinParam as Cabin)
     : INITIAL_SEARCH.cabin;
 
+  // "oneway" is the spelling the rest of the app links with, and the one
+  // CLAUDE.md documents; internally this page compares against "one-way".
+  // Accepting only the former meant a one-way handoff set a tripType that
+  // matched none of isOneWay/isReturnTrip/isMultiple, so the page arrived with
+  // no trip type selected at all.
   const tripTypeParam = normalizeParam(searchParams.tripType);
-  const tripType = (["oneway", "return", "multiple"].includes(tripTypeParam)
-    ? tripTypeParam
-    : INITIAL_SEARCH.tripType) as TripType;
+  const tripTypeAliases: Record<string, TripType> = {
+    oneway: "one-way",
+    "one-way": "one-way",
+    return: "return",
+    multiple: "multiple",
+  };
+  const legs = readLegParams(searchParams);
+  // Legs win: a URL carrying real ones is describing a multi-city trip
+  // whatever else it says.
+  const tripType: TripType =
+    legs.length > 1
+      ? "multiple"
+      : tripTypeAliases[tripTypeParam] ?? INITIAL_SEARCH.tripType;
 
   return {
     ...INITIAL_SEARCH,
@@ -181,9 +227,12 @@ function buildInitialSearch(searchParams: PageSearchParams): SearchState {
     adults: Number(normalizeParam(source.adults)) || INITIAL_SEARCH.adults,
     children: Number(normalizeParam(source.kids)) || INITIAL_SEARCH.children,
     cabin,
-    multiCity: INITIAL_SEARCH.multiCity.map((leg, i) =>
-      i === 0 ? { ...leg, from: originParam || "" } : leg
-    ),
+    multiCity:
+      legs.length > 1
+        ? legs
+        : INITIAL_SEARCH.multiCity.map((leg, i) =>
+            i === 0 ? { ...leg, from: originParam || "" } : leg
+          ),
   };
 }
 

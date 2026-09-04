@@ -3,6 +3,7 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  hasToolCall,
   stepCountIs,
   streamText,
   type UIMessage,
@@ -151,7 +152,11 @@ export async function POST(req: Request) {
         allowedDomains: WEB_SEARCH_ALLOWED_DOMAINS,
       }),
     },
-    stopWhen: stepCountIs(MAX_TOOL_STEPS),
+    // presentResults ends the turn. It used to be followed by one more model
+    // round trip that emitted a single short sentence — measured at 2.4s of a
+    // 26.6s answer for 30 tokens. That sentence is now the tool's own
+    // `followUp` field, so the answer and the question arrive together.
+    stopWhen: [stepCountIs(MAX_TOOL_STEPS), hasToolCall("presentResults")],
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     onError({ error }) {
       console.error("[ai chat]", error);

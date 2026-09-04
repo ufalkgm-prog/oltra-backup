@@ -937,3 +937,33 @@
   min-height: 38px;
   padding-top: 4px;
 }
+
+/* ------------------------------------------------ ask: flight legs --- */
+
+/* One block per journey. Two of them is how an open jaw reads: out to Nice,
+   home from Marseille. */
+.askFlightLegs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.askFlightLegHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.askFlightLegRoute {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oltra-text-primary);
+}
+
+.askFlightLegDate {
+  font-size: 0.75rem;
+  color: var(--oltra-text-muted);
+}

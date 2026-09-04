@@ -96,9 +96,13 @@ const searchHotels = tool({
   description:
     "Search the myOLTRA hotel collection by geography and character. Returns " +
     "candidate properties with their editorial detail so you can rank them " +
-    "yourself. Contains no prices and no availability. Use the broadest " +
+    "yourself. Never returns a price. Use the broadest " +
     "geography that fits, then narrow — city is often too tight, and `area` " +
-    "(Lake Como, Amalfi Coast, Engadin) is usually what a traveller means.",
+    "(Lake Como, Amalfi Coast, Engadin) is usually what a traveller means.\n\n" +
+    "PASS `stay` WHENEVER YOU KNOW THE DATES. It costs nothing extra and " +
+    "returns each candidate's availability and price rank with the results, " +
+    "so you do not need checkAvailability afterwards — that second call is a " +
+    "whole extra round trip and it is the slowest part of an answer.",
   inputSchema: jsonSchema<{
     country?: string;
     adminRegion?: string;
@@ -108,6 +112,16 @@ const searchHotels = tool({
     styles?: string[];
     activities?: string[];
     limit?: number;
+    stay?: {
+      checkIn: string;
+      checkOut: string;
+      adults?: number;
+      kids?: number;
+      childrenAges?: number[];
+      rooms?: number;
+      maxPricePerStay?: number;
+      currency?: string;
+    };
   }>({
     type: "object",
     properties: {
@@ -142,6 +156,29 @@ const searchHotels = tool({
         description: "Purpose tags. Use only these exact values.",
       },
       limit: { type: "number" },
+      stay: {
+        type: "object",
+        description:
+          "The dates and party, if known. Supply it and the results come " +
+          "back with availability and price rank already attached.",
+        properties: {
+          checkIn: { type: "string", description: "yyyy-mm-dd" },
+          checkOut: { type: "string", description: "yyyy-mm-dd" },
+          adults: { type: "number" },
+          kids: { type: "number" },
+          childrenAges: { type: "array", items: { type: "number" } },
+          rooms: { type: "number" },
+          maxPricePerStay: {
+            type: "number",
+            description:
+              "Ceiling for the whole stay, if the visitor named one. Used " +
+              "only to set withinBudget — the figure is never echoed back.",
+          },
+          currency: { type: "string" },
+        },
+        required: ["checkIn", "checkOut"],
+        additionalProperties: false,
+      },
     },
     additionalProperties: false,
   }),
@@ -173,11 +210,30 @@ const searchHotels = tool({
       Math.min(input.limit ?? MAX_HOTEL_CANDIDATES, MAX_HOTEL_CANDIDATES)
     );
 
+    const shaped = capped.map(candidateShape);
+
+    // Availability in the same round trip when the dates are known. The model
+    // asked for these two things back to back every single time, and the
+    // second ask cost more than the supplier call it triggered.
+    if (input.stay?.checkIn && input.stay?.checkOut) {
+      const ranked = await rankAvailability({
+        ...input.stay,
+        ids: shaped.map((h) => h.id),
+      });
+      return asUntrustedData("myoltra-hotels", {
+        matched: narrowed.length,
+        returned: shaped.length,
+        truncated: narrowed.length > shaped.length,
+        hotels: shaped,
+        availability: ranked,
+      });
+    }
+
     return asUntrustedData("myoltra-hotels", {
       matched: narrowed.length,
-      returned: capped.length,
-      truncated: narrowed.length > capped.length,
-      hotels: capped.map(candidateShape),
+      returned: shaped.length,
+      truncated: narrowed.length > shaped.length,
+      hotels: shaped,
     });
   },
 });
@@ -209,6 +265,139 @@ const getHotelDetails = tool({
     });
   },
 });
+
+type StayInput = {
+  ids: number[];
+  checkIn: string;
+  checkOut: string;
+  adults?: number;
+  kids?: number;
+  childrenAges?: number[];
+  rooms?: number;
+  maxPricePerStay?: number;
+  currency?: string;
+};
+
+/* The availability pass, shared by checkAvailability and by searchHotels'
+ * inline mode.
+ *
+ * Extracted so searchHotels can return availability WITH the candidates. When
+ * the two were separate tools the model always called them back to back, and
+ * that second call is a whole extra model round trip — measured at 9.7s of a
+ * 26.6s answer, far more than the supplier request it wraps. Deciding to ask
+ * is the expensive part here, not the asking.
+ *
+ * Returns ranks and a within-budget flag. The amount is used to sort and to
+ * test the ceiling and is then dropped: the model is never handed a figure, so
+ * it cannot leak one (§50). */
+async function rankAvailability(input: StayInput) {
+  // The supplier rejects a past check-in outright, and the whole batch fails
+  // with it. Catching it here turns a dead end into something the model can
+  // act on — it gets told the year is wrong rather than that availability is
+  // down, which is what the visitor was previously shown.
+  const today = new Date().toISOString().slice(0, 10);
+  if (input.checkIn < today) {
+    return {
+      error: "check-in is in the past",
+      today,
+      received: input.checkIn,
+      fix: "Re-run with the next occurrence of that month, not one already past.",
+    };
+  }
+  if (input.checkOut <= input.checkIn) {
+    return {
+      error: "check-out must be after check-in",
+      received: { checkIn: input.checkIn, checkOut: input.checkOut },
+    };
+  }
+
+  const ids = input.ids.slice(0, MAX_AVAILABILITY_IDS);
+  if (!ids.length) return { hotels: [] };
+
+  const rows = await getHotels({
+    fields: ["id", "ratehawk_hid", "ratehawk_status"],
+    filter: { id: { _in: ids } },
+    limit: -1,
+  });
+
+  // Skip passive properties entirely — they will never return rates, so
+  // asking wastes a request against a rate-limited supplier (§42).
+  const priceable = rows.filter(
+    (h) => h.ratehawk_status !== "passive" && h.ratehawk_hid
+  );
+  const hidToId = new Map<number, number>();
+  for (const h of priceable) hidToId.set(Number(h.ratehawk_hid), Number(h.id));
+
+  if (!hidToId.size) {
+    return {
+      hotels: rows.map((h) => ({
+        id: Number(h.id),
+        available: false,
+        reason:
+          h.ratehawk_status === "passive" ? "not-sold-here" : "no-supplier-record",
+      })),
+    };
+  }
+
+  const rooms = Math.max(1, input.rooms ?? 1);
+  const serp = await fetchRatehawkSerpBatch({
+    hids: [...hidToId.keys()],
+    checkin: input.checkIn,
+    checkout: input.checkOut,
+    guests: buildGuestsArray(
+      Math.max(1, input.adults ?? 2),
+      Math.max(0, input.kids ?? 0),
+      input.childrenAges ?? [],
+      rooms
+    ),
+    currency: input.currency || "EUR",
+    residency: "gb",
+  });
+
+  // Cheapest rate per hotel, used ONLY to rank and to test the ceiling.
+  // The amount is deliberately dropped before anything reaches the model.
+  const cheapest = new Map<number, number>();
+  for (const hotel of serp) {
+    const id = hidToId.get(Number(hotel.hid));
+    if (!id) continue;
+    for (const rate of hotel.rates ?? []) {
+      const price = ratePrice(rate);
+      if (!price) continue;
+      const current = cheapest.get(id);
+      if (current === undefined || price.amount < current) {
+        cheapest.set(id, price.amount);
+      }
+    }
+  }
+
+  const ranked = [...cheapest.entries()].sort((a, b) => a[1] - b[1]);
+  const rankById = new Map(ranked.map(([id], index) => [id, index + 1]));
+
+  return {
+    note: "Ranks only. No amounts are provided; the cards display live prices.",
+    hotels: rows.map((h) => {
+      const id = Number(h.id);
+      const amount = cheapest.get(id);
+      if (amount === undefined) {
+        return {
+          id,
+          available: false,
+          reason:
+            h.ratehawk_status === "passive"
+              ? "not-sold-here"
+              : "no-rates-for-these-dates",
+        };
+      }
+      return {
+        id,
+        available: true,
+        priceRank: rankById.get(id) ?? null,
+        withinBudget:
+          input.maxPricePerStay == null ? null : amount <= input.maxPricePerStay,
+      };
+    }),
+  };
+}
 
 const checkAvailability = tool({
   description:
@@ -248,114 +437,7 @@ const checkAvailability = tool({
     additionalProperties: false,
   }),
   async execute(input) {
-    // The supplier rejects a past check-in outright, and the whole batch fails
-    // with it. Catching it here turns a dead end into something the model can
-    // act on — it gets told the year is wrong rather than that availability is
-    // down, which is what the visitor was previously shown.
-    const today = new Date().toISOString().slice(0, 10);
-    if (input.checkIn < today) {
-      return asUntrustedData("availability", {
-        error: "check-in is in the past",
-        today,
-        received: input.checkIn,
-        fix: "Re-run with the next occurrence of that month, not one already past.",
-      });
-    }
-    if (input.checkOut <= input.checkIn) {
-      return asUntrustedData("availability", {
-        error: "check-out must be after check-in",
-        received: { checkIn: input.checkIn, checkOut: input.checkOut },
-      });
-    }
-
-    const ids = input.ids.slice(0, MAX_AVAILABILITY_IDS);
-    if (!ids.length) return asUntrustedData("availability", { hotels: [] });
-
-    const rows = await getHotels({
-      fields: ["id", "ratehawk_hid", "ratehawk_status"],
-      filter: { id: { _in: ids } },
-      limit: -1,
-    });
-
-    // Skip passive properties entirely — they will never return rates, so
-    // asking wastes a request against a rate-limited supplier (§42).
-    const priceable = rows.filter(
-      (h) => h.ratehawk_status !== "passive" && h.ratehawk_hid
-    );
-    const hidToId = new Map<number, number>();
-    for (const h of priceable) hidToId.set(Number(h.ratehawk_hid), Number(h.id));
-
-    if (!hidToId.size) {
-      return asUntrustedData("availability", {
-        hotels: rows.map((h) => ({
-          id: Number(h.id),
-          available: false,
-          reason:
-            h.ratehawk_status === "passive"
-              ? "not-sold-here"
-              : "no-supplier-record",
-        })),
-      });
-    }
-
-    const rooms = Math.max(1, input.rooms ?? 1);
-    const serp = await fetchRatehawkSerpBatch({
-      hids: [...hidToId.keys()],
-      checkin: input.checkIn,
-      checkout: input.checkOut,
-      guests: buildGuestsArray(
-        Math.max(1, input.adults ?? 2),
-        Math.max(0, input.kids ?? 0),
-        input.childrenAges ?? [],
-        rooms
-      ),
-      currency: input.currency || "EUR",
-      residency: "gb",
-    });
-
-    // Cheapest rate per hotel, used ONLY to rank and to test the ceiling.
-    // The amount is deliberately dropped before anything reaches the model.
-    const cheapest = new Map<number, number>();
-    for (const hotel of serp) {
-      const id = hidToId.get(Number(hotel.hid));
-      if (!id) continue;
-      for (const rate of hotel.rates ?? []) {
-        const price = ratePrice(rate);
-        if (!price) continue;
-        const current = cheapest.get(id);
-        if (current === undefined || price.amount < current) {
-          cheapest.set(id, price.amount);
-        }
-      }
-    }
-
-    const ranked = [...cheapest.entries()].sort((a, b) => a[1] - b[1]);
-    const rankById = new Map(ranked.map(([id], index) => [id, index + 1]));
-
-    return asUntrustedData("availability", {
-      note: "Ranks only. No amounts are provided; the cards display live prices.",
-      hotels: rows.map((h) => {
-        const id = Number(h.id);
-        const amount = cheapest.get(id);
-        if (amount === undefined) {
-          return {
-            id,
-            available: false,
-            reason:
-              h.ratehawk_status === "passive"
-                ? "not-sold-here"
-                : "no-rates-for-these-dates",
-          };
-        }
-        return {
-          id,
-          available: true,
-          priceRank: rankById.get(id) ?? null,
-          withinBudget:
-            input.maxPricePerStay == null ? null : amount <= input.maxPricePerStay,
-        };
-      }),
-    });
+    return asUntrustedData("availability", await rankAvailability(input));
   },
 });
 
@@ -434,6 +516,7 @@ const presentResults = tool({
     "voice; the cards themselves render live prices, so put no figures in it.",
   inputSchema: jsonSchema<{
     framing: string;
+    followUp?: string;
     hotelIds?: number[];
     rationales?: { id: number; reason: string }[];
     flights?: {
@@ -442,7 +525,7 @@ const presentResults = tool({
       departureDate: string;
       returnDate?: string;
       cabin?: string;
-    };
+    }[];
     stay?: {
       checkIn?: string;
       checkOut?: string;
@@ -463,6 +546,16 @@ const presentResults = tool({
         type: "string",
         description: "One or two editorial sentences. No prices, no lists.",
       },
+      // Calling this tool ENDS YOUR TURN — say everything here. A separate
+      // message afterwards cost a whole extra model round trip (measured at
+      // ~2.4s) to emit a single sentence, so there is no longer one.
+      followUp: {
+        type: "string",
+        description:
+          "Optional. One short question to continue the conversation, e.g. " +
+          "'Shall I price it in business too?'. Omit it if nothing useful " +
+          "remains to ask. Never put the answer here — that is the framing.",
+      },
       hotelIds: {
         type: "array",
         items: { type: "number" },
@@ -480,17 +573,31 @@ const presentResults = tool({
           additionalProperties: false,
         },
       },
+      // An ARRAY, one entry per journey, in travel order. A trip is not always
+      // a there-and-back on one pair of airports: flying into Nice and home
+      // out of Marseille is two one-way entries, neither carrying a
+      // returnDate. A plain round trip is a single entry WITH returnDate —
+      // do not split that into two, or the visitor loses the cheaper
+      // round-trip fares.
       flights: {
-        type: "object",
-        properties: {
-          origin: { type: "string" },
-          destination: { type: "string" },
-          departureDate: { type: "string" },
-          returnDate: { type: "string" },
-          cabin: { type: "string" },
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            origin: { type: "string", description: "IATA code." },
+            destination: { type: "string", description: "IATA code." },
+            departureDate: { type: "string", description: "yyyy-mm-dd" },
+            returnDate: {
+              type: "string",
+              description:
+                "yyyy-mm-dd. Only for a round trip on this same pair of " +
+                "airports. Leave unset on the legs of an open jaw.",
+            },
+            cabin: { type: "string" },
+          },
+          required: ["origin", "destination", "departureDate"],
+          additionalProperties: false,
         },
-        required: ["origin", "destination", "departureDate"],
-        additionalProperties: false,
       },
       // The stay these results are for. WITHOUT THIS THE CARDS SHOW NO PRICE:
       // pricing needs check-in, check-out and occupancy, and nothing else in

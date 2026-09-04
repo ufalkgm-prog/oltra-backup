@@ -61,20 +61,30 @@ export type AiResultSet = {
   hotelIds: number[];
   /** id -> one-line editorial rationale. Never a price. */
   rationales: Record<string, string>;
-  /** Set when the answer is about flights. */
-  flights: {
-    origin: string;
-    destination: string;
-    departureDate: string;
-    returnDate: string;
-    cabin: string;
-  } | null;
+  /** One entry per journey the answer covers, in travel order.
+   *
+   * An array rather than a single search because a real trip is not always a
+   * there-and-back on one pair of airports: fly into Nice, home out of
+   * Marseille. That open jaw has no `returnDate` on either leg — it is two
+   * one-way legs. A plain round trip is one leg carrying a `returnDate`.
+   * Empty when the answer is not about flights. */
+  flights: AiFlightLeg[];
+};
+
+/** One journey in the answer. `returnDate` is set only when this leg is itself
+ * a round trip on the same pair of airports. */
+export type AiFlightLeg = {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate: string;
+  cabin: string;
 };
 
 export const EMPTY_RESULT_SET: AiResultSet = {
   hotelIds: [],
   rationales: {},
-  flights: null,
+  flights: [],
 };
 
 /** The editorial framing line above the cards, plus the result set it frames.

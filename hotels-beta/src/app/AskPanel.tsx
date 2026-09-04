@@ -20,8 +20,13 @@ import styles from "./page.module.css";
 
 const PLACEHOLDER = "Where would you like to go, and what are you after?";
 
+/** Ceiling on the growing input, in px — roughly six lines. Past that it
+ * scrolls rather than pushing the results off the page. */
+const ASK_INPUT_MAX_PX = 132;
+
 type PresentInput = {
   framing?: string;
+  followUp?: string;
   hotelIds?: number[];
   rationales?: { id: number; reason: string }[];
   flights?: {
@@ -30,7 +35,7 @@ type PresentInput = {
     departureDate: string;
     returnDate?: string;
     cabin?: string;
-  };
+  }[];
   stay?: {
     checkIn?: string;
     checkOut?: string;
@@ -53,7 +58,11 @@ type PresentInput = {
 function readLatestPresentation(messages: UIMessage[]): {
   toolCallId: string;
   framing: string;
-  results: AiResultSet;
+  followUp: string;
+  /* Partial on purpose: only the facets this call actually spoke to. A turn
+   * that answers the flights half of a trip says nothing about hotels, and the
+   * store keeps whatever it is not told about. */
+  results: Partial<AiResultSet>;
   query: Partial<AiQueryState>;
 } | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -103,23 +112,29 @@ function readLatestPresentation(messages: UIMessage[]): {
           : {}),
       };
 
+      const results: Partial<AiResultSet> = {};
+      if (input.hotelIds) {
+        results.hotelIds = input.hotelIds.filter((id) => Number.isFinite(id));
+      }
+      if (input.rationales) results.rationales = rationales;
+      if (input.flights) {
+        results.flights = input.flights
+          .filter((leg) => leg?.origin && leg?.destination && leg?.departureDate)
+          .map((leg) => ({
+            origin: leg.origin,
+            destination: leg.destination,
+            departureDate: leg.departureDate,
+            returnDate: leg.returnDate ?? "",
+            cabin: leg.cabin ?? "economy",
+          }));
+      }
+
       return {
         toolCallId: part.toolCallId,
         framing: input.framing,
+        followUp: input.followUp ?? "",
         query,
-        results: {
-          hotelIds: (input.hotelIds ?? []).filter((id) => Number.isFinite(id)),
-          rationales,
-          flights: input.flights
-            ? {
-                origin: input.flights.origin,
-                destination: input.flights.destination,
-                departureDate: input.flights.departureDate,
-                returnDate: input.flights.returnDate ?? "",
-                cabin: input.flights.cabin ?? "economy",
-              }
-            : null,
-        },
+        results,
       };
     }
   }
@@ -153,6 +168,7 @@ export default function AskPanel() {
   const {
     messages: stored,
     framing,
+    followUp,
     setMessages: persistMessages,
     setPresentation,
     clear,
@@ -161,8 +177,23 @@ export default function AskPanel() {
 
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const seededRef = useRef(false);
   const appliedPresentationRef = useRef<string | null>(null);
+
+  // Grow to fit the text, then scroll. Measured from the element rather than
+  // counting characters, so it stays right at any width or font size: reset to
+  // auto first or scrollHeight only ever reports the current height.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    // scrollHeight covers content + padding but not the border, and the box is
+    // border-box — so add the border back or the field is 2px short and
+    // scrolls by a sliver on every line.
+    const border = el.offsetHeight - el.clientHeight;
+    el.style.height = `${Math.min(el.scrollHeight + border, ASK_INPUT_MAX_PX)}px`;
+  }, [draft]);
 
   const { messages, sendMessage, status, error, setMessages, stop, clearError } =
     useChat({
@@ -218,17 +249,27 @@ export default function AskPanel() {
     // the store — and AskResults skips pricing entirely without dates, which is
     // why cards appeared with no figure even when the visitor had given
     // everything needed.
-    const nextQuery: Partial<AiQueryState> = presentation.results.flights
-      ? {
-          vertical: "flights",
-          origin: presentation.results.flights.origin,
-          from: presentation.results.flights.departureDate,
-          to: presentation.results.flights.returnDate,
-          ...presentation.query,
-        }
-      : { vertical: "hotels", ...presentation.query };
+    // The stay comes from `stay` alone, never from a flight leg. Leg dates are
+    // the journey's, not the room's, and an open jaw's legs carry no return
+    // date at all — reading them here blanked the hotel check-out, and the
+    // cards silently lost their prices with it.
+    const legs = presentation.results.flights ?? [];
+    const nextQuery: Partial<AiQueryState> = {
+      ...(legs.length ? { origin: legs[0].origin } : {}),
+      vertical: presentation.results.hotelIds?.length
+        ? "hotels"
+        : legs.length
+          ? "flights"
+          : "hotels",
+      ...presentation.query,
+    };
 
-    setPresentation(presentation.framing, presentation.results, nextQuery);
+    setPresentation(
+      presentation.framing,
+      presentation.followUp,
+      presentation.results,
+      nextQuery
+    );
   }, [messages, persistMessages, setPresentation]);
 
   useEffect(() => {
@@ -237,7 +278,8 @@ export default function AskPanel() {
 
   const busy = status === "submitted" || status === "streaming";
 
-  function submit(event: React.FormEvent) {
+  // SyntheticEvent, not FormEvent: Enter in the textarea submits too.
+  function submit(event: React.SyntheticEvent) {
     event.preventDefault();
     const text = draft.trim();
     if (!text || busy) return;
@@ -258,10 +300,14 @@ export default function AskPanel() {
     return -1;
   })();
 
+  /* The answer, and the one question that follows it. Both arrive inside
+     presentResults now, so this is the whole assistant turn in the usual case
+     — there is no separate message after it. */
   const framingBlock = framing ? (
-    <p key="framing" className={styles.askFraming}>
-      {framing}
-    </p>
+    <Fragment key="framing">
+      <p className={styles.askFraming}>{framing}</p>
+      {followUp ? <p className={styles.askTurnAgent}>{followUp}</p> : null}
+    </Fragment>
   ) : null;
 
   return (
@@ -304,10 +350,22 @@ export default function AskPanel() {
       ) : null}
 
       <form className={styles.askForm} onSubmit={submit}>
-        <input
+        {/* A textarea, not an input: a brief long enough to be worth writing
+            scrolled its own beginning out of sight while it was being typed.
+            It grows with the text and then scrolls, so the whole question
+            stays visible. Enter still sends — Shift+Enter breaks the line. */}
+        <textarea
+          ref={inputRef}
+          rows={1}
           className={styles.askInput}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              submit(event);
+            }
+          }}
           placeholder={hasConversation ? "Refine, or ask something else…" : PLACEHOLDER}
           aria-label="Ask the concierge"
           autoComplete="off"
