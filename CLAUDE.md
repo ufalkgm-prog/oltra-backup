@@ -513,7 +513,11 @@ Two-tier match between the selected outbound's leg and each return candidate (`g
 
 ### Deep-link from Saved Trips
 
-* `buildInitialSearch` in `FlightsView.tsx` reads `cabin` and `tripType` from URL params so that the Saved Trips "Book" button can land the user on the flights page with the correct cabin class and trip type pre-selected. Valid cabin values: `"Economy" | "Premium Economy" | "Business" | "First"`. Valid tripType values: `"oneway" | "return" | "multiple"`. Falls back to `INITIAL_SEARCH` defaults if param is absent or invalid.
+* `buildInitialSearch` in `FlightsView.tsx` reads `cabin` and `tripType` from URL params so that the Saved Trips "Book" button can land the user on the flights page with the correct cabin class and trip type pre-selected. Valid cabin values: `"Economy" | "Premium Economy" | "Business" | "First"`. Valid tripType values: `"oneway"` (or `"one-way"`) `| "return" | "multiple"`. Falls back to `INITIAL_SEARCH` defaults if param is absent or invalid.
+
+  **Both one-way spellings are accepted only since 2026-09-04.** The URL value documented here has always been `oneway`, but the page's own `TripType` is `"one-way"` and every comparison inside it reads that — so `?tripType=oneway` selected no trip type at all. Fixed in `buildInitialSearch`; see §50 for the detail.
+
+* **Multi-city legs travel in the URL as `leg1`…`leg5`**, each `ORIGIN-DEST-YYYY-MM-DD` (e.g. `leg1=CPH-NCE-2026-09-08`). Added 2026-09-04 for the concierge's open-jaw handoff (§50) — before that, `multiple` mode could not be reached by link at all, since no per-leg params were read. Real legs override `tripType`. The form searches only when every leg is complete, so send whole legs and let the array be trimmed to what arrived rather than padded to the default three.
 
 ---
 
@@ -4051,15 +4055,25 @@ duplicates gone.
 
 ### Status
 
-**Unmerged, PR #7 open.** Branch `ai-chat`, head `794c705`. `main` does not
-have it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on
-production invisibly — the flag gates both the UI and the route.
+**Unmerged, PR #7 open, and two commits ahead of what was pushed.** Branch
+`ai-chat`, head `3b04df9`; `origin/ai-chat` is still at `91648ea`, so
+**`da6bfcb` and `3b04df9` exist only on Ulrik's machine** until someone pushes.
+`main` does not have any of it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default
+off, so it can sit on production invisibly — the flag gates both the UI and the
+route.
 
-Fourteen commits. The feature is `dc5f729`; everything after it is either this
+Sixteen commits. The feature is `dc5f729`; everything after it is either this
 section or a fix found by using the thing in a browser — `c738913`, `901bcc2`,
-`9935fb2`, `9bd3902`, `fae4160`, `c864f68`, `794c705`. That ratio is the point,
-and the "What testing taught" subsection below is what to read before assuming
-this is finished.
+`9935fb2`, `9bd3902`, `fae4160`, `c864f68`, `794c705`, `da6bfcb`, `3b04df9`.
+That ratio is the point, and the "What testing taught" subsection below is what
+to read before assuming this is finished.
+
+**Local prerequisite that is easy to lose an hour to:**
+`NEXT_PUBLIC_AI_CHAT_ENABLED=1` is not in the committed environment anywhere —
+it was added to `hotels-beta/.env.local` by hand on 2026-09-04. Without it the
+toggle does not render and `/api/chat` answers 404, which looks exactly like
+the feature being broken rather than switched off. It is inlined at build time,
+so a change needs a dev-server restart locally and a redeploy on Vercel.
 
 One commit on the branch is **not** part of the feature: `58dc6eb` fixes the
 beta-login hang and touches a file that is on `main` too. It was kept separate
@@ -4116,13 +4130,22 @@ refactoring and must not be:
 | The serif face loads in `lib/ai/fonts.ts`, not `layout.tsx` + a theme token | A global token would reach every page |
 | `FlightResultRow` sits in `src/app/`, not `src/components/` | The classes it uses live in the landing page's own CSS module. Moving it "properly" means either making those styles global or importing a page stylesheet from a shared component |
 
-Outside the landing page the whole feature is **18 lines across three files,
-none of it markup**: an `ids` key in `hotelFilters.ts`, its parsing in
+Outside the landing page the feature is **18 lines across three files, none of
+it markup**: an `ids` key in `hotelFilters.ts`, its parsing in
 `hotels/page.tsx`, and four lines in `HotelsView.tsx` (`selected.ids` in the
 type and in `hasMeaningfulFilters`, plus `"ids"` in both `HiddenPreserveParams`
 exclude lists). Two `export` keywords were added in
 `lib/ratehawk/availability.ts` so `ratePrice`/`RawSerpHotel` could be reused
 rather than duplicated.
+
+**`FlightsView.tsx` joined that list on 2026-09-04** and is the one place the
+containment rule was deliberately relaxed: `buildInitialSearch` now reads
+`leg1`…`leg5` and accepts both one-way spellings. That is a change to a page
+other traffic uses, and it was the right call — multi-city already existed and
+simply had no URL surface, so this makes an existing mode reachable rather than
+building the concierge a private one. It also fixes a one-way bug that was never
+the concierge's (see below). Anything further into that page should be weighed
+the same way: does it serve every caller, or only this feature?
 
 **Both HotelsView lines are load-bearing**, found by testing: without
 `hasMeaningfulFilters`, an ids-only handoff falls through to *featured mode* and
@@ -4189,9 +4212,20 @@ installed `.d.ts`, not recalled:
   `instructions`, which accepts a string, one system message, or an **array** of
   them — and `system` is deprecated in favour of it. The array form is what
   makes a stable cached prefix plus a volatile suffix possible at all.
-* `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'`.
+* `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'` — and so is
+  `FlightsView`'s own, which is what the §7B correction is about.
 * `buildGuestsArray(adults, kids, ages, rooms)` takes four positional
   arguments, not an object.
+
+Added 2026-09-04, both load-bearing:
+
+* **A `ToolUIPart` in state `input-streaming` has `input?: DeepPartial<…>`.**
+  Partial, and typed as such. Anything reading a tool call's input mid-stream is
+  reading an incomplete object — see the `da6bfcb` bug below, which this single
+  fact explains entirely.
+* **`stopWhen` takes an array of conditions**, and `hasToolCall(name)` is
+  exported alongside `stepCountIs(n)`. That is how a turn can end on a specific
+  tool call rather than only on a step count.
 
 ### Prerequisites
 
@@ -4280,13 +4314,41 @@ exactly in the gap those probes skipped. **For this feature, a green
 `tsc`/lint/build and a passing model probe are not evidence that it works;
 someone has to use it in a browser.**
 
-Six separate rounds of bugs were found that way — the layout rounds below
+Eight separate rounds of bugs were found that way — the layout rounds below
 included — and the pattern held every time: **the failure was silent.** No exception, no red state, nothing in the
 console — a request that 400s at validation, a conversation that breaks
-permanently one turn later, a card that renders with no price. Each looked like
+permanently one turn later, a card that renders with no price, a tool call
+applied half-streamed and then never corrected. Each looked like
 working software. Where a value crosses a boundary — model to tool, tool to
 store, store to card — assume nothing tells you when it fails to arrive, and go
 and look.
+
+**Read the store, not the screenshot.** Every 2026-09-04 bug was diagnosed by
+comparing what the model actually passed against what arrived, which the page
+cannot show you:
+
+```js
+JSON.parse(sessionStorage.getItem("oltra_ai_concierge_v1"))
+```
+
+Its `messages[].parts` hold each tool call's `input`, `state` and `output`, so
+"the model chose differently" and "the code dropped it" are distinguishable —
+and they look identical on screen. The answer that started the session named
+four hotels correctly in a tool call while the store held none.
+
+**Measure before optimising latency.** "It feels slow" had a specific shape
+(four serial round trips, 2.4s of it to emit one sentence) that no amount of
+reading the code would have revealed, and the plausible culprit — a prompt cache
+that was not hitting — turned out to be fine. Temporary `[perf]` logging in the
+route with `onStepFinish` gives per-step time, tool names and cache-token
+counts; add it, measure, remove it.
+
+**A model that is non-deterministic makes a single passing run weak evidence.**
+The same Amalfi query took two `searchHotels` calls on one run and one on the
+next with no code change in between — which is also how the second latency
+measurement came back at 22.7s rather than 14.4s. Repeat a scenario before
+calling it fixed, and when it fails, check the tool input before assuming the
+code broke.
 
 **A prompt change is a code change, and it regresses like one.** Two of the
 last fixes were caused by the fix before them. Tightening for brevity produced
@@ -4486,13 +4548,194 @@ identical to a hang.
 cherry-picked there independently of PR #7 — an outstanding decision, not an
 oversight.
 
+### A half-streamed tool call, kept forever (`da6bfcb`)
+
+A Japan query answered with dates and a follow-up question and showed **no
+hotels**. The model had done everything right — `presentResults` carried four
+hotel ids, the country, resolved check-in and check-out, and the party size.
+The store held the framing line and an empty result set.
+
+**Tool input streams in field by field, and while it does `input` is a
+`DeepPartial`** (`ai/dist/index.d.ts`: `state: 'input-streaming'` has
+`input?: DeepPartial<…>`). `framing` is the first property in the
+`presentResults` schema, so it completed while `hotelIds`, `stay` and
+`destination` were still absent. `readLatestPresentation` had no `state` check,
+so the effect fired on that snapshot and wrote it.
+
+**The change guard is what made it permanent.** It compared
+`presentation.framing === framing`, so once the half-formed framing was in the
+store, the completed call read as "no change" and was dropped. Not a flicker —
+the correct data never landed at all.
+
+Two changes: skip parts whose `state` is `input-streaming`, and key the guard on
+`part.toolCallId` rather than the framing text. Framing equality would also have
+swallowed a later turn that happened to reuse a phrase.
+
+**The general rule: never read a streaming tool input without checking its
+state, and never use a *value* as a change key when an identity is available.**
+
+The Next devtools "1 Issue" badge that surfaced alongside it was a second, real
+bug of the same shape — a value moving where it shouldn't. `setPresentation`
+called `mergeHotelFlightSearch` **inside its `setState` updater**; React runs
+updaters during the render phase, and `saveHotelFlightSearch` ends in a
+synchronous `window.dispatchEvent` that `SiteHeader` listens to, so SiteHeader
+set state mid-render. Mirroring moved to an effect keyed on `state.query` and
+the updater is pure again. **Side effects do not belong in a `setState`
+updater** — React may also run it twice.
+
+### Speed: 26.6s to 14.4s (`3b04df9`)
+
+Ulrik's first real complaint was that it took too long. Instrumenting the route
+(temporary `[perf]` logging, since removed) showed the whole answer was four
+serial model round trips, and none of it was the suppliers:
+
+| phase | before | after |
+|---|---|---|
+| triage (Haiku) | 1.1s | 1.1s |
+| `searchHotels` | 2.6s | 4.3s — now returns availability too |
+| `checkAvailability` | 9.7s | **gone** |
+| `presentResults` | 8.0s | 8.9s — now carries the follow-up question |
+| trailing text message | 2.4s for 30 tokens | **gone** |
+| **total** | **26.6s** | **14.4s** |
+
+Downstream was never the problem: `/api/ai/hotels` 36–200ms, a Duffel search
+~1.5s. Prompt caching was already hitting (10,669 cache-read tokens), so the
+cache trap under "Dates, and answer length" above was not the cause — **check
+that first, then stop looking at it.**
+
+Three changes, each removing a round trip rather than tuning one:
+
+* **`searchHotels` takes an optional `stay`** and returns availability and price
+  rank with the candidates. The model called `searchHotels` then
+  `checkAvailability` back to back every single time, and *deciding to ask* cost
+  far more than the supplier request it triggered. `rankAvailability()` in
+  `tools.ts` is now shared by both; `checkAvailability` survives for re-checking
+  a set against different dates.
+* **`presentResults` gained `followUp` and ends the turn**
+  (`stopWhen: [stepCountIs(…), hasToolCall("presentResults")]`). The model's
+  separate closing message cost a whole round trip to emit one sentence.
+* **The prompt asks for one broad search, not several narrow ones.** Without
+  this the model simply spent the saving on a second `searchHotels` — the first
+  re-measurement came back 22.7s, not 14.4s.
+
+**The remaining ~14s is two Opus round trips.** The only large lever left is the
+model itself (`CHAT_MODEL` in `lib/ai/config.ts`); that trades against the
+editorial voice and is Ulrik's call, not a mechanical follow-on.
+
+### A result set is merged, not replaced (`3b04df9`)
+
+Hotel cards vanished the moment the visitor answered a follow-up question. Each
+`presentResults` replaced the whole result set, so a turn about flights wrote
+`hotelIds: []`. `setPresentation` now merges per facet: what the model does not
+mention keeps its value, an explicit `[]` still clears it, and
+`readLatestPresentation` returns a `Partial<AiResultSet>` carrying only the
+facets that call actually spoke to.
+
+The same branch was also overwriting the hotel check-out with a flight leg's
+`returnDate` — empty on a one-way — so the stay blanked and the prices went with
+it. **Leg dates are the journey's, not the room's**: the stay comes from
+`stay` alone.
+
+`vertical` on the query state is written but read nowhere. Left in place, but do
+not treat it as meaningful.
+
+### A trip is a list of journeys (`3b04df9`)
+
+`AiResultSet.flights` was one `{origin, destination, departureDate, returnDate}`
+object. Fly into Nice, spend a few days in Saint-Tropez, home out of Marseille
+is **two one-way legs**, and there was nowhere to put the second — so the model
+presented them in sequence and each overwrote the last. Same root cause as the
+vanishing cards above.
+
+It is now `AiFlightLeg[]`, in travel order, and `presentResults`' `flights` is
+an array. Each leg renders as its own stacked block with its own fare search
+(`FlightLegPanel` in `AskResults.tsx`), one component per leg so each owns its
+hooks and a slow route cannot hold up its sibling — the same shape §38 uses for
+multiple airports.
+
+**A genuine there-and-back stays ONE leg with a `returnDate`.** Splitting it
+loses the cheaper round-trip fares, so the tool description and the prompt both
+say so explicitly.
+
+### Multi-city is what the Flights page's multiple mode is for (`3b04df9`)
+
+"Go to flights" originally handed off the first leg only, on the belief that the
+page had no open-jaw mode. It does — `tripType: "multiple"` — it simply **read
+no per-leg params**, so that mode was unreachable by link.
+
+`buildInitialSearch` now accepts `leg1`…`leg5` as `ORIGIN-DEST-YYYY-MM-DD`
+(`leg1=CPH-NCE-2026-09-08`), parsed with one regex because the date is full of
+hyphens. Real legs win over any `tripType` in the URL. Two details that matter:
+
+* **Trim to the legs that arrived, never pad.** `INITIAL_SEARCH.multiCity` holds
+  three blank legs and the form only searches when *every* leg is complete, so a
+  leftover blank one produces a form that silently refuses to search.
+* `hasFlightSearchParams` includes `leg1`, or a legs-only URL falls back to the
+  stored session and the handoff is quietly replaced.
+
+`AskResults` drops `from`/`to` for a multi-city handoff — those are the hotel
+stay's dates and mean nothing to that form — and maps the concierge's Duffel
+cabin values to the page's display labels (`FLIGHTS_PAGE_CABIN`).
+
+**Correction to §7B:** it lists `tripType` values as
+`"oneway" | "return" | "multiple"`. The page's own `TripType` is
+`"one-way" | "return" | "multiple"`, and every comparison inside it
+(`isOneWay`, `isReturnTrip`, `isMultiple`) reads `"one-way"` — so
+`?tripType=oneway` set a value matching none of them and the page arrived with
+**no trip type selected at all**. Long-standing, and not the concierge's alone:
+anything linking a one-way hit it. `buildInitialSearch` now accepts both
+spellings and normalises. Prefer `oneway` in links, since that is what the rest
+of the app already writes.
+
+### The input grows while you type (`3b04df9`)
+
+The ask box was an `<input>`, so a brief long enough to be worth writing
+scrolled its own beginning out of sight *while being typed* — fine once
+submitted, useless while composing. Now a `<textarea>` that measures itself and
+grows to ~6 lines then scrolls; Enter sends, Shift+Enter breaks the line.
+
+Two things it needs to be correct rather than approximately right: reset
+`height` to `auto` before reading `scrollHeight` (or it only ever reports the
+current height), and add `offsetHeight - clientHeight` back, because
+`scrollHeight` covers content and padding but not the border. `.askForm` moved
+from `align-items: stretch` to `flex-end` so the buttons keep their own height
+instead of growing with the field.
+
+### The §49 encoding trap, twice in one session
+
+Writing files with a Python heredoc mangled an em dash into a lone `0x97`
+(cp1252) byte, leaving two source files no longer valid UTF-8 — silently, since
+`tsc` had not run yet. §49 already records this; it is repeated here because it
+recurred immediately and cost real time.
+
+**Python's `open(p, 'w')` uses the locale codec on Windows.** A read/write
+round-trip survives (bytes in, same bytes out), so only the *new* non-ASCII
+text you introduce is corrupted, which makes it easy to miss. Either use the
+Edit tool for anything with non-ASCII, or read and write bytes explicitly and
+decode/encode UTF-8 yourself. Check with:
+
+```bash
+python -c "open('path','rb').read().decode('utf-8')"
+```
+
 ### Still unexercised
 
-The flights path compiles and the structured teaser still renders, but no
-concierge query has yet produced flight results, so the Best price / Fastest
-rows — and Book and Save inside them — have not been seen rendering from an AI
-answer. Nor has the members-only session gate been walked end to end, which
-needs a real login (§46).
+**The flights path has now been seen** (2026-09-04, superseding what this
+section said before): Best price and Fastest rows with Book and Save rendered
+from a concierge answer, first as a single LHR→HND round trip, then as an open
+jaw — CPH→NCE on the 8th and MRS→CPH on the 18th — and the multi-city handoff
+landed on the Flights page with both legs filled and searched for real.
+
+**The members-only session gate still has not been walked end to end.** Every
+query in the 2026-09-04 session was answered, so a session plainly existed, but
+no sign-in flow was observed, and from inside a session it is not possible to
+tell a real member login from something weaker. It still needs the §46
+handover: Ulrik signs in himself and hands over the tab.
+
+Also unexercised: the daily rate limit, the triage decline path in the real UI
+(only probed against the model directly, per "What testing this actually
+taught"), and web search — no query has yet gone near the allow-list at runtime,
+which is exactly the code path that took the whole feature down in `c738913`.
 
 ### Deliberately not built
 
