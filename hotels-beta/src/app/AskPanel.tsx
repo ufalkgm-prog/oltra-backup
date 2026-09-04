@@ -51,6 +51,7 @@ type PresentInput = {
  * names out of its prose — prose parsing would break the moment it phrased
  * something differently. */
 function readLatestPresentation(messages: UIMessage[]): {
+  toolCallId: string;
   framing: string;
   results: AiResultSet;
   query: Partial<AiQueryState>;
@@ -63,6 +64,14 @@ function readLatestPresentation(messages: UIMessage[]): {
       const part = message.parts[j];
       if (!isToolUIPart(part)) continue;
       if (getToolName(part) !== "presentResults") continue;
+
+      // Tool input streams in field by field, and while it does, `input` is a
+      // DeepPartial. `framing` is the first property in the schema, so it
+      // completes while hotelIds, stay and destination are still absent —
+      // reading that snapshot yields a framing line with no cards, no dates
+      // and no destination, which is exactly what the visitor sees. Wait for
+      // the input to be whole.
+      if (part.state === "input-streaming") continue;
 
       const input = part.input as PresentInput | undefined;
       if (!input?.framing) continue;
@@ -95,6 +104,7 @@ function readLatestPresentation(messages: UIMessage[]): {
       };
 
       return {
+        toolCallId: part.toolCallId,
         framing: input.framing,
         query,
         results: {
@@ -152,6 +162,7 @@ export default function AskPanel() {
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const seededRef = useRef(false);
+  const appliedPresentationRef = useRef<string | null>(null);
 
   const { messages, sendMessage, status, error, setMessages, stop, clearError } =
     useChat({
@@ -175,6 +186,7 @@ export default function AskPanel() {
     clearError();
     setMessages([]);
     setDraft("");
+    appliedPresentationRef.current = null;
     clear();
   }
 
@@ -194,7 +206,12 @@ export default function AskPanel() {
 
     const presentation = readLatestPresentation(messages);
     if (!presentation) return;
-    if (presentation.framing === framing) return;
+    // Keyed on the tool call, not on the framing text. Framing equality was
+    // the reason a half-streamed presentation stuck: once its framing was in
+    // the store, the completed call read as "no change" and was dropped. It
+    // would also swallow a fresh turn that happened to reuse a framing line.
+    if (presentation.toolCallId === appliedPresentationRef.current) return;
+    appliedPresentationRef.current = presentation.toolCallId;
 
     // Merge what the model reported on top of the vertical. Previously the
     // hotel branch set only the vertical, so dates and occupancy never reached
@@ -212,7 +229,7 @@ export default function AskPanel() {
       : { vertical: "hotels", ...presentation.query };
 
     setPresentation(presentation.framing, presentation.results, nextQuery);
-  }, [messages, framing, persistMessages, setPresentation]);
+  }, [messages, persistMessages, setPresentation]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

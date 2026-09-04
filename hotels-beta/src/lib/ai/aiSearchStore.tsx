@@ -88,6 +88,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [askMode, setAskMode] = useState(false);
   const hydrated = useRef(false);
+  const mirrorPending = useRef(false);
 
   useEffect(() => {
     setState(read());
@@ -118,34 +119,49 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
 
   const setPresentation = useCallback(
     (framing: string, results: AiResultSet, query: Partial<AiQueryState>) => {
-      setState((prev) => {
-        const nextQuery = {
+      // Flagged here, mirrored in the effect below. The mirror cannot live
+      // inside the updater: React runs updaters during the render phase, and
+      // saveHotelFlightSearch dispatches a synchronous window event that
+      // SiteHeader listens to — so mirroring there called SiteHeader's
+      // setState mid-render ("Cannot update a component while rendering a
+      // different component"). Updaters have to stay pure; React may also run
+      // them twice.
+      mirrorPending.current = true;
+      setState((prev) => ({
+        ...prev,
+        framing,
+        results,
+        query: {
           ...prev.query,
           ...query,
           destination: { ...prev.query.destination, ...(query.destination ?? {}) },
-        };
-
-        // Mirror the geography and stay details into the cross-page session so
-        // the Flights page keeps working exactly as it does today — it already
-        // falls back to this store when the URL carries no params.
-        mergeHotelFlightSearch({
-          city: nextQuery.destination.city,
-          state: nextQuery.destination.area,
-          admin_region: nextQuery.destination.adminRegion,
-          country: nextQuery.destination.country,
-          from: nextQuery.from,
-          to: nextQuery.to,
-          adults: String(nextQuery.adults),
-          kids: String(nextQuery.kids),
-          bedrooms: String(nextQuery.bedrooms),
-          origin: nextQuery.origin,
-        });
-
-        return { ...prev, framing, results, query: nextQuery };
-      });
+        },
+      }));
     },
     []
   );
+
+  // Mirror the geography and stay details into the cross-page session so the
+  // Flights page keeps working exactly as it does today — it already falls
+  // back to this store when the URL carries no params.
+  useEffect(() => {
+    if (!mirrorPending.current) return;
+    mirrorPending.current = false;
+
+    const { destination, from, to, adults, kids, bedrooms, origin } = state.query;
+    mergeHotelFlightSearch({
+      city: destination.city,
+      state: destination.area,
+      admin_region: destination.adminRegion,
+      country: destination.country,
+      from,
+      to,
+      adults: String(adults),
+      kids: String(kids),
+      bedrooms: String(bedrooms),
+      origin,
+    });
+  }, [state.query]);
 
   const setMessages = useCallback((messages: UIMessage[]) => {
     setState((prev) => ({ ...prev, messages }));
