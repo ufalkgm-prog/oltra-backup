@@ -16,6 +16,8 @@ import { readHotelFlightSearch } from "@/lib/searchSession";
 
 import OltraSelect from "@/components/site/OltraSelect";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
+import AiModeButton from "@/components/ai/AiModeButton";
+import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import type { RestaurantRecord } from "../types";
 import { buildAwardsLabel, buildLocationLabel, buildAddressLabel } from "../utils";
 import {
@@ -244,6 +246,16 @@ export default function RestaurantsMapView({
     if (!filteredRestaurants.length) return null;
     return filteredRestaurants.find((r) => r.id === selectedId) ?? filteredRestaurants[0];
   }, [filteredRestaurants, selectedId]);
+
+  /* What the concierge should assume if it is opened from this page. It still
+     answers hotel and flight questions asked here — the city is a default,
+     not a filter. */
+  useAiPageContext({
+    page: "restaurants",
+    city,
+    country: selectedRestaurant?.country ?? "",
+    restaurantName: selectedRestaurant?.restaurant_name ?? "",
+  });
 
   async function handleAddRestaurantToTrip(tripId?: string) {
     if (!selectedRestaurant) return;
@@ -808,6 +820,10 @@ export default function RestaurantsMapView({
   return (
     <div className="restaurants-layout">
       <aside className="oltra-glass oltra-panel restaurants-sidebar">
+        {/* Its own row at the top of the sidebar, right-aligned — above the
+            City / Restaurant type pair rather than over it. */}
+        <AiModeButton placement="corner" />
+
         <div className="restaurants-sidebar__intro">
           {/* City and Restaurant type share one row at equal width. */}
           <div className="restaurants-sidebar__filters">

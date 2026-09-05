@@ -14,19 +14,23 @@ import { mergeHotelFlightSearch } from "@/lib/searchSession";
 import {
   EMPTY_QUERY_STATE,
   EMPTY_RESULT_SET,
+  type AiPageContext,
   type AiQueryState,
   type AiResultSet,
 } from "./types";
 
-/* The single source of truth for Ask mode.
+/* The single source of truth for the concierge.
  *
- * Search mode and Ask mode are two views onto this one object, so toggling
- * between them never recomputes anything — results change only on a real new
- * entry (a hand-edited field plus search, or a new chat turn).
+ * The classic controls and the conversation are two ways of writing the same
+ * object, so opening or closing the concierge never recomputes anything —
+ * results change only on a real new entry (a hand-edited field plus search, or
+ * a new chat turn).
  *
- * It lives above the page in the layout tree and is backed by sessionStorage,
- * so it survives client-side navigation to /hotels and back, and a reload
- * within the same tab. Closing the tab clears it, which is the intended
+ * It is mounted in the ROOT LAYOUT and backed by sessionStorage, so one
+ * conversation spans the whole site: open the concierge on /restaurants and it
+ * resumes the exchange started on the landing page rather than beginning a
+ * fresh thread. Before this it lived inside the landing page and was destroyed
+ * by the first navigation. Closing the tab clears it, which is the intended
  * lifetime.
  *
  * Note what is NOT stored here: prices, availability, or anything the model
@@ -44,6 +48,20 @@ type Persisted = {
    * whole extra model round trip. */
   followUp: string;
   messages: UIMessage[];
+  /* When the concierge last presented results, and when the visitor last ran a
+   * a classic search. The landing page shows whichever happened more recently.
+   *
+   * Needed because the two live in different places: the classic search is in
+   * the URL, the concierge's answer is in here, and neither can see the other
+   * change. Without this, running a classic search after an AI answer left the
+   * AI frames on screen and the new search apparently ignored.
+   *
+   * Recency rather than clearing one when the other runs: nothing is thrown
+   * away, so both views stay reachable — the concierge's answer is still there
+   * when the modal is reopened, and the classic results come back with the
+   * next search. */
+  presentedAt: number;
+  searchedAt: number;
 };
 
 const EMPTY: Persisted = {
@@ -52,14 +70,26 @@ const EMPTY: Persisted = {
   framing: "",
   followUp: "",
   messages: [],
+  presentedAt: 0,
+  searchedAt: 0,
 };
 
-type AiSearchContextValue = Persisted & {
+/* The results half of the store. Deliberately does NOT carry `messages`:
+ * the conversation writes that on every streamed token, and anything reading
+ * this context would re-render at the same rate. The frames on the landing
+ * page are the ones that would have paid for it. See useAiConversation. */
+type AiSearchContextValue = Omit<Persisted, "messages"> & {
   ready: boolean;
-  /** Ask mode replaces the structured search AND its results, so the summary
-   * below needs to know. Not persisted: a reload should land on Search. */
-  askMode: boolean;
-  setAskMode: (on: boolean) => void;
+  /** Whether the concierge modal is on screen. Not persisted: a reload should
+   * land on the page itself, with the transcript still there behind the
+   * button. */
+  conciergeOpen: boolean;
+  setConciergeOpen: (open: boolean) => void;
+  /** Where the visitor is standing. Written by each page, read by the
+   * conversation when it builds a request. Deliberately outside `Persisted` —
+   * it describes now, not the conversation. */
+  pageContext: AiPageContext | null;
+  setPageContext: (context: AiPageContext | null) => void;
   setQuery: (patch: Partial<AiQueryState>) => void;
   /** `results` is a patch, not a replacement — see setPresentation below. */
   setPresentation: (
@@ -68,11 +98,42 @@ type AiSearchContextValue = Persisted & {
     results: Partial<AiResultSet>,
     query: Partial<AiQueryState>
   ) => void;
-  setMessages: (messages: UIMessage[]) => void;
+  /** Called when the visitor runs a classic search, so the landing page knows
+   * that is the more recent of the two. */
+  markClassicSearch: () => void;
   clear: () => void;
 };
 
 const AiSearchContext = createContext<AiSearchContextValue | null>(null);
+
+/** The transcript, on its own. Only the conversation panel reads it. */
+type AiConversationValue = {
+  messages: UIMessage[];
+  setMessages: (messages: UIMessage[]) => void;
+};
+
+const AiConversationContext = createContext<AiConversationValue | null>(null);
+
+/* A second context holding ONLY the setters a page needs, and nothing that
+ * changes.
+ *
+ * This exists for a measured reason rather than tidiness. The provider now
+ * wraps the whole app, and the conversation writes the message list to the
+ * store on every streamed token. Any page component that read the full context
+ * — to publish its page context, or to mark a classic search — would therefore
+ * re-render several times a second while the concierge was streaming, and
+ * HotelsView is 3,600 lines of component.
+ *
+ * Every value in here is stable for the provider's lifetime (two useState
+ * setters and a useCallback with no deps), so the object never changes
+ * identity and a consumer of it never re-renders because of it. */
+type AiActions = {
+  setConciergeOpen: (open: boolean) => void;
+  setPageContext: (context: AiPageContext | null) => void;
+  markClassicSearch: () => void;
+};
+
+const AiActionsContext = createContext<AiActions | null>(null);
 
 function read(): Persisted {
   if (typeof window === "undefined") return EMPTY;
@@ -86,6 +147,8 @@ function read(): Persisted {
       framing: parsed.framing ?? "",
       followUp: parsed.followUp ?? "",
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+      presentedAt: typeof parsed.presentedAt === "number" ? parsed.presentedAt : 0,
+      searchedAt: typeof parsed.searchedAt === "number" ? parsed.searchedAt : 0,
     };
   } catch {
     return EMPTY;
@@ -98,7 +161,8 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   // server/client mismatch — the same trap the residency auto-detect hit.
   const [state, setState] = useState<Persisted>(EMPTY);
   const [ready, setReady] = useState(false);
-  const [askMode, setAskMode] = useState(false);
+  const [conciergeOpen, setConciergeOpen] = useState(false);
+  const [pageContext, setPageContext] = useState<AiPageContext | null>(null);
   const hydrated = useRef(false);
   const mirrorPending = useRef(false);
 
@@ -148,6 +212,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         framing,
         followUp,
+        presentedAt: Date.now(),
         // Merged, not replaced. A turn that answers only the flights half of a
         // trip says nothing about hotels, and replacing wholesale wiped the
         // hotel cards off the page the moment the visitor answered a follow-up
@@ -155,6 +220,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
         // value; an explicitly empty one (`hotelIds: []`) still clears it.
         results: {
           hotelIds: results.hotelIds ?? prev.results.hotelIds,
+          restaurantIds: results.restaurantIds ?? prev.results.restaurantIds,
           rationales: results.rationales
             ? { ...prev.results.rationales, ...results.rationales }
             : prev.results.rationales,
@@ -196,6 +262,10 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, messages }));
   }, []);
 
+  const markClassicSearch = useCallback(() => {
+    setState((prev) => ({ ...prev, searchedAt: Date.now() }));
+  }, []);
+
   const clear = useCallback(() => {
     setState(EMPTY);
     try {
@@ -205,17 +275,87 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /* Memoised on the individual fields, NOT on `state`.
+   *
+   * That distinction is the whole point of the split: appending a streamed
+   * token replaces `state` but leaves `state.query`, `state.results` and the
+   * rest identical, so this value keeps its identity and nothing reading it
+   * re-renders. Depending on `state` here would undo the split silently. */
   const value = useMemo<AiSearchContextValue>(
-    () => ({ ...state, ready, askMode, setAskMode, setQuery, setPresentation, setMessages, clear }),
-    [state, ready, askMode, setQuery, setPresentation, setMessages, clear]
+    () => ({
+      query: state.query,
+      results: state.results,
+      framing: state.framing,
+      followUp: state.followUp,
+      presentedAt: state.presentedAt,
+      searchedAt: state.searchedAt,
+      ready,
+      conciergeOpen,
+      setConciergeOpen,
+      pageContext,
+      setPageContext,
+      setQuery,
+      setPresentation,
+      markClassicSearch,
+      clear,
+    }),
+    [
+      state.query,
+      state.results,
+      state.framing,
+      state.followUp,
+      state.presentedAt,
+      state.searchedAt,
+      ready,
+      conciergeOpen,
+      pageContext,
+      setQuery,
+      setPresentation,
+      markClassicSearch,
+      clear,
+    ]
   );
 
-  return <AiSearchContext.Provider value={value}>{children}</AiSearchContext.Provider>;
+  const conversation = useMemo<AiConversationValue>(
+    () => ({ messages: state.messages, setMessages }),
+    [state.messages, setMessages]
+  );
+
+  const actions = useMemo<AiActions>(
+    () => ({ setConciergeOpen, setPageContext, markClassicSearch }),
+    [markClassicSearch]
+  );
+
+  return (
+    <AiActionsContext.Provider value={actions}>
+      <AiSearchContext.Provider value={value}>
+        <AiConversationContext.Provider value={conversation}>
+          {children}
+        </AiConversationContext.Provider>
+      </AiSearchContext.Provider>
+    </AiActionsContext.Provider>
+  );
 }
 
 export function useAiSearch(): AiSearchContextValue {
   const ctx = useContext(AiSearchContext);
   if (!ctx) throw new Error("useAiSearch must be used inside AiSearchProvider");
+  return ctx;
+}
+
+/** The transcript. Only the conversation panel should read this — it changes
+ * on every streamed token. */
+export function useAiConversation(): AiConversationValue {
+  const ctx = useContext(AiConversationContext);
+  if (!ctx) throw new Error("useAiConversation must be used inside AiSearchProvider");
+  return ctx;
+}
+
+/** The setters only. Use this from a page component — reading the full store
+ * there would re-render the whole page on every streamed token. */
+export function useAiActions(): AiActions {
+  const ctx = useContext(AiActionsContext);
+  if (!ctx) throw new Error("useAiActions must be used inside AiSearchProvider");
   return ctx;
 }
 
@@ -234,6 +374,11 @@ export function queryStateToParams(query: AiQueryState): URLSearchParams {
   set("from", query.from);
   set("to", query.to);
   set("origin", query.origin);
+  // Comma-joined, which is what parseList in hotelFilters expects — so the
+  // Hotels page's own Settings and Activities facets come across pre-selected
+  // rather than the handoff arriving as a bare geography search.
+  if (query.settings.length) params.set("settings", query.settings.join(","));
+  if (query.activities.length) params.set("activities", query.activities.join(","));
   if (query.adults > 0) params.set("adults", String(query.adults));
   if (query.kids > 0) params.set("kids", String(query.kids));
   query.childrenAges.forEach((age, index) => {

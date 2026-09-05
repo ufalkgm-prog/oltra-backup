@@ -5,8 +5,7 @@ import { buildHotelsDirectusFilter, filterHotelsByTags } from "@/lib/hotelFilter
 import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { readGuestSelection } from "@/lib/guests";
 import LandingSearchPanel from "./LandingSearchPanel";
-import { AiSearchProvider } from "@/lib/ai/aiSearchStore";
-import AskModeGate from "./AskModeGate";
+import LandingResults from "./LandingResults";
 import LandingSummary from "./LandingSummary";
 import styles from "./page.module.css";
 
@@ -251,16 +250,19 @@ export default async function HomePage({
 
       <main className={styles.landingPage}>
         <section className={styles.heroPanel}>
-          {/* The provider wraps the summary too, so Ask mode can hide it — the
-              two are alternative views of the same results area, not layers. */}
-          <AiSearchProvider>
-            <LandingSearchPanel
-              initialSearchParams={resolvedSearchParams}
-              dataset={dataset}
-            />
+          <LandingSearchPanel
+            initialSearchParams={resolvedSearchParams}
+            dataset={dataset}
+          />
 
-            {submitted && hasDestination ? (
-              <AskModeGate>
+          {/* The structured summary and the concierge's frames are alternative
+              views of the same region, so one component picks between them.
+              The provider they both read from now lives in the root layout —
+              it used to wrap just this section, which is why a conversation
+              did not survive leaving the landing page. */}
+          <LandingResults
+            summary={
+              submitted && hasDestination ? (
                 <LandingSummary
                   hotelSummary={hotelSummary}
                   hotelHeaderLabel={hotelHeaderLabel}
@@ -278,9 +280,9 @@ export default async function HomePage({
                   flightsHref={flightsHref}
                   narrowSuggestion={narrowSuggestion}
                 />
-              </AskModeGate>
-            ) : null}
-          </AiSearchProvider>
+              ) : null
+            }
+          />
         </section>
       </main>
     </PageShell>

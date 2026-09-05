@@ -16,6 +16,9 @@ import {
   type BookingSearchParams,
 } from "@/lib/hotels/buildBookingLink";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
+import AiModeButton from "@/components/ai/AiModeButton";
+import AiResultsSync from "@/lib/ai/AiResultsSync";
+import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import {
   normalizeParam,
   readGuestSelection,
@@ -1164,6 +1167,22 @@ export default function HotelsView(props: {
     setDescExpanded(false);
   }, [selectedHotel?.id]);
 
+  /* What the concierge should assume if it is opened from this page.
+     The selected hotel is the important part: "somewhere quieter" asked while
+     looking at a property means an alternative to that property. */
+  useAiPageContext({
+    page: "hotels",
+    hotelName: selectedHotel?.hotel_name ?? "",
+    hotelId: selectedHotel ? Number(selectedHotel.id) : undefined,
+    city: selectedHotel?.city ?? normalizeParam(searchParams.city),
+    country: selectedHotel?.country ?? normalizeParam(searchParams.country),
+    from: fromValue,
+    to: toValue,
+    adults: guestSelection.adults,
+    kids: guestSelection.kids,
+    rooms: Math.max(1, Number(bedroomsValue) || 1),
+  });
+
   // Lets the Restaurants page show this hotel on its map (with a link back)
   // when reached via the shared session (e.g. the top-nav Restaurants link).
   useEffect(() => {
@@ -2221,6 +2240,11 @@ async function handleCreateTripAndAddHotel() {
 
   return (
     <div className="w-full">
+      {/* Renders nothing. If the visitor arrives here on a bare URL after the
+          concierge has found something, it writes that answer into the URL
+          once so this page shows it — the page stays URL-driven either way. */}
+      <AiResultsSync page="hotels" />
+
       <div
         className={[
           "grid gap-4",
@@ -2300,6 +2324,7 @@ async function handleCreateTripAndAddHotel() {
                 dataset={props.suggestions}
                 wrapperClassName="md:col-span-12 pt-[2px]"
                 busy={isPending}
+                trailingControl={<AiModeButton placement="inline" />}
               />
 
               {!compactTopMode ? (
@@ -2783,6 +2808,7 @@ async function handleCreateTripAndAddHotel() {
                     searchParams={searchParams}
                     dataset={props.suggestions}
                     busy={isPending}
+                    trailingControl={<AiModeButton placement="inline" />}
                   />
 
                   {showNarrowFurtherMessage ? (

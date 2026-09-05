@@ -14,6 +14,7 @@ import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
 import { consumeRateLimit } from "@/lib/ai/rateLimit";
 import { triageMessage } from "@/lib/ai/triage";
 import { dropUnansweredToolCalls } from "@/lib/ai/sanitiseHistory";
+import { describePageContext, sanitisePageContext } from "@/lib/ai/pageContext";
 import {
   CHAT_MODEL,
   MAX_MESSAGE_CHARS,
@@ -80,9 +81,14 @@ export async function POST(req: Request) {
 
   // 3. Input caps.
   let messages: UIMessage[];
+  let pageContextNote = "";
   try {
-    const body = (await req.json()) as { messages?: UIMessage[] };
+    const body = (await req.json()) as { messages?: UIMessage[]; pageContext?: unknown };
     messages = Array.isArray(body.messages) ? body.messages : [];
+    // Whitelisted and scrubbed before it goes anywhere near a system block —
+    // the browser sends it, so it is forgeable. See lib/ai/pageContext.ts for
+    // why the sanitiser is as blunt as it is.
+    pageContextNote = describePageContext(sanitisePageContext(body.pageContext));
   } catch {
     return reject(400, "Invalid request.");
   }
@@ -131,6 +137,10 @@ export async function POST(req: Request) {
     // the prompt itself would invalidate the cached prefix for every user every
     // day — and the call-level cacheControl this replaces cached the LAST
     // block, which would have been the volatile one, so the cache never hit.
+    //
+    // Page context follows the date, for the same reason and on the same side
+    // of the breakpoint: it changes on every navigation, so folding it into
+    // the prompt would invalidate the cached prefix for everyone.
     instructions: [
       {
         role: "system" as const,
@@ -138,6 +148,9 @@ export async function POST(req: Request) {
         providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } },
       },
       { role: "system" as const, content: todayNote() },
+      ...(pageContextNote
+        ? [{ role: "system" as const, content: pageContextNote }]
+        : []),
     ],
     // Repaired, not trusted: a history carrying a tool call with no result is
     // rejected outright, and the client cannot always avoid persisting one.

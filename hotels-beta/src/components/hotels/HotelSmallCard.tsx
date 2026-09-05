@@ -21,6 +21,48 @@ export type SmallCardAvailability =
   | { status: "idle" }
   | { status: "error" };
 
+/** How many result frames are sharing the row this card sits in.
+ *
+ * The landing page can now show hotels, flights and restaurants side by side,
+ * so the same card has to read cleanly at roughly 1200px, 590px and 380px. It
+ * is a DENSITY switch and nothing else: every variant shows the same fields,
+ * from the same data, with the same actions — only the image size, the column
+ * widths and how many lines the highlights get change. There is no branch here
+ * that hides a fact at one width and shows it at another.
+ *
+ * Defaults to 1, so every existing call site is unaffected. */
+export type SmallCardColumns = 1 | 2 | 3;
+
+const LAYOUT: Record<
+  SmallCardColumns,
+  { grid: string; image: number; imageBox: string; body: string; clamp: string; right: string }
+> = {
+  1: {
+    grid: "grid-cols-[132px_1fr_auto] gap-3.5",
+    image: 132,
+    imageBox: "h-20 w-full",
+    body: "min-h-[80px]",
+    clamp: "line-clamp-3",
+    right: "w-[84px]",
+  },
+  2: {
+    grid: "grid-cols-[104px_1fr_auto] gap-3",
+    image: 104,
+    imageBox: "h-[66px] w-full",
+    body: "min-h-[66px]",
+    clamp: "line-clamp-2",
+    right: "w-[80px]",
+  },
+  3: {
+    grid: "grid-cols-[88px_1fr_auto] gap-2.5",
+    image: 88,
+    imageBox: "h-[58px] w-full",
+    body: "min-h-[58px]",
+    clamp: "line-clamp-2",
+    right: "w-[74px]",
+  },
+};
+
 type Props = {
   hotel: HotelRecord;
   href?: string;
@@ -30,6 +72,8 @@ type Props = {
   /** Supplied by the caller so the card doesn't have to know about trips - it
    * is a SaveToTripControl, which owns its own popup picker. */
   renderSaveControl?: () => React.ReactNode;
+  /** Frames sharing the row. See SmallCardColumns — density only. */
+  columns?: SmallCardColumns;
 };
 
 export default function HotelSmallCard({
@@ -38,7 +82,9 @@ export default function HotelSmallCard({
   availability,
   bookingHref,
   renderSaveControl,
+  columns = 1,
 }: Props) {
+  const layout = LAYOUT[columns];
   const img = getHotelImageSet(hotel)[0] ?? HOTEL_CARD_PLACEHOLDERS[0];
   const hasPhoto = hasHotelPhotos(hotel);
   const nameAndLocation = [hotel.city, hotel.country].filter(Boolean).join(" · ");
@@ -96,7 +142,7 @@ export default function HotelSmallCard({
       );
     }
     return (
-      <div className="w-[84px] shrink-0 text-right text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+      <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
         Select dates
       </div>
     );
@@ -138,35 +184,59 @@ export default function HotelSmallCard({
     ) : null;
 
   const inner = (
-    <div className="grid grid-cols-[132px_1fr_auto] gap-3.5">
+    <div className={`grid ${layout.grid}`}>
       <div>
         <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
           {hasPhoto ? (
-            <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
+            <Image
+              src={img}
+              alt=""
+              width={layout.image}
+              height={80}
+              className={`${layout.imageBox} object-cover`}
+              sizes={`${layout.image}px`}
+            />
           ) : (
-            <div className="oltra-photo-placeholder h-20 w-full">Photos coming soon</div>
+            <div className={`oltra-photo-placeholder ${layout.imageBox}`}>
+              Photos coming soon
+            </div>
           )}
         </div>
       </div>
 
-      <div className="flex min-h-[80px] min-w-0 flex-col">
+      <div className={`flex ${layout.body} min-w-0 flex-col`}>
         <div className="min-w-0">
-          <div className="truncate text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+          {/* Two lines, then an ellipsis — the middle ground between the two
+              things that were wrong. A single truncated line clipped
+              "Mandarin Oriental, Lutetia, Paris" to "Mandarin Ori…", which
+              names nothing; unbounded wrapping gave it three lines and pushed
+              the price down the card. line-clamp keeps the ellipsis, so a
+              longer name still reads as cut off rather than as the whole
+              name. */}
+          <div className="min-w-0 line-clamp-2 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
             {hotel.hotel_name ?? "Untitled hotel"}
           </div>
-          <div className="mt-0.5 text-xs text-[color:var(--oltra-text-muted)]">
+          {/* Wraps rather than truncates: at three frames the column is
+              narrow enough for "Sabi Sand Reserve · South Africa" to clip,
+              and a card one line taller beats a location you cannot read. */}
+          <div className="mt-0.5 min-w-0 text-xs break-words text-[color:var(--oltra-text-muted)]">
             {nameAndLocation || "—"}
           </div>
         </div>
 
+        {/* Clamped by lines, not by a per-variant character count: the text
+            handed in is the same at every width, so a narrow frame shows less
+            of it rather than a different string. */}
         {hotel.highlights ? (
-          <div className="mt-2 text-xs leading-relaxed text-[color:var(--oltra-text-muted)]">
+          <div
+            className={`mt-2 ${layout.clamp} text-xs leading-relaxed text-[color:var(--oltra-text-muted)]`}
+          >
             {clampHotelText(hotel.highlights, 170)}
           </div>
         ) : null}
       </div>
 
-      <div className="flex w-[84px] shrink-0 flex-col justify-center">
+      <div className={`flex ${layout.right} shrink-0 flex-col justify-center`}>
         {rightBlock}
         {actions}
       </div>

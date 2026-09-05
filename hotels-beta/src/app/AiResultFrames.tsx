@@ -4,41 +4,36 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HotelSmallCard, {
   type SmallCardAvailability,
+  type SmallCardColumns,
 } from "@/components/hotels/HotelSmallCard";
+import RestaurantSmallCard from "@/components/restaurants/RestaurantSmallCard";
 import type { HotelRecord } from "@/lib/directus";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
-import { queryStateToParams, useAiSearch } from "@/lib/ai/aiSearchStore";
+import { useAiSearch } from "@/lib/ai/aiSearchStore";
+import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
+import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
 import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
 import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
-import type { AiFlightLeg, AiHotelCard } from "@/lib/ai/types";
+import type { AiFlightLeg } from "@/lib/ai/types";
 import styles from "./page.module.css";
 
-/* The results region below the conversation.
+/* The concierge's results, on the landing page.
  *
- * Deliberately reuses the structured landing summary's own frames — the same
- * `.summaryGrid` / `.summaryColumn` glass panel, the same `.smallCardsList`
- * scroll box, the same `HotelSmallCard` at its normal size. An earlier version
- * of this file invented its own card grid; results from the concierge should
- * look identical to results from the search bar, because they are the same
- * hotels shown for the same reason.
+ * One, two or three frames side by side — hotels, flights, restaurants —
+ * depending on what the conversation actually covered. The restaurant frame
+ * appears only when restaurants were asked for; it is not a permanent third
+ * column waiting to be filled.
  *
- * The one deliberate difference: when the answer is hotels only, the panel
- * takes the full width and the cards run in two columns inside a single scroll
- * container, rather than leaving half the row empty where the flights panel
- * would otherwise sit.
+ * Deliberately reuses the structured landing summary's own frames: the same
+ * .summaryColumn glass panel, the same .smallCardsList scroll box, the same
+ * HotelSmallCard and FlightResultRow. Results from the concierge should look
+ * identical to results from the search bar, because they are the same hotels
+ * shown for the same reason. What changes with the frame count is density, not
+ * content — see SmallCardColumns.
  *
- * The framing line is the only thing the model wrote. Every price and
- * availability figure is fetched here and rendered by the card, exactly as the
- * structured search does it — the model never sees those numbers. */
-
-/** The concierge speaks Duffel's cabin values; the Flights page's `cabin` param
- * takes its own display labels. */
-const FLIGHTS_PAGE_CABIN: Record<string, string> = {
-  economy: "Economy",
-  premium_economy: "Premium Economy",
-  business: "Business",
-  first: "First",
-};
+ * Every price and availability figure is fetched here and rendered by the
+ * card, exactly as the structured search does it. The model never sees those
+ * numbers, and the summary inside the concierge modal cannot state one. */
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
@@ -61,11 +56,13 @@ function FlightLegPanel({
   adults,
   kids,
   tripDefaults,
+  columns,
 }: {
   leg: AiFlightLeg;
   adults: number;
   kids: number;
   tripDefaults: { destination: string | null; periodLabel: string | null };
+  columns: SmallCardColumns;
 }) {
   type FlightState =
     | { status: "loading" }
@@ -121,12 +118,12 @@ function FlightLegPanel({
   }, [leg.origin, leg.destination, leg.departureDate, leg.returnDate, leg.cabin, adults, kids, isOneWay]);
 
   return (
-    <div className={styles.askFlightLeg}>
-      <div className={styles.askFlightLegHead}>
-        <span className={styles.askFlightLegRoute}>
+    <div className={styles.aiFlightLeg}>
+      <div className={styles.aiFlightLegHead}>
+        <span className={styles.aiFlightLegRoute}>
           {leg.origin} &rarr; {leg.destination}
         </span>
-        <span className={styles.askFlightLegDate}>
+        <span className={styles.aiFlightLegDate}>
           {legDateLabel(leg.departureDate)}
           {leg.returnDate ? ` – ${legDateLabel(leg.returnDate)}` : ""}
         </span>
@@ -150,12 +147,14 @@ function FlightLegPanel({
             flight={state.bestPrice}
             isOneWay={state.isOneWay}
             tripDefaults={tripDefaults}
+            columns={columns}
           />
           <FlightResultRow
             label="Fastest"
             flight={state.fastest}
             isOneWay={state.isOneWay}
             tripDefaults={tripDefaults}
+            columns={columns}
           />
         </div>
       ) : null}
@@ -163,46 +162,12 @@ function FlightLegPanel({
   );
 }
 
-/* No props: it reads the shared store directly, so it can sit outside the AI
- * panel as its own frame — the same relationship LandingSummary has to the
- * search panel in the structured layout. */
-export default function AskResults() {
+/* No props: it reads the shared store directly, so it can sit as its own frame
+ * below the search panel — the same relationship LandingSummary has to it. */
+export default function AiResultFrames() {
   const { results, query } = useAiSearch();
-  const [hotels, setHotels] = useState<AiHotelCard[]>([]);
+  const { hotels, restaurants, loading } = useAiResultRecords();
   const [availability, setAvailability] = useState<Record<string, SmallCardAvailability>>({});
-  const [loading, setLoading] = useState(false);
-
-  const idKey = results.hotelIds.join(",");
-
-  useEffect(() => {
-    if (!results.hotelIds.length) {
-      setHotels([]);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-
-    fetch("/api/ai/hotels", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: results.hotelIds }),
-    })
-      .then((res) => res.json())
-      .then((json: { ok?: boolean; hotels?: AiHotelCard[] }) => {
-        if (cancelled) return;
-        setHotels(json.ok && json.hotels ? json.hotels : []);
-      })
-      .catch(() => {
-        if (!cancelled) setHotels([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [idKey, results.hotelIds]);
 
   // Live prices, via the same batch route the structured landing summary uses.
   // Skipped without dates — a price needs a stay to be a price.
@@ -274,51 +239,6 @@ export default function AskResults() {
     };
   }, [hotels, query.from, query.to, query.adults, query.kids, query.bedrooms, query.currency, query.childrenAges]);
 
-  const hotelsHref = useMemo(() => {
-    const params = queryStateToParams(query);
-    if (results.hotelIds.length) params.set("ids", results.hotelIds.join(","));
-    params.set("search_submitted", "1");
-    return `/hotels?${params.toString()}`;
-  }, [query, results.hotelIds]);
-
-  const allInDestinationHref = useMemo(() => {
-    const params = queryStateToParams(query);
-    params.set("search_submitted", "1");
-    return `/hotels?${params.toString()}`;
-  }, [query]);
-
-  // More than one journey hands off as multi-city, which is precisely what
-  // that mode on the Flights page is for — an open jaw flattened into a return
-  // would send the traveller home from an airport they are not in.
-  const flightsHref = useMemo(() => {
-    const params = queryStateToParams(query);
-    const legs = results.flights;
-    const first = legs[0];
-    if (!first) return `/flights?${params.toString()}`;
-
-    params.set("origin", first.origin);
-    params.set("cabin", FLIGHTS_PAGE_CABIN[first.cabin] ?? "Economy");
-
-    if (legs.length > 1) {
-      params.set("tripType", "multiple");
-      // The form takes at most 5, and only searches when every leg is
-      // complete — so send whole legs, and no more than it can hold.
-      legs.slice(0, 5).forEach((leg, i) => {
-        params.set(`leg${i + 1}`, `${leg.origin}-${leg.destination}-${leg.departureDate}`);
-      });
-      // The single depart/return pair means nothing for a multi-city trip, and
-      // leaving the hotel stay in them shows dates that belong to a room.
-      params.delete("from");
-      params.delete("to");
-    } else {
-      params.set("tripType", first.returnDate ? "return" : "oneway");
-      params.set("from", first.departureDate);
-      if (first.returnDate) params.set("to", first.returnDate);
-      else params.delete("to");
-    }
-    return `/flights?${params.toString()}`;
-  }, [query, results.flights]);
-
   const tripDefaults = useMemo(
     () => ({
       destination:
@@ -339,10 +259,16 @@ export default function AskResults() {
 
   const showHotels = results.hotelIds.length > 0;
   const showFlights = results.flights.length > 0;
-  const hotelsOnly = showHotels && !showFlights;
+  const showRestaurants = results.restaurantIds.length > 0;
 
-  // Nothing to frame yet — the panel above carries the conversation.
-  if (!showHotels && !showFlights) return null;
+  // Nothing to frame yet — the concierge panel carries the conversation.
+  if (!showHotels && !showFlights && !showRestaurants) return null;
+
+  // 1, 2 or 3. Drives both the CSS grid's track count and each card's density,
+  // from one number, so the two can never disagree.
+  const frameCount = ((showHotels ? 1 : 0) +
+    (showFlights ? 1 : 0) +
+    (showRestaurants ? 1 : 0)) as SmallCardColumns;
 
   const hotelCardParams = (name: string) => {
     const p = new URLSearchParams();
@@ -356,10 +282,13 @@ export default function AskResults() {
   };
 
   return (
-    <section className={styles.askResults}>
-      {loading ? <p className={styles.askResultsNote}>Gathering those…</p> : null}
+    <section className={styles.aiResults}>
+      {loading ? <p className={styles.aiResultsNote}>Gathering those…</p> : null}
 
-      <div className={hotelsOnly ? styles.askResultsFull : styles.summaryGrid}>
+      <div
+        className={styles.aiFrameGrid}
+        style={{ "--ai-frames": frameCount } as React.CSSProperties}
+      >
         {showHotels ? (
           <div
             className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}
@@ -370,7 +299,7 @@ export default function AskResults() {
                 {destinationLabel ? ` in ${destinationLabel}` : ""}
               </div>
               <Link
-                href={hotelsHref}
+                href={hotelsHref(query, results)}
                 className={`oltra-button-primary ${styles.summaryTopButton}`}
                 prefetch={false}
               >
@@ -378,9 +307,7 @@ export default function AskResults() {
               </Link>
             </div>
 
-            <div
-              className={`${styles.smallCardsList} ${hotelsOnly ? styles.askCardsTwoCol : ""}`}
-            >
+            <div className={styles.smallCardsList}>
               {hotels.map((hotel) => {
                 const record = hotel as unknown as HotelRecord;
                 return (
@@ -388,6 +315,7 @@ export default function AskResults() {
                     key={String(hotel.id)}
                     hotel={record}
                     href={hotelCardParams(hotel.hotel_name ?? "")}
+                    columns={frameCount}
                     availability={
                       query.from && query.to
                         ? availability[String(hotel.id)] ?? { status: "loading" }
@@ -400,7 +328,11 @@ export default function AskResults() {
             </div>
 
             {destinationLabel ? (
-              <Link href={allInDestinationHref} className={styles.askEscape} prefetch={false}>
+              <Link
+                href={allHotelsHref(query)}
+                className={styles.aiEscape}
+                prefetch={false}
+              >
                 See all hotels in {destinationLabel}
               </Link>
             ) : null}
@@ -413,10 +345,12 @@ export default function AskResults() {
           >
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
-                {results.flights.length > 1 ? "Flights" : `Flights ${results.flights[0].origin} → ${results.flights[0].destination}`}
+                {results.flights.length > 1
+                  ? "Flights"
+                  : `Flights ${results.flights[0].origin} → ${results.flights[0].destination}`}
               </div>
               <Link
-                href={flightsHref}
+                href={flightsHref(query, results)}
                 className={`oltra-button-primary ${styles.summaryTopButton}`}
                 prefetch={false}
               >
@@ -427,7 +361,7 @@ export default function AskResults() {
             {/* One block per journey, stacked. With a single leg this reads
                 exactly as it did before; with two it is how an open jaw gets
                 shown at all. */}
-            <div className={styles.askFlightLegs}>
+            <div className={styles.aiFlightLegs}>
               {results.flights.map((leg) => (
                 <FlightLegPanel
                   key={`${leg.origin}-${leg.destination}-${leg.departureDate}-${leg.returnDate}`}
@@ -435,6 +369,41 @@ export default function AskResults() {
                   adults={query.adults}
                   kids={query.kids}
                   tripDefaults={tripDefaults}
+                  columns={frameCount}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {showRestaurants ? (
+          <div
+            className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}
+          >
+            <div className={styles.summaryHeaderRow}>
+              <div className="oltra-label">
+                {restaurants.length}{" "}
+                {restaurants.length === 1 ? "restaurant" : "restaurants"}
+                {query.destination.city ? ` in ${query.destination.city}` : ""}
+              </div>
+              {query.destination.city ? (
+                <Link
+                  href={restaurantsHref(query)}
+                  className={`oltra-button-primary ${styles.summaryTopButton}`}
+                  prefetch={false}
+                >
+                  Go to restaurants
+                </Link>
+              ) : null}
+            </div>
+
+            <div className={styles.smallCardsList}>
+              {restaurants.map((restaurant) => (
+                <RestaurantSmallCard
+                  key={String(restaurant.id)}
+                  restaurant={restaurant}
+                  href={restaurantsHref(query)}
+                  columns={frameCount}
                 />
               ))}
             </div>

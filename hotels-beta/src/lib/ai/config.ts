@@ -52,6 +52,11 @@ export const MAX_HOTEL_CANDIDATES = 40;
 /** Ratehawk caps a batch at 300 hids (§32); we stay far below it. */
 export const MAX_AVAILABILITY_IDS = 40;
 
+/** Restaurants handed to the model in one candidate set. Smaller than the
+ * hotel cap: a city's list is short editorial copy, and the answer is a
+ * handful of picks rather than a browsable set. */
+export const MAX_RESTAURANT_CANDIDATES = 30;
+
 /* ------------------------------------------------------- web search scope - */
 
 /** The web-search tool is for genuinely current or fuzzy travel facts —

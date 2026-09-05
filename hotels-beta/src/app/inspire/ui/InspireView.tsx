@@ -8,6 +8,10 @@ import styles from "./InspireView.module.css";
 import { filterInspireCities } from "@/lib/inspire/filterCities";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
+import AiModeButton from "@/components/ai/AiModeButton";
+import { useAiPageContext } from "@/lib/ai/useAiPageContext";
+import { useAiSearch } from "@/lib/ai/aiSearchStore";
+import { monthFromQuery, purposeFromQuery } from "@/lib/ai/inspireMirror";
 import type {
   InspireCity,
   InspireCityMatch,
@@ -267,6 +271,40 @@ export default function InspireView({ cities }: Props) {
 
   const monthLabel = month.charAt(0).toUpperCase() + month.slice(1);
 
+  /* What the concierge should assume if it is opened from here. Inspire is
+     about when rather than where, so the month is the whole of it — and it is
+     exactly the context that makes "somewhere warm then" answerable. */
+  useAiPageContext({ page: "inspire", month: monthLabel });
+
+  /* And the other direction: exiting the concierge leaves this page reflecting
+     what was asked.
+
+     Inspire holds its filters in local state rather than the URL, so it cannot
+     be handed an answer the way Hotels and Flights are (AiResultsSync writes
+     to their query string). It sets its own two controls instead — the month
+     the concierge resolved, and the purpose its taxonomy implies — so a
+     conversation about skiing in the Alps in February comes back to a page
+     showing ski destinations in February, not the June/All it opened on.
+
+     Keyed on presentedAt so it applies once per answer and never fights a
+     hand-picked filter afterwards. */
+  const { ready: aiReady, query: aiQuery, presentedAt } = useAiSearch();
+  const appliedPresentationRef = useRef(0);
+
+  useEffect(() => {
+    if (!aiReady || !presentedAt || presentedAt <= appliedPresentationRef.current) return;
+    appliedPresentationRef.current = presentedAt;
+
+    const nextMonth = monthFromQuery(aiQuery);
+    if (nextMonth) setMonth(nextMonth);
+
+    // Only when the answer implies one of Inspire's five. An answer it cannot
+    // express leaves the selector as the visitor left it, rather than being
+    // reset to All.
+    const nextPurpose = purposeFromQuery(aiQuery);
+    if (nextPurpose) setPurpose(nextPurpose);
+  }, [aiReady, presentedAt, aiQuery]);
+
   const goToHotels = useCallback(
     (match: InspireCityMatch) => {
       const params = new URLSearchParams();
@@ -298,6 +336,9 @@ export default function InspireView({ cities }: Props) {
     <div className={styles.page}>
       <section className={styles.content}>
         <aside className={`oltra-glass oltra-panel ${styles.sidebar}`}>
+          {/* Its own row at the top of the sidebar, above the intro line. */}
+          <AiModeButton placement="corner" />
+
           <div className={styles.filters}>
             <div className={styles.filtersHeader}>
               <p className={styles.intro}>

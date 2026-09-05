@@ -6,10 +6,9 @@ import { useRouter } from "next/navigation";
 import GuestSelector from "@/components/site/GuestSelector";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
-import AiModeToggle from "@/components/site/AiModeToggle";
-import AskPanel from "./AskPanel";
-import AskResults from "./AskResults";
-import { useAiSearch, queryStateToParams } from "@/lib/ai/aiSearchStore";
+import AiModeButton from "@/components/ai/AiModeButton";
+import { useAiActions } from "@/lib/ai/aiSearchStore";
+import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
 import { mergeHotelFlightSearch } from "@/lib/searchSession";
@@ -89,11 +88,7 @@ export default function LandingSearchPanel({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // The AI concierge is hidden entirely unless the flag is on. Next inlines
-  // this at build time, so it cannot be flipped without a redeploy — which is
-  // the point: the feature can ship to production and stay invisible.
-  const aiEnabled = process.env.NEXT_PUBLIC_AI_CHAT_ENABLED === "1";
-  const { query: aiQuery, ready: aiReady, askMode, setAskMode } = useAiSearch();
+  const { markClassicSearch } = useAiActions();
 
   const [effectiveSearchParams, setEffectiveSearchParams] =
     useState<PageSearchParams>(initialSearchParams);
@@ -286,6 +281,21 @@ export default function LandingSearchPanel({
     destinationState.hasSelection &&
     destinationState.activeHotelCount > 50;
 
+  /* What the concierge should assume if it is opened from here. Read from the
+     controls as they currently stand, not from the URL, so a destination typed
+     but not yet searched still counts. */
+  useAiPageContext({
+    page: "landing",
+    city: destinationState.selectedValues.city?.[0] ?? "",
+    area: destinationState.selectedValues.state?.[0] ?? "",
+    country: destinationState.selectedValues.country?.[0] ?? "",
+    from: fromValue,
+    to: toValue,
+    adults: guestSelection.adults,
+    kids: guestSelection.kids,
+    rooms: Math.max(1, Number(bedroomsValue) || 1),
+  });
+
   const flightsCanActivate = useMemo(() => {
     const types = destinationState.selectedTypes;
     const values = destinationState.selectedValues;
@@ -347,6 +357,18 @@ export default function LandingSearchPanel({
 
   const searchIsActive = searchDisabledReason === "";
 
+  /** Whether a built URL names somewhere — the same test page.tsx applies
+   * before it renders the summary at all, so the two agree on what counts as
+   * a search worth showing. */
+  function urlHasDestination(url: string): boolean {
+    const qs = url.split("?")[1];
+    if (!qs) return false;
+    const params = new URLSearchParams(qs);
+    return ["q", "city", "state", "admin_region", "country", "region", "activities", "settings"].some(
+      (key) => (params.get(key) ?? "").trim()
+    );
+  }
+
   function buildUrlFromForm(form: HTMLFormElement, submitted: boolean): string {
     const formData = new FormData(form);
     const params = new URLSearchParams();
@@ -366,6 +388,20 @@ export default function LandingSearchPanel({
   function navigateWithParams(submitted: boolean) {
     if (!formRef.current) return;
     const url = buildUrlFromForm(formRef.current, submitted);
+
+    /* The classic search and the concierge write to different places — the URL
+       and the store — so neither can see the other change. This is how the
+       results region below knows which of the two happened last.
+
+       Gated on the search actually having a destination, and that is not a
+       nicety. `submitted` alone was enough at first, and the auto-submit fires
+       on any field change — so a guests-or-dates-only navigation, or the
+       session restore on mount, counted as a search, displaced a perfectly
+       good concierge answer, and rendered nothing in its place because the
+       structured summary needs a destination too. A search that can show
+       nothing must not supersede one that can. */
+    if (submitted && urlHasDestination(url)) markClassicSearch();
+
     startTransition(() => {
       router.push(url, { scroll: false });
     });
@@ -404,53 +440,11 @@ export default function LandingSearchPanel({
     }, 220);
   }
 
-  if (aiEnabled && askMode) {
-    return (
-      <div className={styles.askStack}>
-        <div
-          className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}
-        >
-        {/* Mirrors the classic panel's structure exactly — a labelled field row
-            and a bottom row, in a grid with the same 16px gap — so an empty AI
-            panel is the same height as the search panel. */}
-        <div className={styles.askFieldWrap}>
-          <div className={styles.askField}>
-            <span className="oltra-label">AI concierge</span>
-            <AskPanel />
-          </div>
-
-        {/* Same corner as the classic panel's toggle, so it does not move
-            between modes. */}
-        <div className={styles.askBottomRow}>
-          <AiModeToggle
-            active
-            onToggle={(on) => {
-              if (on) return;
-              // Toggling off back-fills Search mode from whatever the
-              // conversation established, then hands over. Switching modes
-              // never recomputes on its own — this is a real navigation, the
-              // same one the search button performs.
-              setAskMode(false);
-              if (!aiReady) return;
-              const params = queryStateToParams(aiQuery);
-              const qs = params.toString();
-              if (qs) {
-                startTransition(() => {
-                  router.push(`/?${qs}`, { scroll: false });
-                });
-              }
-            }}
-          />
-        </div>
-        </div>
-        </div>
-
-        {/* Its own frame, outside the AI panel — the same relationship
-            LandingSummary has to the search panel in the structured layout. */}
-        <AskResults />
-      </div>
-    );
-  }
+  /* There is no AI branch here any more. The concierge used to replace this
+     whole panel, which is why the panel had to know about it; now it opens
+     over the page as a modal and closes again, so the search panel is never in
+     a "mode" and renders one way only. The only trace left is the button in
+     the destination field. */
 
   return (
     <div className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}>
@@ -475,6 +469,11 @@ export default function LandingSearchPanel({
             }}
             wrapperClassName={`${styles.landingField} ${styles.destinationField}`}
             busy={isPending}
+            /* Right-aligned inside the field's own box, per the brief. The
+               field is shared with the Hotels page, which passes the same
+               thing — it knows nothing about the concierge beyond having a
+               slot at the end of its input row. */
+            trailingControl={<AiModeButton placement="inline" />}
           />
 
           <div className={styles.dateRangeField}>
@@ -622,11 +621,6 @@ export default function LandingSearchPanel({
             </div>
           </div>
 
-          {aiEnabled ? (
-            <div className={styles.modeToggleSlot}>
-              <AiModeToggle active={false} onToggle={(on) => setAskMode(on)} />
-            </div>
-          ) : null}
         </div>
       </form>
     </div>

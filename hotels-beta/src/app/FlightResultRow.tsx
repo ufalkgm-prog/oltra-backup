@@ -91,9 +91,19 @@ type Props = {
   flight: Itinerary | null;
   isOneWay: boolean;
   tripDefaults: TripDefaults;
+  /** Result frames sharing the row — 1, 2 or 3. Density only: the same fields,
+   * the same book and save actions, at three widths. A return trip's two leg
+   * cards stop sitting side by side at 3, because 380px cannot hold them. */
+  columns?: 1 | 2 | 3;
 };
 
-export default function FlightResultRow({ label, flight, isOneWay, tripDefaults }: Props) {
+export default function FlightResultRow({
+  label,
+  flight,
+  isOneWay,
+  tripDefaults,
+  columns = 1,
+}: Props) {
   const handleBook = useCallback(async (offerId: string) => {
     try {
       const res = await fetch("/api/flights/book-link", {
@@ -135,7 +145,11 @@ export default function FlightResultRow({ label, flight, isOneWay, tripDefaults 
 
   return (
     <div className={styles.flightDetailRow}>
-      <div className={styles.flightRowLegend}>
+      <div
+        className={`${styles.flightRowLegend} ${
+          columns === 3 ? styles.flightRowLegendTight : ""
+        }`}
+      >
         <span className={styles.flightLineLabel}>{label}</span>
         <span className={styles.flightRowPrice}>
           {formatPrice(flight.priceEur, flight.currency)}
@@ -156,7 +170,11 @@ export default function FlightResultRow({ label, flight, isOneWay, tripDefaults 
           className={`oltra-button-secondary oltra-button--xs ${styles.flightBookButton}`}
         />
       </div>
-      <div className={styles.flightLegsGrid}>
+      <div
+        className={`${styles.flightLegsGrid} ${
+          columns === 3 ? styles.flightLegsStacked : ""
+        }`}
+      >
         <FlightDetailCard flight={flight.outbound} />
         {!isOneWay && flight.inbound ? <FlightDetailCard flight={flight.inbound} /> : null}
       </div>

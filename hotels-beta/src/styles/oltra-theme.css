@@ -187,6 +187,10 @@
   --oltra-modal-scrim: rgba(10, 18, 26, 0.78);
   --oltra-modal-bg: rgba(20, 32, 42, 0.94);
   --oltra-modal-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+  /* Applied by the concierge scrim only, not by .oltra-modal-scrim itself —
+     blurring the page behind the photo lightbox would blur the photo's own
+     context for no reason, and that overlay is unchanged. */
+  --oltra-modal-blur: 10px;
 
   /* Flights info modal (FlightsView.module.css) — distinct values from the
      HotelsView modal tokens above, preserved as-is rather than unified, so

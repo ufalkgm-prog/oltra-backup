@@ -38,6 +38,18 @@
   border-color: var(--oltra-border-medium);
 }
 
+/* The caller's own control at the right-hand end of the input row.
+   margin-left: auto rather than a fixed position, so it keeps to the end of
+   the last line when chips wrap to a second row — the box is flex-wrap and
+   grows downward by design. */
+.trailingSlot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
 .chipInputField {
   flex: 1 1 100px;
   min-width: 100px;

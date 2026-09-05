@@ -1,7 +1,41 @@
 /* Shared types for the AI concierge. No "server-only" here — the store and the
  * UI components import these too. */
 
-export type AiVertical = "hotels" | "flights" | null;
+export type AiVertical = "hotels" | "flights" | "restaurants" | null;
+
+/** The page the visitor is standing on, and what they are looking at there.
+ *
+ * The concierge is mounted app-wide now, so it has to know where it was opened
+ * from — a question asked on a hotel's page usually means *that* hotel. This
+ * is deliberately not persisted: it describes right now, not the conversation.
+ *
+ * It reaches the model as its own system block, never appended to the cached
+ * prompt prefix. Every field is optional; the page type is the only constant. */
+export type AiPageType = "landing" | "hotels" | "flights" | "restaurants" | "inspire";
+
+export type AiPageContext = {
+  page: AiPageType;
+  /** Hotels page: the property currently selected in the right-hand pane. */
+  hotelName?: string;
+  hotelId?: number;
+  /** Wherever the page knows a place — hotels, restaurants, landing. */
+  city?: string;
+  area?: string;
+  country?: string;
+  /** Flights page: the route as the form currently reads. */
+  origin?: string;
+  destination?: string;
+  /** Restaurants page: the restaurant selected in the sidebar. */
+  restaurantName?: string;
+  /** Inspire page: the month being explored. */
+  month?: string;
+  /** Stay details the page's own controls already hold. */
+  from?: string;
+  to?: string;
+  adults?: number;
+  kids?: number;
+  rooms?: number;
+};
 
 /** The structured parameters the model extracts from the conversation, and the
  * Search-mode fields back-fill from when the user toggles AI off.
@@ -27,6 +61,15 @@ export type AiQueryState = {
   kids: number;
   childrenAges: number[];
   bedrooms: number;
+  /** The locked taxonomy tags the concierge actually searched on.
+   *
+   * Carried so the classic controls can mirror what the conversation asked
+   * for, not just where and when: "skiing in the Alps" is a purpose, and
+   * without it the Inspire page's own Purpose selector has nothing to be set
+   * to and the page still reads "All". Values come from the same locked
+   * vocabularies the tools enumerate (§44). */
+  settings: string[];
+  activities: string[];
   /** Hard filters, applied only when the conversation asks for them (§4.4). */
   availableOnly: boolean;
   maxPricePerStay: number | null;
@@ -45,6 +88,8 @@ export const EMPTY_QUERY_STATE: AiQueryState = {
   kids: 0,
   childrenAges: [],
   bedrooms: 1,
+  settings: [],
+  activities: [],
   availableOnly: false,
   maxPricePerStay: null,
   currency: "EUR",
@@ -59,6 +104,12 @@ export const EMPTY_QUERY_STATE: AiQueryState = {
 export type AiResultSet = {
   /** Directus hotel ids, in the order the model ranked them. */
   hotelIds: number[];
+  /** Directus restaurant ids, in the order the model ranked them.
+   *
+   * Restaurants are a landing-page result frame only — the standalone
+   * Restaurants page keeps its own city-driven data and design, so a handoff
+   * there carries the city, not this list. */
+  restaurantIds: number[];
   /** id -> one-line editorial rationale. Never a price. */
   rationales: Record<string, string>;
   /** One entry per journey the answer covers, in travel order.
@@ -83,6 +134,7 @@ export type AiFlightLeg = {
 
 export const EMPTY_RESULT_SET: AiResultSet = {
   hotelIds: [],
+  restaurantIds: [],
   rationales: {},
   flights: [],
 };

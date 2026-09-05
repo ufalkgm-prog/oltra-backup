@@ -17,6 +17,9 @@ import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
+import AiModeButton from "@/components/ai/AiModeButton";
+import AiResultsSync from "@/lib/ai/AiResultsSync";
+import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import styles from "./FlightsView.module.css";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -345,6 +348,20 @@ export default function FlightsView({ searchParams }: Props) {
       prev[code] === option.city ? prev : { ...prev, [code]: option.city }
     );
   }, []);
+
+  /* What the concierge should assume if it is opened from this page: the route
+     as the form currently reads it, not as it was last searched. Multi-city
+     reports its first leg — that is where the journey starts, and the rest is
+     in the conversation if it matters. */
+  useAiPageContext({
+    page: "flights",
+    origin: (search.tripType === "multiple" ? search.multiCity[0]?.from : search.from) ?? "",
+    destination: (search.tripType === "multiple" ? search.multiCity[0]?.to : search.to) ?? "",
+    from: search.tripType === "multiple" ? search.multiCity[0]?.date ?? "" : search.departDate,
+    to: search.tripType === "return" ? search.returnDate : "",
+    adults: search.adults,
+    kids: search.children,
+  });
 
   const [selectedOutboundId, setSelectedOutboundId] = useState("");
   const [selectedReturnId, setSelectedReturnId] = useState("");
@@ -957,9 +974,18 @@ export default function FlightsView({ searchParams }: Props) {
 
   return (
     <section className={styles.page}>
+      {/* Renders nothing; see AiResultsSync. Writes the concierge's legs into
+          the URL once when the visitor arrives here on a bare one. */}
+      <AiResultsSync page="flights" />
+
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
           <div className={`${styles.searchPanel} oltra-glass oltra-panel`}>
+            {/* Top-right of the search frame. This page has no single input
+                box to sit inside, so the button takes its own row above the
+                trip-type tabs rather than floating over them. */}
+            <AiModeButton placement="corner" />
+
             <div className={styles.sectionStack}>
               <div className={styles.tripTypeTabs}>
                 {([["one-way", "One-way"], ["return", "Return"], ["multiple", "Multiple"]] as const).map(

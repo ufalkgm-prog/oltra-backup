@@ -3,6 +3,7 @@ import { tool, jsonSchema } from "ai";
 import { getHotels, type HotelRecord } from "@/lib/directus";
 import { filterHotelsByTags } from "@/lib/hotelFilters";
 import { getAirportsForCity, pickPrimaryAirportForCity } from "@/lib/cityAirports";
+import { getRestaurantCities, searchRestaurants as findRestaurants } from "@/lib/restaurants";
 import {
   buildGuestsArray,
   fetchRatehawkSerpBatch,
@@ -12,6 +13,7 @@ import { asUntrustedData } from "./systemPrompt";
 import {
   MAX_AVAILABILITY_IDS,
   MAX_HOTEL_CANDIDATES,
+  MAX_RESTAURANT_CANDIDATES,
 } from "./config";
 import { ACTIVITY_VALUES, SETTING_VALUES, STYLE_VALUES } from "./taxonomy";
 
@@ -509,6 +511,94 @@ const searchFlights = tool({
 /** Not a data tool. This is how the model hands the UI a structured result set
  * to render, instead of the UI parsing hotel names out of prose. Calling it is
  * what makes cards appear. */
+const RESTAURANT_TYPE_VALUES = [
+  "Fine dining",
+  "High-end casual",
+  "Informal local favorite",
+  "Beach club",
+] as const;
+
+const searchRestaurants = tool({
+  description:
+    "Search the myOLTRA restaurant collection for one city. Returns candidate " +
+    "restaurants with their editorial detail so you can rank them yourself. " +
+    "Coverage is by city, not by country or region — if the city is not " +
+    "covered, the tool says so and lists nothing. Never returns a price.",
+  inputSchema: jsonSchema<{
+    city: string;
+    cuisine?: string;
+    restaurantType?: string;
+    limit?: number;
+  }>({
+    type: "object",
+    properties: {
+      city: {
+        type: "string",
+        description:
+          "Exact city name, e.g. Paris, Kyoto, Saint-Tropez - Ramatuelle.",
+      },
+      cuisine: {
+        type: "string",
+        description:
+          "Optional. Matched loosely, so 'French' also finds 'Modern French'.",
+      },
+      // Enumerated for the same reason the hotel tags are (§44 / the taxonomy
+      // enum fix): these are the four exact stored values, and anything else
+      // silently matches nothing.
+      restaurantType: {
+        type: "string",
+        enum: [...RESTAURANT_TYPE_VALUES],
+        description: "Optional. Use only these exact values.",
+      },
+      limit: { type: "number" },
+    },
+    required: ["city"],
+    additionalProperties: false,
+  }),
+  async execute(input) {
+    const rows = await findRestaurants({
+      city: input.city,
+      cuisine: input.cuisine,
+      restaurantType: input.restaurantType,
+      limit: Math.min(input.limit ?? MAX_RESTAURANT_CANDIDATES, MAX_RESTAURANT_CANDIDATES),
+    });
+
+    // An empty result is ambiguous on its own — "no Japanese in Oslo" and "we
+    // do not cover Oslo at all" call for different answers, and only the
+    // second should send the visitor elsewhere. So say which it is.
+    if (!rows.length) {
+      const cities = await getRestaurantCities();
+      const covered = cities.some(
+        (city) => city.toLowerCase() === input.city.trim().toLowerCase()
+      );
+      return asUntrustedData("myoltra-restaurants", {
+        returned: 0,
+        cityCovered: covered,
+        note: covered
+          ? "We cover this city, but nothing matched those filters."
+          : "We do not cover this city yet.",
+      });
+    }
+
+    return asUntrustedData("myoltra-restaurants", {
+      returned: rows.length,
+      restaurants: rows.map((row) => ({
+        id: Number(row.id),
+        name: row.restaurant_name,
+        type: row.restaurant_type ?? "",
+        cuisine: row.cuisine ?? "",
+        city: row.city ?? "",
+        area: row.local_area ?? "",
+        country: row.country ?? "",
+        highlights: row.highlights ?? "",
+        setting: row.restaurant_setting ?? "",
+        style: row.restaurant_style ?? "",
+        awards: row.awards ?? [],
+      })),
+    });
+  },
+});
+
 const presentResults = tool({
   description:
     "Show results to the visitor. Call this once you have decided what to " +
@@ -518,6 +608,7 @@ const presentResults = tool({
     framing: string;
     followUp?: string;
     hotelIds?: number[];
+    restaurantIds?: number[];
     rationales?: { id: number; reason: string }[];
     flights?: {
       origin: string;
@@ -539,6 +630,7 @@ const presentResults = tool({
       adminRegion?: string;
       country?: string;
     };
+    searchTags?: { settings?: string[]; activities?: string[] };
   }>({
     type: "object",
     properties: {
@@ -561,13 +653,37 @@ const presentResults = tool({
         items: { type: "number" },
         description: "Directus ids, best first.",
       },
+      // Restaurant ids get their own frame beside the hotels and flights.
+      // Only ids that came back from searchRestaurants — a restaurant we do
+      // not hold has no card to render, and naming one is exactly what the
+      // inventory rule forbids.
+      restaurantIds: {
+        type: "array",
+        items: { type: "number" },
+        description: "Directus restaurant ids from searchRestaurants, best first.",
+      },
+      // FILL THIS IN FOR EVERY PICK. The concierge opens over a dimmed page,
+      // so the cards are not visible while the visitor is reading you — these
+      // lines are the whole summary of what you found. One clause each,
+      // naming the property and why it fits. Never a price or an
+      // availability claim; the cards carry those.
       rationales: {
         type: "array",
         items: {
           type: "object",
           properties: {
-            id: { type: "number" },
-            reason: { type: "string" },
+            id: {
+              type: "number",
+              description: "A hotel or restaurant id from the lists above.",
+            },
+            reason: {
+              type: "string",
+              description:
+                "One short clause saying why it suits them. Do NOT begin " +
+                "with the property's name — it is printed immediately " +
+                "before your words, so repeating it reads as a stutter. " +
+                "Start with the reason itself. No prices.",
+            },
           },
           required: ["id", "reason"],
           additionalProperties: false,
@@ -627,6 +743,24 @@ const presentResults = tool({
         },
         additionalProperties: false,
       },
+      // What the answer is ABOUT, beyond where and when. Pass the same tags
+      // you searched on. The pages behind mirror these into their own
+      // controls — the Inspire page's Purpose selector has nothing to show
+      // without them, so "skiing in the Alps" would come back reading "All".
+      searchTags: {
+        type: "object",
+        properties: {
+          settings: {
+            type: "array",
+            items: { type: "string", enum: [...SETTING_VALUES] },
+          },
+          activities: {
+            type: "array",
+            items: { type: "string", enum: [...ACTIVITY_VALUES] },
+          },
+        },
+        additionalProperties: false,
+      },
     },
     required: ["framing"],
     additionalProperties: false,
@@ -648,5 +782,6 @@ export const conciergeTools = {
   checkAvailability,
   nearestAirport,
   searchFlights,
+  searchRestaurants,
   presentResults,
 };

@@ -1,0 +1,79 @@
+/* The concierge entry button.
+ *
+ * Deliberately quiet. It is an invitation sitting inside a search control, not
+ * a call to action competing with the Search button — so it wears the field's
+ * own border and surface rather than the sage primary, and only lifts on
+ * hover. The one bit of colour is the small accent mark, which is what makes
+ * it findable at a glance.
+ *
+ * Sizing is written here rather than borrowed from .oltra-button--xs: this has
+ * to sit inside a 34px field with 5px of padding above and below, which is
+ * tighter than any shared button size.
+ */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--oltra-field-border);
+  background: var(--oltra-surface-lift-soft);
+  color: var(--oltra-text-muted);
+  font-family: var(--oltra-font-sans);
+  font-size: 0.78rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.button:hover {
+  background: var(--oltra-surface-lift);
+  border-color: var(--oltra-border-medium);
+  color: var(--oltra-text-primary);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--oltra-button-active-bg);
+  outline-offset: 2px;
+}
+
+/* A dot, not an icon: the site has no icon set, and a glyph here would be the
+   only one on the page. */
+.mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oltra-button-active-bg);
+  flex: 0 0 auto;
+}
+
+/* Inside the destination field's chip box, pushed to its right-hand end. The
+   chip box is flex-wrap, so margin-left:auto keeps the button at the end of
+   the last line rather than pinning it to the box's corner — which is what
+   should happen when chips wrap to a second row. */
+.inline {
+  margin-left: auto;
+}
+
+/* Top-right of a search frame that has no single input to sit in.
+ *
+ * A real row in normal flow, NOT an absolutely-positioned corner. Every frame
+ * this lands in starts with a full-width control — the trip-type tabs on
+ * Flights, the City/Type filter pair on Restaurants, the month row on
+ * Inspire — so an absolute button would sit on top of one of them at some
+ * width. A row costs 34px and cannot overlap anything. */
+.cornerRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+.corner {
+  flex: 0 0 auto;
+}

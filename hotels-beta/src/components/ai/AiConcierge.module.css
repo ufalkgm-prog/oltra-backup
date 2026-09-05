@@ -1,0 +1,351 @@
+/* The concierge modal and the conversation inside it.
+ *
+ * The conversation rules below are ported from the landing page's ask* block,
+ * which is where this UI grew up — same sizes, same shared button classes,
+ * same faded-red Clear. They moved here because the concierge is no longer a
+ * landing-page feature, and leaving them in page.module.css would mean four
+ * other pages importing the landing page's stylesheet to render a modal.
+ *
+ * Six classes the old block referenced never existed in it at all —
+ * askResults, askResultsFull, askCardsTwoCol, askResultsNote, askEscape and
+ * askFraming. CSS modules resolve a missing class to undefined, so those
+ * elements rendered unstyled and nobody saw an error. Their replacements are
+ * defined here and in page.module.css.
+ */
+
+/* ── the shell ────────────────────────────────────────────────────────── */
+
+/* The background page is blurred, not merely dimmed. That is what makes the
+   in-chat summary necessary rather than decorative: the cards are still there
+   and still authoritative, they are simply unreadable while this is open. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 6vh 1.5rem 2rem;
+  overflow-y: auto;
+  /* Stops a scroll that reaches the end of this container from chaining
+     outward to the page behind. The overflow lock on <html> covers the case
+     where this container is not scrollable at all; the two together mean a
+     wheel over the modal never moves the page. */
+  overscroll-behavior: contain;
+  backdrop-filter: blur(var(--oltra-modal-blur));
+  -webkit-backdrop-filter: blur(var(--oltra-modal-blur));
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: 100%;
+  max-width: 860px;
+  height: fit-content;
+  padding: 1.1rem 1.25rem 1.25rem;
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-xl);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* A labelled Exit, not a bare ×. The photo lightbox can afford a glyph because
+   nothing else is happening in it; here the visitor is mid-conversation and
+   needs to know the exchange survives leaving. */
+.exit {
+  flex: 0 0 auto;
+  min-width: 84px;
+}
+
+/* ── the conversation ─────────────────────────────────────────────────── */
+
+.conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* The transcript AND the answer live in here together, so neither can grow the
+   panel — it scrolls internally and the input row below stays put. Taller than
+   the old inline version (300px) because the modal has the room, and the
+   summary block added real content to the answer. */
+.scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-height: min(52vh, 460px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+/* Shown only before the first turn. The concierge opens on an empty panel and
+   a bare input reads as a search box; this says what it can be asked. */
+.opening {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--oltra-text-muted);
+}
+
+.turnUser,
+.turnAgent {
+  font-size: 14px;
+  line-height: 1.55;
+  border-radius: var(--oltra-radius-md);
+  padding: 0.55rem 0.8rem;
+}
+
+.turnUser {
+  align-self: flex-end;
+  max-width: 74ch;
+  background: var(--oltra-field-bg);
+  border: 1px solid var(--oltra-field-border);
+  color: var(--oltra-text-primary);
+}
+
+/* Answers use the full width — they carry the reasoning, and wrapping them
+   into a narrow column wastes most of the row. */
+.turnAgent {
+  align-self: stretch;
+  width: 100%;
+  color: var(--oltra-text-primary);
+  padding-left: 0;
+}
+
+/* The answer itself, above the summary it introduces.
+ *
+ * The one place the concierge's own face is used: --oltra-font-voice, scoped
+ * to the panel by lib/ai/fonts.ts's className rather than promoted to a global
+ * token, so no other page is touched. The fallback matters — the variable only
+ * resolves inside the panel. */
+.framing {
+  margin: 0;
+  font-family: var(--oltra-font-voice, var(--oltra-font-sans));
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--oltra-text-primary);
+}
+
+.thinking {
+  font-size: 13px;
+  color: var(--oltra-text-muted);
+  font-style: italic;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--oltra-error-text);
+}
+
+/* ── what it found ────────────────────────────────────────────────────── */
+
+/* The picks are part of the answer, not a panel beside it.
+ *
+ * The first version boxed them — border, fill, its own smaller sans type —
+ * which read as two separate replies to one question: a sentence, and then a
+ * results widget. The answer is one thing, so it is set as one thing: the same
+ * face and the same size as the framing line above, with headings and bullets
+ * for structure rather than a container.
+ *
+ * The follow-up question below is deliberately left in the other format —
+ * that IS a separate thing to say. */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  font-family: var(--oltra-font-voice, var(--oltra-font-sans));
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--oltra-text-primary);
+}
+
+.summaryNote {
+  font-family: var(--oltra-font-voice, var(--oltra-font-sans));
+  font-size: 17px;
+  color: var(--oltra-text-muted);
+  font-style: italic;
+}
+
+.summaryGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* Small caps for structure, but the same face — a sans heading here would
+   reintroduce the two-formats problem in miniature. */
+.summaryHeading {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oltra-text-muted);
+}
+
+.summaryList {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+.summaryList::marker,
+.summaryItem::marker {
+  color: var(--oltra-text-muted);
+}
+
+.summaryItem {
+  font-size: inherit;
+  line-height: inherit;
+  padding-left: 0.1rem;
+}
+
+.summaryName {
+  color: var(--oltra-text-primary);
+}
+
+.summaryReason {
+  color: var(--oltra-text-muted);
+}
+
+/* The one aside inside the answer, and set as an aside: smaller, in the UI
+   sans, so it reads as a note about the interface rather than as another
+   sentence from the concierge. Said plainly because the summary deliberately
+   carries no figures, and the absence would otherwise look like an omission. */
+.summaryFootnote {
+  margin: 0.15rem 0 0;
+  font-family: var(--oltra-font-sans);
+  font-size: 12px;
+  color: var(--oltra-text-muted);
+}
+
+/* ── the input row ────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  gap: 0.6rem;
+  /* flex-end, not stretch: the textarea grows with the text and the buttons
+     must keep their own height rather than growing with it. */
+  align-items: flex-end;
+  min-width: 0;
+}
+
+/* Matches the classic destination field — same height token, radius, border,
+   background and font — so the concierge input and the search input read as
+   the same control. */
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--oltra-control-height);
+  padding: 5px 10px;
+  font-family: var(--oltra-font-sans);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--oltra-text-primary);
+  background: var(--oltra-field-bg);
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-md);
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+}
+
+.input::placeholder {
+  color: var(--oltra-text-placeholder);
+}
+
+/* Same highlight as the classic field: a lift in surface and border, not a
+   coloured ring. */
+.input:focus {
+  background: var(--oltra-field-bg-strong);
+  border-color: var(--oltra-border-medium);
+}
+
+/* Geometry only — Ask, Stop and Clear wear the shared button classes so they
+   match every other button on the site, active and passive. */
+.action {
+  flex: 0 0 auto;
+  min-width: 84px;
+}
+
+/* Clear is destructive, so it is the one button that leaves the sage pair: the
+   faded red already used for warnings (§35/§46), with white text. A compound
+   selector so it beats .oltra-button-secondary regardless of which stylesheet
+   loads first — a single .clear would only tie on specificity and lose to
+   load order. */
+.action.clear {
+  background: var(--oltra-error-text);
+  border-color: var(--oltra-error-text);
+  color: #ffffff;
+}
+
+.action.clear:hover {
+  color: #ffffff;
+  filter: brightness(1.06);
+}
+
+.action.clear:focus-visible {
+  outline: 2px solid var(--oltra-error-text);
+  outline-offset: 2px;
+}
+
+/* ── handoffs ─────────────────────────────────────────────────────────── */
+
+/* Where this answer can be seen in full. Text actions rather than buttons:
+   the offer is made in the model's own words just above, and three filled
+   buttons under a conversation would read as the main event. */
+.handoffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid var(--oltra-border-subtle);
+  margin-top: 0.15rem;
+}
+
+.handoff {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0.35rem 0;
+  font-family: var(--oltra-font-sans);
+  font-size: 13px;
+  color: var(--oltra-text-muted);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.handoff:hover {
+  color: var(--oltra-text-primary);
+}
+
+.handoff:focus-visible {
+  outline: 2px solid var(--oltra-button-active-bg);
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .scrim {
+    padding: 3vh 0.75rem 1rem;
+  }
+
+  .panel {
+    padding: 0.9rem 0.9rem 1rem;
+  }
+
+  .form {
+    flex-wrap: wrap;
+  }
+
+  .input {
+    flex: 1 1 100%;
+  }
+}

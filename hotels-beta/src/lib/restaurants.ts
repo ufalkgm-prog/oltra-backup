@@ -156,6 +156,42 @@ export async function getRestaurantsByIds(
   return (rows ?? []).map(normalizeRestaurant);
 }
 
+/* Candidate lookup for the AI concierge.
+ *
+ * Built on getRestaurantsByCity rather than a second Directus query, so the
+ * concierge sees exactly the set the Restaurants page would show for that city
+ * — including its alias fallback, which is what makes Ramatuelle resolve to
+ * Saint-Tropez. Cuisine and type narrow in JS afterwards: both are short free
+ * text on the record, and a Directus _eq on them would miss "Modern French"
+ * when the model asked for "French".
+ *
+ * Read-only, published records only, same as everything else the concierge
+ * reaches. */
+export async function searchRestaurants(input: {
+  city: string;
+  cuisine?: string;
+  restaurantType?: string;
+  limit?: number;
+}): Promise<RestaurantRecord[]> {
+  const rows = await getRestaurantsByCity(input.city);
+
+  const cuisine = normalizeText(input.cuisine).toLowerCase();
+  const type = normalizeText(input.restaurantType).toLowerCase();
+
+  const narrowed = rows.filter((row) => {
+    if (cuisine && !normalizeText(row.cuisine).toLowerCase().includes(cuisine)) {
+      return false;
+    }
+    if (type && normalizeText(row.restaurant_type).toLowerCase() !== type) {
+      return false;
+    }
+    return true;
+  });
+
+  const limit = Math.max(1, Math.min(input.limit ?? 30, 60));
+  return narrowed.slice(0, limit);
+}
+
 export async function getRestaurantsByCity(city: string): Promise<RestaurantRecord[]> {
   const requestedCity = normalizeText(city);
   if (!requestedCity) return [];

@@ -41,6 +41,14 @@ type Props = {
   allowedTypes?: SuggestionType[];
   onStateChange?: (state: StructuredDestinationState) => void;
   busy?: boolean;
+  /** Rendered at the right-hand end of the input box, after the chips and the
+   * typing area.
+   *
+   * A slot rather than the control itself: this field is shared by the landing
+   * and Hotels pages, and it should not know what is being put in it. Both
+   * callers happen to pass the concierge button; a third could pass nothing
+   * and be unaffected. */
+  trailingControl?: React.ReactNode;
 };
 
 function normalizeParam(v: string | string[] | undefined): string {
@@ -282,6 +290,7 @@ export default function StructuredDestinationField({
   allowedTypes = ALL_TYPES,
   onStateChange,
   busy = false,
+  trailingControl,
 }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -718,12 +727,24 @@ export default function StructuredDestinationField({
               className={styles.chipInputField}
               autoComplete="off"
               spellCheck={false}
-              style={busy ? { paddingRight: 36 } : undefined}
+              style={busy && !trailingControl ? { paddingRight: 36 } : undefined}
             />
+          ) : null}
+
+          {/* Inside the box, at the end of the flex run — so when chips wrap to
+              a second line it follows them down rather than floating over
+              them. The busy spinner comes with it: the absolutely-positioned
+              one below sits exactly where this control now is, and the two
+              would overlap. */}
+          {trailingControl ? (
+            <div className={styles.trailingSlot}>
+              {busy ? <OltraSpinner size={14} /> : null}
+              {trailingControl}
+            </div>
           ) : null}
         </div>
 
-        {busy ? (
+        {busy && !trailingControl ? (
           <span
             aria-hidden="true"
             style={{
