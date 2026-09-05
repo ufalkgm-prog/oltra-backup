@@ -63,11 +63,41 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const memberFirstName = effectiveName.trim().split(/\s+/)[0] ?? "";
   const truncatedFirstName =
     memberFirstName.length > 12 ? `${memberFirstName.slice(0, 12)}...` : memberFirstName;
-  const membersLabel = user
-    ? truncatedFirstName
+  /* Confirmed by email, or by phone for an account that signed up that way.
+   *
+   * `confirmed_at` is Postgres-generated as the coalesce of the two, so it is
+   * the one to read when either counts; email_confirmed_at is checked first
+   * and explicitly because email is what this site actually signs people up
+   * with. A Google OAuth account arrives with email_confirmed_at already set
+   * by the provider, so social sign-in is unaffected. */
+  const isVerifiedMember = Boolean(
+    user?.email_confirmed_at ?? user?.confirmed_at
+  );
+
+  /* "Hello" is a greeting to a named, verified person, so it is never shown
+   * without both. Three cases would otherwise have produced a bare or
+   * unearned greeting, and they look identical on screen:
+   *
+   *  - the moment between the session arriving and the profile fetch
+   *    resolving;
+   *  - permanently, for a member with no name anywhere — an email/password
+   *    signup that never filled in Personal Information has no member_name
+   *    row and no OAuth full_name to fall back on;
+   *  - a session on an address that has never been confirmed.
+   *
+   * All three read "Members", which is honest in every case. The link still
+   * goes to /members, so a signed-in member is not sent back through login;
+   * only the label is neutral.
+   *
+   * Note the label was never an access control: /members is gated server-side
+   * in its layout, which calls getUser() and redirects to /login without a
+   * session. That gate does NOT check confirmation — an unconfirmed session
+   * can still open the members area, and closing that is a change to the
+   * route, not to this greeting. */
+  const membersLabel =
+    user && isVerifiedMember && truncatedFirstName
       ? `Hello ${truncatedFirstName}`
-      : "Hello"
-    : "Members";
+      : "Members";
 
   const navItems: { label: string; href: string; match: string; badge?: string; disabledMessage?: string }[] = [
     { label: "Hotels", href: hotelsHref, match: "/hotels" },
