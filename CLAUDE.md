@@ -4051,181 +4051,502 @@ duplicates gone.
 
 ---
 
-## 50. AI CONCIERGE ON THE LANDING PAGE (2026-08-31, branch `ai-chat`)
+## 50. THE AI CONCIERGE (2026-08-31 to 2026-09-05, branch `ai-chat`)
 
 ### Status
 
-**Unmerged, PR #7 open, and two commits ahead of what was pushed.** Branch
-`ai-chat`, head `3b04df9`; `origin/ai-chat` is still at `91648ea`, so
-**`da6bfcb` and `3b04df9` exist only on Ulrik's machine** until someone pushes.
-`main` does not have any of it. Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default
-off, so it can sit on production invisibly — the flag gates both the UI and the
-route.
+Branch `ai-chat`, head **`5622166`**, pushed. **PR #7 is open and its title —
+"AI concierge on the landing page, behind a feature flag" — is now wrong**: the
+concierge is no longer landing-page-only. `main` has none of it.
 
-Sixteen commits. The feature is `dc5f729`; everything after it is either this
-section or a fix found by using the thing in a browser — `c738913`, `901bcc2`,
-`9935fb2`, `9bd3902`, `fae4160`, `c864f68`, `794c705`, `da6bfcb`, `3b04df9`.
-That ratio is the point, and the "What testing taught" subsection below is what
-to read before assuming this is finished.
+Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on production
+invisibly. The flag gates the route, the modal and the entry button, so a
+disabled feature leaves no trace on any page.
+
+Two eras on this branch. The first (2026-08-31 to 09-04, `dc5f729` onward)
+built it as a *mode* on the landing page: it replaced the search panel, and a
+Classic/AI toggle switched between them. The second (2026-09-05, `5622166`)
+made it a modal the whole site can open. **Everything below describes the
+current design**; where the first era's lessons still hold they are kept,
+because the code paths they were learned in survive.
+
+`90bef47` on this branch is **not** part of the feature — it fixes the header
+greeting, touches only `SiteHeader.tsx`, and is on `main` too. Kept as its own
+commit so it can be cherry-picked there. Same reason `58dc6eb` (the beta-login
+hang) is separate.
 
 **Local prerequisite that is easy to lose an hour to:**
 `NEXT_PUBLIC_AI_CHAT_ENABLED=1` is not in the committed environment anywhere —
-it was added to `hotels-beta/.env.local` by hand on 2026-09-04. Without it the
-toggle does not render and `/api/chat` answers 404, which looks exactly like
-the feature being broken rather than switched off. It is inlined at build time,
-so a change needs a dev-server restart locally and a redeploy on Vercel.
+it lives in `hotels-beta/.env.local` by hand. Without it the button does not
+render and `/api/chat` answers 404, which looks exactly like the feature being
+broken rather than switched off. It is inlined at build time, so a change needs
+a dev-server restart locally and a redeploy on Vercel.
 
-One commit on the branch is **not** part of the feature: `58dc6eb` fixes the
-beta-login hang and touches a file that is on `main` too. It was kept separate
-so it can be cherry-picked there independently of PR #7 — see below.
+### What it is
 
-A second way into the hero search: describe the trip in prose, get curated
-hotels or flights back in the existing cards with an editorial line above them.
-Discovery and steering only. It never books, never takes payment, never becomes
-merchant of record, and every tool it can reach is read-only.
+A second way into the site: describe the trip in prose, get curated hotels,
+flights and restaurants back in the existing cards. Discovery and steering
+only. It never books, never takes payment, never becomes merchant of record,
+and every tool it can reach is read-only.
 
 ### The one design decision that matters
 
-**The no-prices rule is structural, not a prompt promise.** `checkAvailability`
-and `searchFlights` fetch real rates, use them to rank and to test any ceiling
-the visitor named, then **discard the amount**. The model receives
-`{available, priceRank, withinBudget}` and never a figure, so it cannot leak a
-price it was never given — under any framing, including direct pressure. Every
-number on screen is fetched by the card from the same batch route the
-structured search uses.
+**The no-prices rule is structural, not a prompt promise.** `searchHotels`,
+`checkAvailability` and `searchFlights` fetch real rates, use them to rank and
+to test any ceiling the visitor named, then **discard the amount**. The model
+receives `{available, priceRank, withinBudget}` and never a figure, so it
+cannot leak a price it was never given — under any framing, including direct
+pressure. Every number on screen is fetched by the card from the same batch
+route the structured search uses.
 
 If a future change hands the model a raw amount "just for context", that
 guarantee is gone and the prompt becomes the only defence. Don't.
 
-### Route — `src/app/api/chat/route.ts`
+The in-chat summary below inherits this for free: it renders identity and
+rationale only, and is incapable of carrying a figure.
 
-Holds `ANTHROPIC_API_KEY` and nothing else does. Guard order is deliberate:
+### Where it mounts, and how members are excluded
 
-1. **Flag** — 404 when off.
-2. **Session** — members-only; deliberately before the key check, so an
-   unauthenticated caller learns nothing about our configuration.
-3. **Rate limit** — per-user daily, in-memory.
-4. **Input caps** — message length, turns kept.
-5. **Triage** — `claude-haiku-4-5` classifies travel / probe / other before any
-   Opus spend. It is also a *second independent judgement*: a jailbreak that
-   talks the main model round still has to pass a classifier with no tools and
-   no history. It **fails open** on error — the main model's own instructions
-   are the real defence, and refusing everyone during a transient outage is
-   worse. A decline streams back as a normal assistant message, not a JSON
-   error, so the client has one code path.
+`AiSearchProvider` wraps `{children}` in **`src/app/layout.tsx`**, so the store
+outlives navigation. `children` passes straight through, so pages stay server
+components.
 
-Conversation model `claude-opus-5`. Web search is Anthropic's own server-side
-`web_search_20260209` with `maxUses` enforced upstream and a domain allow-list
-— no new vendor, no extra key.
+`AiConciergeRoot` renders the modal and gates it on an **exact-path allow-list**
+in `lib/ai/routes.ts` — `/`, `/hotels`, `/flights`, `/restaurants`, `/inspire`.
+Everything else gets nothing: members, login, editor, beta-login, partners, and
+`/hotels/[hotelid]` (a separate Agoda-era page, §15).
 
-### Containment — read before "tidying" any of this
+**An allow-list, not a deny-list.** A deny-list silently admits every route
+added later, which for a members area is exactly the wrong default.
 
-Ulrik's constraint was **landing page only**. Three things look like they want
-refactoring and must not be:
+Landing on a non-allowed path also *closes* the concierge rather than hiding
+it — otherwise `conciergeOpen` stays true behind the members area and the modal
+reappears unbidden on the way back. The transcript survives either way.
 
-| Looks wrong | Why it is that way |
-|---|---|
-| The AI mark is positioned by a wrapper in `LandingSearchPanel`, not by `StructuredDestinationField` | That component is shared with the Hotels page, which must not grow a toggle |
-| `api/ai/hotels` duplicates much of `api/hotels/by-ids` | The latter serves Members favourites; nothing about this feature should be able to change what Favourites renders |
-| The serif face loads in `lib/ai/fonts.ts`, not `layout.tsx` + a theme token | A global token would reach every page |
-| `FlightResultRow` sits in `src/app/`, not `src/components/` | The classes it uses live in the landing page's own CSS module. Moving it "properly" means either making those styles global or importing a page stylesheet from a shared component |
+The route is **members-only** (401 otherwise) and that is unchanged, so the
+button appears to signed-out visitors and the panel tells them to sign in.
 
-Outside the landing page the feature is **18 lines across three files, none of
-it markup**: an `ids` key in `hotelFilters.ts`, its parsing in
-`hotels/page.tsx`, and four lines in `HotelsView.tsx` (`selected.ids` in the
-type and in `hasMeaningfulFilters`, plus `"ids"` in both `HiddenPreserveParams`
-exclude lists). Two `export` keywords were added in
-`lib/ratehawk/availability.ts` so `ratePrice`/`RawSerpHotel` could be reused
-rather than duplicated.
+### Entry and exit
 
-**`FlightsView.tsx` joined that list on 2026-09-04** and is the one place the
-containment rule was deliberately relaxed: `buildInitialSearch` now reads
-`leg1`…`leg5` and accepts both one-way spellings. That is a change to a page
-other traffic uses, and it was the right call — multi-city already existed and
-simply had no URL surface, so this makes an existing mode reachable rather than
-building the concierge a private one. It also fixes a one-way bug that was never
-the concierge's (see below). Anything further into that page should be weighed
-the same way: does it serve every caller, or only this feature?
+One `AiModeButton`, two placements, no toggle. The Classic/AI toggle was right
+when AI mode replaced the page; now the concierge opens over the page and
+closes again, so the page is never in a "mode" and there is nothing to switch
+back to. `AiModeToggle` is deleted.
 
-**Both HotelsView lines are load-bearing**, found by testing: without
-`hasMeaningfulFilters`, an ids-only handoff falls through to *featured mode* and
-silently ignores the recommendation; without the exclude entries, a new search
-run from the Hotels page re-appends the stale `ids` and pins the user inside the
-AI subset with no way out.
+* **`inline`** — landing and Hotels, at the right-hand end of the destination
+  field. `StructuredDestinationField` gained an optional `trailingControl` slot
+  so the shared component knows nothing about the concierge. The slot lives
+  *inside* the chip box with `margin-left: auto`, so when chips wrap to a
+  second line the button follows them down. The field's busy spinner moved into
+  the slot when one is present — the absolute one sat exactly where the button
+  now is.
+* **`corner`** — Flights, Restaurants, Inspire: **its own row at the top of the
+  frame, in normal flow, NOT an absolute corner.** Every one of those frames
+  opens with a full-width control (trip-type tabs, the City/Type pair, the
+  month row) that an absolute button sat on top of at some width. A row costs
+  34px and cannot overlap anything.
 
-### Tools
+Exit is the modal's own labelled button — not a bare glyph, because the visitor
+is mid-conversation and needs to know the exchange survives leaving.
 
-All read-only. `searchHotels`, `getHotelDetails`, `checkAvailability`,
-`searchFlights`, `nearestAirport`, `webSearch`, plus `presentResults` — which
-is not a data tool but how the model hands the UI a structured result set. The
-client reads that tool call rather than parsing hotel names out of prose, which
-would break the moment the model phrased something differently.
+### The modal
 
-Tool results are wrapped in `<untrusted-data>` markers and the prompt says so:
-supplier free-text may contain sentences that look like commands.
+`AiConciergeModal`, built on the hotel photo lightbox's pattern rather than a
+new one: `createPortal` to `document.body`, `.oltra-modal-scrim`,
+`.oltra-modal-panel`, Esc and click-outside.
 
-`nearestAirport` costs nothing — `cityAirports.ts` (§37/§38) already covers all
-514 hotel cities. **Do not add a Google Places call for this.**
-`checkAvailability` skips `ratehawk_status: "passive"` hotels (§42) — they never
-price, so asking is pure latency against a rate-limited supplier.
+**Portalled for a concrete reason.** `.oltra-page__content` is
+`position: relative; z-index: 1` and therefore its own stacking context, so a
+panel rendered inside it can never clear the fixed header however high its
+z-index. §45 records the itinerary overlay learning this the hard way.
 
-### The defect live testing caught
+The one addition over the lightbox is **blur** — `--oltra-modal-blur`, applied
+to this scrim only, not to `.oltra-modal-scrim` itself (blurring the page
+behind the photo lightbox would blur the photo's own context).
 
-The model opened by inventing plausible taxonomy tags — `"quiet"`,
-`"secluded"`, `"wellness"` — matched nothing, and spent **two extra tool round
-trips** recovering. On every query, silently, with no error anywhere.
+**Scroll containment.** Locking `<body>` alone was not enough: the scrolling
+element is usually `<html>`, so a wheel over the scrim still moved the page.
+Both are locked, and the scrim and the transcript both carry
+`overscroll-behavior: contain` so a scroll reaching the end of the conversation
+does not chain outward. Removing the scrollbar reflows the page a few pixels
+narrower, so its width is added back as body padding for exactly as long as the
+lock is held. Everything is restored on cleanup **including unmount** — a stray
+`overflow: hidden` on `<html>` would silently freeze the next page.
 
-Fixed with `lib/ai/taxonomy.ts`: the 22 setting / 20 style / 37 activity values
-mirrored from Directus and declared as JSON Schema `enum`s, which makes an
-invalid tag impossible rather than discouraged. 3 calls became 2, and the first
-call was correct. Safe to hardcode because §44 locked those fields with
-`allowOther: false`; refresh from `GET /fields/hotels/{field}` if they ever
-move, since a stale entry here silently matches nothing.
+### The answer, and the in-chat summary
 
-**This is the general lesson: a tool parameter whose valid values are a closed
-set should be an `enum`, not a described string.**
+The page behind is blurred, so the cards are present but unreadable while the
+modal is open. The answer in the panel is therefore the only thing the visitor
+can read, and it names each pick and says why.
 
-### Verified against the live model
+**It is set as one piece of text**, not a sentence plus a results widget: the
+framing line and the picks share the concierge's serif face
+(`--oltra-font-voice`, scoped to the panel by `lib/ai/fonts.ts` rather than
+promoted to a global token), with small-caps headings and bullets for structure
+and no container. The follow-up question below is deliberately in the other
+format — that is a separate thing to say.
 
-8/8 refusal probes held — system-prompt extraction (direct, and via a
-"I'm a developer" pretext), other members' data, restaurants, an uncovered
-destination, direct price pressure, off-topic, and booking-plus-discount. **No
-price figure in any response.** A real tool loop returned three genuine
-published Lake Como hotels, found via the traveller-facing `area` field (§3),
-with rationales about character rather than cost.
+**Names come from the same records the cards render from**, never from anything
+the model wrote, so a name in the summary cannot disagree with the card beside
+it. The rationale is the model's, via `presentResults`' `rationales` field.
 
-**Not verified: the live UI, and the members-only session gate end to end** —
-both need a real member login, which session automation cannot perform (§46:
-Ulrik logs in and hands over the tab).
+The footnote is conditional, and that is correctness rather than polish: only
+the landing page (which draws a frame per vertical) and Hotels or Flights (where
+`AiResultsSync` writes the answer into the URL) actually render the result set
+behind the modal. Asked from Inspire — or Restaurants, whose standalone page
+keeps its own city list — there is nothing behind the panel, and the old
+"on the cards behind this panel" sent the visitor looking for cards that were
+not there.
+
+### Page context
+
+`lib/ai/pageContext.ts` (shared) plus `useAiPageContext` (client). Each page
+publishes what it already holds: the selected hotel on Hotels, the active city
+and selected restaurant on Restaurants, the route on Flights, the month on
+Inspire, the form state on landing. It is **not persisted** — it describes now,
+not the conversation — and clears on unmount so the previous page's hotel is
+not attached to the next question.
+
+It travels in the `useChat` request body and becomes a **third system block**,
+after the date. Same reason the date is there: it changes per navigation, and
+folding it into `SYSTEM_PROMPT` would invalidate the cached prefix for every
+user.
+
+**Security note.** It originates in the browser and lands in a system block —
+the highest-trust position in the request. `sanitisePageContext` whitelists
+fields by name, strips each to a narrow character set and caps length; what
+survives cannot express a sentence, let alone a directive. Tool results take the
+opposite route deliberately: supplier text is genuinely prose, so it is wrapped
+in `<untrusted-data>` markers rather than scrubbed.
+
+The prompt treats it as a default scope, never a fence: a question naming its
+own destination overrides the page entirely, and any vertical may be asked from
+any page.
+
+### One conversation across the site
+
+Already how the store worked; the root-layout move is what makes it true across
+navigation. `sessionStorage` key `oltra_ai_concierge_v1`. Closing the tab clears
+it, which is the intended lifetime.
+
+### Results reach the pages they belong to
+
+* **Landing** reads the store directly and renders **one to three frames** —
+  hotels, flights, restaurants — via `AiResultFrames`. Track count comes from
+  `--ai-frames`, set inline from the same number that sets each card's density,
+  so the two cannot drift.
+* **Hotels and Flights** stay URL-driven (§8). `AiResultsSync` writes the answer
+  into the query string, with two different rules: **on arrival**, only if the
+  URL is bare — a real search, a bookmark or the concierge's own handoff link
+  must not be overwritten by something the visitor did earlier; **on a new
+  answer produced while the page is open**, always, because that is a deliberate
+  act happening now. `presentedAt` separates the two. `router.replace`, so Back
+  goes where the visitor came from.
+* **Restaurants** is deliberately NOT synced. That page already resolves its
+  city from the shared cross-page session when it arrives without `?city=`, and
+  the store mirrors its destination into exactly that session. Mounting both
+  would give two effects racing to `router.replace` the same param.
+* **Inspire** holds its filters in local state, so it cannot be handed a URL. It
+  sets its own Month and Purpose instead — see below.
+
+`lib/ai/handoff.ts` is the single implementation of every handoff URL, so the
+modal's link and a frame's button cannot disagree.
+
+### The handoff offer — one option, chosen by scope
+
+* The answer is exactly the page's own subject → **"See relevant hotels /
+  flights / restaurants"**, linking to that page.
+* The answer is wider than the page, or about something else → **"Go to combined
+  results on main page"** (`/`), the only view that shows all of it at once.
+* The landing page gets **none** — it *is* the combined page and its frames are
+  already behind the panel.
+
+One option rather than one per vertical: three links under a conversation is a
+menu, and the answer has already said what it found.
+
+### Inspire mirrors the query, via `searchTags`
+
+Exiting the concierge leaves Inspire showing what was asked — "skiing in the
+Alps in February" returns to Month February, Purpose Ski, not the June/All it
+opened on.
+
+Three pieces, and the middle one is the reusable lesson:
+
+1. **`presentResults` gained `searchTags`** — the locked setting and activity
+   tags the model actually searched on. Geography and dates alone cannot express
+   *what kind of trip* it is.
+2. **Adding the field was not enough. The model ignored it.** Verified by
+   reading the stored tool input: `searchTags` was simply not among the keys. It
+   is optional, and **an optional field that the prompt does not demand gets
+   skipped** — exactly how `stay` behaved earlier in this section. Once the
+   system prompt required it, it came through
+   (`activities: ["Skiing","Spa","Gastronomy"]`, `settings: ["Mountains"]`).
+3. `lib/ai/inspireMirror.ts` maps tags to Inspire's five purposes. **Rule order
+   matters**: a ski hotel is nearly always tagged `Mountains` too, so `ski` is
+   tested first or every ski answer lands on "Mountains". An answer fitting none
+   of the five leaves the selector alone rather than resetting it to All.
+
+Keyed on `presentedAt`, so it applies once per answer and never fights a
+hand-picked filter afterwards.
+
+Bonus: `queryStateToParams` now emits `settings` and `activities`, so the Hotels
+handoff arrives with those facets pre-selected rather than as a bare geography
+search.
+
+### Recency: which results the landing page shows
+
+The classic search lives in the URL and the concierge's answer lives in the
+store, and **neither can see the other change**. Without arbitration, running a
+classic search after an AI answer left the AI frames on screen and the new
+search looked ignored. `presentedAt` / `searchedAt` timestamps decide; nothing
+is discarded, so both views stay one action away.
+
+**`markClassicSearch()` is gated on the search actually naming a destination,
+and that is not a nicety.** `submitted` alone was enough at first, and the
+landing auto-submit fires on any field change — so a guests-only navigation, or
+the session restore on mount, counted as a search, displaced a good answer, and
+rendered nothing in its place because the structured summary needs a destination
+too. Measured live: `searchedAt` stamped 11 minutes after the answer by a
+phantom search, hiding 3 hotels, 3 restaurants and a flight leg. **A search that
+can show nothing must not supersede one that can.**
+
+### The store is three contexts, for a measured reason
+
+`AiSearchProvider` exposes:
+
+* `useAiActions()` — setters only, stable for the provider's lifetime.
+* `useAiSearch()` — query, results, framing, timestamps, page context.
+* `useAiConversation()` — the message list.
+
+The conversation persists on **every streamed token**. With the provider at the
+root, a page component reading the full context would re-render several times a
+second while the concierge streams, and `HotelsView` is 3,600 lines. Pages read
+`useAiActions`; the frames read `useAiSearch`; only the panel reads the
+transcript.
+
+**The results context is memoised on individual fields, not on `state`.**
+Appending a token replaces `state` but leaves `state.query`/`state.results`
+identical, so the value keeps its identity. Depending on `state` there would
+undo the whole split silently.
+
+### Card density variants
+
+`HotelSmallCard` and `FlightResultRow` take `columns?: 1 | 2 | 3`;
+`RestaurantSmallCard` (new) mirrors the shape. It is a **density** switch only —
+every variant shows the same fields, from the same data, with the same actions.
+Image size, track widths and line count are all that change. Default 1, so every
+pre-existing call site is untouched.
+
+**Nothing in a card may force it wider than its column.** The restaurant card
+did: a flex pair of a truncating name and a `shrink-0` badge, and **`truncate`
+cannot shrink a flex child without `min-w-0`** — 413px of content in a 329px
+box, and a horizontal scrollbar. The rule now is wrap, never clip and never
+overflow; the hotel name is the one exception, capped at two lines with
+`line-clamp` so a long name still reads as cut off rather than as the whole
+name.
+
+### Route and tools
+
+`src/app/api/chat/route.ts` holds `ANTHROPIC_API_KEY` and nothing else does.
+Guard order is deliberate and unchanged: **flag** (404) → **session** (401,
+before the key check, so an unauthenticated caller learns nothing about our
+configuration) → **rate limit** → **input caps** → **triage**.
+
+Triage is `claude-haiku-4-5` classifying travel / probe / other before any Opus
+spend, and a second independent judgement: a jailbreak that talks the main model
+round still has to pass a classifier with no tools and no history. It **fails
+open** on error — refusing everyone during a transient outage is worse. A
+decline streams back as a normal assistant message, not a JSON error, so the
+client has one code path.
+
+Tools, all read-only: `searchHotels`, `getHotelDetails`, `checkAvailability`,
+`searchFlights`, `nearestAirport`, `searchRestaurants`, `webSearch`, plus
+`presentResults` — not a data tool but how the model hands the UI a structured
+result set. The client renders from that tool call rather than parsing names out
+of prose, which would break the moment the model rephrased.
+
+`nearestAirport` costs nothing — `cityAirports.ts` already covers all hotel
+cities. **Do not add a Google Places call for this.** `checkAvailability` skips
+`ratehawk_status: "passive"` hotels (§42).
+
+**A tool parameter whose valid values are a closed set should be an `enum`, not
+a described string.** Live testing had the model inventing plausible taxonomy
+tags — "quiet", "secluded", "wellness" — matching nothing and spending two extra
+round trips recovering, silently, on every query. `lib/ai/taxonomy.ts` mirrors
+the locked §44 vocabularies as JSON Schema enums. Safe to hardcode because those
+fields are `allowOther: false`; refresh from `GET /fields/hotels/{field}` if they
+move, since a stale entry silently matches nothing.
+
+### Restaurants
+
+`searchRestaurants` searches one city, built on `getRestaurantsByCity` so the
+concierge sees exactly what the Restaurants page would — including the alias
+fallback that resolves Ramatuelle to Saint-Tropez. Cuisine and type narrow in
+JS, because a Directus `_eq` would miss "Modern French" for "French".
+
+An empty result distinguishes **"we do not cover this city"** from **"nothing
+matched those filters"**, because only the first should send the visitor
+elsewhere.
+
+The old "never discuss restaurants" rule is replaced by the **same in-inventory
+rule hotels have**: never name one that did not come back from the tool, however
+well known. Coverage is by city and much narrower than the hotel collection.
+
+**The standalone Restaurants page is unchanged** — no new data, no new mode.
+Restaurant result sets are a landing-page frame; a handoff there carries the
+city only.
+
+### The system prompt
+
+Preserved verbatim from the first era: read-only tools, no booking or payment,
+the confidentiality block, the non-travel decline wording, the no-result
+wording, adjacent-questions-bounded-to-inventory.
+
+Added: the restaurant in-inventory rule (replacing the blanket ban), page
+context, answer-then-offer-the-handoff, the in-chat summary rule, and the
+`searchTags` requirement.
+
+**Keep `SYSTEM_PROMPT` byte-stable per deploy.** It carries the prompt cache
+breakpoint. Anything per-request — the date, the page context — goes in a
+*later* system block. Note the call-level `cacheControl` this replaced caches
+the **last** cacheable block, which would have been the volatile one: the cache
+would have missed on every request while looking correctly configured. If
+`usage.cache_read_input_tokens` is persistently zero, check this first.
+
+**A prompt change is a code change, and it regresses like one.** Two fixes in
+the first era were caused by the fix before them: tightening for brevity
+produced wording the model read as permission to ask *instead of* showing
+results, so it replied helpfully and rendered no cards at all. Nothing failed;
+there was simply no `presentResults` call, which is invisible unless you notice
+`/api/chat` was not followed by `/api/ai/hotels`. After editing
+`systemPrompt.ts`, run a real query in a browser and check the tool fired.
 
 ### AI SDK v7 — where training priors are wrong
 
-Installed `ai@7` + `@ai-sdk/anthropic@4` + `@ai-sdk/react`. Verified against the
-installed `.d.ts`, not recalled:
+`ai@7` + `@ai-sdk/anthropic@4` + `@ai-sdk/react`. Verified against the installed
+`.d.ts`, not recalled:
 
 * `useChat` is in **`@ai-sdk/react`**, not `ai`.
 * Tool params are **`inputSchema`**, not `parameters`.
 * **`convertToModelMessages` is async** — await it.
 * `useChat` does not manage input; the caller owns the text state and calls
-  `sendMessage({ text })`.
+  `sendMessage({ text })`. Per-request data goes in the second argument:
+  `sendMessage({text}, {body: {...}})`.
 * **`role: "system"` is rejected inside `messages`.** It goes through
-  `instructions`, which accepts a string, one system message, or an **array** of
-  them — and `system` is deprecated in favour of it. The array form is what
-  makes a stable cached prefix plus a volatile suffix possible at all.
-* `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'` — and so is
-  `FlightsView`'s own, which is what the §7B correction is about.
-* `buildGuestsArray(adults, kids, ages, rooms)` takes four positional
-  arguments, not an object.
+  `instructions`, which accepts a string, one system message, or an **array**.
+  The array form is what makes a cached prefix plus volatile suffixes possible.
+* A `ToolUIPart` in state `input-streaming` has `input?: DeepPartial<…>` —
+  partial, and typed as such.
+* `stopWhen` takes an array; `hasToolCall(name)` is exported alongside
+  `stepCountIs(n)`.
+* `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'`.
+* `buildGuestsArray(adults, kids, ages, rooms)` is positional.
 
-Added 2026-09-04, both load-bearing:
+### What testing taught
 
-* **A `ToolUIPart` in state `input-streaming` has `input?: DeepPartial<…>`.**
-  Partial, and typed as such. Anything reading a tool call's input mid-stream is
-  reading an incomplete object — see the `da6bfcb` bug below, which this single
-  fact explains entirely.
-* **`stopWhen` takes an array of conditions**, and `hasToolCall(name)` is
-  exported alongside `stepCountIs(n)`. That is how a turn can end on a specific
-  tool call rather than only on a step count.
+**A green `tsc`, lint and build are not evidence this feature works.** Every
+significant defect in both eras passed all three, and the pattern held every
+time: **the failure was silent.** No exception, no red state, nothing in the
+console — a request that 400s at validation, a conversation that breaks
+permanently one turn later, a card that renders with no price, a tool call
+applied half-streamed, an optional field the model quietly never sends. Each
+looked like working software. Where a value crosses a boundary — model to tool,
+tool to store, store to card — assume nothing tells you when it fails to arrive,
+and go and look.
+
+**Read the store, not the screenshot:**
+`JSON.parse(sessionStorage.getItem("oltra_ai_concierge_v1"))`. Its
+`messages[].parts` hold each tool call's `input`, `state` and `output`, so "the
+model chose differently" and "the code dropped it" are distinguishable — and
+they look identical on screen.
+
+**Measure the DOM, do not read screenshots**, for anything about layout. The
+card overflow was found as `scrollWidth 413 / clientWidth 329`, not by looking.
+Same lesson as §45 and §46.
+
+**A non-deterministic model makes one passing run weak evidence.** The same
+query took two `searchHotels` calls on one run and one on the next with no code
+change. Repeat a scenario before calling it fixed.
+
+**Measure before optimising latency.** "It feels slow" had a specific shape
+(four serial round trips, 2.4s of it to emit one sentence) that reading the code
+would not have revealed, and the plausible culprit — a cache that was not
+hitting — turned out to be fine. Temporary `[perf]` logging with `onStepFinish`
+gives per-step time, tool names and cache-token counts; add it, measure, remove
+it.
+
+Speed, first era: **26.6s to 14.4s**, by removing round trips rather than tuning
+them — `searchHotels` takes an optional `stay` and returns availability with the
+candidates; `presentResults` carries the follow-up question and ends the turn;
+the prompt asks for one broad search rather than several narrow ones. The
+remaining ~14s is two Opus round trips, and the only large lever left is
+`CHAT_MODEL`, which trades against the editorial voice.
+
+### Bugs worth not repeating
+
+* **One unreachable domain in the web-search allow-list breaks every request.**
+  Anthropic rejects the *whole* request at validation
+  (`400 … domains are not accessible to our user agent`), so a query that would
+  never have searched the web fails too. `cntraveler.com` and
+  `travelandleisure.com` are the two that fail — §25 already recorded both as
+  bot-blocked. Verify any domain before adding it.
+* **A tool with no `execute` produces no `tool_result`**, and the API refuses any
+  history containing an unanswered `tool_use` — so the first answer poisoned
+  every later turn. `presentResults` has a deliberately tiny `execute`.
+* **The route does not trust the history the browser sends.**
+  `sanitiseHistory.ts` strips orphaned tool calls, because the client cannot
+  always avoid persisting one (the loop can stop at `MAX_TOOL_STEPS` mid-call).
+  Without it a conversation breaks *permanently* and reloading does not help,
+  since the history is in sessionStorage.
+* **Never read a streaming tool input without checking `state`.** `framing` is
+  the first property in the schema, so it completes while `hotelIds` and `stay`
+  are still absent; reading that snapshot gave a framing line with no cards.
+  **And never use a value as a change key when an identity is available** — the
+  guard compared framing text, so once the half-formed version was stored the
+  completed call read as "no change" and was dropped entirely.
+* **Side effects do not belong in a `setState` updater.** React runs updaters
+  during render, and the mirror into `searchSession` dispatches a synchronous
+  event `SiteHeader` listens to — so it set state mid-render. React may also run
+  updaters twice.
+* **A result set is merged per facet, not replaced.** A turn about flights says
+  nothing about hotels; replacing wholesale wiped the hotel cards the moment the
+  visitor answered a follow-up. An explicit `[]` still clears.
+* **The stay comes from `stay` alone, never from a flight leg.** Leg dates are
+  the journey's, not the room's, and an open jaw's legs carry no return date —
+  reading them blanked the check-out and the prices went with it.
+* **Nothing told the model what day it is**, so it assumed the current year and
+  sent a past check-in, which the supplier rejected — and the model reported
+  that as "the availability service isn't responding". `checkAvailability` now
+  rejects a past check-in itself, because prompt guidance alone leaves the same
+  dead end whenever the model slips.
+* **The rationale repeated the property's name** ("Le Meurice — Le Meurice —
+  grand old Paris") because a sentence needs a subject. Fixed in the prompt and,
+  since prompts regress, in the renderer — matched on tokens, not exact text,
+  because the model writes a variant ("Mandarin Oriental Lutetia" for a record
+  named "Mandarin Oriental, Lutetia, Paris").
+* **Seven CSS classes the first era referenced never existed in
+  `page.module.css`** — modules resolve a missing class to `undefined`, so those
+  elements rendered unstyled and nothing reported it.
+
+### Other operational notes
+
+* Running `npm run build` while `npm run dev` is live corrupts `.next` and the
+  dev server starts throwing `MODULE_NOT_FOUND` (the §34 flakiness — stop dev,
+  `rm -rf .next`, restart).
+* `form_input` on a React-controlled field sets the DOM value without firing
+  React's `onChange`, so the state stays empty and the form submits blank. Use a
+  real click plus typed keys.
+* **The §49 encoding trap recurs.** Python's `open(p, 'w')` uses the locale codec
+  on Windows, so a read/write round-trip survives but *new* non-ASCII text is
+  corrupted — silently, if `tsc` has not run. Use the Edit/Write tools for
+  anything with non-ASCII, or read/write bytes and encode UTF-8 yourself. Check
+  with `python -c "open('path','rb').read().decode('utf-8')"`.
+* `DEP0169 url.parse()` in the dev log is Next's own
+  (`next/dist/server/lib/router-server.js`), not ours.
+* Credit exhaustion surfaces as `AI_APICallError: Your credit balance is too
+  low` on both triage and chat, and reaches the visitor as the generic "please
+  try again" — which retrying cannot fix. Only the route's own 4xx rejections
+  carry a specific reason today.
 
 ### Prerequisites
 
@@ -4234,514 +4555,29 @@ Added 2026-09-04, both load-bearing:
 * `NEXT_PUBLIC_AI_CHAT_ENABLED` — public flag, inlined at build time, so
   flipping it needs a redeploy.
 * **A spend cap and usage alerts in the Anthropic Console.** The in-memory rate
-  limiter is per serverless instance, so the real ceiling is
-  (instances × cap) — a cost backstop, not a control. The Console cap is the
-  only hard stop. Swap the Map for Upstash if the site ever opens past
-  `/beta-login`.
-
-### Three bugs that only a browser found (`c738913`)
-
-Every one passed `tsc`, lint and the production build, and two of them made
-essentially *every* query fail. They surfaced the moment Ulrik opened the page.
-
-**1. One unreachable domain in the web-search allow-list broke every request.**
-`cntraveler.com` and `travelandleisure.com` block Anthropic's crawler, and the
-API rejects the **whole request** at validation over it:
-`400 The following domains are not accessible to our user agent`. So a query
-that would never have searched the web failed too, and it presented as "the AI
-is broken" rather than "web search is unavailable". Predictable in hindsight —
-§25 already records both as bot-blocked. Every domain in that list is now
-verified individually, and `lib/ai/config.ts` carries the warning.
-
-**2. Every second turn failed.** `presentResults` had no `execute`, so its tool
-call produced no `tool_result`, and the API refuses any history containing an
-unanswered `tool_use`. The first answer therefore poisoned the conversation.
-
-**3. A failed turn left the user's message orphaned**, so the next request
-replayed it — the model answered a stale question alongside the new one, and a
-retry showed the same message twice.
-
-The lasting change is #2's real fix: **the route does not trust the history the
-browser sends.** `lib/ai/sanitiseHistory.ts` strips orphaned tool calls before
-each request, because the client cannot always avoid persisting one — the loop
-can stop at `MAX_TOOL_STEPS` mid-call, or a stream can fail part-way. Without
-it a conversation breaks *permanently* and reloading does not help, since the
-history lives in sessionStorage. It also heals conversations poisoned before
-the fix, which were already in real browsers.
-
-There is also a **Clear** control, which the panel originally had no equivalent
-of at all — a stale exchange could persist across reloads with no way out.
-
-### Frames are the structured search's, not lookalikes (`901bcc2`)
-
-The first version rendered hotels in an invented card grid at a different size,
-with a rationale line under each card. Results from the chat and results from
-the search bar are the same hotels shown for the same reason, so they now use
-the same `.summaryColumn` panel, the same `.smallCardsList` scroll box and the
-same `HotelSmallCard`.
-
-**The per-card rationale lines went with that grid.** They were in the original
-brief, but the real card has no slot for one, and keeping them meant keeping
-the lookalike frame. The editorial voice lives in the framing line above.
-
-One deliberate difference: an answer with **hotels and no flights** takes the
-whole row, with cards two-up inside a *single* scroll container so the pair
-scrolls together. With flights present it reverts to the two-panel grid.
-
-`FlightResultRow` was **extracted, not reimplemented** — it owns the row markup,
-`FlightDetailCard`, `formatPrice`, `formatDurationMinutes` and the
-best-price/fastest selection (including the rule that the two rows are never the
-same itinerary). Both callers use it, so `LandingSummary` shed 126 lines. Book
-and save live *inside* the component rather than being passed in: they are
-self-contained, and handlers supplied by two call sites are how two copies
-drift apart.
-
-`AskResults` runs **one** Duffel search for the route the concierge already
-chose, rather than the structured summary's per-airport × per-cabin fan-out —
-which also sidesteps the cost concern §38 records, where a multi-hub
-destination fires six parallel searches.
-
-The chat thread caps at 320px and scrolls rather than growing and pushing
-results down the page; answers use the full panel width, and only the visitor's
-own turns stay narrow and right-aligned.
-
-### What testing this actually taught
-
-The probes that "verified against the live model" passed *because they bypassed
-the route* — they exercised the prompt and tools directly, so they never hit
-request validation or a persisted multi-turn history. Both classes of bug lived
-exactly in the gap those probes skipped. **For this feature, a green
-`tsc`/lint/build and a passing model probe are not evidence that it works;
-someone has to use it in a browser.**
-
-Eight separate rounds of bugs were found that way — the layout rounds below
-included — and the pattern held every time: **the failure was silent.** No exception, no red state, nothing in the
-console — a request that 400s at validation, a conversation that breaks
-permanently one turn later, a card that renders with no price, a tool call
-applied half-streamed and then never corrected. Each looked like
-working software. Where a value crosses a boundary — model to tool, tool to
-store, store to card — assume nothing tells you when it fails to arrive, and go
-and look.
-
-**Read the store, not the screenshot.** Every 2026-09-04 bug was diagnosed by
-comparing what the model actually passed against what arrived, which the page
-cannot show you:
-
-```js
-JSON.parse(sessionStorage.getItem("oltra_ai_concierge_v1"))
-```
-
-Its `messages[].parts` hold each tool call's `input`, `state` and `output`, so
-"the model chose differently" and "the code dropped it" are distinguishable —
-and they look identical on screen. The answer that started the session named
-four hotels correctly in a tool call while the store held none.
-
-**Measure before optimising latency.** "It feels slow" had a specific shape
-(four serial round trips, 2.4s of it to emit one sentence) that no amount of
-reading the code would have revealed, and the plausible culprit — a prompt cache
-that was not hitting — turned out to be fine. Temporary `[perf]` logging in the
-route with `onStepFinish` gives per-step time, tool names and cache-token
-counts; add it, measure, remove it.
-
-**A model that is non-deterministic makes a single passing run weak evidence.**
-The same Amalfi query took two `searchHotels` calls on one run and one on the
-next with no code change in between — which is also how the second latency
-measurement came back at 22.7s rather than 14.4s. Repeat a scenario before
-calling it fixed, and when it fails, check the tool input before assuming the
-code broke.
-
-**A prompt change is a code change, and it regresses like one.** Two of the
-last fixes were caused by the fix before them. Tightening for brevity produced
-"your own message should be either empty or a single short question", which the
-model read as permission to ask *instead of* showing results — so it resolved
-the dates, replied with one helpful sentence, and rendered no cards at all.
-Nothing failed; there was simply no `presentResults` call, which is invisible
-unless you notice `/api/chat` was not followed by `/api/ai/hotels`. Treat
-wording in `systemPrompt.ts` as behaviour under test: after editing it, run a
-real query in the browser and check the tool actually fired.
-
-Two operational notes from the same session: running `npm run build` while
-`npm run dev` is live corrupts `.next` and the dev server starts throwing
-`MODULE_NOT_FOUND` (the §34 flakiness — stop dev, `rm -rf .next`, restart), and
-`form_input` on a React-controlled field sets the DOM value without firing
-React's `onChange`, so the state stays empty and the form submits blank.
-
-### Dates, and answer length (`9935fb2`)
-
-**Nothing told the model what day it is**, so it assumed the current year.
-Asked about February on 31 August 2026 it sent Ratehawk `checkin 2026-02-16` —
-seven months past — and the supplier rejected the whole batch with
-`checkin date must be current or future date`. The model reported that to the
-visitor as "the live availability service isn't responding", which reads like an
-outage rather than a wrong year. Nothing in the stack was down.
-
-Today's date is now supplied on every request, and the prompt says a bare month
-means its **next** occurrence. Verified: February resolves to 2027 and "third
-week" to the 15th–22nd, with the model stating which dates it used.
-
-**Where the date lives matters.** `instructions` is an array of two system
-blocks: the stable prompt carrying the `cacheControl` breakpoint, then the date,
-uncached. Two traps avoided:
-
-- Appending the date to the prompt string would invalidate the cached prefix for
-  every user, every day.
-- The call-level `cacheControl` this replaced caches the **last** cacheable
-  block — which would have been the volatile date. The cache would have missed
-  on every request while looking correctly configured. If
-  `usage.cache_read_input_tokens` is persistently zero, check this first.
-
-`checkAvailability` also **rejects a past check-in itself** and tells the model
-the year is wrong. Prompt guidance alone leaves the same dead end whenever the
-model slips; the guard means a past date cannot reach the supplier.
-
-**Answers were far too long** — 180–230 words of prose, opening with narration
-("Let me see what we cover in Thailand."). The prompt now asks for the answer
-first, short bullets, ~60 words, no preamble, at most one follow-up question.
-Measured on the same two turns afterwards: 84 and 114 words, bullets throughout,
-no narration. Verbosity is not self-correcting — it needs an explicit word
-budget and an explicit ban on preamble.
-
-### The stay never reached the cards (`9bd3902`)
-
-Cards rendered with **no price** even when the visitor had given dates, guests
-and rooms. Nothing was broken in the obvious sense: the model extracted all
-three correctly and passed them to `checkAvailability`. But `presentResults`
-had no fields for them, so they had nowhere to go afterwards — `AskPanel` set
-only `{ vertical: "hotels" }`, `AskResults` skips pricing entirely without
-dates, and every card fell through to `status: "idle"`. No price, no error, no
-signal of any kind. The answer looked complete *because* the model had done its
-part.
-
-`presentResults` now reports the `stay` and `destination` it based the answer
-on, and its tool description says outright that omitting the stay means the
-cards show no price. Verified end to end: "second week of February, 4 people in
-two rooms" resolves to `checkIn 2027-02-08`, `checkOut 2027-02-15`, 4 adults,
-2 rooms.
-
-Two things came free, both previously broken for the same reason: the
-"see all hotels in X" escape and the `/hotels` handoff now carry a destination
-instead of an empty one, and toggling AI off back-fills the Search fields with
-dates, guests and rooms — which §4.5 of the brief required and which had never
-actually worked.
-
-**Say it once.** The same answer was appearing twice — as prose in the thread
-and again as the framing line above the cards, which render in different places
-on the page, so it read as two replies to one question. The framing line is now
-stated to *be* the answer: when `presentResults` is called, the model's own
-message must be empty or a single short question. Measured after: 13 words in
-the thread, the substance once, above the cards.
-
-### Show first, never ask instead (`fae4160`)
-
-Asked for "the Middle-East in the second week of February, 4 people in two
-rooms", the concierge resolved the dates and replied *"I've used 8-15 February;
-happy to shift the dates or narrow to one country"* — with no cards. It had
-never called `presentResults`.
-
-Caused by the previous commit's own wording (see the prompt-regression note
-above). The rule is now explicit: **show first, and a question never replaces
-results.** A named destination plus a rough when is enough — choose sensible
-dates, run the search, show what you found, and state the dates used in one
-clause *in the framing line, with the results*. Clarifying questions are only
-for when nothing can be shown at all (no destination, or a month too vague for
-any date); everything else is asked afterwards.
-
-Verified on the same prompt: 8 hotels shown, stay carried through as 2027-02-08
-to 2027-02-15 for 4 adults in 2 rooms, dates stated in the framing, one short
-question after.
-
-### Ask mode replaces the search, and its results (`c864f68`)
-
-Reported as "Clear leaves the result frames behind". Clear was working. The
-frames still on screen were the **structured** landing summary, rendering from
-`?city=…&submitted=1` in the URL — server-driven, outside the provider, and
-knowing nothing about Ask mode. Switching to Ask therefore stacked three result
-regions: the AI panel, the AI's results, and the previous search underneath.
-Clear removed the first two and left the third, which reads as Clear being
-broken.
-
-Ask mode now replaces the structured search **and its results**: `askMode`
-moved into the shared store, the provider wraps the summary too, and
-`AskModeGate` returns `null` while Ask is on. **The URL is deliberately left
-untouched**, so toggling back to Search restores the previous results exactly —
-nothing is recomputed and nothing is lost.
-
-The rest of that pass: results became their own frame below the AI panel, the
-way `LandingSummary` sits below the search panel (`AskResults` reads the store
-directly rather than taking props, so it no longer has to be nested); the
-transcript and the answer share **one** fixed-height scroll region, so neither
-can grow the panel — the answer had been moved outside that box in the previous
-pass, which is why the frame kept expanding; the answer sits between the ask and
-the next ask box, where it reads as the reply; the only suggestion is the
-input's placeholder.
-
-**Anchor a floating mark to the edge it must line up with, not to the one above
-it.** The "Ask AI" mark used a `top` offset that had to guess past the label,
-and measured 5px low. Measurement showed the wrapper's *bottom* edge is exactly
-the input's bottom edge, so bottom-anchoring centres it on the input row by
-construction — and cannot drift when the label or the row changes.
-
-### Panel parity, a real toggle, and answer-before-question (`794c705`)
-
-The single "Ask AI" mark was the way in and, in AI mode, the only way out —
-nothing said what pressing it would do, or that you were in a mode at all.
-Replaced with a two-segment **Classic search / AI mode** toggle in the Inspire
-map's C/F shape, bottom-right on both modes, with the Hotels/Flights checkbox
-text treatment so the row reads as one set of controls. `inline-grid` with
-`1fr` columns so both halves size to the wider label — flex could not do that
-without hardcoding a width per label, and the first attempt was clipped because
-the label needed 211px in a 170px column under `overflow: hidden`.
-
-**`box-sizing: border-box` means `min-height` does not include padding.** The
-AI panel measured 4px shorter than the classic one: `min-height: 34` plus
-`padding-top: 4` measures **34**, not 38. The bottom row's `min-height` now
-carries the padding.
-
-The input took the classic field's format and its focus treatment — a lift in
-surface and border, not a coloured ring — and the conversation grows and then
-scrolls at 300px rather than pushing the results down the page.
-
-Buttons now use the shared classes outright: Ask is the standard active/passive
-pair (`.oltra-button-primary` when there is something to send,
-`.oltra-button-secondary` when not), Stop is secondary, and Clear keeps the
-faded red used for warnings (§35/§46) — the one button that leaves the sage
-pair, because it is destructive. Its label had been invisible:
-`color: var(--oltra-field-bg)`, a dark field colour over a red fill. Now white,
-since the theme has no red-button standard. **Written as a compound selector**
-(`.askAction.askClear`) so it beats `.oltra-button-secondary` regardless of
-stylesheet order — a single class would only tie on specificity and lose to load
-order, the same trap §45 records for CSS-module-vs-global classes. Typography
-and geometry are left entirely to the shared classes, so all three match every
-other button on the site.
-
-Two traps from that edit, both cheap to repeat:
-
-* **A substring match ate the rule it was meant to spare.** Removing the stale
-  `.askClear` block by locating `".askClear {"` also matched
-  `".askAction.askClear {"`, which contains it — so the replacement rule was
-  deleted along with the thing it replaced. Anchor on the full selector.
-* **`getComputedStyle` from the extension's isolated world can be stale.** It
-  reported Ask as transparent/secondary with the correct class attached, while a
-  byte-identical clone in the same parent rendered sage. The screenshot was
-  right and the API was wrong. When measurement contradicts an identical
-  control, look at the pixels.
-
-Prompt change in the same commit: the answer now comes before any follow-up
-question. Asked for the Middle East in February the concierge had resolved the
-dates, replied with one helpful sentence, and rendered no cards — nothing
-failed, there was simply no `presentResults` call.
-
-### The beta-login hang (`58dc6eb`) — not part of this feature
-
-Entering the correct password left the button on "…" forever, which reads as a
-rejected password. It was not: the POST returned 200 and the cookie was set.
-`router.replace("/")` is a **soft** navigation, and the client router could
-still hold a cached RSC entry for `/` from before the cookie existed — so the
-gate never re-ran. `window.location.assign("/")` forces a document request. A
-login gate has nothing to gain from a soft navigation anyway.
-
-A dropped connection now shows a message rather than spinning silently: nothing
-reset `loading` outside the wrong-password branch, so a network failure looked
-identical to a hang.
-
-**This file is on `main` too.** It is kept as its own commit so it can be
-cherry-picked there independently of PR #7 — an outstanding decision, not an
-oversight.
-
-### A half-streamed tool call, kept forever (`da6bfcb`)
-
-A Japan query answered with dates and a follow-up question and showed **no
-hotels**. The model had done everything right — `presentResults` carried four
-hotel ids, the country, resolved check-in and check-out, and the party size.
-The store held the framing line and an empty result set.
-
-**Tool input streams in field by field, and while it does `input` is a
-`DeepPartial`** (`ai/dist/index.d.ts`: `state: 'input-streaming'` has
-`input?: DeepPartial<…>`). `framing` is the first property in the
-`presentResults` schema, so it completed while `hotelIds`, `stay` and
-`destination` were still absent. `readLatestPresentation` had no `state` check,
-so the effect fired on that snapshot and wrote it.
-
-**The change guard is what made it permanent.** It compared
-`presentation.framing === framing`, so once the half-formed framing was in the
-store, the completed call read as "no change" and was dropped. Not a flicker —
-the correct data never landed at all.
-
-Two changes: skip parts whose `state` is `input-streaming`, and key the guard on
-`part.toolCallId` rather than the framing text. Framing equality would also have
-swallowed a later turn that happened to reuse a phrase.
-
-**The general rule: never read a streaming tool input without checking its
-state, and never use a *value* as a change key when an identity is available.**
-
-The Next devtools "1 Issue" badge that surfaced alongside it was a second, real
-bug of the same shape — a value moving where it shouldn't. `setPresentation`
-called `mergeHotelFlightSearch` **inside its `setState` updater**; React runs
-updaters during the render phase, and `saveHotelFlightSearch` ends in a
-synchronous `window.dispatchEvent` that `SiteHeader` listens to, so SiteHeader
-set state mid-render. Mirroring moved to an effect keyed on `state.query` and
-the updater is pure again. **Side effects do not belong in a `setState`
-updater** — React may also run it twice.
-
-### Speed: 26.6s to 14.4s (`3b04df9`)
-
-Ulrik's first real complaint was that it took too long. Instrumenting the route
-(temporary `[perf]` logging, since removed) showed the whole answer was four
-serial model round trips, and none of it was the suppliers:
-
-| phase | before | after |
-|---|---|---|
-| triage (Haiku) | 1.1s | 1.1s |
-| `searchHotels` | 2.6s | 4.3s — now returns availability too |
-| `checkAvailability` | 9.7s | **gone** |
-| `presentResults` | 8.0s | 8.9s — now carries the follow-up question |
-| trailing text message | 2.4s for 30 tokens | **gone** |
-| **total** | **26.6s** | **14.4s** |
-
-Downstream was never the problem: `/api/ai/hotels` 36–200ms, a Duffel search
-~1.5s. Prompt caching was already hitting (10,669 cache-read tokens), so the
-cache trap under "Dates, and answer length" above was not the cause — **check
-that first, then stop looking at it.**
-
-Three changes, each removing a round trip rather than tuning one:
-
-* **`searchHotels` takes an optional `stay`** and returns availability and price
-  rank with the candidates. The model called `searchHotels` then
-  `checkAvailability` back to back every single time, and *deciding to ask* cost
-  far more than the supplier request it triggered. `rankAvailability()` in
-  `tools.ts` is now shared by both; `checkAvailability` survives for re-checking
-  a set against different dates.
-* **`presentResults` gained `followUp` and ends the turn**
-  (`stopWhen: [stepCountIs(…), hasToolCall("presentResults")]`). The model's
-  separate closing message cost a whole round trip to emit one sentence.
-* **The prompt asks for one broad search, not several narrow ones.** Without
-  this the model simply spent the saving on a second `searchHotels` — the first
-  re-measurement came back 22.7s, not 14.4s.
-
-**The remaining ~14s is two Opus round trips.** The only large lever left is the
-model itself (`CHAT_MODEL` in `lib/ai/config.ts`); that trades against the
-editorial voice and is Ulrik's call, not a mechanical follow-on.
-
-### A result set is merged, not replaced (`3b04df9`)
-
-Hotel cards vanished the moment the visitor answered a follow-up question. Each
-`presentResults` replaced the whole result set, so a turn about flights wrote
-`hotelIds: []`. `setPresentation` now merges per facet: what the model does not
-mention keeps its value, an explicit `[]` still clears it, and
-`readLatestPresentation` returns a `Partial<AiResultSet>` carrying only the
-facets that call actually spoke to.
-
-The same branch was also overwriting the hotel check-out with a flight leg's
-`returnDate` — empty on a one-way — so the stay blanked and the prices went with
-it. **Leg dates are the journey's, not the room's**: the stay comes from
-`stay` alone.
-
-`vertical` on the query state is written but read nowhere. Left in place, but do
-not treat it as meaningful.
-
-### A trip is a list of journeys (`3b04df9`)
-
-`AiResultSet.flights` was one `{origin, destination, departureDate, returnDate}`
-object. Fly into Nice, spend a few days in Saint-Tropez, home out of Marseille
-is **two one-way legs**, and there was nowhere to put the second — so the model
-presented them in sequence and each overwrote the last. Same root cause as the
-vanishing cards above.
-
-It is now `AiFlightLeg[]`, in travel order, and `presentResults`' `flights` is
-an array. Each leg renders as its own stacked block with its own fare search
-(`FlightLegPanel` in `AskResults.tsx`), one component per leg so each owns its
-hooks and a slow route cannot hold up its sibling — the same shape §38 uses for
-multiple airports.
-
-**A genuine there-and-back stays ONE leg with a `returnDate`.** Splitting it
-loses the cheaper round-trip fares, so the tool description and the prompt both
-say so explicitly.
-
-### Multi-city is what the Flights page's multiple mode is for (`3b04df9`)
-
-"Go to flights" originally handed off the first leg only, on the belief that the
-page had no open-jaw mode. It does — `tripType: "multiple"` — it simply **read
-no per-leg params**, so that mode was unreachable by link.
-
-`buildInitialSearch` now accepts `leg1`…`leg5` as `ORIGIN-DEST-YYYY-MM-DD`
-(`leg1=CPH-NCE-2026-09-08`), parsed with one regex because the date is full of
-hyphens. Real legs win over any `tripType` in the URL. Two details that matter:
-
-* **Trim to the legs that arrived, never pad.** `INITIAL_SEARCH.multiCity` holds
-  three blank legs and the form only searches when *every* leg is complete, so a
-  leftover blank one produces a form that silently refuses to search.
-* `hasFlightSearchParams` includes `leg1`, or a legs-only URL falls back to the
-  stored session and the handoff is quietly replaced.
-
-`AskResults` drops `from`/`to` for a multi-city handoff — those are the hotel
-stay's dates and mean nothing to that form — and maps the concierge's Duffel
-cabin values to the page's display labels (`FLIGHTS_PAGE_CABIN`).
-
-**Correction to §7B:** it lists `tripType` values as
-`"oneway" | "return" | "multiple"`. The page's own `TripType` is
-`"one-way" | "return" | "multiple"`, and every comparison inside it
-(`isOneWay`, `isReturnTrip`, `isMultiple`) reads `"one-way"` — so
-`?tripType=oneway` set a value matching none of them and the page arrived with
-**no trip type selected at all**. Long-standing, and not the concierge's alone:
-anything linking a one-way hit it. `buildInitialSearch` now accepts both
-spellings and normalises. Prefer `oneway` in links, since that is what the rest
-of the app already writes.
-
-### The input grows while you type (`3b04df9`)
-
-The ask box was an `<input>`, so a brief long enough to be worth writing
-scrolled its own beginning out of sight *while being typed* — fine once
-submitted, useless while composing. Now a `<textarea>` that measures itself and
-grows to ~6 lines then scrolls; Enter sends, Shift+Enter breaks the line.
-
-Two things it needs to be correct rather than approximately right: reset
-`height` to `auto` before reading `scrollHeight` (or it only ever reports the
-current height), and add `offsetHeight - clientHeight` back, because
-`scrollHeight` covers content and padding but not the border. `.askForm` moved
-from `align-items: stretch` to `flex-end` so the buttons keep their own height
-instead of growing with the field.
-
-### The §49 encoding trap, twice in one session
-
-Writing files with a Python heredoc mangled an em dash into a lone `0x97`
-(cp1252) byte, leaving two source files no longer valid UTF-8 — silently, since
-`tsc` had not run yet. §49 already records this; it is repeated here because it
-recurred immediately and cost real time.
-
-**Python's `open(p, 'w')` uses the locale codec on Windows.** A read/write
-round-trip survives (bytes in, same bytes out), so only the *new* non-ASCII
-text you introduce is corrupted, which makes it easy to miss. Either use the
-Edit tool for anything with non-ASCII, or read and write bytes explicitly and
-decode/encode UTF-8 yourself. Check with:
-
-```bash
-python -c "open('path','rb').read().decode('utf-8')"
-```
-
-### Still unexercised
-
-**The flights path has now been seen** (2026-09-04, superseding what this
-section said before): Best price and Fastest rows with Book and Save rendered
-from a concierge answer, first as a single LHR→HND round trip, then as an open
-jaw — CPH→NCE on the 8th and MRS→CPH on the 18th — and the multi-city handoff
-landed on the Flights page with both legs filled and searched for real.
-
-**The members-only session gate still has not been walked end to end.** Every
-query in the 2026-09-04 session was answered, so a session plainly existed, but
-no sign-in flow was observed, and from inside a session it is not possible to
-tell a real member login from something weaker. It still needs the §46
-handover: Ulrik signs in himself and hands over the tab.
-
-Also unexercised: the daily rate limit, the triage decline path in the real UI
-(only probed against the model directly, per "What testing this actually
-taught"), and web search — no query has yet gone near the allow-list at runtime,
-which is exactly the code path that took the whole feature down in `c738913`.
+  limiter is per serverless instance, so the real ceiling is (instances × cap) —
+  a cost backstop, not a control. Swap the Map for Upstash if the site ever
+  opens past `/beta-login`.
+
+### Verified, and not
+
+Exercised in a browser against a real signed-in member: hotels, flights and
+restaurants in one answer; live prices on the cards; the blur and the summary;
+the conversation resuming across a page change; a bare `/hotels` resolving to
+the concierge's own picks; the Inspire mirror setting Month and Purpose; the
+scroll lock; the "Go to combined results" handoff.
+
+**Not exercised:** the button on `/flights` and `/restaurants`; an uncovered
+restaurant city; the "See relevant hotels" branch of the handoff; the daily rate
+limit; the triage decline path in the real UI; and web search — no query has yet
+gone near the allow-list at runtime, which is exactly the code path that took
+the whole feature down once.
 
 ### Deliberately not built
 
-Restaurants on the landing page (dining questions redirect to `/restaurants`
-and name nothing), chat on Restaurants or Inspire, any booking/payment/write
-tool, fine-tuning, pgvector, and any markup on prices.
+Chat on `/hotels/[hotelid]` or in the members area, any booking/payment/write
+tool, fine-tuning, pgvector, any markup on prices, and any change to the
+standalone Restaurants page's data or design.
 
 ---
 
