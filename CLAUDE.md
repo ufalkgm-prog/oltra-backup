@@ -4694,6 +4694,70 @@ hotel` still printed the name twice.
   your upcoming trip" — em dash, matching the site rather than the hyphen it
   was first written with.
 
+### Web search poisoned the conversation — fixed 2026-09-08
+
+§50 listed web search as the one path never exercised at runtime, "which is
+exactly the code path that took the whole feature down once". It has now been
+exercised, and it did it again.
+
+**Symptom.** A question that triggers Anthropic's server-side search answers
+fine. Every turn after it fails with the generic "I couldn't answer that just
+now" — so **answering the concierge's own follow-up question is what kills the
+conversation**, and a reload does not help, because the history is in
+sessionStorage. Identical in shape to the orphaned-tool-call bug §50 already
+records, and invisible in the UI: the panel simply says try again.
+
+**Cause.** Web search is a PROVIDER-EXECUTED tool. It comes back as a
+`dynamic-tool` part with `providerExecuted: true` and a `srvtoolu_` id — not
+as a call we answer — and replaying it produces a result block with no
+`server_tool_use` before it:
+
+```
+messages.1.content.1: unexpected `tool_use_id` found in
+`code_execution_tool_result` blocks … Each `code_execution_tool_result` block
+must have a corresponding `server_tool_use` block before it.
+```
+
+`dropUnansweredToolCalls` cannot catch this. The part **has** its output; it is
+simply not replayable.
+
+**Fix**, in `sanitiseHistory.ts`: `dropProviderExecutedTools`, applied to the
+UI messages **before** `convertToModelMessages`, where `providerExecuted` is
+still visible on the part.
+
+**And the reasoning goes with it — the first version traded one 400 for
+another:**
+
+```
+`thinking` or `redacted_thinking` blocks in the latest assistant message
+cannot be modified. These blocks must remain as they were in the original
+response.
+```
+
+That turn interleaved reasoning with its tool calls, so removing a block from
+the middle left thinking that no longer matched what was sent. Reasoning is
+therefore dropped **only from the messages actually being edited** — a turn we
+do not touch keeps its thinking intact and stays valid. Nothing is lost: what
+the model learned from the search is already in the answer it wrote.
+
+**Verified against the poisoned conversation itself**, not a fresh one — the
+transcript that had been failing answered its own follow-up correctly, so the
+repair heals histories already sitting in real browsers. Worth remembering as
+the test to run: a fix here has to heal, not just avoid.
+
+### Buttons and the follow-up gap, same day
+
+* Exit, Clear and Ask now share `--concierge-button-width` on the panel. Ask
+  was 84px against the header's 88, because it was sized by its own shorter
+  label; they sit 400px apart, which is exactly the distance at which 4px
+  reads as a mistake.
+* The follow-up was spaced twice. `presentResults`' `followUp` is one sentence
+  ending in "?", so it matched `AgentText`'s closing-question detection and
+  took 14.4px on the paragraph on top of 8px on its wrapper and the column's
+  own gap — 42px in total, the question a clear line adrift of the answer.
+  `AgentText` now takes `detectClosingQuestion`, off at that one call site
+  because the wrapper already styles the whole block. Gap measured after: 19px.
+
 ### Prerequisites
 
 * `ANTHROPIC_API_KEY` — server-only, never `NEXT_PUBLIC`. On Vercel: Sensitive,

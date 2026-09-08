@@ -13,7 +13,10 @@ import { conciergeTools } from "@/lib/ai/tools";
 import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
 import { consumeRateLimit } from "@/lib/ai/rateLimit";
 import { triageMessage } from "@/lib/ai/triage";
-import { dropUnansweredToolCalls } from "@/lib/ai/sanitiseHistory";
+import {
+  dropProviderExecutedTools,
+  dropUnansweredToolCalls,
+} from "@/lib/ai/sanitiseHistory";
 import { describePageContext, sanitisePageContext } from "@/lib/ai/pageContext";
 import {
   CHAT_MODEL,
@@ -152,9 +155,14 @@ export async function POST(req: Request) {
         ? [{ role: "system" as const, content: pageContextNote }]
         : []),
     ],
-    // Repaired, not trusted: a history carrying a tool call with no result is
-    // rejected outright, and the client cannot always avoid persisting one.
-    messages: dropUnansweredToolCalls(await convertToModelMessages(trimmed)),
+    /* Repaired, not trusted, in two passes — a history carrying a tool call
+       with no result is rejected outright, and so is one carrying the web
+       search's provider-executed parts. Neither is something the client can
+       reliably avoid persisting. The search parts go BEFORE conversion, where
+       `providerExecuted` is still visible on them. */
+    messages: dropUnansweredToolCalls(
+      await convertToModelMessages(dropProviderExecutedTools(trimmed))
+    ),
     tools: {
       ...conciergeTools,
       // Anthropic's own server-side search. maxUses is enforced upstream, so

@@ -209,7 +209,18 @@ function inlineBold(text: string, keyBase: string): React.ReactNode[] {
   return nodes;
 }
 
-function AgentText({ text }: { text: string }) {
+function AgentText({
+  text,
+  /* Off when the caller is already styling the whole block as the question —
+     the presentResults `followUp` field is one sentence ending in "?", so it
+     matched the detection below and got the spacing twice: 8px on the wrapper
+     and 14.4px on the paragraph inside it, on top of the column gap. The
+     question drifted a clear line away from the answer it belongs to. */
+  detectClosingQuestion = true,
+}: {
+  text: string;
+  detectClosingQuestion?: boolean;
+}) {
   const blocks: React.ReactNode[] = [];
   let bullets: { key: string; text: string }[] = [];
 
@@ -236,6 +247,7 @@ function AgentText({ text }: { text: string }) {
    * the answer and the two cases did not match. Last non-empty line, ending in
    * a question mark, and not a bullet. */
   const closingIndex = (() => {
+    if (!detectClosingQuestion) return -1;
     for (let i = lines.length - 1; i >= 0; i -= 1) {
       const line = lines[i].trim();
       if (!line) continue;
@@ -573,7 +585,7 @@ export default function AiConversation() {
       <ResultSummary />
       {followUp ? (
         <div className={`${styles.turnAgent} ${styles.followUp}`}>
-          <AgentText text={followUp} />
+          <AgentText text={followUp} detectClosingQuestion={false} />
         </div>
       ) : null}
     </Fragment>

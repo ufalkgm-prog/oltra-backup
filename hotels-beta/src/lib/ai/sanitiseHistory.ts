@@ -1,5 +1,53 @@
 import "server-only";
-import type { ModelMessage } from "ai";
+import type { ModelMessage, UIMessage } from "ai";
+
+/* Removes the web search's own parts before the history is replayed.
+ *
+ * Anthropic's web search is a PROVIDER-EXECUTED tool: it runs on their side
+ * and comes back as a part with `providerExecuted: true` and a `srvtoolu_`
+ * id, not as a call we answer. Sent back on the next turn it arrives as a
+ * result block with no `server_tool_use` before it, and the API rejects the
+ * whole request:
+ *
+ *   messages.1.content.1: unexpected `tool_use_id` found in
+ *   `code_execution_tool_result` blocks … Each `code_execution_tool_result`
+ *   block must have a corresponding `server_tool_use` block before it.
+ *
+ * The damage is the same shape as an orphaned tool call, and worse in
+ * practice: the turn that searched succeeds, and every turn after it 400s —
+ * so answering the concierge's own follow-up question is what kills the
+ * conversation, and a reload does not help, because the history is in
+ * sessionStorage. dropUnansweredToolCalls cannot catch it: the part HAS its
+ * output. It simply is not replayable.
+ *
+ * Dropping it loses nothing the model needs. What it learned from the search
+ * is already in the reasoning and the answer it wrote at the time; only the
+ * unreplayable envelope goes.
+ */
+export function dropProviderExecutedTools(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => {
+    const hasProviderExecuted = message.parts.some(
+      (part) => (part as { providerExecuted?: boolean }).providerExecuted
+    );
+    if (!hasProviderExecuted) return message;
+
+    /* The reasoning goes with it, and only from the messages actually being
+       edited. Removing the search part alone traded one 400 for another:
+       "`thinking` or `redacted_thinking` blocks in the latest assistant
+       message cannot be modified. These blocks must remain as they were in
+       the original response." The turn interleaved reasoning with its tool
+       calls, so taking a block out of the middle left thinking that no longer
+       matched what was sent. A turn we do not touch keeps its thinking intact
+       and stays valid, which is why this is scoped rather than applied to
+       every message. */
+    const parts = message.parts.filter(
+      (part) =>
+        !(part as { providerExecuted?: boolean }).providerExecuted &&
+        part.type !== "reasoning"
+    );
+    return { ...message, parts };
+  });
+}
 
 /* Removes tool calls that never got a result.
  *

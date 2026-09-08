@@ -37,6 +37,12 @@
 }
 
 .panel {
+  /* One width for every button in the panel — Exit, Clear, Ask and Stop.
+     They are the same kind of control and sit 400px apart vertically, which
+     is exactly the distance at which a 4px difference reads as a mistake
+     rather than as nothing. Declared once so the four cannot drift (§46:
+     equal-looking is not equal). */
+  --concierge-button-width: 88px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -59,12 +65,11 @@
 /* A labelled Exit, not a bare ×. The photo lightbox can afford a glyph because
    nothing else is happening in it; here the visitor is mid-conversation and
    needs to know the exchange survives leaving. */
-/* A fixed width, not a min-width: Clear sits directly beside this and the two
-   have to be the same size. On min-width the longer word won, and they came
-   out 88px against 84px (§46 — equal-looking is not equal). */
+/* A fixed width, not a min-width. On min-width the longest word won and the
+   buttons came out at whatever their own labels needed. */
 .exit {
   flex: 0 0 auto;
-  width: 88px;
+  width: var(--concierge-button-width);
 }
 
 .headerActions {
@@ -358,11 +363,13 @@
   border-color: var(--oltra-border-medium);
 }
 
-/* Geometry only — Ask, Stop and Clear wear the shared button classes so they
-   match every other button on the site, active and passive. */
+/* Geometry only — Ask and Stop wear the shared button classes so they match
+   every other button on the site, active and passive. The width is the
+   header's width: Ask sat 4px narrower than Exit above it, because "Ask" is
+   a shorter word than "Clear" and both were sized by their content. */
 .action {
   flex: 0 0 auto;
-  min-width: 84px;
+  width: var(--concierge-button-width);
 }
 
 /* ── handoffs ─────────────────────────────────────────────────────────── */
