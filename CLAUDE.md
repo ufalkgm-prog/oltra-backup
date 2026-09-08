@@ -4055,9 +4055,11 @@ duplicates gone.
 
 ### Status
 
-Branch `ai-chat`, head **`5622166`**, pushed. **PR #7 is open and its title —
-"AI concierge on the landing page, behind a feature flag" — is now wrong**: the
-concierge is no longer landing-page-only. `main` has none of it.
+Branch `ai-chat`, pushed. PR #7 is open — "AI concierge across the site, behind
+a feature flag", retitled once the concierge stopped being landing-page-only.
+`main` has none of it.
+
+Head moves with every round; read it from git rather than from here.
 
 Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on production
 invisibly. The flag gates the route, the modal and the entry button, so a
