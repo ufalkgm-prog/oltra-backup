@@ -117,15 +117,41 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       }
     });
 
-    const onScroll = () => setIsScrolled(window.scrollY > 8);
+    /* The window is not the only thing that scrolls.
+     *
+     * Hotels, Flights and Restaurants each bound their layout to the viewport
+     * and scroll an inner pane instead (§30, §33), so window.scrollY never
+     * moves there and the header stayed transparent over content sliding
+     * under it — on exactly the pages where it is hardest to read.
+     *
+     * `scroll` does not bubble, so this listens in the CAPTURE phase on the
+     * document, which sees every scroller. A document-level scroll reports
+     * `document` as its target and falls through to window.scrollY; an element
+     * reports itself, and we read its scrollTop.
+     *
+     * Any scroller counts, with no size test. A first version required half
+     * the viewport, on the theory that a dropdown should not darken the site
+     * header — but Restaurants scrolls two panes of roughly 220px each, so the
+     * page it was written for was the one it excluded. Guessing which
+     * containers are "the main window" from their height does not work; every
+     * scroll darkening the header is predictable, and a small list scrolling
+     * under a header that is already legible costs nothing. */
+    const onScroll = (event?: Event) => {
+      const target = event?.target;
+      if (target instanceof HTMLElement) {
+        setIsScrolled(target.scrollTop > 8);
+        return;
+      }
+      setIsScrolled(window.scrollY > 8);
+    };
     onScroll();
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
 
     return () => {
       mounted = false;
       listener.subscription.unsubscribe();
-      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("scroll", onScroll, { capture: true });
     };
   }, [supabase]);
 

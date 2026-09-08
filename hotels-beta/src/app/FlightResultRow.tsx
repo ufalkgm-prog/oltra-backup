@@ -34,27 +34,44 @@ export function formatPrice(value: number, currency: string): string {
   return `${symbol}${Math.round(value).toLocaleString()}`;
 }
 
-/** Best price and fastest, chosen the way the landing summary has always
- * chosen them: cheapest by fare, then the shortest total that is not already
- * the cheapest (so the two rows are never the same itinerary). */
+function totalMinutes(itinerary: Itinerary): number {
+  return itinerary.outbound.durationMinutes + (itinerary.inbound?.durationMinutes ?? 0);
+}
+
+/* Best price, and fastest — unless the cheapest is already the fastest, in
+ * which case there is only one row and it says so.
+ *
+ * This used to fall back to the SECOND fastest whenever the quickest itinerary
+ * was also the cheapest, purely so the two rows were never the same object.
+ * That produced the thing it was avoiding: a "Fastest" row showing the same
+ * departure, the same arrival and the same duration as the row above it, for
+ * more money — a different ticket, but not a faster one, and labelled as
+ * though it were.
+ *
+ * So the test is duration, not identity. If nothing is strictly quicker than
+ * the cheapest fare, `fastest` is null and `bestIsAlsoFastest` is set; the one
+ * row that remains is headed "Best price and fastest", which is both shorter
+ * and truer than printing it twice. */
 export function pickHeadlineItineraries(itineraries: Itinerary[]): {
   bestPrice: Itinerary | null;
   fastest: Itinerary | null;
+  bestIsAlsoFastest: boolean;
 } {
-  if (!itineraries.length) return { bestPrice: null, fastest: null };
+  if (!itineraries.length) {
+    return { bestPrice: null, fastest: null, bestIsAlsoFastest: false };
+  }
 
   const byPrice = [...itineraries].sort((a, b) => a.priceEur - b.priceEur);
-  const byDuration = [...itineraries].sort((a, b) => {
-    const ad = a.outbound.durationMinutes + (a.inbound?.durationMinutes ?? 0);
-    const bd = b.outbound.durationMinutes + (b.inbound?.durationMinutes ?? 0);
-    return ad - bd;
-  });
+  const byDuration = [...itineraries].sort((a, b) => totalMinutes(a) - totalMinutes(b));
 
-  const bestPrice = byPrice[0] ?? null;
-  const fastest =
-    byDuration[0]?.id !== bestPrice?.id ? byDuration[0] ?? null : byDuration[1] ?? null;
+  const bestPrice = byPrice[0];
+  const quickest = byDuration[0];
 
-  return { bestPrice, fastest };
+  if (totalMinutes(bestPrice) <= totalMinutes(quickest)) {
+    return { bestPrice, fastest: null, bestIsAlsoFastest: true };
+  }
+
+  return { bestPrice, fastest: quickest, bestIsAlsoFastest: false };
 }
 
 /* The stop line, and it is always present — every card is four lines whether

@@ -25,6 +25,10 @@ export type AiPageContext = {
   /** Flights page: the route as the form currently reads. */
   origin?: string;
   destination?: string;
+  /** The member's saved home airport, from Personal Information. Not page
+   * state — it travels the same way because it is the same per-request
+   * envelope, and it is what the concierge assumes a trip departs from. */
+  homeAirport?: string;
   /** Restaurants page: the restaurant selected in the sidebar. */
   restaurantName?: string;
   /** Inspire page: the month being explored. */

@@ -7,6 +7,7 @@ import { useAiConversation, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { collapseReturnLegs } from "@/lib/ai/flightLegs";
 import { stripLeadingName } from "@/lib/ai/rationale";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
+import { useHomeAirport } from "@/lib/members/useHomeAirport";
 import type { AiQueryState, AiResultSet } from "@/lib/ai/types";
 import styles from "./AiConcierge.module.css";
 
@@ -424,10 +425,18 @@ export default function AiConversation() {
   const seededRef = useRef(false);
   const appliedPresentationRef = useRef<string | null>(null);
 
-  // The context is read at send time, not at render time, so a stale closure
-  // cannot pin the question to the page the modal was first opened on.
+  /* The context is read at send time, not at render time, so a stale closure
+     cannot pin the question to the page the modal was first opened on.
+
+     The home airport rides along with it: it is the same per-request envelope,
+     and reading it here rather than in each page's own useAiPageContext call
+     means every page gets it from one place. It is re-validated as IATA
+     server-side like everything else in this object. */
+  const homeAirport = useHomeAirport();
   const pageContextRef = useRef(pageContext);
-  pageContextRef.current = pageContext;
+  pageContextRef.current = pageContext
+    ? { ...pageContext, ...(homeAirport ? { homeAirport } : {}) }
+    : null;
 
   // Grow to fit the text, then scroll. Measured from the element rather than
   // counting characters, so it stays right at any width or font size: reset to

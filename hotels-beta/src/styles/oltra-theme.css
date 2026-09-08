@@ -150,6 +150,10 @@
 
   /* Header sizing */
   --oltra-header-top: 20px;
+  /* The scrolled header's fill. Translucent so the page reads as moving behind
+     it; 0.78 of the near-black base is what keeps --oltra-text-primary above
+     4.5:1 even when the thing sliding underneath is a white sky. */
+  --oltra-header-scrolled-bg: rgba(18, 24, 30, 0.78);
   --oltra-logo-size: clamp(1.7rem, 2.2vw, 2.3rem);
   --oltra-section-label-size: 0.72rem;
 
@@ -863,12 +867,21 @@ button.oltra-select {
   padding: 18px var(--oltra-page-side) 14px;
   transition:
     background-color 180ms ease,
+    backdrop-filter 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease;
 }
 
+/* Translucent and blurred, not opaque.
+   The page keeps moving visibly behind the header instead of disappearing
+   under a solid band — the same treatment the concierge modal gives the page
+   behind it. The fill is dark enough that the nav clears AA over anything
+   underneath, including the bright hero images on the landing page, and the
+   blur is what keeps it legible rather than the opacity alone. */
 .oltra-site-header.is-scrolled {
-  background: rgb(18, 24, 30);
+  background: var(--oltra-header-scrolled-bg);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
   border-bottom: 1px solid var(--oltra-border-subtle);
   box-shadow: 0 8px 24px rgba(10, 24, 36, 0.24);
 }

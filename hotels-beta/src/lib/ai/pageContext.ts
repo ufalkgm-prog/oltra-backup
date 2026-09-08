@@ -87,6 +87,7 @@ export function sanitisePageContext(input: unknown): AiPageContext | null {
   assign("area", text(raw.area));
   assign("country", text(raw.country));
   assign("origin", iata(raw.origin));
+  assign("homeAirport", iata(raw.homeAirport));
   assign("destination", iata(raw.destination));
   assign("restaurantName", text(raw.restaurantName));
   assign("month", text(raw.month));
@@ -125,6 +126,14 @@ export function describePageContext(context: AiPageContext | null): string {
     facts.push(`with the route ${context.origin} to ${context.destination}`);
   } else if (context.origin) {
     facts.push(`flying from ${context.origin}`);
+  }
+
+  /* Stated separately from `origin`, and only when it adds something. `origin`
+     is what a form on the page currently reads; this is the member's standing
+     answer to where they fly from, which the prompt tells the model to assume
+     when the visitor names no origin of their own. */
+  if (context.homeAirport && context.homeAirport !== context.origin) {
+    facts.push(`whose home airport is ${context.homeAirport}`);
   }
 
   if (context.month) facts.push(`exploring ${context.month}`);

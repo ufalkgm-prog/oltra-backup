@@ -8,6 +8,7 @@ import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AiModeButton from "@/components/ai/AiModeButton";
 import { useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
+import { useHomeAirport } from "@/lib/members/useHomeAirport";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
@@ -203,6 +204,14 @@ export default function LandingSearchPanel({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* True when the origin was chosen rather than merely inherited: an `origin`
+     in the URL the visitor arrived on, or an airport picked in the popover.
+     Everything else — this browser's remembered value, an echo of our own
+     auto-submitted URL — yields to the member's profile. */
+  const originIsExplicitRef = useRef(
+    Boolean(normalizeParam(initialSearchParams.origin))
+  );
+
   useEffect(() => {
     const storedCity = window.localStorage.getItem(HOME_AIRPORT_CITY_STORAGE_KEY);
     if (storedCity) setHomeAirportCity((prev) => prev || storedCity);
@@ -210,6 +219,39 @@ export default function LandingSearchPanel({
     const stored = window.localStorage.getItem(HOME_AIRPORT_STORAGE_KEY);
     if (stored) setHomeAirport(stored);
   }, [homeAirport]);
+
+  /* Trips start from the member's saved home airport.
+   *
+   * Order, most deliberate first: an `origin` in the URL — a saved trip, a
+   * concierge handoff, a shared link — or an airport picked here; then the
+   * profile; then whatever this browser remembered; then nothing.
+   *
+   * The profile beating localStorage is the point rather than a detail:
+   * localStorage is per-device and predates the profile field, so a member
+   * with CPH in Personal Information still departed from an LHR this laptop
+   * happened to be holding, with nothing on screen to say why.
+   *
+   * It ASSERTS rather than fills a blank, and `homeAirport` is in the
+   * dependencies for that reason. The origin is written into the URL by the
+   * auto-submit, and the searchParams effect above reads it back — so a
+   * profile value applied while a stale URL was still in flight was overwritten
+   * a moment later by an echo of the value it had just replaced. Re-asserting
+   * costs nothing when they already agree, and React bails on a set to the
+   * same value. */
+  const profileHomeAirport = useHomeAirport();
+  useEffect(() => {
+    if (!profileHomeAirport || originIsExplicitRef.current) return;
+    if (homeAirport === profileHomeAirport) return;
+    setHomeAirport(profileHomeAirport);
+    /* And re-run the search. The URL carries the origin the fares are actually
+       fetched for, so without this the panel said "assume you depart from
+       Copenhagen" over a set of prices quoted from London — a stated
+       assumption that was not the one being used, which is worse than saying
+       nothing. The submit is debounced, so it reads the form after this render
+       has put the new code in the hidden field. */
+    scheduleAutoSubmit();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileHomeAirport, homeAirport]);
 
   useEffect(() => {
     if (homeAirport) {
@@ -602,13 +644,17 @@ export default function LandingSearchPanel({
                     scheduleAutoSubmit();
                   }}
                 />
-                {/* One line: "Flights from London". The origin used to sit on
-                    its own second line under the checkbox. */}
+                {/* One line: "Flights assume you depart from London".
+                    The assumption is stated rather than implied — the origin is
+                    now taken from the member's home airport without anyone
+                    choosing it here, so the sentence says where the fares are
+                    being priced from, and the city itself stays the control
+                    that changes it. */}
                 <span className={styles.flightsCheckLabel}>
                   Flights
                   {flightsCanActivate && effectiveIncludeFlights ? (
                     <>
-                      {homeAirport ? " from " : " "}
+                      {homeAirport ? " assume you depart from " : " "}
                       <button
                         type="button"
                         className={styles.airportNameButton}
@@ -633,6 +679,8 @@ export default function LandingSearchPanel({
                     label="Home airport"
                     value={homeAirport}
                     onChange={(code, option) => {
+                      // Picked by hand, so the profile stops asserting itself.
+                      originIsExplicitRef.current = true;
                       setHomeAirport(code);
                       setHomeAirportCity(option?.city ?? "");
                       setAirportPopoverOpen(false);

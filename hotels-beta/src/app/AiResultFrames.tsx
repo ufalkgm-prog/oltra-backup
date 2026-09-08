@@ -87,7 +87,13 @@ function FlightLegPanel({
     | { status: "loading" }
     | { status: "empty" }
     | { status: "error" }
-    | { status: "ready"; bestPrice: Itinerary | null; fastest: Itinerary | null; isOneWay: boolean };
+    | {
+        status: "ready";
+        bestPrice: Itinerary | null;
+        fastest: Itinerary | null;
+        bestIsAlsoFastest: boolean;
+        isOneWay: boolean;
+      };
   const [state, setState] = useState<FlightState>({ status: "loading" });
 
   const isOneWay = !leg.returnDate;
@@ -124,8 +130,9 @@ function FlightLegPanel({
           setState({ status: "empty" });
           return;
         }
-        const { bestPrice, fastest } = pickHeadlineItineraries(itineraries);
-        setState({ status: "ready", bestPrice, fastest, isOneWay });
+        const { bestPrice, fastest, bestIsAlsoFastest } =
+          pickHeadlineItineraries(itineraries);
+        setState({ status: "ready", bestPrice, fastest, bestIsAlsoFastest, isOneWay });
       })
       .catch(() => {
         if (!cancelled) setState({ status: "error" });
@@ -164,8 +171,10 @@ function FlightLegPanel({
       ) : null}
       {state.status === "ready" ? (
         <div className={styles.flightDetailList}>
+          {/* One row when the cheapest fare is also the quickest — the second
+              would have repeated its times and its duration for more money. */}
           <FlightResultRow
-            label="Best price"
+            label={state.bestIsAlsoFastest ? "Best price and fastest" : "Best price"}
             flight={state.bestPrice}
             isOneWay={state.isOneWay}
             tripDefaults={tripDefaults}

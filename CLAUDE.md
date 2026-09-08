@@ -4758,6 +4758,62 @@ the test to run: a fix here has to heal, not just avoid.
   `AgentText` now takes `detectClosingQuestion`, off at that one call site
   because the wrapper already styles the whole block. Gap measured after: 19px.
 
+### Home airport, header blur, one flight row — 2026-09-08
+
+* **Trips start from the member's home airport.** The column has existed since
+  the members area was built and the Flights page has read it since, but the
+  landing page kept its own copy in localStorage and the concierge knew nothing
+  about it — so the same member got three answers to "where do you fly from".
+  `lib/members/useHomeAirport.ts` is now the single reader.
+
+  Order, most deliberate first: an `origin` in the URL or an airport picked in
+  the popover, then the profile, then whatever the browser remembered.
+
+  **Two things had to be got right, and both were found by looking, not by
+  reasoning.** First, the column is free text and has held three shapes over
+  its life — a bare `CPH`, `CPH · Copenhagen Kastrup, DK`, and `Copenhagen
+  (CPH)`, which InspireView still parses by hand — so `readAirportCode` covers
+  all three and refuses anything it cannot read confidently (a bare
+  `[A-Z]{3}` sweep turns "San Francisco" into SAN).
+
+  Second, the profile value kept losing to a stale LHR. The auto-submit writes
+  `origin` into the URL and the searchParams effect reads it back, so a profile
+  value applied while an older URL was in flight was overwritten moments later
+  by an echo of what it had just replaced. The effect therefore **asserts**
+  rather than fills a blank, with `homeAirport` in its dependencies, and calls
+  `scheduleAutoSubmit()` when it changes the value — without that the panel
+  said "assume you depart from Copenhagen" over fares quoted from London, which
+  is worse than saying nothing.
+
+  Stated, not implied: the landing checkbox reads "Flights assume you depart
+  from Copenhagen", the city still being the control that changes it. The
+  concierge gets the code in its page context (`homeAirport`, sanitised as IATA
+  like every other field) and the prompt tells it to assume it, say so in one
+  clause, and ask when there is none. Verified: "a long weekend in Lisbon" with
+  no origin given returned CPH ⇆ LIS and "a nonstop out of Copenhagen each way".
+
+* **The scrolled header is blurred, and now fires on every page.** It was an
+  opaque band, and it was wired to `window.scrollY` — but Hotels, Flights and
+  Restaurants bound their layout to the viewport and scroll an inner pane
+  (§30, §33), so it never fired on the three pages where the header is hardest
+  to read. It now listens in the **capture** phase on the document, which sees
+  every scroller (`scroll` does not bubble).
+
+  A first version required the scroller to be half the viewport tall, to keep
+  dropdowns out of it. Restaurants scrolls two panes of roughly 220px, so the
+  guard excluded a page it was meant to fix; there is no size that separates
+  "the main window" from "a list", so there is no size test. `is-scrolled` is
+  `rgba(18, 24, 30, 0.78)` with `blur(14px) saturate(120%)`.
+
+* **Best price and fastest collapse into one row when they are the same.**
+  `pickHeadlineItineraries` used to fall back to the SECOND fastest whenever
+  the quickest was also the cheapest, purely so the two rows held different
+  objects — which produced exactly what it was avoiding: a "Fastest" row with
+  the same departure, arrival and duration as the row above, for more money.
+  The test is now duration, not identity: if nothing is strictly quicker than
+  the cheapest fare, `fastest` is null, `bestIsAlsoFastest` is set, and the one
+  row reads "Best price and fastest". Both callers carry the flag.
+
 ### Prerequisites
 
 * `ANTHROPIC_API_KEY` — server-only, never `NEXT_PUBLIC`. On Vercel: Sensitive,

@@ -113,7 +113,13 @@ export default function LandingSummary({
 
   type CabinResult =
     | { status: "loading" }
-    | { status: "ready"; bestPrice: Itinerary | null; fastest: Itinerary | null; isOneWay: boolean }
+    | {
+        status: "ready";
+        bestPrice: Itinerary | null;
+        fastest: Itinerary | null;
+        bestIsAlsoFastest: boolean;
+        isOneWay: boolean;
+      }
     | { status: "empty" }
     | { status: "error"; message: string };
 
@@ -177,10 +183,11 @@ export default function LandingSummary({
               setFlightResults((prev) => ({ ...prev, [key]: { status: "empty" } }));
               return;
             }
-            const { bestPrice, fastest } = pickHeadlineItineraries(itineraries);
+            const { bestPrice, fastest, bestIsAlsoFastest } =
+              pickHeadlineItineraries(itineraries);
             setFlightResults((prev) => ({
               ...prev,
-              [key]: { status: "ready", bestPrice, fastest, isOneWay },
+              [key]: { status: "ready", bestPrice, fastest, bestIsAlsoFastest, isOneWay },
             }));
           })
           .catch((err) => {
@@ -521,9 +528,16 @@ export default function LandingSummary({
                           </div>
                         ) : (
                           <>
+                            {/* One row when the cheapest fare is also the
+                                quickest: the second repeated its times and its
+                                duration for more money. */}
                             {renderFlightRow(
                               `${airport.iata}-${cabin.key}-price`,
-                              `${cabin.label} · Best price`,
+                              `${cabin.label} · ${
+                                state.bestIsAlsoFastest
+                                  ? "Best price and fastest"
+                                  : "Best price"
+                              }`,
                               state.bestPrice,
                               state.isOneWay
                             )}
