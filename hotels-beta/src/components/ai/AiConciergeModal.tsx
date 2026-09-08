@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
-import { voiceFont } from "@/lib/ai/fonts";
 import { flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
 import AiConversation from "./AiConversation";
 import styles from "./AiConcierge.module.css";
@@ -35,7 +34,15 @@ const VERTICAL_LABEL: Record<Vertical, string> = {
 };
 
 export default function AiConciergeModal() {
-  const { conciergeOpen, setConciergeOpen, query, results, pageContext } = useAiSearch();
+  const {
+    conciergeOpen,
+    setConciergeOpen,
+    query,
+    results,
+    pageContext,
+    hasConversation,
+    requestClear,
+  } = useAiSearch();
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -142,9 +149,7 @@ export default function AiConciergeModal() {
     >
       <div
         ref={panelRef}
-        /* voiceFont.variable scopes --oltra-font-voice to this panel, which is
-           the only place the concierge's serif is used. */
-        className={`oltra-modal-panel ${voiceFont.variable} ${styles.panel}`}
+        className={`oltra-modal-panel ${styles.panel}`}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -152,13 +157,28 @@ export default function AiConciergeModal() {
       >
         <div className={styles.header}>
           <span className="oltra-label">Concierge</span>
-          <button
-            type="button"
-            className={`oltra-button-secondary ${styles.exit}`}
-            onClick={close}
-          >
-            Exit
-          </button>
+          {/* Clear sits beside Exit rather than down in the input row: both
+              are things you do to the whole conversation, not to the message
+              you are writing, and next to Ask it read as a third way to send.
+              Shown only when there is something to clear. */}
+          <div className={styles.headerActions}>
+            {hasConversation ? (
+              <button
+                type="button"
+                className={`oltra-button-secondary ${styles.exit} ${styles.clear}`}
+                onClick={requestClear}
+              >
+                Clear
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={`oltra-button-secondary ${styles.exit}`}
+              onClick={close}
+            >
+              Exit
+            </button>
+          </div>
         </div>
 
         <AiConversation />

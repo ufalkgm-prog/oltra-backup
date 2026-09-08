@@ -102,6 +102,17 @@ type AiSearchContextValue = Omit<Persisted, "messages"> & {
    * that is the more recent of the two. */
   markClassicSearch: () => void;
   clear: () => void;
+  /** Whether there is a transcript at all. A boolean rather than the message
+   * list itself, deliberately: the modal header needs to know whether to offer
+   * Clear, and reading the transcript for that would re-render the header — and
+   * the conversation inside it — on every streamed token. This changes at most
+   * twice a conversation. */
+  hasConversation: boolean;
+  /** Bumped by the header's Clear. The conversation owns the actual reset —
+   * the transcript it has to throw away lives inside useChat, not in here — so
+   * this is the signal that reaches it. */
+  clearSignal: number;
+  requestClear: () => void;
 };
 
 const AiSearchContext = createContext<AiSearchContextValue | null>(null);
@@ -266,6 +277,11 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, searchedAt: Date.now() }));
   }, []);
 
+  /* Outside `Persisted` on purpose: `clear()` resets that wholesale, and a
+     counter that reset with it would fire the reset it had just caused. */
+  const [clearSignal, setClearSignal] = useState(0);
+  const requestClear = useCallback(() => setClearSignal((n) => n + 1), []);
+
   const clear = useCallback(() => {
     setState(EMPTY);
     try {
@@ -274,6 +290,10 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }, []);
+
+  // A boolean, so appending a token leaves it identical and the memo below
+  // keeps its identity.
+  const hasConversation = state.messages.length > 0;
 
   /* Memoised on the individual fields, NOT on `state`.
    *
@@ -298,6 +318,9 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       setPresentation,
       markClassicSearch,
       clear,
+      hasConversation,
+      clearSignal,
+      requestClear,
     }),
     [
       state.query,
@@ -313,6 +336,9 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       setPresentation,
       markClassicSearch,
       clear,
+      hasConversation,
+      clearSignal,
+      requestClear,
     ]
   );
 

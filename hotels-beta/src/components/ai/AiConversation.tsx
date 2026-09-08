@@ -1,9 +1,11 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isToolUIPart, getToolName, type UIMessage } from "ai";
 import { useAiConversation, useAiSearch } from "@/lib/ai/aiSearchStore";
+import { collapseReturnLegs } from "@/lib/ai/flightLegs";
+import { stripLeadingName } from "@/lib/ai/rationale";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import type { AiQueryState, AiResultSet } from "@/lib/ai/types";
 import styles from "./AiConcierge.module.css";
@@ -23,7 +25,11 @@ import styles from "./AiConcierge.module.css";
  * identity and rationale only — every number the visitor acts on is fetched by
  * the card behind the modal. */
 
-const PLACEHOLDER = "Where would you like to go, and what are you after?";
+/* The opening prompt, and the only one: this used to be a sentence ABOVE the
+   input as well as the placeholder inside it, saying the same thing twice
+   before the visitor had typed anything. */
+const PLACEHOLDER =
+  "What are you looking for — ask me anything about your upcoming trip";
 
 /** Ceiling on the growing input, in px — roughly six lines. */
 const ASK_INPUT_MAX_PX = 132;
@@ -130,15 +136,20 @@ function readLatestPresentation(messages: UIMessage[]): {
       }
       if (input.rationales) results.rationales = rationales;
       if (input.flights) {
-        results.flights = input.flights
-          .filter((leg) => leg?.origin && leg?.destination && leg?.departureDate)
-          .map((leg) => ({
-            origin: leg.origin,
-            destination: leg.destination,
-            departureDate: leg.departureDate,
-            returnDate: leg.returnDate ?? "",
-            cabin: leg.cabin ?? "economy",
-          }));
+        // Collapsed here rather than at the frame, so the summary, the cards,
+        // the handoff URL and the Flights page's trip type all read the same
+        // one round trip.
+        results.flights = collapseReturnLegs(
+          input.flights
+            .filter((leg) => leg?.origin && leg?.destination && leg?.departureDate)
+            .map((leg) => ({
+              origin: leg.origin,
+              destination: leg.destination,
+              departureDate: leg.departureDate,
+              returnDate: leg.returnDate ?? "",
+              cabin: leg.cabin ?? "economy",
+            }))
+        );
       }
 
       return {
@@ -169,6 +180,94 @@ function errorMessage(error: Error | undefined): string {
   }
 }
 
+/* The concierge's own turns, rendered.
+ *
+ * It writes Markdown — the prompt asks it for short bullets, and it bolds the
+ * thing each bullet is about — and the transcript used to print the source:
+ * literal asterisks and hyphens, newlines collapsed, three bullets running
+ * together as one paragraph. Invisible while nearly every answer came through
+ * presentResults as one framing line; unmissable now that declining to rank
+ * the collection is answered in prose.
+ *
+ * Bold, bullets and line breaks, and nothing else — that is the whole of what
+ * it emits here. No Markdown library: this is a dozen lines against a new
+ * dependency, and §2 says no new libraries unless asked.
+ *
+ * Only the agent's side. A visitor who types an asterisk means an asterisk. */
+function inlineBold(text: string, keyBase: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+
+  for (const match of text.matchAll(/\*\*([^*]+)\*\*/g)) {
+    const at = match.index ?? 0;
+    if (at > cursor) nodes.push(text.slice(cursor, at));
+    nodes.push(<strong key={`${keyBase}-b${at}`}>{match[1]}</strong>);
+    cursor = at + match[0].length;
+  }
+
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return nodes;
+}
+
+function AgentText({ text }: { text: string }) {
+  const blocks: React.ReactNode[] = [];
+  let bullets: { key: string; text: string }[] = [];
+
+  function flushBullets() {
+    if (!bullets.length) return;
+    const items = bullets;
+    bullets = [];
+    blocks.push(
+      <ul key={`ul-${items[0].key}`}>
+        {items.map((item) => (
+          <li key={item.key}>{inlineBold(item.text, item.key)}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  const lines = text.split("\n");
+
+  /* Which line, if any, is the closing question.
+   *
+   * When results are shown the question arrives in its own presentResults
+   * field and is styled as such. Answering in prose there is no such field —
+   * the question is simply the last sentence — so it was set like the rest of
+   * the answer and the two cases did not match. Last non-empty line, ending in
+   * a question mark, and not a bullet. */
+  const closingIndex = (() => {
+    for (let i = lines.length - 1; i >= 0; i -= 1) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      if (/^[-*•]\s+/.test(line)) return -1;
+      return line.endsWith("?") ? i : -1;
+    }
+    return -1;
+  })();
+
+  lines.forEach((line, index) => {
+    const bullet = /^\s*[-*•]\s+(.*)$/.exec(line);
+    if (bullet) {
+      bullets.push({ key: `l${index}`, text: bullet[1] });
+      return;
+    }
+    flushBullets();
+    if (line.trim()) {
+      blocks.push(
+        <p
+          key={`l${index}`}
+          className={index === closingIndex ? styles.closingQuestion : undefined}
+        >
+          {inlineBold(line, `l${index}`)}
+        </p>
+      );
+    }
+  });
+
+  flushBullets();
+  return <>{blocks}</>;
+}
+
 function messageText(message: UIMessage): string {
   return message.parts
     .filter((part): part is { type: "text"; text: string } => part.type === "text")
@@ -184,61 +283,6 @@ function shortDate(iso: string): string {
   return MONTH_DAY.format(new Date(Date.UTC(y, m - 1, d)));
 }
 
-const WORDS = /[^\p{L}\p{N}]+/u;
-
-function tokens(value: string): string[] {
-  return value.toLowerCase().split(WORDS).filter(Boolean);
-}
-
-function squash(value: string): string {
-  return value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
-}
-
-/* Drops the property's name off the front of its own rationale.
- *
- * The model leads with the name whatever the prompt says — it is writing a
- * sentence, and a sentence needs a subject — so the row rendered as
- * "Le Meurice — Le Meurice — grand old Paris". The prompt asks it not to, but
- * a prompt is guidance and this is the display: doing it here means the row
- * cannot read wrong even when the model ignores the instruction.
- *
- * Matched on tokens rather than exact text, because what it writes is a
- * variant, not a copy — "Mandarin Oriental Lutetia" for a record named
- * "Mandarin Oriental, Lutetia, Paris". A leading clause is dropped only when
- * most of its words belong to the name, so a genuine opening clause that
- * happens to share a word survives. */
-function stripLeadingName(reason: string, name: string): string {
-  const text = reason.trim();
-  const nameTokens = new Set(tokens(name));
-  if (!nameTokens.size) return text;
-
-  // The usual shape: "<name variant> — <the actual reason>".
-  const split = text.split(/\s+[—–-]\s+/);
-  if (split.length > 1) {
-    const head = tokens(split[0]);
-    const overlap = head.filter((token) => nameTokens.has(token)).length;
-    if (head.length && overlap / head.length >= 0.6) {
-      const rest = split.slice(1).join(" — ").trim();
-      if (rest) return rest;
-    }
-  }
-
-  // No dash, but it still opens with the name verbatim.
-  const squashedName = squash(name);
-  if (squashedName && squash(text).startsWith(squashedName)) {
-    let seen = "";
-    for (let i = 0; i < text.length; i += 1) {
-      seen += squash(text[i]);
-      if (seen === squashedName) {
-        const rest = text.slice(i + 1).replace(/^[\s—–\-:,·|]+/, "").trim();
-        if (rest) return rest;
-        break;
-      }
-    }
-  }
-
-  return text;
-}
 
 /* What the concierge found, in words — the whole point of which is that the
  * cards behind the modal are dimmed and unreadable while it is open.
@@ -322,7 +366,11 @@ function ResultSummary() {
                 className={styles.summaryItem}
               >
                 <span className={styles.summaryName}>
-                  {leg.origin} &rarr; {leg.destination}
+                  {/* A return is one journey on one pair of airports, so it is
+                      drawn as one — the same double arrow the Flights page
+                      puts in its route header. A single arrow here said
+                      one-way about a trip that comes home. */}
+                  {leg.origin} {leg.returnDate ? "⇆" : "→"} {leg.destination}
                 </span>
                 <span className={styles.summaryReason}>
                   {" "}
@@ -352,7 +400,7 @@ function ResultSummary() {
 }
 
 export default function AiConversation() {
-  const { framing, followUp, pageContext, setPresentation, clear, ready } =
+  const { framing, followUp, pageContext, setPresentation, clear, ready, clearSignal } =
     useAiSearch();
   // Its own context: the transcript changes on every streamed token, and
   // everything else reading the store would re-render with it.
@@ -400,14 +448,25 @@ export default function AiConversation() {
     });
   }, [error, setMessages]);
 
-  function startOver() {
+  const startOver = useCallback(() => {
     stop();
     clearError();
     setMessages([]);
     setDraft("");
     appliedPresentationRef.current = null;
     clear();
-  }
+  }, [stop, clearError, setMessages, clear]);
+
+  /* Clear now lives in the modal header, which cannot reach useChat's own
+     message list — so it raises a signal and the reset happens here. Compared
+     against a ref rather than run on mount, so restoring a stored conversation
+     does not immediately wipe it. */
+  const clearedRef = useRef(clearSignal);
+  useEffect(() => {
+    if (clearSignal === clearedRef.current) return;
+    clearedRef.current = clearSignal;
+    startOver();
+  }, [clearSignal, startOver]);
 
   // Restore the conversation once the store has hydrated from sessionStorage.
   // This is what makes one conversation span the site: the store now lives in
@@ -481,13 +540,28 @@ export default function AiConversation() {
 
   const hasConversation = messages.length > 0;
 
-  // The framing line is the answer, so it has to come BEFORE the model's
-  // follow-up question rather than after it — reading "would you prefer X?"
-  // and only then the answer is backwards. It belongs immediately above the
-  // last assistant turn, which is where that question lives.
-  const lastAssistantIndex = (() => {
+  /* Where the answer belongs in the transcript: at the turn that produced it.
+   *
+   * This used to anchor to the last assistant turn that had TEXT, on the
+   * reasoning that the answer must come above the follow-up question rather
+   * than after it. That holds only while the newest turn is the one that
+   * spoke. A turn that answers purely with presentResults — no prose — leaves
+   * the last text turn an OLDER one, so the new answer was rendered above it
+   * and the previous reply reappeared underneath, reading as though the
+   * concierge had just said it again. Anchoring to the presentResults call
+   * itself puts the answer where its turn actually happened, and the
+   * follow-up is part of the block so it still sits below the framing. */
+  const presentationIndex = (() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
-      if (messages[i].role === "assistant" && messageText(messages[i]).trim()) return i;
+      const message = messages[i];
+      if (message.role !== "assistant") continue;
+      const presented = message.parts.some(
+        (part) =>
+          isToolUIPart(part) &&
+          getToolName(part) === "presentResults" &&
+          part.state !== "input-streaming"
+      );
+      if (presented) return i;
     }
     return -1;
   })();
@@ -497,32 +571,34 @@ export default function AiConversation() {
     <Fragment key="framing">
       <p className={styles.framing}>{framing}</p>
       <ResultSummary />
-      {followUp ? <p className={styles.turnAgent}>{followUp}</p> : null}
+      {followUp ? (
+        <div className={`${styles.turnAgent} ${styles.followUp}`}>
+          <AgentText text={followUp} />
+        </div>
+      ) : null}
     </Fragment>
   ) : null;
 
   return (
     <div className={styles.conversation}>
       <div className={styles.scroll} ref={scrollRef}>
-        {!hasConversation && !framing ? (
-          <p className={styles.opening}>
-            Tell me the shape of the trip — where, roughly when, and what you are
-            after. I can look at hotels, flights and restaurants together.
-          </p>
-        ) : null}
-
         {messages.map((message, index) => {
           const text = messageText(message);
-          if (!text.trim()) return null;
-          const row = (
+          const anchorsAnswer = index === presentationIndex;
+          // A turn with no prose still renders, if it is the one that carried
+          // the answer.
+          if (!text.trim() && !anchorsAnswer) return null;
+
+          const row = text.trim() ? (
             <div
               key={message.id}
               className={message.role === "user" ? styles.turnUser : styles.turnAgent}
             >
-              {text}
+              {message.role === "user" ? text : <AgentText text={text} />}
             </div>
-          );
-          return index === lastAssistantIndex ? (
+          ) : null;
+
+          return anchorsAnswer ? (
             <Fragment key={message.id}>
               {framingBlock}
               {row}
@@ -532,9 +608,9 @@ export default function AiConversation() {
           );
         })}
 
-        {/* No assistant turn to sit above (the model said nothing beyond the
-            results), so the answer stands alone at the end. */}
-        {framing && lastAssistantIndex === -1 ? framingBlock : null}
+        {/* A stored answer whose own turn is no longer in the list — it stands
+            at the end rather than vanishing. */}
+        {framing && presentationIndex === -1 ? framingBlock : null}
 
         {busy ? <div className={styles.thinking}>Thinking…</div> : null}
 
@@ -585,15 +661,6 @@ export default function AiConversation() {
             Ask
           </button>
         )}
-        {hasConversation && !busy ? (
-          <button
-            type="button"
-            className={`oltra-button-secondary ${styles.action} ${styles.clear}`}
-            onClick={startOver}
-          >
-            Clear
-          </button>
-        ) : null}
       </form>
     </div>
   );

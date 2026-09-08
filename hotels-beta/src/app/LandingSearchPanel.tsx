@@ -7,7 +7,7 @@ import GuestSelector from "@/components/site/GuestSelector";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AiModeButton from "@/components/ai/AiModeButton";
-import { useAiActions } from "@/lib/ai/aiSearchStore";
+import { useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
@@ -89,6 +89,10 @@ export default function LandingSearchPanel({
   const [isPending, startTransition] = useTransition();
 
   const { markClassicSearch } = useAiActions();
+  /* Safe to read here despite the transcript streaming a token at a time: this
+     context is memoised on its individual fields, so appending a token leaves
+     query and presentedAt identical and the value keeps its identity. */
+  const { query: aiQuery, presentedAt } = useAiSearch();
 
   const [effectiveSearchParams, setEffectiveSearchParams] =
     useState<PageSearchParams>(initialSearchParams);
@@ -104,6 +108,25 @@ export default function LandingSearchPanel({
   const [guestSelection, setGuestSelection] = useState<GuestSelection>(
     readGuestSelection(initialSearchParams)
   );
+
+  /* The concierge's stay, back into the classic date field.
+   *
+   * The dates the visitor gave in prose are the dates the search panel should
+   * be holding when they close the modal — otherwise the frames below say
+   * "20 Sept – 30 Sept" while the box above still says "Select dates", and
+   * touching any other control searches without them.
+   *
+   * Keyed on presentedAt so it lands once per answer and never fights a date
+   * picked by hand afterwards — the same rule the Inspire mirror follows.
+   * Setting state here cannot trigger the auto-submit: that fires from the
+   * field handlers, not from the values changing. */
+  const appliedStayRef = useRef(0);
+  useEffect(() => {
+    if (!presentedAt || presentedAt === appliedStayRef.current) return;
+    appliedStayRef.current = presentedAt;
+    if (aiQuery.from) setFromValue(aiQuery.from);
+    if (aiQuery.to) setToValue(aiQuery.to);
+  }, [presentedAt, aiQuery.from, aiQuery.to]);
 
   const [includeHotels, setIncludeHotels] = useState(
     normalizeParam(initialSearchParams.include_hotels) !== "0"

@@ -59,9 +59,39 @@
 /* A labelled Exit, not a bare ×. The photo lightbox can afford a glyph because
    nothing else is happening in it; here the visitor is mid-conversation and
    needs to know the exchange survives leaving. */
+/* A fixed width, not a min-width: Clear sits directly beside this and the two
+   have to be the same size. On min-width the longer word won, and they came
+   out 88px against 84px (§46 — equal-looking is not equal). */
 .exit {
   flex: 0 0 auto;
-  min-width: 84px;
+  width: 88px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Clear is Exit, in red. Same class, same size, same fill — only the border
+   moves off the sage pair onto the faded red used for warnings (§35/§46),
+   because it is the one control here that throws work away.
+
+   Compound, so it beats .oltra-button-secondary's own border regardless of
+   which stylesheet loads first; a single .clear would tie on specificity and
+   lose to load order (§45). */
+.exit.clear {
+  border-color: var(--oltra-error-text);
+}
+
+.exit.clear:hover {
+  border-color: var(--oltra-error-text);
+  color: var(--oltra-error-text);
+}
+
+.exit.clear:focus-visible {
+  outline: 2px solid var(--oltra-error-text);
+  outline-offset: 2px;
 }
 
 /* ── the conversation ─────────────────────────────────────────────────── */
@@ -87,15 +117,6 @@
   padding-right: 4px;
 }
 
-/* Shown only before the first turn. The concierge opens on an empty panel and
-   a bare input reads as a search box; this says what it can be asked. */
-.opening {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--oltra-text-muted);
-}
-
 .turnUser,
 .turnAgent {
   font-size: 14px;
@@ -113,7 +134,10 @@
 }
 
 /* Answers use the full width — they carry the reasoning, and wrapping them
-   into a narrow column wastes most of the row. */
+   into a narrow column wastes most of the row.
+
+   Upright: the answer is the answer whether it arrives as prose or through
+   presentResults, and italic is reserved for the one question at the end. */
 .turnAgent {
   align-self: stretch;
   width: 100%;
@@ -121,16 +145,81 @@
   padding-left: 0;
 }
 
+/* The closing question, and the only italic in the panel.
+ *
+ * Two routes to it, deliberately styled the same: .followUp is the field
+ * presentResults carries, .closingQuestion is the last sentence of a prose
+ * answer when it ends in a question mark. Without the second, the same
+ * question was italic after a set of results and upright after a plain reply.
+ *
+ * A clear break above it, over and above the column's own gap: it is a
+ * separate thing to say, and sitting tight under the last line of the answer
+ * it read as one more sentence of it. */
+.followUp {
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.turnAgent > .closingQuestion {
+  margin-top: 0.9rem;
+  font-style: italic;
+}
+
+/* The concierge writes in paragraphs and short bullets, so its turns are real
+   blocks rather than one text node — see AgentText. Spacing is set between
+   siblings, so a single-sentence follow-up carries no stray margin. */
+.turnAgent > * + * {
+  margin-top: 0.5rem;
+}
+
+.turnAgent p {
+  margin: 0;
+}
+
+.turnAgent ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+/* The same two colours the summary uses: the thing itself in the primary
+   text colour, what is said about it in the muted one. In a bullet the model
+   bolds the lead and explains after it, so that split falls exactly on the
+   bold — white lead, grey detail, no extra markup needed. */
+.turnAgent li {
+  color: var(--oltra-text-muted);
+}
+
+.turnAgent li strong {
+  color: var(--oltra-text-primary);
+}
+
+.turnAgent li + li {
+  margin-top: 0.2rem;
+}
+
+.turnAgent li::marker {
+  color: var(--oltra-text-muted);
+}
+
+/* 500, not bold: the theme is set in light weights and a true bold reads as
+   shouting next to them. */
+.turnAgent strong {
+  font-weight: 500;
+}
+
 /* The answer itself, above the summary it introduces.
  *
- * The one place the concierge's own face is used: --oltra-font-voice, scoped
- * to the panel by lib/ai/fonts.ts's className rather than promoted to a global
- * token, so no other page is touched. The fallback matters — the variable only
- * resolves inside the panel. */
+ * Plain text, in the site's own sans at the conversation's own size. It was
+ * set in --oltra-font-voice, a serif, which gave the panel two typefaces and
+ * made the answer — the part the visitor is actually reading — the one thing
+ * on the page that did not look like the rest of the site. The distinction
+ * that earns its keep is upright answer against italic question, not two
+ * families. */
 .framing {
   margin: 0;
-  font-family: var(--oltra-font-voice, var(--oltra-font-sans));
-  font-size: 17px;
+  font-family: var(--oltra-font-sans);
+  font-size: 14px;
   line-height: 1.55;
   color: var(--oltra-text-primary);
 }
@@ -156,21 +245,21 @@
  * face and the same size as the framing line above, with headings and bullets
  * for structure rather than a container.
  *
- * The follow-up question below is deliberately left in the other format —
- * that IS a separate thing to say. */
+ * The follow-up question below is deliberately left in the other format — it
+ * IS a separate thing to say, and it is italic for exactly that reason. */
 .summary {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  font-family: var(--oltra-font-voice, var(--oltra-font-sans));
-  font-size: 17px;
+  font-family: var(--oltra-font-sans);
+  font-size: 14px;
   line-height: 1.55;
   color: var(--oltra-text-primary);
 }
 
 .summaryNote {
-  font-family: var(--oltra-font-voice, var(--oltra-font-sans));
-  font-size: 17px;
+  font-family: var(--oltra-font-sans);
+  font-size: 14px;
   color: var(--oltra-text-muted);
   font-style: italic;
 }
@@ -216,10 +305,10 @@
   color: var(--oltra-text-muted);
 }
 
-/* The one aside inside the answer, and set as an aside: smaller, in the UI
-   sans, so it reads as a note about the interface rather than as another
-   sentence from the concierge. Said plainly because the summary deliberately
-   carries no figures, and the absence would otherwise look like an omission. */
+/* The one aside inside the answer, and set as an aside: smaller and muted, so
+   it reads as a note about the interface rather than as another sentence from
+   the concierge. Said plainly because the summary deliberately carries no
+   figures, and the absence would otherwise look like an omission. */
 .summaryFootnote {
   margin: 0.15rem 0 0;
   font-family: var(--oltra-font-sans);
@@ -274,27 +363,6 @@
 .action {
   flex: 0 0 auto;
   min-width: 84px;
-}
-
-/* Clear is destructive, so it is the one button that leaves the sage pair: the
-   faded red already used for warnings (§35/§46), with white text. A compound
-   selector so it beats .oltra-button-secondary regardless of which stylesheet
-   loads first — a single .clear would only tie on specificity and lose to
-   load order. */
-.action.clear {
-  background: var(--oltra-error-text);
-  border-color: var(--oltra-error-text);
-  color: #ffffff;
-}
-
-.action.clear:hover {
-  color: #ffffff;
-  filter: brightness(1.06);
-}
-
-.action.clear:focus-visible {
-  outline: 2px solid var(--oltra-error-text);
-  outline-offset: 2px;
 }
 
 /* ── handoffs ─────────────────────────────────────────────────────────── */

@@ -4180,11 +4180,19 @@ modal is open. The answer in the panel is therefore the only thing the visitor
 can read, and it names each pick and says why.
 
 **It is set as one piece of text**, not a sentence plus a results widget: the
-framing line and the picks share the concierge's serif face
-(`--oltra-font-voice`, scoped to the panel by `lib/ai/fonts.ts` rather than
-promoted to a global token), with small-caps headings and bullets for structure
-and no container. The follow-up question below is deliberately in the other
-format — that is a separate thing to say.
+framing line and the picks share one face and one size, with small-caps
+headings and bullets for structure and no container. The follow-up question
+below is deliberately in the other format — that is a separate thing to say.
+
+**That face is the site's own sans, upright, and the question below it is
+italic** (2026-09-08). It was a serif — Cormorant Garamond, loaded by
+`lib/ai/fonts.ts` and scoped to the panel as `--oltra-font-voice` — which gave
+the panel two typefaces and made the answer the one thing in it that did not
+look like the rest of the site. The distinction worth keeping is upright answer
+against italic question, so the serif went and `lib/ai/fonts.ts` with it: the
+font was loaded and, once nothing consumed the variable, downloaded for
+nothing. Reinstating it is a revert of that one file plus the `voiceFont.variable`
+className on the panel.
 
 **Names come from the same records the cards render from**, never from anything
 the model wrote, so a name in the summary cannot disagree with the card beside
@@ -4547,6 +4555,144 @@ remaining ~14s is two Opus round trips, and the only large lever left is
   low` on both triage and chat, and reaches the visitor as the generic "please
   try again" — which retrying cannot fix. Only the route's own 4xx rejections
   carry a specific reason today.
+
+### UI round, 2026-09-08 — five fixes, all found in the browser
+
+Rollback map, per §33. Each was reproduced live before it was touched, and the
+two that are geometry were measured rather than looked at (§45/§46).
+
+* **A there-and-back is one round trip.** `lib/ai/flightLegs.ts`'s
+  `collapseReturnLegs` folds a mirrored one-way pair — B leaves from where A
+  landed, on or after A's departure — into one leg with a `returnDate`, applied
+  in `readLatestPresentation` so the summary, the frames, the handoff URL and
+  the Flights page's trip type all read the same journey. The prompt already
+  asked for this; the model does not always oblige, and split legs are priced
+  as two one-ways, losing the cheaper round-trip fare. An open jaw is not a
+  mirror and still travels as two legs. Eight cases exercised in Node.
+* **The flights frame said the route twice** — `Flights LHR → VCE` in the panel
+  header, `LHR → VCE` in the leg block one line below. The header is now just
+  "Flights", and a leg with a return date draws `⇆` rather than `→`, matching
+  the Flights page's own route header. Same arrow rule in the in-chat summary.
+* **Typography inverted** — see "The answer, and the in-chat summary" above.
+* **Hotel cards in the concierge frame had no SAVE.** `HotelSmallCard` has
+  supported `renderSaveControl` all along; `AiResultFrames` was the one caller
+  never passing it, so its hotels were the only result type there that could
+  not go in a trip. Its `bookingHref` also now uses the structured summary's
+  own fallback chain (booking link, then the hotel's site) instead of a bare
+  `buildBookingLink`, which returned null often enough to leave a lone SAVE.
+* **The concierge's dates now reach the classic date field.** `LandingSearchPanel`
+  reads `useAiSearch` and applies `query.from`/`to` once per `presentedAt` —
+  the Inspire mirror's rule, so it never fights a date picked by hand. Safe to
+  read that context there despite streaming: it is memoised on individual
+  fields, so a token does not change its identity. Setting the state cannot
+  trigger the auto-submit, which fires from the field handlers; the mount-time
+  auto-submit does then carry the dates into the URL, which is wanted, and
+  cannot displace the answer because `markClassicSearch` is gated on a
+  destination.
+* **BOOK and SAVE were not on the same line in a flight row.** Measured at the
+  three-frame width: BOOK at y=362 h=22, SAVE at y=391 h=25, 207px to its left.
+  As siblings of the label and price the two were free to be split by the flex
+  wrap, and the longer "Best price" label broke where "Fastest" did not, so the
+  pair did not line up down the column either. They are now one
+  `.flightRowActions` flex unit that takes a line of its own at that width, and
+  `align-items: center` on it absorbs the descender space the Save control's
+  block wrapper adds. After: both rows y-aligned, both buttons 84×22.
+
+### Second UI round, 2026-09-08 — no league table, Clear moved, flight cards
+
+* **The concierge does not rank the collection.** Asked "the 3 best hotels in
+  Paris" it named three and called them "the three that stand above the rest".
+  There is no ranking behind the collection, so that was invented. A new
+  prompt section, `"The best" — the one question you answer with a question`,
+  answers instead with "I can highly recommend all hotels on myOLTRA" plus a
+  request for something to judge on, and holds it under pressure.
+
+  **The exception is deliberately narrow, and the prompt says so twice**, because
+  §50's own record is that a prompt tightened for brevity once read as
+  permission to ask *instead of* showing. It applies only when there is nothing
+  to rank by; "hotels in Paris" still searches and shows, and so does any
+  request carrying a quarter, a spa, a brand, a budget or a date. Verified live
+  across three turns: the refusal, a push ("just pick three, you must have an
+  opinion" → "I'll hold the line on that one"), and then a criterion, which
+  produced three hotels with reasons.
+
+  A cross-reference was added at "Show first ... A question never replaces
+  results", so the two rules are read together rather than as a contradiction.
+
+* **Clear moved to the header, beside Exit.** Both act on the whole
+  conversation; next to Ask it read as a third way to send. It is the same
+  button as Exit with the border moved to `--oltra-error-text`, and it appears
+  only when there is a transcript. The header cannot reach `useChat`'s message
+  list, so the store carries a `clearSignal` the conversation watches — and
+  `hasConversation` is exposed as a **boolean**, not the message list, or the
+  header would re-render on every streamed token and take the conversation
+  with it. `.exit` is a fixed 88px rather than a min-width: on min-width the
+  longer word won and they came out 88 against 84.
+
+* **Flight cards are four lines, always.** Route first (`LHR–ORY`), then the
+  times; duration on its own line, left aligned; the airline; then the stop
+  line, which now names the airport and the wait — `via CAN, 8h 20m layover`,
+  or "Direct". Always rendered, so every card is the same height (measured:
+  16 cards, one height, 105px, no overflow) and a return trip's pair does not
+  go ragged. The route matters because the two cards of a return were
+  otherwise told apart only by their times. `describeStops` in
+  `FlightResultRow.tsx`; the times row is `nowrap`, which is what actually
+  holds the card to four lines.
+
+* **The concierge writes Markdown and the transcript printed the source.**
+  Bold and bullets came out as literal asterisks and hyphens with the newlines
+  collapsed into one run-on paragraph. Nearly invisible while almost every
+  answer arrived through `presentResults` as a single framing line — and
+  unmissable the moment declining to rank made prose answers normal. `AgentText`
+  renders bold, bullets and line breaks, and nothing else, because that is the
+  whole of what the model emits. No Markdown dependency (§2).
+
+* **The answer rendered above an older turn.** The framing block anchored to
+  the last assistant turn *with text*; a turn answering purely through
+  `presentResults` leaves that an older one, so the new answer appeared above
+  the previous reply and the previous reply reappeared below it, reading as a
+  fresh refusal. It now anchors to the `presentResults` call itself, so the
+  answer sits at the turn that produced it.
+
+**Fixed in the round below**, not left alone: `stripLeadingName` split only on
+a dash, so a rationale written as `Le Bristol: the city's most complete grand
+hotel` still printed the name twice.
+
+### Third UI round, 2026-09-08 — one italic, two colours, one prompt
+
+* **The colon case is fixed, and `stripLeadingName` moved to
+  `lib/ai/rationale.ts` to make that checkable.** The dash pass could not catch
+  it: in `Le Bristol: the city's most complete grand hotel — courtyard garden,
+  two Michelin rooms` the split lands on the LATER dash, whose head is the
+  whole first clause and barely overlaps the name. A separate pass now looks
+  for a colon within the first 60 characters and applies the same 0.6
+  token-overlap test, so a colon used mid-sentence is untouched. Nine cases in
+  Node, including the two that must NOT strip.
+
+  Extracting the helper is the point of the entry: the model writes a different
+  variant every run, so the only honest way to know a shape is handled is to
+  run it — the same reason `flightLegs.ts` exists.
+
+* **One italic in the panel, and it is the closing question.** Agent turns went
+  back to upright; the question at the end is italic with a clear break above
+  it. Two routes reach that style deliberately: `.followUp` for the field
+  `presentResults` carries, and `.closingQuestion` for the last line of a prose
+  answer when it ends in a question mark and is not a bullet. Without the
+  second, the same question was italic after a set of results and upright after
+  a plain reply — the prose case has no `followUp` field to style.
+
+* **Two colours, extended to prose.** The summary already set names in
+  `--oltra-text-primary` and rationales in `--oltra-text-muted`. Prose bullets
+  now do the same, and it needs no extra markup: the model bolds the lead and
+  explains after it, so `li { muted }` with `li strong { primary }` puts the
+  split exactly where the meaning does.
+
+* **One opening prompt, in the input.** The panel used to say "Tell me the
+  shape of the trip…" above the box AND carry a placeholder inside it — the
+  same invitation twice before anything was typed. The paragraph is gone and
+  the placeholder now reads "What are you looking for — ask me anything about
+  your upcoming trip" — em dash, matching the site rather than the hyphen it
+  was first written with.
 
 ### Prerequisites
 

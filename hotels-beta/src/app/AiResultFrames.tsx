@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HotelSmallCard, {
   type SmallCardAvailability,
@@ -9,6 +9,11 @@ import HotelSmallCard, {
 import RestaurantSmallCard from "@/components/restaurants/RestaurantSmallCard";
 import type { HotelRecord } from "@/lib/directus";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
+import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
+import SaveToTripControl, {
+  type SaveToTripResult,
+} from "@/components/members/SaveToTripControl";
+import { addHotelToTripBrowser } from "@/lib/members/db";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
@@ -36,6 +41,20 @@ import styles from "./page.module.css";
  * numbers, and the summary inside the concierge modal cannot state one. */
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+
+/* Same fallback chain the structured landing summary uses: the real booking
+ * link, then the hotel's own site. Without the fallback a hotel with no
+ * provider had no BOOK at all, so its actions column held a lone SAVE. */
+function bookingHrefFor(
+  hotel: HotelRecord,
+  params: { from: string; to: string; adults: number; kids: number }
+): string | null {
+  const link = buildBookingLink(hotel, params);
+  if (link) return link;
+  const site = (hotel.www ?? "").trim();
+  if (!site) return null;
+  return /^https?:\/\//i.test(site) ? site : `https://${site}`;
+}
 
 function legDateLabel(iso: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
@@ -121,7 +140,10 @@ function FlightLegPanel({
     <div className={styles.aiFlightLeg}>
       <div className={styles.aiFlightLegHead}>
         <span className={styles.aiFlightLegRoute}>
-          {leg.origin} &rarr; {leg.destination}
+          {/* Double arrow for a return: this block already carries both
+              directions and both dates, so a single arrow described it as a
+              one-way it is not. */}
+          {leg.origin} {leg.returnDate ? "⇆" : "→"} {leg.destination}
         </span>
         <span className={styles.aiFlightLegDate}>
           {legDateLabel(leg.departureDate)}
@@ -239,6 +261,35 @@ export default function AiResultFrames() {
     };
   }, [hotels, query.from, query.to, query.adults, query.kids, query.bedrooms, query.currency, query.childrenAges]);
 
+  /* Hotels get the same BOOK and SAVE pair the flight rows have, through the
+   * same SaveToTripControl every other surface uses — the card already
+   * supported both, the concierge frame was simply never passing the save
+   * control in, so its hotels were the one result type here you could not put
+   * in a trip. */
+  const handleSaveHotel = useCallback(
+    async (tripId: string, hotel: HotelRecord): Promise<SaveToTripResult> => {
+      const result = await addHotelToTripBrowser({
+        tripId,
+        hotelDirectusId: String(hotel.id),
+        name: hotel.hotel_name ?? "Hotel",
+        location: [hotel.city, hotel.country].filter(Boolean).join(" · "),
+        stayLabel: query.from && query.to ? `${query.from} – ${query.to}` : null,
+        thumbnail: getHotelThumbnail(hotel),
+        checkIn: query.from || null,
+        checkOut: query.to || null,
+      });
+      return {
+        message:
+          result.status === "already_exists"
+            ? "Already in that trip."
+            : result.overlapWarning
+              ? "Saved — dates overlap another item."
+              : "Saved to trip.",
+      };
+    },
+    [query.from, query.to]
+  );
+
   const tripDefaults = useMemo(
     () => ({
       destination:
@@ -321,7 +372,24 @@ export default function AiResultFrames() {
                         ? availability[String(hotel.id)] ?? { status: "loading" }
                         : { status: "idle" }
                     }
-                    bookingHref={buildBookingLink(record)}
+                    bookingHref={bookingHrefFor(record, {
+                      from: query.from,
+                      to: query.to,
+                      adults: query.adults,
+                      kids: query.kids,
+                    })}
+                    renderSaveControl={() => (
+                      <SaveToTripControl
+                        onSave={(tripId) => handleSaveHotel(tripId, record)}
+                        newTripDefaults={tripDefaults}
+                        label="SAVE"
+                        compact
+                        align="right"
+                        /* --xs and w-full match the BOOK button rendered
+                           inside the card, so the pair is one size. */
+                        className="oltra-button-secondary oltra-button--xs w-full"
+                      />
+                    )}
                   />
                 );
               })}
@@ -344,11 +412,10 @@ export default function AiResultFrames() {
             className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}
           >
             <div className={styles.summaryHeaderRow}>
-              <div className="oltra-label">
-                {results.flights.length > 1
-                  ? "Flights"
-                  : `Flights ${results.flights[0].origin} → ${results.flights[0].destination}`}
-              </div>
+              {/* Just "Flights". Every leg block below states its own route
+                  and dates, so naming the route here too printed the same
+                  pair of airports twice, one line apart. */}
+              <div className="oltra-label">Flights</div>
               <Link
                 href={flightsHref(query, results)}
                 className={`oltra-button-primary ${styles.summaryTopButton}`}

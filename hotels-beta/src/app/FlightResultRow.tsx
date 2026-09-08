@@ -57,6 +57,47 @@ export function pickHeadlineItineraries(itineraries: Itinerary[]): {
   return { bestPrice, fastest };
 }
 
+/* The stop line, and it is always present — every card is four lines whether
+ * the flight is direct or not, so a return trip's two cards are the same
+ * height and a row of them does not go ragged.
+ *
+ * Names the airport you actually wait in and how long for, which is what a
+ * stop costs you. The leg's own stopSummary ("1 stop · Frankfurt 2h 15m") had
+ * the same facts in an order that led with a count. */
+export function describeStops(flight: FlightLeg): string {
+  const stops = flight.layovers;
+
+  if (!stops.length) {
+    // The count wins over an empty list: a leg with stops we hold no layover
+    // detail for must not go out claiming to be direct.
+    return flight.stops > 0
+      ? `${flight.stops} ${flight.stops === 1 ? "stop" : "stops"}`
+      : "Direct";
+  }
+
+  if (stops.length === 1) {
+    return `via ${stops[0].code}, ${formatDurationMinutes(stops[0].durationMinutes)} layover`;
+  }
+
+  const codes = stops.map((stop) => stop.code);
+  const total = stops.reduce((sum, stop) => sum + stop.durationMinutes, 0);
+  return `via ${codes.slice(0, -1).join(", ")} and ${codes[codes.length - 1]}, ${formatDurationMinutes(
+    total
+  )} total layover`;
+}
+
+/* Four lines, in this order:
+ *
+ *   CPH–ORY  14:42 → 17:49
+ *   Duration: 2h 7m
+ *   Air France
+ *   via FRA, 2h 15m layover
+ *
+ * The route leads, because on a return trip the two cards were otherwise told
+ * apart only by their times — which direction you were reading was left to be
+ * inferred from the order they sat in. Duration moved off the end of the times
+ * line onto its own: right-aligned there it drifted away from the times it
+ * describes, and it was the first thing to wrap as the column narrowed. */
 export function FlightDetailCard({ flight }: { flight: FlightLeg }) {
   const airlineLabel = flight.airlines.length
     ? flight.airlines.map((a) => a.name).join(" + ")
@@ -65,17 +106,18 @@ export function FlightDetailCard({ flight }: { flight: FlightLeg }) {
   return (
     <div className={styles.flightCardInner}>
       <div className={styles.flightCardTimes}>
+        <span className={styles.flightCardRoute}>
+          {flight.originCode}–{flight.destinationCode}
+        </span>
         <span className={styles.flightCardTime}>{flight.departTime}</span>
         <span className={styles.flightCardArrow}>→</span>
         <span className={styles.flightCardTime}>{flight.arriveTime}</span>
-        <span className={styles.flightCardDuration}>
-          Duration: {formatDurationMinutes(flight.durationMinutes)}
-        </span>
+      </div>
+      <div className={styles.flightCardDuration}>
+        Duration: {formatDurationMinutes(flight.durationMinutes)}
       </div>
       <div className={styles.flightCardMeta}>{airlineLabel}</div>
-      {flight.stopSummary ? (
-        <div className={styles.flightCardStops}>{flight.stopSummary}</div>
-      ) : null}
+      <div className={styles.flightCardStops}>{describeStops(flight)}</div>
     </div>
   );
 }
@@ -154,21 +196,30 @@ export default function FlightResultRow({
         <span className={styles.flightRowPrice}>
           {formatPrice(flight.priceEur, flight.currency)}
         </span>
-        <button
-          type="button"
-          className={`oltra-button-primary oltra-button--xs ${styles.flightBookButton}`}
-          onClick={() => handleBook(flight.offerId)}
-        >
-          BOOK
-        </button>
-        <SaveToTripControl
-          onSave={(tripId) => handleSave(tripId, flight)}
-          newTripDefaults={tripDefaults}
-          label="SAVE"
-          compact
-          align="right"
-          className={`oltra-button-secondary oltra-button--xs ${styles.flightBookButton}`}
-        />
+        {/* The pair travels as one unit. As siblings of the label and price
+            they were free to be split by the flex wrap: at three frames the
+            legend is 291px, so a row labelled "Best price" pushed SAVE onto a
+            second line at the far left while BOOK stayed top right, and the
+            shorter "Fastest" row beside it kept both on one line. Grouping
+            them means they wrap together or not at all, and line up with each
+            other and across rows either way. */}
+        <div className={styles.flightRowActions}>
+          <button
+            type="button"
+            className={`oltra-button-primary oltra-button--xs ${styles.flightBookButton}`}
+            onClick={() => handleBook(flight.offerId)}
+          >
+            BOOK
+          </button>
+          <SaveToTripControl
+            onSave={(tripId) => handleSave(tripId, flight)}
+            newTripDefaults={tripDefaults}
+            label="SAVE"
+            compact
+            align="right"
+            className={`oltra-button-secondary oltra-button--xs ${styles.flightBookButton}`}
+          />
+        </div>
       </div>
       <div
         className={`${styles.flightLegsGrid} ${

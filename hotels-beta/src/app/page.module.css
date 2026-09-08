@@ -480,6 +480,23 @@
   margin-left: auto;
 }
 
+/* BOOK and SAVE as one unit, so the flex wrap can never put one on a line
+   without the other. align-items: center rather than the row's default
+   stretch, because the Save control renders its button inside a positioning
+   wrapper — an inline-level button in a block box leaves descender space
+   under it, which measured as a 25px SAVE beside a 22px BOOK. */
+.flightRowActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* The wrapper itself, not the button: SaveToTripControl puts the caller's
+   className on the button and keeps the wrapper for its popup anchor. */
+.flightRowActions > div {
+  display: flex;
+}
+
 /* Fixed width so BOOK and SAVE match exactly - content sizing left them 3px
    apart, and the Save control sits inside its own positioning wrapper so there
    is no shared flex track to even them out. Height/type come from
@@ -521,6 +538,16 @@
   row-gap: 0.4rem;
 }
 
+/* The actions take a line of their own rather than wrapping only when they
+   happen not to fit. Left to the wrap alone, "Best price" and "Fastest" —
+   one directly above the other — broke differently, because the longer label
+   pushed its buttons over and the shorter one did not, so the pair no longer
+   lined up down the column. Right-aligned, under the price. */
+.flightRowLegendTight .flightRowActions {
+  flex: 1 0 100%;
+  justify-content: flex-end;
+}
+
 .flightCardInner {
   display: grid;
   gap: 0.2rem;
@@ -530,25 +557,40 @@
   border-radius: var(--oltra-radius-sm);
 }
 
+/* nowrap, and that is what holds the card to four lines: this row is short
+   enough at every width the card is used at (route plus two times), and left
+   to wrap it would silently make some cards five lines and others four. */
 .flightCardTimes {
   display: flex;
   align-items: baseline;
   gap: 0.45rem;
   font-size: 0.92rem;
   color: var(--oltra-text-primary);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .flightCardTime {
   font-weight: 400;
 }
 
+/* The direction, leading the line it belongs to. Muted and letter-spaced so it
+   reads as a label on the times rather than competing with them. */
+.flightCardRoute {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--oltra-text-muted);
+  white-space: nowrap;
+}
+
 .flightCardArrow {
   color: var(--oltra-text-muted);
 }
 
+/* Its own line now, left aligned under the times. No margin-left: auto — that
+   was what pushed it to the far right of the times row. */
 .flightCardDuration {
-  margin-left: auto;
   font-size: 0.78rem;
   color: var(--oltra-text-secondary);
 }
