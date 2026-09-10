@@ -166,3 +166,17 @@ Every value in `macroRegions.ts` was validated against the live collection befor
 * 17 values match nothing today and are kept deliberately. Austria's admin regions here are Vorarlberg, Vienna and Salzburg — so "Tyrol" is a real absence, not a typo, and the USA's contain no Idaho.
 
 Re-run that validation after any roster expansion: a macro-region silently narrowing is exactly the §26 country-map failure in a new place.
+
+### Two findings from reviewing a finished answer (2026-09-10)
+
+Both came from Ulrik reading an answer that looked entirely fine — a Venice → Tuscany → Rome trip, 18 properties, well written. Neither would have surfaced from a screenshot.
+
+**"Are these exhaustive?"** Venice 6/6 and Rome 10/10 were complete; **Tuscany found 2 of 10**. The model had searched `area: "Tuscany"`, and only two rows carry that in `state_province_county_island` — the six Florence hotels leave it null (§3), and Il Pellicano and Principe Forte dei Marmi hold their own sub-areas (`Monte Argentario`, `Versilia`).
+
+This was the *same* `area`-vs-`admin_region` gap found an hour earlier in the `narrowBy` facets, where the fix was to make the payload **report** its coverage. That fix was too narrow: it made the broad-set path honest and left the ordinary geography path silently missing 80% of a region. **A gap found in one code path is worth checking in every path that reads the same field.**
+
+After widening, the same query searched Tuscany with `Countryside`/`Hillside` and returned 3 — the pool complete at 10, the narrowing now a stated editorial choice rather than an accident, and Collegio alla Querce (previously invisible) among the picks.
+
+**"What does 'an open jaw' mean — is that slang?"** It is airline trade jargon, and it was in a tool description: `returnDate` read "leave unset on the legs of an open jaw". Eight other occurrences are code comments, which the model never sees and where the precise term is correct — so the leak was one string. Worth grepping the prose the model actually receives (`SYSTEM_PROMPT` plus every `description:` in `tools.ts`) separately from the comments around them.
+
+**And a self-inflicted one worth recording.** The first exhaustiveness check reported all 18 as missing, because it built `new Set([1479, …])` of numbers and compared against Directus ids, which come back as **strings** (§44). The script ran clean and told me nothing — the same shape §44 warns about, hit while verifying something else. `Number(h.id)` on both sides.

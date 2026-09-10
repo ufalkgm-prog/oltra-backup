@@ -415,12 +415,18 @@ const searchHotels = tool({
       country: { type: "string", description: "Exact country name, e.g. Italy." },
       adminRegion: {
         type: "string",
-        description: "Administrative unit, e.g. Lombardy, Valais, Kyoto Prefecture.",
+        description:
+          "Administrative unit, e.g. Lombardy, Valais, Kyoto Prefecture. " +
+          "Interchangeable with `area` — either one matches both fields, so " +
+          "you do not have to guess which holds the name.",
       },
       area: {
         type: "string",
         description:
-          "Traveller-facing area, e.g. Lake Como, Amalfi Coast, Engadin, Masai Mara.",
+          "Traveller-facing area, e.g. Lake Como, Amalfi Coast, Engadin, " +
+          "Masai Mara. Interchangeable with `adminRegion`. A region name like " +
+          "Tuscany returns everything in it, cities included — narrow with " +
+          "`settings` (Countryside, City) rather than by leaving hotels out.",
       },
       city: { type: "string", description: "Exact city name." },
       // Enumerated, not free text. These are locked vocabularies (§44), and a
@@ -514,9 +520,32 @@ const searchHotels = tool({
 
     if (input.region) and.push({ region: { _eq: input.region } });
     if (country) and.push({ country: { _eq: country } });
-    if (adminRegion) and.push({ admin_region: { _eq: adminRegion } });
-    if (area) and.push({ state_province_county_island: { _eq: area } });
     if (city) and.push({ city: { _eq: city } });
+
+    /* `area` and `adminRegion` are one geography slot, matched against BOTH
+     * columns.
+     *
+     * They are separate fields with separate meanings (§3) but they overlap
+     * constantly — Tuscany, Bali, Sicily and Rajasthan are legitimately both
+     * the administrative unit and what a traveller types — and the traveller
+     * field is deliberately null for a major city, so it holds a fifth of what
+     * the region actually contains.
+     *
+     * Matching `area: "Tuscany"` against the traveller column alone returned 2
+     * hotels of the 10 in Tuscany, silently dropping every Florence property
+     * plus Il Pellicano and Forte dei Marmi, which sit under their own
+     * sub-areas. The model has no way to know which of two near-identical
+     * fields holds the value it wants, and picking wrong should widen the
+     * search, not gut it. */
+    for (const value of [adminRegion, area]) {
+      if (!value) continue;
+      and.push({
+        _or: [
+          { admin_region: { _eq: value } },
+          { state_province_county_island: { _eq: value } },
+        ],
+      });
+    }
 
     const rows = await getHotels({
       fields: CANDIDATE_FIELDS as unknown as string[],
@@ -1111,7 +1140,8 @@ const presentResults = tool({
               type: "string",
               description:
                 "yyyy-mm-dd. Only for a round trip on this same pair of " +
-                "airports. Leave unset on the legs of an open jaw.",
+                "airports. Leave unset when the visitor flies into one city " +
+                "and home from another — those are two separate one-way legs.",
             },
             cabin: { type: "string" },
           },

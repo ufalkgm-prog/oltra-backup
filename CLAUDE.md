@@ -1007,6 +1007,14 @@ Each `narrowBy` axis reports `covers` out of `of`. Not every axis explains the w
 * **Values matching nothing today are deliberate** — Tyrol, Idaho, Trentino, Malta, Finland, Belgium. They are the boundary as a person draws it, so a future hotel there needs no code change. Verified as genuine absences, not typos. **Do not "clean" them out.**
 * A search that still matches nothing returns `didYouMean`: real values with the parameter each belongs to, matched by bounded Levenshtein — containment alone scores "Tirol" against "Tyrol" at zero, which is the case the feature exists for.
 
+**`area` and `adminRegion` are one geography slot** — each matches *both* columns, OR'd. They are separate fields with separate meanings (§3), but they legitimately hold the same value (Tuscany, Bali, Sicily), and the traveller field is deliberately null for a major city. Matching `area: "Tuscany"` against the traveller column alone returned **2 hotels of the 10 in Tuscany**, dropping every Florence property plus Il Pellicano and Forte dei Marmi, which sit under their own sub-areas. The model cannot know which of two near-identical fields holds the name it wants, and guessing wrong must widen the search rather than gut it. Narrowing a region to what was meant is then the model's job, via `settings` — which is what it does: the same query now searches Tuscany with `Countryside`/`Hillside` and says so.
+
+### Never say aloud the words we use to explain the data
+
+The concierge told a visitor "an open jaw works nicely here". That is airline trade jargon for flying into one city and home from another, and it came **from our own tool description** — `returnDate` said "leave unset on the legs of an open jaw". Vocabulary written to describe a data shape to the model got reused as house voice.
+
+The prompt now carries a general rule, because this class recurs: instructions and tool descriptions name things precisely so the model can act on them, and much of that vocabulary is jargon a guest has never met. Not "open jaw"; not "passive" or "not integrated" (§42) — "we can't book that one here"; never "macroRegion", "setting tags", "candidates", "the tool", or a supplier's name. **If a phrase would look at home in a schema, it does not go in an answer.** When adding a tool description, write it so that a sentence lifted from it verbatim would still sound like a concierge.
+
 ### Dates: never invent one (2026-09-10)
 
 **A question about which hotels we have is not a question about a particular week.** Answering it against a week the model chose prices the wrong stay and hides everything sold out then.
