@@ -128,14 +128,31 @@ function readLatestPresentation(messages: UIMessage[]): {
           : {}),
       };
 
+      // The highlighted set is exactly who the model wrote a line about in
+      // THIS call. Derived here rather than merged from `rationales`, which
+      // accumulates across turns — a line written two answers ago would
+      // otherwise promote a hotel the model did not choose to name now.
+      const highlightIds = (input.rationales ?? [])
+        .map((entry) => entry?.id)
+        .filter((id): id is number => Number.isFinite(id));
+
       const results: Partial<AiResultSet> = {};
       if (input.hotelIds) {
-        results.hotelIds = input.hotelIds.filter((id) => Number.isFinite(id));
+        results.hotelIds = highlightsFirst(
+          input.hotelIds.filter((id) => Number.isFinite(id)),
+          highlightIds
+        );
       }
       if (input.restaurantIds) {
-        results.restaurantIds = input.restaurantIds.filter((id) => Number.isFinite(id));
+        results.restaurantIds = highlightsFirst(
+          input.restaurantIds.filter((id) => Number.isFinite(id)),
+          highlightIds
+        );
       }
-      if (input.rationales) results.rationales = rationales;
+      if (input.rationales) {
+        results.rationales = rationales;
+        results.highlightIds = highlightIds;
+      }
       if (input.flights) {
         // Collapsed here rather than at the frame, so the summary, the cards,
         // the handoff URL and the Flights page's trip type all read the same
@@ -297,6 +314,32 @@ function shortDate(iso: string): string {
 }
 
 
+/** Most the panel will ever read out, however many the model wrote lines for.
+ *
+ * The panel is a spoken answer, not a listing — past eight names it stops being
+ * something anyone takes in, and the page behind is where a set is browsed. A
+ * hard cap here rather than trust in the prompt, because the cost of the model
+ * getting expansive is the one screen the visitor can actually read. */
+const MAX_NAMED = 8;
+
+/** Put the properties the concierge named at the head of the list.
+ *
+ * The panel names a handful and the page behind carries the whole set, so the
+ * two have to agree on order: a visitor who reads five names, closes the panel
+ * and finds them scattered down a list of fifteen has been told something that
+ * turned out not to be true. The model is asked to lead with them anyway, but
+ * asking is not the same as knowing — and this is one line of code.
+ *
+ * Order within each group is preserved: the model's ranking among the named
+ * ones, and its ranking among the rest. */
+function highlightsFirst(ids: number[], highlightIds: number[]): number[] {
+  if (!highlightIds.length) return ids;
+  const named = new Set(highlightIds);
+  const lead = ids.filter((id) => named.has(id));
+  if (!lead.length) return ids;
+  return [...lead, ...ids.filter((id) => !named.has(id))];
+}
+
 /* What the concierge found, in words — the whole point of which is that the
  * cards behind the modal are dimmed and unreadable while it is open.
  *
@@ -305,8 +348,15 @@ function shortDate(iso: string): string {
  * The rationale is the model's. No prices: the summary is deliberately
  * incapable of carrying one. */
 function ResultSummary() {
-  const { results, pageContext } = useAiSearch();
+  const { results, query, pageContext } = useAiSearch();
   const { hotels, restaurants, loading } = useAiResultRecords();
+
+  /* The cards price themselves from the stay, so with no dates there is
+     nothing on them to see. Saying "with prices and availability" regardless
+     sends the visitor to look for figures that are not there — and a question
+     with no dates in it is exactly when the concierge is told not to invent
+     any, so this is the normal case, not an edge one. */
+  const priced = Boolean(query.from && query.to);
 
   const hasAny =
     results.hotelIds.length || results.restaurantIds.length || results.flights.length;
@@ -327,15 +377,39 @@ function ResultSummary() {
     return raw ? stripLeadingName(raw, name ?? "") : "";
   };
 
+  /* Name the shortlist, not the whole result set.
+   *
+   * Above a handful, reciting every card is not a summary — it is the list the
+   * visitor opened the concierge to avoid. So the panel reads out the ones the
+   * model chose to write a line about and counts the remainder, which are a
+   * click away on the cards behind. With no shortlist we are back to the old
+   * behaviour and name everything, which is right for the small sets where the
+   * model gives every pick a line. */
+  const shortlist = <T extends { id: number | string }>(items: T[]): T[] => {
+    if (!results.highlightIds.length) return items.slice(0, MAX_NAMED);
+    const wanted = new Set(results.highlightIds.map(String));
+    const picked = items.filter((item) => wanted.has(String(item.id)));
+    return (picked.length ? picked : items).slice(0, MAX_NAMED);
+  };
+
+  const hotelPicks = shortlist(hotels);
+  const restaurantPicks = shortlist(restaurants);
+  const alsoBehind =
+    hotels.length - hotelPicks.length + (restaurants.length - restaurantPicks.length);
+
   return (
     <div className={styles.summary}>
-      {hotels.length ? (
+      {hotelPicks.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {hotels.length === 1 ? "Hotel" : "Hotels"}
+            {hotels.length === 1
+              ? "Hotel"
+              : hotelPicks.length < hotels.length
+                ? "For example"
+                : "Hotels"}
           </div>
           <ul className={styles.summaryList}>
-            {hotels.map((hotel) => {
+            {hotelPicks.map((hotel) => {
               const why = reason(hotel.id, hotel.hotel_name);
               return (
                 <li key={`h-${hotel.id}`} className={styles.summaryItem}>
@@ -348,13 +422,17 @@ function ResultSummary() {
         </div>
       ) : null}
 
-      {restaurants.length ? (
+      {restaurantPicks.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {restaurants.length === 1 ? "Restaurant" : "Restaurants"}
+            {restaurants.length === 1
+              ? "Restaurant"
+              : restaurantPicks.length < restaurants.length
+                ? "For example"
+                : "Restaurants"}
           </div>
           <ul className={styles.summaryList}>
-            {restaurants.map((restaurant) => {
+            {restaurantPicks.map((restaurant) => {
               const why = reason(restaurant.id, restaurant.restaurant_name);
               return (
                 <li key={`r-${restaurant.id}`} className={styles.summaryItem}>
@@ -403,10 +481,21 @@ function ResultSummary() {
           keeps its own city list rather than the concierge's picks — there is
           nothing behind this panel, and saying otherwise sends the visitor
           looking for cards that are not there. */}
+      {/* When the panel has named only some of them, say where the rest are and
+          that these lead the list — the order is guaranteed by highlightsFirst,
+          so this is a promise the page behind actually keeps. */}
       <p className={styles.summaryFootnote}>
-        {rendersBehind
-          ? "Prices and availability are on the cards behind this panel."
-          : "Prices and availability are on the cards — open them with the link below."}
+        {alsoBehind > 0
+          ? rendersBehind
+            ? `These come first on the page behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}.`
+            : `These come first on the cards, with the other ${alsoBehind} below — open them with the link below.`
+          : priced
+            ? rendersBehind
+              ? "Prices and availability are on the cards behind this panel."
+              : "Prices and availability are on the cards — open them with the link below."
+            : rendersBehind
+              ? "The cards are on the page behind this panel."
+              : "The cards are open with the link below."}
       </p>
     </div>
   );

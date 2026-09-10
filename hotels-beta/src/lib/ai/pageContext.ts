@@ -137,7 +137,16 @@ export function describePageContext(context: AiPageContext | null): string {
   }
 
   if (context.month) facts.push(`exploring ${context.month}`);
-  if (context.from && context.to) facts.push(`for ${context.from} to ${context.to}`);
+  /* Said as form contents, not as the visitor's wish, because that is what they
+     are. These fields carry whatever was last put in them — including dates the
+     concierge itself proposed on an earlier turn, which the results sync writes
+     into the URL and the panel then reads back. Phrased as "for 6-13 March" the
+     model adopted them as a stated intention and priced a beach question in
+     France against a leftover ski week. The prompt tells it to offer these
+     rather than assume them; this wording is what makes that possible. */
+  if (context.from && context.to) {
+    facts.push(`with ${context.from} to ${context.to} filled into the search form`);
+  }
 
   const party: string[] = [];
   if (context.adults) party.push(`${context.adults} adult${context.adults === 1 ? "" : "s"}`);

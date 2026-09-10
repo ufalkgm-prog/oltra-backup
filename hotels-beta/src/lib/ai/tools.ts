@@ -11,11 +11,33 @@ import {
 } from "@/lib/ratehawk/availability";
 import { asUntrustedData } from "./systemPrompt";
 import {
+  BROAD_RESULT_LIMIT,
   MAX_AVAILABILITY_IDS,
   MAX_HOTEL_CANDIDATES,
   MAX_RESTAURANT_CANDIDATES,
 } from "./config";
 import { ACTIVITY_VALUES, SETTING_VALUES, STYLE_VALUES } from "./taxonomy";
+import {
+  MACRO_REGION_NAMES,
+  macroRegionFilter,
+  matchesMacroSetting,
+  resolveMacroRegion,
+} from "./macroRegions";
+
+/** The `region` column's fixed vocabulary — continents, plus the two basins
+ * that are how people actually name those places (CLAUDE.md §3). */
+const REGION_VALUES = [
+  "Africa",
+  "Asia",
+  "Caribbean",
+  "Central America",
+  "Europe",
+  "Middle East",
+  "North America",
+  "Oceania",
+  "South America",
+  "South Pacific",
+] as const;
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -92,6 +114,238 @@ function candidateShape(hotel: HotelRecord) {
   };
 }
 
+/** Levenshtein distance, abandoned once it exceeds `max`.
+ *
+ * Bounded because the only question asked of it is "within two edits?", and
+ * quitting early keeps a full-collection sweep cheap. */
+function editDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+
+  let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    let rowBest = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const value = Math.min(
+        previous[j] + 1,
+        current[j - 1] + 1,
+        previous[j - 1] + cost
+      );
+      current.push(value);
+      if (value < rowBest) rowBest = value;
+    }
+    if (rowBest > max) return max + 1;
+    previous = current;
+  }
+  return previous[b.length];
+}
+
+/** Real geography values closest to what was asked, for a search that matched
+ * nothing.
+ *
+ * Runs only on the zero path, so the extra Directus read costs nothing in the
+ * normal case. Four short columns across the collection is a cheap query, and
+ * it is the difference between the model saying "we have nothing in Tuscany"
+ * and it noticing the value it wanted was spelled differently. */
+async function nearestGeography(terms: string[]) {
+  const simplify = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const rows = await getHotels({
+    fields: ["country", "admin_region", "state_province_county_island", "city"],
+    filter: { published: { _eq: true } },
+    limit: -1,
+  });
+
+  const known = new Map<string, string>();
+  for (const row of rows) {
+    const record = row as unknown as Record<string, string | null>;
+    for (const field of [
+      "country",
+      "admin_region",
+      "state_province_county_island",
+      "city",
+    ]) {
+      const value = (record[field] ?? "").trim();
+      if (value) known.set(`${field}:${value}`, value);
+    }
+  }
+
+  const wanted = terms.map(simplify).filter(Boolean);
+  const scored: { value: string; field: string; score: number }[] = [];
+
+  for (const [key, value] of known) {
+    const field = key.slice(0, key.indexOf(":"));
+    const simple = simplify(value);
+    let best = 0;
+    for (const term of wanted) {
+      if (!term) continue;
+      let score = 0;
+      if (simple === term) score = 100;
+      else if (simple.includes(term) || term.includes(simple)) score = 70;
+      else {
+        // Shared words — "Tyrol" against "South Tyrol", "Como" against
+        // "Lake Como".
+        const words = simple.split(" ");
+        const known = new Set(words);
+        const termWords = term.split(" ");
+        const shared = termWords.filter((word) => known.has(word)).length;
+        if (shared) score = 30 + shared * 10;
+        else {
+          // Near-spellings, which is the case this whole function exists for.
+          // Containment and whole-word overlap both score "Tirol" against
+          // "South Tyrol" at zero — one letter apart, and the single most
+          // likely thing for someone to type. Anything within two edits of a
+          // word we hold counts.
+          let best = 0;
+          for (const termWord of termWords) {
+            if (termWord.length < 4) continue;
+            for (const word of words) {
+              if (word.length < 4) continue;
+              const distance = editDistance(termWord, word, 2);
+              if (distance <= 2) best = Math.max(best, distance === 1 ? 55 : 45);
+            }
+          }
+          score = best;
+        }
+      }
+      if (score > best) best = score;
+    }
+    if (best) scored.push({ value, field, score: best });
+  }
+
+  return scored
+    .sort((a, b) => b.score - a.score || a.value.localeCompare(b.value))
+    .slice(0, 8)
+    .map(({ value, field }) => ({
+      value,
+      field:
+        field === "state_province_county_island"
+          ? "area"
+          : field === "admin_region"
+            ? "adminRegion"
+            : field,
+    }));
+}
+
+/** How many of the tags the visitor asked for this hotel actually carries.
+ *
+ * filterHotelsByTags is an OR within each field (§4), so a hotel matching one
+ * of three requested activities passes the same test as one matching all three.
+ * That is right for inclusion and wrong for ordering: asked for skiing AND a
+ * family, a hotel tagged both should come first. */
+function tagMatchScore(
+  hotel: HotelRecord,
+  requested: { activities: string[]; settings: string[]; styles: string[] }
+): number {
+  const count = (values: string[] | null | undefined, wanted: string[]) => {
+    if (!wanted.length) return 0;
+    const set = new Set(values ?? []);
+    return wanted.filter((v) => set.has(v)).length;
+  };
+  return (
+    count(hotel.activities, requested.activities) +
+    count(hotel.setting, requested.settings) +
+    count(hotel.style, requested.styles)
+  );
+}
+
+/** Order candidates by how well they answer the question, not by how decorated
+ * they are. Relevance first, then editorial rank, then accreditation count as a
+ * last tiebreak only. The incoming array is already sorted by editor_rank and
+ * name, and Array.prototype.sort is stable, so equal scores keep that order. */
+function relevanceSort<T extends HotelRecord>(
+  hotels: T[],
+  requested: { activities: string[]; settings: string[]; styles: string[] }
+): T[] {
+  const asked =
+    requested.activities.length + requested.settings.length + requested.styles.length;
+  if (!asked) return hotels;
+
+  const score = new Map<T, number>();
+  for (const hotel of hotels) score.set(hotel, tagMatchScore(hotel, requested));
+
+  return hotels.slice().sort((a, b) => {
+    const diff = (score.get(b) ?? 0) - (score.get(a) ?? 0);
+    if (diff) return diff;
+    const points = (h: T) => Number((h as unknown as Record<string, unknown>).ext_points ?? 0);
+    return points(b) - points(a);
+  });
+}
+
+/** The axes a broad result set could be cut along, with real counts.
+ *
+ * This is what turns "that is too many, narrow it down" into a question worth
+ * answering — "Switzerland (22), France (12), Austria (4)" gives the visitor
+ * something to point at. Only axes that would actually divide the set are
+ * returned: an axis where everything shares one value narrows nothing, and
+ * offering it wastes the one question we get to ask.
+ *
+ * Tags the visitor already asked for are excluded — re-offering "Skiing" to
+ * someone who asked about skiing is noise. */
+function narrowingAxes(
+  hotels: HotelRecord[],
+  requested: { activities: string[]; settings: string[]; styles: string[] }
+) {
+  const tally = (values: (string | null | undefined)[]) => {
+    const counts = new Map<string, number>();
+    for (const value of values) {
+      const key = (value ?? "").trim();
+      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  };
+
+  type Axis = { covers: number; of: number; values: { value: string; count: number }[] };
+
+  const shape = (counts: Map<string, number>, exclude: string[] = []): Axis | null => {
+    const skip = new Set(exclude);
+    const kept = [...counts.entries()].filter(([value]) => !skip.has(value));
+    // One value covering the whole set is not a choice.
+    if (kept.length < 2) return null;
+    return {
+      // How many of the set this axis actually accounts for. It is not always
+      // all of them: `area` is deliberately null for a major city (§3), so
+      // half of Italy is invisible on it and quoting its counts as if they
+      // were the whole country understates Tuscany by a factor of five.
+      // Saying so lets the model qualify the offer instead of guessing.
+      covers: kept.reduce((sum, [, count]) => sum + count, 0),
+      of: hotels.length,
+      values: kept
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, 8)
+        .map(([value, count]) => ({ value, count })),
+    };
+  };
+
+  const flat = (pick: (h: HotelRecord) => string[] | null | undefined) =>
+    tally(hotels.flatMap((h) => pick(h) ?? []));
+  const field = (key: string) =>
+    tally(hotels.map((h) => (h as unknown as Record<string, string | null>)[key]));
+
+  const axes: Record<string, Axis> = {};
+  const add = (name: string, axis: Axis | null) => {
+    if (axis) axes[name] = axis;
+  };
+
+  add("country", shape(tally(hotels.map((h) => h.country))));
+  // Never null, so this one always partitions the whole set — the axis to
+  // prefer when `area` covers only part of it.
+  add("adminRegion", shape(field("admin_region")));
+  add("area", shape(field("state_province_county_island")));
+  add("style", shape(flat((h) => h.style), requested.styles));
+  add("activities", shape(flat((h) => h.activities), requested.activities));
+
+  return axes;
+}
+
 /* ------------------------------------------------------------------------- */
 
 const searchHotels = tool({
@@ -101,11 +355,24 @@ const searchHotels = tool({
     "yourself. Never returns a price. Use the broadest " +
     "geography that fits, then narrow — city is often too tight, and `area` " +
     "(Lake Como, Amalfi Coast, Engadin) is usually what a traveller means.\n\n" +
-    "PASS `stay` WHENEVER YOU KNOW THE DATES. It costs nothing extra and " +
-    "returns each candidate's availability and price rank with the results, " +
-    "so you do not need checkAvailability afterwards — that second call is a " +
-    "whole extra round trip and it is the slowest part of an answer.",
+    "For anything spanning areas or borders — the Alps, the Caribbean, the " +
+    "Mediterranean, Scandinavia — use `macroRegion`, whose enum lists every " +
+    "one supported. `country`/`area` hold single exact values and will not " +
+    "match those names.\n\n" +
+    "PASS `stay` WHENEVER THE VISITOR HAS TOLD YOU THE DATES — it costs " +
+    "nothing extra and returns availability and price rank with the results, " +
+    "so you do not need checkAvailability afterwards. But only then: dates " +
+    "you picked yourself, or left over in the page's search form, narrow the " +
+    "answer to a week nobody asked about.\n\n" +
+    "Tags within a field are OR'd, not AND'd, so extra tags WIDEN the search. " +
+    "Ask for the tags that genuinely matter and let the ranking do the rest — " +
+    "results come back ordered by how many of your tags each one carries.\n\n" +
+    "If the result is too broad to recommend you get counts and narrowing " +
+    "options back instead of properties, with `tooBroadToShow: true`. That is " +
+    "not an error and not an empty result: it means ask, then search again.",
   inputSchema: jsonSchema<{
+    macroRegion?: string;
+    region?: string;
     country?: string;
     adminRegion?: string;
     area?: string;
@@ -114,6 +381,7 @@ const searchHotels = tool({
     styles?: string[];
     activities?: string[];
     limit?: number;
+    showAll?: boolean;
     stay?: {
       checkIn: string;
       checkOut: string;
@@ -127,6 +395,23 @@ const searchHotels = tool({
   }>({
     type: "object",
     properties: {
+      // Geography a traveller names that no column holds. Enumerated for the
+      // same reason the taxonomy tags are: a term outside the list matches
+      // nothing, and the model reaching for a plausible one ("Alps") cost a
+      // wasted round trip every time.
+      macroRegion: {
+        type: "string",
+        enum: [...MACRO_REGION_NAMES],
+        description:
+          "A region spanning areas or borders — use this for the Alps, the " +
+          "Caribbean, Scandinavia and the like, INSTEAD of country/area. " +
+          "Combines with settings/styles/activities as usual.",
+      },
+      region: {
+        type: "string",
+        enum: [...REGION_VALUES],
+        description: "Continent-level scope. Broader than country.",
+      },
       country: { type: "string", description: "Exact country name, e.g. Italy." },
       adminRegion: {
         type: "string",
@@ -145,7 +430,14 @@ const searchHotels = tool({
       settings: {
         type: "array",
         items: { type: "string", enum: [...SETTING_VALUES] },
-        description: "Setting tags. Use only these exact values.",
+        description:
+          "Setting tags. Use only these exact values.\n" +
+          "The water-facing ones — Beachfront, Beach, Seaside, Coastal, " +
+          "Oceanfront, Waterfront, Clifftop — are not applied consistently " +
+          "across the collection: the whole Côte d'Azur is tagged Waterfront " +
+          "or Coastal and none of it Beachfront. For anything by the sea pass " +
+          "the whole family, not the one word the visitor used, or you will " +
+          "miss most of what we hold. They are OR'd, so this widens correctly.",
       },
       styles: {
         type: "array",
@@ -158,11 +450,20 @@ const searchHotels = tool({
         description: "Purpose tags. Use only these exact values.",
       },
       limit: { type: "number" },
+      showAll: {
+        type: "boolean",
+        description:
+          "Only when the visitor has been told the set is large and has asked " +
+          "to see it anyway. Returns the properties instead of counts.",
+      },
       stay: {
         type: "object",
         description:
-          "The dates and party, if known. Supply it and the results come " +
-          "back with availability and price rank already attached.",
+          "The dates and party — ONLY when the visitor has said when they are " +
+          "going. Supply it and the results come back with availability and " +
+          "price rank attached. Omit it when they gave no timing: dates you " +
+          "chose yourself filter the results against a week nobody asked " +
+          "about, and hide everything sold out that week.",
         properties: {
           checkIn: { type: "string", description: "yyyy-mm-dd" },
           checkOut: { type: "string", description: "yyyy-mm-dd" },
@@ -186,26 +487,95 @@ const searchHotels = tool({
   }),
   async execute(input) {
     const and: Record<string, unknown>[] = [{ published: { _eq: true } }];
-    if (input.country) and.push({ country: { _eq: input.country } });
-    if (input.adminRegion) and.push({ admin_region: { _eq: input.adminRegion } });
-    if (input.area) and.push({ state_province_county_island: { _eq: input.area } });
-    if (input.city) and.push({ city: { _eq: input.city } });
+
+    // A macro-region may arrive in its own parameter or, because the model
+    // does not always reach for a new parameter, inside one of the ordinary
+    // geography fields. Accept it either way: "Alps" in `area` used to match
+    // nothing and cost a retry.
+    const macro =
+      resolveMacroRegion(input.macroRegion) ??
+      resolveMacroRegion(input.area) ??
+      resolveMacroRegion(input.adminRegion) ??
+      resolveMacroRegion(input.country) ??
+      resolveMacroRegion(input.city);
+
+    if (macro) and.push(macroRegionFilter(macro));
+
+    // A field whose value WAS the macro-region must not also be applied
+    // literally — "Alps" as both a macro-region and an exact area match is a
+    // guaranteed zero.
+    const literal = (value: string | undefined) =>
+      value && !resolveMacroRegion(value) ? value : undefined;
+
+    const country = literal(input.country);
+    const adminRegion = literal(input.adminRegion);
+    const area = literal(input.area);
+    const city = literal(input.city);
+
+    if (input.region) and.push({ region: { _eq: input.region } });
+    if (country) and.push({ country: { _eq: country } });
+    if (adminRegion) and.push({ admin_region: { _eq: adminRegion } });
+    if (area) and.push({ state_province_county_island: { _eq: area } });
+    if (city) and.push({ city: { _eq: city } });
 
     const rows = await getHotels({
       fields: CANDIDATE_FIELDS as unknown as string[],
       filter: and.length === 1 ? and[0] : { _and: and },
-      sort: ["-ext_points", "-editor_rank", "hotel_name"],
+      // Editorial rank first, name second. ext_points is deliberately NOT here:
+      // it is a count of external accreditations, and sorting by it made the
+      // candidate list a trophy cabinet rather than an answer to the question
+      // asked. It survives only as the last tiebreak in relevanceSort below,
+      // and as `awards` labels the model may cite when accreditation is what
+      // the visitor actually asked about.
+      sort: ["-editor_rank", "hotel_name"],
       limit: -1,
     });
 
     // setting/style/activities are native Postgres text[] columns that Directus
     // cannot filter (CLAUDE.md §4), so this narrowing runs in JS — exactly as
     // the Hotels page does it.
-    const narrowed = filterHotelsByTags(rows, {
+    const requested = {
       activities: input.activities ?? [],
       settings: input.settings ?? [],
       styles: input.styles ?? [],
-    });
+    };
+    // The macro-region's own setting requirement is a separate AND pass, not
+    // merged into `requested.settings` — filterHotelsByTags ORs within a field,
+    // so folding "Mountains" in beside a visitor's own setting would widen the
+    // search instead of narrowing it.
+    const inRegion = macro ? rows.filter((h) => matchesMacroSetting(h, macro)) : rows;
+    const narrowed = relevanceSort(filterHotelsByTags(inRegion, requested), requested);
+
+    // Nothing matched, and geography was part of the ask. A bare zero is the
+    // least useful thing we can say: the model cannot tell "we have none there"
+    // from "that is not a name this database knows", so it either retries blind
+    // or tells the visitor we have nothing. Hand back the real values closest
+    // to what was asked instead, and let it correct in the same breath.
+    if (!narrowed.length) {
+      const asked = [input.macroRegion, country, adminRegion, area, city].filter(
+        (v): v is string => Boolean(v)
+      );
+      if (asked.length) {
+        const didYouMean = await nearestGeography(asked);
+        return asUntrustedData("myoltra-hotels", {
+          matched: 0,
+          searchedFor: asked,
+          didYouMean,
+          guidance: didYouMean.length
+            ? "No hotels matched that geography. Each entry in didYouMean is a " +
+              "real value and the parameter it belongs to, closest first. " +
+              "Search again using one of them EXACTLY — value and field " +
+              "together. Do not try another spelling of your own: this list " +
+              "is the collection's actual contents and a guess is another " +
+              "empty result."
+            : "No hotels matched that geography, and nothing in the " +
+              "collection is close to that name. Widen the search yourself — " +
+              "the surrounding country or macroRegion — rather than telling " +
+              "them we have nothing, and say plainly that the place they " +
+              "named is not one we cover.",
+        });
+      }
+    }
 
     const capped = narrowed.slice(
       0,
@@ -217,17 +587,40 @@ const searchHotels = tool({
     // Availability in the same round trip when the dates are known. The model
     // asked for these two things back to back every single time, and the
     // second ask cost more than the supplier call it triggered.
-    if (input.stay?.checkIn && input.stay?.checkOut) {
-      const ranked = await rankAvailability({
-        ...input.stay,
-        ids: shaped.map((h) => h.id),
-      });
+    const ranked = input.stay?.checkIn && input.stay?.checkOut
+      ? await rankAvailability({ ...input.stay, ids: shaped.map((h) => h.id) })
+      : null;
+
+    // What the visitor would actually end up looking at: the properties that
+    // can be booked for their dates, or every match when no dates are known.
+    // `ranked` is either a rejection (a past check-in, say) or a hotel list —
+    // a rejection has no count to report, and must not read as "none available".
+    const rankedHotels =
+      ranked && "hotels" in ranked && Array.isArray(ranked.hotels) ? ranked.hotels : null;
+    const availableCount = rankedHotels
+      ? rankedHotels.filter((h) => "available" in h && h.available).length
+      : null;
+    const facing = availableCount ?? narrowed.length;
+
+    // Too many to recommend: hand back counts and the axes that would cut it
+    // down, and no properties at all. The model has nothing to present, so it
+    // asks — which is the behaviour we want and could not get from the prompt
+    // alone. `showAll` is the way back out for a visitor who wants the lot.
+    if (facing > BROAD_RESULT_LIMIT && !input.showAll) {
       return asUntrustedData("myoltra-hotels", {
+        tooBroadToShow: true,
         matched: narrowed.length,
-        returned: shaped.length,
-        truncated: narrowed.length > shaped.length,
-        hotels: shaped,
-        availability: ranked,
+        availableForTheseDates: availableCount,
+        narrowBy: narrowingAxes(narrowed, requested),
+        guidance:
+          `${facing} properties is a directory, not a recommendation. Do NOT ` +
+          `call presentResults. Tell the visitor the counts above, say what ` +
+          `they have in common, and ask for ONE thing that would cut it down ` +
+          `— use narrowBy for concrete options with real counts. Each axis ` +
+          `reports "covers" out of "of": where those differ the axis explains ` +
+          `only part of the set, so do not present its values as the full ` +
+          `picture. Call this tool again with their answer, or with ` +
+          `showAll: true if they ask to see everything regardless.`,
       });
     }
 
@@ -236,6 +629,7 @@ const searchHotels = tool({
       returned: shaped.length,
       truncated: narrowed.length > shaped.length,
       hotels: shaped,
+      ...(ranked ? { availability: ranked } : {}),
     });
   },
 });
@@ -651,7 +1045,11 @@ const presentResults = tool({
       hotelIds: {
         type: "array",
         items: { type: "number" },
-        description: "Directus ids, best first.",
+        description:
+          "EVERY hotel that genuinely fits, best first — not just the ones " +
+          "you name. These become the cards the visitor browses, so a fitting " +
+          "property left out here is one they never see. Give rationales for " +
+          "the few you want to highlight; the rest still get a card.",
       },
       // Restaurant ids get their own frame beside the hotels and flights.
       // Only ids that came back from searchRestaurants — a restaurant we do
@@ -662,10 +1060,16 @@ const presentResults = tool({
         items: { type: "number" },
         description: "Directus restaurant ids from searchRestaurants, best first.",
       },
-      // FILL THIS IN FOR EVERY PICK. The concierge opens over a dimmed page,
-      // so the cards are not visible while the visitor is reading you — these
-      // lines are the whole summary of what you found. One clause each,
-      // naming the property and why it fits. Never a price or an
+      // THE HIGHLIGHTS, AND THE ONLY PROPERTIES NAMED IN THE PANEL. The
+      // concierge opens over a dimmed page, so the cards are not visible while
+      // the visitor is reading — whatever you put here is the answer they see,
+      // and the rest of hotelIds waits on the cards behind.
+      //
+      // Five to eight is the useful range, and eight is a hard ceiling — the
+      // panel will not read out more than that however many you send. All of
+      // them when the set is that small; a sample when it is larger. Put the
+      // ones you name FIRST in hotelIds, in this order: they lead the page
+      // behind, and the panel tells the visitor so. Never a price or an
       // availability claim; the cards carry those.
       rationales: {
         type: "array",

@@ -120,6 +120,14 @@ export function useAiResultRecords(): Records & { loading: boolean } {
 
     let cancelled = false;
     setLoading(true);
+    // Drop the previous answer's records before fetching the new ones.
+    // Without this they stay on screen for the length of the fetch, and the
+    // panel reads out the last answer's hotels under this answer's framing —
+    // "All 67 across Italy" over a list of Alpine ski hotels. The rationales
+    // are keyed by id, so the stale names even kept their old reasons and the
+    // whole thing looked deliberate. An honest "Gathering those…" is better
+    // than a confident wrong answer.
+    setRecords(EMPTY);
     load(key, results.hotelIds, results.restaurantIds).then((next) => {
       if (cancelled) return;
       setRecords(next);

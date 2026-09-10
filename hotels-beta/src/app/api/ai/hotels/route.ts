@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getItems } from "@/lib/directus";
+import { MAX_HOTEL_CANDIDATES } from "@/lib/ai/config";
 import type { AiHotelCard } from "@/lib/ai/types";
 
 /* Card data for the AI results region.
@@ -36,7 +37,14 @@ const CARD_FIELDS = [
   "booking_hotel_ref",
 ];
 
-const MAX_IDS = 40;
+/* Must not sit below MAX_HOTEL_CANDIDATES: the model can now present every
+ * hotel that matched, and anything this route trims is a card the visitor was
+ * told about and never sees. It was its own literal 40 while the search tool
+ * also capped at 40, so the two agreed by coincidence rather than by
+ * construction — when the tool cap rose, this silently truncated a 67-hotel
+ * answer to 40 with nothing in the UI to say so. Shared now, so they cannot
+ * drift apart again. */
+const MAX_IDS = MAX_HOTEL_CANDIDATES;
 
 export async function POST(request: Request) {
   try {

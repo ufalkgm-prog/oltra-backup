@@ -235,6 +235,10 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
           rationales: results.rationales
             ? { ...prev.results.rationales, ...results.rationales }
             : prev.results.rationales,
+          // Replaced, not merged, unlike the rationales it is derived from:
+          // this is "who did the model name in this answer", and accumulating
+          // it across turns would keep reading out last turn's shortlist.
+          highlightIds: results.highlightIds ?? prev.results.highlightIds,
           flights: results.flights ?? prev.results.flights,
         },
         query: {

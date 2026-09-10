@@ -45,12 +45,39 @@ export const MAX_TOOL_STEPS = 8;
  * if it tries. */
 export const MAX_WEB_SEARCHES = 3;
 
-/** Hotels handed to the model in one candidate set. Enough for a real choice,
- * small enough to keep the context (and the re-rank) tight. */
-export const MAX_HOTEL_CANDIDATES = 40;
+/** Hotels handed to the model in one candidate set.
+ *
+ * This is a context ceiling, not an editorial one. It used to be 40, which was
+ * doing real damage: a family-ski search matched 53, and the 13 it silently cut
+ * were ranked purely by `ext_points` — an awards score, orthogonal to what was
+ * asked. Eight of the thirteen carried the "Family" tag, so the cut removed the
+ * family-strongest candidates (Suvretta House, Les Fermes de Marie, Rosewood
+ * Courchevel) before the model ever saw them, and it presented four trophy
+ * hotels from what was left.
+ *
+ * Narrowing is the concierge's job, not the tool's — so the tool now returns
+ * everything that matched and lets the model choose. See BROAD_RESULT_LIMIT for
+ * what happens when "everything" is too much to choose from. */
+export const MAX_HOTEL_CANDIDATES = 120;
 
-/** Ratehawk caps a batch at 300 hids (§32); we stay far below it. */
-export const MAX_AVAILABILITY_IDS = 40;
+/** Above this many candidates, the concierge asks before it shows.
+ *
+ * A set this large is not an answer, it is a list — the visitor asked for a
+ * recommendation and got a directory. So searchHotels stops returning the
+ * properties at this point and returns counts and narrowing axes instead: the
+ * model cannot present a set it was not given, which makes "ask before showing
+ * a broad set" structural rather than a line in the prompt that testing showed
+ * gets skipped.
+ *
+ * Counted on what the visitor would actually see: available properties when the
+ * dates are known, matches otherwise. `showAll` overrides it, for the visitor
+ * who answers "just show me all of them". */
+export const BROAD_RESULT_LIMIT = 20;
+
+/** Ratehawk caps a batch at 300 hids (§32); we stay well below it. Matches
+ * MAX_HOTEL_CANDIDATES so the availability count the model quotes covers every
+ * candidate it was told about, rather than the first 40 of them. */
+export const MAX_AVAILABILITY_IDS = 120;
 
 /** Restaurants handed to the model in one candidate set. Smaller than the
  * hotel cap: a city's list is short editorial copy, and the answer is a

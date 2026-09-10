@@ -116,6 +116,16 @@ export type AiResultSet = {
   restaurantIds: number[];
   /** id -> one-line editorial rationale. Never a price. */
   rationales: Record<string, string>;
+  /** The subset of `hotelIds`/`restaurantIds` the model chose to name, in its
+   * own order.
+   *
+   * `hotelIds` is everything that fits and becomes the cards; this is the
+   * shortlist the panel reads out. They are the same list when the result set
+   * is small, and they diverge when it is not — fifteen hotels are worth
+   * browsing but not worth reciting, so the panel names the best few and says
+   * how many more are behind it. Empty means "name them all", which is what an
+   * answer with no rationales at all should still do. */
+  highlightIds: number[];
   /** One entry per journey the answer covers, in travel order.
    *
    * An array rather than a single search because a real trip is not always a
@@ -140,6 +150,7 @@ export const EMPTY_RESULT_SET: AiResultSet = {
   hotelIds: [],
   restaurantIds: [],
   rationales: {},
+  highlightIds: [],
   flights: [],
 };
 
