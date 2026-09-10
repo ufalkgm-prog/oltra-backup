@@ -945,7 +945,7 @@ Moved to `CLAUDE-ARCHIVE.md` — completed work. Read it there if this task touc
 
 ### Status
 
-Branch `ai-chat`, pushed; PR #7 open. `main` has none of it. Head moves with every round — read it from git, not from here.
+Branch `ai-chat`; PR #7 open. `main` has none of it. Head moves with every round — read it from git, not from here, and **local commits may be ahead of the pushed branch**: the 2026-09-10 work was committed and not pushed.
 
 Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on production invisibly. The flag gates the route, the modal and the entry button. It was first built as a *mode* on the landing page behind a Classic/AI toggle; `5622166` made it a modal the whole site can open, and **everything below describes the current design**. `90bef47` (header greeting) and `58dc6eb` (beta-login hang) are **not** part of the feature — separate commits so they can be cherry-picked to `main`.
 
@@ -974,6 +974,61 @@ Tools, all read-only: `searchHotels`, `getHotelDetails`, `checkAvailability`, `s
 **A tool parameter whose valid values are a closed set should be an `enum`, not a described string.** Live testing had the model inventing plausible taxonomy tags — "quiet", "secluded", "wellness" — matching nothing and spending two extra round trips recovering, silently, on every query. `lib/ai/taxonomy.ts` mirrors the locked §44 vocabularies as JSON Schema enums. Safe to hardcode because those fields are `allowOther: false`; refresh from `GET /fields/hotels/{field}` if they move, since a stale entry silently matches nothing.
 
 `searchRestaurants` searches one city, built on `getRestaurantsByCity` so the concierge sees exactly what the Restaurants page would, alias fallback included. Cuisine and type narrow in JS, because a Directus `_eq` would miss "Modern French" for "French". An empty result distinguishes **"we do not cover this city"** from **"nothing matched those filters"**, because only the first should send the visitor elsewhere. Restaurants follow the **same in-inventory rule hotels have**: never name one that did not come back from the tool, however well known.
+
+### Ranking: fit, not decoration (2026-09-10)
+
+**`ext_points` must never order a candidate list.** It counts external accreditations, which is orthogonal to what was asked, and sorting by it turned every answer into a trophy cabinet. Asked for a family ski trip, the tool matched 53, cut to 40 by awards rank, and the 13 it dropped were the least decorated — eight of them carrying the `Family` tag, including Suvretta House, Les Fermes de Marie and Rosewood Courchevel. The model then picked four grand hotels from what survived, having never seen the family-strongest.
+
+Order is now **tag-match count → `editor_rank` → `ext_points` as a last tiebreak only**, in `relevanceSort`. `filterHotelsByTags` ORs within a field (§4), so a hotel matching one of three requested tags passes the same test as one matching all three: right for inclusion, wrong for ordering.
+
+Awards survive only as `awards` labels on each candidate, and the prompt says they are not a ranking — name them **only when the visitor asks about accreditation itself** ("which are Michelin-starred", "the Forbes five-star ones"), or in passing when an award is the reason a hotel fits a stated need. The model is never given the `ext_points` number.
+
+### Caps, and the broad-set gate
+
+| Constant | Value | Why |
+|---|---|---|
+| `MAX_HOTEL_CANDIDATES` | 120 | Context ceiling, not an editorial one. Narrowing is the concierge's job. |
+| `BROAD_RESULT_LIMIT` | 20 | Above this, ask before showing |
+| `MAX_AVAILABILITY_IDS` | 120 | Matches the candidate cap so the availability count covers every candidate |
+
+**`/api/ai/hotels` imports `MAX_HOTEL_CANDIDATES` and must never sit below it.** It held its own literal `40`, which agreed with the old tool cap by coincidence rather than construction — so raising the tool cap silently truncated a 67-hotel answer to 40 cards, with nothing in the UI to say so.
+
+**Above `BROAD_RESULT_LIMIT`, `searchHotels` returns counts and `narrowBy` axes INSTEAD of properties**, with `tooBroadToShow: true`. The model cannot present a set it was not given, so "ask before showing a directory" is structural rather than a prompt line — and §50's own testing shows prompt-only rules of this shape get skipped. Counted on what the visitor would see: available properties when dates are known, matches otherwise. `showAll: true` is the escape hatch, and it is **required** — without it "just show me all of them" loops forever.
+
+Each `narrowBy` axis reports `covers` out of `of`. Not every axis explains the whole set: `state_province_county_island` is null for a major city (§3), so it described half of Italy and read Tuscany as 2 where 10 hotels sit. `admin_region` is never null and is the axis to prefer.
+
+### Colloquial geography — `lib/ai/macroRegions.ts`
+
+"The Alps", "the Caribbean", "Scandinavia" are how people describe where they want to go and **none is a value in any column**. `area: "Alps"` matched nothing, cost a wasted round trip every time, and the blind retry searched the world — returning Colorado and Alberta for an Alpine question.
+
+18 terms, exposed as a `macroRegion` **enum** (the §44 lesson: a closed set is an enum, not a described string). `region` — the continent column, which already holds "Caribbean" and "South Pacific" — is exposed too, and had never been reachable. A macro term is also resolved out of `country`/`area`/`adminRegion`/`city`, because the model does not always reach for a new parameter.
+
+* **Mountain ranges intersect with a `setting` tag.** Administrative regions alone put Munich, Lausanne and Vevey in the Alps; requiring `Mountains` strips exactly those and keeps every real one.
+* **Values matching nothing today are deliberate** — Tyrol, Idaho, Trentino, Malta, Finland, Belgium. They are the boundary as a person draws it, so a future hotel there needs no code change. Verified as genuine absences, not typos. **Do not "clean" them out.**
+* A search that still matches nothing returns `didYouMean`: real values with the parameter each belongs to, matched by bounded Levenshtein — containment alone scores "Tirol" against "Tyrol" at zero, which is the case the feature exists for.
+
+### Dates: never invent one (2026-09-10)
+
+**A question about which hotels we have is not a question about a particular week.** Answering it against a week the model chose prices the wrong stay and hides everything sold out then.
+
+No timing given — no dates, month, season — means **omit `stay`** from `searchHotels` and `presentResults`. Cards render without prices, which is the honest answer, and the follow-up asks when. Asked about price with no dates: ask for timing, do not guess a week to produce a figure.
+
+**Dates in the page's search form are an offer, not an assumption.** They may be dates the concierge itself proposed earlier: `AiResultsSync` writes an answer's dates into the URL (§8), `LandingSearchPanel` reads them back and republishes them as page context, and the model then treats its own guess as the visitor's stated wish. A leftover ski week priced a beach question in France. `pageContext` now says "filled into the search form" rather than "for", so the model can tell form contents from intent.
+
+### What the panel says, and what the page shows
+
+`hotelIds` is **every** property that fits and becomes the cards; `rationales` is the **five to eight** the panel names. They are the same list only when the set is small.
+
+* **The count in the framing is `hotelIds.length`** — not how many matched, not how many are free. Three numbers are in play and only one is the answer; say two only when both matter ("Ten of the thirty-nine have rooms that week").
+* **Named properties lead the card order.** `highlightsFirst` reorders `hotelIds` before it reaches the store, so the footnote's promise — "these come first on the page behind, with the other N below" — is one the page keeps.
+* `MAX_NAMED = 8` is a hard UI cap, independent of how many rationales arrive.
+* The footnote claims prices **only when a stay was passed**; without one the cards are blank.
+
+### Water-proximity tags are inconsistent — §42B
+
+`Beachfront`, `Beach`, `Seaside`, `Coastal`, `Oceanfront`, `Waterfront`, `Clifftop` are not applied consistently, and the §42B reclassification has never run. The whole Côte d'Azur is `Waterfront` or `Coastal` and **none of it `Beachfront`**, so "beachfront hotels in France" returned 3 — Deauville, La Baule, Biarritz — and missed Hôtel du Cap Eden-Roc, Cheval Blanc Saint-Tropez and the rest.
+
+The `settings` parameter description tells the model to pass the whole family for anything by the sea, which took that answer from 3 to 17. **That is a patch over the data, not a fix.** §42B is still the real answer.
 
 ### The system prompt
 

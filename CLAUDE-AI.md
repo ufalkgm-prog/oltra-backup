@@ -123,3 +123,46 @@ Trips start from the member's home airport. The column has existed since the mem
 
 The concierge gets the code in its page context (sanitised as IATA) and the prompt tells it to assume it, say so in one clause, and ask when there is none.
 
+
+### The 2026-09-10 session — five silent failures
+
+Every one of these passed `tsc`, lint and a build, and four were invisible on screen. The session began with a question about an *answer*, not an error: four hotels for a family ski trip, where most of the Alps roster fits.
+
+**The narrowing was accidental, and it was three separate cuts.** 853 published → 53 by tag filter → 40 by `MAX_HOTEL_CANDIDATES` → 4 by the model. The middle cut was the damaging one: sorted by `-ext_points`, it removed the 13 least-decorated, of which 8 carried `Family`. The user's own hypothesis — that `activities: ["Skiing","Family"]` had over-filtered — was wrong; tags OR within a field, so `Family` *widened* it. **Read `filterHotelsByTags` before believing a filter narrowed something.**
+
+**A second cap nobody remembered.** `/api/ai/hotels` declared its own `MAX_IDS = 40`. It matched the tool's cap by coincidence, so raising one truncated a 67-hotel answer to 40 cards with no error, no warning, and a framing line confidently saying "All 67". Two constants that must agree, agreeing by luck, is the same shape as `CARD_LIMIT` in §33.
+
+**The panel rendered the previous answer under the new framing.** `useAiResultRecords` kept `records` while a new id list loaded, and the "Gathering those…" guard only fires when `hotels.length` is 0 — which it wasn't, because the stale set was still there. So "All 67 Italian properties" appeared over a list of Alpine ski hotels, with their old rationales still attached, looking entirely deliberate. Rationales are keyed by id, which is what made it convincing. Now `setRecords(EMPTY)` before the fetch.
+
+**Three numbers, and the model quoted whichever it liked.** One run said "Thirty-nine Alpine properties" while passing 20 ids of which 10 were bookable. An earlier run had got it right by luck. The prompt had never said which number goes in the framing — it said to name the picks and to state a total, without connecting either to `hotelIds.length`.
+
+**`didYouMean` returned empty for the exact case it exists for.** The scorer did exact match, containment and whole-word overlap; "Tirol" against "South Tyrol" scores zero on all three, one letter apart. Bounded Levenshtein added. The model recovered anyway by guessing `country: "Austria"` — **a feature can fail completely while the answer still looks fine**, which is why the store, not the screenshot, is the evidence.
+
+**And one introduced mid-session:** removing invented dates left the footnote still promising "all with prices and availability" when no `stay` is passed and the cards render blank. Caught by reading the store after the fix, not before.
+
+### Reading the store is the whole technique
+
+`JSON.parse(sessionStorage.getItem("oltra_ai_concierge_v1"))` distinguishes, every time, between "the model chose differently" and "the code dropped it" — which look identical on screen. In this session it produced:
+
+* `matched: 53, returned: 40, truncated: true` — proving the cap, not the filter, was the cut.
+* `{"macroRegion":"The Alps", …} matched=39` in **one** call where there had been two.
+* `tooBroadToShow: true, matched: 67, availableForTheseDates: 30` with `narrowBy` counts that then matched Directus exactly — proving the model quoted the tool rather than inventing plausible numbers.
+* `stay=undefined` on turn one and `2027-07-01` on turn two, proving the date rule held while stale dates sat in the form.
+
+**Verify counts against Directus, not against plausibility.** Every figure the model quoted was checked with a throwaway script: Italy 67, Amalfi Coast 6, Lake Como 5 — all exact. That check is what would have caught an invented number, and it is cheap.
+
+### The date feedback loop
+
+Worth understanding because it makes a guess look like consent. `AiResultsSync` writes the answer's dates into the URL; `LandingSearchPanel` reads its controls into page context; page context is a **system block**, the highest-trust position in the request. So a date the concierge invented on turn one arrives on turn three indistinguishable from something the visitor typed — and the prompt's "say which dates you used" made it *sound* deliberate.
+
+The fix is wording, not plumbing: page context says "filled into the search form" rather than "for", and the prompt treats form dates as an offer. The loop itself is intentional (§8, URL-driven state) and was not changed.
+
+### Macro-regions were built from the data, not from memory
+
+Every value in `macroRegions.ts` was validated against the live collection before shipping: all 18 resolve non-empty, and the Mediterranean was checked not to contain Paris. The checks that shaped the design:
+
+* Alpine admin regions alone return Munich, Lausanne and Vevey; `+ Mountains` returns exactly the right 44 (Savoie 12/12, Graubünden 6/6, Valais 5/5).
+* The Mediterranean by country would file Paris and Biarritz as Mediterranean, and Spain would bring in the Atlantic Canaries — so it is admin-regions for the big countries, whole-country only for Greece, Cyprus, Malta, Monaco and Montenegro. Resolves to 129, zero of them Île-de-France.
+* 17 values match nothing today and are kept deliberately. Austria's admin regions here are Vorarlberg, Vienna and Salzburg — so "Tyrol" is a real absence, not a typo, and the USA's contain no Idaho.
+
+Re-run that validation after any roster expansion: a macro-region silently narrowing is exactly the §26 country-map failure in a new place.
