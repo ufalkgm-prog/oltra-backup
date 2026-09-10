@@ -22,6 +22,8 @@ pass, a geography change, a taxonomy edit, or anything under `src/lib/ai`. Not
 being in context does not make it optional; it makes it something you have to
 go and get. The traps recorded there cost real sessions to find.
 
+**Claude's own memory is a fourth store, and it lives outside the repo** — `C:\Users\ufalk\.claude\projects\C--Users-ufalk-dev-oltra-beta\memory\`, on one machine, not in git. `claude-memory/` is a backup copy of it with a README covering restore and re-sync. It is a copy, so it drifts: **after a session that changes how Claude should work, re-sync it**, or the backup quietly becomes a way to restore a superseded instruction.
+
 **When you add to this file, check the size.** `node -e "console.log(require('fs').readFileSync('CLAUDE.md','utf8').length)"` — characters, not bytes; `wc -c` overstates it because of the accented characters. Past ~140k, move a closed section out rather than compressing a live one.
 
 ---

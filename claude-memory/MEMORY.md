@@ -1,0 +1,8 @@
+- [RateHawk/ETG integration status](project_ratehawk_integration.md) — matching/images/availability done, certification-prep landed 2026-08-10 (CLAUDE.md §26-32); booking still blocked pending ETG
+- [Project context is three files](feedback_claude_md_source_of_truth.md) — CLAUDE.md (auto-loaded, 150k cap), CLAUDE-ARCHIVE.md, CLAUDE-AI.md; check size in chars before adding
+- [Diagnose live before fixing](feedback_diagnose_before_fixing.md) — verify assumed API/data shapes with a throwaway script first, flag doc/code contradictions instead of silently resolving (data only — not UI)
+- [Never act unprompted: UI tests, commits, pushes](project_no_unsolicited_ui_testing.md) — don't drive the browser to check a UI change, and don't commit/push, unless asked; main takes direct pushes, no PR or branch (CLAUDE.md §14)
+- [2026-08-11 UI fix session](project_ui_fix_session_2026-08-11.md) — pointer only; rollback map is in CLAUDE.md §33 (commits c507f57, 799e614)
+- [Don't ask at every step](feedback_dont_ask_at_every_step.md) — carry a task through its implied follow-through steps; ask only when the answer changes what gets built
+- [Data staging lives in oltra-agents](project_oltra_agents_split.md) — new hotel/restaurant content is generated and staged there, not in oltra-beta (CLAUDE.md §41)
+- [Verify manual steps yourself](feedback_verify_manual_steps.md) — a "done, I ran it" report is a starting point for verification, not proof
