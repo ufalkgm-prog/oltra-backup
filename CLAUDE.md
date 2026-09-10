@@ -728,28 +728,50 @@ A passive hotel shows **"Check availability on website"** linked to `www` (delib
 
 ---
 
-## 42B. OUTSTANDING — WATER-PROXIMITY SETTING RECLASSIFICATION (logged 2026-08-16, not started)
+## 42B. WATER-PROXIMITY SETTING RECLASSIFICATION (redefined and started 2026-09-10)
 
-Agreed as a content clean-up, deliberately **not run**. Ulrik's definitions:
+**These definitions replace the ones agreed 2026-08-16, and one pair is inverted — read the table, do not go from memory.**
 
 | Value | Means |
 |---|---|
-| `Beachfront` | Truly on the beach, or first row to it |
-| `Beach` | Walking distance to a beach, with beach/water views |
-| `Seaside` | Like Beachfront but **no direct beach access** — includes city hotels by the ocean |
-| `Coastal` | No beach, sea view, **not** walking distance from the coast |
-| `Lakeside` | Seaside, but a lake |
-| `Canalside` | City hotels on canals that aren't rivers |
-| `Riverside` | On or very close to a river |
-| `Oceanfront`, `Waterfront` | **To be retired** — reclassified into the above |
+| `Beachfront` | On an actual sandy beach, **nothing between** the hotel and the sand |
+| `Beach` | Overlooking the beach with a **road or small obstruction** between — under 5 minutes' walk |
+| `Oceanfront` | On the ocean but **not a beach**, including clifftops a limited distance above it |
+| `Waterfront` | **All other water** — rivers, lakes, canals. Absorbs `Lakeside`, `Riverside`, `Canalside` |
+| `Coastal` | Near the ocean but not on it — a clifftop 20+ minutes from reaching the water |
+| `Seaside`, `Clifftop` | **To be retired**, reclassified into the above |
 
-**This can't be done as a rename** — the old label does not predict the new one. **Oceanfront (29 primaries)** splits roughly in half: clifftop with no beach → Seaside (Andronis, Katikies, Canaves Oia, Il San Pietro, Le Sirenuse, Splendido Portofino, Maybourne Riviera, San Domenico Palace, Six Senses Uluwatu, Bulgari Bali); genuinely Beachfront (Lesante Blu, W Dubai Mina Seyahi, Four Seasons Surf Club, Riviera Maya EDITION, Phulay Bay). **Waterfront (23)** splits three ways, including one inland golf resort (Finca Cortesin → Coastal). **Two aren't sea at all**: Four Seasons Jackson Hole (→ Lakeside) and Airelles Palladio, Venice (→ Canalside).
+**`Beach` and `Beachfront` swapped meaning.** August had `Beachfront` = "truly on the beach" and `Beach` = "walking distance". September makes `Beach` the *weaker* value. Ulrik was offered both directions and chose this one deliberately, because the existing 163 `Beachfront` rows mostly do sit on sand and stay correct — the alternative moved ~130 records for no gain. A guest filtering "Beachfront" gets the stronger set.
 
-Scope notes:
+**`Waterfront` is now the generic for fresh water**, so `Lakeside` (34), `Riverside` (29) and `Canalside` (8) retire into it. This removes Lakeside as a filter facet, which was flagged and accepted.
 
-* **The `setting[]` tag array is the real target**, not just the single-selects — the Hotels filter runs JS-side on the arrays (§4). `Waterfront` is on 41 hotels there, `Oceanfront` on 37. Retiring a value means converting the arrays *then* removing the choice, or the filter keeps offering a dead option. And **`Beachfront` has 144 primaries / 177 tags**, so the sharper definition changes what belongs in it: reclassifying only the two retiring values leaves correctly-labelled Seaside hotels beside Beachfront ones that should also be Seaside. Auditing all of it is the consistent answer and roughly triples the work — an explicit choice, not an oversight.
-* **Geopositioning helps less than expected.** Lat/lng cannot separate a clifftop hotel 50m from the sea from a beach resort 50m from the sea — exactly the Beachfront/Seaside line. It *is* decisive for `Coastal`, and an OpenStreetMap `natural=beach` polygon within ~200m is a real proxy for "is there actually a beach" — free and dependency-less, but a build, and OSM beach coverage is uneven outside Europe.
-* Agreed approach: per-hotel classification with evidence attached and a confidence level; auto-apply only the unambiguous, hand the rest back as a review list. "Only change where sure" means evidenced, not inferred.
+### Progress
+
+| Batch | Scope | Status |
+|---|---|---|
+| 1 | the 37 tagged `Waterfront` | **Applied 2026-09-10** — 36 written, 1 no-op, 0 failures, verified by re-read |
+| 2 | `Lakeside` + `Riverside` + `Canalside` (71) | Not started. Mechanical merge, no review needed |
+| 3 | `Coastal` (31) + `Oceanfront` (35) | Not started. Verify against the 20-minute line |
+| 4 | `Seaside` (4) + `Clifftop` (5) | Not started. Retire |
+| 5 | `Beachfront` (~163) | Not started. Sweep for road-separated cases → `Beach` |
+
+Batch 1 artefacts: `scripts/hotels/settings-2026/apply-waterfront-batch1-2026-09-10.mjs` and its appending rollback record. **A one-time record of a reviewed session, not a tool** — copy the pattern for the next batch, per §24.
+
+**Only the water tag is touched.** A hotel tagged `["City","Waterfront"]` keeps `City`; the water value is replaced in the array and in whichever of `primary_setting`/`secondary_setting` held it. Explicit instruction, and it is what makes a batch safe against rows whose other tags were never reviewed.
+
+### What the machine cannot decide, measured not assumed
+
+**OSM is not a usable signal for this roster.** Tested live 2026-09-10: Velaa Private Island returned **zero** `natural=beach` polygons — a Maldivian resort that is nothing but sand — confirming §42B's original worry about coverage outside Europe. Measuring to a polygon's `center` also put One&Only Le Saint Géran 637m from a beach it sits on; distance must be to the nearest vertex, not the centroid. Both Overpass mirrors then returned 504 partway through six queries, so 268 of them was never realistic.
+
+**Our own editorial text does not settle it either.** Across the 268 in-scope hotels, "direct beach access" appears 8 times and "across the road" **zero**. The descriptions are evocative, not diagnostic — they establish that there is a beach, never what lies between it and the hotel.
+
+So the Beachfront/Beach line is a human call in every case, which is why batches go through a review artifact (the §25 awards pattern) with a proposed value, the quoted evidence, and a confidence flag. In batch 1 Ulrik overrode 4 of 37 proposals — Six Senses Samui and Cap Estel to `Beachfront`, Fouquet's Saint-Barth to `Oceanfront`, and Baku left as `Waterfront`.
+
+Retiring a value means converting the arrays **then** removing the choice from the field's `meta.options.choices`, or the filter keeps offering a dead option (§44). None of the retirements are done yet, so `Seaside`, `Clifftop`, `Lakeside`, `Riverside` and `Canalside` are all still live choices.
+
+### Editorial follow-up, not applied
+
+* **id 1135, The St. Regis Bali** — highlights say "perched on a cliff"; it is not, and the description has it on the beachfront. A copy fix, deliberately left out of a settings script.
 
 ---
 

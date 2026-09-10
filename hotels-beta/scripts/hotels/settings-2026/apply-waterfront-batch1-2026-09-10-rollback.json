@@ -1,0 +1,723 @@
+[
+  {
+    "at": "2026-09-10T21:21:02.603Z",
+    "batch": "waterfront-1",
+    "changes": [
+      {
+        "id": "1061",
+        "name": "Park Hyatt Zanzibar",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1117",
+        "name": "Amankila",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1135",
+        "name": "The St. Regis Bali Resort",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1184",
+        "name": "Solaire Resort Entertainment City - Sky Tower",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1203",
+        "name": "COMO Point Yamu",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1216",
+        "name": "Six Senses Samui",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1250",
+        "name": "Fouquet's Saint-Barth",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Island",
+            "Waterfront"
+          ],
+          "primary_setting": "Island",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "Island",
+            "Oceanfront"
+          ],
+          "primary_setting": "Island",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1275",
+        "name": "Villa Dubrovnik",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1276",
+        "name": "Almyra",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1319",
+        "name": "Cap Estel",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1324",
+        "name": "Cheval Blanc Saint-Tropez",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Beachfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beachfront"
+        }
+      },
+      {
+        "id": "1333",
+        "name": "Le Majestic Cannes",
+        "choice": "Beach",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Beach"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beach"
+        }
+      },
+      {
+        "id": "1336",
+        "name": "Hôtel Belles Rives",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront",
+            "City"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": "City"
+        },
+        "after": {
+          "setting": [
+            "Beachfront",
+            "City"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": "City"
+        }
+      },
+      {
+        "id": "1340",
+        "name": "Hôtel du Cap Eden-Roc",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1348",
+        "name": "La Réserve de Beaulieu",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1385",
+        "name": "Bill & Coo Mykonos",
+        "choice": "Beach",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beach"
+          ],
+          "primary_setting": "Beach",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1390",
+        "name": "Cavo Tagoo Mykonos",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1394",
+        "name": "Elounda Beach Hotel & Villas",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1396",
+        "name": "Four Seasons Astir Palace Hotel Athens",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront",
+            "City"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": "City"
+        },
+        "after": {
+          "setting": [
+            "Beachfront",
+            "City"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": "City"
+        }
+      },
+      {
+        "id": "1404",
+        "name": "Kivotos Mykonos",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1408",
+        "name": "Myconian Imperial",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1448",
+        "name": "Grand Hotel Vesuvio",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1454",
+        "name": "Hotel Santa Caterina",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1500",
+        "name": "The Thief, Oslo",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1516",
+        "name": "BLESS Ibiza Cala Nova",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1521",
+        "name": "Finca Cortesin",
+        "choice": "Coastal",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1526",
+        "name": "Hotel Arts Barcelona",
+        "choice": "Beach",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Beach"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beach"
+        }
+      },
+      {
+        "id": "1538",
+        "name": "The St. Regis Mardavall Mallorca Resort",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1540",
+        "name": "Grand Hotel Stockholm",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1622",
+        "name": "Fairmont Waterfront",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1625",
+        "name": "Banyan Tree Cabo Marqués",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1678",
+        "name": "Four Seasons Resort and Residences Jackson Hole",
+        "choice": "__REMOVE__",
+        "before": {
+          "setting": [
+            "Mountains",
+            "Waterfront"
+          ],
+          "primary_setting": "Mountains",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "Mountains"
+          ],
+          "primary_setting": "Mountains",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1693",
+        "name": "Mauna Lani",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1770",
+        "name": "Wequassett Resort & Golf Club",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1814",
+        "name": "Jumeirah Marsa Al Arab",
+        "choice": "Beachfront",
+        "before": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Beachfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beachfront"
+        }
+      },
+      {
+        "id": "2021",
+        "name": "Mandarin Oriental Bosphorus, Istanbul",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Waterfront",
+            "City"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront",
+            "City"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      }
+    ]
+  }
+]
