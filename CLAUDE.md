@@ -1,12 +1,10 @@
-# OLTRA — AI CONTEXT (UPDATED)
+# OLTRA — AI CONTEXT
 
 ## 0. REPOSITORY STRUCTURE
 
-All application code lives in the `hotels-beta/` subdirectory. The repo root contains only top-level config (CLAUDE.md, GitHub workflows, etc.).
+All application code lives in `hotels-beta/`. The repo root holds only top-level config (CLAUDE.md, GitHub workflows).
 
-**Git paths must be relative to the repo root**, so always use `hotels-beta/src/...` when staging files — e.g. `git add hotels-beta/src/app/hotels/ui/HotelsView.tsx`.
-
-### Where the checkouts live
+**Git paths are relative to the repo root** — stage as `hotels-beta/src/...`.
 
 | | |
 |---|---|
@@ -14,2981 +12,973 @@ All application code lives in the `hotels-beta/` subdirectory. The repo root con
 | App code | `C:\Users\ufalk\dev\oltra-beta\hotels-beta` |
 | Sibling data repo (§41) | `C:\Users\ufalk\dev\oltra-agents` |
 
-Development moved from a GitHub Codespace to Windows. **Any `/workspaces/oltra-beta/...` path elsewhere in this file is a historical record of that era, not a current location** — those sections are left as they were written, since rewriting them would falsify the account of what happened at the time.
+Any `/workspaces/oltra-beta/...` path in this file is a historical record of the Codespace era, not a current location.
 
 ### Two sibling checkouts — use absolute paths
 
-`oltra-beta` and `oltra-agents` each have their own `CLAUDE.md`, and §41's is deliberately stricter. Neither file's rules should be applied to the other repo, so reading the wrong one is a real failure, not a cosmetic one.
+`oltra-beta` and `oltra-agents` each have their own `CLAUDE.md`, and §41's is deliberately stricter. Reading the wrong one is a real failure.
 
-As of 2026-08-18 `~/.bashrc` on this machine contains `cd /c/Users/ufalk/dev/oltra-agents`, which Git Bash runs for **non-interactive** shells too — so a shell opened by a tool starts in the wrong repo even when the tool was started in this one, and a bare `CLAUDE.md` then resolves to the wrong file. The fix is to guard it (`case $- in *i*) cd ... ;; esac`); until that is applied:
+`~/.bashrc` contains `cd /c/Users/ufalk/dev/oltra-agents`, which Git Bash runs for **non-interactive** shells too — so a tool-opened shell starts in the wrong repo and a bare `CLAUDE.md` resolves to the wrong file. Until it is guarded (`case $- in *i*) cd ... ;; esac`):
 
 * check `pwd` before trusting a relative path, and prefer absolute paths;
-* prefer edits that **fail loudly** on a wrong-file match (anchor-text assertions) over ones that silently no-op (`sed -i`) — this is what caught the mistake on 2026-08-18;
+* prefer edits that **fail loudly** on a wrong-file match (anchor-text assertions) over ones that silently no-op (`sed -i`);
 * the PowerShell tool is unaffected and starts in the correct directory.
 
 ---
 
 ## 1. PROJECT OVERVIEW
 
-OLTRA is a curated luxury travel platform focused on high-end hotels and restaurants, designed for an affluent, design-conscious, international audience.
-
-Core principles:
+OLTRA is a curated luxury travel platform — high-end hotels and restaurants, for an affluent, design-conscious, international audience.
 
 * Editorial-first (not OTA-first)
 * Luxury UX with minimal clutter
 * Highly structured taxonomy-driven filtering
-* Server-driven data (Supabase as canonical store, accessed via Directus CMS layer)
+* Server-driven data (Supabase as canonical store, accessed via Directus)
 * Clean, scalable architecture with minimal technical debt
 
 ---
 
 ## 2. TECH STACK
 
-Frontend:
+**Frontend**: Next.js 15 (App Router), TypeScript, Tailwind v4, Server Components by default.
 
-* Next.js 15 (App Router)
-* TypeScript
-* Tailwind v4
-* Server Components by default
+**Backend / data**: Supabase (OLTRA account, "Hotel database") is the canonical store for all hotel and restaurant records. Directus (on Railway) is a CMS layer on top of it; all content reads/writes go via the Directus REST API (`/src/lib/directus`), never directly to Supabase.
 
-Backend / Data:
+**Auth / members**: a *separate* Supabase project — auth and user data only. See §31, which is the mix-up that costs a session if unread.
 
-* Supabase (OLTRA account, "Hotel database") — canonical data store for all hotel and restaurant records
-* Directus (hosted on Railway) — CMS layer on top of Supabase; all content reads/writes go via Directus REST API (`/src/lib/directus`), never directly to Supabase for content
+**AI**: the concierge (§50). Placeholder elsewhere.
 
-Auth / Members:
-
-* Supabase (OLTRA account, separate from the Hotel database) — auth + user-specific data only
-
-AI:
-
-* Placeholder layer (no direct Directus querying)
-
-Strict rules:
-
-* No schema redesign unless explicitly requested
-* No new libraries unless explicitly requested
-* Minimal-diff, production-grade changes only
+Strict rules: no schema redesign unless asked, no new libraries unless asked, minimal-diff production-grade changes only.
 
 ---
 
 ## 3. CORE DATA MODEL (SUPABASE / DIRECTUS)
 
-> **Architecture note:** All hotel and restaurant data lives in Supabase (OLTRA account, "Hotel database"). Directus is a CMS layer running on top of that Supabase instance — it adds structured field definitions, permissions, and the REST API that the app uses. Never write directly to Supabase for content; always go via the Directus API.
+Never write directly to Supabase for content; always go via Directus.
 
 ### Hotels
 
-> Schema migrated 2026-06: `hotelid` was removed (use `id`), `editor_rank_13` → `editor_rank`, the old double-underscore state field → single underscore, and `activities`/`awards`/`settings`/`styles` went from M2M relations to flat multiselect tag fields (`setting`/`style` are now **singular**). See section 4 for the taxonomy details.
+Schema migrated 2026-06: `hotelid` removed (use `id`), `editor_rank_13` → `editor_rank`, the double-underscore state field → single underscore, and `activities`/`awards`/`settings`/`styles` went from M2M relations to flat multiselect tag fields (`setting`/`style` are now **singular**). See §4.
 
-> Geography split 2026-08-31: `admin_region` was added, and
-> `state_province_county_island` was narrowed to hold only the traveller-facing
-> area. Every one of the 903 rows was reclassified — see the five-field table
-> below, and §49 for how it was done.
-
-Key fields:
-
-* id (bigint, primary key)
-* hotel_name
-* affiliation
-
-Geography — five fields, each with one meaning. Getting these confused is the
-mistake the 2026-08-31 split exists to prevent:
+Geography — five fields, each with one meaning (split 2026-08-31, §49):
 
 | Field | Holds | Examples |
 |---|---|---|
 | `region` | Continent. 10 fixed values. | Europe, Africa, Asia |
 | `country` | Country. | Italy, Switzerland |
-| `admin_region` | The **administrative** unit — state, province, canton, prefecture, emirate, governorate, county. **Never null** (all 903 rows populated). | Lombardy, Valais, Kyoto Prefecture, Emirate of Dubai |
-| `state_province_county_island` | The **traveller-facing area** — what someone would type into a search box. **Null for a major city**, where `city` already does the job. 470 of 903 populated. | Lake Como, Amalfi Coast, Engadin, Masai Mara |
+| `admin_region` | The **administrative** unit — state, province, canton, prefecture, emirate, county. **Never null** (all 903 rows). | Lombardy, Valais, Kyoto Prefecture |
+| `state_province_county_island` | The **traveller-facing area** — what someone types into a search box. **Null for a major city**, where `city` does the job. 470 of 903 populated. | Lake Como, Amalfi Coast, Masai Mara |
 | `city` | Town, or for a lodge the reserve/area name. | Cernobbio, Sabi Sand Reserve |
 
 Three things that look like bugs and aren't:
 
-* **`admin_region` and `state_province_county_island` may hold the same value.**
-  Intended, wherever the administrative unit is also what a traveller types —
-  Tuscany, Bali, Sicily, Rajasthan. Not duplication to clean up.
-* **`region` means continent, not region.** A user searching "Tuscany" is
-  matching the traveller-area field, not this one.
-* **A major city's traveller area is deliberately empty.** Rome, Tokyo,
-  Shanghai, Marrakech, Geneva, Hong Kong all carry an `admin_region` and no
-  area. Filling it would only repeat `city`.
+* **`admin_region` and `state_province_county_island` may hold the same value** — wherever the administrative unit is also what a traveller types (Tuscany, Bali, Sicily, Rajasthan).
+* **`region` means continent.** A user searching "Tuscany" matches the traveller-area field.
+* **A major city's traveller area is deliberately empty** (Rome, Tokyo, Marrakech, Geneva). Filling it would repeat `city`.
 
-Both fields are searchable levels in the destination dropdown on the landing
-and hotels pages (`StructuredDestinationField`), which narrows
-hotel > city > area > admin_region > country > region — each level hides the
-broader ones. `local_area` is **not** searchable: it holds neighbourhoods
-(Mayfair, Kowloon, Spanish Steps), not areas.
+Both are searchable levels in the destination dropdown (`StructuredDestinationField`), narrowing hotel > city > area > admin_region > country > region. `local_area` is **not** searchable — it holds neighbourhoods (Mayfair, Kowloon).
 
-Both are plain `text` with `interface: null`, i.e. unconstrained. §44 records
-what unconstrained text fields do here, and this one had already drifted into
-holding `Giorgia`, `Boca Raton` on a Turkish hotel, and a country name.
-Locking them to a choice list is a deferred follow-up, not a decision taken.
+Both are plain `text` with `interface: null`, i.e. unconstrained; §44 records what unconstrained text fields do here, and this one had already drifted. Locking them to a choice list is a deferred follow-up, not a decision taken.
 
-Editorial:
+Other fields:
 
-* highlights
-* description
-
-Stats:
-
-* editor_rank
-* ext_points
-* total_rooms_suites_villas
-
-Taxonomy — flat multiselect tags, not relational (see section 4):
-
-* activities
-* awards
-* setting
-* style
-
-Editorial single-select companions (not yet wired into app code):
-
-* primary_setting / secondary_setting
-* primary_style / secondary_style
-
-Award boolean flags (one column per accolade):
-
-* best50, cn, forbes5, michelin3keys, telegraph, tl100, aaa5d
-
-Links:
-
-* www
-* insta
-
-Booking:
-
-* booking_provider
-* booking_URL (capital URL — `official_website_booking_url` does not exist)
-* booking_enabled
-* booking_label
-* booking_hotel_ref
-* booking_notes
-
-Agoda:
-
-* agoda_hotel_id
-* agoda_photo1 – agoda_photo5
-
-Geo:
-
-* lat / lng
-
----
+* Editorial: `highlights`, `description`
+* Stats: `editor_rank`, `ext_points`, `total_rooms_suites_villas`
+* Taxonomy tags (flat, §4): `activities`, `awards`, `setting`, `style`
+* Editorial single-selects: `primary_setting` / `secondary_setting` / `primary_style` / `secondary_style` (locked to choice lists as of §44; not wired into app code)
+* Award booleans, one column per accolade: `best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`
+* Links: `www`, `insta`
+* Booking: `booking_provider`, `booking_URL` (capital URL — `official_website_booking_url` does not exist), `booking_enabled`, `booking_label`, `booking_hotel_ref`, `booking_notes`
+* Agoda: `agoda_hotel_id`, `agoda_photo1`–`5`
+* Ratehawk: `ratehawk_hid`, `ratehawk_image_1`–`50` (+ `_category`), `ratehawk_status` (§42), and the static-content fields in §48
+* Geo: `lat` / `lng` — Directus reports these as `type: "integer"` but `schema.data_type` is `numeric` and decimals round-trip intact. **Never `Math.trunc` a coordinate** (§40).
 
 ### Restaurants
 
-Separate Directus collection (`restaurants`). Key fields:
+Separate Directus collection (`restaurants`): `id`, `status`, `rank`, `restaurant_name`, `slug` (kebab-case, unique — the upsert key), `description`, `highlights`, `restaurant_type` (`Fine dining` | `High-end casual` | `Informal local favorite` | `Beach club`), `cuisine`, `restaurant_setting`, `restaurant_style`, geography fields, `lat`/`lng`, `www`, `insta`, `awards` (JSON array: `michelin_3`, `michelin_2`, `michelin_1`, `worlds_50`, `laliste100`), `sources`, `hotel_name_hint`.
 
-* id (bigint, primary key)
-* status (`published` / `draft`)
-* rank (integer — display order within city)
-* restaurant_name
-* slug (kebab-case, unique — used as upsert key by the import script)
-* description, highlights
-* restaurant_type (`Fine dining` | `High-end casual` | `Informal local favorite` | `Beach club`)
-* cuisine, restaurant_setting, restaurant_style
-* country, region, city, local_area, state_province_county_island
-* lat / lng
-* www, insta
-* awards (JSON array — values: `michelin_3`, `michelin_2`, `michelin_1`, `worlds_50`, `laliste100`)
-* sources, hotel_name_hint
+**Coverage: 63 cities, 2,192 records (2026-06-28), all Google Maps–geocoded.** Source JSON lives in `hotels-beta/scripts/restaurants/updated_restaurants/` (the original 23 cities) and `newrestaurants/` (everything added since). Old v2 files are archived in `olddata/`.
 
-### Restaurant data files (v3 format)
+`restaurants.lat`/`lng` are `numeric(10,5)` with no Directus integer-cast override — decimals round-trip to 5 d.p.
 
-Source JSON files are organised in two folders:
-
-* `hotels-beta/scripts/restaurants/updated_restaurants/` — the original 23 cities, re-geocoded 2026-06-28
-* `hotels-beta/scripts/restaurants/newrestaurants/` — all cities added from 2026-06-28 onwards
-
-Old v2 files (`rest_[city].json`) are archived in `olddata/`.
-
-**Current coverage (2026-06-28): 63 cities, 2,192 records loaded into Directus. All records have Google Maps–geocoded `lat`/`lng` coordinates.**
-
-Cities: Abu Dhabi, Amsterdam, Athens, Auckland, Bangkok, Barcelona, Berlin, Brussels, Budapest, Buenos Aires, Cannes, Cape Town, Chicago, Copenhagen, Doha, Dubai, Edinburgh, Florence, Forte dei Marmi, Frankfurt, Geneva, Hamburg, Helsinki, Hong Kong, Istanbul, Jakarta, Kuala Lumpur, Kyoto, Las Vegas, Lima, Lisbon, London, Los Angeles, Madrid, Marrakech, Marseille, Melbourne, Mexico City, Miami, Milan, Monaco, Munich, New York, Nice, Osaka, Oslo, Paris, Rio de Janeiro, Rome, Saint-Tropez – Ramatuelle, San Francisco, Santiago, Seoul, Singapore, Stockholm, Sydney, São Paulo, Tokyo, Toronto, Vancouver, Venice, Vienna, Zurich.
-
-### Upsert script
-
-`hotels-beta/scripts/restaurants/directus-upsert-restaurants-batch.mjs` — slug-based upsert, safe to re-run. Handles both old `rest_[city].json` and new `[city]_restaurants.json` naming. Excludes `geocode-*.json` files automatically.
+### Scripts
 
 ```bash
-# from hotels-beta/
+# from hotels-beta/ — slug-based upsert, safe to re-run, --dry-run first
 DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/restaurants/directus-upsert-restaurants-batch.mjs --dir scripts/restaurants
-# dry run first:
-... --dry-run
-# single city:
-... --only amsterdam_restaurants.json
 ```
 
-### Geocoding restaurants (lat/lng)
-
-`GOOGLE_MAPS_API_KEY` is present in `hotels-beta/.env.local` and confirmed working (tested 2026-06-28).
-
-**Field types confirmed safe** (checked 2026-06-28): `restaurants.lat` and `restaurants.lng` are `numeric(10,5)` in Postgres with no Directus integer-cast override (`meta.type: null`) — decimal coordinates round-trip correctly to 5 d.p. (~1 m precision). No field-type fix needed before writing.
-
-**Workflow:**
-
-1. User downloads current restaurant data and reviews lat/lng correctness.
-2. User specifies which cities need geocoding/correction.
-3. Run Geocoding API (`maps.googleapis.com/maps/api/geocode/json`) with query `restaurant_name + city + country` for each restaurant in the specified cities where `lat`/`lng` is null or incorrect.
-4. Patch corrected coordinates back to Directus via `PATCH /items/restaurants/:id`.
-
-**Workflow for new cities:**
-
-1. Add geocoded JSON file to `scripts/restaurants/newrestaurants/` (file can have `oltra_` prefix — upsert script handles it).
-2. Run geocoding script: `GOOGLE_MAPS_API_KEY=... node scripts/restaurants/geocode-new-restaurants.mjs --only "City Name"` — updates lat/lng in the JSON file in place.
-3. Upsert: `DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/restaurants/directus-upsert-restaurants-batch.mjs --dir scripts/restaurants/newrestaurants --only [filename]`
-4. Add the new city to the CITIES array in `geocode-new-restaurants.mjs` so future re-runs cover it.
-
-**Cost:** ~$5/1000 requests (Geocoding API). A city of 35 restaurants costs ~$0.18.
+New city: add geocoded JSON to `newrestaurants/` → `node scripts/restaurants/geocode-new-restaurants.mjs --only "City Name"` (updates lat/lng in place) → upsert → add the city to that script's CITIES array. Geocoding is ~$5/1000 requests; a 35-restaurant city costs ~$0.18.
 
 ---
 
 ## 4. TAXONOMY SYSTEM
 
-**As of 2026-06, `activities`/`awards`/`setting`/`style` are flat multiselect tag fields directly on `hotels`** (native Postgres `text[]` columns) — not relational M2M fields. The old `activities`/`awards`/`settings`/`styles` Directus collections (M2M join targets) no longer exist; `GET /collections` returns only `hotels`.
+`activities`/`awards`/`setting`/`style` are flat multiselect tag fields on `hotels` (native Postgres `text[]`), not relational. The old M2M collections no longer exist.
 
-* Each field's stored value **is** the display label (e.g. `["Hiking", "Diving"]`) — no id → name resolution needed.
-* The allowed/canonical choices for each field are configured directly on the field in Directus: `meta.interface = "select-multiple-dropdown"`, `meta.options.choices = [{text, value}, ...]`, `meta.options.allowOther = false` (locked to the defined list — editors can't introduce new typos).
-* Field names are **singular**: `setting`, `style` (not `settings`/`styles`). `activities`/`awards` keep their plural names.
+* Each stored value **is** the display label — no id → name resolution.
+* Canonical choices live on the field in Directus: `meta.interface = "select-multiple-dropdown"`, `meta.options.choices`, `allowOther: false`.
+* Field names are **singular**: `setting`, `style`. `activities`/`awards` stay plural.
 
 ### Filtering mechanics
 
-Directus's `_contains`/`_in` filter operators throw `500` errors against these native array columns (confirmed by live testing) — they cannot be used for server-side filtering.
+Directus `_contains`/`_in` throw `500` against native array columns — they cannot be used for server-side filtering.
 
-* `activities` / `setting` / `style` filtering happens as a **JS-side post-fetch pass**: `filterHotelsByTags()` in `/src/lib/hotelFilters.ts`. Fetch hotels filtered on the other (scalar) criteria, then narrow in application code — a hotel matches if its tag array overlaps at least one selected value per field (OR within a field, AND across fields).
-* `awards` filtering (the "Accolades" UI facet) instead uses the **7 boolean flag columns** (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`), which Directus *can* filter natively (`_eq: true`, OR'd together). The allow-list of valid codes lives in `/src/lib/hotels/awardCodes.ts`, shared between the server filter builder and the client award-badge UI so they can't drift apart.
-* The general `awards` multiselect tag field (separate from the 7 curated booleans) has its own choices in Directus but isn't wired into any UI yet — hotel-card award badges and the Accolades filter both key off the boolean columns + `FEATURED_AWARDS` in `HotelsView.tsx`.
+* `activities` / `setting` / `style` filter as a **JS-side post-fetch pass**: `filterHotelsByTags()` in `/src/lib/hotelFilters.ts`. OR within a field, AND across fields.
+* `awards` (the "Accolades" facet) instead uses the **7 boolean columns**, which Directus can filter natively (`_eq: true`, OR'd). Allow-list in `/src/lib/hotels/awardCodes.ts`, shared between the server filter builder and the client badge UI so they can't drift.
+* The general `awards` tag field is separate from the 7 booleans and isn't wired into any UI.
 
-### Editor tool
+The `/editor/hotels/[id]` tool sources its checkbox options live from each field's `meta.options.choices` — `getEditorTaxonomies()` in `/src/lib/editorHotels.ts`.
 
-The internal `/editor/hotels/[id]` tool sources its taxonomy checkbox options live from each field's `meta.options.choices` (`GET /fields/hotels/{field}`) rather than a separate collection — see `getEditorTaxonomies()` in `/src/lib/editorHotels.ts`.
+### Writing these fields via the API — the trap
 
-### Writing these fields via the Directus API (confirmed 2026-07-07, corrected 2026-07-07)
-
-`GET /fields/hotels/activities` shows Directus's own schema introspector tags these columns `type: "unknown"` (it has no first-class concept of a native Postgres array column, even though `schema.data_type` is correctly `text[]`). This is harmless for **reads** — Postgres's wire protocol returns proper arrays regardless of Directus's type metadata.
-
-It breaks on **both create (`POST /items/hotels`) and update (`PATCH /items/hotels/:id`)**: sending a plain JS array (e.g. `["Spa","Fitness"]`) gets JSON-stringified by Directus and Postgres rejects it — `malformed array literal: "[\"Spa\",\"Fitness\"]"`. (An earlier version of this note claimed PATCH was fine with a plain JS array — that was wrong; confirmed failing live during the 2026-07-07 award-review apply step, see `hotels-beta/scripts/hotels/new-hotels-2026/apply-award-review-2026-07-07.mjs`.) The fix works the same for both verbs: send a **Postgres array-literal string** instead, e.g. `'{"Spa","Fitness"}'`. Reusable helper (`toPgArrayLiteral`) is in `hotels-beta/scripts/hotels/new-hotels-2026/create-hotels-batch.mjs` (also duplicated in the apply-award-review script above) — any future script that *creates or updates* hotel rows with `activities`/`awards`/`setting`/`style` needs this conversion.
+Directus tags these columns `type: "unknown"` (it has no concept of a native array column). Harmless for reads. It breaks on **both `POST` and `PATCH`**: a plain JS array gets JSON-stringified and Postgres rejects it — `malformed array literal`. Send a **Postgres array-literal string** instead, e.g. `{"Spa","Fitness"}` wrapped in quotes. Helper `toPgArrayLiteral` is in `scripts/hotels/new-hotels-2026/create-hotels-batch.mjs`. Any script that creates or updates these fields needs it.
 
 ---
 
 ## 5. KEY ARCHITECTURE FILES
 
-### Hotels
+**Hotels** — page `/src/app/hotels/page.tsx`, UI `/src/app/hotels/ui/HotelsView.tsx`. Helpers: `/src/lib/directus`, `/src/lib/hotelFilters` (Directus filter builder + `filterHotelsByTags`), `/src/lib/hotelOptions`, `/src/lib/hotelSearchSuggestions`, `/src/lib/hotels/awardCodes`, `/src/lib/hotels/buildBookingLink`, `/src/lib/hotels/cardHelpers`, `/src/lib/editorHotels`.
 
-Page:
+**Restaurants** — `/src/app/restaurants/page.tsx`, `/src/app/restaurants/ui/RestaurantsMapView.tsx`, `/src/lib/restaurants`.
 
-* `/src/app/hotels/page.tsx`
+**Flights** — `/src/app/flights/page.tsx`, `ui/FlightsView.tsx`, `ui/FlightDetailsPopup.tsx`, `ui/AirportAutocomplete.tsx`. Data: `/src/lib/flights/duffelNormalizer.ts`, `/src/lib/flights/airlineAlliances.ts`, `/src/lib/airportOptions.ts`. Routes: `/src/app/api/flights/{search,book-link,offer/[id]}`.
 
-Main UI:
+**Ratehawk** — `/src/lib/ratehawk/availability.ts`, `/src/app/api/ratehawk/availability{,/batch}`.
 
-* `/src/app/hotels/ui/HotelsView.tsx`
+**Concierge** — `/src/app/api/chat/route.ts`, `/src/lib/ai/*` (§50).
 
-Helpers:
-
-* `/src/lib/directus`
-* `/src/lib/hotelFilters` — Directus filter builder + `filterHotelsByTags` (JS-side activities/setting/style filter)
-* `/src/lib/hotelOptions`
-* `/src/lib/hotelSearchSuggestions`
-* `/src/lib/hotels/awardCodes` — shared allow-list of the 7 award boolean-column codes
-* `/src/lib/hotels/buildBookingLink`
-* `/src/lib/hotels/cardHelpers`
-* `/src/lib/editorHotels` — data layer for the internal `/editor/hotels` tool
-
----
-
-### Restaurants
-
-Page:
-
-* `/src/app/restaurants/page.tsx`
-
-Main UI:
-
-* `/src/app/restaurants/ui/RestaurantsMapView.tsx`
-
-Helpers:
-
-* `/src/lib/restaurants`
-
----
-
-### Flights
-
-Page:
-
-* `/src/app/flights/page.tsx`
-
-Main UI:
-
-* `/src/app/flights/ui/FlightsView.tsx`
-* `/src/app/flights/ui/FlightDetailsPopup.tsx`
-* `/src/app/flights/ui/AirportAutocomplete.tsx`
-
-Helpers / data:
-
-* `/src/lib/flights/duffelNormalizer.ts` — Duffel offer → `Itinerary` + `FlightLeg`
-* `/src/lib/flights/airlineAlliances.ts` — IATA → Star / OneWorld / SkyTeam map
-* `/src/lib/airportOptions.ts` — labelled airport list (`"CPH · Copenhagen"` format; no coordinates)
-
-API routes:
-
-* `/src/app/api/flights/search/route.ts` — POST → Duffel offer request
-* `/src/app/api/flights/book-link/route.ts` — opens partner booking link
-* `/src/app/api/flights/offer/[id]/route.ts`
-
----
-
-### Shared
-
-Location logic:
-
-* `/src/lib/locationAliases.ts`
-
-Guests:
-
-* `/src/lib/guests`
-
-Members:
-
-* `/src/lib/members`
+**Shared** — `/src/lib/locationAliases.ts`, `/src/lib/guests`, `/src/lib/members`, `/src/lib/cityAirports.ts`.
 
 ---
 
 ## 6. HOTELS PAGE LOGIC
 
-### Modes
+Three modes:
 
-The Hotels page operates in 3 modes:
+1. **Featured** — no filters or >50 results. Full-screen hero, floating search (top-left), floating featured card (top-right).
+2. **Results** — active filters and ≤50 results. Left panel filters + list, right panel selected hotel.
+3. **Map** — toggle from results. MapLibre.
 
-1. **Featured Mode**
+Key variables: `shouldShowResults`, `shouldShowFeatured`, `effectiveView`.
 
-   * No filters OR >50 results
-   * Full-screen hero
-   * Floating search (top-left)
-   * Floating featured hotel card (top-right)
+Selection: first hotel auto-selected when results load; selection persists if still in the result set, else falls back to the first result.
 
-2. **Results Mode**
-
-   * Active filters AND ≤50 results
-   * Left panel: filters + list
-   * Right panel: selected hotel
-
-3. **Map Mode**
-
-   * Toggle from results
-   * MapLibre map
-
----
-
-### Key Logic Variables
-
-```ts
-const shouldShowResults
-const shouldShowFeatured
-const effectiveView
-```
-
----
-
-### Selection Logic
-
-* First hotel auto-selected when results load
-* Selected hotel persists if still in result set
-* Falls back to first result if invalid
-
----
-
-### Featured Mode — hotel cycling
-
-* Pool: all hotels with at least one real photo — `hasHotelPhotos()` in `cardHelpers.ts`, Ratehawk (`ratehawk_image_1`) preferred, Agoda (`agoda_photo1`–`agoda_photo5`) as fallback (§29) — no ext_points restriction
-* Cycle: random shuffle of the pool indices, with ≥30 positions between any repeat across cycle boundaries — same gap-guarantee algorithm as `LandingBackground.buildCycle`
-* Implemented with `featuredCycleRef` (remaining indices queue) and `featuredTailRef` (last N shown) refs; `setSelectedImageIndex` advances the display every 5 s via `setInterval`
-* Hotels without images are excluded regardless of points
+Featured-mode cycling: the pool is every hotel with at least one real photo — `hasHotelPhotos()` in `cardHelpers.ts`, Ratehawk preferred, Agoda fallback (§29) — with no ext_points restriction. Random shuffle with ≥30 positions between repeats across cycle boundaries (same algorithm as `LandingBackground.buildCycle`), via `featuredCycleRef` / `featuredTailRef`, advancing every 5s.
 
 ---
 
 ## 7. RESTAURANTS PAGE LOGIC
 
-### Flow
+Read `city` from the URL (default Paris) → resolve against available cities with alias expansion → fetch all restaurants for the city → render map + list via `RestaurantsMapView`.
 
-1. Read `city` from URL (defaults to Paris if absent)
-2. Resolve against available city options (with alias expansion)
-3. Fetch all restaurants for the city from Directus
-4. Render map + list via `RestaurantsMapView`
+**Type filter**: client-side `selectedType` (default `"All"`), values matching `restaurant_type` exactly. Filters both list and markers, refits map bounds on change, resets to All when the city changes, count label dynamic.
 
-### Restaurant type filter
-
-Client-side filter in `RestaurantsMapView`. State: `selectedType` (default `"All"`). Options: All / Fine dining / High-end casual / Informal local favorite / Beach club — match the `restaurant_type` field values exactly.
-
-* Filters both the sidebar list and the map markers
-* Map refits bounds to the filtered set on each change
-* Resets to "All" when the city changes
-* Count label is dynamic (`N RESTAURANTS`)
-
----
-
-### City Alias Logic
-
-Saint Tropez and Ramatuelle are treated as a shared cluster.
-
-Implemented via:
-
-```ts
-expandCityAliases([city])
-```
-
-Behavior:
-
-* Selecting "Saint Tropez" includes Ramatuelle
-* Selecting "Ramatuelle" includes Saint Tropez
-* Results merged and deduplicated by `id`
+**City aliases**: Saint Tropez and Ramatuelle are one cluster via `expandCityAliases([city])` — selecting either includes the other, merged and deduped by `id`.
 
 ---
 
 ## 7B. FLIGHTS PAGE LOGIC (DUFFEL)
 
-### Duffel data model — single ticket per offer
+### Data model — single ticket per offer
 
-* A return-trip offer = **one Duffel offer with two `slices`** (`slices[0]` outbound, `slices[1]` inbound) sold at a single `total_amount`. There is **no "two one-way tickets" scenario** in this flow — every bookable result is a single ticket.
-* Inside a slice, `segments[]` represents the flight legs of that direction. A direct flight has one segment; multi-stop has N. Each segment has its own `marketing_carrier` (airline) — so a slice can legitimately mix carriers (long-haul + local feeder).
-* Per-segment fields used: `marketing_carrier.{name,iata_code}`, `marketing_carrier_flight_number`, `origin/destination.{iata_code,name,city.name,time_zone}`, `departing_at`, `arriving_at`, `duration` (ISO 8601), `aircraft.name`.
-* Slices may also have `duration` directly; segments may not — fall back to computing from arriving_at − departing_at.
+A return trip is **one Duffel offer with two `slices`** at a single `total_amount`. There is no "two one-way tickets" scenario. Inside a slice, `segments[]` are the legs; a slice can legitimately mix carriers. Slices may carry `duration` directly, segments may not — fall back to arriving_at − departing_at.
 
-### `FlightLeg` type (in `duffelNormalizer.ts`)
+### `FlightLeg` (`duffelNormalizer.ts`)
 
-Normalized from a Duffel slice. Important computed fields beyond the obvious:
+Beyond the obvious: `airlines[]` (distinct marketing carriers in segment order, for the combined card label), `longHaulAirline` (carrier of the longest segment, for Tier-A matching), `layovers[]` (`code` for filter logic, `name` for display), `segments[]` (incl. raw `departIso`/`arriveIso` with offset for TZ math), `stopSummary`.
 
-* `airlines: AirlineRef[]` — distinct marketing carriers across all segments, in segment order. Used for the card's combined label (e.g. "Lufthansa + Bangkok Airways").
-* `longHaulAirline: AirlineRef | null` — carrier of the **longest segment** (used for Tier-A return matching).
-* `layovers: { code, name, durationMinutes }[]` — structured stops; `code` is IATA (for filter logic), `name` is city/airport display name (for cards and popup).
-* `segments: Segment[]` — full per-segment data including `departIso/arriveIso` (raw ISO with offset for TZ math), aircraft, origin/destination timezones. Drives the FlightDetailsPopup.
-* `stopSummary: string` — display string `"N stop(s) · City Hh Mm, City Hh Mm..."` listing **all** layovers (plural-aware).
+### Return-trip matching (`getReturnMatchTier`)
 
-### Return-trip airline matching (highlighting)
+* **Tier A** — same `longHaulAirline.iataCode` → strong highlight + "Same airline".
+* **Tier C** — all carriers across both legs in one alliance (`airlineAlliances.ts`) → light highlight + "Alliance partner".
+* The selected card's white outline overrides match styling visually.
 
-Two-tier match between the selected outbound's leg and each return candidate (`getReturnMatchTier` in FlightsView):
+### Smart defaults
 
-* **Tier A — long-haul match**: outbound.longHaulAirline.iataCode === inbound.longHaulAirline.iataCode → stronger highlight (`selectCardMatchStrong`) + "Same airline" badge.
-* **Tier C — alliance match**: all carriers across BOTH legs sit in the same alliance (via `airlineAlliances.ts` — Star / OneWorld / SkyTeam IATA sets) → lighter highlight (`selectCardMatchWeak`) + "Alliance partner" badge.
-* No match → default card. The selected card uses a white 2px outline + dark tinted bg (`selectCardActive`), which overrides match styling visually.
+Max-duration sliders auto-set per result set to `clamp(6, 24, ceil(minDuration × 1.5))`, tracked by `autoDurationKeyRef` so user adjustments survive rerenders but a new search re-applies. Airline filter prefills with all airlines present. Layover filter keys on IATA, displays city names via `layoverAirportMap`. Default departure interval 08:00–24:00 (slider `max=24` so end-of-day is reachable).
 
-### Smart defaults after results land
+### Column alignment
 
-* **Max duration sliders** auto-set on each new result set to `clamp(6, 24, ceil(minDuration × 1.5))` for outbound and (if return) inbound. Tracked with `autoDurationKeyRef` (keyed by itinerary IDs) so user adjustments aren't overwritten on rerenders, but a new search re-applies the default.
-* **Airline filter** prefills with all airlines present in results; preserved across rerenders if non-empty.
-* **Layover airports filter** uses IATA codes as keys but displays city names via `layoverAirportMap` (Map<code, name>) passed to `MultiSelectDropdown`.
-* Default departure time interval: 08:00–24:00. The TimeIntervalFilter slider has `max=24` so end-of-day is reachable.
+Only `.resultsScroll` scrolls; headers and pinned rows sit outside it. A `ResizeObserver` toggles `hasScrollGutter`, applying `.withScrollGutter { padding-right: 12px }` so columns stay aligned when the scrollbar appears.
 
-### Column alignment when scrollbar appears
+### Booking
 
-* Only the `.resultsScroll` (the flight-card grid) scrolls. Headers + pinned rows (Top pick / Fastest) sit outside it.
-* A `ResizeObserver` on `.resultsScroll` toggles `hasScrollGutter` state when `scrollHeight > clientHeight`. That state applies `.withScrollGutter { padding-right: 12px }` to the column headers and pinned stack so the columns stay aligned with the scrollable grid when the scrollbar appears, and revert to full width when it disappears.
+`BookingBar` was removed. The only book action is the BOOK button inside each `PriceCard`, active only for the Top pick / Fastest rows and the user-selected itinerary. Opens the partner URL via `/api/flights/book-link`.
 
-### Booking flow
+### Cards and popup
 
-* The `BookingBar` component (formerly at the bottom of the page) was removed. The **only book action** is the BOOK button inside each `PriceCard`. The button is active (sage-green `--oltra-button-active-bg`) only for:
-  * the Top pick + Fastest rows
-  * the user-selected itinerary in the price column (selected outbound for one-way; selected return for return-trip)
-  * inactive elsewhere (outlined / disabled).
-* Click opens the Duffel/partner booking URL via `/api/flights/book-link`.
+Cards are fixed `height: 96px`, three rows: `dep → arr` + duration + (i); airline names + match badge; stop summary. The (i) opens `FlightDetailsPopup` with per-segment detail, layovers, total travel time, and time-zone change computed from the ISO offsets.
 
-### Cards & info popup
+### Autocomplete
 
-* Flight cards: fixed `height: 96px`. Three rows:
-  1. `dep → arr` + `Duration: Xh Ym` + small inline (i) button
-  2. Airline names + match badge (inline)
-  3. Stop summary (`N stops · City Hh Mm, …`)
-* The (i) button opens `FlightDetailsPopup` with per-segment details, layover blocks, total travel time, time-zone change (computed from ISO offset diff: parse `+HH:MM` from departIso/arriveIso), and airline summary.
+`AirportAutocomplete` clears on focus, needs ≥2 chars, restores the previous label on blur if nothing new was picked. Panel `min-width: 320px`, `white-space: nowrap`.
 
-### From/To autocomplete
+### Deep links
 
-* `AirportAutocomplete` clears on focus, requires ≥2 chars to show suggestions, restores the previously-selected label on blur/outside-click if no new selection was made. Dropdown panel has `min-width: 320px` and `white-space: nowrap` so full "CPH · Copenhagen" labels show on one line.
+`buildInitialSearch` reads `cabin` and `tripType`. Cabins: `Economy | Premium Economy | Business | First`. Trip types: `oneway` (or `one-way`) `| return | multiple`.
 
-### Header & UX
+**Both one-way spellings only since 2026-09-04** — the URL value has always been `oneway` but the page's own `TripType` is `"one-way"`, so `?tripType=oneway` selected nothing (§50).
 
-* Header city names: `cityForCode(code)` parses the part after `·` in `AIRPORT_OPTIONS` labels.
-* `AIRPORT_OPTIONS` has **no coordinates** — great-circle calculations require expanding it. Avoided so far.
-* Airline logos: not currently used. If added, public sources are Daisycon (`https://daisycon.io/images/airline/?iata=XX`) and Google flights static (`https://www.gstatic.com/flights/airline_logos/70px/XX.png`).
-
-### Deep-link from Saved Trips
-
-* `buildInitialSearch` in `FlightsView.tsx` reads `cabin` and `tripType` from URL params so that the Saved Trips "Book" button can land the user on the flights page with the correct cabin class and trip type pre-selected. Valid cabin values: `"Economy" | "Premium Economy" | "Business" | "First"`. Valid tripType values: `"oneway"` (or `"one-way"`) `| "return" | "multiple"`. Falls back to `INITIAL_SEARCH` defaults if param is absent or invalid.
-
-  **Both one-way spellings are accepted only since 2026-09-04.** The URL value documented here has always been `oneway`, but the page's own `TripType` is `"one-way"` and every comparison inside it reads that — so `?tripType=oneway` selected no trip type at all. Fixed in `buildInitialSearch`; see §50 for the detail.
-
-* **Multi-city legs travel in the URL as `leg1`…`leg5`**, each `ORIGIN-DEST-YYYY-MM-DD` (e.g. `leg1=CPH-NCE-2026-09-08`). Added 2026-09-04 for the concierge's open-jaw handoff (§50) — before that, `multiple` mode could not be reached by link at all, since no per-leg params were read. Real legs override `tripType`. The form searches only when every leg is complete, so send whole legs and let the array be trimmed to what arrived rather than padded to the default three.
+**Multi-city legs travel as `leg1`…`leg5`**, each `ORIGIN-DEST-YYYY-MM-DD`. Added 2026-09-04; before that `multiple` mode could not be reached by link. Real legs override `tripType`. The form searches only when every leg is complete — send whole legs and let the array be trimmed to what arrived.
 
 ---
 
 ## 8. FILTERING PRINCIPLES
 
-* URL-driven state (searchParams)
-* No local-only filtering state
-* All filters reflected in URL
-* `search_submitted=1` controls activation
+URL-driven state (searchParams). No local-only filtering state; all filters reflected in the URL. `search_submitted=1` controls activation.
 
 ---
 
-## 9. UI / DESIGN SYSTEM (OLTRA THEME)
+## 9. UI / DESIGN SYSTEM
 
-Central file:
-
-* `/src/styles/oltra-theme.css`
-
-Principles:
-
-* Glassmorphism panels
-* Soft borders
-* Subtle transparency
-* Uppercase micro-labels
-* Tight spacing consistency
-
-Key tokens:
-
-* `--oltra-glass-bg`
-* `--oltra-radius-*`
-* `--oltra-text-*`
+Central file `/src/styles/oltra-theme.css`. Glassmorphism panels, soft borders, subtle transparency, uppercase micro-labels, tight spacing. Tokens `--oltra-glass-bg`, `--oltra-radius-*`, `--oltra-text-*`. Current palette and radius scale: §35 (which supersedes §34's values).
 
 ---
 
 ## 10. DROPDOWN / FILTER BEHAVIOR
 
-* Vertical sliders
-* Sub-sections per taxonomy
-* Max 4 visible items per section
-* Scroll inside dropdown
-* Controlled open/close state
+Vertical sliders, sub-sections per taxonomy, max 4 visible items per section, scroll inside the dropdown, controlled open/close state.
 
 ---
 
 ## 11. SEARCH BEHAVIOR
 
-* StructuredDestinationField drives input
-* Suggestions dataset used for autocomplete
-* No execution until meaningful input
+`StructuredDestinationField` drives input; suggestions dataset for autocomplete; no execution until meaningful input.
 
 ---
 
 ## 12. MAP BEHAVIOR
 
-* MapLibre GL
-* Markers built from hotel coordinates
-* Hover = popup
-* Click = select hotel
-* Auto-fit bounds
+MapLibre GL. Markers from hotel coordinates, hover = popup, click = select, auto-fit bounds. Basemap is `streets-v4` everywhere — no dark variant (§34).
 
 ---
 
 ## 13. MEMBER FEATURES
 
-* Add to trip
-* Add to favourites
-* Trip creation
-
-All handled via:
-
-* `/src/lib/members/db`
+Add to trip, add to favourites, trip creation — all via `/src/lib/members/db`.
 
 ---
 
 ## 14. KEY RULES FOR DEVELOPMENT
 
 * Minimal diffs only
-* No duplication of logic
-* Centralize reusable logic (e.g. location aliases)
+* No duplication of logic; centralize reusable logic
 * Keep UI consistent with Hotels as reference
 * Do not break editorial hierarchy
 
 ### Do not run your own browser UI test unless asked
 
-**Ulrik checks the UI himself.** Do not start a dev server and drive the page
-in Chrome to verify a change unless he explicitly asks for it in that session.
-Driving the browser is slow and burns a lot of credits — a multi-step search
-form can cost more than the code change itself.
+**Ulrik checks the UI himself.** Do not start a dev server and drive the page in Chrome to verify a change unless he explicitly asks in that session — it is slow and burns a lot of credits.
 
-Default verification for a UI change is `npx tsc --noEmit` and `npm run lint`,
-plus reading the code path. Then hand it over and say what was *not* visually
-verified, so Ulrik knows what to look at.
+Default verification for a UI change is `npx tsc --noEmit` and `npm run lint`, plus reading the code path. Then hand it over and say what was *not* visually verified.
 
-This supersedes any earlier note in this file (or in session memory) that says
-to browser-verify UI changes as a matter of course — that guidance came from a
-session where it was explicitly requested. Live verification of **data/API**
-behaviour (throwaway read-only scripts against Directus/RateHawk, per §32) is
-unaffected and still expected.
+This supersedes any earlier note saying to browser-verify as a matter of course. Live verification of **data/API** behaviour (throwaway read-only scripts against Directus/RateHawk) is unaffected and still expected.
 
 ### Commit and push straight to `main` — but only when asked
 
-`main` takes direct pushes. The classic branch-protection rule that required a
-pull request was removed on 2026-08-16 (`required_pull_request_reviews`
-deleted) precisely so this workflow needs no PR — it had been producing a
-"Bypassed rule violations" warning on every push instead of actually stopping
-anything, since `enforce_admins` was false. Force-pushes and branch deletion on
-`main` are still blocked, and should stay that way.
+`main` takes direct pushes; the pull-request requirement was removed 2026-08-16 precisely so this workflow needs no PR. Force-pushes and branch deletion on `main` are still blocked and should stay that way.
 
-**Do not commit or push on your own initiative.** Ulrik decides when work is
-committed; wait for an explicit instruction in that session ("commit", "push",
-"commit and push"). Removing the PR requirement changed *how* a push happens,
-not *who* decides that it happens. Leave finished work in the working tree and
-say it's ready.
+**Do not commit or push on your own initiative.** Wait for an explicit instruction in that session. Removing the PR requirement changed *how* a push happens, not *who* decides it happens. Leave finished work in the tree and say it's ready.
 
-Do not create a branch for the change either — this repo's history is a linear
-series of commits on `main` (see §33's rollback map), and that's deliberate.
+Do not create a branch either — this repo's history is a deliberate linear series of commits on `main`.
 
 ---
 
 ## 15. LANDING PAGE LOGIC
 
-Key files:
+Files: `/src/components/site/LandingBackground.tsx`, `/src/app/LandingSearchPanel.tsx`, `/src/app/LandingSummary.tsx`.
 
-* `/src/components/site/LandingBackground.tsx` — full-screen image slideshow
-* `/src/app/LandingSearchPanel.tsx` — floating search panel (destination, dates, guests, flights toggle)
-* `/src/app/LandingSummary.tsx` — results panel showing hotel cards + flight previews
+**LandingBackground** — 49 images in `/public/images/landing/`, cross-fade + Ken Burns motion, `buildCycle` guarantees ≥20 positions between repeats. **No dark overlay** — the `rgba(0,0,0,0.34)` layer was removed.
 
-### LandingBackground
+**LandingSummary** — each hotel card links to `/hotels?q=<name>&from=&to=&adults=N&submitted=1`, i.e. the main Hotels page, **not** the standalone `/hotels/[hotelid]` page (which exists but is not part of the intended UX flow).
 
-* 49 images in `/public/images/landing/landing-01.jpg … -49.jpg`
-* Cycles with cross-fade + Ken Burns motion (zoom-in / zoom-out / pan-left / pan-right / fly-over)
-* Shuffle algorithm (`buildCycle`) guarantees ≥20 positions between any repeat across cycle boundaries
-* **No dark overlay** — the `rgba(0,0,0,0.34)` overlay was removed; images display at full brightness
-
-### LandingSummary — hotel card links
-
-* Each hotel card links to `/hotels?q=<hotel_name>&from=<date>&to=<date>&adults=N&submitted=1`
-* This lands on the main Hotels page with that hotel filtered/selected — **not** the standalone `/hotels/[hotelid]` page (which exists but is not part of the intended UX flow)
-
-### LandingSearchPanel
-
-* "Add flights" checkbox (lowercase f) — activates flight search when destination, dates and guests are filled
-* When active, shows home airport selector; origin IATA resolved from `AIRPORT_OPTIONS`
+**LandingSearchPanel** — Hotels and Flights checkboxes (§38). Flights activates when destination, dates and guests are filled; origin IATA resolves from `AIRPORT_OPTIONS`, defaulting to the member's home airport (§50).
 
 ---
 
 ## 16. AUTH & MEMBERS
 
-### Login page (`/src/app/login/LoginView.tsx`)
+### Login (`/src/app/login/LoginView.tsx`)
 
-Three views rendered in the same panel:
+Four views in one panel:
 
-* **login** — email + password; LOG IN button is `oltra-button-primary` only when email is valid (has `@`, `.`, letters before/between/after) AND password non-empty; CREATE NEW ACCOUNT and CONTINUE WITH GOOGLE always primary; no Facebook
-* **signup** — email, password (≥7 chars, must contain letters and numbers), confirm password; Supabase `signUp` handles duplicate-email detection natively
-* **forgot** — email field; **sends for real** as of 2026-08-17 via
-  `supabase.auth.resetPasswordForEmail`. The old "deferred until Vercel
-  deployment (server function)" note was based on a wrong premise — Supabase
-  sends this itself from the browser, so nothing was ever blocking it. See §46
-  for the two Supabase config prerequisites (redirect URL allow-list, and
-  custom SMTP: the built-in mailer is rate-limited and not for production).
-* **reset** — SET A NEW PASSWORD, entered via the `PASSWORD_RECOVERY` auth
-  event when the member returns from the emailed link. Same strength rules as
-  signup. Without this view the link landed on a form that could do nothing
-  with the recovery session.
+* **login** — LOG IN is primary only when the email is valid and the password non-empty; CREATE NEW ACCOUNT and CONTINUE WITH GOOGLE always primary; no Facebook.
+* **signup** — password ≥7 chars with letters and numbers; Supabase `signUp` detects duplicate emails natively.
+* **forgot** — sends for real via `supabase.auth.resetPasswordForEmail`. Neutral "if an account exists" wording so the form can't be used to discover registered addresses. Two config prerequisites, both outside the code: `/login` must be in Supabase → Authentication → URL Configuration → Redirect URLs (localhost *and* Vercel), and the built-in mailer is rate-limited and not for production — real use needs custom SMTP. **The last hop, mail actually arriving, has never been confirmed.**
+* **reset** — SET A NEW PASSWORD, entered via the `PASSWORD_RECOVERY` event.
 
 ### SiteHeader greeting
 
-* Uses `supabase.auth.onAuthStateChange` only (no separate `getUser()` call — removed to fix race condition where `getUser()` could overwrite state with null during token refresh)
-* Name resolution order: `memberName` from DB profile → `user.user_metadata.full_name` → `user.user_metadata.name` → shows "Hello" without name
-* Shows "Members" when logged out, "Hello [FirstName]" when logged in
+Uses `supabase.auth.onAuthStateChange` only — a separate `getUser()` call was removed because it could overwrite state with null during a token refresh. Name resolution: `memberName` from the DB profile → `user_metadata.full_name` → `user_metadata.name` → "Hello" with no name.
 
-### Member profile name for OAuth users
+`fetchMemberProfileBrowser` falls back to the same metadata when `member_profiles.member_name` is null, so Google OAuth users see their name immediately after first login.
 
-* `fetchMemberProfileBrowser` in `/src/lib/members/db.ts` falls back to `user.user_metadata.full_name ?? user.user_metadata.name` when `member_profiles.member_name` is null
-* This means Google OAuth users see their name pre-filled in Personal Information and in the header immediately after first login, before they have saved a profile
+### OAuth redirect URLs
 
-### OAuth redirect URLs (Supabase config required)
-
-* Code uses `window.location.origin` dynamically for the `redirectTo` URL
-* Both the Vercel production URL and `http://localhost:3000` must be in Supabase Dashboard → Authentication → URL Configuration → Redirect URLs, and in Google Cloud Console → Authorized redirect URIs
-* Site URL in Supabase should be set to the production Vercel URL after deployment
+Code uses `window.location.origin` for `redirectTo`. Both the Vercel URL and `http://localhost:3000` must be in Supabase → Redirect URLs and in Google Cloud Console → Authorized redirect URIs.
 
 ---
 
-## 17. CURRENT STATE SUMMARY
+## 17. CURRENT STATE
 
-* Hotels UI: complete and stable; featured mode cycles all hotels with ext_points > 10 in random order with ≥40-position repeat gap
-* Hotel awards: full-collection audit completed 2026-07-15 across all 7 award codes (Michelin 3 Keys, AAA/CAA Five Diamond, Condé Nast Gold List, World's 50 Best, Forbes 5 Star, Travel + Leisure 100, Telegraph) — see §25 for results, algorithm fixes, and follow-up items
-* Hotels data model: app code fixed (2026-06-24) to match the migrated Directus schema — taxonomy fields are flat multiselect tags now (not M2M), field renames applied across hotels/landing/inspire/editor code (`hotelid`→`id`, `editor_rank_13`→`editor_rank`, state field underscore fix, `booking_URL` casing). Verified via `tsc --noEmit`, live Directus queries, and a dev-server smoke test.
-* Restaurants data: 63 cities, 2,192 records as of 2026-06-28 — all with `restaurant_type` field and Google Maps–geocoded coordinates. Source files in `scripts/restaurants/updated_restaurants/` (original 23 cities) and `scripts/restaurants/newrestaurants/` (40 new cities). See §3 for full schema, upsert, and geocoding instructions.
-* Restaurants UI: enabled (was temporarily disabled during data migration); city filter + restaurant-type pill filter (All / Fine dining / High-end casual / Informal local favorite / Beach club); map + list both respond to type filter
-* Flights UI: Duffel-backed search, return-trip airline matching (same airline / alliance), per-segment detail popup, smart max-duration defaults, scrollbar-aware column alignment, cabin + tripType URL params for deep-linking from Saved Trips
-* Landing page: no dark overlay, hotel cards link to main /hotels page, "Add flights" label correct
-* Members UI: Personal Information, Saved Trips (with localStorage trip notes + Book redirect URLs), Favorites — complete
-* Login: three-view panel (login / signup / forgot), Google OAuth only, active button state validation
-* Auth header: race-condition-free, OAuth name fallback, instant greeting on login
-* Location alias system implemented (Saint Tropez ↔ Ramatuelle)
-* Build: passes `npm run build` and `npx tsc --noEmit` clean (warnings only, no errors)
+Hotels, Restaurants, Flights and Members UI are complete and stable on `main`; the AI concierge (§50) is on branch `ai-chat` behind a flag. Ratehawk supplies availability, pricing, room selection and images on the Hotels page; booking itself is still blocked (§32). Build passes `npm run build` and `npx tsc --noEmit` clean.
+
+Live counts (hotel totals, published splits, per-award tallies) drift — query Directus rather than trusting a number written in this file.
 
 ---
 
 ## 18. BACKUP WORKFLOW
 
-### How it works
+Primary `ufalkgm-prog/oltra-beta` → backup `ufalkgm-prog/oltra-backup`, via `.github/workflows/backup.yml` on every push to `main`. Auth is an SSH deploy key that does not expire (public key on the backup repo's Deploy keys with write access; private key base64-encoded as the `BACKUP_SSH_KEY` secret).
 
-* Primary repo: `ufalkgm-prog/oltra-beta` (this repo)
-* Backup repo: `ufalkgm-prog/oltra-backup`
-* Workflow file: `.github/workflows/backup.yml`
-* Trigger: every push to `main` — fully automatic, no manual steps needed
-* Auth: SSH deploy key — **does not expire**
-  * Public key added to `oltra-backup` → Settings → Deploy keys (write access)
-  * Private key stored (base64-encoded) as secret `BACKUP_SSH_KEY` in `oltra-beta`
+Status: **Actions tab → "Backup to oltra-backup" → the `backup` job**. A red ✗ means the push actually failed.
 
-### Viewing workflow status and errors
+**"error in libcrypto" / "Permission denied (publickey)"** → the secret is corrupted. Regenerate: `ssh-keygen -t ed25519 -f /tmp/backup-deploy-key -N ""`, add the `.pub` to the backup repo's deploy keys, then `cat /tmp/backup-deploy-key | base64 -w 0` and paste into the secret. **Always copy that string from the raw terminal, never from chat** — markdown rendering corrupts it.
 
-1. Go to **github.com/ufalkgm-prog/oltra-beta → Actions tab**
-2. Find the latest "Backup to oltra-backup" run
-3. Click it to expand, then click the "backup" job to see the full log
-4. A red ✗ next to the job means the push actually failed
+**"Repository not found"** → re-create the backup repo (private, empty), re-add the deploy key, re-run.
 
-### Common errors and fixes
-
-**"error in libcrypto" or "Permission denied (publickey)"**
-→ The `BACKUP_SSH_KEY` secret is corrupted. Regenerate and re-set it:
-1. In the codespace terminal: `ssh-keygen -t ed25519 -C "oltra-backup-deploy-key" -f /tmp/backup-deploy-key -N ""`
-2. Add the new public key to oltra-backup → Settings → Deploy keys (write access): `cat /tmp/backup-deploy-key.pub`
-3. Get the base64 private key from the terminal (not from chat): `cat /tmp/backup-deploy-key | base64 -w 0`
-4. Copy that output from your terminal and paste into oltra-beta → Settings → Secrets → `BACKUP_SSH_KEY` → Update
-5. **IMPORTANT**: always copy the base64 string from your raw terminal, never from chat (markdown rendering corrupts it)
-
-**"Repository not found"**
-→ The `oltra-backup` repo was deleted or renamed.
-Fix: re-create it at github.com/ufalkgm-prog/oltra-backup (private, empty), re-add the deploy key, then re-run the workflow.
-
-**Re-running a failed workflow**
-1. Actions tab → find the failed run → click "Re-run all jobs" (top right)
-
-### Manual backup push (if workflow keeps failing)
+Manual push if the workflow keeps failing:
 
 ```bash
-eval $(ssh-agent -s)
-cat /tmp/backup-deploy-key | ssh-add -
+eval $(ssh-agent -s); cat /tmp/backup-deploy-key | ssh-add -
 git push git@github.com:ufalkgm-prog/oltra-backup.git main --force
 ```
 
-### Verify backup is current
-
-```bash
-gh api repos/ufalkgm-prog/oltra-beta/commits/main --jq '.sha'
-gh api repos/ufalkgm-prog/oltra-backup/commits/main --jq '.sha'
-```
-
-Both SHAs should match.
-
-**On Ulrik's Windows machine the first command 404s** (2026-08-17) while the
-backup one works and `git` pushes to that same repo fine. That is an
-authorization gap on the `gh` token for the primary repo — `git` uses Windows
-Credential Manager, `gh` its own keyring token — not a missing repo or disabled
-Actions. Use the git protocol instead, which needs no API access:
+Verify in sync — **use the git protocol, not `gh`**. On Ulrik's Windows machine `gh api repos/.../oltra-beta/commits/main` 404s while the backup one works and `git` pushes fine: an authorization gap on the `gh` token (git uses Windows Credential Manager, `gh` its own keyring), not a missing repo. `gh auth refresh -h github.com` would likely clear it.
 
 ```bash
 git ls-remote origin refs/heads/main
 git ls-remote https://github.com/ufalkgm-prog/oltra-backup.git refs/heads/main
 ```
 
-Verified in sync this way on 2026-08-17. `gh auth refresh -h github.com` would
-likely clear the 404 if the API is wanted.
-
 ---
+## 19. HOTEL DATA BACKFILL - 16 HOTELS (started 2026-05-22)
 
-## 19. HOTEL DATA BACKFILL — IN PROGRESS (started 2026-05-22)
+IDs 1825-1840, inserted `published: false`. Already populated: the editorial, geography and taxonomy fields plus `www`. Still to do per hotel: `description`, `lat`/`lng`, Agoda matching, `ext_points`/`editor_rank`, award booleans, then `published: true` only after review. Each hotel's official site is already in its `www` field - read it from Directus.
 
-### Background
-
-16 new hotels were inserted into Directus on 2026-05-22 (IDs 1825–1840, all `published: false`). The following fields are already populated for all 16: `hotel_name`, `affiliation`, `country`, `city`, `local_area`, `region`, `primary_setting`, `secondary_setting`, `primary_style`, `secondary_style`, `highlights`, `www`, `activities1`–`activities7` (raw input fields, no underscore), and the `setting`/`style`/`activities` multiselect tags (these are now flat fields, not M2M relations — see section 4).
-
-### Still to do for each hotel
-
-- [ ] `description` — 2–4 sentence editorial description (next task)
-- [ ] `lat` / `lng` — coordinates for map mode
-- [ ] Agoda matching — `agoda_hotel_id`, `agoda_hotel_name`, photos, booking URL
-- [ ] Scoring — `ext_points`, `editor_rank`
-- [ ] Awards — boolean flag columns (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`)
-- [ ] `published: true` — only after all above are complete and reviewed
-
-### The 16 hotels (Directus IDs)
-
-| ID | hotel_name | country | city |
-|---|---|---|---|
-| 1825 | Atlantis The Royal | United Arab Emirates | Dubai |
-| 1826 | Chablé Yucatán | Mexico | Mérida |
-| 1827 | Upper House Hong Kong | China | Hong Kong |
-| 1828 | Belmond Copacabana Palace | Brazil | Rio de Janeiro |
-| 1829 | Mandarin Oriental Qianmen, Beijing | China | Beijing |
-| 1830 | Jumeirah Marsa Al Arab | United Arab Emirates | Dubai |
-| 1831 | Hotel Il Pellicano | Italy | Porto Ercole |
-| 1832 | The Emory | England | London |
-| 1833 | Maroma, A Belmond Hotel | Mexico | Riviera Maya |
-| 1834 | The Lana | United Arab Emirates | Dubai |
-| 1835 | Janu Tokyo | Japan | Tokyo |
-| 1836 | One&Only Mandarina | Mexico | Puerto Vallarta |
-| 1837 | Las Ventanas al Paraíso, A Rosewood Resort | Mexico | San José del Cabo |
-| 1838 | Estelle Manor | England | Oxford |
-| 1839 | Grand Park Hotel Rovinj | Croatia | Rovinj |
-| 1840 | Mandapa, a Ritz-Carlton Reserve | Indonesia | Ubud |
-
-### Description guidelines
-
-* 2–4 sentences, editorial tone, first-person-plural avoided
-* Focus on what makes the property distinctive — setting, architecture, USP
-* No marketing superlatives ("world's best", "unparalleled")
-* Cross-reference `highlights` field (max 15 words) — description expands on it, does not repeat it verbatim
-* Target length: 60–100 words
-
-### Website URLs (for fetching description content)
-
-| ID | URL |
-|---|---|
-| 1825 | https://www.atlantis.com/atlantis-the-royal |
-| 1826 | https://yucatan.chablehotels.com/ |
-| 1827 | https://www.upperhouse.com/en/hongkong/ |
-| 1828 | https://www.belmond.com/hotels/south-america/brazil/rio-de-janeiro/belmond-copacabana-palace/ |
-| 1829 | https://www.mandarinoriental.com/en/beijing/qianmen |
-| 1830 | https://www.jumeirah.com/en/stay/dubai/jumeirah-marsa-al-arab |
-| 1831 | https://www.pellicanohotels.com/en/hotels/hotel-il-pellicano/ |
-| 1832 | https://www.maybourne.com/en/hotels/the-emory |
-| 1833 | https://www.belmond.com/hotels/north-america/mexico/riviera-maya/belmond-maroma-resort-and-spa/ |
-| 1834 | https://www.dorchestercollection.com/dubai/the-lana |
-| 1835 | https://www.janu.com/janu-tokyo/ |
-| 1836 | https://www.oneandonlyresorts.com/mandarina |
-| 1837 | https://www.rosewoodhotels.com/en/las-ventanas-los-cabos |
-| 1838 | https://estellemanor.com/ |
-| 1839 | https://www.maistra.com/properties/grand-park-hotel-rovinj/ |
-| 1840 | https://www.ritzcarlton.com/en/hotels/dpsub-mandapa-a-ritz-carlton-reserve/overview/ |
+**Description guidelines**: 2-4 sentences, 60-100 words, editorial tone, focused on what makes the property distinctive. No marketing superlatives. The description expands on `highlights` rather than repeating it.
 
 ---
 
 ## 20. HOTEL LAT/LNG GEOCODING
 
-### Status (updated 2026-07-07)
+`GOOGLE_MAPS_API_KEY` in `.env.local` is valid, and lat/lng round-trip through Directus as exact decimals — no field-type fix needed.
 
-Both blockers below are **resolved**: `GOOGLE_MAPS_API_KEY` in `.env.local` is now a valid 39-char `AIza...` key (confirmed `status: OK` against the Geocoding API), and lat/lng round-trip through Directus as exact decimals (e.g. `46.571428`) with no integer truncation — no field-type fix was needed.
+Script: `scripts/hotels/new-hotels-2026/google-geocode-hotels.mjs`. Uses the **Places API — Find Place from Text** (~$17/1000) rather than the Geocoding API (~$5/1000), because it searches by business name and lands on the actual property pin instead of a city centroid for remote lodges. Builds fallback query variants (name+area+city+region+country down to name+country), scores candidates by country/city string-match, flags mismatches. Flags: `--ids`, `--countries`, `--cities`, `--dry-run`, `--force`, `--verify`, `--out`. Skips hotels that already have coordinates unless `--force`.
 
-The script is `hotels-beta/scripts/hotels/new-hotels-2026/google-geocode-hotels.mjs` (uses the **Places API — Find Place from Text**, per the cost/accuracy tradeoff below). It builds fallback query variants (name+area+city+region+country down to name+country), scores candidates by country/city string-match against the returned address, and flags mismatches for manual review. Supports `--ids`, `--countries`, `--cities`, `--dry-run`, `--force` (re-geocode hotels that already have coordinates), `--verify`, `--out <report.json>`. Safe to re-run — skips any hotel that already has `lat`/`lng` unless `--force` is passed.
+**Known false-positive noise in the mismatch flags**: the country/city check is a plain substring match after accent-stripping, so it routinely flags correct results — abbreviations (`UK`/`USA`/`UAE`), transliterations (`Wien`, `München`, `Lisboa`), renames (`Türkiye` vs `Turkey`), or the DB's `city` being broader than what Google returns (`Alta Badia`→`San Cassiano`, `Maui`→`Kihei`). Always spot-check a flag against the coordinates and formatted address before treating it as a real error.
 
-**Known false-positive noise in the mismatch flags:** the country/city string-match is naive (plain substring check after accent-stripping), so it routinely flags correct results as mismatches when Google's formatted address uses a different name for the same place — country abbreviations (`UK`/`USA`/`UAE` vs the DB's full name), transliterations (`Wien`/`München`/`Bakı`/`Lisboa`/`Krung Thep Maha Nakhon`), post-2022 renames (`Türkiye` vs `Turkey`), or the DB's `city` field being a broader area/resort name than the specific town Google returns (`Alta Badia`→`San Cassiano`, `Ise-Shima`→`Shima`, `Maui`→`Kihei`). Always spot-check flagged results against the coordinates and formatted address before treating a mismatch as a real error — don't assume the flag means the geocode is wrong.
-
-**2026-07-07 run:** geocoded the 67 new hotels from §23 (IDs 2001–2067) — see that section for results.
-
-### Remaining scope — legacy hotels (~800, pre-dating §23's batch)
-
-The original goal of this section was a from-scratch backfill across the whole `hotels` collection (0 of 806 hotels had `lat`/`lng` as of 2026-06-25, before the §23 batch existed). That larger backfill has **not** been run yet — only the 67 new hotels have been geocoded so far. To resume for the rest:
-
-1. Confirm current count still missing `lat`/`lng` (may have changed since 2026-06-25).
-2. **EnterPlanMode** before the bulk write (hundreds of hotels, real API cost) — per the standing rule to plan before any Directus data change.
-3. Run `google-geocode-hotels.mjs` (no `--ids` scope, or `--countries`/`--cities` in batches) using the same Places API approach, spot-check results (esp. flagged mismatches per the note above), then update this section.
-
-### Cost reference
-
-* **Geocoding API** (~$5/1000 requests) — address-string based; cheaper, but may fall back to a city-centroid point for remote lodges/resorts that don't parse well as a postal address.
-* **Places API — Find Place from Text** (~$17/1000 requests, the one this script uses) — searches by business/POI name, more likely to land on the actual property pin rather than the city center. Better fit for a luxury-property map (§12: "Markers built from hotel coordinates").
+**Remaining scope**: only the 67 new hotels (§23) have been geocoded this way. The from-scratch backfill across the ~800 legacy hotels has **not** run. To resume: confirm the current count missing coordinates, **EnterPlanMode before the bulk write** (hundreds of hotels, real API cost), then run in `--countries`/`--cities` batches and spot-check the flags.
 
 ---
 
-## 21. HOTEL DESCRIPTION PARAGRAPH REFORMATTER — PENDING API KEY
+## 21. HOTEL DESCRIPTION PARAGRAPH REFORMATTER - PLANNED, NOT RUN
 
-### Goal
+Add paragraph breaks to hotel descriptions via the Anthropic API. As of 2026-06-27: 39 hotels are a single block, 219 are 2 paragraphs, 504 are 3, 42 are 4. Target 3-4, split at topic transitions (setting -> architecture/rooms -> dining -> atmosphere), separator `
 
-Add natural paragraph breaks to hotel descriptions in Directus using Claude's API. Current state (2026-06-27):
+`.
 
-| Paragraphs | Hotels | Status |
-|---|---|---|
-| 1 (single block) | 39 | Needs splitting |
-| 2 paragraphs | 219 | Needs splitting |
-| 3 paragraphs | 504 | Probably fine |
-| 4 paragraphs | 42 | Fine |
-
-Target: 3–4 paragraphs per description, split at natural topic transitions (setting/location → architecture/rooms → dining/activities → atmosphere).
-
-### Blocker
-
-`ANTHROPIC_API_KEY` is not present in `hotels-beta/.env.local`. Add it before starting:
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
-Get the key from console.anthropic.com → API Keys (account: ufalkgm@gmail.com).
-
-### Script to build
-
-`hotels-beta/scripts/hotels/reformat-descriptions.mjs`
-
-- Zero new npm dependencies — raw `fetch` only
-- Model: `claude-haiku-4-5-20251001` (fast, cheap — estimated < $0.10 for all 762 hotels)
-- Flags: `--dry-run` (default) / `--apply` / `--only <id>` / `--limit N` / `--min-paras N` (default 4)
-- Separator convention: `\n\n` between paragraphs (matches existing data)
-- Validates response: same word count ±5% to catch rewriting
-
-### System prompt for Claude
-
-```
-You are an editorial assistant for a luxury travel platform. Your job is to add paragraph breaks to hotel descriptions.
-
-Rules:
-- Split the text into paragraphs at natural topic transitions (e.g. location/setting → architecture/rooms → dining/activities → atmosphere).
-- Aim for 3–4 paragraphs.
-- Do NOT rewrite, rephrase, or change any words. Preserve the exact wording.
-- Separate paragraphs with a single blank line (\n\n).
-- Return ONLY the reformatted description text — no commentary, no labels, no extra whitespace.
-```
-
-### Run order (once key is available)
-
-1. `--dry-run --only <id>` on one 0-newline hotel → confirm 3–4 paragraphs with natural breaks
-2. `--dry-run --only <id>` on a 3-paragraph hotel → confirm it is skipped
-3. `--apply --only <id>` on one hotel → verify Directus patched and dev server renders correctly
-4. `--dry-run --limit 10` → review sample before bulk
-5. `--apply` full run (762 hotels)
+Script to build: `scripts/hotels/reformat-descriptions.mjs` - zero new dependencies (raw `fetch`), model `claude-haiku-4-5-20251001`, flags `--dry-run` (default) / `--apply` / `--only <id>` / `--limit N` / `--min-paras N`. **Validate the response against the original word count +/-5%** to catch the model rewriting rather than reformatting, and dry-run a 3-paragraph hotel to confirm it is skipped. `ANTHROPIC_API_KEY` is no longer a blocker - it exists for the concierge (§50).
 
 ---
 
----
+## 22. HOTEL DESCRIPTION PARAGRAPH SPACING
 
-## 22. NEXT SESSION — HOTEL DESCRIPTION PARAGRAPH SPACING (planned 2026-06-29)
-
-Add natural paragraph breaks to hotel descriptions in Directus. Full background and script spec are in §21 above. The only blocker is the `ANTHROPIC_API_KEY` — add it to `hotels-beta/.env.local` before starting:
-
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-Get from console.anthropic.com → API Keys (account: ufalkgm@gmail.com).
-
-Once the key is in place, follow the run order in §21 exactly: dry-run one hotel, verify output, apply to one hotel, check the dev server renders correctly, then bulk run.
+Merged into §21 — same task, same script spec, no separate blocker.
 
 ---
 
-## 23. NEW HOTEL BATCH — 67 HOTELS ADDED (2026-07-07)
+## 23. NEW HOTEL BATCH — 67 HOTELS (2026-07-07)
 
-67 new hotels were created in Directus, **IDs 2001–2067**, all `published: false`. Source files and scripts live in `hotels-beta/scripts/hotels/new-hotels-2026/`: `new_hotels_batch1.json`–`new_hotels_batch14.json`, `create-hotels-batch.mjs` (creation, safe to re-run — skips any ID that already exists, doubles as the reference implementation for the array-field write fix in §4), and `google-geocode-hotels.mjs` (lat/lng geocoding, relocated here 2026-07-07 — see §20 for how it works).
+IDs 2001–2067. Sources and scripts in `scripts/hotels/new-hotels-2026/`: `new_hotels_batch1.json`–`batch14.json`, `create-hotels-batch.mjs` (safe to re-run, skips existing IDs; also the reference implementation for the array-field write fix in §4), `google-geocode-hotels.mjs`.
 
-### Fields already populated for all 67
+Populated for all 67: the editorial and taxonomy fields, the 7 award booleans, `www`/`insta`, and `lat`/`lng`.
 
-`hotel_name`, `published`, `country`, `region`, `state_province_county_island`, `city`, `local_area`, `affiliation`, `highlights`, `description`, `editor_rank`, `ext_points`, `total_rooms_suites_villas`, `activities`, `awards` (tag field), `setting`, `style`, the 7 award boolean flags (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`), `www`, `insta`, and (as of 2026-07-07) `lat`/`lng` via the Places API — see §20.
-
-### Still to do for each hotel (same pattern as §19)
-
-- [x] `lat` / `lng` — geocoded 2026-07-07 via `google-geocode-hotels.mjs`, all 67 populated
-- [x] Awards — audited and applied 2026-07-07, see §24
-- [x] `published: true` — applied 2026-07-07 via `publish-new-hotels-2026-07-07.mjs` to 66 of the 67 (all except **id 2020, Mandarin Oriental Cortina**, which stays `published: false` per explicit instruction). Note this was done *ahead of* Agoda/booking fields below, out of the original planned order.
-- [ ] Agoda matching — `agoda_hotel_id`, photos, booking URL. **Explicitly aborted 2026-07-07** — the existing pipeline (`scripts/agoda/match-agoda-hotels.mjs`) needs a bulk Agoda hotel-list export to fuzzy-match against, which isn't available for this batch, and Agoda's affiliate API has no name-search endpoint (ID-lookup only — see `GetHotelInformation` in `test-agoda-content.mjs`). GIATA's ID-mapping API (which could bridge this) returns 403, needs a special agreement. Revisit only when a fresh bulk export is available, or with an explicit decision to do manual per-hotel lookups.
-- [ ] Booking fields (`booking_provider`, `booking_URL`, etc.) or explicitly set `booking_provider: "none"` — not started.
+* Awards audited and applied 2026-07-07 (§24).
+* `published: true` applied to 66 of 67 — all except **id 2020, Mandarin Oriental Cortina**, which stays unpublished per explicit instruction. Done *ahead of* the Agoda/booking fields, out of the original planned order.
+* **Agoda matching explicitly aborted.** The pipeline needs a bulk Agoda hotel-list export to fuzzy-match against, which is not available; Agoda's affiliate API has no name-search endpoint and GIATA's ID-mapping API returns 403 without a special agreement. Revisit only with a fresh export.
+* Booking fields not started.
 
 ---
 
-## 24. HOTEL AWARDS REVIEW WORKFLOW (2026-07-07)
+## 24. HOTEL AWARDS REVIEW WORKFLOW
 
-### What this is
+The 7 award booleans are set at creation time from whatever source the editor had, and drift from the real award lists. This workflow cross-checks a batch against curated source lists and corrects both the booleans and the `awards` tag array.
 
-The 7 award boolean flags (`best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`) on `hotels` are set at hotel-creation time from whatever source the editor had, and can drift out of sync with the real award lists (wrong, stale, or simply unverified). This workflow cross-checks a batch of hotels against curated source lists and corrects the flags + the `awards` tag array.
+Scripts, all in `scripts/hotels/new-hotels-2026/`:
 
-Scripts (all in `hotels-beta/scripts/hotels/new-hotels-2026/`):
+* `match-hotel-awards.mjs` — **read-only**, general-purpose. Takes `--award <code>` (required, one at a time) and optional `--ids <from>,<to>` (default: the whole collection). Loads `awards-2026/*.json`, matches by name/location, writes `award-review-<code>-<date>.{txt,json}`. Four buckets: **confirmed** (exact core-name match, no location conflict), **near** (brand-prefix-agnostic containment, e.g. "Tamarindo" ≈ "Four Seasons Resort Tamarindo"), **uncertain**, **removal candidates** (flag set but no source match). Also flags **drift** — boolean and tag array disagreeing with each other. Exports its matching functions for reuse, guarded so importing doesn't trigger `main()`.
+* `apply-award-review-<date>[-<code>].mjs` — **writes**, dry-run by default, `--confirm` to patch. Hardcoded lists of exactly what to change: a one-time record of a reviewed session, not a tool. **Copy the pattern for a new round; don't edit an old one.**
+* `recalc-ext-points-<date>.mjs` — **writes**. `ext_points = editor_rank + award points`, where `michelin3keys`=5, `best50`=5, and `cn`/`tl100`/`forbes5`/`aaa5d`/`telegraph`=3 each. `editor_rank` is stored, not recomputed. Only patches where the value differs.
 
-* `match-hotel-awards.mjs` — **read-only**. Loads `awards-2026/*.json`, fetches the target hotels from Directus, matches by name/location, writes both a plain-text report and a structured JSON report (`award-review-<code>-<date>.{txt,json}`). **As of 2026-07-15 this is general-purpose and reusable**, not scoped to one batch: takes `--award <code>` (required, one of the 7 codes — run one at a time) and an optional `--ids <from>,<to>` to restrict scope (default is the full `hotels` collection). Four buckets: **confirmed** (exact core-name match, no location conflict), **near** (brand-prefix-agnostic containment match, e.g. "Tamarindo" vs "Four Seasons Resort Tamarindo"), **uncertain** (weaker signal — needs a human call), **removal candidates** (flag/tag currently set but no source-list match found). Also flags **drift** (boolean column and `awards` tag array disagree with each other, independent of source-list matching). Safe to re-run anytime. See §25 for the algorithm fixes made 2026-07-15 and the full-collection results.
-* `apply-award-review-2026-07-07.mjs` — **writes** to Directus. Dry-run by default; `--confirm` to actually patch. Takes hardcoded lists of exactly what to change (`CONFIRMED` additions, `RENAMES` to the award list's official naming, `REMOVALS` for flags that couldn't be confirmed) — this is a one-time record of a specific reviewed session, not a general tool. Copy this file's pattern (Directus fetch/patch helpers + `toPgArrayLiteral`) as the starting point for the next award-review round rather than editing this one's hardcoded lists.
-* `recalc-ext-points-2026-07-07.mjs` — **writes** to Directus. Run this *after* any award-flag change (from `apply-award-review-*.mjs` or a manual edit) — `ext_points` is not auto-derived, so a stale value silently lingers until recomputed. Dry-run by default; `--confirm` to write. General-purpose as-is (reusable — no hardcoded per-hotel data, just the formula and the hardcoded ID range filter): `ext_points = editor_rank + sum of award points`, where `editor_rank` is a stored field (not recomputed) and award points are `michelin3keys`=5, `best50`=5, `cn`=3, `tl100`=3, `forbes5`=3, `aaa5d`=3, `telegraph`=3. Only patches hotels where the computed value differs from the current one.
-
-### Workflow order
-
-1. Run `match-hotel-awards.mjs` (read-only) to get the review report.
-2. Resolve Section C uncertain candidates (web research) and Section B unconfirmed-existing flags (human call) with the user.
-3. Write/run an apply script (`apply-award-review-<date>.mjs` pattern) to patch the confirmed award flags + `awards` tag array.
-4. **Run `recalc-ext-points-2026-07-07.mjs` (or its successor) — award flags changed in step 3 make `ext_points` stale until this runs.** Easy to forget since it's a separate field from `awards`/the boolean columns.
+**Workflow order**: match (read-only) → resolve uncertain candidates and unconfirmed existing flags with the user → apply → **recalc ext_points**. That last step is easy to forget because it's a separate field, and a stale value lingers silently until it runs.
 
 ### Award source files (`awards-2026/*.json`)
 
-One file per award code, each a flat JSON array of source entries (`hotel_name`, `city`/`location`, `state_region`, `country`, plus source-specific fields). **These files can be stale or incomplete** — always sanity-check the entry count against the award org's own published total before trusting a file. In this session: Forbes had only 109 of the real 343 five-star hotels, Travel+Leisure had 89 of 100, Condé Nast's Gold List was a full year stale (2025 file vs. the already-published 2026 list), and Michelin Keys had 130 of the true 143 (never fully resolved — see below).
+One flat JSON array per award code. **These can be stale or incomplete — always sanity-check the entry count against the award org's own published total.** How to get a full, current list when the site only exposes a search widget:
 
-**How to find a full/current list when the org's website only exposes a search widget:**
-* Check the page's JS for an `ajax`/`fetch` call to a `.json` endpoint — Forbes Travel Guide's entire dataset is at `forbestravelguide.com/award-winners.json` (2,414 properties, filter by `propertyType`/`ratingDisplay`). Condé Nast Traveler's gallery/article pages embed a `window.__PRELOADED_STATE__` JSON blob containing the full `gallery.items` array (or the full article `body` as a hyperscript-like `["h3", "text"]` tree) — no need to scrape rendered HTML.
-* If the site blocks direct `curl`/fetch (AWS WAF JS challenge on Michelin's `guide.michelin.com`; a 402/bot-block on `travelandleisure.com`), check the **Wayback Machine** for a snapshot of the specific article URL (`archive.org/wayback/available?url=...`) — this recovered the full Travel+Leisure Top 100 and World's 50 Best 51-100 list when the live site wouldn't serve either script or WebFetch.
-* Some "full list" secondary sources (SEO blogs, affiliate sites) can be internally inconsistent (their own stated totals don't add up) — cross-check any secondary source's math before trusting it. When a user-supplied "new" source file doesn't reconcile with the current file (e.g. two supposedly-complete Michelin Keys lists sharing only ~1/3 of entries), that's a sign one of them is a different tier or year, not a data-quality bug to merge away — ask before incorporating.
+* **Forbes 5-Star**: the whole dataset is at `forbestravelguide.com/award-winners.json` — filter `propertyType === "HOTEL" && ratingDisplay === "5-Star Rated"`.
+* **World's 50 Best**: `theworlds50best.com/hotels/best-in-the-world/list/1-50` and `/51-100`, client-rendered — needs a headless browser.
+* **Condé Nast Gold List**: six regional gallery articles, no master page. Each page's `window.__PRELOADED_STATE__.transformed.gallery.items[]` has `dangerousHed` = `"Hotel Name — Country"`.
+* **Telegraph**: paywalled live — use the **Wayback Machine** for a pre-paywall snapshot.
+* **Travel + Leisure 100**: direct `curl` gets HTTP 402 (a bot-block, not a paywall — a headless browser sails through). Find the current slug via `travelandleisure.com/worlds-best-awards`; the full 100 are in the initial page load.
+* **AAA Five Diamond**: official PDF at `newsroom.aaa.com/wp-content/uploads/2024/04/AAA-Five-Diamond-Hotels-<YEAR>-1.pdf` — the `2024` in the path stays fixed as `<YEAR>` updates. `curl` it directly.
+* **Michelin 3 Keys**: `guide.michelin.com` is WAF-blocked. Workaround: `finehotelsguide.com/api/hotels?page=1&limit=10000&keyTier=Three-Keys`, found by watching network requests in a headless browser — it isn't referenced in the static bundle. Each entry links to its own guide.michelin.com page, so it is effectively Michelin's own data.
 
-### Matching-algorithm gotchas (already fixed in `match-hotel-awards.mjs`, keep in mind if extending it)
+**Puppeteer**: none of the JS-rendered sites are fetchable with plain `curl`/WebFetch. `npm install puppeteer` was done in a scratch directory only, not as a project dependency, and needed system libs first (`libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2t64 libpango-1.0-0 libcairo2 libnss3 libnspr4`) — without them Chrome fails with `libatk-1.0.so.0: cannot open shared object file`.
 
-* Strip generic hospitality words (`hotel`, `resort`, `spa`, plurals) before the **exact**-match check, not just the fuzzy-scoring path — otherwise "Four Seasons Resort Tamarindo" never lines up with a source's "Four Seasons Tamarindo".
-* Compare stripped tokens as a **sorted set**, not an ordered string — sources reorder the same words (our DB's "Rosewood Castiglion del Bosco" vs. Forbes's "Castiglion del Bosco, A Rosewood Hotel").
-* A location-string mismatch should not hard-exclude a candidate whose core name matches exactly — surface it for human review instead (caught a real same-property case: DB city "Tamarindo" vs. source's "La Manzanilla", the specific coastal town name for the same resort).
-* Chain brands (Mandarin Oriental, Four Seasons, Rosewood, ...) often have multiple distinct properties in the same city/region — a fuzzy brand-name match with country+city corroboration is still not proof of identity. Always verify uncertain chain-brand candidates against real-world facts (a web search) before treating them as the same hotel. This session found 4 genuinely different properties this way: Mandarin Oriental Wangfujing ≠ Qianmen (Beijing), Mandarin Oriental Dubai Downtown ≠ Jumeira, Naviva ≠ Four Seasons Resort Punta Mita (adjacent but separate resorts), Four Seasons Bali at Sayan ≠ at Jimbaran Bay.
-* Once a fuzzy candidate is confirmed as a genuine match, the award list's name is often the *more complete/official* one — consider updating the DB's `hotel_name` (and `city`, if the source's location is more specific) to match, not just flipping the boolean.
+Some "full list" secondary sources are internally inconsistent — cross-check their own math. When a supposedly-complete new source shares only a third of its entries with the current file, that's a sign it's a different tier or year, **not** a data-quality bug to merge away. Ask.
 
-### Directus write gotcha
+### Matching-algorithm rules (already in the script — keep in mind if extending)
 
-Writing to `activities`/`awards`/`setting`/`style` (native Postgres `text[]` columns) requires the Postgres array-literal string (`toPgArrayLiteral`, see §4) on **both** `POST` and `PATCH` — an earlier version of §4 claimed PATCH was safe with a plain JS array; that was wrong and is now corrected.
+* Strip generic hospitality words (`hotel`, `resort`, `spa`) before the **exact**-match check, not just the fuzzy path.
+* Compare stripped tokens as a **sorted set**, not an ordered string — sources reorder the same words ("Rosewood Castiglion del Bosco" vs "Castiglion del Bosco, A Rosewood Hotel").
+* A location mismatch must **not** hard-exclude a candidate whose core name matches exactly — surface it for review. A real country-label mismatch (DB "China" vs source "Hong Kong"; DB "St. Barthelemy" vs source's umbrella "French West Indies") was silently dropping genuine matches before this was fixed.
+* `cityStatus()` is three-tier (`match` / `state-only` / `conflict`). State-level overlap alone is too loose in dense regions — "Four Seasons Santa Barbara" matched "Four Seasons San Francisco" purely on "California". A city-level match is required to trust a *weak* name signal; `state-only` corroborates only a *strong* one, which preserves legitimate remote-resort cases (Royal Malewane's "Hoedspruit" vs Michelin's "Kruger National Park").
+* Once a fuzzy candidate is confirmed, the award list's name is often the more official one — consider updating `hotel_name` and `city` too.
 
-**Update 2026-07-14:** the "Award source files" note above (Forbes 109/343, T+L 89/100, CN stale, Michelin 130/143) is now out of date — all 7 source files were re-verified/rebuilt this session. See §25 for current status and the in-progress full-collection audit that follows on from it.
+### The pattern no string-matching fix resolves: chain-brand collisions
 
----
+Distinct hotels sharing a brand *and* a city share every location field the algorithm has. Every one of these needed a live web search to resolve, and they recurred across nearly every award pass: Mandarin Oriental Wangfujing vs Qianmen (Beijing); Four Seasons Istanbul at the Bosphorus (1 Key) vs at Sultanahmet (3 Keys); The Peninsula Beverly Hills vs The Beverly Hills Hotel — where the Peninsula turned out not to be on Forbes's list at all. Naviva vs Four Seasons Punta Mita, Jumeirah Burj Al Arab vs Marsa Al Arab, Hotel Le Lana (Courchevel) vs The Lana (Dubai) and Four Seasons Bali at Sayan vs at Jimbaran Bay are the same shape.
 
-## 25. HOTEL AWARDS — FULL-COLLECTION AUDIT (completed 2026-07-15)
-
-### Where this picks up from
-
-§24 covered a review scoped to the 67 new hotels (IDs 2001–2067). The natural next step — reviewing awards for the **entire hotels collection** (~806+ hotels) — was requested 2026-07-14. Before starting that, the 7 `awards-2026/*.json` source files themselves needed re-verification, since §24 already flagged several as incomplete/stale and one (Michelin) turned out to be badly wrong in a way nobody had caught.
-
-### Source file status (as of 2026-07-14 — supersedes the stale note in §24)
-
-All verified against **live, authoritative sources** (not secondary press write-ups). Commit `77e70bc` "Rebuild Michelin/AAA/T+L award source files against authoritative live data".
-
-| File | Result | Detail |
-|---|---|---|
-| `forbes5.json` | **No change** | Exact match (343/343) vs `forbestravelguide.com/award-winners.json` |
-| `best50.json` | **No change** | Exact match (100/100) vs `theworlds50best.com`'s live 2026 list |
-| `cn.json` | **No change** | Exact match (73/73) vs CN Gold List 2026 gallery data |
-| `telegraph.json` | **No change** | 49/50 exact (1 trivial naming variant); Telegraph hasn't published a newer edition — live page is still the Sept 2024 article |
-| `tl100.json` | **Rebuilt** (100 entries) | Old file was the 2025 edition; T+L published 2026 results 2026-07-07 (a week before this session) — 78 of 100 hotels turned over |
-| `aaa5d.json` | **Rebuilt** (151 entries, was 146) | Old file was stale; rebuilt from AAA's own 2026 PDF — 14 new designations, 9 properties no longer listed |
-| `michelin3keys.json` | **Rebuilt** (143 entries, was 134 raw/133 unique) | Old file wasn't just incomplete — it had **badly wrong per-country counts** (29 "USA" entries vs the real 16, only 14 France vs the real 23, 8 UAE entries that shouldn't have been there at all). Root cause: originally built from secondary press write-ups conflating tiers/adjacent luxury hotels, not the verified Three-Key roster. |
-
-### How to refresh each source file (techniques discovered 2026-07-14)
-
-* **Forbes 5-Star**: `forbestravelguide.com/award-winners.json` — filter `propertyType === "HOTEL" && ratingDisplay === "5-Star Rated"`. Already documented in §24; confirmed still working.
-* **World's 50 Best**: `theworlds50best.com/hotels/best-in-the-world/list/1-50` and `/51-100` — **client-rendered**, plain `curl`/WebFetch only sees a loading shell. Needs a headless browser (see "Puppeteer" note below). Simple `rank / name / city` text once rendered.
-* **Condé Nast Gold List**: `cntraveler.com/gold-list` links to regional gallery articles (`/gallery/gold-list-europe-hotels`, `/gallery/gold-list-asia-hotels`, `/gallery/best-hotels-africa-middle-east-gold-list`, `/gallery/best-hotels-mexico-south-america-gold-list`, `/gallery/best-hotels-united-states-canada-gold-list`, `/gallery/the-gold-list-2026-the-top-hotels-and-resorts-in-australia` — 6 regions, no single master page). Each gallery page's `window.__PRELOADED_STATE__.transformed.gallery.items[]` has `dangerousHed` = `"Hotel Name — Country"` (or just the name if the country's already in the name).
-* **Telegraph Best Hotels**: `telegraph.co.uk/travel/hotels/best-hotels-in-world-telegraph-awards/` is paywalled live (free-account gate after ~1 paragraph). Use the **Wayback Machine** (`archive.org/wayback/available?url=...`) for a pre-paywall or cached full snapshot — recovered the complete ranked list of 50 this way.
-* **Travel + Leisure 100**: direct `curl` gets **HTTP 402** (bot-block, not a real paywall — a headless browser sails through). URL is `travelandleisure.com/worlds-best-awards-top-100-hotels-in-the-world-<id>` (find current slug via the hub page `travelandleisure.com/worlds-best-awards`, since the numeric ID suffix can change year to year). Full 100-entry list is present in the **initial** page load — no scroll-triggered lazy loading despite appearances.
-* **AAA Five Diamond**: official PDF at `newsroom.aaa.com/wp-content/uploads/2024/04/AAA-Five-Diamond-Hotels-<YEAR>-1.pdf` (note the URL's `2024` stays fixed even as `<YEAR>` in the filename updates annually — AAA doesn't move the upload path). No scraping needed — `curl` it directly and read the PDF.
-* **Michelin 3 Keys**: `guide.michelin.com` itself is WAF-blocked (per §24). Found a workaround: `finehotelsguide.com/three-key-hotels` client-renders from `finehotelsguide.com/api/hotels?page=1&limit=10000&keyTier=Three-Keys` (discovered by watching network requests in a headless browser — the endpoint isn't referenced anywhere in the static JS bundle, only called at runtime). Each returned entry includes a direct link to its own `guide.michelin.com` page, so this is effectively Michelin's own data, not a third party's interpretation of it.
-
-**Puppeteer note**: none of the above JS-rendered sites (World's 50 Best, T+L, Condé Nast, Michelin via finehotelsguide) are fetchable with plain `curl`/WebFetch. This session installed `puppeteer` (bundled Chromium) via `npm install puppeteer` — but **only in the scratch working directory**, not as a project dependency, so it isn't available in the repo by default. Needed system libraries first (`sudo apt-get install libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2t64 libpango-1.0-0 libcairo2 libnss3 libnspr4`) — without them Chrome fails with `libatk-1.0.so.0: cannot open shared object file`. A future session repeating this will need to redo both steps.
-
-### Directus credentials — resolved 2026-07-15
-
-`hotels-beta/.env.local` didn't exist in the 2026-07-14 codespace (a fresh checkout — correctly gitignored, never committed). The user provided `DIRECTUS_URL` and `DIRECTUS_TOKEN` directly (via Directus's own user-profile Token field, not any machine-level secret store) and the file was created 2026-07-15. **General guidance for any future fresh checkout still applies**: ask the user directly for credentials; do NOT go looking in Codespaces' own secret stores (e.g. `/workspaces/.codespaces/shared/.env-secrets`) even when they'd plausibly contain the answer — a different trust boundary than reading a project file, even when the motivation is legitimate.
-
-### Full-collection match — completed 2026-07-15
-
-Widened `match-hotel-awards.mjs` from the old hardcoded `filter[id][_between]=2001,2067` to the full `hotels` collection (873 hotels), with a `--award <code>` flag to run one award code at a time (per the requested workflow below) and an optional `--ids <from>,<to>` to restrict scope if ever needed again. Ran all 7 award codes in sequence: Michelin 3 Keys → AAA/CAA Five Diamond → Condé Nast Gold List → World's 50 Best → Forbes 5 Star → Travel + Leisure 100 → Telegraph.
-
-**Workflow used, per the user's 2026-07-14 request:**
-* Went award-by-award; the user manually reviewed and approved every change before any Directus write, via an interactive HTML artifact per award (4 buckets: confirmed / near / uncertain / removal candidates, each with per-row approve/reject controls and a copyable JSON decision summary) rather than a flat text report.
-* Both additions and removals were in scope every round — a genuine re-audit, not just gap-filling.
-* Brand-prefix-agnostic matching (ignore whether a brand-name prefix is present, e.g. "Four Seasons Resort Tamarindo" ≈ "Tamarindo") implemented as a new "near" tier using token-set containment (requires ≥2 tokens in the smaller set, to avoid one-word false positives like a single shared word "palace" or "grand").
-
-**Final results, all reconciled against Directus (0 removal candidates / 0 drift) except best50, which has 3 hotels the user chose to keep `true` despite the algorithm not matching them to the current source list — see the "place-name variant" note below):**
-
-| Award | Confirmed | Near | Uncertain | Total changes applied |
-|---|---|---|---|---|
-| Michelin 3 Keys | 59 | 10 | 19 | 110 (40 add, 70 remove) + 2 manual corrections post-apply |
-| AAA/CAA Five Diamond | 46 | 9 | 3 | 11 (2 add, 9 remove) |
-| Condé Nast Gold List | 21 | 3 | 2 | 66 (13 add, 53 remove) |
-| World's 50 Best | 62 | 2 | 17 | 1 (1 remove) — user rejected the algorithm's recommendation to keep 3 place-name-variant matches |
-| Forbes 5 Star | 135 | 25 | 21 | 135 (105 add, 30 remove) |
-| Travel + Leisure 100 | 26 | 3 | 13 | 48 (30 add, 18 remove) |
-| Telegraph | 14 | 1 | 3 | 3 (0 add, 3 remove) |
-
-Every apply step also ran an ext_points recalc scoped to just the hotels touched that round (§24 step 4) — never skipped.
-
-### Algorithm fixes made during the audit (in `match-hotel-awards.mjs`)
-
-Two real bugs were found and fixed mid-audit — both were caught by cross-checking the algorithm's output against source-file entries directly and against real-world facts, not by inspection of the code alone. Re-ran already-completed award passes after each fix to confirm no regression (0 removal candidates / 0 drift held throughout).
-
-1. **Country-label hard-exclusion.** A real country-label mismatch (DB `country` = "China" vs. source "Hong Kong" for the same Hong Kong hotel; DB "St. Barthelemy" vs. source's umbrella "French West Indies" for the same island) was excluding a candidate *before* name similarity was even checked — silently dropping genuine matches (caught via Rosewood Hong Kong and Cheval Blanc St-Barth, the latter only found after cross-checking a "hotels not in DB" delta file and discovering the hotel actually *was* in the DB, just wrongly excluded). Fixed: an exact-name or containment match now downgrades to `uncertain` on a country conflict instead of being silently dropped.
-2. **Same-state-different-city false positive.** `cityStatus()` treated any overlap at the state/region level as a location match — too loose in city-dense states/countries: "Four Seasons Resort The Biltmore Santa Barbara" matched "Four Seasons Hotel San Francisco" purely because both are "California". Fixed with a three-tier signal (`match` / `state-only` / `conflict`): a real city-level match is required to trust a *weak* name signal (brand-token overlap); `state-only` is accepted as corroboration only for a *strong* signal (exact-name or containment match) — this preserves legitimate remote-resort matches where the DB's `city` is hyper-local but the source list (or the DB's own `state_province_county_island` field) uses the broader named area, e.g. Royal Malewane's DB city "Hoedspruit" vs. Michelin's "Kruger National Park".
-
-### Recurring pattern that only real-world verification catches: chain-brand name collisions
-
-Distinct hotels sharing a brand *and* a city are a persistent false-positive source that no string-matching fix resolves — both properties genuinely share every location field the algorithm has. Every instance below required a live web search or direct source-file cross-check to resolve, and recurred across nearly every award pass:
-
-* Mandarin Oriental Wangfujing ≠ Qianmen (Beijing) — best50, forbes5
-* Mandarin Oriental Dubai Downtown ≠ Jumeira — forbes5
-* Jumeirah Burj Al Arab ≠ Marsa Al Arab — best50, forbes5
-* Four Seasons Istanbul at the Bosphorus (1 Michelin Key) ≠ at Sultanahmet (3 Keys) — michelin3keys
-* Naviva ≠ Four Seasons Resort Punta Mita (adjacent but separate resorts, per §24) — cn
-* Hotel Le Lana (Courchevel, France) ≠ The Lana (Dubai) — best50
-* The Peninsula Beverly Hills ≠ The Beverly Hills Hotel — and Peninsula Beverly Hills isn't actually on Forbes's list at all — forbes5
-* The Fifth Avenue Hotel ≠ The Langham, New York, Fifth Avenue — coincidental "Fifth Avenue" word overlap (a containment false positive, not a brand-prefix case) — aaa5d
-
-**Rule of thumb going forward**: any `near`/`uncertain` match between two hotels of the same chain brand in the same city needs a live check before approving — the "core name" match being confident is not evidence.
-
-### Duplicate hotel records found and deleted
-
-Found incidentally while auditing awards (not via a systematic sweep — worth doing one at some point):
-* id 1841 "Hotel da Cataratas" — duplicate of id 1782 "Hotel das Cataratas" (identical Belmond `www`/`insta`/lat-lng). Deleted 1841; kept 1782 (has 5 Agoda photos, matters for Featured Mode per §6).
-* id 1643 "Waldorf Astoria Los Cabos Pedregal" (city "Cabo San Lucas") — duplicate of id 1649 (city "Los Cabos"), identical `www`/`insta`/lat-lng/room count. Deleted 1643; kept 1649 (5 Agoda photos vs. 0).
-
-### Follow-up — hotels on award lists but not in the OLTRA database
-
-Cross-checked the Michelin 3 Keys source list (143 entries) against all 873 DB hotels for entries with **zero match at any tier** — **54 of 143 have no match in the DB at all**, output at `hotels-beta/scripts/hotels/new-hotels-2026/michelin3keys-not-in-db-2026-07-15.{json,txt}`. Spread across 21 countries (France 8, USA 8, UK 5, Italy 6, Japan 4, Spain 4, single entries elsewhere). Not run for the other 6 award codes — the delta script itself wasn't saved as a named file this session (built ad hoc importing from `match-hotel-awards.mjs`'s exported functions; see chat history 2026-07-15 to reconstruct if needed). This isn't a data-quality issue with the awards — mostly small independent luxury properties the DB hasn't catalogued yet. Worth doing as a follow-up if/when expanding hotel coverage, and worth repeating for the other 6 award codes.
-
-### Scripts produced this session (all in `hotels-beta/scripts/hotels/new-hotels-2026/`)
-
-* `match-hotel-awards.mjs` — generalized per above; now exports its normalization/matching functions (`loadAwardList`, `loadHotels`, `hotelLocationFields`, `coreTokenSet`, `matchHotelToAward`, `TIER_RANK`, `AWARD_DISPLAY`, `ALL_AWARD_CODES`, `DIRECTUS_URL`, `DIRECTUS_TOKEN`) so other scripts (like the "not in DB" delta check) can reuse them without duplicating matching logic — guarded with `if (import.meta.url === \`file://${process.argv[1]}\`)` so importing it doesn't also trigger its CLI `main()`.
-* `apply-award-review-2026-07-15-<code>.mjs` — one per award code (michelin3keys, aaa5d, cn, best50, forbes5, tl100, telegraph). Same one-time hardcoded-list pattern as the 2026-07-07 predecessor (§24) — dry-run by default, `--confirm` to write, sets the boolean column and `awards` tag array together via `toPgArrayLiteral`. Follow this naming convention for any future re-audit round; don't edit these, copy the pattern.
-* `recalc-ext-points-2026-07-15-<code>.mjs` — one per award code, scoped to just the hotels touched by that round's apply script (not a full-collection recalc, unlike the 2026-07-07 predecessor which recalculated across a fixed ID range).
-* `award-review-<code>-2026-07-15-final.{json,txt}` — final reconciled report per award code, generated after all corrections were applied (0 removal candidates / 0 drift, except best50's 3 kept exceptions).
+**Rule: any `near`/`uncertain` match between two hotels of the same brand in the same city needs a live check before approving. A confident core-name match is not evidence.**
 
 ---
 
-## 26. RATEHAWK INTEGRATION — HOTEL MATCHING (matching complete 2026-08-07; images + booking integration next)
+## 25. FULL-COLLECTION AWARDS AUDIT (completed 2026-07-15)
 
-### Goal
+All 7 codes re-audited across the whole collection (873 hotels), one code at a time, with Ulrik approving every change via an interactive HTML artifact per award before any write. Both additions and removals were in scope.
 
-Add Ratehawk (Emerging Travel Group / ETG) as a booking data source, following the same shape as the existing Agoda integration (§23/§24): **hotel-matching comes first** — match Ratehawk's inventory against the OLTRA `hotels` Directus collection (~850 hotels) before building search/booking-link UI. No app code references Ratehawk yet; this section covers only the data-matching groundwork.
+Source files were re-verified first (commit `77e70bc`). `forbes5`, `best50`, `cn` and `telegraph` needed no change; `tl100` was rebuilt (the 2026 list published a week earlier, 78 of 100 turned over), `aaa5d` rebuilt from AAA's own PDF, and `michelin3keys` rebuilt — the old file wasn't merely incomplete, it had **badly wrong per-country counts** (29 "USA" entries against a real 16, 8 UAE entries that shouldn't have been there) because it had been built from secondary press write-ups conflating tiers.
 
-### Credentials & API access
+Across the 7 codes: 363 confirmed, 53 near, 78 uncertain, and 374 changes applied (191 additions, 183 removals). All reconciled to 0 removal candidates / 0 drift, except best50, where Ulrik chose to keep 3 place-name-variant matches `true`. Every round ran its own scoped ext_points recalc. Artefacts: `apply-award-review-2026-07-15-<code>.mjs`, `recalc-ext-points-2026-07-15-<code>.mjs`, `award-review-<code>-2026-07-15-final.{json,txt}`.
 
-* `hotels-beta/.env.local`: `RATEHAWK_KEY`, `RATEHAWK_KEY_ID`, `RATEHAWK_API_URL=https://api.ratehawk.com`.
-* **Auth**: HTTP Basic — `key_id` as username, `key` as password (`curl --user '<KEY_ID>:<KEY>'`).
-* **Host**: `https://api.ratehawk.com` is the current production host as of a 2026-07-14 partner email (moved from the legacy `https://api.worldota.net`, which still works identically — same paths, same credentials, just the old domain). Both hosts authenticate successfully with our key; `api.ratehawk.com` is the one to standardize on going forward.
-* **Important caveat — this is a "Sandbox Key" per ETG's onboarding email, but it authenticates against the live production host, not an isolated sandbox subdomain.** (A dedicated `api-sandbox.worldota.net` host exists per ETG's public docs, but our specific key returns `401 incorrect_credentials` there — it's simply not provisioned for that tier.) ETG's own email explicitly warns: test *bookings* are treated as real orders and must be manually cancelled. Read-only content endpoints (used so far) carry no such risk.
-* Confirmed working test call: `POST /api/b2b/v3/hotel/info/` with body `{"hid": 8473727, "language": "en"}` → returns ETG's fixture "Test Hotel (Do Not Book) test" in Tegucigalpa, Honduras. Use `hid` (integer), not `id` (string slug) — the numeric id from the onboarding email is a `hid`.
-* **Content API v1** (`/api/content/v1/filter_values`, `/api/content/v1/hotel_ids_by_filter/`, `/api/content/v1/hotel_content_by_ids/` — filter by country, fetch content by hid, avoids downloading the full global dump) was **not enabled** for this key when the pipeline below was built (`403 endpoint_not_found`, `is_active: false`; re-verified 2026-08-17), which is why that pipeline streams the 2.8 GB dump. **ETG enabled it on 2026-08-24** — all three endpoints now 200 / `is_active: true`, and `hotel_content_by_ids` is the preferred static-content source going forward. See §32 for the verified limits, the field comparison against `/hotel/info/`, and the measured cost of a full-roster sync. The dump pipeline below still works and is kept as a fallback.
-* Docs at `docs.emergingtravel.com` block direct fetch (403, same bot-protection pattern as other sites noted in §25) — use web search against the docs domain to extract specifics instead; a Wayback Machine fallback (used successfully for other blocked sites in §25) did **not** work here, this tool's WebFetch refuses `web.archive.org` outright.
+Two duplicate records were found incidentally and deleted (id 1841, a duplicate of 1782; id 1643, a duplicate of 1649 — the surviving row kept in each case for its Agoda photos). Not found by a systematic sweep; one is still worth doing.
 
-### Data pipeline built this session (all in `hotels-beta/scripts/ratehawk/`)
+### Follow-up — award-listed hotels not in the database
 
-Content API v1 wasn't available when this was built (it is now — see above), so the working approach here is ETG's **full hotel dump** endpoint:
+**54 of the 143 Michelin 3 Keys entries have no match in the DB at any tier**, across 21 countries (France 8, USA 8, Italy 6, UK 5, Japan 4, Spain 4). Output at `michelin3keys-not-in-db-2026-07-15.{json,txt}`. Not a data-quality issue — mostly small independent properties not yet catalogued. Not run for the other 6 codes; worth repeating when expanding coverage.
 
-1. `POST /api/b2b/v3/hotel/info/dump/` with `{"inventory": "all", "language": "en"}` → returns a signed S3 URL (`partner_feed__en_v3.jsonl.zst`, ~1hr expiry) + `last_update` timestamp. This is ETG's **entire global partner inventory**, not scoped to us — confirmed size **2,797,718,014 bytes (~2.8GB) compressed**, reportedly 20GB+ decompressed. Updated weekly by ETG; there's also a documented incremental/daily-diff dump endpoint (`retrieve-hotel-incremental-dump`) not yet used.
-2. Downloaded to `scripts/ratehawk/partner_feed__en_v3.jsonl.zst` (gitignored — see below). Format: newline-delimited JSON, Zstandard-compressed. **Node 24's built-in `zlib` module has native Zstandard streaming support** (`createZstdDecompress`) — no new npm dependency needed, consistent with this project's scripts convention.
-3. `filter-dump-by-country.mjs` streams the file end-to-end (never holding the full decompressed feed in memory or on disk) and keeps only records whose `region.country_code` maps to one of the OLTRA `hotels` collection's countries, writing a slim record (`hid`, `id`, `name`, `country`, `country_code`, `city`, `region_id`, `latitude`, `longitude`, `star_rating`, `kind`, `address`) per line to `scripts/ratehawk/output/filtered-hotels.jsonl`.
-4. `country-map.mjs` — hand-built ISO 3166-1 alpha-2 → OLTRA-country-string lookup table, one entry per country in `oltra-countries.json` (the distinct-country snapshot pulled from Directus, kept in sync with the DB — see cleanup below). This is the join key between Ratehawk's `region.country_code` and our `hotels.country` field.
-5. **Full run result**: of 3,166,880 total hotels in the global dump, **2,944,537 matched** one of our then-87 countries, plus a **3,629-hotel Nepal append** (targeted single-country scan, not a full re-filter) after the DB fix below added Nepal as an 88th country — **final total: 2,948,166 hotels** in `scripts/ratehawk/output/filtered-hotels.jsonl`.
+### Credentials for a fresh checkout
 
-`.gitignore` additions: `scripts/ratehawk/*.zst`, `scripts/ratehawk/*.jsonl`, `scripts/ratehawk/output/` — the raw dump and filtered output never get committed (multi-GB, regenerable, and the raw dump is ETG's proprietary global inventory, not ours to publish).
-
-### Country-mapping audit (prompted by a valid user concern about silent mismatches)
-
-Before trusting the country-level filter, cross-checked every one of the 87 target countries against the actual dump for zero-match cases (a real risk: a country whose Ratehawk `country_code` isn't in `country-map.mjs` would be silently dropped with no error). Findings:
-
-* **Hong Kong** — turned out to be a non-issue: Ratehawk itself files Hong Kong hotels under `country_code: "CN"` (with `region.name: "Hong Kong"`, `iata: "HKG"`), i.e. lumped into China — same as the OLTRA DB already does. No mismatch.
-* **Macau** — Ratehawk does give Macau its own `MO` code (confirmed 80+ real records), but `country-map.mjs` already maps `MO → "China"` to match the DB's existing grouping, so these aren't dropped.
-* **St. Martin** — the one OLTRA hotel here (La Samanna, Marigot) is genuinely on the French side of the island; `MF` is the correct code, no Sint Maarten/Dutch-side split issue in practice.
-* **Russia** — the only country with a genuine zero-match, and it's not a mapping bug: the full dump (all 3.16M records) contains **zero** `RU`-coded hotels at all, almost certainly ETG (a European company) excluding Russian inventory for sanctions reasons. The one OLTRA hotel in Russia (Barvikha Hotel & Spa, Moscow, id 1505) simply won't have a Ratehawk match available — expected, not broken.
-* **All other 85 countries** — real matches found, ranging from 413,826 (China) down to 35 (Monaco).
-
-**Takeaway for extending `country-map.mjs` later**: if a new OLTRA country is added, verify it against the dump the same way (grep the raw stream for the expected `country_code`, or check the filtered output's per-country counts) rather than assuming a code — don't trust ISO-standard assumptions blindly, since ETG's own classification has at least one real deviation (Hong Kong under `CN` rather than a separate `HK`).
-
-### Directus data cleanup done alongside this (2026-08-05)
-
-Found while auditing `hotels.country` for the country-map work — all normalized to the majority spelling already in use:
-
-| Hotel(s) | Was | Now |
-|---|---|---|
-| ids 1105, 1107 | `"China "` (trailing space) | `"China"` |
-| id 1106 (Four Seasons HK) | `"China "` + `hotel_name` `"Four Seasons Hotel Hong Kong "` (trailing space) | `"China"` + trimmed name |
-| id 1148 (Mandarin Oriental Tokyo) | `"Japan "` + trailing-space `hotel_name` | `"Japan"` + trimmed name |
-| id 1149 | `"Japan "` | `"Japan"` |
-| ids 2029, 2039 | `"UAE"` | `"United Arab Emirates"` (majority: 20 vs 2) |
-| id 1578 | `"The Netherlands"` | `"Netherlands"` (majority: 5 vs 1) |
-| id 1088 (Shinta Mani Mustang, city Jomsom — actually Mustang, **Nepal**) | `"China"` (pre-existing unrelated data error, unrelated to Ratehawk, just spotted during this audit) | `"Nepal"` |
-
-`oltra-countries.json` and `country-map.mjs` updated to include `"Nepal"` / `NP` after the last fix; a targeted append-only pass (scan the dump for `"NP"` only, not a full re-filter) backfilled Nepal into `filtered-hotels.jsonl` without re-running the ~10-minute full stream.
-
-### Matching algorithm (`match-ratehawk-hotels.mjs`, built 2026-08-07)
-
-Mirrors `scripts/agoda/match-agoda-hotels.mjs` and the CONFIRMED/NEAR/UNCERTAIN tiering from `match-hotel-awards.mjs`, adapted for Ratehawk's scale:
-
-* **Country is a hard filter** and, unlike the Agoda script, needs no fuzzy normalization — `filtered-hotels.jsonl` already carries the exact OLTRA country string (via `country-map.mjs`), so grouping is an exact-string match.
-* **City is deliberately NOT a filter**, only a soft scoring bonus — Ratehawk's `city` field is actually `region.name`, which is sometimes a broader area than OLTRA's `city` (e.g. "Kruger National Park" vs "Sabi Sand Reserve") and occasionally just wrong (see Bateleur Camp below).
-* **Name matching**: strip generic hospitality words (hotel/resort/spa/villa/lodge/palace/suites/residence/collection/boutique/the/a/an/and/by), Jaccard token-overlap score, plus a brand-prefix-containment bonus (smaller token set ⊂ larger, ≥2 tokens, same idea as the awards script's "near" tier) and a rare-token (≥5 chars) bonus.
-* **Lat/lng haversine distance** added as a scoring signal not present in the Agoda script: ≤1km strong bonus, ≤5km smaller bonus, ≤25km tiny bonus, >100km penalty.
-* **Tiers**: `CONFIRMED` (score ≥85, ≥15 clear of runner-up) / `LIKELY` (≥60, ≥8 clear) / `QUESTIONABLE` / `NO_MATCH` (best <40 or no candidate scored ≥20). Keeps top 3 candidates per OLTRA hotel.
-* Run end-to-end against the full ~2.95M-row filtered dump in a few minutes (single readline stream, country-grouped candidates kept small in memory).
-
-### Review tooling (`build-review-tool.mjs` → `output/review-tool.html`)
-
-Self-contained offline HTML page (embeds the match results as a JS const, no server needed) for confirm/reject review at hotel scale:
-
-* Per hotel: shows top-3 candidates with score/notes/distance; **Confirm** / **Not this** / **None of these match** (→ rejected) / **Mark unsure** buttons.
-* Autosaves decisions to `localStorage` (`ratehawk_match_decisions_v1`, keyed by `oltra_id`); **Export decisions JSON** downloads them; **Import decisions** re-loads a JSON file.
-* Filters: status tier, reviewed/pending, text search. Default view is "All statuses" / "All (incl. reviewed)" so a full pass can scroll continuously rather than tier-by-tier.
-* **Gotcha**: hotels with zero candidates originally rendered with no action buttons at all (no way to mark "no match") — fixed by adding Confirm-no-match/Mark-unsure buttons to the empty-candidates branch too.
-* **Browser-automation gotcha**: the Claude-in-Chrome extension cannot navigate to `file://` URLs. Workaround used: `python -m http.server` from `scripts/ratehawk/output/` and open `http://localhost:<port>/review-tool.html` instead.
-* To bulk-inject decisions (e.g. after a re-match) without re-clicking everything: `fetch` the decisions JSON from the local server and write it into `localStorage` via the JS console/`javascript_tool`, then reload — far faster than re-driving the UI.
-
-### Manual-lookup verification (`test-manual-matches.mjs`)
-
-For hotels the algorithm couldn't confidently match, the user searched Ratehawk's public site by hand and supplied alternate names/addresses; this script tests those leads against `filtered-hotels.jsonl` (name+address token-overlap scoring, country-scoped) to find the real `hid`. Recovered 27 of 30 manually-supplied leads (3 were "Unpublish"/"duplicate" data-cleanup notes, not match leads).
-
-### Key bugs and lessons from this session (read before extending)
-
-* **Decisions-merge bug**: when bulk-writing the 27 manually-verified matches into the decisions file, the update script pulled `candidates[0]` from the *automatic* matcher's `ratehawk_match_results.json` instead of from `manual_match_test_results.json` — silently overwriting several correct manual matches with the automatic matcher's (wrong) top guess, e.g. `The Biltmore Hotel` (Miami) got replaced with "Biltmore Suites Hotel" in **Baltimore**. Caught by the Stage-1 distance QA check below, not by the matching logic itself. **Lesson: when merging match results from two different sources, double-check which source's candidate list you're actually reading — a matching `oltra_id` doesn't guarantee you grabbed the right hid.**
-* **Country misclassification isn't limited to the Hong-Kong/Macau case already documented above.** Found the same pattern for St. Barthélemy: Ratehawk splits genuine island properties inconsistently between `country_code: "BL"` and `"FR"` (e.g. Rosewood Le Guanahani is FR-coded despite being on the island). Fixed via a geographic bounding-box scan (`scan-st-barth.mjs`) rather than a country-code remap, since only ~6 of the many FR-coded records were genuinely on the island — most FR hits for "st barth"-like text were unrelated mainland-France false positives. **Lesson: when a country-hard-filtered match comes back NO_MATCH for a hotel you're confident should be in the dump, check for this pattern before concluding it's absent — scan the raw dump by name/geography across *all* country codes, not just the expected one.**
-* **Google Places re-geocoding is not independent verification** when the coordinate being checked was *originally sourced* the same way (per §20, OLTRA's lat/lng were populated via this same Places "Find Place from Text" method). Re-querying today can reproduce the exact same (wrong) answer Google gave originally, which looks like confirmation but isn't. Caught this for 2 of the largest distance-outliers (`Bulgari Hotel Shanghai` — Google matched an unrelated address in Qinhuangdao, ~1000km off, exactly reproducing OLTRA's stored error; `Casa Chablé` — Google matched a same-brand sibling property, "Chablé Yucatán", instead). Both resolved via plain web search for the hotel's real address instead. **Lesson: a "verification" that uses the same method/data source as the original data creation only proves consistency, not correctness — treat it as low-confidence when the two should be independent, and cross-check outliers via a genuinely different source.**
-* **Directus data-entry bugs surfaced along the way** (not Ratehawk-related, just found while cross-referencing): `hotel_name` fields with junk appended (`"One&Only Kéa Island, Greece"`, `"One&Only Reethi Rah, Maldvies"` — note the misspelling) and a plain typo (`"Senses Lanai"` → should be `"Sensei Lanai"`), plus a duplicate `Caruso` (Ravello) row (ids 1426/1449, both `published: true` simultaneously) and 4 hotels genuinely in Anguilla mistagged `country: "British Virgin Islands"` (ids 1237/1238/1239/1240) — `state_province_county_island` already correctly said "Anguilla" for all 4, only `country` was wrong.
-
-### Final results (2026-08-07)
-
-Of 871 OLTRA hotels: **829 confirmed matches** (630 automatic CONFIRMED-tier + 91 automatic LIKELY-tier with location corroboration, bulk-accepted after spot-check + 27 from manual lookup, 4 of which needed the St. Barth/Anguilla fixes above to even find a candidate), **31 marked unsure**, **11 confirmed no-match** (genuinely absent from Ratehawk's inventory — includes Russia per the sanctions exclusion above, and several ultra-exclusive independent brands like Cheval Blanc and Eden Rock St-Barths that don't appear anywhere in the 3.16M-row dump under any country code).
-
-**Pre-write-back QA** (`build-writeback-review.mjs` → `output/writeback_review.csv`) cross-checked all 829 confirmed matches on three axes before touching Directus:
-
-1. **Distance** (haversine, OLTRA vs Ratehawk lat/lng): 322 of 829 >50m apart, but 285 of those are <1km (GPS-pin precision, not investigated further). Of the 37 >1km outliers, independently verified via Google Places (`verify-distance-outliers.mjs`) + web search for the worst two — **9 confirmed as OLTRA coordinate errors**, fixed in Directus (see table search-worthy hotel names: Bulgari Hotel Shanghai, Casa Chablé, Excellence Oyster Bay, Four Seasons Hotel Boston, Nihi Sumba, Royal Malewane, Ritz-Carlton Ras Al Khaimah, Ritz-Carlton Shanghai, Upper House Chengdu). The other 28 outliers left as-is (see the Google-Places-circularity lesson above for why those verdicts are lower-confidence, not wrong).
-2. **Name**: 221 of 829 differ after normalization. Cross-checked each OLTRA `description` (sourced from official hotel websites) for which name it actually validates — **216 of 221 (98%) validated OLTRA's existing name** (Ratehawk's "difference" is almost always just a distribution-channel suffix like "- The Leading Hotels of the World" or "By Hyatt"). Only 3 pointed the other way, and all 3 turned out to be the Directus typos/junk listed above — fixed, no bulk renaming needed.
-3. **City**: 288 of 829 differ. 15 had a blank OLTRA `city` (14 backfilled from Ratehawk — 1 skipped, Ratehawk's value was garbled hotel-name text, not a real place). The other 273 (both sides non-blank) showed **no consistent direction** — sometimes OLTRA is more precise (ski-resort sub-villages, named reserves), sometimes Ratehawk is (the actual town vs. a broader named area) — left untouched as a blanket update would make roughly half of them worse, not better.
-
-**Directus schema change**: added `ratehawk_hid` (integer, nullable) to the `hotels` collection, same pattern as `agoda_hotel_id`. Backfilled for all 829 confirmed matches, 0 failures.
-
-**Files** (all in `hotels-beta/scripts/ratehawk/`): `export-oltra-hotels.mjs` (fresh OLTRA snapshot incl. `affiliation`/lat/lng), `match-ratehawk-hotels.mjs`, `build-review-tool.mjs`, `test-manual-matches.mjs`, `scan-st-barth.mjs`, `append-country-to-filtered.mjs` (generic targeted-country backfill, used for both Nepal and Anguilla), `fix-anguilla-country.mjs`, `build-writeback-review.mjs`, `verify-distance-outliers.mjs`, `export-non-confirmed-csv.mjs`, `apply-ratehawk-hid.mjs` (the only script here that writes `ratehawk_hid` — everything else is review/report-only). `.env.local` also now has `GOOGLE_MAPS_API_KEY` (re-added 2026-08-07; was present as of §20's 2026-07-07 note but had since been removed).
+`.env.local` is correctly gitignored and never committed. Ask Ulrik directly for `DIRECTUS_URL`/`DIRECTUS_TOKEN` (his Directus user-profile Token field). **Do NOT go looking in Codespaces' own secret stores** even when they'd plausibly contain the answer — a different trust boundary than reading a project file, even with legitimate motivation.
 
 ---
 
-## 27. NEXT PHASES — RATEHAWK IMAGES & BOOKING INTEGRATION (not started, planned 2026-08-07)
+## 26. RATEHAWK INTEGRATION — HOTEL MATCHING (complete 2026-08-07)
 
-With hotel-matching done and `ratehawk_hid` populated for 829 hotels, the two next pieces of work:
+Matching Ratehawk's inventory against the OLTRA `hotels` collection, ahead of any search/booking UI. Credentials and current API status are in §32; this section is the matching groundwork and its lessons.
 
-### 1. Hotel images from Ratehawk
+### The dump pipeline (`scripts/ratehawk/`)
 
-Not yet scoped. The slim records in `filtered-hotels.jsonl` (from the full dump) don't include image URLs — that field wasn't captured by `filter-dump-by-country.mjs`'s slim-record projection (see the field list in the pipeline section above). Before starting:
+Content API v1 wasn't provisioned when this was built, so it used ETG's **full hotel dump**: `POST /api/b2b/v3/hotel/info/dump/` returns a signed S3 URL (~1hr expiry) for `partner_feed__en_v3.jsonl.zst` — ETG's **entire global inventory**, ~2.8 GB compressed, 20 GB+ decompressed, refreshed weekly. **Node 24's built-in `zlib` has native Zstandard streaming** (`createZstdDecompress`) — no npm dependency needed.
 
-* Check whether the full dump's raw JSONL rows (pre-slimming) actually contain an images field — if so, a targeted re-scan keyed by our 829 known `hid`s (same streaming pattern as `append-country-to-filtered.mjs`) can pull them without re-downloading.
-* If the dump doesn't carry images, the per-hotel `POST /api/b2b/v3/hotel/info/` endpoint (already confirmed working, see credentials section) is the fallback — 829 individual calls, so check for rate limits.
-* Existing precedent to follow: `scripts/agoda/backfill-agoda-lite-images.mjs` for how Agoda photos were pulled into `agoda_photo1`–`agoda_photo5`; decide whether Ratehawk images get parallel `ratehawk_photo*` fields or a different storage shape (array field, like the taxonomy tags?).
+`filter-dump-by-country.mjs` streams it end to end (never holding the decompressed feed in memory or on disk) and keeps records whose `region.country_code` maps to an OLTRA country, writing a slim record per line to `output/filtered-hotels.jsonl`. `country-map.mjs` is the hand-built ISO alpha-2 → OLTRA-country-string lookup that is the join key. Result: 2,948,166 of 3,166,880 hotels kept.
 
-### 2. Room selection, availability check, and booking integration
+`.gitignore` covers `scripts/ratehawk/*.zst`, `*.jsonl`, `output/` — multi-GB, regenerable, and ETG's proprietary inventory rather than ours to publish.
 
-Mirrors the existing Duffel flights integration architecture (§7B) in spirit — search/offer/book — but for hotel rooms:
+**Content API is now enabled and is the preferred source — see §32.** The dump pipeline still works and stays as a fallback.
 
-* Ratehawk/ETG's booking API endpoints haven't been explored yet this session (only the content/dump endpoints used for matching). Will need: availability search (dates + `hid` → room/rate options), rate/room selection, and a booking-confirmation flow.
-* **Careful**: per the credentials section above, this key is a "Sandbox Key" that hits the *live production* host — ETG's onboarding email explicitly warns that test bookings are treated as real orders and must be manually cancelled. Read-only search/availability calls are presumably safe; anything that creates a booking needs explicit care and probably a confirmation step before ever calling it, even in testing.
-* UI shape: likely a new `/hotels/[id]/book` flow or a booking panel on the existing hotel detail view, following the `FlightsView`/`PriceCard` pattern of showing options with a clear book action — but hotel booking has a different shape (room types, occupancy, cancellation policy) than flight offers, so don't force-fit the flights component structure.
+### Country mapping — don't trust ISO assumptions
 
-Before resuming either: re-verify `RATEHAWK_KEY`/`RATEHAWK_KEY_ID` are still valid (§26 credentials section) and check whether ETG's weekly dump refresh means `filtered-hotels.jsonl` should be re-pulled if picking this up much later.
+A country whose code isn't in `country-map.mjs` is **silently dropped with no error**. Audited all 87 target countries against the dump for zero-match cases:
+
+* **Hong Kong** is a non-issue: Ratehawk files HK hotels under `country_code: "CN"`, same as our DB does. **Macau** gets `MO`, which `country-map.mjs` maps to `"China"` to match. **Russia** is the one genuine zero, and not a mapping bug — the dump contains **no** `RU` hotels at all, almost certainly a sanctions exclusion, so Barvikha (id 1505) simply has no Ratehawk match available. All other 85 countries had real matches, from 413,826 (China) down to 35 (Monaco).
+
+**When adding a new OLTRA country, verify its code against the dump** rather than assuming — ETG's classification has real deviations. Sri Lanka was later found missing entirely (§49), which is exactly this failure mode.
+
+### Matching algorithm (`match-ratehawk-hotels.mjs`)
+
+* **Country is a hard filter** and needs no fuzzy normalization — the filtered file already carries the exact OLTRA string.
+* **City is deliberately NOT a filter**, only a scoring bonus — Ratehawk's `city` is really `region.name`, sometimes broader than ours ("Kruger National Park" vs "Sabi Sand Reserve") and occasionally wrong.
+* **Name**: strip generic words, Jaccard token overlap, plus a brand-prefix-containment bonus (≥2 tokens) and a rare-token (≥5 chars) bonus.
+* **Haversine distance** as a scoring signal: ≤1km strong bonus, ≤5km smaller, ≤25km tiny, >100km penalty.
+* Tiers: `CONFIRMED` (≥85, ≥15 clear of runner-up) / `LIKELY` (≥60, ≥8 clear) / `QUESTIONABLE` / `NO_MATCH`. Top 3 candidates kept per hotel.
+
+### Lessons that cost real time
+
+* **When merging match results from two sources, check which source's candidate list you're reading.** The update script pulled `candidates[0]` from the *automatic* results instead of the *manual* ones, silently overwriting correct manual matches — The Biltmore (Miami) became "Biltmore Suites Hotel" in **Baltimore**. A matching `oltra_id` does not guarantee the right hid. Caught by a distance QA check, not by the matching logic.
+* **Country misclassification isn't limited to Hong Kong/Macau.** Ratehawk splits St. Barthélemy inconsistently between `BL` and `FR`. Fixed by a geographic bounding-box scan (`scan-st-barth.mjs`), not a code remap, since most FR hits for "st barth" text were mainland false positives. **When a hard-filtered match returns NO_MATCH for a hotel you're confident exists, scan the raw dump by name/geography across all country codes before concluding it's absent.**
+* **Google Places re-geocoding is not independent verification** when the coordinate was originally sourced the same way (§20). Re-querying reproduces the same wrong answer — which looks like confirmation. Two of the worst distance outliers did exactly this (Bulgari Shanghai matched an address ~1000km off, exactly reproducing the stored error; Casa Chablé matched a same-brand sibling). Both resolved by plain web search instead. **A verification using the same method as the original data creation proves consistency, not correctness.**
+
+### Results and write-back
+
+Of 871 hotels: **829 confirmed**, 31 unsure, 11 confirmed absent from Ratehawk's inventory. `ratehawk_hid` (integer, nullable) was added and backfilled for all 829, 0 failures.
+
+Pre-write-back QA (`build-writeback-review.mjs`) cross-checked all 829 on distance, name and city before anything was written. Two findings shaped later work: **9 hotels turned out to have wrong OLTRA coordinates** (fixed), and of 221 differing names, **216 validated OLTRA's own** — Ratehawk's difference is almost always a distribution suffix ("- The Leading Hotels of the World", "By Hyatt"), so no bulk renaming. City differed on 288 with **no consistent direction**, so a blanket update would have made half of them worse; left untouched.
+
+Directus data-entry bugs found along the way: `hotel_name` fields with junk appended, a typo ("Senses Lanai" → "Sensei Lanai"), a duplicate Caruso row (1426/1449, both published), and 4 Anguilla hotels mistagged `country: "British Virgin Islands"` (1237–1240).
+
+**Files**: `export-oltra-hotels.mjs`, `match-ratehawk-hotels.mjs`, `build-review-tool.mjs`, `test-manual-matches.mjs`, `scan-st-barth.mjs`, `append-country-to-filtered.mjs`, `fix-anguilla-country.mjs`, `build-writeback-review.mjs`, `verify-distance-outliers.mjs`, `export-non-confirmed-csv.mjs`, `apply-ratehawk-hid.mjs` (the only one that writes).
 
 ---
 
-## 28. RATEHAWK HOTEL IMAGES — BACKFILL COMPLETE (2026-08-08)
+## 27. RATEHAWK — NEXT PHASES
 
-### What was done
+Phase 1 (images) is done — §28 and §29. Phase 2 (rooms, availability, pricing) is done — §30. Booking itself is still blocked pending ETG; see §32, which is the live section for anything Ratehawk from here.
 
-Completed phase 1 of §27 ("Hotel images from Ratehawk") for the 829 hotels confirmed matched in §26. **Data-only phase, same precedent as `ratehawk_hid`**: no app code, no `HotelRecord` TypeScript changes, no gallery UI — those come later, once a consumer is actually built.
+---
+
+## 28. RATEHAWK HOTEL IMAGES — BACKFILL (2026-08-08)
 
 ### Schema: 100 flat fields, not a JSON blob
 
-Added `ratehawk_image_1` … `ratehawk_image_50` (Directus `string`, the image URL) and `ratehawk_image_1_category` … `ratehawk_image_50_category` (Directus `string`, the `category_slug`, e.g. `exterior`, `guest_rooms`, `pool`) to the `hotels` collection. **Deliberately not a `json`-type array field** (that was the first draft of this plan) — flat numbered fields stay editable/browsable in the Directus admin UI, where a JSON blob would be opaque. **Deliberately not capped at a smaller number either** — the true per-hotel max is 50, and since these are just URL strings there's no real cost to keeping all of them; capping would silently drop real editorial value (a pool/spa shot sorted late in Ratehawk's list). No category-priority curation or truncation logic — every image Ratehawk returns for a hotel gets a slot, in Ratehawk's own native order.
+`ratehawk_image_1`–`50` (URL) and `ratehawk_image_1_category`–`50_category` (the `category_slug`). **Deliberately not a `json` array** — flat fields stay editable and browsable in the Directus admin UI where a blob is opaque. **Deliberately not capped lower either** — the true per-hotel max is 50 and these are just URL strings, so capping would silently drop editorial value. No curation or truncation: every image Ratehawk returns gets a slot, in Ratehawk's own order.
 
-Script: `hotels-beta/scripts/ratehawk/add-ratehawk-image-fields.mjs` (idempotent — an existing field is skipped, see §48 on why that is a 400 and not a 409 — same `createField` pattern as `scripts/restaurants/create-restaurants-collection.mjs`).
+Script: `add-ratehawk-image-fields.mjs` (idempotent — see §48 on why a duplicate field is a 400, not a 409).
 
-### Data source and pipeline
+### Pipeline
 
-The full dump already on disk (`scripts/ratehawk/partner_feed__en_v3.jsonl.zst`, §26) carries hotel images in `images_ext: [{url, category_slug}]` (the plain `images: [String]` field is deprecated per ETG's own docs and always identical in content/order — confirmed 0 mismatches across all 829 hotels this session, so only `images_ext` is used).
+The dump carries images in `images_ext: [{url, category_slug}]`. The plain `images: [String]` field is deprecated and always identical (0 mismatches across all 829), so only `images_ext` is used.
 
-1. `scripts/ratehawk/extract-images-for-matched.mjs` — targeted re-scan of the dump (no re-download) keyed by the 829 confirmed `hid`s from `ratehawk_match_decisions.json`. Direct hid→oltra_id join per line (not index-based) — found 829/829, written to `scripts/ratehawk/output/matched-hotel-images.jsonl`.
-2. `scripts/ratehawk/apply-ratehawk-images.mjs` — walks each hotel's `images_ext` in Ratehawk's native order, maps `images_ext[0]` → `ratehawk_image_1`/`_1_category`, `images_ext[1]` → `_2`/`_2_category`, etc. Dry-run by default, `--confirm` to write, `--only <id>`/`--limit N` for scoped runs.
+`extract-images-for-matched.mjs` re-scans the dump (no re-download) keyed by the 829 confirmed hids, joining **hid → oltra_id directly per line, not by index**. `apply-ratehawk-images.mjs` maps `images_ext[n]` → slot `n+1`; dry-run by default.
 
-**Result: 811/829 updated (≥1 image), 18 skipped (confirmed match, zero images available from Ratehawk), 0 failures.** Verified `ratehawk_image_1 IS NOT NULL` count in Directus = 811, matching exactly. Per-hotel image counts range up to the full 50 (e.g. id 1602, Four Seasons Dubai at Jumeirah Beach). Spot-checked one hotel (id 1602) against a **live** `POST /api/b2b/v3/hotel/info/` call for its `hid` — slots 1, 2, and 50 matched byte-for-byte (URL + category) against what was stored, confirming no drift between the dump snapshot and live data and no join/index errors in the pipeline.
+**Result: 811 of 829 updated, 18 skipped (confirmed match, zero images available), 0 failures.** Spot-checked id 1602 against a live `/hotel/info/` call — slots 1, 2 and 50 matched byte-for-byte.
 
-### `{size}` URL template — documented values
+### The `{size}` URL template
 
-Every image URL has an unresolved `{size}` placeholder (stored as-is — not pre-resolved, so one stored URL serves both a thumbnail grid and a full-size lightbox depending on what a future consumer substitutes). Confirmed via ETG's official docs (`docs.emergingtravel.com/docs/b2b-api/static-content/retrieve-hotel-content/` — like other ETG pages per §25/§26, blocked for plain `WebFetch`/`curl` with a default UA; fetched successfully with `curl -A "Mozilla/5.0 ..."`, a browser User-Agent) — the CDN accepts a **fixed whitelist**, not arbitrary `WxH`:
+Every URL has an unresolved `{size}` placeholder, stored as-is so one URL serves both a thumbnail grid and a full-size lightbox. The CDN accepts a **fixed whitelist**, not arbitrary `WxH`: square crops (`40x40` … `240x240`, `900x900`), fit-by-height (`x220`, `x500`, `x768`, `x1080`, `x1920`), fit-by-width (`1080x`, `1920x`) and full fit (`1024x768`, `1920x1080`). The app uses two tiers, `240x240` and `1024x768`. An undocumented size can still return 200 — the CDN is lenient — but stick to documented tokens.
 
-* Square crop: `40x40`, `80x80`, `100x100`, `120x120`, `154x105`, `240x240`, `241x241`, `900x900`
-* Fit-by-height: `x220`, `x500`, `x768`, `x1080`, `x1920`, `768x1024`, `1080x1920`
-* Fit-by-width: `326x220`, `1920x`, `1080x`
-* Full fit: `1024x768`, `1920x1080`
+### Room images — deferred, and a trap for booking
 
-(An arbitrary `640x400` also returned 200 in ad-hoc testing — the CDN is lenient beyond the documented list — but stick to documented tokens for anything production-facing.)
+Each `room_groups[]` entry carries its own images, but the field that would link a room group to search results, **`room_group_id`, is explicitly deprecated**. The documented linkage is **`rg_ext`**, a room-characteristics object present on both the static content and the live rate objects. ETG's docs say directly: *"rg_ext — Use this field to get extra data on the room from the hotel static data. For example, room images, descriptions."*
 
-### Room images — deferred, and a real gotcha for whoever builds booking next
-
-**Do not backfill room images the same way — they don't belong in this phase.** Each `room_groups[]` entry in the static-content dump does carry its own `images`/`images_ext` (same `{size}`-template shape), but the field that would link a room group to search/booking results, **`room_group_id`, is explicitly marked `deprecated`** in ETG's current docs (both the static-content page and `b2b-api/hotel-search/retrieve-hotelpage/`). The documented, non-deprecated linkage is **`rg_ext`** — a room-characteristics object (`class`, `quality`, `bathroom`, `bedding`, `family`, `capacity`, `club`, `bedrooms`, `balcony`, `floor`, `view`) present on both the static content's `room_groups[]` and the live hotelpage rate objects. ETG's own docs say directly: *"rg_ext — Use this field to get extra data on the room from the hotel static data. For example, room images, descriptions."*
-
-**Implication for §27 phase 2 (booking integration)**: match a live search/hotelpage rate's `rg_ext` against the static content's `room_groups[].rg_ext` at request time to find that room's images — don't key anything off `room_group_id`. Since room offers are inherently live/per-search (not a fixed list), pre-storing room images in Directus now would either duplicate this matching logic later or go stale before booking is built — so it wasn't done.
-
-### Files (`hotels-beta/scripts/ratehawk/`)
-
-`add-ratehawk-image-fields.mjs` (schema, one-shot/idempotent), `extract-images-for-matched.mjs` (dump re-scan → `output/matched-hotel-images.jsonl`), `apply-ratehawk-images.mjs` (the only script here that writes `ratehawk_image_*` — dry-run by default).
+So for booking: match a live rate's `rg_ext` against the static `room_groups[].rg_ext` at request time. Don't key anything off `room_group_id`. Room offers are inherently per-search, so pre-storing room images would either duplicate this logic later or go stale.
 
 ---
 
-## 29. RATEHAWK IMAGES — DISPLAYED IN THE APP (2026-08-08)
+## 29. RATEHAWK IMAGES IN THE APP (2026-08-08)
 
-### What was done
+Ratehawk images take priority everywhere; Agoda is only a fallback for hotels with none.
 
-Wired the §28 backfill into the UI. Ratehawk images now take priority everywhere; Agoda is only a fallback for hotels with no Ratehawk images.
+### Priority logic in `cardHelpers.ts`
 
-### Priority logic centralized in `cardHelpers.ts`
+`getRawHotelImages(hotel)` (private) is the single source of truth: Ratehawk if `ratehawk_image_1` is set, else up to 5 Agoda photos, else `[]`. Built on it:
 
-`getRawHotelImages(hotel)` (private) is the single source of truth: returns Ratehawk (as one `{url, category}` entry — see lazy-load below) if `hotel.ratehawk_image_1` is set, else the up-to-5 Agoda photos (`category: null`), else `[]`. Built on top of it:
-* `hasHotelPhotos(hotel)` — replaces `hasAgodaPhotos()` at every *display-gating* call site in `HotelsView.tsx` (map popup, featured-mode pool eligibility, results-row, detail-panel layout, the three member add-to-trip/add-to-favorites thumbnail picks) and in `HotelSmallCard.tsx`. `hasAgodaPhotos()` itself is untouched/still exported (still meaningful as "does this hotel have Agoda data").
-* `getHotelThumbnail(hotel)` — single nullable URL, no placeholder fallback (used by Inspire).
-* `getHotelImageSet(hotel)` — unchanged signature (`string[]`, placeholder-fallback), reimplemented on top of the same raw list. Every pre-existing call site that only ever read `[0]` needed no changes at all.
-* `resolveRatehawkUrl(url, size)` / `RATEHAWK_THUMB_SIZE` ("240x240") / `RATEHAWK_FULL_SIZE` ("1024x768") — the `{size}` template resolver and the two size tiers actually used (see §28 for the full documented token whitelist). Only two tiers are used app-wide: thumbnails at 240x240, everything else (hero/card/popup/lightbox/main panel image) at 1024x768 — no per-call-site size parameter, keeps the API surface small.
+* `hasHotelPhotos()` — replaces `hasAgodaPhotos()` at every *display-gating* call site. `hasAgodaPhotos()` is untouched and still exported (still meaningful as "does this hotel have Agoda data").
+* `getHotelThumbnail()` — single nullable URL, no placeholder fallback.
+* `getHotelImageSet()` — unchanged signature, reimplemented on the same raw list, so every call site that only read `[0]` needed no change.
+* `resolveRatehawkUrl(url, size)` with `RATEHAWK_THUMB_SIZE` (`240x240`) and `RATEHAWK_FULL_SIZE` (`1024x768`). Only two tiers app-wide — no per-call-site size parameter.
 
-### Bulk fetch vs. lazy full gallery
+### Bulk fetch vs lazy gallery
 
-The Hotels page fetches all ~870 published hotels in one request (`limit: -1`) for list/map/featured-pool/detail-panel alike. Adding all 100 `ratehawk_image_*` fields to that fetch measured at **~4.5MB** of extra JSON per page load — rejected. Instead:
-* `HotelRecord` (`src/lib/directus.ts`) and the three bulk `fields` lists (`src/app/hotels/page.tsx`, `src/app/page.tsx`, `src/lib/inspire/buildInspireCities.ts`) only gained **`ratehawk_image_1` + `ratehawk_image_1_category`** — enough for the hero image everywhere except the selected-hotel gallery.
-* New route `src/app/api/hotels/[id]/ratehawk-images/route.ts` (GET) fetches one hotel's full `ratehawk_image_1..50`/`_category` set on demand (local 100-field type, not added to the shared `HotelRecord`) and returns `{ok, images: [{url, category}]}`, URLs still unresolved.
-* `HotelsView.tsx`: a `useEffect` keyed on `selectedHotel?.id` fires this fetch **only when `selectedHotel.ratehawk_image_1` is set** (zero extra calls for Agoda-only/photo-less hotels — confirmed via the browser network tab during testing). While pending, `selectedHotelGalleryRaw` falls back to the single hero entry already available from the bulk fetch, so the main image renders with no loading flash; `selectedHotelGallery` (full-size) and `selectedHotelThumbGallery` (thumb-size) both derive from that one raw array via `resolveRatehawkUrl`.
+The Hotels page fetches all ~870 published hotels in one request. Adding all 100 image fields to that measured at **~4.5 MB of extra JSON per page load** — rejected. Instead: `HotelRecord` and the three bulk field lists gained only **`ratehawk_image_1` + `_category`**, enough for the hero image everywhere. A new route `/api/hotels/[id]/ratehawk-images` fetches one hotel's full set on demand (local 100-field type, not added to the shared `HotelRecord`).
 
-### Thumbnail strip and category badge
+`HotelsView` fires that fetch **only when `selectedHotel.ratehawk_image_1` is set** — zero extra calls for Agoda-only or photo-less hotels. While pending it falls back to the single hero entry from the bulk fetch, so the main image renders with no loading flash.
 
-The selected-hotel detail panel's thumbnail grid (`grid-cols-2`, ~8 visible) kept its exact thumbnail sizing. **Updated 2026-08-08**: the initial version added flat ▲/▼ scroll-arrow buttons above/below the grid, but the user asked for these to be removed in favor of the native scrollbar, and for the panel to be a fixed `h-[340px]` matching the large image's height exactly (was `max-h-[340px]`, which left a gap for hotels with few images). **Caught a real CSS Grid gotcha making that change**: switching to a definite `height` (from `max-height`) caused all thumbnail rows to compress to fit instead of scrolling — a known issue where `grid-auto-rows: auto` rows can shrink under a fixed-height scroll container. Fixed by adding `auto-rows-min` (forces rows to their natural min-content size regardless of container height). Thumbnails still use `loading="lazy"` (up to 50 now, vs. Agoda's 5).
+### Thumbnails and the category badge
 
-A small pill badge (`.oltra-status-badge` — existing CSS, previously unused anywhere in the app — combined with a dark glass background) shows the current image's category bottom-right, on both the detail-panel hero and the lightbox. Hidden when `category` is `null` (always true for Agoda) or the literal string `"unspecified"` (~17% of Ratehawk images, per §28's session data — not useful to show). Label formatting: `guest_rooms` → "Guest Rooms" (`formatImageCategory()` in `HotelsView.tsx`).
+A **real CSS Grid gotcha**: switching the thumbnail panel from `max-height` to a definite `height: 340px` made all rows compress to fit instead of scrolling — `grid-auto-rows: auto` rows shrink under a fixed-height scroll container. Fixed with `auto-rows-min`.
 
-### `next.config.ts` — a real bug caught during browser testing
+A pill badge shows the current image's category on the hero and in the lightbox, hidden when the category is `null` (always true for Agoda) or the literal `"unspecified"` (~17% of Ratehawk images). `guest_rooms` → "Guest Rooms" via `formatImageCategory()`.
 
-`next/image` throws (and freezes the tab) on any hostname not in `images.remotePatterns`. Agoda's `*.agoda.net` was already allowlisted; **`cdn.worldota.net` (Ratehawk's image CDN) was missing** — added alongside it. Required a dev-server restart to take effect (Next.js reads `next.config.ts` once at startup, not hot-reloaded).
+### A real bug caught in the browser
 
-### Explicitly out of scope
+`next/image` throws — and freezes the tab — on any hostname not in `images.remotePatterns`. **`cdn.worldota.net` was missing** and had to be added alongside `*.agoda.net`. Requires a dev-server restart; `next.config.ts` is read once at startup.
 
-* `src/app/hotels/[hotelid]/page.tsx` — untouched. Per §15 it's not part of the intended UX flow, and it already runs on a wholly separate Agoda-CSV-based image system (`getAgodaPhotos`), not `cardHelpers`/Directus fields.
-* No `SavedTripsView.tsx`/`FavoriteHotelsView.tsx` code changes — both only ever render a flat `thumbnail` string persisted to Supabase at add-time, sourced from the `hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null` calls in `HotelsView.tsx`. Once those prefer Ratehawk, new saves automatically do too. **Already-saved trips/favorites keep their old Agoda thumbnail — not retroactively backfilled.**
-* No Inspire category badge — the hover popup is a small, no-interaction card; only the thumbnail source changed there (`buildInspireCities.ts` now imports `normalizeAgodaImage`/`resolveRatehawkUrl` from `cardHelpers.ts` instead of a locally-duplicated copy, and prefers `ratehawk_image_1` at thumb size).
-* Room images: still not displayed anywhere — see §28's `rg_ext`-not-`room_group_id` note for the booking-integration phase.
+### Out of scope
+
+`/hotels/[hotelid]` is untouched — not part of the intended UX flow (§15), and it runs a separate Agoda-CSV image system. Saved trips and favourites persist a flat `thumbnail` string at save time, so new saves pick up Ratehawk automatically but **already-saved rows keep their old Agoda thumbnail** — not backfilled.
 
 ---
 
 ## 30. RATEHAWK AVAILABILITY, PRICING & ROOM SELECTION (2026-08-08)
 
-### What was done
+Ratehawk handles all availability, pricing and room selection on the Hotels page; **Agoda's price-fetch and booking are fully disabled there** (Agoda is untouched elsewhere — the landing teaser still uses it). Data-and-selection only: **no real booking or payment call is made anywhere.**
 
-Ratehawk now handles all availability/pricing/room-selection on the Hotels page — **Agoda's price-fetch and booking are fully disabled there** (Agoda is untouched everywhere else — the homepage teaser cards in `LandingSummary.tsx` still use it; `/hotels/[hotelid]` is still the separate Agoda-CSV system per §15/§29). This is data-and-selection only — **no real booking/payment call is made anywhere**, matching the sandbox-key-hits-production caution in §26. Booking integration is a distinct next phase.
+### Two endpoints
 
-### API split: SERP (headline) vs. hotelpage (room list)
+* `POST /api/b2b/v3/search/serp/hotels/` — batch, one call for all visible results' hids, headline price per hotel. ETG's docs say not to let users pick rates from this response.
+* `POST /api/b2b/v3/search/hp/` — detail, the selected hotel only, full list of selectable rates.
 
-Two ETG endpoints, mirroring how Agoda had a batch check (list-row price) and a single check (selected-hotel detail):
-* `POST /api/b2b/v3/search/serp/hotels/` — batch, one call for all visible results' `ratehawk_hid`s, returns a headline price per hotel. ETG's own docs say not to let users pick rates from this response directly.
-* `POST /api/b2b/v3/search/hp/` — detail, one call for the selected hotel only, returns the full list of selectable room rates. ETG's "Recommended Flow" call.
-* Both take `guests: [{adults, children}]` — **one array entry per room**, built by `buildGuestsArray()` in `src/lib/ratehawk/availability.ts`, which evenly splits the search form's `adults`/`kids`/bedroom count across that many room slots.
-* Auth is HTTP Basic (`key_id:key`), unlike Agoda's custom header.
-* `residency` (passport country) is a real, user-changeable search-form field
-  as of 2026-08-10 (§32) — an `OltraSelect` on the Hotels results-mode search
-  form, backed by `RESIDENCY_COUNTRIES` in
-  `src/lib/countries.ts` (full ISO 3166-1 alpha-2 list). Defaults to a
-  best-effort guess from the browser locale (`guessResidencyFromLocale()`,
-  client-only to avoid an SSR/hydration mismatch — see the effect in
-  `HotelsView.tsx`), but that default is not the only path: it's a real `name="residency"`
-  form field like `from`/`to`/`bedrooms`, round-trips through the `residency`
-  URL param, and is required (400 if missing/invalid) on both
-  `/api/ratehawk/availability` and `/api/ratehawk/availability/batch`. One
-  residency per search, applied to all guests, passed to both `search/hp/`
-  and `search/serp/hotels/`. Previously hardcoded to `"gb"` — that was flagged
-  as failing ETG certification ("hardcoding a default counts as not
-  implementing it") and has been replaced, not just documented as a gap.
-  **UI de-emphasized 2026-08-11 (§33)** — no longer its own full-width row
-  labeled "Passport country" next to Bedrooms (user feedback: reads like a
-  booking prerequisite, unlike any mainstream OTA). Now a small "Pricing for"
-  inline control. The underlying field/data behavior above is unchanged —
-  still auto-detected, still sent on every request, still overridable.
-* Added `ratehawk_hid?: number | null` to `HotelRecord` (`src/lib/directus.ts`) and `hotels/page.tsx`'s field list — this hid already existed in Directus per §26 but, like `ratehawk_image_1` before §29, had never been wired into the TS layer.
+Both take `guests: [{adults, children}]`, **one array entry per room**, built by `buildGuestsArray()` — which splits the form's adults/kids across the bedroom count. Auth is HTTP Basic, unlike Agoda's custom header.
+
+`residency` is a real required field (400 if missing) on both routes. Auto-detected from browser locale (`guessResidencyFromLocale()`, client-only to avoid a hydration mismatch), round-trips through the `residency` URL param, applied to all guests. **The interactive selector was removed 2026-08-14 (§39)** after measuring that the price effect is ≤3% and property-specific; detection and sending are unchanged.
 
 ### Headline price formula
 
-Cheapest available room whose `rg_ext.capacity` covers `ceil(totalGuests / bedroomsRequested)`, × `bedroomsRequested` — "book N copies of the cheapest room that fits." Not a true mixed-room-type bin-pack; a documented simplification (`computeHeadlinePrice()` in `availability.ts`). The room-selection UI lets the user override it room-by-room afterward. The API itself returns a **flat list of individual room rates**, confirmed via live testing — it does not pre-combine a multi-room booking, so this app does the aggregation.
+Cheapest available room whose `rg_ext.capacity` covers `ceil(totalGuests / bedroomsRequested)`, × `bedroomsRequested` — "book N copies of the cheapest room that fits". A documented simplification, not a true mixed-room bin-pack; the room UI lets the user override room-by-room. The API returns a **flat list of individual rates** and does not pre-combine a multi-room booking, so the aggregation is ours.
 
-### Room images: a real deviation from ETG's own docs
+### Room images
 
-§28 flagged that room images would need `rg_ext` matching (ETG's documented approach) once this phase arrived. **Tested against live data — it doesn't work**: `rg_ext` values differ slightly between the `search/hp/` rate objects and the `hotel/info/` static-content `room_groups[]`, so exact-equality matching found 0/5 correct matches on a real hotel. **What actually works: matching by `room_name` containment** (`rate.room_name.includes(roomGroup.name)`, longest match wins) — 5/5 correct matches, each pulling real images. This is `matchRoomImages()` in `availability.ts`. `/api/ratehawk/availability` calls `search/hp/` (rates) and `hotel/info/` (room images) in parallel for every request — not cached separately, so dates-only changes re-fetch images unnecessarily; acceptable simplicity for this phase, not optimized.
+**§32 supersedes what was first concluded here.** The original finding — that `rg_ext` matched 0/5 and `room_name` containment worked — was a comparison-method bug, not a data incompatibility. `rg_ext` field-by-field matching is correct and is what `matchRoomImages()` does now; `room_name` containment is only a fallback that logs a warning.
 
-Room `size` (m²) exists in ETG's schema but is feature-gated — their docs say it needs a supplementary account-manager agreement; confirmed `null` in a live response for this account. `sizeSquareMeters` is always `null` today; the room card/popup render it conditionally so it'll pick up automatically if the feature is ever enabled.
+Room `size` (m²) exists in ETG's schema but is feature-gated behind a separate agreement and is always `null` on this account. The UI renders it conditionally so it picks up automatically if enabled.
 
-### `HotelsView.tsx` — what changed
+### `HotelsView.tsx`
 
-* All Agoda availability/booking state, effects, and JSX removed: `agodaAvailability`, `agodaResultAvailability(Status)`, `handleCheckAgodaAvailability`, `selectedAgodaHotelId`, `getAgodaHotelIdForHotel`, `selectedHotelBatchAvailability`/`HasBatchAvailability`/`AgodaResult`/`AgodaUnavailable`/`CanCheckAgoda`, the "CHECK AGODA AVAILABILITY"/"BOOK WITH AGODA" JSX, and the Agoda price pill/error block. `src/app/api/agoda/*` and `src/lib/agoda/*` are untouched (still used by `LandingSummary.tsx`).
-* `agodaSearchDirty` renamed to `availabilitySearchDirty` throughout (mechanical) — the "search inputs changed, refetch" concept is provider-agnostic, just happened to be named after Agoda.
-* New Ratehawk batch effect (results-row headline price) and a new **auto-fetching** detail effect (no manual button — rooms should just be displayed) keyed on `selectedHotel?.id, fromValue, toValue, guestSelection, bedroomsValue`. Pre-selects the headline combo (`roomSelection` state) whenever the room list reloads.
-* New "Rooms" section inserted between Description and the action-buttons row: one card per grouped room (thumbnail via `resolveRatehawkUrl(..., RATEHAWK_THUMB_SIZE)`, capacity, balcony, bed/layout line, price, a 0..N quantity stepper, an "(i)"-equivalent "More details" link). A running total (`roomSelectionTotal`) replaces the old Agoda price pill in the action row; the hotel's own fallback `booking_URL` link (unrelated to Agoda) now shows there instead, only when nothing is selected.
-* Room detail popup (mirrors the app's `createPortal`/fixed-inset lightbox pattern already used for photos, not the Flights page's separate CSS-module popup): full matched image gallery at `RATEHAWK_LARGE_SIZE`, occupancy, layout, meal, cancellation policy, amenities.
-* A real bug caught during testing: `rg_ext.capacity` can be `0` (not just missing) for some rates (e.g. suites) — `?? 1` doesn't catch that (nullish coalescing only replaces `null`/`undefined`), so it rendered "Sleeps 0". Fixed with `|| 1`.
+All Agoda availability state, effects and JSX were removed, and `agodaSearchDirty` renamed `availabilitySearchDirty` — the "inputs changed, refetch" concept is provider-agnostic. Rooms auto-fetch on hotel/dates/guests/bedrooms with no manual button, pre-selecting the headline combo; a "Rooms" section sits between Description and the action row, and the room detail popup uses the app's `createPortal` lightbox pattern rather than the Flights page's CSS-module popup.
 
-### Layout: left pane fixed, right pane scrolls independently
+**A real bug**: `rg_ext.capacity` can be `0`, not just missing, for some suites — `?? 1` doesn't catch that (nullish coalescing only replaces null/undefined) and it rendered "Sleeps 0". Use `|| 1`.
 
-New `.oltra-hotels-layout`/`.oltra-hotels-right-pane` classes in `oltra-theme.css`, mirroring the existing fixed-sidebar pattern in `restaurants.css`: the outer two-pane grid gets a bounded height (`calc(100vh - top/bottom page padding)`) + `overflow: hidden`; the right `<section>` becomes the one that scrolls. The left pane's results-list `flex-1 min-h-0 overflow-y-auto` classes were already present but inert (no ancestor had a bounded height) — they now work as originally intended once the ancestor is bounded. (Featured Mode, which has no left pane, keeps its original unbounded/full-page behavior — the new classes only apply in Results/Details mode.)
+### Layout
 
-### Save to Trip — `room_selection` column
+`.oltra-hotels-layout` / `.oltra-hotels-right-pane` give the two-pane grid a bounded height + `overflow: hidden`, making the right section the one that scrolls. The left results list's `flex-1 min-h-0 overflow-y-auto` was already there but inert — no ancestor had a bounded height. Featured Mode has no left pane and keeps its unbounded behaviour.
 
-**Migration applied (2026-08-08).** Ran via the Supabase Dashboard SQL Editor against the Members project (no service-role key / linked CLI available to run it directly from this session — see §31 for why "the Members project" wasn't obvious):
+### `room_selection` column
+
+Applied 2026-08-08 via the Supabase SQL Editor against the **Members** project (§31):
+
 ```sql
-alter table member_trip_hotels
-  add column room_selection jsonb;
-
-comment on column member_trip_hotels.room_selection is
-  'Ratehawk room picks at save time: [{room_name, quantity, price_per_stay, currency}], null if no rooms were selected.';
+alter table member_trip_hotels add column room_selection jsonb;
 ```
-`src/lib/supabase/database.types.ts` hand-edited to add `room_selection: Json | null` (no CLI link to regenerate from). `addHotelToTripBrowser` (`src/lib/members/db.ts`) takes an optional `roomSelection` param; `SavedHotel`/`RoomSelectionEntry` types (`src/lib/members/types.ts`) and `mapSavedTrips` carry it through to the read side. `SavedTripsView.tsx` renders a `2× Deluxe Double room, 1× Executive Suite`-style summary line under the existing stay-date line when present — no card redesign.
 
-Column confirmed present via a direct read-only PostgREST call (`.../rest/v1/member_trip_hotels?select=id,room_selection` → 200, not the `column ... does not exist` error seen before the migration). **Full end-to-end verification (Add to Trip → Saved Trips) not yet done — deferred to next session**, since it requires a real member login, which this session couldn't perform (session automation doesn't authenticate as the user, even in their own dev environment).
-
-### Explicitly out of scope
-
-* Any real booking/prebook/payment call — `book_hash` is fetched and stored on each grouped room but never sent anywhere. Next phase.
-* `LandingSummary.tsx` (homepage teaser) and `/hotels/[hotelid]` — untouched, same reasoning as §29.
-* Optimizing the redundant `hotel/info` call on every rate refetch.
+Holds `[{room_name, quantity, price_per_stay, currency}]`, null if no rooms selected. `database.types.ts` was hand-edited (no CLI link to regenerate from). Carried through `addHotelToTripBrowser` → `SavedHotel`/`RoomSelectionEntry` → `mapSavedTrips` → a summary line in `SavedTripsView`.
 
 ---
 
----
+## 31. `.env.local` HAD THE WRONG SUPABASE PROJECT (fixed 2026-08-08)
 
-## 31. `.env.local` HAD THE WRONG SUPABASE PROJECT — FIXED (2026-08-08)
+Per §2 there are **two separate Supabase projects**: the Hotel database (behind Directus) and a separate one for auth + member data. `.env.local` had `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` pointing at the **Hotel database** instead of the Members project, so every member feature — login, Add to Trip, Favourites, the header greeting — was aimed at a project with no members schema at all.
 
-### The bug
+**Why it's easy to miss**: there is exactly one Supabase client code path, reading the same two variable names, with no naming distinction in code between "the hotel one" and "the members one". A mix-up produces no error until something queries a members table.
 
-Per §2, OLTRA uses **two separate Supabase accounts/projects**: one is the "Hotel database" (canonical hotel/restaurant store, sat under Directus — the app never talks to it directly, only via Directus's own REST API), the other is a separate project for **auth + member data only** (`member_trips`, `member_trip_hotels`, `member_favorite_hotels`, etc.).
+**The probe**: `GET .../rest/v1/member_trip_hotels?select=id` — on the wrong project it returns `PGRST205 Could not find the table ... Perhaps you meant 'public.hotels'`; on the right one, 200 with an empty RLS-gated result.
 
-This session's `hotels-beta/.env.local` had `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` set to the **Hotel database** project (ref `slejwbswlzgoeogpxixc`) instead of the Members project. Confirmed by a direct read-only PostgREST call: `.../rest/v1/member_trip_hotels` on that ref returned `PGRST205 Could not find the table 'public.member_trip_hotels'... Perhaps you meant the table 'public.hotels'` — i.e. that project genuinely only has hotel-content tables, not the members schema.
+Also: Supabase renamed the anon key to **"Publishable key"** in the dashboard — same purpose, same place, so don't conclude it's missing.
 
-**Practical effect while broken**: every member-auth-dependent feature (login, Add to Trip, Favorites, Personal Information, the header's login greeting) was pointed at a Supabase project with no members schema at all — these would have failed outright in this local checkout, unrelated to any application code bug.
-
-### Why this was easy to miss
-
-* There is exactly **one** Supabase client code path in the app (`src/lib/supabase/client.ts`, `server.ts`, `middleware.ts`), all reading the same two `NEXT_PUBLIC_SUPABASE_*` variable names — there's no naming distinction in code between "the hotel one" and "the members one," so a value mix-up during `.env.local` setup produces no error until something tries to query a members table.
-* Supabase renamed the anon key to **"Publishable key"** in their dashboard UI (same purpose, same place in Project Settings → API) — worth knowing so a future session doesn't go looking for a field literally labeled "anon key" and conclude it's missing.
-
-### The fix
-
-Corrected `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` to the Members project (ref `hrlvtzcapsqkgrcawluf`). Verified via the same PostgREST probe — `member_trip_hotels` now resolves (200, empty result set — RLS-gated, expected with the publishable key and no session). Dev server needed a restart to pick up the change (same as any `.env.local`/`next.config.ts` edit — not hot-reloaded).
-
-**For any future fresh checkout**: don't assume "the Supabase URL/key" in a shared `.env.local` template is correct without checking — ask the user directly which of their two projects it should be (per the general fresh-checkout credential guidance in §25), or verify with the same read-only `member_trip_hotels` probe before trusting it.
+**For any fresh checkout**: don't assume a shared `.env.local` value is correct. Ask which project, or run the probe first. A dev-server restart is needed after the change.
 
 ---
-
 ## 32. RATEHAWK / ETG INTEGRATION
 
-### Model
-Affiliate API, contract AFF-392026. ZenHotels = consumer brand, RateHawk =
-partner API layer, same inventory. Use Affiliate API documentation only — never
-B2B/wholesale endpoints, `deposit` payment type, net pricing, or fake-gross
-commission. myOLTRA is never merchant of record.
+**This is the live section for anything ETG.** §26–§30 are the build history.
 
-Agreed architecture: myOLTRA owns discovery (search, hotel pages, rate display).
-ZenHotels owns checkout at `hotels.myoltra.com` via CNAME and is merchant of record.
+### Model
+
+Affiliate API, contract AFF-392026. ZenHotels is the consumer brand, RateHawk the partner API layer, same inventory. **Use Affiliate API documentation only** — never B2B/wholesale endpoints, `deposit` payment type, net pricing, or fake-gross commission. myOLTRA is never merchant of record.
+
+Agreed architecture: myOLTRA owns discovery (search, hotel pages, rate display). ZenHotels owns checkout at `hotels.myoltra.com` via CNAME and is merchant of record.
 
 ### BLOCKED — do not build
-The handoff mechanism to the ZenHotels checkout is not documented and is pending
-written confirmation from ETG (asked 10 Aug 2026). Until it arrives, do not write:
-- Create booking process, Start booking process, Check booking process
-- Create credit card token, `pay_uuid`/`init_uuid`/`return_path`, 3DS handling
-- Booking status webhooks or booking-status state machines
-- Retrieve bookings, Cancel booking
 
-Unknown until answered: at what point we redirect, what we pass across (prebook
-hash, rate identifiers, guest/search params), and whether any booking endpoint
-stays on our side.
+The handoff to the ZenHotels checkout is undocumented and pending written confirmation from ETG (asked 10 Aug 2026). Until it arrives, do not write: Create / Start / Check booking process; credit card tokens, `pay_uuid` / `init_uuid` / `return_path`, 3DS; booking status webhooks or state machines; Retrieve or Cancel booking.
 
-Everything below is confirmed by ETG documentation and safe to build now.
+Unknown until answered: at what point we redirect, what we pass across, and whether any booking endpoint stays on our side.
+
+**Sandbox and test bookings are treated as real orders.** Do not execute any booking call without explicit confirmation from Ulrik in-session.
 
 ### Hosts and credentials
-Base URL must remain a single config value, never hardcoded per call. **Verified
-against live code (`hotels-beta/src/lib/ratehawk/availability.ts`):** already
-follows this — `RATEHAWK_API_URL` is read from env with a fallback to
-`https://api.ratehawk.com`, matching ETG's stated production host below. No
-change needed.
 
-**As of 2026-08-19 the app no longer calls `api.ratehawk.com` directly from
-deployed environments** — `RATEHAWK_API_URL` points at the Railway forwarding
-proxy, which holds the ETG credentials and gives ETG a fixed set of source IPs
-to whitelist. **See §47.** Local dev still calls ETG directly. The single-config-
-value rule is what made that a one-variable change.
+`RATEHAWK_API_URL` is a single config value read from env, never hardcoded per call. **Since 2026-08-19 deployed environments point it at the Railway proxy** (§47), which holds the credentials and gives ETG fixed source IPs. Local dev calls ETG directly. The single-config-value rule is what made that a one-variable change.
 
-Host configuration was established during live API testing — treat the working
-values already in the codebase and existing §26 as authoritative. Do not
-change them based on documentation alone. For reference, ETG's stated production
-host is `api.ratehawk.com` (migrated from `api.worldota.net`, same auth and payload
-format); if what's in the code differs, the code wins and the discrepancy should be
-noted rather than "corrected."
+ETG's stated production host is `api.ratehawk.com` (migrated from `api.worldota.net`, same auth and payloads). Host configuration was established during live testing — **the code wins over documentation**; note a discrepancy rather than "correcting" it.
 
-Sandbox key: RateHawk Backoffice → Settings → API tab. One key covers search,
-booking and content — no separate content key exists.
+Sandbox key: RateHawk Backoffice → Settings → API tab. One key covers search, booking and content. Never mix keys, IDs or static content across environments.
 
-#### What this key actually reaches — Content API enabled 2026-08-24
+#### What this key reaches — Content API enabled 2026-08-24
 
-**ETG enabled Content API v1 on our key** (Sofia Kamalova, 24 Aug 2026),
-verified live the same day against `api.ratehawk.com` with the key in
-`hotels-beta/.env.local`. It had been 403 `endpoint_not_found` /
-`is_active: false` on every prior check (§26 2026-08-06, retested 2026-08-17);
-that is now history, not current state.
+| Endpoint | Status | Rate limit (our key) | Docs claim |
+|---|---|---|---|
+| `GET /api/content/v1/filter_values` | 200 | 30 / 60s | 60 QPM |
+| `POST /api/content/v1/hotel_ids_by_filter/` | 200 | 30 / 60s | 60 QPM |
+| `POST /api/content/v1/hotel_content_by_ids/` | 200 | 30 / 60s | 1200 QPM, max 100 hids |
+| `POST /api/b2b/v3/hotel/info/` | 200 | 30 / 60s | — |
+| `POST /api/b2b/v3/hotel/info/dump/` | 200 | 5 / 60s | — |
+| `POST /api/b2b/v3/hotel/info/incremental_dump/` | 200 | 5 / 60s | — |
 
-| Endpoint | Status | `is_active` | Rate limit (our key) | Docs say |
-|---|---|---|---|---|
-| `GET /api/content/v1/filter_values` | **200 ok** | `true` | 30 req / 60s | 60 QPM |
-| `POST /api/content/v1/hotel_ids_by_filter/` | **200 ok** | `true` | 30 req / 60s | 60 QPM |
-| `POST /api/content/v1/hotel_content_by_ids/` | **200 ok** | `true` | 30 req / 60s | 1200 QPM, max 100 hids/request |
-| `POST /api/b2b/v3/hotel/info/` | **200 ok** | `true` | 30 req / 60s | — |
-| `POST /api/b2b/v3/hotel/info/dump/` | **200 ok** | `true` | 5 req / 60s | — |
-| `POST /api/b2b/v3/hotel/info/incremental_dump/` | **200 ok** | `true` | 5 req / 60s | — |
+**The real per-key limit is what `debug.api_endpoint` reports, not what the docs say** — the docs advertise 1200 QPM for `hotel_content_by_ids` and our key returns 30. Read the limit off the response.
 
-**The real per-key limit is what `debug.api_endpoint` reports, not what the docs
-say** — the docs advertise 1200 QPM for `hotel_content_by_ids` and our key
-returns `requests_number: 30`. Read the limit off the response, don't trust the
-published figure.
+**A 524 is not a 403 — do not read it as "still not enabled".** A Cloudflare `524` after 100s with no ETG `debug` block means the request *reached* ETG and the backend took too long. Cause was the body: `hotel_ids_by_filter` takes `country` / `kind` / `star_rating` / `serp_filter` / `updated_since` / `supplier_type` / `preferable` / `top` **and nothing else**. There is no `limit`, no `region_id`, no `inventory`; unknown keys are silently ignored, so `{inventory, limit, region_id}` is an unfiltered global query over ~3.16M hotels that times out at the edge. Any real filter answers in 1–7s.
 
-**A 524 is not a 403 — do not read it as "still not enabled".** The first probe
-this session came back Cloudflare `524: A timeout occurred` after 100s with no
-ETG `debug` block, which looks like a failure but is the opposite: the request
-reached ETG and the *backend* took too long. Cause was the request body —
-`hotel_ids_by_filter` takes `country` / `kind` / `star_rating` / `serp_filter` /
-`updated_since` / `supplier_type` / `preferable` / `top`, **and nothing else**.
-There is no `limit`, no `region_id`, no `inventory`; unknown keys are silently
-ignored rather than rejected, so a body of `{inventory, limit, region_id}` is an
-unfiltered global query over ~3.16M hotels and times out at Cloudflare's 100s
-edge. Any real filter answers in ~1–7s.
+`country` takes ETG's own **integer** country ids (Monaco 120, France 59, UK 190 — 234 total), not ISO codes. Get them from `filter_values`, which is a **GET with no body**, unlike everything else here.
 
-`country` takes ETG's own integer country ids (Monaco 120, France 59, Botswana
-22, Egypt 52, UK 190 — 234 total), **not** ISO codes. Get them from
-`filter_values`, which is a **GET** with no body, unlike everything else here.
-Its response also carries the valid `kind` (17 values) and `star_rating` lists.
+#### `hotel_content_by_ids` vs `/hotel/info/`
 
-#### `hotel_content_by_ids` vs `/hotel/info/` — same data, one omission
+Compared field-by-field on three hotels: **36 keys from `/hotel/info/`, 35 from `hotel_content_by_ids`, zero differing values on the 35 shared keys.** The single omission is the top-level `images` array — the deprecated one byte-identical to `images_ext`. Costs nothing.
 
-Compared field-by-field on three hotels (Wilderness Mombo `hid` 13347937, Four
-Seasons Cairo Nile Plaza 7855756, the ETG test hotel 8473727): **36 keys from
-`/hotel/info/`, 35 from `hotel_content_by_ids`, zero differing values on the 35
-shared keys.** The single omission is the top-level `images` array — the one
-§28 already established is deprecated and byte-identical to `images_ext`. Its
-absence costs nothing.
+**`rg_ext` is present and identical** (33,519/33,519 room groups across the roster), which is what room-image matching depends on. Room-group images, `room_group_id`, `name_struct`, `room_amenities`, `size`, `metapolicy_struct` and `metapolicy_extra_info` are all present too — so swapping the static source is a source change only.
 
-**`rg_ext` is present and identical**, which is the part the room-image matching
-in `availability.ts` depends on (§32 Display rules, §28): every room group
-carries it, and field-by-field it matches `/hotel/info/` exactly (2/2, 19/19,
-13/13 room groups across the three hotels; 33,519/33,519 across the full
-roster). Room-group `images`/`images_ext`, `room_group_id`, `name_struct`,
-`room_amenities`, `size`, `metapolicy_struct` and `metapolicy_extra_info` are
-all present too. So swapping the static source is a source change only — no
-change to `matchRoomImages()`/`rgExtEquals()`.
+Request body is `{hids: [Int], language: "en"}`. **`ids` (the legacy string form) is deprecated** — use `hids`, which is what `hotels.ratehawk_hid` already stores.
 
-Request body is `{hids: [Int], language: "en"}`. **`ids` (the legacy string
-form) is marked deprecated** — use `hids`, which is what we already store in
-`hotels.ratehawk_hid`, so no id translation is needed anywhere.
+#### Measured cost of a full static pull
 
-#### What this means for the static sync (§32 TODO) — measured, not estimated
+853 hotels with a hid → **853 returned, zero missing, 9 requests, 8.5s, 58.7 MB**, covering 33,519 room groups and 160,972 room images. 101 hids returns `400 invalid_params`.
 
-Pulled the entire matched roster on 2026-08-24, read-only, nothing written:
+**This replaced the full dump as the sync source** — the dump is ~2.8 GB and ~10 minutes for the same 853 hotels. `updated_since` on `hotel_ids_by_filter` works for incremental refresh, but returns hids across **all** of ETG's inventory matching the filter (France alone: 199,074 total), so intersect locally — and at 8.5s for a full refresh, incremental may not be needed.
 
-| | |
-|---|---|
-| Our hotels with a `ratehawk_hid` | 853 |
-| Returned by Content API | **853 — zero missing** |
-| Requests (100 hids/batch, the hard cap) | **9** |
-| Wall time, sequential | **8.5 s** |
-| Payload | 58.7 MB JSON |
-| Room groups / room images covered | 33,519 / 160,972 |
-
-101 hids returns `400 invalid_params`, `hids should not be greater than 100`.
-
-**This is now the preferred source for the static sync, replacing the full
-dump.** The dump is ~2.8 GB compressed and ~10 minutes of streaming to reach the
-same 853 hotels; this is 9 requests and 8.5 seconds, and fits inside the 30
-req/60s window with room to spare. It also removes the reason §32 gave for
-needing Railway *for the sync specifically* — 9 requests and 59 MB fit a
-serverless function comfortably. (The proxy and its static IPs in §47 are a
-separate matter and unaffected; a sync running anywhere other than behind those
-IPs still has to be whitelisted with ETG.)
-
-`updated_since` on `hotel_ids_by_filter` works, so incremental refresh is
-available — but it returns **hids across all of ETG's inventory matching the
-filter**, not just ours (France alone: 199,074 hotels total, 40,152 updated
-since 2026-08-01, 30,230 since 2026-08-17). Intersect that against our 853
-locally and re-pull only the overlap. Given a full refresh is 8.5 seconds, the
-incremental path is an optimisation we may simply not need.
-
-**The offline-sync rule still applies unchanged.** ETG's own docs on this
-endpoint are explicit: *"Do not call this endpoint during live user search
-sessions or when displaying hotel lists. This endpoint is intended exclusively
-for scheduled, offline content synchronization."* Same rule as before, and the
-existing live `/hotel/info/` call per hotel-page request is still the
-certification problem it always was.
-
-Dump freshness, checked in the same run (metadata only, neither file
-downloaded): full dump `last_update` 2026-08-18T06:56:03Z, incremental
-2026-08-24T01:24:07Z — both still current, so the dump route stays available as
-a fallback.
-
-Never mix keys, IDs or static content across environments.
-
-**Sandbox and test bookings are treated as real orders.** Do not execute any
-booking call without explicit confirmation from Ulrik in-session.
+**The offline-sync rule is unchanged.** ETG's docs: *"Do not call this endpoint during live user search sessions or when displaying hotel lists. This endpoint is intended exclusively for scheduled, offline content synchronization."*
 
 ### ETG source IPs
 
-Supplied by ETG on 17 Aug 2026 (Sofia Kamalova, Integration Launch Specialist)
-as the addresses to whitelist on our side:
-
-* `95.213.146.120/29`
-* `5.8.78.64/29`
-* Cloudflare's published ranges — https://www.cloudflare.com/en-gb/ips/
-
-**Only relevant if ETG calls us, i.e. webhooks.** Whether we receive any is
-still open, pending the white-label handoff answer in BLOCKED above — so there
-is no action here yet. If a webhook endpoint is ever IP-restricted, the two
-`/29` blocks are the meaningful ones; the Cloudflare list covers anything
-hosted behind Cloudflare and is far too broad to serve as a real control on
-its own.
+Supplied 17 Aug 2026 as the addresses to whitelist **on our side**: `95.213.146.120/29`, `5.8.78.64/29`, plus Cloudflare's published ranges. **Only relevant if ETG calls us, i.e. webhooks** — still open pending the handoff answer, so no action yet. The two `/29` blocks are the meaningful ones; the Cloudflare list is far too broad to be a real control.
 
 ### Flow (our scope)
-Search by hotel IDs / region / geo → Retrieve hotelpage → Prebook from hotelpage
-step → [handoff to ZenHotels checkout — mechanism TBC]
 
-Hash chain: `h-…` from Retrieve hotelpage → passed to Prebook → returns `p-…`.
-Prebook is part of the search step and must be excluded from the booking flow.
+Search by hotel IDs / region / geo → Retrieve hotelpage → Prebook → [handoff to ZenHotels — mechanism TBC]. Hash chain: `h-…` from hotelpage → Prebook → returns `p-…`. **Prebook is part of the search step** and must be excluded from the booking flow.
 
-**Implementation gap, not a contradiction**: the current code (§30) never calls a
-separate Prebook endpoint — `book_hash` is read directly off each `search/hp/`
-rate and stored unused (per §30's "Explicitly out of scope"). Adding the actual
-Prebook call (`h-…` → `p-…`) is new scope from this section, still pending the
-BLOCKED handoff question above before it's worth building.
+**Implementation gap**: the current code never calls a separate Prebook endpoint — `book_hash` is read off each `search/hp/` rate and stored unused. Adding the real Prebook call is new scope, still pending the BLOCKED question.
 
 ### Static content
-- **Built 2026-08-24 — `etg-static-sync/`, see §48.** Daily job, Content API
-  `hotel_content_by_ids`, 853 hotels in 9 requests / 8.5 s, versus ~2.8 GB and
-  ~10 minutes for the full dump. The dump (weekly) and incremental dump (daily)
-  are still live on our key (200, 5 req/60s each) and remain a fallback.
-- Static content is for scheduled offline sync into Supabase/Directus **only** —
-  never called during a live user search. Explicitly checked at certification.
-  (ETG's Best Practices phrase this in terms of their Content API; the rule is
-  about *when* static content is fetched, not *which* endpoint supplies it.)
-  **The live path no longer calls ETG for static data at all** — the only
-  remaining `/hotel/info/` references under `src/` are comments.
-- Use `updated_since` on Retrieve hotel IDs by filter for incremental updates.
-  **Available since 2026-08-24** — but it returns matching hids across all of
-  ETG's inventory, not just ours, so intersect locally. With a full refresh at
-  8.5 s we may not need it at all. `hotel/info/incremental_dump/` remains the
-  alternative.
-- Region IDs from the regions' dump or hotel dump.
+
+Built 2026-08-24 — `etg-static-sync/`, §48. Daily job, Content API, 853 hotels in 9 requests. The dump (weekly) and incremental dump (daily) remain a fallback. **The live path no longer calls ETG for static data at all** — the only `/hotel/info/` references under `src/` are comments.
 
 ### Display rules (all certification-checked)
-- Pricing is **gross** — `amount` / `show_amount` already include ETG's
-  commission. Never add markup. Commission is calculated on ETG's side.
-  **Verified consistent**: `ratePrice()` in `availability.ts` reads
-  `show_amount`/`show_currency_code` directly, adds nothing on top.
-- Non-included taxes (`included_by_supplier: false`) shown separately, never
-  folded into the displayed price. **Resolved 2026-08-10.** `tax_data.taxes`
-  turned out to live on the rate's primary payment type
-  (`payment_options.payment_types[0].tax_data.taxes`), not on the rate
-  itself — confirmed 2026-08-10 via a one-off read-only diagnostic script
-  (`scripts/ratehawk/diagnose-tax-cancellation.mjs`, deleted after use — no
-  longer needed once the fix landed). Each
-  room row shows a "+ taxes at hotel" note when a non-included tax exists;
-  the "More details" popup lists included taxes (informational — already in
-  the shown price, not re-added) separately from not-included ones (shown in
-  their own currency, e.g. a Dubai city tax quoted in AED alongside a
-  USD-displayed room price — never converted into the headline price).
-  `groupRoomOptions()`/`rateTaxes()` in `availability.ts`.
-- `residency` (passport country) collected on the **first** search step and sent
-  on all `/search/serp/*/` and `/search/hp/` requests. Hardcoding a default counts
-  as not implementing it. **Resolved 2026-08-10** (was flagged as a
-  contradiction against §30's earlier hardcoded `"gb"`). Replaced with a real
-  "Passport country" selector on the Hotels search form — see §30 for the
-  implementation. Not just a certification fix: residency-based price
-  adjustments are real in Gulf/Russian/some Asian markets, so the hardcode was
-  a correctness bug, not only a documentation gap.
 
-- Cancellation policies parsed from `cancellation_penalties.policies` and shown
-  unmodified in either direction. API returns UTC+0 — decide and document whether
-  the UI shows UTC+0 or converts to local. `free_cancellation_before: null` means
-  no free cancellation. **Resolved 2026-08-10.** Two real bugs found and fixed
-  along the way, both caught only by testing in the actual browser (not by
-  `tsc`/lint, which stayed clean throughout):
-  1. `cancellation_penalties` was being read straight off the rate
-     (`rate.cancellation_penalties`) — that path doesn't exist. Like
-     `tax_data`, it lives on the primary payment type
-     (`payment_options.payment_types[0].cancellation_penalties`). This means
-     `freeCancellationBefore` had silently read as `undefined` on every
-     single rate before this fix — the room popup always said
-     "Non-refundable" regardless of the real policy.
-  2. `Intl`'s `toLocaleString` throws a `RangeError` ("Invalid option :
-     option") if `dateStyle`/`timeStyle` are combined with `timeZoneName` in
-     the same options object — not a silent no-op, a hard crash on opening
-     the room detail popup. Fixed by spelling out the date/time parts
-     individually (`year`/`month`/`day`/`hour`/`minute`) alongside
-     `timeZoneName: "short"` instead.
-
-  `formatRatehawkUtcDateTime()` in `HotelsView.tsx` converts ETG's raw
-  no-offset UTC timestamps (`new Date()` on a bare "2026-09-22T11:00:00"
-  string parses as **local** time per the JS spec — a "Z" is appended first)
-  to the browser's local time with an explicit `GMT±N` label. The room
-  detail popup renders the full `policies` schedule unmodified — every
-  window and its charge amount (`0` = "no charge", not silently omitted),
-  not just a single collapsed before/after date.
-  `rateCancellationPolicies()` in `availability.ts`.
-- Parse and display **both** `metapolicy_struct` and `metapolicy_extra_info`.
-  Neither is read anywhere in the current code — implementation gap.
-- Room static data matched on `rg_ext` only — not `room_name`, not `room_group_id`.
-  **Resolved 2026-08-10** (was flagged as a contradiction against §30's earlier
-  "0/5 correct matches, use room_name instead" finding). Re-tested live via a
-  one-off read-only diagnostic script (`scripts/ratehawk/diagnose-rg-ext.mjs`,
-  deleted after use) against both the
-  ETG test hotel and a real, varied hotel (Four Seasons Dubai at Jumeirah
-  Beach): `rg_ext` matched field-by-field on 10/10 rooms tested, including
-  varied real values (`view: 5` vs `37`, `quality: 6` vs `17`). The original
-  "0/5" result was a comparison-method bug, not a data incompatibility —
-  `RawRoomGroup` never even declared an `rg_ext` field (so it read as
-  `undefined` regardless of the real data), and a raw `JSON.stringify()`
-  equality check would fail on identical data anyway since `/search/hp/` and
-  `/hotel/info/` serialize the object in different key orders. **Never compare
-  `rg_ext` via `JSON.stringify()` — always compare field-by-field (or
-  key-sorted).** Matching logic fixed in `availability.ts`
-  (`matchRoomImages()`/`rgExtEquals()`) to compare `rg_ext` field-by-field;
-  `room_name` containment is now only a fallback for when `rg_ext` is missing
-  from the rate or every room group, and logs a warning when it fires.
-
-- Rate name from `room_name` in `/search/hp/`. **Verified consistent** with
-  current code.
-- Meal type from `meal_data.value`. Never present a meal type as better than what
-  ETG sent. **Verified consistent** — `mealValue: rate.meal_data?.value`.
-- First search step shows one or two lowest rates per hotel; all rates only on the
-  hotel page.
-- ETG is our only supplier.
-- Upsells (early check-in / late check-out): not applicable to Affiliate API. Skip.
+* **Pricing is gross** — `amount` / `show_amount` already include ETG's commission. Never add markup. Verified: `ratePrice()` reads `show_amount`/`show_currency_code` directly.
+* **Non-included taxes shown separately**, never folded into the price. `tax_data.taxes` lives on the rate's **primary payment type** (`payment_options.payment_types[0].tax_data.taxes`), not on the rate. Each room row shows "+ taxes at hotel" when a non-included tax exists; the detail popup lists included taxes (informational) separately from not-included ones, in their own currency (a Dubai city tax in AED beside a USD room price) and never converted into the headline.
+* **Cancellation policies** parsed from `cancellation_penalties.policies`, shown unmodified. Like `tax_data`, this lives on the **primary payment type**, not the rate — before that was found, `freeCancellationBefore` read as `undefined` on every rate and the popup always said "Non-refundable". `free_cancellation_before: null` means no free cancellation. The popup renders the full schedule — every window and its charge, with `0` shown as "no charge" rather than omitted.
+  * ETG returns bare no-offset UTC timestamps. `new Date()` on `"2026-09-22T11:00:00"` parses as **local** per the JS spec — append a "Z" first. `formatRatehawkUtcDateTime()` converts to browser-local with an explicit `GMT±N` label.
+  * **`Intl`'s `toLocaleString` throws `RangeError` if `dateStyle`/`timeStyle` are combined with `timeZoneName`** — a hard crash on opening the popup, not a silent no-op. Spell out `year`/`month`/`day`/`hour`/`minute` individually instead.
+* **Room static data matched on `rg_ext`**, compared **field-by-field**. Never compare `rg_ext` via `JSON.stringify()` — `/search/hp/` and `/hotel/info/` serialize the same object in different key orders, so identical data fails. (The earlier "0/5 matches, use room_name" finding was this bug plus a `RawRoomGroup` type that never declared `rg_ext`.) `room_name` containment is now only a fallback, and logs a warning.
+* Rate name from `room_name`; meal type from `meal_data.value`, never presented as better than what ETG sent.
+* First search step shows one or two lowest rates per hotel; all rates only on the hotel page.
+* ETG is our only supplier. Upsells (early check-in / late check-out) are not applicable to the Affiliate API — skip.
+* **`residency` collected on the first search step** and sent on all `/search/serp/*/` and `/search/hp/` requests. Hardcoding a default counts as not implementing it. Auto-detected from browser locale and sent on every request; the visible selector was removed after measuring the effect at ≤3% (§39).
+* **Parse and display `metapolicy_struct` and `metapolicy_extra_info`** — neither is read anywhere in the current code. Implementation gap.
 
 ### Caching
-Never cache Retrieve hotelpage or Prebook responses — prohibited. Hotelpage rates
-are storable for roughly 1 hour for display purposes only. **Verified consistent**:
-§30 already notes `/api/ratehawk/availability` fetches fresh on every request,
-no caching layer exists.
+
+Never cache Retrieve hotelpage or Prebook responses — prohibited. Hotelpage rates are storable ~1 hour for display only. Verified: `/api/ratehawk/availability` fetches fresh every request.
 
 ### Limits and timeouts
-- Max 300 hotels per Search by hotel IDs request.
-- Max 9 rooms per rate, same room type only.
-- Max 6 adults + 4 children per room; children are 17 and under, ages passed as an
-  array e.g. `"children": [7]`. Current `buildGuestsArray()` already sends
-  children as an age array (consistent), but enforces none of the 300/9/6+4
-  limits above — implementation gap, not a contradiction (nothing in the code
-  claims otherwise).
-- Stays up to 30 nights; check-in no more than 730 days out. Not enforced in the
-  search form yet — gap.
-- Search timeout 30s recommended, sent as an explicit `timeout` parameter.
-- Prebook timeout 60s recommended, 30s minimum. Prebook does not accept an
-  incoming timeout — set on ETG's side.
-- `price_increase_percent` 0–100. Any value above 0 requires showing the price
-  change to the user before proceeding. Default TBC.
+
+* Max 300 hotels per Search by hotel IDs request.
+* Max 9 rooms per rate, same room type only.
+* Max 6 adults + 4 children per room; children are 17 and under, ages passed as an array (`"children": [7]`). `buildGuestsArray()` already sends ages as an array but enforces none of these limits.
+* Stays up to 30 nights; check-in no more than 730 days out. Not enforced in the search form.
+* Search timeout 30s recommended, sent as an explicit `timeout` parameter — **not currently sent**. Distinct from the HTTP client timeouts in §47.
+* Prebook timeout 60s recommended, 30s minimum; set on ETG's side.
+* `price_increase_percent` 0–100. Any value above 0 requires showing the price change before proceeding. Default TBC.
 
 ### Certification deliverables (non-code)
-- Test hotel `hid` 8473727 / `test_hotel_do_not_book` must be mapped. **Verified
-  consistent** — §26 already confirms this exact `hid` returns ETG's "Test Hotel
-  (Do Not Book) test" fixture.
-- Diagram comparing ETG endpoints against the myOLTRA flow.
-- Workflow table: step name, triggering user action, ETG endpoint(s).
-- RPM estimates for `/serp/hotels`, `/serp/region`, `/serp/geo`, `/search/hp`,
-  `/hotel/prebook`, `/serp/prebook`.
-- IP whitelisting is mandatory on ETG's side. Vercel serverless egress is not
-  static — unresolved, raised with ETG 10 Aug 2026.
-- Scope of certification under the white-label model is itself unconfirmed.
 
-### TODO — before certification (deferred, not actioned yet)
-Real certification requirements, lower stakes than the items already fixed
-above — do a cleanup pass on these before certification, not now.
+Test hotel `hid` 8473727 / `test_hotel_do_not_book` must be mapped — confirmed present. Plus a diagram comparing ETG endpoints against the myOLTRA flow, a workflow table (step, triggering user action, endpoints), and RPM estimates for `/serp/hotels`, `/serp/region`, `/serp/geo`, `/search/hp`, `/hotel/prebook`, `/serp/prebook`. Scope of certification under the white-label model is itself unconfirmed.
 
-- Parse and display `metapolicy_struct` / `metapolicy_extra_info` — neither is
-  read anywhere in the current code.
-- Enforce the Limits and timeouts above (300 hotels/request, 9 rooms/rate,
-  6 adults + 4 children/room, 30-night max stay, 730-day advance window) —
-  none are enforced in the search form today.
-- ~~**Static content is fetched live, not synced offline.**~~ **Resolved
-  2026-08-24 — see §48.** `fetchRatehawkRoomImages()` called
-  `/api/b2b/v3/hotel/info/` live on every hotel-page request; it is now
-  `loadRatehawkRoomGroups()`, reading synced content from Directus. Besides the
-  graded certification point, that live call was a site-wide ceiling of 30
-  hotel-detail views per minute (`/hotel/info/` is 30 req/60s on our key).
+### TODO before certification (deferred)
 
-  **Schema for this landed 2026-08-10** (data sync itself has not — this was
-  additive schema only, approved and created via
-  `scripts/ratehawk/add-ratehawk-static-content-fields.mjs`, idempotent/safe
-  to re-run): 4 new nullable fields on `hotels`, none populated yet —
-  `ratehawk_room_groups` (`json` — array of `{name, rg_ext, images}`, one
-  entry per room group; a JSON blob rather than flat numbered fields like
-  `ratehawk_image_*` because room-group count and image count both vary per
-  hotel, unlike the fixed 50-slot hotel-image list), `ratehawk_metapolicy_struct`
-  (`json`, raw structured policy object), `ratehawk_metapolicy_extra_info`
-  (`text` — long free-form notes, confirmed 2026-08-10 via a one-off
-  read-only diagnostic script, `scripts/ratehawk/diagnose-metapolicy.mjs`,
-  deleted after use — not `string`), and
-  `ratehawk_static_synced_at` (`timestamp`, shared "last synced" marker for
-  all of the above). Full Directus schema snapshots taken before and after
-  via `GET /schema/snapshot`, saved to `scripts/ratehawk/output/` (gitignored,
-  local only). **A real finding from the pre-proposal investigation**:
-  `metapolicy_struct`/`metapolicy_extra_info` turned out to live entirely on
-  `/hotel/info/` (hotel-level static content), not on live `/search/hp/`
-  rates — unlike taxes/cancellation (§32 Display rules), which are genuinely
-  live per-search pricing data and must never be cached, metapolicy was a
-  legitimate schema candidate. **The sync that populates these 4 fields was
-  built 2026-08-24 — see §48**, which also adds 4 more (check-in/out times,
-  is_closed, deleted).
-- ~~**Content API v1 (`/api/content/v1/*`) is not provisioned on our key.**~~
-  **Resolved 2026-08-24** — ETG enabled it (Sofia Kamalova); verified live the
-  same day, all three endpoints 200 / `is_active: true`. See the endpoint table
-  under Hosts and credentials.
-- ~~**Decide where the static-content sync runs.**~~ **Settled 2026-08-24:
-  Railway — see §48.** Content API removed the original argument (a 2.8 GB dump
-  stream cannot run inside a serverless execution limit; 9 requests / 8.5 s / 59
-  MB fits comfortably), leaving IP whitelisting as the only reason — and it is
-  decisive on its own, since ETG confirmed whitelisting is mandatory (§47) and
-  Vercel egress rotates. The sync egresses through the existing etg-proxy rather
-  than standing up a second set of static IPs to get whitelisted.
-- ~~**Whether IP whitelisting is mandatory for affiliate partners is an open
-  question with ETG** (asked 17 Aug 2026).~~ **Answered 2026-08-19: it is
-  mandatory.** ETG's Pre-Certification Checklist listing "we use dynamic IP
-  addresses" as a valid answer turned out not to apply to us. Resolved by the
-  Railway forwarding proxy — **see §47**, which now also settles the
-  "where does the sync run" bullet above in Railway's favour on both counts.
-- **No chunking at ETG's 300-hotels-per-request limit** in
-  `src/app/api/ratehawk/availability/batch/route.ts` — it forwards whatever
-  `hids` array it is given. Does not bite today: the Hotels results list sends
-  ≤50 hids (results mode caps at 50) and the landing summary ≤40. Would bite if
-  either cap is raised or a region-wide search is added.
-- **No explicit ETG `timeout` parameter** on `/search/serp/*/` and `/search/hp/`
-  requests; §32 recommends 30 s. Note this is the *ETG-side* search timeout, and
-  is distinct from the HTTP client timeouts added with §47 (35 s Vercel→proxy,
-  30 s proxy→ETG), which are already in place.
+* Parse and display `metapolicy_struct` / `metapolicy_extra_info`.
+* Enforce the limits above — none are enforced in the search form today.
+* **No chunking at the 300-hotel limit** in `api/ratehawk/availability/batch/route.ts` — it forwards whatever it's given. Doesn't bite today (results mode caps at 50, landing at 40); would bite if either cap rises or a region-wide search is added.
+* **No explicit ETG `timeout` parameter** on search requests.
+
+Resolved and no longer open: IP whitelisting (mandatory — §47), where the sync runs (Railway — §48), Content API provisioning, live static fetching (§48), residency, taxes, cancellation, `rg_ext`.
 
 ### Contacts
-Valeriy Korobov (integration) — apisupport@ratehawk.com
-Seseg Shuianova (commercial) — s.shuianova@emergingtravel.com
+
+Valeriy Korobov (integration) — apisupport@ratehawk.com · Sofia Kamalova (integration launch, handles IP whitelisting) · Seseg Shuianova (commercial) — s.shuianova@emergingtravel.com
 
 ---
 
 ## 33. LANDING/HOTELS/FLIGHTS UI FIX SESSION (2026-08-11)
 
-Two commits, both pushed to `main`. Listed here mainly as a rollback map —
-each item names the exact file(s)/behavior touched so a future session can
-revert a single fix in isolation if it turns out to cause a regression,
-without having to re-derive intent from the diff alone.
+Commits `c507f57` (landing + cross-page dates/availability) and `799e614` (Hotels filters/layout/images), both on `main`. Per-file detail is in the two commits; what is worth carrying forward:
 
-### Commit `c507f57` — landing page + cross-page date/availability fixes
+* **`limit: -1` was missing** on the landing-summary hotel fetch, so it capped at Directus's default 100 rows *before* the JS-side taxonomy filter ran — the root cause of "0 hotels identified" for a taxonomy-only search. One-line fix.
+* **`CARD_LIMIT` is declared independently in `page.tsx` and `LandingSummary.tsx`** — no shared constant, so the two must be changed together.
+* **The Ratehawk batch effect had an early `if (availabilitySearchDirty) return;` guard** blocking auto-refetch until "CHECK AVAILABILITY" was clicked. Removing it (plus a 450ms debounce) fixed **two separately-reported symptoms** — "select dates" stuck after the landing handoff, and guest changes not updating availability. If either reappears, check the deploy timestamp against the commit before re-diagnosing.
+* **Native lazy-load can silently never fire** for images landing at the fold boundary while an async fetch swaps a 1-image fallback for up to 50. Removed `loading="lazy"` from the hotel thumbnail grid only; if perf demands it back, use an `IntersectionObserver`.
+* **A filter control that navigates needs optimistic local state.** Each taxonomy checkbox was a `<Link>` doing a full server round-trip with no feedback, so a quick second click looked like nothing happened. `RelDropdown` now keeps `localSelectedIds`, updates synchronously, and navigates via `router.push` in `startTransition`, with a reconciling `useEffect` that self-heals if navigation fails.
+* **Results-pane squeeze**: with Filters expanded the results list compressed to a sliver, because the outer left `<section>` had a bounded height and no overflow of its own. Fixed with a fixed `max-h-[50vh]` on the list plus `overflow-y-auto` on the section — nested scrollbars when both are needed, intentionally.
 
-Files: `src/app/page.tsx`, `src/app/LandingSummary.tsx`,
-`src/app/LandingSearchPanel.tsx`, `src/app/hotels/ui/HotelsView.tsx`,
-`src/app/flights/ui/FlightsView.tsx`, `src/components/hotels/HotelSmallCard.tsx`.
-
-* **Real bug fix, high confidence**: `page.tsx`'s landing-summary hotel fetch
-  was missing `limit: -1`, so it silently capped at Directus's default page
-  size (100) before the JS-side setting/style/activity filter ran. Once no
-  location param narrowed the query, any matching hotel outside that first
-  page was invisible to the filter — root cause of "0 hotels identified"
-  after clearing destination and picking a taxonomy-only filter (e.g.
-  Setting=Beach). Fix is a one-line `limit: -1` add. Low rollback risk;
-  if reverted, the 0-hotels bug returns.
-* Landing hotel-summary header changed from a static "Hotels" label to a
-  dynamic string built from the actual selected params (`city`/`country`/
-  `region`/`settings`/`activities`), e.g. "24 hotels in London", "4 hotels
-  with beach setting". New `buildHotelsHeaderLabel()`/`joinWithAnd()` in
-  `page.tsx`; the previously-used `pickHotelGeographyLabel()` and the
-  `geography` field on `HotelSummary` were removed as dead code once nothing
-  read them anymore.
-* Landing `CARD_LIMIT` raised 20 → 40 in both `page.tsx` and
-  `LandingSummary.tsx` (must stay in sync between the two — there's no
-  shared constant, they're independently declared).
-* From-date pickers now call `openDatePicker(toRef)` (wrapped in
-  `requestAnimationFrame`) on change, on landing, hotels, and flights
-  (Depart→Return only, not the multi-city single-date fields). Flights
-  needed `DateField` converted to `forwardRef`/`useImperativeHandle`
-  (exports `DateFieldHandle`) since it's a shared component instantiated
-  3× in `FlightsView.tsx`. **Not visually confirmed** — this environment's
-  browser automation can't screenshot native `<input type=date>` popups on
-  Windows, so this was verified by code-path/console-error inspection only,
-  not a real click-through. Worth a manual sanity check next time someone's
-  in the actual UI.
-* Hotels page: the Ratehawk batch-availability `useEffect` had an early
-  `if (availabilitySearchDirty) { reset to idle; return; }` guard that
-  blocked auto-refetch until the user clicked "CHECK AVAILABILITY" —
-  removed that guard (dependency array already covered dates/guests/
-  bedrooms/currency/residency, so the effect just needed to be allowed to
-  run) and added a 450ms debounce so rapid stepper clicks don't fire one
-  request per click. This was the single fix behind two user-reported
-  symptoms in two different sessions ("select dates" stuck after landing
-  handoff, and "changing guests didn't update availability") — see §34
-  below, task 8, for the second confirmation pass.
-* Saved Trips date labels (`stayLabel`/`periodLabel` in
-  `handleAddHotelToTrip`/`handleCreateTripAndAddHotel`, `HotelsView.tsx`;
-  the flight `timing` string in `FlightsView.tsx`) were building raw ISO
-  `${fromValue} – ${toValue}` strings — switched to the existing
-  `formatDisplayDate()` helper each file already had for its own date
-  pickers, so trips/flights display "10 Sept 2026" instead of "2026-09-10".
-* `HotelSmallCard.tsx`'s `no-id` availability status ("No Agoda ID") now
-  renders `null` instead of the label — landing-page-only component, not
-  used on the Hotels page (that page has no Agoda references left post-§30).
-
-### Commit `799e614` — Hotels page filter/layout/image fixes
-
-Files: `src/app/hotels/ui/HotelsView.tsx` only.
-
-* **Passport country UI**: moved off its own full-width row (peer to
-  From/To/Guests/Bedrooms) into a small "Pricing for [country]" inline
-  control under the main fields. Purely a JSX/className change — same
-  `OltraSelect`, same `name="residency"`, same auto-detect-from-locale
-  default. See §32's residency entry for the still-unchanged data behavior.
-* **Results-pane squeeze**: when the Filters panel (Activities/Settings/
-  Accolades/Price) expanded, the results-card list — previously
-  `flex-1 min-h-0` — got compressed to a sliver because the outer left
-  `<section>` had a bounded height with no overflow of its own. Changed the
-  results list from `flex-1 min-h-0` to a fixed `max-h-[50vh]` (stays a
-  stable, comfortable size regardless of filter state) and gave the left
-  `<section>` `overflow-y-auto` (removed a `[contain:size]` utility that
-  was there previously, no comment on original intent) so the whole left
-  column scrolls as a bounded unit — same pattern `.oltra-hotels-right-pane`
-  already used for the right pane. Net effect: nested scrollbars (outer
-  left-pane scroll + inner results-list scroll) when both are needed —
-  intentional, not a bug, but worth knowing if it looks odd on a future pass.
-* **Ritz Paris thumbnails intermittently blank**: the hotel-detail thumbnail
-  grid (`selectedHotelThumbGallery.map(...)`, up to 50 images) had
-  `loading="lazy"` on each `<img>`. Images landing right at the fold
-  boundary during the async full-gallery fetch (which replaces a 1-image
-  fallback with up to 50 once `/api/hotels/[id]/ratehawk-images` resolves)
-  intermittently never triggered native lazy-load. Confirmed the CDN URLs
-  themselves were fine (loaded directly via `fetch` and via direct
-  navigation) — this was a browser lazy-load timing issue, not bad data.
-  Removed `loading="lazy"` from that one grid only (thumbnails are small
-  240×240 JPEGs; the room-detail-popup image grid elsewhere in the same
-  file still lazy-loads and was left alone, different component/context).
-  If a future session wants lazy-loading back for perf reasons, consider
-  re-adding it only for images beyond the first visible row, or switching
-  to an `IntersectionObserver`-driven approach instead of the native
-  attribute.
-* **Taxonomy filter checkboxes (Activities/Settings/Accolades) felt broken
-  on a second click**: each option was a `<Link>` doing a full server
-  round-trip (Directus re-fetch) with zero optimistic UI — a quick second
-  click before the first navigation resolved looked like nothing happened.
-  `RelDropdown` now keeps a local `localSelectedIds` state (initialized
-  from and reconciled via `useEffect` against `props.selectedIds`), updates
-  it synchronously on click for instant checkbox/pill feedback, and
-  triggers the actual navigation via `router.push` wrapped in
-  `startTransition` instead of `<Link>`. If this ever drifts from the URL
-  (e.g. a failed navigation), the reconciling `useEffect` will pull it back
-  in line with `props.selectedIds` on the next render — no separate
-  rollback state needed, it self-heals. Rollback would mean reverting to
-  the plain `<Link>` version and accepting the latency-reads-as-broken UX.
-
-### What was not independently re-verified this round
-Task 8 ("select dates" stuck) could not be reproduced against current code
-in either session — both times it traced back to the same
-`availabilitySearchDirty`-blocking bug fixed in commit `c507f57` above. If
-it's still seen after this, it's most likely a stale deployment/browser
-cache rather than a new bug — check the Vercel deploy timestamp against the
-commit before spending time re-diagnosing from scratch.
+Also: from-date pickers now open the to-date picker (`openDatePicker(toRef)` in a `requestAnimationFrame`) on landing, hotels and flights — **not visually confirmed**, since browser automation can't screenshot native `<input type=date>` popups on Windows.
 
 ---
 
 ## 34. DESIGN-SYSTEM AUDIT & DARK-SURFACE REFINEMENT (2026-08-11 to 2026-08-13)
 
-### What this was
+Ulrik proposed a two-surface theme — tinted dark for editorial pages, warm ivory for transactional ones — and asked for an audit before any code changed. **The ivory surface was built, reviewed and rejected**: *"it reads too mainstream — the standard luxury-travel white-and-black look I deliberately moved away from."* Its tokens are gone from the codebase entirely, not dormant. Final commit `ae62e5b`. **§35 supersedes this section's text-colour values**; the radius scale below is current.
 
-Ulrik proposed moving the site to a two-surface theme — a tinted dark for
-editorial/browse pages, a warm ivory for transactional ones — and asked for
-an audit of what it would break *before* any code changed. The audit (8
-checklist items: color definitions, maps, native controls, overlays,
-third-party surfaces, Duffel logos, RateHawk imagery, WCAG contrast) was
-delivered as findings only, no code. What actually shipped by the end of
-the session is much narrower than the original proposal: the ivory surface
-was reviewed and rejected, and only two refinements to the existing dark
-theme landed — a tighter corner-radius scale and a dimmer/warmer primary
-text color. Final commit: **`ae62e5b`**, pushed to `origin/main`.
+### What shipped: the radius scale
 
-### Resequencing Ulrik set, in order
-
-1. Pure tokenization refactor first (no visual change), so a later "the
-   palette is wrong" reaction could be told apart from "this component
-   isn't wired to tokens at all."
-2. Token *value* fixes (ivory border split, scrollbar surface-awareness).
-3. Answer the map-surface question before touching any MapTiler style URL.
-4. Build `/theme-test` last, once the above made it meaningful to look at.
-
-### Step 1 — tokenization refactor (zero visual change)
-
-Moved ~30 hardcoded `rgba()`/hex literals into `--oltra-*` tokens in
-`oltra-theme.css`, across exactly the areas flagged in the audit and no
-more:
-
-* HotelsView room-detail modal + photo lightbox → `--oltra-modal-scrim`,
-  `--oltra-modal-bg`, `--oltra-modal-shadow`, plus two new helper classes
-  (`.oltra-modal-scrim`, `.oltra-modal-panel`) replacing the Tailwind
-  arbitrary-value `bg-[rgba(...)]`/`shadow-[rgba(...)]` literals in the JSX.
-* `FlightsView.module.css` `.modalBackdrop`/`.modal` → `--oltra-flights-modal-backdrop`/`-bg`/`-border`.
-  **Kept as a separate token pair from the HotelsView modal above** even
-  though they serve the same role — the two had genuinely different rgba
-  values (not just historical drift assumed to be mergeable), and unifying
-  them would have been a real, if tiny, visual change.
-* Map popup/marker chrome and badge colours (`oltra-theme.css` — hotel
-  markers, city markers, origin marker, `.maplibregl-popup` variants,
-  `.oltra-photo-placeholder`) → `--oltra-marker-*`, `--oltra-city-marker-*`,
-  `--oltra-origin-marker-*`, `--oltra-map-popup-*`, `--oltra-hotel-popup-meta`,
-  `--oltra-photo-placeholder-*`.
-
-Found along the way and deliberately **not** touched: `.hotel-marker`/
-`.hotel-map-popup` exist as two byte-identical duplicate rule blocks in
-`oltra-theme.css` — harmless redundancy, out of scope for a pure refactor.
-
-Verified pixel-identical via `git stash`/`stash pop` before/after screenshot
-pairs (photo lightbox, hotel-map popup) rather than just trusting the
-diff — this was Ulrik's explicit acceptance test for the step.
-
-### Step 2 — token value fixes
-
-* Ivory border split into `--oltra-border-decorative` (#E2DBCD, unchanged —
-  cards/dividers where the card background already distinguishes the
-  boundary, no 3:1 requirement) vs `--oltra-border-functional` (#908C83,
-  **computed** — lightest warm grey on the same hue as the decorative
-  border that still clears 3:1 against both `#F6F2EA` and `#FFFDF9`, for
-  input outlines/focus rings/checkbox edges where WCAG's 3:1 *does* apply).
-* Scrollbar rules made surface-aware: extracted `--oltra-scrollbar-thumb`/
-  `-track` tokens out of one hardcoded global rule, added an ivory override
-  reusing the functional-border colour.
-* Map question resolved without touching any style URL: "just go with the
-  standard map format... need to see the final layout before deciding" —
-  reconfirmed after ivory was dropped ("maps look fine on dark as they
-  are"). `streets-v4` stays the basemap everywhere, no dark MapTiler
-  variant was ever added.
-
-### `/theme-test` — built, survived, still exists
-
-`hotels-beta/src/app/theme-test/{page.tsx, ThemeTestView.tsx,
-ThemeTestView.module.css}`. Prod-guarded (`notFound()` when
-`NODE_ENV=production`), not linked from any nav. Renders **real** app
-components (`OltraSelect`, `GuestSelector`, `HotelSmallCard`, the actual
-modal/lightbox markup, a live MapLibre instance) wrapped via
-`[data-oltra-surface="dark"]`, not replicas — this is why building it kept
-surfacing real bugs rather than just showing a mockup. `OltraSelect`/
-`GuestSelector` both gained a small additive `defaultOpen` prop so the page
-can render them pre-opened for review.
-
-Building the two-surface (dark + ivory) version required expanding the
-token system with full accent/error/button/field/glass/border roles for
-*both* surfaces, computed rather than eyeballed:
-
-* Ivory accent split into two distinct values that came out too close to
-  merge: `accent-text` #876B32 (4.50/4.95 vs page/card — lightest bronze on
-  the gold's own hue/saturation, H40/S46, that still clears 4.5:1 as text)
-  and `accent-fill` #8C6F34 (darker than "3:1 vs page" alone would ever
-  require — the actual binding constraint turned out to be near-white
-  *text on top of* the fill needing 4.5:1, not the fill-vs-page ratio by
-  itself).
-* Dark accent needed no change (#C8A96A already 8.08/7.24 vs page/card),
-  but its filled-button text has to be **dark** (`#0E1719`), not
-  near-white — near-white on that gold only reached ~2:1. Opposite pattern
-  from ivory, confirmed and kept.
-* A derived error/red colour for both surfaces — not part of Ulrik's
-  original brief, and no error colour existed anywhere in the codebase
-  before this either. Flagged explicitly as an unreviewed proposal, unlike
-  the accent which was verified. Dark: `#D66452`. (Ivory's `#C4422E` is now
-  dead code — see below.)
-* Building the page surfaced two more hardcoded-white-text bugs beyond
-  what the original audit found: `.oltra-dropdown-item`
-  (`color: rgba(255,255,255,0.86)`, hardcoded) and `HotelSmallCard`'s title
-  and price (`text-white` Tailwind literals) — both went white-on-white,
-  effectively invisible, on the ivory column. Flagged in-page first
-  (`/theme-test`'s own "known gap" notes), fixed for real once brought
-  into scope in a later turn (see below).
-
-**Recurring dev-server flakiness this session** (not a code defect, worth
-knowing about for future long sessions with heavy file churn): hit a bare
-500 on `/theme-test` and, later, a Flights page whose CSS module had
-silently stopped applying (`grid-template-columns: none` despite the
-correct class name being present — traced to
-`/_next/static/css/app/flights/page.css` returning a 404). Both times,
-spinning up a clean `next dev` on a scratch port confirmed the *source* was
-correct and the problem was purely accumulated `.next` build state. Fixed
-for good by killing the port-3000 `next` process tree, `rm -rf .next`, and
-restarting via `npm run dev`.
-
-### Decision: drop ivory entirely (2026-08-12)
-
-Ulrik's verdict after looking at the built page: *"the ivory column reads
-too mainstream — it's the standard luxury-travel white-and-black look I
-deliberately moved away from, and it doesn't earn its place on the results
-grid or the forms."* Removed the entire `[data-oltra-surface="ivory"]`
-block, the bronze accent tokens, and the ivory border split. The
-`[data-oltra-surface]` attribute mechanism itself was kept (cheap to leave
-in, `/theme-test` still needs it as a sandbox) — there's just no `"ivory"`
-variant registered against it anymore.
-
-### Two refinements, requested and shipped
-
-**1. Corner-radius scale.** Computed by grepping every real consumer of
-each radius token first, not guessed:
+Computed by grepping every real consumer of each token first, not guessed:
 
 | Token(s) | Was | Now | Used for |
 |---|---|---|---|
-| `--oltra-radius-xl`, `--oltra-radius-lg` | 16px / 14px | **6px** (both) | Large panels, modals, lightbox — deliberately not 0 ("crisp, not crude") |
-| `--oltra-radius-md`, `--oltra-dropdown-radius` | 10px | **4px** | Cards, dropdowns, map popups, inputs, buttons — these already shared `radius-md` before this, so no restructuring was needed |
-| `--oltra-radius-sm`, `--oltra-radius-xs`, `--oltra-dropdown-item-radius` | 8px / 5px | **2px** | Badges, chips, small pills, thumbnails, dropdown option rows |
+| `--oltra-radius-xl`, `-lg` | 16 / 14px | **6px** | Large panels, modals, lightbox — deliberately not 0 ("crisp, not crude") |
+| `--oltra-radius-md`, `--oltra-dropdown-radius` | 10px | **4px** | Cards, dropdowns, map popups, inputs, buttons |
+| `--oltra-radius-sm`, `-xs`, `--oltra-dropdown-item-radius` | 8 / 5px | **2px** | Badges, chips, small pills, thumbnails, dropdown rows |
 
-`--oltra-radius-pill` (999px) untouched — it's a shape keyword, not a
-rounding amount.
+`--oltra-radius-pill` (999px) untouched — a shape keyword, not a rounding amount.
 
-**2. Primary/muted text colour.** Three candidates were computed and
-rendered live in `/theme-test` (not picked by eye), all **solid hex**, not
-white at reduced opacity — Ulrik's explicit constraint, since opacity
-renders inconsistently between the base and the raised panel:
+### Method worth reusing
 
-| Candidate | Primary | vs page/panel | Muted companion | vs page/panel |
-|---|---|---|---|---|
-| A — same cool family, moderate dim | `#C2CBCB` | 10.99:1 / 9.85:1 | `#708F8E` | 5.20:1 / 4.66:1 |
-| B — same cool family, deeper dim | `#A7B4B3` | 8.50:1 / 7.62:1 | `#708F8E` | 5.20:1 / 4.66:1 |
-| **C — warm variant (SELECTED)** | **`#D9D4C9`** | 12.30:1 / 11.02:1 | **`#978869`** | 5.23:1 / 4.68:1 |
+* **Tokenize first, in a pass with zero visual change**, so a later "the palette is wrong" can be told from "this component isn't wired to tokens at all". Verified pixel-identical via `git stash`/`stash pop` screenshot pairs, not by trusting the diff — Ulrik's explicit acceptance test.
+* **Two tokens that play the same role are not automatically mergeable.** The Flights and HotelsView modal scrims were kept separate because their rgba values genuinely differed, and unifying them would have been a real if tiny visual change.
+* **Colour candidates are computed and rendered live, never picked by eye** — each muted companion is the dimmest value on its hue still clearing 4.5:1 against both the base and the raised panel. Ulrik's constraint is **solid hex, not white at reduced opacity**, because opacity renders inconsistently between the base and a raised panel.
+* On the dark surface a gold filled button needs **dark** text — near-white on that gold reaches only ~2:1. On a light surface the pattern inverts, and the binding constraint for the fill is *text on top of it* needing 4.5:1, not fill-vs-page.
+* The app had **25 distinct border alphas and 19 background alphas** — not a scale. §35 bands them.
 
-Muted companions are each the dimmest value on that hue that still clears
-4.5:1 against both base and panel — computed, not eyeballed. A and B share
-one companion since they're the same hue family. Candidate C — shifted
-onto the gold accent's own hue (H40) at low saturation, i.e. warm against
-the cool blue-green base — is what Ulrik picked.
+### `/theme-test` — still exists, still useful
 
-### Shipped to bare `:root` 2026-08-13 — deliberately narrow scope
+`src/app/theme-test/`. Prod-guarded (`notFound()` when `NODE_ENV=production`), not linked from any nav. Renders **real** components wrapped in `[data-oltra-surface="dark"]`, not replicas — which is why building it kept surfacing real bugs, including two hardcoded-white-text cases the audit had missed. `OltraSelect`/`GuestSelector` gained an additive `defaultOpen` prop for it. The `[data-oltra-surface]` mechanism stays even though only one surface is registered.
 
-Only the radius scale and `--oltra-text-primary`/`-secondary`/`-muted`
-went live site-wide. **Not** pushed: the accent-driven button recolour
-(gold fill), the glass-bg/field-bg retint, `--oltra-border-functional`, or
-the derived error colour — none of those were ever explicitly reviewed as
-a "ship this" decision the way radius and text were; they were built only
-to make the (now-dropped) two-surface `/theme-test` render correctly.
-**`--oltra-button-active-bg` is still live sage green
-`rgb(182, 204, 168)`** — the gold button treatment never shipped. If a
-future session is asked to "finish" this, check with Ulrik before assuming
-those sandboxed tokens should go live too — that's a real, visible decision
-(sage green → gold buttons site-wide), not a mechanical follow-on.
-
-The now-redundant duplicate overrides (radius + text-primary/secondary/
-muted) were removed from the `[data-oltra-surface="dark"]` block once
-`:root` matched them exactly, to avoid the file implying they're still
-sandbox-only. `--oltra-surface-page/card/text/muted/accent` stay defined
-in that block regardless — `/theme-test`'s own CSS module reads those
-names directly, independent of the shared component tokens.
-
-The two hardcoded-white-text bugs found while building `/theme-test` were
-fixed for real in this pass: `.oltra-dropdown-item` and `HotelSmallCard`'s
-title/price now read `var(--oltra-text-primary)`. **Not quite
-byte-pixel-identical** — the old hardcoded values were
-`rgba(255,255,255,0.86)`/pure white, not exactly whatever
-`--oltra-text-primary` held at the time — flagged as a real if visually
-negligible delta rather than claimed as a clean refactor.
-
-### Files
-
-* `hotels-beta/src/styles/oltra-theme.css` — the bulk of the change; see
-  above for the token inventory.
-* `hotels-beta/src/app/hotels/ui/HotelsView.tsx` — modal/lightbox markup
-  repointed to the new helper classes (step 1 only).
-* `hotels-beta/src/app/flights/ui/FlightsView.module.css` — modal tokens
-  (step 1 only).
-* `hotels-beta/src/components/hotels/HotelSmallCard.tsx` — title/price
-  hardcoded-white fix.
-* `hotels-beta/src/components/site/OltraSelect.tsx`,
-  `GuestSelector.tsx` — added `defaultOpen` prop for `/theme-test`.
-* New: `hotels-beta/src/app/theme-test/{page.tsx, ThemeTestView.tsx,
-  ThemeTestView.module.css}` — kept as a standing review route for future
-  design-system work, not a one-off scaffold to delete.
-
-### What's still outstanding
-
-* ~~The sandboxed-but-unshipped tokens above (accent/button-active-bg/
-  glass-bg/field-bg/border-functional/error-colour) — still only live
-  inside `[data-oltra-surface="dark"]`, real decisions pending.~~
-  **Resolved — this bullet was stale (corrected 2026-08-16).** §35's final
-  palette shipped all of these to bare `:root` a day later, so nothing is
-  waiting on a decision. In particular the "sage green → gold buttons
-  site-wide" call this section flagged as pending never happened and is not
-  pending: §35 shipped a *recomputed sage* (`--oltra-button-active-bg:
-  #7ba079`), gold was dropped. `--oltra-error-text` shipped too.
-  `--oltra-border-functional` and the ivory accent tokens don't exist
-  anywhere in the codebase — they went with ivory.
-* The step-1 modal tokens (`--oltra-modal-scrim`/`-bg`) were never made
-  surface-aware — moot now that there's only one surface, but worth
-  knowing they're a distinct token pair from the general
-  `--oltra-text-primary`/etc. pushed this session.
-* Ivory's derived error colour (`#C4422E`) and everything else ivory-only
-  is gone from the codebase entirely, not just unused — if a warm surface
-  ever comes back, it isn't a matter of re-enabling something dormant.
+**Recurring dev-server flakiness worth recognising**: a bare 500 on a route, and a CSS module silently not applying (`grid-template-columns: none` with the right class name, its `page.css` 404ing). Both times a clean `next dev` on a scratch port proved the source was fine — accumulated `.next` state. Kill the port-3000 process tree, `rm -rf .next`, restart.
 
 ---
 
-## 35. FINAL PALETTE + TOKEN MIGRATION (2026-08-13; completed 2026-08-16)
+## 35. FINAL PALETTE + TOKEN MIGRATION (2026-08-13, completed 2026-08-16)
 
-### Supersedes §34's shipped text-color values
+Supersedes §34's shipped text colours. A fully prescriptive spec from Ulrik, shipped straight to bare `:root` as `a2b1c30`, with the live-component migration in `15c8ea8`. §34's radius scale is unaffected.
 
-After §34 shipped its own radius-scale + text-color refinement, Ulrik gave a
-new, fully prescriptive **FINAL PALETTE** spec in a later session the same
-day — a genuine second round, not a continuation of §34's candidate C. It
-replaces §34's shipped text colors (`#D9D4C9` primary / `#978869` muted)
-and expands the surface tokens beyond what §34 touched. Shipped straight to
-bare `:root` (not just `/theme-test`) as commit **`a2b1c30`** ("Ship final
-palette: lighter base, recessed fields, raised dropdowns"). §34's
-**radius scale is unaffected** and stays current; only its text/surface
-values are superseded here.
+**Surfaces**: base `--oltra-bg-color: #2c3634`; raised panel/card `--oltra-field-bg-solid: #374240`; recessed field `--oltra-field-bg: #232c2a`; field border `--oltra-field-border: #3e4947`.
 
-**Surfaces**: base `--oltra-bg-color: #2c3634`, raised panel/card
-`--oltra-field-bg-solid: #374240`, recessed field
-`--oltra-field-bg: #232c2a`, field border `--oltra-field-border: #3e4947`.
+**Text — three solid roles, no opacity variants**: primary `--oltra-text-primary: #f5f2ec` (headings, body, values, labels on outline buttons); muted `--oltra-text-secondary` / `--oltra-text-muted: #cbd0cb` (secondary and metadata only — the two names alias one value, there is no third tier); placeholder `--oltra-text-placeholder: #c0c6c1`; disabled `--oltra-text-disabled: #787774` (deliberately sub-AA, only where nothing essential is carried by the text alone).
 
-**Text — three solid roles, no opacity variants**: primary
-`--oltra-text-primary: #f5f2ec` (headings, body, values, labels on outline
-buttons); muted `--oltra-text-secondary`/`--oltra-text-muted: #cbd0cb`
-(secondary/metadata only — locations, price suffixes, helper text,
-timestamps, badge text; the two token names now alias the same value, no
-third intermediate tier); placeholder `--oltra-text-placeholder: #c0c6c1`
-(input placeholders only); disabled `--oltra-text-disabled: #787774`
-(deliberately sub-AA, only where nothing essential is carried by the text
-alone).
+**Fields are solid recessed, not translucent** — every form field is `--oltra-field-bg` + 1px `--oltra-field-border`. Translucency survives **only** where glass does real work over imagery: map popups, the featured-mode hero search panel, the featured hotel card, the map container.
 
-**Fields switched from translucent to solid recessed** — every form field
-(destination input, guest/room selector trigger, date fields, any text
-input/select trigger) is `--oltra-field-bg` fill + 1px `--oltra-field-border`.
-Translucency is kept **only** where glass is doing real work over imagery —
-map popups and photo-overlay chrome (the featured-mode hero search panel,
-the featured hotel card, the map container). Everything else went solid.
+**Dropdowns and popups are raised, not recessed** — `--oltra-field-bg-solid` panel, `--oltra-dropdown-border` (`1px solid #738783`), hover `#414c4a`, selected `#4c5754` + primary text.
 
-**Dropdowns/popup panels are raised, not recessed** — panel bg
-`--oltra-field-bg-solid`, panel border `--oltra-dropdown-border` (`1px solid
-#738783`), item hover `--oltra-dropdown-item-hover-bg: #414c4a`, item
-selected `--oltra-dropdown-item-selected-bg: #4c5754` + primary text.
+**Badges/chips** are recessed like fields, with their own `--oltra-badge-text` token (aliases muted) so badge colour can't drift from body text by accident.
 
-**Badges/chips**: recessed like fields (`--oltra-field-bg` +
-`--oltra-field-border`), label color is its own token
-`--oltra-badge-text` (currently aliases muted) so badge color can't drift
-from body text color by accident.
+**Buttons** keep the sage family, recomputed: active `--oltra-button-active-bg: #7ba079` with **dark** text `#232c2a`; inactive transparent fill, `--oltra-button-inactive-border: #6c8c6a`, primary text. **Gold buttons were never shipped and are not pending** — §34 flagged that as an open decision; §35 settled it as recomputed sage.
 
-**Buttons**: kept the sage hue family, recomputed for contrast — active
-`--oltra-button-active-bg: #7ba079` with **dark** active text
-`--oltra-button-active-text: #232c2a` (not white-on-sage); inactive
-`transparent` fill, `--oltra-button-inactive-border: #6c8c6a`, primary text.
+**Error**: `--oltra-error-text: #ff8a71`. **Type size**: metadata/secondary raised from 11px to 12px wherever it appears.
 
-**Error color**: `--oltra-error-text: #ff8a71` — chosen over a
-`#ff7762` alternative (fully-WCAG-compliant option, picked over the
-marginally-brighter one).
+### Live-component migration
 
-**Type size**: metadata/secondary text raised from 11px to 12px wherever it
-appears (applied during the component migration below, not the token pass
-itself).
+Changing what a token *resolves to* does nothing for components holding literal `text-white/NN` utilities. Migrating those to `text-[color:var(--oltra-text-primary)]` — the Tailwind-v4-without-a-config convention here, since there's no config file or `@theme` block — is separate work, now complete.
 
-### Live-component migration (commit `15c8ea8`, same session)
+**Methodology for future passes**: primary for headings, body copy, values and icon glyphs on solid fills; muted for metadata, status and helper text; the recessed field treatment for filter/status pills; and a **two-step muted→primary hover** for small utility links and icon-only buttons, since a solid three-role system has no continuous opacity scale to step through. The hotel Description body is **primary** (it is "body"); smaller highlights blurbs are **muted**.
 
-Token/`/theme-test` work only changes what CSS custom properties *resolve
-to* — components still holding literal `text-white/NN` Tailwind utilities
-don't pick any of it up. Migrating those literal call sites to the token
-syntax (`text-[color:var(--oltra-text-primary)]` etc. — the established
-Tailwind-v4-without-a-config convention in this codebase, since there's no
-`tailwind.config.js`/`@theme` block) is separate, ongoing work.
+### New tokens (2026-08-16)
 
-**Done**: `HotelsView.tsx` (all ~74 hardcoded instances — result cards,
-detail panel, description, taxonomy metadata, Rooms section, room-detail
-popup, total-price footer, trip picker, photo lightbox, favorites/trip
-buttons), `HotelSmallCard.tsx`, `OltraSelect.tsx` (trigger + selected
-dropdown row), `StructuredDestinationField.module.css` (token pill →
-badge treatment).
+`--oltra-border-subtle/-soft/-medium/-strong` and `--oltra-surface-lift-soft/-lift/-lift-strong`, banded from the values actually in use. **Deliberately kept translucent**, unlike the solid text and field tokens: they sit inside glass over imagery where a relative lift is correct, and it means the pass preserved rendering rather than shifting it. Making them solid is a separate, visible decision.
 
-**Methodology used, for consistency in future passes**: primary for
-headings/body copy/values/icon glyphs on solid fills; muted for
-metadata/status text/helper text/secondary blurbs; the recessed
-field-bg/field-border/badge-text treatment for filter or status "pill"
-chips; a new **two-step muted→primary hover** pattern for small utility
-links and icon-only buttons (there's no continuous opacity scale to step
-through anymore in a solid 3-role system). The main hotel "Description"
-section body copy was classified **primary** (matches the spec's explicit
-"body" role), distinct from smaller "highlights" card blurbs classified
-**muted**. Photo-overlay/glass chrome (the three elements named above)
-was deliberately left untouched/translucent.
+`--oltra-border-field` and `--oltra-border-panel` were **removed** — sandbox duplicates gone stale (`-panel` still held `#738783` after the pane border softened to `#545F5D`, so `/theme-test` drew borders the live site no longer used).
 
-**Verified**: `npx tsc --noEmit` clean, `npm run lint` clean (no new
-warnings beyond this repo's pre-existing baseline), live Chrome walkthrough
-of `/hotels` — result list, detail panel, Rooms section + room-detail
-popup, total-price box, trip/favourites buttons, photo lightbox, and the
-Bedrooms `OltraSelect` dropdown's raised-panel/selected-row treatment all
-confirmed rendering correctly.
+### Deliberately NOT tokenised — check here before "finishing" any of them
 
-**Found and skipped**: `TopNav.tsx` is dead code — confirmed via grep, never
-imported or rendered anywhere in the app — not migrated, not worth the
-effort.
-
-### Remaining scope — CLOSED 2026-08-16
-
-Every item on the original list is done. The list itself turned out to be
-incomplete in a way worth recording, since it under-described the job by
-roughly 3×:
-
-* It covered **text colour only**. Borders (78 hardcoded
-  `rgba(255,255,255,a)` literals) and backgrounds (55) were never mentioned.
-* It **missed the two largest text files**: `oltra-theme.css` (21 instances —
-  the theme file itself still hardcoded white-at-opacity, despite §35's stated
-  premise of "no white-at-opacity anywhere") and `page.module.css` (20).
-* It listed the **Flights page nowhere**, which held ~46% of all the border
-  and background literals.
-
-Resolved along the way:
-* `PageShell`'s `.intro` — the open question ("over imagery or solid
-  chrome?") is answered: it carries a `text-shadow` and sits over
-  `.background`'s hero image, so it is photo-overlay chrome and **stays
-  translucent**. Its sibling `.page { color: #ffffff }` was migrated.
-* Flights' `var(--oltra-accent, #f87171)` fallback — already fixed earlier
-  the same day while adding the saved-trip rebook notice.
-
-### What is deliberately NOT tokenised (2026-08-16)
-
-Not oversights — check here before "finishing" any of them:
-
-* **Map/photo-overlay chrome.** `.oltra-temp-controls__*` (5 text rules, a
-  glass panel over the Inspire map) and `PageShell`'s `.intro`. Same
-  exemption §35 applied to the old featured-mode hero.
-* **Functional borders at alpha 0.32+** — checkbox edges, focus rings, the
-  selected-card outline on flight cards. These are the only cue for what they
-  enclose, per the decorative/functional split in §34.
-* **The Info pill** (`.infoButton`: `background:#fff; color:#111`) — a
-  deliberately inverted control, not a theme colour.
+* **Map and photo-overlay chrome**: `.oltra-temp-controls__*` and `PageShell`'s `.intro` (it carries a `text-shadow` and sits over a hero image — overlay chrome, and that question is settled).
+* **Functional borders at alpha 0.32+** — checkbox edges, focus rings, the selected flight-card outline. These are the only cue for what they enclose.
+* **The Info pill** (`.infoButton`: `background:#fff; color:#111`) — a deliberately inverted control, not a theme colour.
 * **`@media print` `#000`/`#fff`** in `members.css` — paper is white.
-* **`/editor/*` (20 instances) and `TopNav.tsx` (3)** — internal-only tool
-  that doesn't follow the design system, and dead code respectively.
-
-### New tokens added 2026-08-16
-
-`--oltra-border-subtle/-soft/-medium/-strong` and
-`--oltra-surface-lift-soft/-lift/-lift-strong`. Banded from the values
-actually in use (the app had 25 distinct border alphas and 19 background
-alphas — not a scale). Deliberately kept **translucent**, unlike the solid
-text and field tokens: they sit inside glass over imagery where a relative
-lift is the correct behaviour, and it means the pass preserved rendering
-rather than shifting it. Making them solid is a separate, visible decision.
-
-`--oltra-border-field` and `--oltra-border-panel` were **removed** — sandbox
-duplicates that had gone stale (`-panel` still held `#738783`, the pane border
-softened to `#545F5D` that same day, so `/theme-test` was drawing borders the
-live site no longer used). `/theme-test` now reads the live tokens directly.
+* **`/editor/*` and `TopNav.tsx`** — an internal tool that doesn't follow the design system, and dead code (`TopNav` is never imported anywhere).
 
 ---
 
 ## 36. LOCAL DEV — BETA-LOGIN GATE
 
-The whole site (all routes) sits behind a simple password gate —
-`hotels-beta/src/middleware.ts` redirects any request without a
-`beta_auth=oltra_beta_granted` cookie to `/beta-login`. This applies to
-direct browser navigation (including automated browser sessions used for
-live UI verification) and to any `curl`/fetch call made without the cookie.
+The whole site sits behind a password gate: `hotels-beta/src/middleware.ts` redirects any request without a `beta_auth=oltra_beta_granted` cookie to `/beta-login`. This applies to browser navigation (including automated sessions) and to any `curl`/fetch without the cookie.
 
-Password (hardcoded in `hotels-beta/src/app/api/beta-login/route.ts`,
-`BETA_PASSWORD`, already plaintext-committed there — recording it here isn't
-a new exposure): `Oltra2387`
+Password (hardcoded in `src/app/api/beta-login/route.ts` as `BETA_PASSWORD`, already plaintext-committed there): `Oltra2387`
 
 ---
 
-## 37. LANDING PAGE — PER-CITY NEAREST-AIRPORT MAPPING & MULTI-AIRPORT FLIGHT TEASER (2026-08-14)
+## 37. PER-CITY NEAREST-AIRPORT MAPPING (2026-08-14)
 
-### What prompted this
+"Venice says be more specific to find flights" traced to the landing flight teaser resolving cities via the ~70-entry `AIRPORT_OPTIONS` list, which exists for the Flights page's manual autocomplete and covers almost none of the hotel roster's ~500 cities.
 
-A user report ("Venice says be more specific to find flights") traced back
-to the landing page's flight teaser resolving a destination city to an
-airport via a ~70-entry hardcoded `AIRPORT_OPTIONS` list
-(`src/lib/airportOptions.ts`) meant for the Flights page's manual
-autocomplete — Venice (and most of the hotel roster's ~500 other cities)
-simply wasn't in it. Adding Venice fixed that one case; this section is the
-follow-up to cover the entire hotel roster properly, including cities
-genuinely served by more than one relevant airport (multi-airport cities
-like London, or regions like Alpine ski resorts reachable via two
-comparably-distant hub airports).
+`scripts/airports/build-city-airports.mjs` regenerates `src/lib/cityAirports.ts` from the Directus `hotels` collection (city/country/lat/lng for published hotels, grouped by city+country, each group's centroid being the measuring point) and **OurAirports** (`davidmegginson.github.io/ourairports-data/airports.csv`, ~86k rows, downloaded fresh each run to a gitignored cache). Filtered to `scheduled_service == "yes"`, excluding heliports, seaplane bases, closed and balloonports.
 
-### Data pipeline: `scripts/airports/build-city-airports.mjs`
+**Manual exclusions** — flagged `scheduled_service: yes` but business-aviation only: `TEB` (Teterboro), `LBG` (Paris-Le Bourget), `OPF` (Miami-Opa Locka). With these out, Paris correctly shows just CDG + Orly.
 
-Regenerates `src/lib/cityAirports.ts` from two sources:
+Selection per city:
 
-* **Directus `hotels` collection** — `city`/`country`/`lat`/`lng` for all
-  838 published hotels (all of which have coordinates). Grouped by
-  city+country (507 distinct combinations as of 2026-08-14); each group's
-  centroid (mean lat/lng of its hotels) is the point distances are measured
-  from.
-* **OurAirports' public dataset**
-  (`davidmegginson.github.io/ourairports-data/airports.csv`, ~86k airports
-  worldwide) — downloaded fresh each run to `scripts/airports/airports.csv`
-  (gitignored, large third-party data). Filtered to `scheduled_service ==
-  "yes"` (real commercial routes, not private/charter-only strips) and
-  excludes `heliport`/`seaplane_base`/`closed`/`balloonport` types. One
-  further manual exclusion: `TEB` (Teterboro) — flagged `scheduled_service:
-  yes` in the raw data but is a business-aviation-only field with no real
-  passenger routes.
+1. **Same-city airports** — within 25km of the centroid, OR within 60km if the airport's own `name` or `municipality` starts with the city name (catches "London Luton" and "Milan Malpensa", whose `municipality` is a satellite town). **All** same-city matches are listed, uncapped — London shows 6, New York 3.
+2. **Otherwise** the nearest airport within 400km alone if it's a clear favourite (next-nearest >1.5× farther); if comparably distant, up to `MAX_HUBS = 3` candidates each within 1.5× of the *nearest* (not chained pairwise). The Alpine case — Zermatt → Milan Malpensa 87km / Lugano 90km / Turin 91km.
+3. If nothing is within 400km, the globally nearest scheduled airport regardless of distance.
 
-**Selection rule per city** (confirmed with Ulrik before building — see
-"max 2, all if the city itself has multiple, single if there's a clear
-favorite" below):
+**A real bug caught during the build**: an earlier ranking pre-filtered tier 2 to `large_airport` types, on the theory that a better-connected hub beats a closer small one. It skipped Missoula (medium, 50km) for Spokane (large, 319km), and Tambolaka (small, 36km) for Lombok 300km across open water. **Dropping the type filter entirely** fixed both — type is stored for reference but never used to filter or re-rank. Pure nearest-distance already matches real gateway patterns.
 
-1. **Same-city airports** — any airport within 25km of the centroid, OR
-   within 60km whose own `name` or `municipality` field starts with the
-   city name (catches e.g. "London Luton Airport" for London, or "Milan
-   Malpensa" for Milan, whose OurAirports `municipality` is a small
-   satellite town rather than the city itself — matching on the airport's
-   own *name* catches these where matching on `municipality` alone would
-   miss them). **All** same-city matches are listed, uncapped — this is
-   what makes London show all 6 (City/Heathrow/Gatwick/Luton/Stansted/
-   Southend) and New York show 3 (LaGuardia/Newark/JFK).
-2. **Otherwise** (no airport belongs to the city itself — the common case
-   for smaller towns/resorts): the single nearest airport (any type, large
-   or small) within 400km is used alone if it's a **clear favorite** (the
-   next-nearest candidate is >1.5x farther away). If two candidates are
-   comparably distant (ratio ≤1.5x), **both** are listed — this is the
-   Alpine-ski-resort case (e.g. Zermatt → Milan Malpensa 87km + Lugano
-   90km; Courchevel → Chambéry 64km + Annecy 71km).
-3. If nothing is within 400km at all (very remote), the single
-   globally-nearest scheduled airport is used regardless of distance.
+**Known soft spot, accepted**: ~9 of 507 cities are remote safari lodges reached by charter, not scheduled service, so "nearest scheduled airport" can be a distant city rather than the practical gateway. Not fixable from public scheduled-service data.
 
-**A real bug caught during build, not just theorized**: an earlier version
-of the ranking (tier 2) pre-filtered to `large_airport`-type candidates
-before picking nearest, on the theory that a bigger/better-connected hub
-should be preferred over a closer small one. This blew up for "Greenough"
-(a Montana ranch resort near Missoula): it skipped Missoula
-(`medium_airport`, 50km) entirely in favor of Spokane (`large_airport`,
-319km) purely because of the type label, and did the same for a Sumba
-island resort (skipped the correct **Tambolaka** `small_airport` 36-44km
-away in favor of Lombok 300km+ across open water). Fixed by dropping the
-type-based pre-filter entirely — type is stored for reference but never
-used to filter or re-rank the candidate pool; pure nearest-distance (after
-the heliport/seaplane/TEB exclusions above) turned out to already match
-real-world gateway patterns well once that bug was gone. Re-verified after
-the fix: Greenough → Missoula, Sumba resorts → Tambolaka, both correct.
+Labels strip generic suffixes ("Milan Malpensa International Airport" → "Milan Malpensa"), not hand-tuned. ~9 of 507 cities are remote lodges reached by charter rather than scheduled service, so their "nearest scheduled airport" is a distant city — accepted, not fixable from public data.
 
-**Known soft spot, accepted rather than chased further**: a handful of
-very remote safari lodges (e.g. Pamushana in Zimbabwe, Sesriem/Sonop Farm
-in Namibia) are in reality reached by charter flight from a regional hub,
-not commercial service to a nearby strip — for these, "nearest airport
-with real *scheduled* service" can legitimately be a distant major city
-(200-330km) rather than the practical charter gateway a travel agent would
-actually book. Affects ~9 of 507 cities (spot-checked by listing every
-city whose picked airport was >150km away). Not auto-fixable from public
-scheduled-service data; would need manual per-lodge research to improve,
-not done this session.
+Exports `CITY_AIRPORTS` (keyed by the exact Directus `hotels.city` string), `getAirportsForCity(city)` and `getCityForAirportIata(iata)` (§39/§45). Auto-generated — regenerate, don't hand-edit:
 
-**Airport labels** are derived from the OurAirports `name` field with
-generic suffixes stripped (`International Airport`, `Regional Airport`,
-`Airport`, parenthetical codes) — e.g. "Milan Malpensa International
-Airport" → "Milan Malpensa", "Zayed International Airport" → "Zayed". Not
-hand-tuned per airport; a few (like Abu Dhabh's renamed "Zayed" airport,
-which dropped "Abu Dhabi" from its official name in 2023) read a little
-opaque in isolation, but the surrounding UI always shows the destination
-city already, so this wasn't treated as worth special-casing.
-
-**Regenerate**: `DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/airports/build-city-airports.mjs`
-whenever the hotel roster's city list changes meaningfully. Safe to re-run
-anytime — always recomputes from scratch and overwrites
-`src/lib/cityAirports.ts`.
-
-### `src/lib/cityAirports.ts`
-
-Auto-generated (regenerate via the script above, don't hand-edit). Exports
-`CITY_AIRPORTS: Record<string, CityAirport[]>` (keyed by the exact Directus
-`hotels.city` string) and `getAirportsForCity(city)` (case/whitespace-
-normalized lookup, returns `[]` if the city isn't in the mapping).
-
-### `LandingSummary.tsx` — multi-airport flight teaser
-
-Replaced the single-airport `findAirportForCity()`/`destinationAirport`
-logic with `candidateAirports` (the full array from `getAirportsForCity`,
-minus the selected origin airport if it happens to coincide). UX choice
-(Ulrik, 2026-08-14): **one flight-result block per candidate airport**, not
-a single "best price" pick — each block fires its own independent
-`/api/flights/search` call and renders as soon as *that* call resolves
-(not blocked by slower siblings), labeled "Via {airport label} ({IATA})".
-Reuses the exact same row markup/CSS
-(`flightDetailRow`/`flightRowLegend`/`flightLineLabel`/`flightRowPrice`/
-`flightBookButton`/`flightLegsGrid`) that previously rendered the
-Recommended/Fastest pair for a single airport — just one row per airport
-now, showing that airport's top-scored (`recommended`) itinerary rather
-than a separate fastest pick, since the preview Ulrik approved showed one
-price line per airport block, not two.
-
-**Real cost implication, not yet limited**: a multi-airport city fires one
-Duffel search per candidate — up to 6 in parallel for London. Each result
-is cached server-side for 15 minutes
-(`src/app/api/flights/search/route.ts`'s existing `CACHE_TTL_MS`), but the
-first visitor to search a given London date/guest combination triggers 6
-live Duffel calls at once. Not a problem observed this session, but worth
-knowing if Duffel usage/latency ever becomes a concern — the same-city
-uncapped-list rule is the direct cause for cities with many airports.
-
-**Verified live** (2026-08-14, via a properly re-paired browser session —
-see §36's context on why that took a retry): Venice → single VCE block
-with real Duffel results; London → all 6 airports rendering independently
-with real results (€104–€115 range); Zermatt → both Milan Malpensa and
-Lugano blocks with real results. `tsc --noEmit` and `npm run lint` both
-clean throughout.
-
-### Files
-
-* `hotels-beta/scripts/airports/build-city-airports.mjs` — the regenerable
-  build script (documented above).
-* `hotels-beta/src/lib/cityAirports.ts` — auto-generated output, committed
-  (unlike the raw `airports.csv` cache, which is gitignored).
-* `hotels-beta/src/app/LandingSummary.tsx` — multi-airport search/render.
-* `hotels-beta/src/lib/airportOptions.ts` — untouched beyond the earlier
-  Venice addition; still the separate, manually-curated list backing the
-  Flights page's own airport autocomplete and the landing page's "home
-  airport" (origin) field, which have no equivalent "cover every hotel
-  city" requirement.
-
----
-
-## 38. LANDING PAGE — RICHER FLIGHT TEASER, SIMPLE CHECKBOXES, INLINE CHIPS (2026-08-14)
-
-Same-day follow-up to §37, based on more specific direction from Ulrik.
-Four changes, all live-verified in the browser:
-
-### 1. Hub cap raised 2 → 3
-
-`scripts/airports/build-city-airports.mjs`: the "different hub" tier
-(§37's rule 2) now keeps up to `MAX_HUBS = 3` candidates, each still
-required to be within `FAVORITE_RATIO` (1.5x) of the *nearest* one, not
-chained pairwise — so a single dominant airport still collapses to 1, but
-comparably-distant cases now show 3 instead of 2 (e.g. Zermatt → Milan
-Malpensa 87km / Lugano 90km / Turin 91km). Same-city-uncapped and
-single-clear-favorite behavior unchanged.
-
-Also added two more manual exclusions alongside Teterboro (§37): `LBG`
-(Paris-Le Bourget — business aviation/air-show venue) and `OPF`
-(Miami-Opa Locka Executive — business aviation), both of which were
-surfacing in same-city buckets despite `scheduled_service: yes` in the
-raw OurAirports data, for the same reason TEB was excluded — no real
-commercial-airline routes worth showing. Paris now correctly shows just
-CDG + Orly, matching Ulrik's own example exactly.
-
-### 2. Flight teaser: 4 rows per airport (Best price + Fastest × Standard + Business)
-
-`LandingSummary.tsx`: each candidate airport now fires **two** searches
-(one per cabin, `economy`/`business` — Duffel's `CabinClass` values,
-confirmed via `node_modules/@duffel/api/dist/typings.d.ts`), not one. Per
-(airport, cabin) pair, a single search result is used to derive **both**
-"Best price" (cheapest by `priceEur`) and "Fastest" (shortest total
-duration, deduped against best-price by itinerary id — same pattern as
-the pre-§37 single-airport code, restored) — no need for a second search
-per metric. State keyed `${iata}__${cabin}` in `flightResults`.
-
-Render structure per airport, all new classes in `page.module.css`:
+```bash
+DIRECTUS_URL=... DIRECTUS_TOKEN=... node scripts/airports/build-city-airports.mjs
 ```
-{AIRPORT LABEL} ({IATA})                    {distKm} km from {city} centre
-  STANDARD CABIN
-    Best price  €xxx [BOOK]  <times/duration>
-    Fastest     €xxx [BOOK]  <times/duration>
-  BUSINESS CABIN
-    Best price  €xxx [BOOK]
-    Fastest     €xxx [BOOK]
-```
-Distance line reuses `CityAirport.distKm`, already computed by §37's
-pipeline — no new data needed, just surfaced in the UI per Ulrik's ask
-("distance from airport to selected city centre as support info").
-
-**Real cost implication, worse than §37's already-flagged one**: up to 3
-airports × 2 cabins = **6 parallel Duffel searches** per landing-page
-visit for a multi-hub destination (was up to 3). Each still cached
-server-side 15 min (`api/flights/search/route.ts`). Not addressed this
-session — noted as a scaling/cost watch-item, not a bug.
-
-Verified live: Paris (LHR origin) → Orly block (16km) with Standard+Business
-×2 rows each, then Charles de Gaulle block (24km) with its own set,
-Business Cabin at Orly showing a real €406/€420 split — confirms both
-cabins genuinely hit Duffel rather than one being a stub.
-
-### 3. Two plain checkboxes replace the single dynamic "Add flights" control
-
-`LandingSearchPanel.tsx`: `include_hotels` was previously a hardcoded
-`<input type="hidden" value="1">` with no user-facing toggle at all — now
-a real checkbox (`includeHotels` state, default `true`, synced through the
-same three places `includeFlights`/`homeAirport` already were: the
-searchParams-changed effect, the sessionStorage-restore-on-mount effect,
-and the hidden form field). The Flights checkbox is simplified from
-dynamic label text ("Add flights - To activate please fill in city or
-hotel, dates and guests" / "Add flights from London") down to a plain
-"Flights" label — the disabled-reason moved to a `title` tooltip, and the
-"from {home airport}" detail moved to a small secondary line
-(`.homeAirportLine`) below the checkbox rather than embedded inside the
-label itself. `.flightsCheckWrap` changed from a single-line inline-flex
-to a column layout to stack the checkbox and that secondary line. All
-existing activation logic (`flightsCanActivate`, the airport popover,
-localStorage persistence) is unchanged — this was a presentation
-simplification, not a behavior change.
-
-Verified live: Flights checkbox greyed out with no city/dates/guests set;
-once Venice + dates were filled (origin already known from URL), it
-auto-activated showing "From London" beneath it, and the flight teaser
-populated correctly on the right.
-
-### 4. Selected-token chips moved inside the input box (shared component)
-
-`StructuredDestinationField.tsx`/`.module.css` — used by **both** the
-landing page and the Hotels page, so one change covers both. Chips
-(`City: Venice ×`, `Purpose: Spa ×`, etc.) previously rendered in a
-separate `.tokenRow` below the bordered input; now they render inside a
-new `.chipInputBox` flex-wrap container alongside the typed-text input
-itself, which flows after the last chip. Saves the vertical line the old
-row took, and — per Ulrik's ask — the box grows to a second line via
-plain `flex-wrap` when chips overflow, rather than truncating or
-scrolling.
-
-Deliberately **not** built on the shared `oltra-input` class: that class
-hardcodes `height: var(--oltra-control-height)` (34px), which would have
-fought the wrap-to-two-lines requirement via CSS specificity/load-order
-fragility. `.chipInputBox` instead replicates the visual border/background/
-radius tokens directly with `min-height` (not `height`), so it can grow
-freely. The pre-existing single-hotel special case (chip replaces the
-input entirely, e.g. selecting one specific hotel) folded into the same
-unified chip-rendering path instead of staying a separate branch — same
-visual result, less duplicated markup.
-
-Verified live on both pages with a 6-chip case (Rome + 5 activities):
-wraps cleanly to two lines, no layout breakage, results panels below
-unaffected.
-
-### Files
-
-* `hotels-beta/scripts/airports/build-city-airports.mjs` — hub cap +
-  manual exclusions.
-* `hotels-beta/src/lib/cityAirports.ts` — regenerated.
-* `hotels-beta/src/app/LandingSummary.tsx`, `page.module.css` — 4-row
-  per-airport flight teaser.
-* `hotels-beta/src/app/LandingSearchPanel.tsx` — Hotels/Flights checkboxes.
-* `hotels-beta/src/components/site/StructuredDestinationField.tsx`,
-  `.module.css` — inline chip box (shared, affects Hotels page too).
 
 ---
 
-## 39. HOTELS PAGE — POPUP/LAYOUT FIXES, AIRPORT-NAME LEAK FIX, RESIDENCY SELECTOR REMOVED (2026-08-14)
+## 38. RICHER FLIGHT TEASER, CHECKBOXES, INLINE CHIPS (2026-08-14)
 
-Five independent Hotels-page fixes from the same session, all live-verified.
+### Flight teaser: 4 rows per airport
 
-### 1. Room-detail popup: images cramped, close button crowded
+Each candidate airport fires **two** searches (economy and business — Duffel `CabinClass` values). Per (airport, cabin) pair, one search yields **both** "Best price" (cheapest) and "Fastest" (shortest, deduped against best-price by itinerary id) — no second search needed. State keyed `${iata}__${cabin}`.
 
-The image grid was a hardcoded `grid-cols-3` inside a `max-h-[300px]
-overflow-y-auto` box — with 1-2 images (common), each image only got 1/3
-of the available width (grid still reserved 3 columns) and looked tiny,
-and the inner scrollbar added a second, unnecessary scroll region inside
-an already-scrollable modal. Fixed: column count now tracks actual image
-count (`grid-cols-1`/`-2`/`-3` for 1/2/3+ images), and the inner
-max-height/overflow-scroll was dropped entirely — images lay out at full
-width, no internal scrollbar. Also gave the panel `pt-14` (was `p-5`
-uniformly) and the title `pr-10`, so a long room name no longer runs
-under the close button.
+Each airport block shows its label, IATA and `distKm` from the city centre (already computed by §37's pipeline), then Standard and Business sections of two rows each. Each block renders as soon as *its* call resolves, not blocked by slower siblings.
 
-### 2. Airport descriptive-name leaking into the Hotels destination field ("Venice Marco Polo")
+**Cost implication, flagged not fixed**: up to 3 airports × 2 cabins = **6 parallel Duffel searches** per landing visit for a multi-hub destination. Each is cached server-side 15 min (`CACHE_TTL_MS`), but the first visitor to a given date/guest combination triggers all six live.
 
-Root cause, traced end to end: landing page saves `city: "Venice"` to the
-shared cross-page session (`searchSession.ts`) when a user picks Venice
-and enables flights. On the Flights page, `buildInitialSearch` resolves
-that city to a destination airport code (`VCE`) via
-`resolveAirportCode()`. Flights' own session-merge effect then wrote
-`city: cityForCode(search.to)` back into the *same* shared session -
-`cityForCode` parses the part after "·" in the `AIRPORT_OPTIONS` label,
-which for `VCE` is `"Venice Marco Polo"` (the airport's own descriptive
-name, since that entry was added for §36's Venice fix as `"VCE · Venice
-Marco Polo"`, not a bare city name like `"CPH · Copenhagen"`). So the
-shared session's `city` value got silently overwritten from a real city
-to an airport name - which then showed up as a normal, removable "City:
-Venice Marco Polo" chip on the Hotels page, because
-`StructuredDestinationField`'s `buildInitialTokens` builds a city token
-from the URL param unconditionally, with no check that it's a city that
-actually exists in the hotel dataset.
+### Chips inside the input box
 
-**This exact `cityForCode()` fragility likely predates §36** for any
-`AIRPORT_OPTIONS` entry whose label isn't a bare city (Milan Malpensa,
-Rome Fiumicino, New York JFK, ...) - Venice just made it newly visible
-because that entry didn't exist before this session.
-
-Two-part fix, addressing both root cause and the missing guard:
-* `scripts/airports/build-city-airports.mjs` now also emits
-  `getCityForAirportIata(iata)` in the generated `cityAirports.ts` - a
-  reverse lookup (IATA → the OLTRA hotel city that treats it as one of its
-  own nearest airports), built from the same `CITY_AIRPORTS` data already
-  used for the landing flight teaser. `FlightsView.tsx`'s session-merge
-  effect now uses this instead of `cityForCode(search.to)` - it returns
-  either a real hotel city or `""`, never a fabricated one built from an
-  airport's display name.
-* `StructuredDestinationField.tsx`'s `buildInitialTokens` now only builds
-  a city/country/region token if some hotel in `dataset.hotels` actually
-  has that exact value (mirrors the pre-existing `qMatchesHotel` guard
-  already used for hotel-name tokens) - defense in depth, so this class of
-  bug can't resurface some other way and land a fake destination on this
-  page again.
-
-Verified live end to end: Landing (Venice + flights, origin LHR) → Flights
-page (correctly shows "VCE · Venice Marco Polo" as destination, that's
-expected/correct there) → clicked through to Hotels via the header nav →
-shared session inspected via devtools (`city: "Venice"`, confirmed via
-`sessionStorage`) → Hotels page renders "City: Venice ×", 6 real Venice
-hotels.
-
-### 3. Add to Trip / Add to Favourites moved to the right-hand pane
-
-Previously lived in a 2-column grid at the very bottom of the left
-(main-content) pane, sharing a row with the room-selection Total/booking
-link. Moved into the right metadata pane, directly under the "Brand"
-row - a real 4th argument the user made (grouping account-actions with
-the rest of the hotel's static metadata rather than pinning them to
-whatever happens to be at the bottom of a variable-height rooms list).
-The trip-picker popover (`oltra-popup-panel--up`, opened upward to clear
-the bottom edge) now opens downward instead, since it's no longer pinned
-to the pane's bottom - fits its new position better. The left pane's
-bottom row is now just the Total/booking-link block, no longer a 2-column
-grid. No behavior changes - same handlers, same `tripPickerRef`
-click-outside logic, same trip-picker/create-new-trip UI, just relocated.
-
-### 4. "Not available on Ratehawk" → "No availability"
-
-One-line copy change in the result-card fallback (`HotelsView.tsx`) -
-"Ratehawk" is an internal supplier name a guest has no reason to know;
-"No availability" says the same thing without the implementation detail.
-
-### 5. Residency ("Pricing for") selector removed from the Hotels search form
-
-Before removing it, measured whether residency-based price differences
-are real and worth this UI real estate at all - live-tested the same
-hotel/dates across 10-16 residency codes via
-`/api/ratehawk/availability/batch` (bypassing the beta-login gate with a
-cookie jar, `curl -c/-b`). Findings:
-* **A real Paris hotel showed zero price variance** across gb/us/ae/cn/id/sa.
-* **A real Dubai hotel showed measurable but modest variance**: a baseline
-  (gb, sa, ru, in, th, kr, br, qa, kw) vs. two higher tiers roughly 1.9%
-  and 2.9% above baseline (us and cn at the lower elevated tier; ae and id
-  at the higher one). Tiered, not a smooth per-country curve.
-* The ETG test hotel (`hid` 8473727) showed **no** variance at all across
-  any residency tried - it's a static certification fixture, not real
-  inventory, so it's useless for this kind of check (noted here so a
-  future session doesn't waste time re-testing against it for this
-  purpose).
-
-Conclusion: real but genuinely marginal (≤3%), and property/market-
-specific rather than a fixed list of "these countries always differ" -
-matches Ulrik's own "I assume it is marginal" instinct, empirically
-confirmed rather than assumed. Removed the interactive `OltraSelect`
-"Pricing for" control entirely. `residencyValue` and the
-`guessResidencyFromLocale()` auto-detect effect (§30) are **unchanged** -
-still silently detected from browser locale and still sent on every
-Ratehawk request (required field, per §32 certification requirements) -
-just no longer exposed as something a guest picks on this page. Replaced
-with a small, non-interactive line: "Prices assume booking from
-{country}." A precise country prompt at actual booking time (per Ulrik's
-"could we include it later upon booking" suggestion) is a natural fit for
-whenever the booking flow itself gets built - still blocked, see §32 -
-not attempted this session.
-
-### Files
-
-* `hotels-beta/src/app/hotels/ui/HotelsView.tsx` — items 1, 3, 4, 5.
-* `hotels-beta/scripts/airports/build-city-airports.mjs`,
-  `hotels-beta/src/lib/cityAirports.ts` — `getCityForAirportIata` (item 2).
-* `hotels-beta/src/app/flights/ui/FlightsView.tsx` — item 2 fix.
-* `hotels-beta/src/components/site/StructuredDestinationField.tsx` —
-  item 2 defense-in-depth guard.
+Chips render inside a `.chipInputBox` flex-wrap container alongside the text input, in the shared `StructuredDestinationField` (landing and Hotels both). **Deliberately not built on the shared `oltra-input` class** — that hardcodes `height: var(--oltra-control-height)`, which fights the wrap-to-two-lines requirement through specificity; `.chipInputBox` replicates the border/background/radius tokens directly with `min-height`.
 
 ---
 
-## 40. CREATE-HOTELS-BATCH — SIX MISSING COLUMNS, SINGLE-SELECT VALIDATION, VALUE CLEANUP (2026-08-16)
+## 39. HOTELS PAGE FIXES + RESIDENCY REMOVED (2026-08-14)
 
-Branch `fix/create-hotels-batch-missing-columns`, PR #2 — four commits. The
-first two are script changes only; the last two **were applied to Directus**.
+### Airport name leaking into the destination field ("Venice Marco Polo")
 
-### 1. Six columns were missing from the create payload
+Traced end to end: landing saves `city: "Venice"` to the shared cross-page session; Flights resolves it to `VCE`; Flights' session-merge effect then wrote `city: cityForCode(search.to)` back into that **same** session — and `cityForCode` parses the part after "·" in `AIRPORT_OPTIONS`, which for VCE is `"Venice Marco Polo"`. So the session's city was silently overwritten with an airport name, surfacing on Hotels as a normal removable "City: Venice Marco Polo" chip, because `buildInitialTokens` built a city token from the URL unconditionally.
 
-`buildCreatePayload()` in `scripts/hotels/new-hotels-2026/create-hotels-batch.mjs`
-omitted six columns that exist on `hotels`, so any batch input file carrying
-them had those values silently dropped at create time: `lat`, `lng`,
-`primary_setting`, `secondary_setting`, `primary_style`, `secondary_style`.
-The four text fields use `normalizeText()` like the rest of the file.
+**This `cityForCode()` fragility predates the Venice entry** for any label that isn't a bare city (Milan Malpensa, Rome Fiumicino, New York JFK).
 
-**`lat`/`lng` deliberately do NOT use `Math.trunc`**, unlike the three adjacent
-numeric fields (`editor_rank`, `ext_points`, `total_rooms_suites_villas`) which
-are genuine integers. Truncating a coordinate discards everything after the
-decimal point and moves a hotel by up to ~100km. `null` stays `null`, and `0`
-stays `0` (a valid coordinate, so `??`-style defaulting is wrong here too).
+Two-part fix: the build script now emits `getCityForAirportIata(iata)` — a reverse lookup returning a real hotel city or `""`, never a fabricated one — and `FlightsView`'s merge effect uses it; and `buildInitialTokens` only builds a city/country/region token if some hotel in the dataset actually carries that value, mirroring the existing `qMatchesHotel` guard.
 
-**Schema gotcha worth remembering**: `GET /fields/hotels` reports `lat`/`lng`
-as Directus `type: "integer"`, but `schema.data_type` is `numeric` and decimals
-round-trip intact (confirmed by reading rows back — id 1002 `lat:
-"-19.226859"`). Same class of cosmetic mislabelling as the `text[]` columns in
-§4 — **do not take Directus's `type` metadata as evidence about these columns.**
+### Other
 
-Note the 14 `new_hotels_batch*.json` files in that folder carry none of the six
-fields (checked all 67 rows), so this changed nothing for the existing
-2001–2067 batch — those got their coordinates separately via
-`google-geocode-hotels.mjs` (§23). Ulrik confirmed the upstream payload
-generator now emits them, and that the script is only for **new** additions
-from here on — existing hotels are not to be re-uploaded.
-
-### 2. The four single-select columns had no validation anywhere
-
-> **Superseded 2026-08-16 — see §44.** All four columns are now
-> `select-dropdown` with locked choices, so the script is no longer the only
-> place their vocabulary is enforced. Its validation stays as a useful
-> pre-flight for batch imports (it fails fast, before hitting Directus), but
-> the field itself is now authoritative. The paragraph below describes the
-> pre-2026-08-16 state.
-
-`GET /fields/hotels` shows `primary_setting`/`secondary_setting`/
-`primary_style`/`secondary_style` have **no `meta.options.choices` and
-`interface: null`** — plain text, unconstrained at the CMS layer, unlike the
-`setting`/`style` tag arrays (`select-multiple-dropdown`, `allowOther: false`).
-So this script is the only place their vocabulary can be enforced.
-
-They are now validated against the same `TAXONOMY.setting`/`.style` lists
-already hardcoded in the script, which match the live field choices exactly
-(22 and 20 values — verified, currently in sync).
-
-**Matching is case-insensitive and canonicalizes to the taxonomy's spelling.**
-Because nothing ever constrained these columns, existing rows drifted:
-
-| Column | Drifted value | Rows | Taxonomy spelling |
-|---|---|---|---|
-| `primary_style` | `"Safari lodge"` | 13 | `"Safari Lodge"` |
-| `primary_setting` | `"Private island"` | 8 | `"Private Island"` |
-| `primary_style`/`secondary_style` | `"Tented camp"` | 6 | `"Tented Camp"` |
-
-For the first two the drifted form is the *only* spelling present in that
-column, so a case-sensitive check would reject values that are legitimate and
-currently dominant. A case-only correction prints a `note:` line rather than
-being applied silently.
-
-**Bug caught in testing, worth not repeating**: the first version compared
-against `canonicalizeChoice()`'s return value — that helper passes an unmatched
-value straight through, so an unknown value was indistinguishable from an exact
-match and `"Lakefront"` validated clean. Membership must be tested directly.
-
-### 3. Value cleanup — APPLIED to Directus (10 hotels)
-
-Existing rows needed their own pass, since the validator only guards new rows.
-Applied via `fix-setting-style-values-2026-08-16.mjs` (dry-run by default,
-`--confirm` to write, re-runnable — each change re-reads the stored value first):
-
-| Change | Rows |
-|---|---|
-| `secondary_style` `"184"` → `null` | 8 (ids 1151, 1441, 1486, 1603, 1679, 1724, 1733, 1745) |
-| `primary_setting` `"Lakefront"` → `"Lakeside"` | 1 (id 1461, Mandarin Oriental Lago di Como) |
-| `secondary_setting` `"Riverfront"` → `"Riverside"` | 1 (id 1839, Clayoquot Wilderness Lodge) |
-
-Verified against a fresh read of all 871 rows: **no value in the four columns
-now falls outside the taxonomy.**
-
-**`"Riverside"` is deliberately untouched everywhere.** It is a canonical
-taxonomy value (a live choice on the `setting` field, carried by 29 hotels'
-`setting[]` arrays), not drift. Retiring it in favour of `Waterfront` was
-considered and explicitly deferred — it would mean converting ~30 hotels
-*including* their `setting[]` tag arrays, removing the choice from the Directus
-field, and dropping "Riverside" from the Hotels page Setting filter. Not a
-mechanical follow-on; ask before assuming it should happen.
-
-id 1461 was first written as `"Waterfront"` and then corrected to `"Lakeside"`
-— it is a lake hotel whose `setting[]` already read `["Lakeside"]`, so
-`Waterfront` left the single-select and the tag array disagreeing. **General
-lesson: a row's own `setting[]`/`style[]` tag array is the best available
-corroboration when deciding what a drifted single-select value should become.**
-
-Two script details that exist because of that double-write, and matter for any
-similar one-time fix script:
-* `from` accepts an **array** of prior values, so the script converges on the
-  same end state whether re-run against pristine or already-patched data.
-* The rollback record **appends** rather than overwrites. A re-run only reports
-  rows it actually changed, so writing fresh would have discarded the first
-  run's record of the nine rows it skipped as already correct.
-
-### Files
-
-* `hotels-beta/scripts/hotels/new-hotels-2026/create-hotels-batch.mjs` —
-  payload fix + `SINGLE_SELECT_TAXONOMY`/`canonicalizeChoice()` validation.
-* `hotels-beta/scripts/hotels/new-hotels-2026/fix-setting-style-values-2026-08-16.mjs`
-  — the applied data cleanup (one-time, hardcoded list, same pattern as the
-  `apply-award-review-*` scripts in §24/§25).
-* `hotels-beta/scripts/hotels/new-hotels-2026/fix-setting-style-values-2026-08-16-rollback.json`
-  — committed record of every previous value (11 entries, both steps of id 1461).
-* `scripts/hotels/directus-create-hotels-from-json.mjs` — untouched, still the
-  unused pre-migration M2M version.
+* Add to Trip / Add to Favourites moved from the bottom of the left pane into the right metadata pane under "Brand" — grouping account actions with the hotel's static metadata rather than pinning them below a variable-height rooms list. The trip picker now opens downward.
+* "Not available on Ratehawk" → **"No availability"** — the supplier name is an implementation detail a guest has no reason to see.
+* **Residency selector removed.** Before removing it, the effect was measured live across 10–16 residency codes: a Paris hotel showed **zero** variance; a Dubai hotel showed a tiered ~1.9% and ~2.9% above baseline. The ETG **test hotel shows no variance at all** — a static fixture, useless for this kind of check. Conclusion: real but ≤3% and property-specific. The control is gone; detection and sending are unchanged (§32 requires it). Replaced with a non-interactive "Prices assume booking from {country}." A precise prompt at booking time fits whenever that flow is built.
 
 ---
 
-## 41. WHERE DATA WORK LIVES — THE `oltra-agents` REPO (2026-08-16)
+## 40. CREATE-HOTELS-BATCH — MISSING COLUMNS AND VALUE CLEANUP (2026-08-16)
+
+### Six columns were missing from the create payload
+
+`buildCreatePayload()` omitted `lat`, `lng`, `primary_setting`, `secondary_setting`, `primary_style`, `secondary_style`, so any input file carrying them had those values silently dropped.
+
+**`lat`/`lng` deliberately do NOT use `Math.trunc`**, unlike the adjacent integer fields — truncating a coordinate moves a hotel by up to ~100km. `null` stays `null` and `0` stays `0` (a valid coordinate, so `??`-defaulting is wrong too).
+
+**Schema gotcha**: `GET /fields/hotels` reports `lat`/`lng` as `type: "integer"` but `schema.data_type` is `numeric` and decimals round-trip intact. Same class of cosmetic mislabelling as the `text[]` columns in §4 — **do not take Directus's `type` metadata as evidence about these columns.**
+
+The 14 existing batch files carry none of the six, so this changed nothing for IDs 2001–2067. The script is for **new** additions only; existing hotels are not to be re-uploaded.
+
+### Single-select validation
+
+Validated against the same `TAXONOMY.setting`/`.style` lists in the script — **case-insensitive, canonicalizing to the taxonomy's spelling**, because nothing had ever constrained the columns and rows had drifted (`"Safari lodge"` ×13, `"Private island"` ×8, `"Tented camp"` ×6 — in two of those the drifted form was the *only* spelling present, so a case-sensitive check would reject the dominant value). A case-only correction prints a note rather than being applied silently. Since §44 the fields themselves are locked, so this is now a pre-flight that fails fast before hitting Directus.
+
+**Bug caught in testing**: the first version compared against `canonicalizeChoice()`'s return value, but that helper passes an unmatched value straight through — so an unknown value was indistinguishable from an exact match and `"Lakefront"` validated clean. **Membership must be tested directly.**
+
+### Value cleanup — applied to Directus (10 hotels)
+
+Via `fix-setting-style-values-2026-08-16.mjs` (dry-run by default, re-runnable, re-reads each stored value first): `secondary_style "184"` → `null` (8 rows), `primary_setting "Lakefront"` → `"Lakeside"` (id 1461), `secondary_setting "Riverfront"` → `"Riverside"` (id 1839). Verified across all 871 rows: no value in the four columns falls outside the taxonomy.
+
+**`"Riverside"` is deliberately untouched** — a canonical value carried by 29 hotels' `setting[]` arrays, not drift. Retiring it for `Waterfront` would mean converting ~30 hotels including their tag arrays, removing the Directus choice, and dropping it from the Setting filter. Explicitly deferred — ask before assuming.
+
+id 1461 was first written as `"Waterfront"` then corrected to `"Lakeside"`, because its own `setting[]` already read `["Lakeside"]`. **General lesson: a row's own tag array is the best available corroboration for what a drifted single-select should become.**
+
+Two script details that exist because of that double-write, and matter for any one-time fix script: `from` accepts an **array** of prior values, so the script converges on the same end state whether run against pristine or already-patched data; and the rollback record **appends** rather than overwrites, since a re-run only reports rows it actually changed.
+
+---
+
+## 41. WHERE DATA WORK LIVES — THE `oltra-agents` REPO
 
 ### Read this before generating any hotel or restaurant content
 
-**New hotel and new restaurant records are researched, generated and staged in
-a separate repo, `oltra-agents` — not here.** This repo holds the application
-code, the import/matching scripts, and the schema conventions. The data
-retrieval and the workflow around it (what to add, researched content, review
-state, handover notes) lives in `oltra-agents`.
+**New hotel and restaurant records are researched, generated and staged in `oltra-agents`, not here.** This repo holds application code, import/matching scripts and schema conventions.
 
-Sibling checkout, alongside this one:
+**Check `oltra-agents` first.** A session was one step from researching editorial content for 34 hotels that had already been fully staged there the day before — descriptions, taxonomy, coordinates, award flags and all. The work looks missing from inside this repo because its inputs are not in this repo.
 
-```
-oltra-beta/     <- application code, scripts, schema conventions (this repo)
-oltra-agents/   <- data retrieval, content generation, staging, workflow state
-```
+Layout (`oltra-agents/agents/`): `database-agent/hotels/{pending,flagged}/`, `database-agent/restaurants/{pending,flagged}/`, `code-agent/{tasks,completed}/`, `marketing-agent/{briefs,drafts}/`, `monitoring-agent/reports/`.
 
-**Check `oltra-agents` first.** A 2026-08-16 session was one step away from
-researching and drafting editorial content for 34 brand-delta hotels that had
-already been fully staged there the day before — descriptions, taxonomy,
-coordinates, award flags and all. The work looks missing from inside this repo,
-because the inputs it needs are not in this repo.
-
-### Layout (`oltra-agents/agents/`)
-
-| Path | Holds |
-|---|---|
-| `database-agent/hotels/pending/` | staged hotel records ready for review/import |
-| `database-agent/hotels/flagged/` | per-hotel issues needing a human call |
-| `database-agent/restaurants/pending/` | same, for restaurants |
-| `database-agent/restaurants/flagged/` | same, for restaurants |
-| `code-agent/tasks/`, `code-agent/completed/` | code task briefs |
-| `marketing-agent/briefs/`, `drafts/` | marketing copy |
-| `monitoring-agent/reports/` | monitoring output |
-
-Convention: **everything lands in `pending/` or `flagged/` first, and the path
-from staging to live runs through Ulrik.** Nothing there is authorised for
-import into Directus by virtue of existing.
-
-### What was staged there, and promoted 2026-08-16
-
-* `database-agent/hotels/pending/new-hotels-2026-08-15.json` — **32 hotel
-  records, ids 3001–3032**, from the brand-delta audit (the audit itself and
-  the include/exclude decisions are in this repo under
-  `hotels-beta/scripts/hotels/brand-delta-*`: 34 approved, 2 later excluded —
-  Danieli, not yet open, and Six Senses Courchevel, residences). All 32 passed
-  `validateRow()` in `create-hotels-batch.mjs` unmodified, carried all six
-  columns added in §40, and used affiliation strings matching existing DB
-  spellings.
-* `database-agent/hotels/pending/etg-match-2026-08-15.json` — Ratehawk/ETG
-  `hid` matches for those same 32 (24 confirmed, 8 unresolved). **Its
-  `written_to_directus: false` field is stale as of 2026-08-16** — the hids
-  *were* written. That file belongs to `oltra-agents` and is being corrected
-  there; do not edit it from this repo.
-* `database-agent/hotels/flagged/` — per-hotel findings, mostly
-  `url-redirected` / `url-blocked-by-bot-protection`.
-* Restaurant folders existed but were empty as of this date.
-
-**The batch was promoted to Directus on 2026-08-16**, in three passes, each
-verified by an independent readback: create the records via
-`create-hotels-batch.mjs` (at the §40 version) → write `ratehawk_hid` to the
-matched ones → apply images. No failures in any pass, and no duplicate `hid`
-anywhere in the collection.
-
-A subset was then **unpublished**: ETG carried no images at all for them and
-`agoda_photo1`–`5` were empty, so they were live with no image source.
-
-**The rule is no longer "published tracks the ETG match".** Some hotels in the
-batch have a confirmed `hid` and are deliberately unpublished. The rule is now:
-
-> **published requires a `hid` AND an image source.**
-
-Verified as an exact set equality when it was applied — the published rows were
-precisely those with ≥1 `ratehawk_image_*`.
-
-*Live counts and per-id state are deliberately not recorded here — they drift
-as images and hids are backfilled. Query Directus for the current split
-(`filter[id][_between]=3001,3032`, fields `published,ratehawk_hid,
-ratehawk_image_1`) rather than trusting a number in this file.*
-
-**Import-order gotcha — a recorded outcome, not a prediction.** The
-create → `hid` → images order *was* followed, and it still left a set of hotels
-briefly published with no photo: exactly the §30 "No availability" and §6
-Featured-Mode-exclusion case. Correct ordering is necessary but not sufficient,
-because whether ETG has any images for a hotel is not knowable until the image
-pass runs. Either create unpublished and flip only after the image pass, or
-expect a cleanup pass like the one above. Do not assume a confirmed match
-implies a usable image set.
-
-**A confirmed `hid` also does not mean the property is bookable.** Read-only
-`POST /api/b2b/v3/search/hp/` probes on 2026-08-16 (one date window, 2 adults,
-residency `gb`, EUR; ETG rate-limits this to ~5 requests/60s) returned rates for
-some hotels with a confirmed hid and none at all for others — including two
-lodges and one Aman with no rates, while a different Aman and an Airelles both
-returned rates on the same window.
-
-So rate availability is **per property, not per brand** — do not generalise a
-zero result to a brand. A zero on one date window is also not proof a property
-is never bookable. This bears on §30 and on what `published` ought to mean: a
-published hotel with a hid, images and no rates still shows "No availability"
-to the user.
-
-**Probe gotcha**: `/search/hp/` takes **`hid`**, not `id`. Sending `id` returns
-HTTP 400 with zero rates — indistinguishable at a glance from a genuine
-zero-availability result, and a good way to manufacture a false "nothing is
-bookable" conclusion. Always run a known-good control in the same batch.
+Convention: **everything lands in `pending/` or `flagged/` first, and the path from staging to live runs through Ulrik.** Nothing there is authorised for import by virtue of existing.
 
 ### `oltra-agents` has its own rules — do not carry habits across
 
-It has its own `CLAUDE.md` that governs work there, and it is **stricter than
-this one**: read-only by default, with three protected actions (removing,
-overwriting, editing existing content) each requiring a specific literal
-keyword in Ulrik's own instruction before they are permitted. Synonyms,
-implication, prior authorisation and "the usual process" explicitly do not
-count. Read that file before doing anything there beyond reading.
+Its `CLAUDE.md` is **stricter than this one**: read-only by default, with three protected actions (removing, overwriting, editing existing content) each requiring a specific literal keyword in Ulrik's own instruction. Synonyms, implication, prior authorisation and "the usual process" explicitly do not count. Read that file before doing anything there beyond reading.
 
-That file also states: *"Do not merge, copy, or move content between the two."*
-This section is a **pointer**, deliberately — enough to stop a future session
-rediscovering the split or duplicating staged work. Do not copy `oltra-agents`
-content into this file.
+It also says: *"Do not merge, copy, or move content between the two."* This section is a **pointer**, deliberately. Do not copy `oltra-agents` content into this file.
+
+### What the 2026-08-16 promotion taught
+
+32 records (ids 3001–3032) were promoted in three passes — create, write `ratehawk_hid`, apply images — each verified by an independent readback, no failures. A subset was then **unpublished**: ETG carried no images for them and Agoda photos were empty, so they were live with no image source.
+
+**The rule is no longer "published tracks the ETG match". It is:**
+
+> **published requires a `hid` AND an image source.**
+
+**Import-order gotcha — a recorded outcome, not a prediction.** The create → hid → images order *was* followed and still left hotels briefly published with no photo, because whether ETG has images isn't knowable until the image pass runs. Either create unpublished and flip after the image pass, or expect a cleanup pass. Correct ordering is necessary but not sufficient.
+
+**A confirmed `hid` also does not mean the property is bookable.** Read-only `/search/hp/` probes returned rates for some hotels with a confirmed hid and none for others — including two lodges and one Aman, while a *different* Aman and an Airelles returned rates on the same window. **Rate availability is per property, not per brand** — never generalise a zero to a brand, and a zero on one window is not proof a property is never bookable.
+
+**Probe gotcha**: `/search/hp/` takes **`hid`**, not `id`. Sending `id` returns HTTP 400 with zero rates — indistinguishable at a glance from a genuine zero-availability result, and a good way to manufacture a false "nothing is bookable" conclusion. Always run a known-good control in the same batch.
 
 ---
 
@@ -2996,101 +986,47 @@ content into this file.
 
 ### The problem
 
-Hotels Ratehawk cannot price showed **"No availability"**, which reads as "sold out
-for your dates". For a large minority of the roster that is simply wrong: the
-property is not sold through Ratehawk at all and never will be, for any date.
+Hotels Ratehawk cannot price showed **"No availability"**, which reads as "sold out for your dates". For a large minority of the roster that is simply wrong — the property isn't sold through Ratehawk at all, for any date.
 
-### It is not a sandbox artefact — verified, not assumed
+### Not a sandbox artefact — verified, not assumed
 
-The obvious suspicion (§26: the key is a "Sandbox Key", albeit against the live
-production host) was tested before any code was written. Probing the whole published
-inventory across four windows: **664 active · 136 passive · 53 not integrated**.
+Probing the published inventory across four windows: **664 active · 136 passive · 53 not integrated**. The passive set is almost entirely safari lodges, private islands and remote luxury — Singita, &Beyond, Wilderness, Londolozi, Royal Malewane, North Island, Aman Bhutan, Ritz Paris — exactly the properties that sell direct or via specialist agents rather than bedbanks. A sandbox restriction would not selectively exclude *those* while returning rates for hundreds of city hotels on the same key. **Going live will not change this; do not wait for it.**
 
-The passive set is almost entirely safari lodges, private islands and remote luxury —
-Singita, &Beyond, Wilderness, Londolozi, Sabi Sabi, Royal Malewane, Mombo, North
-Island, Kisawa, Aman Bhutan, Ritz Paris. Those are exactly the properties that sell
-direct or via specialist agents rather than through bedbanks. A sandbox restriction
-would not selectively exclude *those* while returning rates for hundreds of city
-hotels on the same key. **Going live will not change this; do not wait for it.**
+### The probe-design trap — read before re-running
 
-### The probe-design trap — read this before re-running
+The intuitive design ("probe far out so nothing is merely sold out") **gives the wrong answer**:
 
-The intuitive design ("probe dates well into the future so nothing is merely sold
-out") **gives the wrong answer**. Measured 2026-08-16:
-
-| Check-in | Hotels with rates (of 800 probeable) |
+| Check-in | Hotels with rates (of 800) |
 |---|---|
-| 2026-09-30 | 570 |
-| 2026-11-14 | 561 |
-| 2027-01-13 | 559 |
-| 2027-05-13 | 567 |
-| **2027-10-05** | **96** ← collapse |
+| +45 days | 570 |
+| +90 days | 561 |
+| +150 days | 559 |
+| +270 days | 567 |
+| **~14 months** | **96** ← collapse |
 
-A window ~14 months out returns almost nothing, because most hotels have not loaded
-inventory that far ahead. Probing far out measures *how far ahead rates are loaded*,
-not whether a hotel is on Ratehawk.
+A window ~14 months out measures *how far ahead inventory is loaded*, not whether a hotel is on Ratehawk. Several windows are still needed: each sits near 560, well below the 664 bookable on at least one, so ~100 hotels are merely sold out on any given window and a single probe would mislabel them. The script generates windows from *today* so this can't creep back as the file ages.
 
-Several windows are still needed: each individually sits near 560, well below the 664
-bookable on at least one — roughly 100 hotels are merely sold out on any given window
-and a single probe would mislabel them. `probe-ratehawk-status.mjs` generates its
-windows from *today* (+45/+90/+150/+270 days) so this can't creep back as the file
-ages.
+### Field and scripts
 
-### Field
+`ratehawk_status` — `select-dropdown`, `allowOther: false`, values `active` / `passive` / `not_integrated`. `not_integrated` = no `ratehawk_hid` **or** no `ratehawk_image_1`. Deliberately **not** the pre-existing free-text `status_notes` — a value the app branches on must not be free text (§40, §44).
 
-`ratehawk_status` on `hotels` — `select-dropdown`, `allowOther: false`, values
-`active` / `passive` / `not_integrated`.
+* `probe-ratehawk-status.mjs` — **read-only**, writes a JSON report. Batches hids 300 at a time (§32's limit), so the whole inventory is ~12 requests. **A failed request throws rather than being read as "no rates"** — that would silently mark hotels passive.
+* `add-ratehawk-status-field.mjs` — one-shot, idempotent, schema snapshots either side.
+* `apply-ratehawk-status-2026-08-16.mjs` — dry-run by default. Unlike the `apply-award-review-*` scripts it is **not** a hardcoded one-time record: it reads whatever `--report` it's given, so the quarterly re-probe reuses it as-is.
 
-Deliberately **not** the pre-existing free-text `status_notes` (unused,
-`interface: null`). §40 records what unconstrained text fields do here —
-`primary_setting` drifted into "Private island"/"Private Island" variants needing a
-cleanup script. A value the app branches on must not be free text.
+### App behaviour and caveats
 
-`not_integrated` = no `ratehawk_hid` **or** no `ratehawk_image_1` (36 have no hid;
-17 more have a hid but no images).
+A passive hotel shows **"Check availability on website"** linked to `www` (deliberately neutral rather than the error-toned pill), is **excluded from the availability batch** on both the Hotels page and the landing summary (~17% fewer hids per call), and sorts **between** available and sold-out — it isn't a dead end.
 
-### Scripts (`hotels-beta/scripts/ratehawk/`)
-
-* `probe-ratehawk-status.mjs` — **read-only**, writes a JSON report. Batches hids 300
-  at a time (§32 limit) through `/search/serp/hotels/`, so the entire inventory is
-  ~12 requests total, not one per hotel. `--only`, `--windows`, `--out`. A failed
-  request throws rather than being read as "no rates" — that would silently mark
-  hotels passive.
-* `add-ratehawk-status-field.mjs` — one-shot, idempotent, schema snapshots either
-  side per §32.
-* `apply-ratehawk-status-2026-08-16.mjs` — dry-run by default, `--confirm` to write.
-  Unlike the `apply-award-review-*` scripts it is **not** a hardcoded one-time
-  record: it reads whatever `--report` it is given, so the quarterly re-probe reuses
-  it as-is.
-
-### App behaviour
-
-`ratehawk_status` is in `HotelRecord` and both bulk field lists (`hotels/page.tsx`,
-`page.tsx`). A passive hotel:
-
-* shows **"Check availability on website"** (linked to `www` on the Hotels page)
-  instead of "No availability" — `.hotel-availability-note`, deliberately neutral
-  rather than the error-toned `.hotel-availability-pill`;
-* is **excluded from the availability batch request** on both the Hotels page and the
-  landing summary — ~17% fewer hids per call, and no waiting on a price that cannot
-  exist;
-* sorts **between** available and sold-out, not with sold-out — it isn't a dead end.
-
-### Cadence and caveats
-
-* **Re-probe quarterly — see §43 for the schedule and next due date.** A passive
-  hotel can start distributing. ~12 requests.
-* **`active` means "bookable at least once", not "bookable now".** A live "No
-  availability" is still correct for an active hotel on sold-out dates — the stored
-  status and the live check are complementary, not alternatives.
-* Probe occupancy is 2 adults / 1 room, residency `gb`. A property selling only
-  family rooms could in principle be misfiled; not observed.
+* **Re-probe quarterly (§43)** — a passive hotel can start distributing.
+* **`active` means "bookable at least once", not "bookable now".** A live "No availability" is still correct for an active hotel on sold-out dates — the stored status and the live check are complementary.
+* Probe occupancy is 2 adults / 1 room, residency `gb`. A property selling only family rooms could in principle be misfiled; not observed.
 
 ---
 
 ## 42B. OUTSTANDING — WATER-PROXIMITY SETTING RECLASSIFICATION (logged 2026-08-16, not started)
 
-Agreed as a content clean-up task, deliberately **not run**. Ulrik's definitions:
+Agreed as a content clean-up, deliberately **not run**. Ulrik's definitions:
 
 | Value | Means |
 |---|---|
@@ -3103,77 +1039,33 @@ Agreed as a content clean-up task, deliberately **not run**. Ulrik's definitions
 | `Riverside` | On or very close to a river |
 | `Oceanfront`, `Waterfront` | **To be retired** — reclassified into the above |
 
-### Why this can't be done as a rename
+**This can't be done as a rename** — the old label does not predict the new one. **Oceanfront (29 primaries)** splits roughly in half: clifftop with no beach → Seaside (Andronis, Katikies, Canaves Oia, Il San Pietro, Le Sirenuse, Splendido Portofino, Maybourne Riviera, San Domenico Palace, Six Senses Uluwatu, Bulgari Bali); genuinely Beachfront (Lesante Blu, W Dubai Mina Seyahi, Four Seasons Surf Club, Riviera Maya EDITION, Phulay Bay). **Waterfront (23)** splits three ways, including one inland golf resort (Finca Cortesin → Coastal). **Two aren't sea at all**: Four Seasons Jackson Hole (→ Lakeside) and Airelles Palladio, Venice (→ Canalside).
 
-The old label does not predict the new one. Both retiring values contain a
-mixture of what would become Beachfront, Seaside *and* Coastal:
+Scope notes:
 
-* **Oceanfront (29 primaries)** splits roughly in half. Clifftop, no beach →
-  Seaside: Andronis, Katikies ×2, Canaves Oia, Cavo Tagoo Santorini, Il San
-  Pietro, Le Sirenuse, Splendido Portofino, Maybourne Riviera, San Domenico
-  Palace, Hotel La Palma, Six Senses Uluwatu, Bulgari Bali. Genuinely
-  Beachfront: Lesante Blu, W Dubai Mina Seyahi, Four Seasons Surf Club,
-  Riviera Maya EDITION, Phulay Bay.
-* **Waterfront (23 primaries)** splits three ways — Beachfront (Elounda Beach,
-  Myconian Imperial, St. Regis Bali, Six Senses Samui, BLESS Ibiza, Mauna
-  Lani), Seaside (Hôtel du Cap Eden-Roc, Cap Estel, J.K. Place Capri, Santa
-  Caterina, Fairmont Waterfront Vancouver) and Coastal (Finca Cortesin, an
-  inland golf resort).
-* **Two aren't sea at all**: Four Seasons Jackson Hole (secondary Waterfront,
-  in the Rockies → Lakeside) and Airelles Palladio, Venice (→ Canalside).
-
-### Scope notes for whoever picks this up
-
-* **The `setting[]` tag array is the real target**, not just the single-selects
-  — §4: the Hotels page filter runs JS-side on the arrays. `Waterfront` is on
-  41 hotels there, `Oceanfront` on 37. Retiring a value means converting the
-  arrays, then removing the choice, or the filter keeps offering a dead option.
-* **`Beachfront` has 144 primaries / 177 tags** and the sharper definition
-  changes what belongs in it. Reclassifying only the two retiring values leaves
-  correctly-labelled Seaside hotels beside Beachfront ones that should also be
-  Seaside. Auditing all of it is the consistent answer and roughly triples the
-  work — an explicit choice, not an oversight.
-* **Geopositioning helps less than expected.** Lat/lng cannot separate a
-  clifftop hotel 50 m from the sea from a beach resort 50 m from the sea, which
-  is exactly the Beachfront/Seaside line. It *is* decisive for `Coastal` (pure
-  distance), and an OpenStreetMap `natural=beach` polygon within ~200 m is a
-  real proxy for "is there actually a beach" — free, no key, no new npm
-  dependency, but a build, and OSM beach coverage is uneven outside Europe.
-* Agreed approach when it runs: per-hotel classification with evidence
-  attached (description excerpt, city, coordinates, current tags) and a
-  confidence level; auto-apply only the unambiguous, hand the rest back as a
-  review list. "Only change where sure" means evidenced, not inferred.
+* **The `setting[]` tag array is the real target**, not just the single-selects — the Hotels filter runs JS-side on the arrays (§4). `Waterfront` is on 41 hotels there, `Oceanfront` on 37. Retiring a value means converting the arrays *then* removing the choice, or the filter keeps offering a dead option. And **`Beachfront` has 144 primaries / 177 tags**, so the sharper definition changes what belongs in it: reclassifying only the two retiring values leaves correctly-labelled Seaside hotels beside Beachfront ones that should also be Seaside. Auditing all of it is the consistent answer and roughly triples the work — an explicit choice, not an oversight.
+* **Geopositioning helps less than expected.** Lat/lng cannot separate a clifftop hotel 50m from the sea from a beach resort 50m from the sea — exactly the Beachfront/Seaside line. It *is* decisive for `Coastal`, and an OpenStreetMap `natural=beach` polygon within ~200m is a real proxy for "is there actually a beach" — free and dependency-less, but a build, and OSM beach coverage is uneven outside Europe.
+* Agreed approach: per-hotel classification with evidence attached and a confidence level; auto-apply only the unambiguous, hand the rest back as a review list. "Only change where sure" means evidenced, not inferred.
 
 ---
 
 ## 43. RECURRING DATA MAINTENANCE — SCHEDULE
 
-Data that goes stale on a clock rather than when someone changes something. Nothing
-here runs automatically; each is a manual re-run. **When you run one, update its "last
-run" and "next due" below** — that is the only record.
+Data that goes stale on a clock rather than when someone changes something. **When you run one, update its row — that is the only record.**
 
 | What | Interval | Last run | Next due | How |
 |---|---|---|---|---|
-| Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests, a few minutes) |
+| Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests) |
 | Ratehawk static content (§48) | Daily | 2026-08-24 | automatic (Railway cron) | `etg-static-sync` — no manual step; check the Railway run log if room images go missing |
 | Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
-| City → airport mapping (§37/§38) | When the hotel roster's city list changes | 2026-08-31 | on demand | `build-city-airports.mjs` |
+| City → airport mapping (§37) | When the roster's city list changes | 2026-08-31 | on demand | `build-city-airports.mjs` |
 | Airport options list (§39) | With the above | 2026-08-31 | on demand | `build-airport-options.mjs` |
 
-Notes:
-
-* **Ratehawk status is the one needing a human to remember it.** The static-content
-  row runs itself on Railway's cron and is listed so that its existence, and where to
-  look when it fails, are on the record — not because anyone has to trigger it.
-* Award refreshes are event-driven, not calendar-driven: T+L published its 2026 list
-  on 2026-07-07, a week before that session happened to check. Annually is a
-  reminder to *look*, not a deadline.
-* The two airport builds are triggered by data changes, not time. Re-run them after
-  any meaningful batch of new hotels (e.g. a promotion out of `oltra-agents`, §41),
-  or destinations will resolve to the wrong nearest airport.
+* **Ratehawk status is the one needing a human to remember it.** The static-content row runs itself; it's listed so its existence and failure point are on the record.
+* Award refreshes are event-driven — T+L published its 2026 list a week before a session happened to check. Annually is a reminder to *look*, not a deadline.
+* Re-run the two airport builds after any meaningful batch of new hotels, or destinations resolve to the wrong nearest airport.
 
 ---
-
 ## 44. TAXONOMY FIELDS LOCKED + HIGHLIGHTS TYPO PASS (2026-08-16)
 
 ### Every taxonomy field now has a locked choice list
@@ -3184,459 +1076,149 @@ Notes:
 | `primary_setting` / `secondary_setting` / `setting[]` | 22 | dropdown / multi |
 | `activities1`–`7` / `activities[]` | **37** (was 39) | dropdown / multi |
 
-All `allowOther: false`, `allowNone: true` on the single-selects. The six
-single-selects were plain `text` with `interface: null` until now — §40
-describes that state and is marked superseded.
+All `allowOther: false`, `allowNone: true` on the single-selects, which were plain `text` with `interface: null` until now (§40).
 
-**The choices came from the multiselect siblings**, which have been locked
-since §4 — no vocabulary was invented. Both members of each pair share one
-list, so an editor can set a value as primary even if it currently only
-appears as secondary.
+**The choices came from the multiselect siblings**, locked since §4 — no vocabulary was invented. Both members of each pair share one list, so an editor can set a value as primary even if it currently only appears as secondary.
 
-### Why locking, not just another clean-up
-
-`"Private island"` has now been corrected **twice** — §40 fixed 8 rows of it in
-`primary_setting`, and 8 more had appeared by this session. Cleaning an
-unconstrained field only resets the clock.
+**Why locking, not another clean-up**: `"Private island"` had been corrected **twice** — §40 fixed 8 rows, and 8 more had appeared by this session. Cleaning an unconstrained field only resets the clock.
 
 ### Data corrected
 
-* `Safari lodge` → `Safari Lodge` (13), `Tented camp` → `Tented Camp` (6)
-* `Private island` → `Private Island` (8)
-* `HIking` → `Hiking`, `Kajaking` → `Kayaking`, one `"Spa "` trimmed
-* **Merges** (approved): `Biking` → `Cycling` (15), `Jeep safari` → `Safari`
-  (4); both removed from the `activities[]` choice list afterwards so the
-  Hotels page filter stops offering dead options.
-* **20 hotels had duplicate tags** in `activities[]` (Spa ×5, Nature ×5,
-  Beach, Diving, Tennis, Fishing, Golf, Hiking, Sightseeing) — pre-existing,
-  unrelated to the merges, deduped in the same pass.
+Case fixes across `Safari lodge`, `Tented camp`, `Private island`, `HIking`, `Kajaking` and one trailing-space `"Spa "`. **Merges** (approved, and the only vocabulary change): `Biking` → `Cycling` (15 hotels) and `Jeep safari` → `Safari` (4), both then removed from the choice list so the filter stops offering dead options. **20 hotels had duplicate tags** in `activities[]` — pre-existing, unrelated to the merges, deduped in the same pass.
 
-### Scripts (`hotels-beta/scripts/hotels/`)
+### Scripts (`scripts/hotels/`)
 
-* `fix-taxonomy-case.mjs --group style|setting` — case normalisation. Anything
-  that is *not* a case variant is reported, never guessed: §40's
-  `Lakefront`→`Lakeside` needed a human call and was initially got wrong
-  (id 1461 written as `Waterfront` first). **A row's own tag array is the best
-  corroboration** for what a drifted single-select should become.
-* `set-taxonomy-field-choices.mjs --group style|setting|activities` — copies the
-  multiselect's choices onto its single-selects. Meta-only; the Postgres column
-  stays `text`. **Refuses to run if any stored value is outside the list** —
-  Directus does not validate existing rows, so locking over bad data leaves it
-  in the database rendering blank in the admin UI. That guard caught the
-  invisible `"Spa "` trailing space.
+* `fix-taxonomy-case.mjs --group style|setting` — case normalisation. Anything that is *not* a case variant is **reported, never guessed** (§40's `Lakefront` needed a human call and was initially got wrong). A row's own tag array is the best corroboration.
+* `set-taxonomy-field-choices.mjs --group style|setting|activities` — copies the multiselect's choices onto its single-selects. Meta-only; the column stays `text`. **Refuses to run if any stored value is outside the list** — Directus does not validate existing rows, so locking over bad data leaves it in the database rendering blank in the admin UI. That guard caught the invisible `"Spa "` trailing space.
 * `fix-activities-values-2026-08-16.mjs`, `retire-activity-choices-2026-08-16.mjs`
-* All dry-run by default, `--confirm` to write, rollback records that **append**
-  rather than overwrite (§40).
+* All dry-run by default, rollback records that **append** rather than overwrite (§40).
 
-**Writing `activities[]`/`setting[]`/`style[]` still needs the Postgres array
-literal** (`toPgArrayLiteral`, §4/§24) — on `PATCH` as well as `POST`.
+Writing these arrays still needs the Postgres array literal (§4), on `PATCH` as well as `POST`.
 
 ### Highlights typo pass
 
-126 of 903 hotels edited: 99 spelling occurrences, 28 leading/trailing
-whitespace, 3 double spaces, 1 dangling comma, plus 14 approved grammar
-rewrites. `facilities` was misspelled **13 different ways**; `Michelin` as
-"Micheling" ×5. Three proper nouns were wrong: `Kilimajaro`, `Altas Mountains`,
-`Ihuazu` (→ Iguazu).
+126 of 903 hotels edited: 99 spelling occurrences, 28 whitespace, 3 double spaces, 1 dangling comma, 14 approved grammar rewrites. `facilities` was misspelled **13 different ways**; `Michelin` as "Micheling" ×5. Three proper nouns were wrong: `Kilimajaro`, `Altas Mountains`, `Ihuazu` (→ Iguazu).
 
-**Method, for whoever repeats this on `description`:** frequency-map the field,
-review rare words *in context*, then widen the band. A ≤2-occurrence filter
-alone would have missed `facilties` (5), `micheling` (5), `accomodation` (4) —
-a typo repeated often enough stops looking rare. And beware the tokeniser:
-splitting on non-`[A-Za-z]` turns `décor`→`cor`, `château`→`teau`,
-`Belle Époque`→`poque`. Those are not typos.
+**Method, for repeating this on `description`**: frequency-map the field, review rare words *in context*, then widen the band. A ≤2-occurrence filter alone would have missed `facilties` (5), `micheling` (5), `accomodation` (4) — **a typo repeated often enough stops looking rare.** And beware the tokeniser: splitting on non-`[A-Za-z]` turns `décor`→`cor`, `château`→`teau`, `Belle Époque`→`poque`. Those are not typos.
 
-Script: `fix-highlights-typos-2026-08-16.mjs`. Two bugs in it were caught by
-its own dry run and are worth not repeating: phrase rewrites ran *before* word
-fixes, so any phrase containing a typo could never match; and Directus returns
-`id` as a **string**, so a number-keyed lookup silently matched nothing —
-including silencing the "did not match" warning. A no-op that reports success
-is the dangerous shape.
+Two bugs in `fix-highlights-typos-2026-08-16.mjs` were caught by its own dry run: phrase rewrites ran *before* word fixes, so any phrase containing a typo could never match; and **Directus returns `id` as a string**, so a number-keyed lookup silently matched nothing — including silencing the "did not match" warning. **A no-op that reports success is the dangerous shape.**
 
 ---
 
 ## 45. UI PASS + SAVED-TRIP SCHEMA (2026-08-17)
 
-Commit **`5556444`**, pushed to `main`. A page-by-page UI list from Ulrik across
-Landing, Hotels, Flights, Restaurants and Members, plus the schema it needed.
-Listed here as a rollback map (per §33) and, more usefully, as a record of the
-root causes — several recur by category.
+Commit `5556444`. A page-by-page list from Ulrik across Landing, Hotels, Flights, Restaurants and Members, plus the schema it needed.
 
-### Members schema — 12 columns, applied 2026-08-17
+### Members schema — 12 columns
 
-`hotels-beta/scripts/members/2026-08-17-add-trip-item-prices.sql`, run in the
-Supabase SQL Editor against the **Members** project (§31), all nullable, all
-`add column if not exists`:
+`scripts/members/2026-08-17-add-trip-item-prices.sql`, run in the Supabase SQL Editor against the **Members** project (§31), all nullable, all `add column if not exists`:
 
 | Table | Columns |
 |---|---|
 | `member_trip_hotels` | `price_amount`, `price_currency`, `rooms`, `adults`, `kids`, `children_ages` |
 | `member_trip_flights` | `price_amount`, `price_currency`, `adults`, `kids`, `destination_arrive_at`, `return_depart_at` |
 
-**There is no Directus step, and this is worth stating because it is the
-natural assumption.** Directus is a CMS layer over the *Hotel database*
-project; the `member_trip_*` tables live in the Members project, which Directus
-has no connection to. The app reads and writes them directly via supabase-js
-under RLS. Nothing to mirror.
+**There is no Directus step, and that's worth stating because it's the natural assumption.** Directus is a CMS layer over the *Hotel database*; `member_trip_*` lives in the Members project, which Directus has no connection to.
 
-**`destination_arrive_at` is not `arrive_at`.** A return itinerary is saved as
-one row, so `arrive_at` is the arrival *back home*; `destination_arrive_at` is
-the outbound's final segment and `return_depart_at` is the departure from the
-destination (null one-way). Anything comparing a flight against a hotel date
-must use the new pair, or it compares the wrong end of the trip. Recorded as a
-column comment in Postgres as well.
+**`destination_arrive_at` is not `arrive_at`.** A return itinerary is one row, so `arrive_at` is the arrival *back home*; `destination_arrive_at` is the outbound's final segment and `return_depart_at` the departure from the destination (null one-way). Anything comparing a flight against a hotel date must use the new pair, or it compares the wrong end of the trip.
 
-Two failed attempts preceded the successful run, both worth recognising:
-* Nothing appeared, and a PostgREST probe returned raw `42703` from Postgres.
-  A stale schema cache gives `PGRST204`/`PGRST100` instead, so `42703` proves
-  the DDL genuinely never ran.
-* The next attempt errored `42701: column "room_selection" already exists` —
-  a column this script never mentions. The §30 snippet was in the editor
-  instead. **`add column if not exists` cannot raise `42701`, so that error is
-  proof the wrong SQL is loaded**, and naming a real table proves the project
-  selection was right.
+Two failed attempts preceded the successful run, and both errors are diagnostic:
 
-### Behaviour worth knowing
+* A PostgREST probe returned raw `42703`. A stale schema cache gives `PGRST204`/`PGRST100` instead, **so `42703` proves the DDL genuinely never ran.**
+* The next attempt errored `42701: column "room_selection" already exists` — a column that script never mentions. **`add column if not exists` cannot raise `42701`, so that error is proof the wrong SQL is loaded**, and naming a real table proves the project selection was right.
 
-* **Saved prices are flat numbers captured at save time**, never recomputed on
-  render. "Update price and availability" in Saved trips re-runs the real
-  supplier query and writes the answer back. Hotels re-price exactly (same
-  property, dates, rooms, guests, child ages) via a new server route,
-  `/api/members/hotel-price`, which resolves `ratehawk_hid` server-side so it
-  is never handed to the browser, and short-circuits on `ratehawk_status:
-  passive` (§42). **Flights cannot re-price exactly** — a Duffel offer is
-  short-lived — so the refresh returns the cheapest fare on that route/date/
-  cabin now and the card says so rather than implying the saved fare stands.
-* **Trip warnings** (`src/lib/members/tripWarnings.ts`): overlapping hotels,
-  a flight landing after the room starts (with sharper wording when it lands
-  the next day after 09:00), party-size mismatch, and nights with no room.
-  Cross-checks 2–4 run only when a trip has both hotels and flights. Timestamps
-  are read as written (regex on the ISO string), never converted — "did I land
-  after check-in" is a question about local time at the airport. Verified
-  against 10 scenarios in Node, including back-to-back hotels which must *not*
-  warn.
-* **`travelers_label` is written by nothing except the demo seed data**, so it
-  is null on every real trip. That is why the party-size check needed passenger
-  columns on flights rather than parsing that label.
+### Behaviour
 
-### Root causes found by auditing the finished work in the browser
+* **Saved prices are flat numbers captured at save time**, never recomputed on render. "Update price and availability" re-runs the real supplier query and writes back. Hotels re-price exactly via `/api/members/hotel-price`, which resolves `ratehawk_hid` server-side so it is never handed to the browser, and short-circuits on `ratehawk_status: passive`. **Flights cannot re-price exactly** — a Duffel offer is short-lived — so the refresh returns the cheapest fare on that route/date/cabin now, and the card says so rather than implying the saved fare stands.
+* **Trip warnings** (`lib/members/tripWarnings.ts`): overlapping hotels, a flight landing after the room starts, party-size mismatch, nights with no room. Cross-checks run only when a trip has both hotels and flights. **Timestamps are read as written** (regex on the ISO string), never converted — "did I land after check-in" is a question about local time at the airport. Verified against 10 scenarios in Node, including back-to-back hotels which must *not* warn.
+* **`travelers_label` is written by nothing except the demo seed data**, so it is null on every real trip — which is why the party-size check needed passenger columns rather than parsing that label.
 
-Four defects, two of them in work already reported as done. The audit is the
-reason they were caught; measuring the DOM rather than reading screenshots is
-the reason they were caught *precisely*.
+### Root causes worth generalising
 
-* **`getCityForAirportIata` resolved LHR to "Eynsham Park".** The reverse map
-  was first-seen over object keys (alphabetical) and four hotel cities list
-  Heathrow. Nearest-wins alone does not fix it either — Heathrow is 13km from
-  Sunningdale and 22km from London. Now: a city named in the airport's own
-  label wins, then nearest. Surfaced as "Flights from Eynsham Park" and as the
-  Flights route header, and the same function feeds the cross-page session.
-  **Fixed in both `scripts/airports/build-city-airports.mjs` and the generated
-  `src/lib/cityAirports.ts` — regenerating from the script alone would not have
-  been enough if only one had been edited.**
-* **CSS-module class vs global class is a specificity tie**, so declaration
-  order decides. This bit twice: `.flightBookButton`'s `height` silently loses
-  to `.oltra-button-*`, and the Flights column headers' `padding` shorthand vs
-  the gutter class's `padding-right` resolved *differently for each header*.
-  Use compound selectors (`.a.b`) when a modifier must win.
-* **Equal-looking buttons were not equal.** Flex sized them by content and the
-  row was too narrow for `flex-grow` to even them out (BOOK 63.2px vs SAVE
-  49.6px). Fixed with a grid at `minmax(0,1fr)`. Anything that must be exactly
-  equal should be a grid track, not flex.
-* **The residency search box sits inside the Hotels `<form>`**, so typing a
-  country name fired the form's `onChange` and reset every result card to
-  "Select dates". Fixed with `stopPropagation` in the input's handler.
+* **`getCityForAirportIata` resolved LHR to "Eynsham Park".** The reverse map was first-seen over object keys (alphabetical) and four hotel cities list Heathrow. Nearest-wins alone doesn't fix it — Heathrow is 13km from Sunningdale and 22km from London. Now: a city named in the airport's own label wins, then nearest. **Fixed in both `build-city-airports.mjs` and the generated `cityAirports.ts`** — editing only one would not have been enough.
+* **A CSS-module class vs a global class is a specificity tie**, so declaration order decides. **Use compound selectors (`.a.b`) when a modifier must win.**
+* **Anything that must be exactly equal should be a grid track (`minmax(0,1fr)`), not a flex child** — flex sized two buttons by content and the row was too narrow for `flex-grow` to even them out (63.2px vs 49.6px).
+* **A control inside a `<form>` fires that form's `onChange`.** Typing in the residency search box reset every result card to "Select dates". Fixed with `stopPropagation`.
+* **`stopPropagation` does not cancel an anchor's default action, only `preventDefault` does** — saving a hotel from a landing card navigated to that hotel, because the card is an `<a>` and the picker renders inside it.
+* **The itinerary wouldn't close** because it sits in `.oltra-page__content`, `position: relative; z-index: 1` and therefore its own stacking context, so `z-index: 700` could never rise above the fixed header. Now portalled to `document.body`.
+* Hotels favourites were keyed on the favourite row's uuid rather than the hotel's Directus id, so "ALREADY IN FAVOURITES" could never appear.
 
-### Also fixed
-
-* Saving a hotel from a landing card navigated to that hotel: the card is an
-  `<a>` and the picker renders inside it, and **`stopPropagation` does not
-  cancel an anchor's default action** — only `preventDefault` does.
-* The itinerary would not close. It sits in `.oltra-page__content`, which is
-  `position: relative; z-index: 1` and therefore its own stacking context, so
-  the overlay's `z-index: 700` could never rise above the fixed header
-  (z-index 30, sibling context). It is top-aligned, unlike the centred confirm
-  dialogs sharing that overlay class, so its toolbar landed under the header
-  band. Now portalled to `document.body`, the pattern the Hotels lightbox uses.
-* Hotels favourites were keyed on the favourite row's uuid rather than the
-  hotel's Directus id, so "ALREADY IN FAVOURITES" could never appear.
-
-### New files
-
-`src/components/site/ResidencyPicker.tsx`, `src/lib/members/tripWarnings.ts`,
-`src/app/api/members/hotel-price/route.ts`,
-`src/app/api/restaurants/by-ids/route.ts` (Favorite restaurants needs the full
-editorial record, and the ids only exist client-side),
-`scripts/members/2026-08-17-add-trip-item-prices.sql`.
-
-### Not verified
-
-**Superseded — see §46.** This section originally recorded that the entire
-Members area had never been seen working, because `/members/*` needs an account
-login that session automation cannot perform. That was resolved on 2026-08-17:
-Ulrik logged in himself in the Claude-in-Chrome tab and handed over the
-authenticated session, which is the workaround whenever member-gated UI needs
-verifying. Everything listed here has since been exercised against a real
-profile — and doing so found four bugs that were invisible against seeded data.
+New files: `components/site/ResidencyPicker.tsx`, `lib/members/tripWarnings.ts`, `api/members/hotel-price/route.ts`, `api/restaurants/by-ids/route.ts`.
 
 ---
 
 ## 46. SECOND UI PASS, VERIFIED AGAINST A REAL MEMBER (2026-08-17)
 
-Commits **`643df9f`** and **`3b39b24`**, both pushed to `main`. A second
-feedback round on §45's work, plus password reset and the review UI. The
-important part of this section is not the fix list — it is *why* several items
-in §45 were reported as done when they were not.
+Commits `643df9f` and `3b39b24`. The important part is not the fix list — it is *why* several §45 items were reported done when they weren't.
 
 ### Verifying member-gated UI: Ulrik hands over the session
 
-`/members/*` needs an account login, and session automation must never type
-credentials. The workaround, used successfully here: **Ulrik logs in himself in
-the Claude-in-Chrome tab and says when he is in**; the session cookie lives in
-that tab, so the authenticated pages can be driven from there afterwards. Use
-this whenever member-gated UI needs real verification.
-
-It is worth the setup. Four bugs were found this way that were invisible
-against the seeded demo data, and none would have been caught by `tsc`.
+`/members/*` needs an account login, and session automation must never type credentials. The workaround, used successfully: **Ulrik logs in himself in the Claude-in-Chrome tab and says when he's in**; the session cookie lives in that tab, so the authenticated pages can be driven from there. Use this whenever member-gated UI needs real verification — four bugs were found this way that were invisible against seeded demo data, and none would have been caught by `tsc`.
 
 ### Measure the DOM, do not read screenshots
 
-§45 shipped three alignment "fixes" that were not fixes. All three were caught
-by reading `getBoundingClientRect()` instead of looking at a picture, and two
-had been reported as done twice.
+§45 shipped three alignment "fixes" that were not fixes, two of them reported done twice. All three were caught by reading `getBoundingClientRect()`.
 
-* **Grid track geometry, not padding.** The Flights header row was never inset
-  the way `.pinnedRow` is, so the two grids resolved *different track widths*
-  (282.8px vs 269px). Padding on a header label only moves text **inside** a
-  track; it cannot move the track. Departure merely looked correct because it
-  is left-aligned and its 13px happened to land on the card. Fixed by giving
-  the header row the same 13px inset (`.splitPanesHeader`), after which every
-  column lines up by construction. **Two rounds of padding tweaks preceded
-  this and both made it worse.** If two grids must align, give them the same
-  geometry — do not compensate per element.
-* **Equal-looking is not equal.** Flights Book/Save were 63.2px vs 49.6px:
-  flex sizes by content and the row was too narrow for `flex-grow` to even
-  them out. Anything that must be exactly equal should be a grid track
-  (`minmax(0,1fr)`), not a flex child.
-* **A block wrapper adds baseline space.** With the widths fixed, Save still
-  sat 2px low — `SaveToTripControl` renders its trigger inside a positioning
-  wrapper, and an inline-level button in a block leaves descender space.
-  `display: flex` on the wrapper.
+**Grid track geometry, not padding** is the reusable one. The Flights header row was never inset the way `.pinnedRow` is, so the two grids resolved *different track widths* (282.8px vs 269px). Padding on a header label moves text **inside** a track; it cannot move the track. Departure merely looked right because it is left-aligned. **Two rounds of padding tweaks preceded the real fix and both made it worse. If two grids must align, give them the same geometry — don't compensate per element.** The other two were §45's grid-track rule, and a block wrapper adding descender space under an inline-level button (`display: flex` on the wrapper).
 
 ### Directus: one bad id fails the whole `_in` filter
 
-Favourite-hotel highlights silently never appeared, while calling the same
-endpoint by hand worked. **Directus rejects the entire `_in` filter if any
-value cannot be cast to bigint**, so a single placeholder id from a seeded demo
-row was failing the lookup for every real record in the batch. Both
-`/api/hotels/by-ids` and `/api/restaurants/by-ids` now drop non-numeric ids
-before querying. The restaurants route had the identical exposure and would
-have failed the same way on the first real favourite.
+Favourite-hotel highlights silently never appeared while calling the endpoint by hand worked. **Directus rejects the entire `_in` filter if any value can't be cast to bigint**, so a single placeholder id from a seeded demo row failed the lookup for every real record in the batch. Both `/api/hotels/by-ids` and `/api/restaurants/by-ids` now drop non-numeric ids first — the restaurants route had the identical exposure and would have failed the same way on the first real favourite.
 
-### Removing a child from a fixed-column grid
+### Other rules worth carrying
 
-`.members-item__layout` is `84px minmax(0,1fr)`. §45 removed the thumbnail from
-flight and restaurant trip cards, which left their content as the *first*
-child — rendering inside the 84px thumbnail track and wrapping one word per
-line. A `--no-thumb` modifier gives those cards a single full-width column.
+* **Removing a child from a fixed-column grid.** `.members-item__layout` is `84px minmax(0,1fr)`; removing the thumbnail left the content as the *first* child, rendering inside the 84px track one word per line. A `--no-thumb` modifier gives those cards one full-width column.
+* **A blocked control stays clickable rather than `disabled`** — a disabled button fires no click, so it can never say why. `getCreateTripBlockedReason()` in `lib/members/tripLimits.ts` is the single rule for the picker's three implementations (empty name / duplicate name / 8-trip cap), and the reason renders *inside* the picker; it was first wired to a status line elsewhere in the pane, where it was set correctly and nobody would ever see it.
+* **Checking printed output is a separate act from checking the modal.** Flip every `@media print` block's `conditionText` to `screen` via CSSOM, then screenshot. That revealed `repeat(auto-fit, …)` fact grids spreading into six columns, and no page margins at all — neither visible on screen. Fixed with two fixed columns and `@page { margin: 14mm }`.
+* **For anything transient, record it; do not sample it.** The Flights save flashes "Saved" for 2.5s, and two checks read the button *after* the flash expired and concluded it was broken. A `MutationObserver` across the click captured the real sequence: `SAVE → Saving... → Saved (italic) → SAVE`.
+* Warnings live in exactly one place — the Editor notes box under Trip notes, always present, showing "All good but prices may have changed since your last save" when clean. They use `--oltra-error-text`; the cards had been using a separate amber, which is why they read as two systems.
 
-### Trip pickers — one rule, three implementations
+### Password reset (`3b39b24`)
 
-The picker exists three times (`SaveToTripControl` for landing + flights, and
-bespoke copies inside `HotelsView` and `RestaurantsMapView`).
-`getCreateTripBlockedReason()` in `lib/members/tripLimits.ts` is now the single
-rule for empty name / duplicate name / 8-trip cap.
+The handler only set a placeholder, with a comment deferring the send to a Vercel server function. **That premise was wrong** — Supabase sends this from the browser, so nothing was blocking it. Sending alone is half a feature, though: the emailed link returns to `/login` with a recovery session the old form could do nothing with, hence the SET A NEW PASSWORD view. Config prerequisites and the untested last hop are in §16.
 
-**The control stays clickable when blocked rather than being `disabled`** — a
-disabled button fires no click, so it can never say why, and an empty-name save
-previously just closed the panel with no feedback. The reason renders *inside
-the picker*; it was first wired to a shared status line elsewhere in the pane,
-where it was set correctly and nobody would ever see it.
-
-### Itinerary and PDF
-
-* Every fact whose value was still "To be confirmed" is dropped. Almost nothing
-  beyond the basics exists until a trip is booked, and printing a row of filler
-  per field buried the real values.
-* **Checking the printed output is a separate act from checking the modal.**
-  Trick used: flip every `@media print` block's `conditionText` to `screen` via
-  CSSOM, then screenshot. That revealed two faults the on-screen view could not
-  show — `repeat(auto-fit, …)` fact grids spreading into six columns edge to
-  edge (squeezing the date into four lines), and no page margins at all. Fixed
-  with two fixed columns and `@page { margin: 14mm }`.
-
-### Warnings live in exactly one place
-
-Trip warnings appear only in the **Editor notes** box under Trip notes — always
-present, showing "All good but prices may have changed since your last save"
-when clean. Card-level warning text was removed (`has_overlap_warning` still
-gates the Book confirm step). Warnings use `--oltra-error-text` (#ff8a71), the
-faded red already chosen in §35; the cards had been using a separate amber,
-which is why they read as two systems.
-
-### Password reset (commit `3b39b24`)
-
-The handler only set a placeholder, with a comment deferring the send to a
-Vercel server function. **That premise was wrong** — Supabase sends this from
-the browser, so nothing was blocking it. Now calls
-`resetPasswordForEmail`, keeping the neutral "if an account exists" wording so
-the form cannot be used to discover which addresses are registered.
-
-Sending alone is half a feature: the emailed link returns to `/login` with a
-recovery session, which the old form could do nothing with. A **SET A NEW
-PASSWORD** view now handles the `PASSWORD_RECOVERY` event.
-
-**Two config prerequisites, both outside the code and both untested:** `/login`
-must be in Supabase → Authentication → URL Configuration → Redirect URLs (for
-localhost *and* the Vercel URL), and the built-in mailer is heavily
-rate-limited and not for production — real use needs custom SMTP. Testing used
-a non-existent address deliberately: sending a reset to a real person is
-outward-facing and is Ulrik's call, so **the last hop (mail actually arriving)
-has never been confirmed.**
-
-### Review ratings
-
-Six dropdowns became one row per criterion with five stars, stacked. **Stored
-values are unchanged** (`not_observed` or `"1"`–`"5"`), so scoring, validation
-and submission behave exactly as before — only the control changed. Clicking
-the current score again returns the row to Not observed, which is the default
-and otherwise unreachable once a rating is set; each row prints its own value
-so that state is legible rather than implied.
-
-### Other
-
-Login notes no longer use a green found nowhere else in the design system —
-informational text is primary, problems are the faded red. Landing Book/Save
-are one size across both panes (84×22). Destination suggestions order cities,
-then countries, then hotels. The Restaurants type dropdown had explicitly
-opted out of the shared hover-close (`closeOnHoverOutside={false}`). The
-featured hotel card is as tall as its three lines need rather than 300px.
-Favourite hotels show highlights read live rather than stored, so the text
-stays current when an editor revises it.
-
-### A timing trap when verifying transient UI
-
-The Flights save flashes "Saved" in italic for 2.5s. Two separate checks read
-the button *after* the flash had expired and concluded it was broken. A
-`MutationObserver` recording label + `fontStyle` across the click captured the
-real sequence: `SAVE → Saving... → Saved (italic) → SAVE`. **For anything
-transient, record it; do not sample it.**
+Review ratings: six dropdowns became one row per criterion with five stars. **Stored values are unchanged** (`not_observed` or `"1"`–`"5"`), so scoring, validation and submission behave exactly as before — only the control changed.
 
 ---
 
-## 47. ETG FORWARDING PROXY ON RAILWAY (2026-08-19)
+## 47. ETG FORWARDING PROXY ON RAILWAY (live since 2026-08-20)
 
 ### Why
 
-ETG confirmed IP whitelisting is **mandatory** (this closes the open question
-recorded in §32's TODO list). Vercel serverless egress rotates, so ETG calls
-needed a fixed origin. Railway (Pro, EU West) assigns a service three static
-outbound IPs at no extra cost, and Directus already runs there — so Railway was
-already a hard dependency on every hotel page load and this adds no new failure
-domain.
+ETG confirmed IP whitelisting is **mandatory**. Vercel serverless egress rotates, so ETG calls needed a fixed origin. Railway assigns a service three static outbound IPs at no extra cost, and Directus already runs there — so it was already a hard dependency on every hotel page load and this adds no new failure domain. Measured before choosing: the added hop is ~2% of a search (~55–65ms against a ~3s serp call), and a long-lived Railway process keeps TLS warm to ETG where Vercel re-handshakes per cold instance. The rejected alternative was Vercel's paid static IPs at $100/month, which would not have avoided Railway anyway.
 
 ```
 browser → Vercel route → lib/ratehawk/availability.ts → Railway proxy → ETG
                          (all parsing stays here)       (creds live here)
 ```
 
-**Measured before choosing this** (read-only probes, 2026-08-19): ETG
-`/search/serp/hotels/` ~2 990 ms and flat from 10 to 40 hids; `/search/hp/` +
-`/hotel/info/` in parallel ~1 200 ms; a warm Railway round trip ~55–65 ms. The
-added hop is ~2% of a search, and a long-lived Railway process keeps TLS warm to
-ETG (57 ms warm vs 104 ms cold) where Vercel serverless re-handshakes per cold
-instance. The alternative considered and rejected was Vercel's paid static IPs at
-$100/month, which would not have avoided Railway anyway — the §32 static sync
-cannot run on serverless regardless of IPs.
-
 ### The service — `etg-proxy/`
 
-Top-level directory in this repo, sibling to `hotels-beta/`. Railway's root
-directory is set to `etg-proxy`; Vercel's is still `hotels-beta`, so the Vercel
-build is unaffected. Zero dependencies (`node:http` + global `fetch`), per §2.
+Top-level directory, sibling to `hotels-beta/`. Railway's root directory is `etg-proxy`; Vercel's is still `hotels-beta`. Zero dependencies.
 
-It forwards the request body byte-for-byte and returns the upstream status and
-body unmodified. It is deliberately **not** verbatim in one respect: it strips any
-inbound `Authorization` and injects its own, so Vercel never holds the ETG key.
+It forwards the body byte-for-byte and returns the upstream status and body unmodified — except that it **strips any inbound `Authorization` and injects its own**, so Vercel never holds the ETG key.
 
-**Only four paths are proxied** — `/api/b2b/v3/search/serp/hotels/`,
-`/api/b2b/v3/search/hp/`, `/api/b2b/v3/hotel/info/`, and (since 2026-08-24)
-`/api/content/v1/hotel_content_by_ids/`. Everything else is 404.
-**This allowlist is load-bearing, not tidiness.** An open forwarder holding our
-credentials would let anyone with the shared secret reach any ETG endpoint,
-including the booking endpoints §32 marks BLOCKED — and per §26 our key hits
-ETG's live production host, where test bookings are real orders needing manual
-cancellation. Do not add paths to it casually.
+**Only four paths are proxied**: `/api/b2b/v3/search/serp/hotels/`, `/api/b2b/v3/search/hp/`, `/api/b2b/v3/hotel/info/`, `/api/content/v1/hotel_content_by_ids/`. Everything else is 404.
 
-**The test a new path has to pass**, since one was added: is it read-only, and
-does admitting it leave every BLOCKED endpoint just as unreachable?
-`hotel_content_by_ids` passes — it returns static hotel content and creates
-nothing. Its purpose is the opposite of widening: it lets the §48 static sync
-egress from the three already-whitelisted Railway IPs instead of standing up a
-second service with a second set of addresses for ETG to approve. Note the
-sibling `hotel_ids_by_filter` was deliberately **not** added — the sync does a
-full refresh and never calls it. Verified after the change that
-`/hotel/prebook/`, `/order/booking/form/` and `hotel_ids_by_filter` all still
-404 with a valid secret.
+**This allowlist is load-bearing, not tidiness.** An open forwarder holding our credentials would let anyone with the shared secret reach any ETG endpoint, including the booking endpoints §32 marks BLOCKED — and our key hits ETG's **live production** host, where test bookings are real orders needing manual cancellation.
 
-`GET /healthz` is unauthenticated and cannot reach ETG. The service exits at boot
-if any required env var is missing, so a misconfiguration fails the Railway
-healthcheck loudly rather than serving errors under load.
+**The test a new path must pass**: is it read-only, and does admitting it leave every BLOCKED endpoint just as unreachable? `hotel_content_by_ids` passes — it returns static content and creates nothing, and its purpose is the opposite of widening: it lets the §48 sync egress from the already-whitelisted IPs instead of standing up a second service with a second set of addresses. `hotel_ids_by_filter` was deliberately **not** added — the sync does a full refresh and never calls it. Verified after: `/hotel/prebook/`, `/order/booking/form/` and `hotel_ids_by_filter` all still 404 with a valid secret.
+
+`GET /healthz` is unauthenticated and cannot reach ETG. The service exits at boot if any required env var is missing, so a misconfiguration fails the healthcheck loudly rather than serving errors under load.
 
 ### `GET /whoami` — confirm the static IPs, don't trust the panel
 
-Reports the outbound IP the service **actually presents**. Behind the same
-timing-safe shared secret as the forwarding paths; touches neither ETG nor the
-ETG credentials.
+Reports the outbound IP the service **actually presents**, behind the same shared secret, touching neither ETG nor the credentials.
 
-```bash
-curl -s https://<service>.up.railway.app/whoami \
-  -H "x-oltra-proxy-secret: $PROXY_SHARED_SECRET"
-```
+**Enabling the toggle is not enough — the service must be redeployed before the static IPs take effect.** This is the one thing to get right here, and it cost real debugging time. The Networking panel lists the three addresses the moment the toggle is flipped, which reads as if they're live; they are not. Until a redeploy, `/whoami` returns **an address not in Railway's listed set at all** — so the natural conclusion is that the feature is broken or `/whoami` is lying. **If the observed address isn't one of the three, redeploy before investigating anything else.**
 
-**Enabling the toggle is not enough — the service must be redeployed before the
-static IPs take effect.** This is the single thing to get right here, and it
-cost real debugging time on 2026-08-20. The Networking panel lists the three
-addresses the moment the toggle is flipped, which reads as if they are already
-live; they are not. Until a redeploy, `/whoami` returns **an address that is
-not in Railway's listed set at all** — so the natural conclusion is that the
-static-IP feature is broken or that `/whoami` is lying, when in fact the
-deploy simply predates the toggle. If the observed address is not one of the
-three, redeploy before investigating anything else.
+**One call returns one address, and that is correct.** Railway assigns an outbound address **per instance**, not per request — it does not rotate, and repeated calls will not enumerate the other two.
 
-**One call returns one address, and that is correct.** Railway assigns an
-outbound address **per instance**, not per request — it does not rotate across
-the three on successive calls. A single instance therefore reports the same
-address consistently, and repeated calls will not enumerate the other two.
-Seeing one stable address is the expected result, not a partial one.
+Re-run `/whoami` and re-notify ETG after any region change or Railway maintenance — moving region reassigns the IPs.
 
-*(The `distinctSeen` accumulator in the response is a leftover from the earlier,
-wrong assumption that traffic rotated per request. It is harmless, but do not
-read a single-entry `distinctSeen` as evidence that anything is missing — and
-do not loop the call ~10 times expecting it to converge on all three, which is
-what an earlier version of this section incorrectly advised.)*
+### Auth and env
 
-All three addresses come from Railway's Networking panel; `/whoami` confirms
-that the deployed service is genuinely presenting from that set, which is the
-part the panel cannot tell you.
-
-Two points where this check is required, not optional:
-
-* **Before sending ETG any addresses.** Railway's Networking panel is a claim;
-  `/whoami` is the observed reality. Three wrong addresses unwind slowly — ETG
-  whitelist them, calls still get rejected, and it presents as an integration
-  bug rather than a bad IP list.
-* **After any region change or Railway maintenance.** Moving region reassigns
-  the IPs (see the caveats below), and the addresses are not guaranteed
-  dedicated. Re-run `/whoami` and re-notify ETG if the set has moved.
-
-### Auth
-
-Vercel sends `x-oltra-proxy-secret`. The proxy compares it in constant time
-against a SHA-256 digest of `PROXY_SHARED_SECRET` (hashing both sides first, so
-the comparison leaks neither content nor length). Missing or wrong → 401, before
-any ETG call. Transport is public HTTPS — Railway's private networking is
-project-internal, so Vercel must use the public `*.up.railway.app` domain.
+Vercel sends `x-oltra-proxy-secret`. The proxy compares it in constant time against a SHA-256 digest of `PROXY_SHARED_SECRET` (hashing both sides, so the comparison leaks neither content nor length). Missing or wrong is a 401 before any ETG call. Transport is public HTTPS — Railway private networking is project-internal.
 
 | Variable | Railway | Vercel | Local `.env.local` |
 |---|---|---|---|
@@ -3645,72 +1227,25 @@ project-internal, so Vercel must use the public `*.up.railway.app` domain.
 | `RATEHAWK_PROXY_SECRET` | — | ✅ | ❌ |
 | `RATEHAWK_API_URL` | — | Railway URL | `https://api.ratehawk.com` |
 
-**Set `RATEHAWK_PROXY_SECRET` on Vercel's Production and Preview only, never
-Development** — `vercel env pull` writes Development values into `.env.local` and
-would silently flip local dev into proxy mode. Same for the `RATEHAWK_API_URL`
-override.
+**Set `RATEHAWK_PROXY_SECRET` and the `RATEHAWK_API_URL` override on Vercel's Production and Preview only, never Development** — `vercel env pull` writes Development values into `.env.local` and would silently flip local dev into proxy mode.
 
-**Cutover confirmed 2026-08-20** — the table above is the verified live state,
-not the intended one:
-
-* `RATEHAWK_PROXY_SECRET` and `RATEHAWK_API_URL` are set on **Production and
-  Preview only**. Development is deliberately empty, per the rule above.
-* `RATEHAWK_KEY` and `RATEHAWK_KEY_ID` are **removed from Vercel entirely** —
-  not blanked, not left on an unused environment. Vercel no longer holds the
-  ETG credentials in any form; the proxy is the only place they exist outside
-  Ulrik's machine.
-* Local `.env.local` is **unchanged and still in direct mode** — it keeps the
-  ETG credentials and points `RATEHAWK_API_URL` at `https://api.ratehawk.com`,
-  so local dev talks to ETG directly and is not gated on Railway being up.
-  (Which also means local dev is the thing that breaks once ETG start
-  enforcing the whitelist — see the note at the end of "Two modes" below.)
+ETG credentials are **removed from Vercel entirely** — not blanked, not left on an unused environment. The proxy is the only place they exist outside Ulrik's machine. Local `.env.local` stays in direct mode, so local dev is never gated on Railway being up.
 
 ### Two modes, selected by env vars alone
 
-`ratehawkPost()` in `availability.ts` branches on whether
-`RATEHAWK_PROXY_SECRET` is set:
+`ratehawkPost()` branches on whether `RATEHAWK_PROXY_SECRET` is set: **proxy mode** sends the secret header and no `Authorization`; **direct mode** sends HTTP Basic exactly as before. `assertRatehawkConfig()` requires *either* credentials or a proxy secret. Nothing else changed.
 
-* **proxy mode** — sends the secret header, no `Authorization`.
-* **direct mode** — sends HTTP Basic, exactly as before. This is what local dev
-  uses, so local work is never gated on Railway being up.
-
-`assertRatehawkConfig()` now requires *either* ETG credentials or a proxy secret.
-Nothing else changed: the three routes, `groupRoomOptions`,
-`computeHeadlinePrice`, `matchRoomImages` and every caller are untouched.
-
-**When ETG start enforcing**, calls from Ulrik's machine get rejected too — both
-local dev and `scripts/ratehawk/probe-ratehawk-status.mjs` (§43), which calls
-`/search/serp/hotels/` directly. Either whitelist that IP with ETG or flip to
-proxy mode (two env vars locally; the probe script already reads
-`RATEHAWK_API_URL` but would also need the secret header). Deliberately deferred,
-not overlooked.
+**When ETG start enforcing**, calls from Ulrik's machine get rejected too — both local dev and `probe-ratehawk-status.mjs` (§43), which calls `/search/serp/hotels/` directly. Either whitelist that IP or flip to proxy mode. Deliberately deferred, not overlooked.
 
 ### Failure behaviour — fail fast, no retry
 
-No automatic retry, by decision: serp already takes ~3 s so a retry doubles the
-worst case with the user waiting, ETG rate-limits, and the UI already has an
-explicit user-driven retry. **Verified**: with the proxy down the batch route
-returns 500 in ~38 ms and the existing error states render —
-`COULDN'T CHECK — TAP TO RETRY`, `Couldn't check availability`, `Could not load
-room options.` None of them claims the hotel is unavailable, preserving the §42
-distinction.
+No automatic retry, by decision: serp already takes ~3s so a retry doubles the worst case with the user waiting, ETG rate-limits, and the UI already has an explicit user-driven retry. **Verified**: with the proxy down the batch route returns 500 in ~38ms and the existing error states render — and **none of them claims the hotel is unavailable**, preserving the §42 distinction.
 
-`ratehawkPost()` previously passed **no timeout at all**. Now 35 s
-Vercel→proxy against 30 s proxy→ETG, so the proxy always fails first and returns
-a real status rather than leaving Vercel on a dangling socket. Distinct from the
-ETG-side `timeout` request parameter, still a §32 TODO.
+`ratehawkPost()` previously passed **no timeout at all**. Now 35s Vercel→proxy against 30s proxy→ETG, so the proxy always fails first and returns a real status rather than leaving Vercel on a dangling socket.
 
-### Deployment and the static IPs — live since 2026-08-20
+### Deployment
 
-Service Settings → **Networking** → **Enable Static IPs**. The three IPv4
-addresses appear in that same section immediately, before redeploying — but
-**the toggle does not take effect until the service is redeployed**, and until
-it does, the service still egresses from an address outside the listed set.
-See the `/whoami` section above; that gap is where the debugging time went.
-CLI: `railway outbound-network static-ip status --service <name>`.
-
-**Region: EU West (Amsterdam).** Fixed before the addresses were sent — moving
-region reassigns them.
+Service Settings → Networking → Enable Static IPs, **then redeploy**. Region **EU West (Amsterdam)**, fixed before the addresses were sent.
 
 ```
 208.77.244.241
@@ -3718,53 +1253,9 @@ region reassigns them.
 152.55.185.190
 ```
 
-Confirmed via `/whoami` against the redeployed service, then **sent to Sofia
-Kamalova (Integration Launch Specialist) on 2026-08-20** — she handles
-whitelisting, not Valeriy. Re-notify her if the set ever moves.
+Confirmed via `/whoami` against the redeployed service, then sent to Sofia Kamalova — she handles whitelisting, not Valeriy. Also: healthcheck `/healthz`, and **App Sleeping must stay off** — with no retry, a cold start on the first search after an idle period surfaces as a failed availability check.
 
-Also: Settings → Deploy → healthcheck `/healthz`, and **App Sleeping must stay
-off** — with no retry, a cold start on the first search after an idle period
-surfaces to the user as a failed availability check.
-
-Three caveats worth not getting wrong:
-
-* **Moving the service to another region changes the IPs.** Fix EU West before
-  notifying ETG.
-* **Static IPs are per service, not per project.** A future static-sync service
-  (§32 TODO) needs its own *Enable Static IPs* toggle, may be assigned different
-  addresses, and those must be sent to ETG too. It will call
-  `/hotel/info/dump/` and `/hotel/info/incremental_dump/` directly rather than
-  through this proxy — those are not on the allowlist.
-* Railway does not guarantee the addresses are *dedicated* — they may be shared
-  with other Railway customers. Fine for a whitelist, but don't describe them to
-  ETG as dedicated.
-
-### Verified 2026-08-19
-
-Against a locally-run proxy with real ETG credentials: healthz 200; no secret and
-wrong secret both 401; `/hotel/prebook/` and `/order/booking/form/` both 404 with
-a valid secret (booking endpoints unreachable by construction); GET on an
-allowlisted path 405; a >1 MB body a clean 413. All three allowlisted endpoints
-returned real ETG data. `/whoami` 401s without the secret and with a wrong one,
-405s on POST, and returns the caller's real egress IP with a valid secret —
-locally that is one address, since the three-IP set only exists on Railway. End-to-end through `next dev` with `RATEHAWK_KEY`
-blanked, proving proxy mode needs no ETG credentials on the app side: batch
-availability returned a real headline price and the detail route returned 7
-matched rooms, with the proxy log confirming all traffic went through it.
-`tsc --noEmit` and `npm run lint` clean.
-
-### Verified 2026-08-20 — deployed
-
-The Railway items §47 originally left open are now confirmed: the service is
-deployed in EU West (Amsterdam), static IPs are enabled **and redeployed** so
-the three addresses above are genuinely in use (confirmed via `/whoami`, not
-just the Networking panel), and the Vercel cutover is live with the ETG
-credentials removed from Vercel altogether — see the env-var section above for
-the verified per-environment state.
-
-Ulrik checked the production browser UI against the deployed proxy the same
-day, so the cutover is confirmed end to end — at the service/config layer and
-in the running app — and §47 has no open verification items left.
+Three caveats: moving region changes the IPs; **static IPs are per service, not per project** (a future service needs its own toggle and its own notification); and Railway does not guarantee the addresses are *dedicated* — fine for a whitelist, but don't describe them to ETG as dedicated.
 
 ---
 
@@ -3772,26 +1263,16 @@ in the running app — and §47 has no open verification items left.
 
 ### What this closes
 
-`/api/ratehawk/availability` called ETG's `/api/b2b/v3/hotel/info/` live on every
-hotel-detail view, to get the room-group static data `matchRoomImages()` needs.
-Two problems, and the second is the one that would have bitten first:
+`/api/ratehawk/availability` called `/hotel/info/` live on every hotel-detail view. Two problems, and the second would have bitten first:
 
-1. ETG grade "static content fetched during a live user search" as a
-   certification failure — their docs are explicit that it must be synced
-   offline.
-2. `/hotel/info/` is **30 requests / 60 s on our key**, so that call was a
-   site-wide ceiling of 30 hotel-detail views per minute across all users. It
-   had not bitten only because traffic is low.
+1. ETG grade "static content fetched during a live user search" as a certification failure.
+2. `/hotel/info/` is **30 requests / 60s on our key**, so that call was a site-wide ceiling of 30 hotel-detail views per minute across all users. It hadn't bitten only because traffic is low.
 
-Now: a daily Railway job writes ETG static content into Directus, and the
-availability route reads from there. Room-matching logic is untouched.
+Now a daily Railway job writes ETG static content into Directus and the availability route reads from there. Room-matching logic is untouched.
 
 ### Directus fields
 
-The 4 from §32 (created 2026-08-10, empty until now) are joined by 4 more,
-created 2026-08-24 via `scripts/ratehawk/add-ratehawk-content-flag-fields.mjs`
-— additive only, before/after `GET /schema/snapshot` diffed to confirm exactly
-4 additions, 0 modifications, 0 removals.
+The 4 from §32 (created 2026-08-10, empty until now) plus 4 more via `add-ratehawk-content-flag-fields.mjs` — additive only, before/after `GET /schema/snapshot` diffed to confirm exactly 4 additions, 0 modifications, 0 removals.
 
 | Field | Type | ETG source |
 |---|---|---|
@@ -3799,1054 +1280,275 @@ created 2026-08-24 via `scripts/ratehawk/add-ratehawk-content-flag-fields.mjs`
 | `ratehawk_metapolicy_struct` | json | `metapolicy_struct` |
 | `ratehawk_metapolicy_extra_info` | text | `metapolicy_extra_info` |
 | `ratehawk_static_synced_at` | timestamp | stamped by the job |
-| `ratehawk_check_in_time` | string | `check_in_time` |
-| `ratehawk_check_out_time` | string | `check_out_time` |
-| `ratehawk_is_closed` | boolean | `is_closed` |
-| `ratehawk_deleted` | boolean | `deleted` |
+| `ratehawk_check_in_time` / `_check_out_time` | string | `check_in_time` / `check_out_time` |
+| `ratehawk_is_closed` / `ratehawk_deleted` | boolean | `is_closed` / `deleted` |
 
-`null` on any of them means **never synced**, which is not the same as a real
-`false` or a real empty list.
+`null` on any of them means **never synced**, which is not the same as a real `false` or a real empty list.
 
-**The times are strings, not a Directus `time` column.** 4 of 853 hotels report
-`"00:00:00"`, which almost certainly means "unspecified" rather than a real
-midnight check-in; a `time` column would launder that into a legitimate-looking
-value. Storing the raw string keeps the ambiguity visible, and matches the house
-habit of reading timestamps as written (§45).
+**The times are strings, not a Directus `time` column.** 4 of 853 hotels report `"00:00:00"`, which almost certainly means "unspecified" rather than a real midnight check-in; a `time` column would launder that into a legitimate-looking value.
 
-**`is_closed`/`deleted` are deliberately not folded into `ratehawk_status`**
-(§42). That field is a quarterly live-rate verdict; these are daily content
-flags. One shared column would let the daily job overwrite the quarterly one.
-Both are advisory — the sync never changes `published` on their strength.
+**`is_closed`/`deleted` are deliberately not folded into `ratehawk_status`** (§42). That field is a quarterly live-rate verdict; these are daily content flags. One shared column would let the daily job overwrite the quarterly one. Both are advisory — the sync never changes `published`. Validation on first run: the single `is_closed = true` is Four Seasons The Biltmore Santa Barbara (id 1682), genuinely closed and already unpublished.
 
-Validation on first run: the single `is_closed = true` across all 853 is Four
-Seasons Resort The Biltmore Santa Barbara (id 1682), genuinely closed and
-already `published: false`. The flag agreed with reality on day one.
+### A duplicate field is a 400, not a 409
 
-### A duplicate field is a 400, not a 409 — fixed everywhere 2026-08-24
+**Directus answers a duplicate field with `400 INVALID_PAYLOAD` and an "already exists" message, not `409`** — verified live. Every field-creation script here had inherited a `409` check and a header calling itself "409-safe", so a perfectly clean re-run printed `FAILED` on every field it skipped — 100 of them in the image script's case. Harmless in effect, but **a clean re-run that looks broken is the kind of thing that gets "investigated" for an hour.**
 
-**Directus answers a duplicate field with `400 INVALID_PAYLOAD` and an "already
-exists" message, not `409`** — verified live. Every field-creation script here
-had inherited a `status === 409` check and a header calling itself "409-safe",
-so a perfectly clean re-run printed `FAILED` on every field it skipped — 100 of
-them in the image script's case. Harmless in effect, but a clean re-run that
-looks broken is the kind of thing that gets "investigated" for an hour.
-
-All three now share an `isAlreadyExists(status, data)` helper accepting both
-codes: `add-ratehawk-content-flag-fields.mjs`,
-`add-ratehawk-static-content-fields.mjs`, `add-ratehawk-image-fields.mjs`.
-Confirmed by re-running all three against the live instance — 0 `FAILED` lines.
-Any future field-creation script should copy that helper rather than the old
-409-only shape, which still exists in
-`scripts/restaurants/create-restaurants-collection.mjs` — left alone as a
-run-once/archive script, and untested here (its field path would misreport the
-same way; whether *collection* creation really answers 409 was never checked).
+All three now share an `isAlreadyExists(status, data)` helper accepting both codes. Copy that helper in any future field-creation script rather than the old shape, which still exists in `scripts/restaurants/create-restaurants-collection.mjs` — left alone as a run-once script, and untested.
 
 ### The trimmed `ratehawk_room_groups` shape
 
-Exactly the three keys `RawRoomGroup` declares in `availability.ts`:
-`{name, rg_ext, images: string[]}`. Dropped, each measured on live data rather
-than assumed:
+Exactly the three keys `RawRoomGroup` declares: `{name, rg_ext, images: string[]}`. Dropped, each **measured** on live data rather than assumed: room-group `images` (byte-identical to `images_ext[].url`, 36.9% of the bytes); `category_slug` on room images (`"unspecified"` on 51,838 of 51,838 sampled); `name_struct`, `room_amenities`, `size` (never read; `size` is feature-gated and always null); `room_group_id` (deprecated, never read).
 
-* room-group `images` — byte-identical to `images_ext[].url`, 36.9% of
-  room-group bytes
-* `category_slug` on room images — `"unspecified"` on 51,838 of 51,838 sampled,
-  never rendered
-* `name_struct`, `room_amenities`, `size` — never read (`size` is feature-gated
-  and always null on our account, §30)
-* `room_group_id` — ETG's deprecated linkage; `matchRoomImages()` never reads it
-
-18.9 MB stored for 853 hotels, from a 58.7 MB raw response. Per hotel p50 11.8
-KB / p95 153 KB / max 367 KB.
+18.9 MB stored for 853 hotels, from a 58.7 MB raw response. Per hotel p50 11.8 KB / p95 153 KB / max 367 KB.
 
 ### The job — `etg-static-sync/`
 
-Top-level directory, sibling to `etg-proxy/`; Railway root directory is set per
-service so the Vercel build is unaffected. Zero dependencies (§2). Daily on
-Railway's cron. Flags: `--dry-run`, `--only <hid>` (repeatable), `--limit <n>`.
+Top-level directory, sibling to `etg-proxy/`. Zero dependencies. Daily on Railway's cron. Flags: `--dry-run`, `--only <hid>`, `--limit <n>`.
 
-Per run: load every hotel with a `ratehawk_hid` → batch 100 hids (ETG's hard
-cap; 101 returns `400 invalid_params`) through the proxy to
-`hotel_content_by_ids` → trim → compare against what is stored → PATCH only what
-actually changed → stamp `ratehawk_static_synced_at` on every row in the run,
-once, at the end.
+Per run: load every hotel with a `ratehawk_hid` → batch 100 hids through the proxy to `hotel_content_by_ids` → trim → compare against what's stored → PATCH only what changed → stamp `ratehawk_static_synced_at` on every row in the run, once, at the end.
 
-Points that matter if this is ever rewritten:
+Points that matter if this is rewritten:
 
-* **`data` comes back as a flat array and is NOT in request order.** Verified
-  live: `[8473727, 7855756]` returned 7855756 first. Join on `hid`, never on
-  position — the same class of bug §28 warns about.
-* **Compare canonically, never by raw `JSON.stringify`.** Key order differs
-  between what we send and what Directus returns. Same lesson as `rg_ext` (§32),
-  which is why the diff sorts keys recursively.
-* **Change detection is the expensive half, not the fetch.** The 9 ETG requests
-  take ~8.5 s; 853 Directus PATCHes take ~3 minutes. ETG content is stable, so
-  after the first run most days write nothing — measured: an immediate second
-  run reported **0 of 853 changed** and finished in 11.1 s.
-* **The timestamp is stamped separately from content**, so per-row freshness
-  stays meaningful without rewriting 19 MB daily.
-* **A failed batch aborts the run before anything is stamped**, so a partial
-  sync surfaces as stale timestamps rather than a silent mix. No retry — the
-  same fail-fast posture as the proxy (§47). Stored content is never deleted on
-  a failed fetch, and a hid we asked for and didn't get back is reported, not
-  overwritten with nulls.
-* Local runs use direct mode (ETG credentials, no proxy), deployment uses proxy
-  mode — same env-var selection as `availability.ts` (§47), so a local sync is
-  not gated on Railway being up.
+* **`data` comes back as a flat array and is NOT in request order.** Verified: `[8473727, 7855756]` returned 7855756 first. **Join on `hid`, never on position.**
+* **Compare canonically, never by raw `JSON.stringify`.** Key order differs between what we send and what Directus returns — same lesson as `rg_ext` (§32). The diff sorts keys recursively.
+* **Change detection is the expensive half, not the fetch.** The 9 ETG requests take ~8.5s; 853 Directus PATCHes take ~3 minutes. ETG content is stable, so after the first run most days write nothing — an immediate second run reported **0 of 853 changed** in 11.1s.
+* **The timestamp is stamped separately from content**, so per-row freshness stays meaningful without rewriting 19 MB daily.
+* **A failed batch aborts the run before anything is stamped**, so a partial sync surfaces as stale timestamps rather than a silent mix. No retry. Stored content is never deleted on a failed fetch, and a hid we asked for and didn't get back is reported, not overwritten with nulls.
+* Local runs use direct mode, deployment uses proxy mode.
 
 ### The read path
 
-`fetchRatehawkRoomImages()` → **`loadRatehawkRoomGroups()`**, renamed because it
-no longer fetches from ETG; leaving the old name would have misled. It reads
-`ratehawk_room_groups` from Directus filtered on `ratehawk_hid` and maps stored
-`images: string[]` back to `images_ext: [{url, category_slug: null}]`, so
-`RawRoomGroup` is unchanged and `matchRoomImages()` / `rgExtEquals()` /
-`groupRoomOptions()` are untouched.
+`fetchRatehawkRoomImages()` → **`loadRatehawkRoomGroups()`**, renamed because it no longer fetches from ETG and the old name would mislead. It reads `ratehawk_room_groups` filtered on `ratehawk_hid` and maps stored `images: string[]` back to `images_ext: [{url, category_slug: null}]`, so `RawRoomGroup` is unchanged and `matchRoomImages()` / `rgExtEquals()` / `groupRoomOptions()` are untouched. Unsynced or room-group-less hotels return `[]` and render rooms without images — 24 of 853 legitimately have zero room groups.
 
-Unsynced or room-group-less hotels return `[]` and render rooms without images —
-what those hotels already did. 24 of 853 legitimately have zero room groups.
+**Never add `ratehawk_room_groups` to a bulk hotel field list** — ~19 MB across the roster, and the Hotels page fetches every published hotel in one request. Guard comments sit in `HotelRecord` and above all three bulk `fields` lists.
 
-**Never add `ratehawk_room_groups` to a bulk hotel field list** — ~19 MB across
-the roster, and the Hotels page fetches every published hotel in one request.
-Guard comments sit in `HotelRecord` (`src/lib/directus.ts`) and above all three
-bulk `fields` lists (`hotels/page.tsx`, `page.tsx`,
-`lib/inspire/buildInspireCities.ts`), which is where someone adding a field
-would actually be looking.
+### Verified
 
-### Verified 2026-08-24
-
-* Schema — snapshot diff shows exactly the 4 additions, nothing modified;
-  re-running the script now reports "already exists" cleanly.
-* Single hotel — synced Four Seasons Cairo Nile Plaza (`hid` 7855756) and
-  compared the stored blob against a live `/hotel/info/` call for the same hid:
-  all 7 fields match, 19/19 room groups, 82/82 images.
-* Full run — 853/853 returned, 0 missing, 852 written (the 1 unchanged being
-  Cairo from the single-hotel run, which is its own small proof that change
-  detection works). Immediate re-run: 0 changed.
-* Read path — `tsc --noEmit` and `npm run lint` clean. Then the assertion that
-  actually proves nothing user-visible changed: the same
-  `/api/ratehawk/availability` request run against the old code (via
-  `git stash`) and the new one returned **the same 11 rooms with byte-identical
-  `images[]` on all 11**. The only difference is `category: "unspecified"` →
-  `null`, the deliberately dropped field — and it accounts for the entire
-  405-byte response-size delta exactly (45 images × 9 bytes).
-* No live ETG static call remains: the only `/hotel/info/` hits under `src/` are
-  comments.
+Full run: 853/853 returned, 0 missing, 852 written; an immediate re-run reported 0 changed. The assertion that proves nothing user-visible changed: the same `/api/ratehawk/availability` request run against the old code (via `git stash`) and the new returned **the same 11 rooms with byte-identical `images[]` on all 11**, the only difference being the deliberately dropped `category: "unspecified"` → `null`.
 
 ### Not done — deployment
 
-The Railway service itself has **not** been created: no `etg-static-sync`
-service, no cron schedule, no env vars set there. The code is verified locally
-end to end (direct mode against ETG, and through a locally-run proxy), but
-nothing runs on a schedule yet. Deploying it needs: new service with root
-directory `etg-static-sync`, `DIRECTUS_URL`/`DIRECTUS_TOKEN`/
-`RATEHAWK_API_URL`/`RATEHAWK_PROXY_SECRET` set, cron schedule, and **no static
-IP toggle of its own** — it egresses through `etg-proxy`, which is the whole
-reason the allowlist gained a path rather than a second service being stood up.
+The Railway service has **not** been created: no `etg-static-sync` service, no cron schedule, no env vars there. The code is verified locally end to end. Deploying needs: a new service with root directory `etg-static-sync`, `DIRECTUS_URL`/`DIRECTUS_TOKEN`/`RATEHAWK_API_URL`/`RATEHAWK_PROXY_SECRET`, a cron schedule, and **no static-IP toggle of its own** — it egresses through `etg-proxy`, which is the whole reason the allowlist gained a path.
 
 ---
 
 ## 49. HOTEL GEOGRAPHY SPLIT — `admin_region` + TRAVELLER AREA (2026-08-31)
 
-Commit `90f4287` (this repo) and `b1e9294` (`oltra-agents`). §3 carries the
-resulting field definitions; this section is the how and the rollback map.
+Commit `90f4287` here and `b1e9294` in `oltra-agents`. §3 carries the resulting field definitions; this is the how.
 
 ### What prompted it
 
-Adding `state_province_county_island` to the destination dropdown surfaced that
-the column held two different ideas at once — administrative units (Tuscany,
-Canton of Zurich, Beijing Municipality) beside traveller-facing areas (Amalfi
-Coast, Riviera Maya, Kruger National Park) — and that 366 of 903 rows were
-blank, so searching "Tuscany" returned 3 hotels.
+Adding `state_province_county_island` to the destination dropdown surfaced that the column held two different ideas at once — administrative units (Tuscany, Canton of Zurich) beside traveller-facing areas (Amalfi Coast, Kruger National Park) — and that 366 of 903 rows were blank, so searching "Tuscany" returned 3 hotels.
 
-Ulrik's call: keep both ideas, in separate fields. `admin_region` for the
-administrative unit, `state_province_county_island` narrowed to the traveller
-area, major cities getting an admin region and no area.
+### Order it ran in
 
-### Order it ran in, and why that order
+Clean the source values first (they were the input to everything downstream), then triage 223 *values* rather than 903 rows — one decision per distinct value resolved 537 hotels, where per-hotel review would have been ~4x the work for the same answer. Apply the split, then fill the 366 blanks per hotel, since those had no value to key on.
 
-1. **Clean the source first.** The existing values were the input to everything
-   downstream, so propagating them before fixing them would have multiplied the
-   errors rather than the good data.
-2. **Triage 223 *values*, not 903 rows.** One decision per distinct value
-   resolved 537 hotels. Reviewing per-hotel at this stage would have been ~4×
-   the work for the same answer.
-3. Apply the split.
-4. **Then** the 366 blanks, per hotel, since they had no value to key on.
-5. Apply, verify against a fresh read.
+### Scripts (`scripts/hotels/geo-2026/`)
 
-### Scripts (`hotels-beta/scripts/hotels/geo-2026/`)
+`add-admin-region-field.mjs` (schema, snapshots diffed) · `export-geo-values.mjs`, `export-geo-gaps.mjs` (read-only) · `build-geo-review.mjs`, `build-gap-review.mjs` · `apply-geo-split-2026-08-31.mjs` (537 rows) · `apply-geo-gaps-2026-08-31.mjs` (366 rows) · `fix-geo-typos-2026-08-31.mjs` (`Equador`→`Ecuador`, `Sourfriere`→`Soufrière`).
 
-| Script | Does |
-|---|---|
-| `add-admin-region-field.mjs` | Schema. Snapshots before/after, diffed to confirm 1 addition / 0 modified |
-| `export-geo-values.mjs` | Read-only. Distinct values with countries, cities, counts |
-| `export-geo-gaps.mjs` | Read-only. The unclassified hotels, with any classified sibling in the same city |
-| `build-geo-review.mjs` / `build-gap-review.mjs` | Render the two review pages from the proposals |
-| `apply-geo-split-2026-08-31.mjs` | Writes. The 537-row split |
-| `apply-geo-gaps-2026-08-31.mjs` | Writes. The 366-row fill |
-| `fix-geo-typos-2026-08-31.mjs` | Writes. `Equador`→`Ecuador`, `Sourfriere`→`Soufrière` |
+All apply scripts: dry-run by default, re-read each row before patching, **appending** rollback records. The two proposal JSONs are one-time records — copy for a future round, don't edit.
 
-All three apply scripts: dry-run by default, `--confirm` to write, re-read each
-row before patching, **appending** rollback records (§40). Proposals live in
-`geo-triage-2026-08-31.json` and `geo-gap-proposal-2026-08-31.json` — one-time
-records of a reviewed session, same as the `apply-award-review-*` pattern.
-Copy them for a future round; don't edit them.
-
-### Results
-
-903/903 hotels carry an `admin_region` (291 distinct); 470 carry a traveller
-area (222 distinct, down from 223 mixed-meaning values). 8 wrong values and 14
-duplicates gone.
+**Result**: 903/903 carry an `admin_region` (291 distinct); 470 carry a traveller area (222 distinct). 8 wrong values and 14 duplicates gone.
 
 ### Traps worth not repeating
 
-* **An apply script keyed on a value it overwrites is not idempotent, and the
-  second failure mode is worse than the first.** `apply-geo-split` looks rows up
-  by their pre-split value. After a run, 130 of 537 no longer resolved — a loud
-  abort. But some re-resolved to the *wrong* entry: Mandarin Oriental Cortina
-  ends up `area="Dolomites"`, which matches the Italy||Dolomites row whose admin
-  is South Tyrol — right for Alta Badia, wrong for Cortina, which is Veneto. A
-  re-run would have silently corrupted it. Fixed by making the **rollback record**
-  the authority on what is already applied, checked before any lookup.
-* **A value-level decision cannot be applied blindly to every hotel under it.**
-  39 hotels needed per-hotel handling: two Portofino properties filed under the
-  Amalfi Coast (Liguria, wrong coast), Chablé Yucatán among eight Quintana Roo
-  properties, Kruger lodges spanning Limpopo and Mpumalanga, Six Senses Yao Noi
-  in Phang Nga rather than Phuket. The review notes named each one; the apply
-  script encodes them as an explicit `PER_HOTEL` table rather than fixing them
-  in a later pass.
-* **Python's text-mode write flips line endings.** Editing `AGENT.md` produced
-  1373 insertions on a 1338-line file — every line, CRLF. Use
-  `newline=""` on both read and write, and check `git diff --stat` looks
-  proportionate to the edit before trusting it.
-* **Stripping accents to dodge shell encoding is a data downgrade.** The first
-  triage draft wrote `Mahe` over the DB's correct `Mahé`. Caught in the dry run.
-* **Geography values are join keys, not display strings.** The two typo fixes
-  each required a code change in the same pass: `country-map.mjs` and
-  `oltra-countries.json` for the country (a mismatch there silently drops a
-  country from the Ratehawk dump filter — §26), `cityAirports.ts` for the city
-  (keyed on the exact `hotels.city` string).
+* **An apply script keyed on a value it overwrites is not idempotent, and the second failure mode is worse than the first.** `apply-geo-split` looks rows up by their pre-split value; after a run, 130 of 537 no longer resolved — a loud abort. But some **re-resolved to the wrong entry**: Mandarin Oriental Cortina ends up `area="Dolomites"`, matching the row whose admin is South Tyrol — right for Alta Badia, wrong for Cortina, which is Veneto. A re-run would have silently corrupted it. Fixed by making the **rollback record** the authority on what is already applied.
+* **A value-level decision cannot be applied blindly to every hotel under it.** 39 hotels needed per-hotel handling: two Portofino properties filed under the Amalfi Coast (wrong coast), Chablé Yucatán among eight Quintana Roo properties, Kruger lodges spanning Limpopo and Mpumalanga, Six Senses Yao Noi in Phang Nga rather than Phuket. The script encodes them as an explicit `PER_HOTEL` table rather than fixing them in a later pass.
+* **Python's text-mode write flips line endings.** Editing a file produced 1,373 insertions on a 1,338-line file — every line, CRLF. Use `newline=""` on both read and write, and **check `git diff --stat` looks proportionate before trusting it.**
+* **Stripping accents to dodge shell encoding is a data downgrade.** The first triage draft wrote `Mahe` over the DB's correct `Mahé`. Caught in the dry run.
+* **Geography values are join keys, not display strings.** Each typo fix required a code change in the same pass: `country-map.mjs` and `oltra-countries.json` for the country (a mismatch silently drops a country from the dump filter, §26), `cityAirports.ts` for the city.
 
-### Found along the way, fixed
+### Found along the way
 
-* **Sri Lanka was absent from `country-map.mjs` entirely** — the silent-drop case
-  §26 warns about, affecting Amanwella (id 3003). Country code confirmed as `LK`
-  against ETG's own Content API response, not assumed from ISO.
-* **`cityAirports.ts` predated 7 published-hotel cities** (Aswan, Beau Champ, La
-  Baule, Ngala, Phinda, St. David, Tangalle), which resolved to no airport in the
-  landing flight teaser. Regenerated: 507 → 514 cities, 0 removed. The 21
-  remaining unkeyed cities are all **unpublished** hotels, which the generator
-  excludes by design — they pick up airports when published and the build re-runs.
+* **Sri Lanka was absent from `country-map.mjs` entirely** — exactly the silent-drop case §26 warns about, affecting Amanwella (id 3003). Code confirmed as `LK` against ETG's own Content API response, not assumed from ISO.
+* **`cityAirports.ts` predated 7 published-hotel cities** (Aswan, Beau Champ, La Baule, Ngala, Phinda, St. David, Tangalle), which resolved to no airport in the landing teaser. Regenerated: 507 → 514 cities, 0 removed. The 21 remaining unkeyed cities are all **unpublished** hotels, which the generator excludes by design.
 
 ### Not done
 
-* **Neither field is locked to a choice list.** Both are `text` /
-  `interface: null`. §44's lesson is that cleaning without locking resets the
-  clock — and this column had already drifted into `Giorgia`, `Boca Raton` and a
-  country name. Deferred deliberately: `admin_region` is a bounded vocabulary and
-  a good candidate; traveller areas will keep growing. ~290 choices is a long
-  dropdown and every new destination would need a schema edit.
-* **`local_area` is untouched** and still holds neighbourhoods. Ulrik flagged a
-  separate pass for it; that is where a major city's missing area detail belongs.
+* **Neither field is locked to a choice list** — both `text` / `interface: null`. §44's lesson is that cleaning without locking resets the clock, and this column had already drifted into `Giorgia` and `Boca Raton`. Deferred deliberately: `admin_region` is a bounded vocabulary and a good candidate; traveller areas keep growing, and ~290 choices is a long dropdown where every new destination needs a schema edit.
+* **`local_area` is untouched** and still holds neighbourhoods. Ulrik flagged a separate pass for it.
 
 ---
-
-## 50. THE AI CONCIERGE (2026-08-31 to 2026-09-05, branch `ai-chat`)
+## 50. THE AI CONCIERGE (branch `ai-chat`)
 
 ### Status
 
-Branch `ai-chat`, pushed. PR #7 is open — "AI concierge across the site, behind
-a feature flag", retitled once the concierge stopped being landing-page-only.
-`main` has none of it.
+Branch `ai-chat`, pushed; PR #7 open. `main` has none of it. Head moves with every round — read it from git, not from here.
 
-Head moves with every round; read it from git rather than from here.
+Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on production invisibly. The flag gates the route, the modal and the entry button. It was first built as a *mode* on the landing page behind a Classic/AI toggle; `5622166` made it a modal the whole site can open, and **everything below describes the current design**. `90bef47` (header greeting) and `58dc6eb` (beta-login hang) are **not** part of the feature — separate commits so they can be cherry-picked to `main`.
 
-Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on production
-invisibly. The flag gates the route, the modal and the entry button, so a
-disabled feature leaves no trace on any page.
-
-Two eras on this branch. The first (2026-08-31 to 09-04, `dc5f729` onward)
-built it as a *mode* on the landing page: it replaced the search panel, and a
-Classic/AI toggle switched between them. The second (2026-09-05, `5622166`)
-made it a modal the whole site can open. **Everything below describes the
-current design**; where the first era's lessons still hold they are kept,
-because the code paths they were learned in survive.
-
-`90bef47` on this branch is **not** part of the feature — it fixes the header
-greeting, touches only `SiteHeader.tsx`, and is on `main` too. Kept as its own
-commit so it can be cherry-picked there. Same reason `58dc6eb` (the beta-login
-hang) is separate.
-
-**Local prerequisite that is easy to lose an hour to:**
-`NEXT_PUBLIC_AI_CHAT_ENABLED=1` is not in the committed environment anywhere —
-it lives in `hotels-beta/.env.local` by hand. Without it the button does not
-render and `/api/chat` answers 404, which looks exactly like the feature being
-broken rather than switched off. It is inlined at build time, so a change needs
-a dev-server restart locally and a redeploy on Vercel.
+**Local prerequisite that is easy to lose an hour to**: `NEXT_PUBLIC_AI_CHAT_ENABLED=1` is in no committed environment — it goes in `.env.local` by hand. Without it the button doesn't render and `/api/chat` answers 404, which looks exactly like the feature being broken rather than switched off. Inlined at build time, so a change needs a dev-server restart locally and a redeploy on Vercel.
 
 ### What it is
 
-A second way into the site: describe the trip in prose, get curated hotels,
-flights and restaurants back in the existing cards. Discovery and steering
-only. It never books, never takes payment, never becomes merchant of record,
-and every tool it can reach is read-only.
+A second way into the site: describe the trip in prose, get curated hotels, flights and restaurants back in the existing cards. Discovery and steering only — it never books, never takes payment, and every tool it reaches is read-only.
 
 ### The one design decision that matters
 
-**The no-prices rule is structural, not a prompt promise.** `searchHotels`,
-`checkAvailability` and `searchFlights` fetch real rates, use them to rank and
-to test any ceiling the visitor named, then **discard the amount**. The model
-receives `{available, priceRank, withinBudget}` and never a figure, so it
-cannot leak a price it was never given — under any framing, including direct
-pressure. Every number on screen is fetched by the card from the same batch
-route the structured search uses.
+**The no-prices rule is structural, not a prompt promise.** `searchHotels`, `checkAvailability` and `searchFlights` fetch real rates, use them to rank and to test any ceiling the visitor named, then **discard the amount**. The model receives `{available, priceRank, withinBudget}` and never a figure, so it cannot leak a price it was never given — under any framing, including direct pressure. Every number on screen is fetched by the card from the same batch route the structured search uses.
 
-If a future change hands the model a raw amount "just for context", that
-guarantee is gone and the prompt becomes the only defence. Don't.
-
-The in-chat summary below inherits this for free: it renders identity and
-rationale only, and is incapable of carrying a figure.
+If a future change hands the model a raw amount "just for context", that guarantee is gone and the prompt becomes the only defence. Don't.
 
 ### Where it mounts, and how members are excluded
 
-`AiSearchProvider` wraps `{children}` in **`src/app/layout.tsx`**, so the store
-outlives navigation. `children` passes straight through, so pages stay server
-components.
+`AiSearchProvider` wraps `{children}` in **`src/app/layout.tsx`**, so the store outlives navigation; `children` passes straight through, so pages stay server components.
 
-`AiConciergeRoot` renders the modal and gates it on an **exact-path allow-list**
-in `lib/ai/routes.ts` — `/`, `/hotels`, `/flights`, `/restaurants`, `/inspire`.
-Everything else gets nothing: members, login, editor, beta-login, partners, and
-`/hotels/[hotelid]` (a separate Agoda-era page, §15).
+`AiConciergeRoot` gates the modal on an **exact-path allow-list** in `lib/ai/routes.ts` — `/`, `/hotels`, `/flights`, `/restaurants`, `/inspire`. Everything else gets nothing: members, login, editor, beta-login, partners, `/hotels/[hotelid]`. **An allow-list, not a deny-list** — a deny-list silently admits every route added later, which for a members area is the wrong default. Landing on a non-allowed path also *closes* it rather than hiding it, or `conciergeOpen` stays true behind the members area and the modal reappears unbidden on the way back. The transcript survives either way.
 
-**An allow-list, not a deny-list.** A deny-list silently admits every route
-added later, which for a members area is exactly the wrong default.
+The route is **members-only** (401), so the button appears to signed-out visitors and the panel tells them to sign in.
 
-Landing on a non-allowed path also *closes* the concierge rather than hiding
-it — otherwise `conciergeOpen` stays true behind the members area and the modal
-reappears unbidden on the way back. The transcript survives either way.
+### Entry, exit, and the modal
 
-The route is **members-only** (401 otherwise) and that is unchanged, so the
-button appears to signed-out visitors and the panel tells them to sign in.
+One `AiModeButton`, two placements, no toggle — the concierge opens *over* the page, so there is no mode to switch back to.
 
-### Entry and exit
+* **`inline`** — landing and Hotels, via an optional `trailingControl` slot on `StructuredDestinationField`, so the shared component knows nothing about the concierge. The slot sits *inside* the chip box with `margin-left: auto`, so when chips wrap the button follows.
+* **`corner`** — Flights, Restaurants, Inspire: **its own row at the top of the frame, in normal flow, NOT an absolute corner.** Each of those frames opens with a full-width control that an absolute button overlapped at some width. A row costs 34px and cannot overlap anything.
 
-One `AiModeButton`, two placements, no toggle. The Classic/AI toggle was right
-when AI mode replaced the page; now the concierge opens over the page and
-closes again, so the page is never in a "mode" and there is nothing to switch
-back to. `AiModeToggle` is deleted.
+Exit is a labelled button, not a bare glyph — the visitor is mid-conversation and needs to know the exchange survives leaving.
 
-* **`inline`** — landing and Hotels, at the right-hand end of the destination
-  field. `StructuredDestinationField` gained an optional `trailingControl` slot
-  so the shared component knows nothing about the concierge. The slot lives
-  *inside* the chip box with `margin-left: auto`, so when chips wrap to a
-  second line the button follows them down. The field's busy spinner moved into
-  the slot when one is present — the absolute one sat exactly where the button
-  now is.
-* **`corner`** — Flights, Restaurants, Inspire: **its own row at the top of the
-  frame, in normal flow, NOT an absolute corner.** Every one of those frames
-  opens with a full-width control (trip-type tabs, the City/Type pair, the
-  month row) that an absolute button sat on top of at some width. A row costs
-  34px and cannot overlap anything.
+The modal reuses the hotel photo lightbox's pattern: `createPortal` to `document.body`, `.oltra-modal-scrim`, `.oltra-modal-panel`, Esc and click-outside. **Portalled for a concrete reason**: `.oltra-page__content` is `position: relative; z-index: 1` and therefore its own stacking context, so a panel inside it can never clear the fixed header however high its z-index (§45). The one addition is **blur** — `--oltra-modal-blur`, on this scrim only, since blurring behind the photo lightbox would blur the photo's own context.
 
-Exit is the modal's own labelled button — not a bare glyph, because the visitor
-is mid-conversation and needs to know the exchange survives leaving.
-
-### The modal
-
-`AiConciergeModal`, built on the hotel photo lightbox's pattern rather than a
-new one: `createPortal` to `document.body`, `.oltra-modal-scrim`,
-`.oltra-modal-panel`, Esc and click-outside.
-
-**Portalled for a concrete reason.** `.oltra-page__content` is
-`position: relative; z-index: 1` and therefore its own stacking context, so a
-panel rendered inside it can never clear the fixed header however high its
-z-index. §45 records the itinerary overlay learning this the hard way.
-
-The one addition over the lightbox is **blur** — `--oltra-modal-blur`, applied
-to this scrim only, not to `.oltra-modal-scrim` itself (blurring the page
-behind the photo lightbox would blur the photo's own context).
-
-**Scroll containment.** Locking `<body>` alone was not enough: the scrolling
-element is usually `<html>`, so a wheel over the scrim still moved the page.
-Both are locked, and the scrim and the transcript both carry
-`overscroll-behavior: contain` so a scroll reaching the end of the conversation
-does not chain outward. Removing the scrollbar reflows the page a few pixels
-narrower, so its width is added back as body padding for exactly as long as the
-lock is held. Everything is restored on cleanup **including unmount** — a stray
-`overflow: hidden` on `<html>` would silently freeze the next page.
+**Scroll containment.** Locking `<body>` alone was not enough: the scrolling element is usually `<html>`, so a wheel over the scrim still moved the page. Both are locked, with `overscroll-behavior: contain` on the scrim and transcript, and the scrollbar's width added back as body padding while the lock holds. Everything is restored on cleanup **including unmount** — a stray `overflow: hidden` on `<html>` would silently freeze the next page.
 
 ### The answer, and the in-chat summary
 
-The page behind is blurred, so the cards are present but unreadable while the
-modal is open. The answer in the panel is therefore the only thing the visitor
-can read, and it names each pick and says why.
+The page behind is blurred, so the answer in the panel is the only readable thing: it names each pick and says why. **It is set as one piece of text**, not a sentence plus a results widget — framing line and picks share one face and size, with small-caps headings and bullets for structure and no container. The face is the site's own sans, upright; the closing question is italic.
 
-**It is set as one piece of text**, not a sentence plus a results widget: the
-framing line and the picks share one face and one size, with small-caps
-headings and bullets for structure and no container. The follow-up question
-below is deliberately in the other format — that is a separate thing to say.
+**Names come from the same records the cards render from**, never from anything the model wrote, so a name in the summary cannot disagree with the card beside it. The rationale is the model's, via `presentResults`' `rationales`.
 
-**That face is the site's own sans, upright, and the question below it is
-italic** (2026-09-08). It was a serif — Cormorant Garamond, loaded by
-`lib/ai/fonts.ts` and scoped to the panel as `--oltra-font-voice` — which gave
-the panel two typefaces and made the answer the one thing in it that did not
-look like the rest of the site. The distinction worth keeping is upright answer
-against italic question, so the serif went and `lib/ai/fonts.ts` with it: the
-font was loaded and, once nothing consumed the variable, downloaded for
-nothing. Reinstating it is a revert of that one file plus the `voiceFont.variable`
-className on the panel.
-
-**Names come from the same records the cards render from**, never from anything
-the model wrote, so a name in the summary cannot disagree with the card beside
-it. The rationale is the model's, via `presentResults`' `rationales` field.
-
-The footnote is conditional, and that is correctness rather than polish: only
-the landing page (which draws a frame per vertical) and Hotels or Flights (where
-`AiResultsSync` writes the answer into the URL) actually render the result set
-behind the modal. Asked from Inspire — or Restaurants, whose standalone page
-keeps its own city list — there is nothing behind the panel, and the old
-"on the cards behind this panel" sent the visitor looking for cards that were
-not there.
+The footnote is conditional, which is correctness not polish: only landing and Hotels/Flights actually render the result set behind the modal, so from Inspire or Restaurants "on the cards behind this panel" sent the visitor looking for cards that weren't there.
 
 ### Page context
 
-`lib/ai/pageContext.ts` (shared) plus `useAiPageContext` (client). Each page
-publishes what it already holds: the selected hotel on Hotels, the active city
-and selected restaurant on Restaurants, the route on Flights, the month on
-Inspire, the form state on landing. It is **not persisted** — it describes now,
-not the conversation — and clears on unmount so the previous page's hotel is
-not attached to the next question.
+`lib/ai/pageContext.ts` plus `useAiPageContext`. Each page publishes what it already holds — the selected hotel on Hotels, the active city on Restaurants, the route on Flights, the month on Inspire, the form state on landing. **Not persisted** (it describes now, not the conversation) and cleared on unmount, so the previous page's hotel isn't attached to the next question. It travels in the `useChat` request body and becomes a **third system block**, after the date — folding it into `SYSTEM_PROMPT` would invalidate the cached prefix for every user.
 
-It travels in the `useChat` request body and becomes a **third system block**,
-after the date. Same reason the date is there: it changes per navigation, and
-folding it into `SYSTEM_PROMPT` would invalidate the cached prefix for every
-user.
+**Security note.** It originates in the browser and lands in a system block — the highest-trust position in the request. `sanitisePageContext` whitelists fields by name, strips each to a narrow character set and caps length; what survives cannot express a sentence, let alone a directive. Tool results take the opposite route deliberately: supplier text is genuinely prose, so it is wrapped in `<untrusted-data>` markers rather than scrubbed.
 
-**Security note.** It originates in the browser and lands in a system block —
-the highest-trust position in the request. `sanitisePageContext` whitelists
-fields by name, strips each to a narrow character set and caps length; what
-survives cannot express a sentence, let alone a directive. Tool results take the
-opposite route deliberately: supplier text is genuinely prose, so it is wrapped
-in `<untrusted-data>` markers rather than scrubbed.
-
-The prompt treats it as a default scope, never a fence: a question naming its
-own destination overrides the page entirely, and any vertical may be asked from
-any page.
-
-### One conversation across the site
-
-Already how the store worked; the root-layout move is what makes it true across
-navigation. `sessionStorage` key `oltra_ai_concierge_v1`. Closing the tab clears
-it, which is the intended lifetime.
+The prompt treats it as a default scope, never a fence: a question naming its own destination overrides the page, and any vertical may be asked from any page.
 
 ### Results reach the pages they belong to
 
-* **Landing** reads the store directly and renders **one to three frames** —
-  hotels, flights, restaurants — via `AiResultFrames`. Track count comes from
-  `--ai-frames`, set inline from the same number that sets each card's density,
-  so the two cannot drift.
-* **Hotels and Flights** stay URL-driven (§8). `AiResultsSync` writes the answer
-  into the query string, with two different rules: **on arrival**, only if the
-  URL is bare — a real search, a bookmark or the concierge's own handoff link
-  must not be overwritten by something the visitor did earlier; **on a new
-  answer produced while the page is open**, always, because that is a deliberate
-  act happening now. `presentedAt` separates the two. `router.replace`, so Back
-  goes where the visitor came from.
-* **Restaurants** is deliberately NOT synced. That page already resolves its
-  city from the shared cross-page session when it arrives without `?city=`, and
-  the store mirrors its destination into exactly that session. Mounting both
-  would give two effects racing to `router.replace` the same param.
-* **Inspire** holds its filters in local state, so it cannot be handed a URL. It
-  sets its own Month and Purpose instead — see below.
+One conversation site-wide, in `sessionStorage` under `oltra_ai_concierge_v1`; closing the tab clears it.
 
-`lib/ai/handoff.ts` is the single implementation of every handoff URL, so the
-modal's link and a frame's button cannot disagree.
+* **Landing** reads the store directly and renders one to three frames via `AiResultFrames`. Track count comes from `--ai-frames`, set from the same number that sets each card's density, so the two cannot drift.
+* **Hotels and Flights** stay URL-driven (§8). `AiResultsSync` writes the answer into the query string with two rules: **on arrival**, only if the URL is bare — a real search, a bookmark or the concierge's own handoff link must not be overwritten by something the visitor did earlier; **on a new answer while the page is open**, always, because that is a deliberate act happening now. `presentedAt` separates them. `router.replace`, so Back goes where the visitor came from.
+* **Restaurants is deliberately NOT synced.** It already resolves its city from the shared cross-page session when it arrives without `?city=`, and the store mirrors the destination into exactly that session. Mounting both would give two effects racing to `router.replace` the same param.
+* **Inspire** holds filters in local state and cannot be handed a URL — it sets its own Month and Purpose instead.
 
-### The handoff offer — one option, chosen by scope
-
-* The answer is exactly the page's own subject → **"See relevant hotels /
-  flights / restaurants"**, linking to that page.
-* The answer is wider than the page, or about something else → **"Go to combined
-  results on main page"** (`/`), the only view that shows all of it at once.
-* The landing page gets **none** — it *is* the combined page and its frames are
-  already behind the panel.
-
-One option rather than one per vertical: three links under a conversation is a
-menu, and the answer has already said what it found.
+`lib/ai/handoff.ts` is the single implementation of every handoff URL, so the modal's link and a frame's button cannot disagree. **The handoff offers one option, chosen by scope**: answer matches the page's subject → "See relevant hotels / flights / restaurants"; wider or about something else → "Go to combined results on main page"; on landing, none — it *is* the combined page. Three links under a conversation is a menu, and the answer has already said what it found.
 
 ### Inspire mirrors the query, via `searchTags`
 
-Exiting the concierge leaves Inspire showing what was asked — "skiing in the
-Alps in February" returns to Month February, Purpose Ski, not the June/All it
-opened on.
+Exiting leaves Inspire showing what was asked. `presentResults` gained **`searchTags`** — the locked setting and activity tags actually searched on, since geography and dates alone cannot express *what kind of trip* it is — and `lib/ai/inspireMirror.ts` maps them to Inspire's five purposes, keyed on `presentedAt` so it applies once per answer and never fights a hand-picked filter. `queryStateToParams` now also emits `settings` and `activities`, so the Hotels handoff arrives with those facets pre-selected.
 
-Three pieces, and the middle one is the reusable lesson:
-
-1. **`presentResults` gained `searchTags`** — the locked setting and activity
-   tags the model actually searched on. Geography and dates alone cannot express
-   *what kind of trip* it is.
-2. **Adding the field was not enough. The model ignored it.** Verified by
-   reading the stored tool input: `searchTags` was simply not among the keys. It
-   is optional, and **an optional field that the prompt does not demand gets
-   skipped** — exactly how `stay` behaved earlier in this section. Once the
-   system prompt required it, it came through
-   (`activities: ["Skiing","Spa","Gastronomy"]`, `settings: ["Mountains"]`).
-3. `lib/ai/inspireMirror.ts` maps tags to Inspire's five purposes. **Rule order
-   matters**: a ski hotel is nearly always tagged `Mountains` too, so `ski` is
-   tested first or every ski answer lands on "Mountains". An answer fitting none
-   of the five leaves the selector alone rather than resetting it to All.
-
-Keyed on `presentedAt`, so it applies once per answer and never fights a
-hand-picked filter afterwards.
-
-Bonus: `queryStateToParams` now emits `settings` and `activities`, so the Hotels
-handoff arrives with those facets pre-selected rather than as a bare geography
-search.
+Two lessons: **adding the field was not enough — the model ignored it**, verified by reading the stored tool input where `searchTags` simply wasn't among the keys. **An optional field the prompt does not demand gets skipped.** And **rule order matters**: a ski hotel is nearly always tagged `Mountains` too, so `ski` is tested first or every ski answer lands on Mountains. An answer fitting none of the five leaves the selector alone.
 
 ### Recency: which results the landing page shows
 
-The classic search lives in the URL and the concierge's answer lives in the
-store, and **neither can see the other change**. Without arbitration, running a
-classic search after an AI answer left the AI frames on screen and the new
-search looked ignored. `presentedAt` / `searchedAt` timestamps decide; nothing
-is discarded, so both views stay one action away.
+The classic search lives in the URL and the concierge's answer in the store, and **neither can see the other change**. Without arbitration, a classic search after an AI answer left the AI frames on screen and the new search looked ignored. `presentedAt` / `searchedAt` decide; nothing is discarded, so both views stay one action away.
 
-**`markClassicSearch()` is gated on the search actually naming a destination,
-and that is not a nicety.** `submitted` alone was enough at first, and the
-landing auto-submit fires on any field change — so a guests-only navigation, or
-the session restore on mount, counted as a search, displaced a good answer, and
-rendered nothing in its place because the structured summary needs a destination
-too. Measured live: `searchedAt` stamped 11 minutes after the answer by a
-phantom search, hiding 3 hotels, 3 restaurants and a flight leg. **A search that
-can show nothing must not supersede one that can.**
+**`markClassicSearch()` is gated on the search actually naming a destination, and that is not a nicety.** `submitted` alone was enough at first, and the landing auto-submit fires on any field change — so a guests-only navigation, or the session restore on mount, counted as a search, displaced a good answer, and rendered nothing in its place because the structured summary needs a destination too. Measured live: `searchedAt` stamped 11 minutes after the answer by a phantom search, hiding 3 hotels, 3 restaurants and a flight leg. **A search that can show nothing must not supersede one that can.**
 
 ### The store is three contexts, for a measured reason
 
-`AiSearchProvider` exposes:
+`useAiActions()` (setters only, stable), `useAiSearch()` (query, results, framing, timestamps, page context), `useAiConversation()` (the message list).
 
-* `useAiActions()` — setters only, stable for the provider's lifetime.
-* `useAiSearch()` — query, results, framing, timestamps, page context.
-* `useAiConversation()` — the message list.
+The conversation persists on **every streamed token**. With the provider at the root, a page component reading the full context would re-render several times a second while the concierge streams, and `HotelsView` is 3,600 lines. Pages read `useAiActions`; frames read `useAiSearch`; only the panel reads the transcript, and anything the header needs is exposed as a scalar — `hasConversation` is a **boolean**, not the message list.
 
-The conversation persists on **every streamed token**. With the provider at the
-root, a page component reading the full context would re-render several times a
-second while the concierge streams, and `HotelsView` is 3,600 lines. Pages read
-`useAiActions`; the frames read `useAiSearch`; only the panel reads the
-transcript.
-
-**The results context is memoised on individual fields, not on `state`.**
-Appending a token replaces `state` but leaves `state.query`/`state.results`
-identical, so the value keeps its identity. Depending on `state` there would
-undo the whole split silently.
+**The results context is memoised on individual fields, not on `state`.** Appending a token replaces `state` but leaves `state.query`/`state.results` identical, so the value keeps its identity. Depending on `state` would undo the whole split silently.
 
 ### Card density variants
 
-`HotelSmallCard` and `FlightResultRow` take `columns?: 1 | 2 | 3`;
-`RestaurantSmallCard` (new) mirrors the shape. It is a **density** switch only —
-every variant shows the same fields, from the same data, with the same actions.
-Image size, track widths and line count are all that change. Default 1, so every
-pre-existing call site is untouched.
+`HotelSmallCard` and `FlightResultRow` take `columns?: 1 | 2 | 3`; `RestaurantSmallCard` (new) mirrors it. A **density** switch only — same fields, same data, same actions; only image size, track widths and line count change. Default 1, so every pre-existing call site is untouched.
 
-**Nothing in a card may force it wider than its column.** The restaurant card
-did: a flex pair of a truncating name and a `shrink-0` badge, and **`truncate`
-cannot shrink a flex child without `min-w-0`** — 413px of content in a 329px
-box, and a horizontal scrollbar. The rule now is wrap, never clip and never
-overflow; the hotel name is the one exception, capped at two lines with
-`line-clamp` so a long name still reads as cut off rather than as the whole
-name.
+**Nothing in a card may force it wider than its column.** The restaurant card did: a flex pair of a truncating name and a `shrink-0` badge, and **`truncate` cannot shrink a flex child without `min-w-0`** — 413px of content in a 329px box, and a horizontal scrollbar. Wrap, never clip and never overflow; the hotel name is the one exception, capped at two lines with `line-clamp`.
+
+Flight cards are **four lines, always** — route, times, duration, airline, stop line (`via CAN, 8h 20m layover`, or "Direct") — always rendered, so every card is one height and a return pair doesn't go ragged. The route is there because the two cards of a return were otherwise told apart only by their times; the times row is `nowrap`, which is what holds it to four lines.
 
 ### Route and tools
 
-`src/app/api/chat/route.ts` holds `ANTHROPIC_API_KEY` and nothing else does.
-Guard order is deliberate and unchanged: **flag** (404) → **session** (401,
-before the key check, so an unauthenticated caller learns nothing about our
-configuration) → **rate limit** → **input caps** → **triage**.
+`src/app/api/chat/route.ts` holds `ANTHROPIC_API_KEY` and nothing else does. Guard order is deliberate: **flag** (404) → **session** (401, before the key check, so an unauthenticated caller learns nothing about our configuration) → **rate limit** → **input caps** → **triage**.
 
-Triage is `claude-haiku-4-5` classifying travel / probe / other before any Opus
-spend, and a second independent judgement: a jailbreak that talks the main model
-round still has to pass a classifier with no tools and no history. It **fails
-open** on error — refusing everyone during a transient outage is worse. A
-decline streams back as a normal assistant message, not a JSON error, so the
-client has one code path.
+Triage is `claude-haiku-4-5` classifying travel / probe / other before any Opus spend, and a second independent judgement: a jailbreak that talks the main model round still has to pass a classifier with no tools and no history. It **fails open** on error — refusing everyone during a transient outage is worse. A decline streams back as a normal assistant message, not a JSON error, so the client has one code path.
 
-Tools, all read-only: `searchHotels`, `getHotelDetails`, `checkAvailability`,
-`searchFlights`, `nearestAirport`, `searchRestaurants`, `webSearch`, plus
-`presentResults` — not a data tool but how the model hands the UI a structured
-result set. The client renders from that tool call rather than parsing names out
-of prose, which would break the moment the model rephrased.
+Tools, all read-only: `searchHotels`, `getHotelDetails`, `checkAvailability`, `searchFlights`, `nearestAirport`, `searchRestaurants`, `webSearch`, plus `presentResults` — not a data tool but how the model hands the UI a structured result set. The client renders from that tool call rather than parsing names out of prose, which would break the moment the model rephrased.
 
-`nearestAirport` costs nothing — `cityAirports.ts` already covers all hotel
-cities. **Do not add a Google Places call for this.** `checkAvailability` skips
-`ratehawk_status: "passive"` hotels (§42).
+`nearestAirport` costs nothing — `cityAirports.ts` already covers every hotel city. **Do not add a Google Places call for this.** `checkAvailability` skips passive hotels (§42).
 
-**A tool parameter whose valid values are a closed set should be an `enum`, not
-a described string.** Live testing had the model inventing plausible taxonomy
-tags — "quiet", "secluded", "wellness" — matching nothing and spending two extra
-round trips recovering, silently, on every query. `lib/ai/taxonomy.ts` mirrors
-the locked §44 vocabularies as JSON Schema enums. Safe to hardcode because those
-fields are `allowOther: false`; refresh from `GET /fields/hotels/{field}` if they
-move, since a stale entry silently matches nothing.
+**A tool parameter whose valid values are a closed set should be an `enum`, not a described string.** Live testing had the model inventing plausible taxonomy tags — "quiet", "secluded", "wellness" — matching nothing and spending two extra round trips recovering, silently, on every query. `lib/ai/taxonomy.ts` mirrors the locked §44 vocabularies as JSON Schema enums. Safe to hardcode because those fields are `allowOther: false`; refresh from `GET /fields/hotels/{field}` if they move, since a stale entry silently matches nothing.
 
-### Restaurants
-
-`searchRestaurants` searches one city, built on `getRestaurantsByCity` so the
-concierge sees exactly what the Restaurants page would — including the alias
-fallback that resolves Ramatuelle to Saint-Tropez. Cuisine and type narrow in
-JS, because a Directus `_eq` would miss "Modern French" for "French".
-
-An empty result distinguishes **"we do not cover this city"** from **"nothing
-matched those filters"**, because only the first should send the visitor
-elsewhere.
-
-The old "never discuss restaurants" rule is replaced by the **same in-inventory
-rule hotels have**: never name one that did not come back from the tool, however
-well known. Coverage is by city and much narrower than the hotel collection.
-
-**The standalone Restaurants page is unchanged** — no new data, no new mode.
-Restaurant result sets are a landing-page frame; a handoff there carries the
-city only.
+`searchRestaurants` searches one city, built on `getRestaurantsByCity` so the concierge sees exactly what the Restaurants page would, alias fallback included. Cuisine and type narrow in JS, because a Directus `_eq` would miss "Modern French" for "French". An empty result distinguishes **"we do not cover this city"** from **"nothing matched those filters"**, because only the first should send the visitor elsewhere. Restaurants follow the **same in-inventory rule hotels have**: never name one that did not come back from the tool, however well known.
 
 ### The system prompt
 
-Preserved verbatim from the first era: read-only tools, no booking or payment,
-the confidentiality block, the non-travel decline wording, the no-result
-wording, adjacent-questions-bounded-to-inventory.
+Read-only tools, no booking or payment, the confidentiality block, the non-travel decline wording, the no-result wording, adjacent questions bounded to inventory, the restaurant in-inventory rule, page context, answer-then-offer-the-handoff, the in-chat summary rule, and the `searchTags` requirement.
 
-Added: the restaurant in-inventory rule (replacing the blanket ban), page
-context, answer-then-offer-the-handoff, the in-chat summary rule, and the
-`searchTags` requirement.
+**Keep `SYSTEM_PROMPT` byte-stable per deploy.** It carries the prompt cache breakpoint. Anything per-request — the date, the page context — goes in a *later* system block. The call-level `cacheControl` this replaced caches the **last** cacheable block, which would have been the volatile one: the cache would have missed on every request while looking correctly configured. **If `usage.cache_read_input_tokens` is persistently zero, check this first.**
 
-**Keep `SYSTEM_PROMPT` byte-stable per deploy.** It carries the prompt cache
-breakpoint. Anything per-request — the date, the page context — goes in a
-*later* system block. Note the call-level `cacheControl` this replaced caches
-the **last** cacheable block, which would have been the volatile one: the cache
-would have missed on every request while looking correctly configured. If
-`usage.cache_read_input_tokens` is persistently zero, check this first.
+**A prompt change is a code change, and it regresses like one.** Two fixes were caused by the fix before them: tightening for brevity produced wording the model read as permission to ask *instead of* showing results, so it replied helpfully and rendered no cards. Nothing failed; there was simply no `presentResults` call — invisible unless you notice `/api/chat` wasn't followed by `/api/ai/hotels`. **After editing `systemPrompt.ts`, run a real query in a browser and check the tool fired.**
 
-**A prompt change is a code change, and it regresses like one.** Two fixes in
-the first era were caused by the fix before them: tightening for brevity
-produced wording the model read as permission to ask *instead of* showing
-results, so it replied helpfully and rendered no cards at all. Nothing failed;
-there was simply no `presentResults` call, which is invisible unless you notice
-`/api/chat` was not followed by `/api/ai/hotels`. After editing
-`systemPrompt.ts`, run a real query in a browser and check the tool fired.
+**"The best" — the one question answered with a question.** Asked "the 3 best hotels in Paris" it named three and called them "the three that stand above the rest". **There is no ranking behind the collection, so that was invented.** It now answers with "I can highly recommend all hotels on myOLTRA" plus a request for something to judge on, and holds it under pressure. **The exception is deliberately narrow and the prompt says so twice**, per the regression above: it applies only when there is nothing to rank by. "Hotels in Paris" still searches and shows, as does any request carrying a quarter, a spa, a brand, a budget or a date.
 
 ### AI SDK v7 — where training priors are wrong
 
-`ai@7` + `@ai-sdk/anthropic@4` + `@ai-sdk/react`. Verified against the installed
-`.d.ts`, not recalled:
+`ai@7` + `@ai-sdk/anthropic@4` + `@ai-sdk/react`. Verified against the installed `.d.ts`, not recalled:
 
 * `useChat` is in **`@ai-sdk/react`**, not `ai`.
 * Tool params are **`inputSchema`**, not `parameters`.
 * **`convertToModelMessages` is async** — await it.
-* `useChat` does not manage input; the caller owns the text state and calls
-  `sendMessage({ text })`. Per-request data goes in the second argument:
-  `sendMessage({text}, {body: {...}})`.
-* **`role: "system"` is rejected inside `messages`.** It goes through
-  `instructions`, which accepts a string, one system message, or an **array**.
-  The array form is what makes a cached prefix plus volatile suffixes possible.
-* A `ToolUIPart` in state `input-streaming` has `input?: DeepPartial<…>` —
-  partial, and typed as such.
-* `stopWhen` takes an array; `hasToolCall(name)` is exported alongside
-  `stepCountIs(n)`.
+* `useChat` does not manage input; the caller owns the text state and calls `sendMessage({ text })`. Per-request data goes in the second argument: `sendMessage({text}, {body: {...}})`.
+* **`role: "system"` is rejected inside `messages`.** It goes through `instructions`, which accepts a string, one system message, or an **array** — the array form is what makes a cached prefix plus volatile suffixes possible.
+* A `ToolUIPart` in state `input-streaming` has `input?: DeepPartial<…>` — partial, and typed as such.
+* `stopWhen` takes an array; `hasToolCall(name)` is exported alongside `stepCountIs(n)`.
 * `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'`.
 * `buildGuestsArray(adults, kids, ages, rooms)` is positional.
 
 ### What testing taught
 
-**A green `tsc`, lint and build are not evidence this feature works.** Every
-significant defect in both eras passed all three, and the pattern held every
-time: **the failure was silent.** No exception, no red state, nothing in the
-console — a request that 400s at validation, a conversation that breaks
-permanently one turn later, a card that renders with no price, a tool call
-applied half-streamed, an optional field the model quietly never sends. Each
-looked like working software. Where a value crosses a boundary — model to tool,
-tool to store, store to card — assume nothing tells you when it fails to arrive,
-and go and look.
+**A green `tsc`, lint and build are not evidence this feature works.** Every significant defect passed all three, and the pattern held every time: **the failure was silent.** No exception, no red state, nothing in the console — a request that 400s at validation, a conversation that breaks permanently one turn later, a card with no price, a tool call applied half-streamed, an optional field the model never sends. **Where a value crosses a boundary — model to tool, tool to store, store to card — assume nothing tells you when it fails to arrive, and go and look.**
 
-**Read the store, not the screenshot:**
-`JSON.parse(sessionStorage.getItem("oltra_ai_concierge_v1"))`. Its
-`messages[].parts` hold each tool call's `input`, `state` and `output`, so "the
-model chose differently" and "the code dropped it" are distinguishable — and
-they look identical on screen.
-
-**Measure the DOM, do not read screenshots**, for anything about layout. The
-card overflow was found as `scrollWidth 413 / clientWidth 329`, not by looking.
-Same lesson as §45 and §46.
-
-**A non-deterministic model makes one passing run weak evidence.** The same
-query took two `searchHotels` calls on one run and one on the next with no code
-change. Repeat a scenario before calling it fixed.
-
-**Measure before optimising latency.** "It feels slow" had a specific shape
-(four serial round trips, 2.4s of it to emit one sentence) that reading the code
-would not have revealed, and the plausible culprit — a cache that was not
-hitting — turned out to be fine. Temporary `[perf]` logging with `onStepFinish`
-gives per-step time, tool names and cache-token counts; add it, measure, remove
-it.
-
-Speed, first era: **26.6s to 14.4s**, by removing round trips rather than tuning
-them — `searchHotels` takes an optional `stay` and returns availability with the
-candidates; `presentResults` carries the follow-up question and ends the turn;
-the prompt asks for one broad search rather than several narrow ones. The
-remaining ~14s is two Opus round trips, and the only large lever left is
-`CHAT_MODEL`, which trades against the editorial voice.
+* **Read the store, not the screenshot**: `JSON.parse(sessionStorage.getItem("oltra_ai_concierge_v1"))`. Its `messages[].parts` hold each tool call's `input`, `state` and `output`, so "the model chose differently" and "the code dropped it" are distinguishable — and they look identical on screen.
+* **Measure before optimising latency.** "It feels slow" had a specific shape (four serial round trips, 2.4s of it to emit one sentence) that reading the code would not have revealed, and the plausible culprit — a cache that wasn't hitting — turned out to be fine. Temporary `[perf]` logging with `onStepFinish` gives per-step time, tool names and cache-token counts. Speed went **26.6s → 14.4s** by removing round trips, not tuning them; the only large lever left is `CHAT_MODEL`, which trades against the editorial voice.
+* **A helper the model's output feeds into belongs in its own file, testable.** `lib/ai/flightLegs.ts` and `lib/ai/rationale.ts` exist because the model writes a different variant every run, so the only honest way to know a shape is handled is to run it. `stripLeadingName` is the example: a dash pass could not catch `Le Bristol: the city's most complete grand hotel — courtyard garden…`, where the split lands on the LATER dash; a separate colon pass within the first 60 characters, using the same 0.6 token-overlap test, does.
 
 ### Bugs worth not repeating
 
-* **One unreachable domain in the web-search allow-list breaks every request.**
-  Anthropic rejects the *whole* request at validation
-  (`400 … domains are not accessible to our user agent`), so a query that would
-  never have searched the web fails too. `cntraveler.com` and
-  `travelandleisure.com` are the two that fail — §25 already recorded both as
-  bot-blocked. Verify any domain before adding it.
-* **A tool with no `execute` produces no `tool_result`**, and the API refuses any
-  history containing an unanswered `tool_use` — so the first answer poisoned
-  every later turn. `presentResults` has a deliberately tiny `execute`.
-* **The route does not trust the history the browser sends.**
-  `sanitiseHistory.ts` strips orphaned tool calls, because the client cannot
-  always avoid persisting one (the loop can stop at `MAX_TOOL_STEPS` mid-call).
-  Without it a conversation breaks *permanently* and reloading does not help,
-  since the history is in sessionStorage.
-* **Never read a streaming tool input without checking `state`.** `framing` is
-  the first property in the schema, so it completes while `hotelIds` and `stay`
-  are still absent; reading that snapshot gave a framing line with no cards.
-  **And never use a value as a change key when an identity is available** — the
-  guard compared framing text, so once the half-formed version was stored the
-  completed call read as "no change" and was dropped entirely.
-* **Side effects do not belong in a `setState` updater.** React runs updaters
-  during render, and the mirror into `searchSession` dispatches a synchronous
-  event `SiteHeader` listens to — so it set state mid-render. React may also run
-  updaters twice.
-* **A result set is merged per facet, not replaced.** A turn about flights says
-  nothing about hotels; replacing wholesale wiped the hotel cards the moment the
-  visitor answered a follow-up. An explicit `[]` still clears.
-* **The stay comes from `stay` alone, never from a flight leg.** Leg dates are
-  the journey's, not the room's, and an open jaw's legs carry no return date —
-  reading them blanked the check-out and the prices went with it.
-* **Nothing told the model what day it is**, so it assumed the current year and
-  sent a past check-in, which the supplier rejected — and the model reported
-  that as "the availability service isn't responding". `checkAvailability` now
-  rejects a past check-in itself, because prompt guidance alone leaves the same
-  dead end whenever the model slips.
-* **The rationale repeated the property's name** ("Le Meurice — Le Meurice —
-  grand old Paris") because a sentence needs a subject. Fixed in the prompt and,
-  since prompts regress, in the renderer — matched on tokens, not exact text,
-  because the model writes a variant ("Mandarin Oriental Lutetia" for a record
-  named "Mandarin Oriental, Lutetia, Paris").
-* **Seven CSS classes the first era referenced never existed in
-  `page.module.css`** — modules resolve a missing class to `undefined`, so those
-  elements rendered unstyled and nothing reported it.
+* **One unreachable domain in the web-search allow-list breaks every request** — Anthropic rejects the *whole* request at validation, so a query that would never have searched the web fails too. `cntraveler.com` and `travelandleisure.com` both fail (§25 recorded them as bot-blocked).
+* **The route does not trust the history the browser sends.** `sanitiseHistory.ts` strips orphaned tool calls, because the client cannot always avoid persisting one (the loop can stop at `MAX_TOOL_STEPS` mid-call). Without it a conversation breaks *permanently* and reloading doesn't help.
+* **Never read a streaming tool input without checking `state`.** `framing` is first in the schema, so it completes while `hotelIds` and `stay` are still absent, giving a framing line with no cards. **And never use a value as a change key when an identity is available** - the guard compared framing text, so once the half-formed version was stored the completed call read as "no change" and was dropped entirely.
 
-### Other operational notes
+### Web search poisoned the conversation — fixed
 
-* Running `npm run build` while `npm run dev` is live corrupts `.next` and the
-  dev server starts throwing `MODULE_NOT_FOUND` (the §34 flakiness — stop dev,
-  `rm -rf .next`, restart).
-* `form_input` on a React-controlled field sets the DOM value without firing
-  React's `onChange`, so the state stays empty and the form submits blank. Use a
-  real click plus typed keys.
-* **The §49 encoding trap recurs.** Python's `open(p, 'w')` uses the locale codec
-  on Windows, so a read/write round-trip survives but *new* non-ASCII text is
-  corrupted — silently, if `tsc` has not run. Use the Edit/Write tools for
-  anything with non-ASCII, or read/write bytes and encode UTF-8 yourself. Check
-  with `python -c "open('path','rb').read().decode('utf-8')"`.
-* `DEP0169 url.parse()` in the dev log is Next's own
-  (`next/dist/server/lib/router-server.js`), not ours.
-* Credit exhaustion surfaces as `AI_APICallError: Your credit balance is too
-  low` on both triage and chat, and reaches the visitor as the generic "please
-  try again" — which retrying cannot fix. Only the route's own 4xx rejections
-  carry a specific reason today.
+Web search was the one path never exercised at runtime. It has now been exercised, and it took the feature down again.
 
-### UI round, 2026-09-08 — five fixes, all found in the browser
+**Symptom.** A question triggering Anthropic's server-side search answers fine; every turn after it fails with the generic "I couldn't answer that just now" — so **answering the concierge's own follow-up is what kills the conversation**, and a reload doesn't help, because the history is in sessionStorage.
 
-Rollback map, per §33. Each was reproduced live before it was touched, and the
-two that are geometry were measured rather than looked at (§45/§46).
+**Cause.** Web search is a PROVIDER-EXECUTED tool: it returns a `dynamic-tool` part with `providerExecuted: true` and a `srvtoolu_` id — not a call we answer — and replaying it produces a result block with no `server_tool_use` before it. `dropUnansweredToolCalls` cannot catch this: the part **has** its output, it is simply not replayable. **Fix**, in `sanitiseHistory.ts`: `dropProviderExecutedTools`, applied to the UI messages **before** `convertToModelMessages`, where `providerExecuted` is still visible on the part.
 
-* **A there-and-back is one round trip.** `lib/ai/flightLegs.ts`'s
-  `collapseReturnLegs` folds a mirrored one-way pair — B leaves from where A
-  landed, on or after A's departure — into one leg with a `returnDate`, applied
-  in `readLatestPresentation` so the summary, the frames, the handoff URL and
-  the Flights page's trip type all read the same journey. The prompt already
-  asked for this; the model does not always oblige, and split legs are priced
-  as two one-ways, losing the cheaper round-trip fare. An open jaw is not a
-  mirror and still travels as two legs. Eight cases exercised in Node.
-* **The flights frame said the route twice** — `Flights LHR → VCE` in the panel
-  header, `LHR → VCE` in the leg block one line below. The header is now just
-  "Flights", and a leg with a return date draws `⇆` rather than `→`, matching
-  the Flights page's own route header. Same arrow rule in the in-chat summary.
-* **Typography inverted** — see "The answer, and the in-chat summary" above.
-* **Hotel cards in the concierge frame had no SAVE.** `HotelSmallCard` has
-  supported `renderSaveControl` all along; `AiResultFrames` was the one caller
-  never passing it, so its hotels were the only result type there that could
-  not go in a trip. Its `bookingHref` also now uses the structured summary's
-  own fallback chain (booking link, then the hotel's site) instead of a bare
-  `buildBookingLink`, which returned null often enough to leave a lone SAVE.
-* **The concierge's dates now reach the classic date field.** `LandingSearchPanel`
-  reads `useAiSearch` and applies `query.from`/`to` once per `presentedAt` —
-  the Inspire mirror's rule, so it never fights a date picked by hand. Safe to
-  read that context there despite streaming: it is memoised on individual
-  fields, so a token does not change its identity. Setting the state cannot
-  trigger the auto-submit, which fires from the field handlers; the mount-time
-  auto-submit does then carry the dates into the URL, which is wanted, and
-  cannot displace the answer because `markClassicSearch` is gated on a
-  destination.
-* **BOOK and SAVE were not on the same line in a flight row.** Measured at the
-  three-frame width: BOOK at y=362 h=22, SAVE at y=391 h=25, 207px to its left.
-  As siblings of the label and price the two were free to be split by the flex
-  wrap, and the longer "Best price" label broke where "Fastest" did not, so the
-  pair did not line up down the column either. They are now one
-  `.flightRowActions` flex unit that takes a line of its own at that width, and
-  `align-items: center` on it absorbs the descender space the Save control's
-  block wrapper adds. After: both rows y-aligned, both buttons 84×22.
+**The reasoning goes with it — the first version traded one 400 for another** (`thinking blocks in the latest assistant message cannot be modified`). That turn interleaved reasoning with its tool calls, so removing a block from the middle left thinking that no longer matched what was sent. Reasoning is therefore dropped **only from the messages actually being edited**; a turn we don't touch keeps its thinking and stays valid. Nothing is lost — what the model learned from the search is already in the answer it wrote.
 
-### Second UI round, 2026-09-08 — no league table, Clear moved, flight cards
+**Verified against the poisoned conversation itself**, not a fresh one: the transcript that had been failing answered its own follow-up correctly. **A fix here has to heal, not just avoid.**
 
-* **The concierge does not rank the collection.** Asked "the 3 best hotels in
-  Paris" it named three and called them "the three that stand above the rest".
-  There is no ranking behind the collection, so that was invented. A new
-  prompt section, `"The best" — the one question you answer with a question`,
-  answers instead with "I can highly recommend all hotels on myOLTRA" plus a
-  request for something to judge on, and holds it under pressure.
+### Home airport
 
-  **The exception is deliberately narrow, and the prompt says so twice**, because
-  §50's own record is that a prompt tightened for brevity once read as
-  permission to ask *instead of* showing. It applies only when there is nothing
-  to rank by; "hotels in Paris" still searches and shows, and so does any
-  request carrying a quarter, a spa, a brand, a budget or a date. Verified live
-  across three turns: the refusal, a push ("just pick three, you must have an
-  opinion" → "I'll hold the line on that one"), and then a criterion, which
-  produced three hotels with reasons.
+Trips start from the member's home airport. The column has existed since the members area was built and the Flights page has read it since, but the landing page kept its own copy in localStorage and the concierge knew nothing about it — so the same member got three answers to "where do you fly from". `lib/members/useHomeAirport.ts` is now the single reader: an `origin` in the URL or an airport picked in the popover, then the profile, then whatever the browser remembered.
 
-  A cross-reference was added at "Show first ... A question never replaces
-  results", so the two rules are read together rather than as a contradiction.
+**Two things had to be got right.** The column is free text and has held three shapes — `CPH`, `CPH · Copenhagen Kastrup, DK`, and `Copenhagen (CPH)` — so `readAirportCode` covers all three and refuses anything it cannot read confidently (a bare `[A-Z]{3}` sweep turns "San Francisco" into SAN). And the profile value kept losing to a stale LHR, because the auto-submit writes `origin` into the URL and the searchParams effect reads it back, so a value applied while an older URL was in flight was overwritten by an echo of what it had just replaced. **The effect therefore asserts rather than fills a blank**, with `homeAirport` in its dependencies, and calls `scheduleAutoSubmit()` when it changes the value.
 
-* **Clear moved to the header, beside Exit.** Both act on the whole
-  conversation; next to Ask it read as a third way to send. It is the same
-  button as Exit with the border moved to `--oltra-error-text`, and it appears
-  only when there is a transcript. The header cannot reach `useChat`'s message
-  list, so the store carries a `clearSignal` the conversation watches — and
-  `hasConversation` is exposed as a **boolean**, not the message list, or the
-  header would re-render on every streamed token and take the conversation
-  with it. `.exit` is a fixed 88px rather than a min-width: on min-width the
-  longer word won and they came out 88 against 84.
-
-* **Flight cards are four lines, always.** Route first (`LHR–ORY`), then the
-  times; duration on its own line, left aligned; the airline; then the stop
-  line, which now names the airport and the wait — `via CAN, 8h 20m layover`,
-  or "Direct". Always rendered, so every card is the same height (measured:
-  16 cards, one height, 105px, no overflow) and a return trip's pair does not
-  go ragged. The route matters because the two cards of a return were
-  otherwise told apart only by their times. `describeStops` in
-  `FlightResultRow.tsx`; the times row is `nowrap`, which is what actually
-  holds the card to four lines.
-
-* **The concierge writes Markdown and the transcript printed the source.**
-  Bold and bullets came out as literal asterisks and hyphens with the newlines
-  collapsed into one run-on paragraph. Nearly invisible while almost every
-  answer arrived through `presentResults` as a single framing line — and
-  unmissable the moment declining to rank made prose answers normal. `AgentText`
-  renders bold, bullets and line breaks, and nothing else, because that is the
-  whole of what the model emits. No Markdown dependency (§2).
-
-* **The answer rendered above an older turn.** The framing block anchored to
-  the last assistant turn *with text*; a turn answering purely through
-  `presentResults` leaves that an older one, so the new answer appeared above
-  the previous reply and the previous reply reappeared below it, reading as a
-  fresh refusal. It now anchors to the `presentResults` call itself, so the
-  answer sits at the turn that produced it.
-
-**Fixed in the round below**, not left alone: `stripLeadingName` split only on
-a dash, so a rationale written as `Le Bristol: the city's most complete grand
-hotel` still printed the name twice.
-
-### Third UI round, 2026-09-08 — one italic, two colours, one prompt
-
-* **The colon case is fixed, and `stripLeadingName` moved to
-  `lib/ai/rationale.ts` to make that checkable.** The dash pass could not catch
-  it: in `Le Bristol: the city's most complete grand hotel — courtyard garden,
-  two Michelin rooms` the split lands on the LATER dash, whose head is the
-  whole first clause and barely overlaps the name. A separate pass now looks
-  for a colon within the first 60 characters and applies the same 0.6
-  token-overlap test, so a colon used mid-sentence is untouched. Nine cases in
-  Node, including the two that must NOT strip.
-
-  Extracting the helper is the point of the entry: the model writes a different
-  variant every run, so the only honest way to know a shape is handled is to
-  run it — the same reason `flightLegs.ts` exists.
-
-* **One italic in the panel, and it is the closing question.** Agent turns went
-  back to upright; the question at the end is italic with a clear break above
-  it. Two routes reach that style deliberately: `.followUp` for the field
-  `presentResults` carries, and `.closingQuestion` for the last line of a prose
-  answer when it ends in a question mark and is not a bullet. Without the
-  second, the same question was italic after a set of results and upright after
-  a plain reply — the prose case has no `followUp` field to style.
-
-* **Two colours, extended to prose.** The summary already set names in
-  `--oltra-text-primary` and rationales in `--oltra-text-muted`. Prose bullets
-  now do the same, and it needs no extra markup: the model bolds the lead and
-  explains after it, so `li { muted }` with `li strong { primary }` puts the
-  split exactly where the meaning does.
-
-* **One opening prompt, in the input.** The panel used to say "Tell me the
-  shape of the trip…" above the box AND carry a placeholder inside it — the
-  same invitation twice before anything was typed. The paragraph is gone and
-  the placeholder now reads "What are you looking for — ask me anything about
-  your upcoming trip" — em dash, matching the site rather than the hyphen it
-  was first written with.
-
-### Web search poisoned the conversation — fixed 2026-09-08
-
-§50 listed web search as the one path never exercised at runtime, "which is
-exactly the code path that took the whole feature down once". It has now been
-exercised, and it did it again.
-
-**Symptom.** A question that triggers Anthropic's server-side search answers
-fine. Every turn after it fails with the generic "I couldn't answer that just
-now" — so **answering the concierge's own follow-up question is what kills the
-conversation**, and a reload does not help, because the history is in
-sessionStorage. Identical in shape to the orphaned-tool-call bug §50 already
-records, and invisible in the UI: the panel simply says try again.
-
-**Cause.** Web search is a PROVIDER-EXECUTED tool. It comes back as a
-`dynamic-tool` part with `providerExecuted: true` and a `srvtoolu_` id — not
-as a call we answer — and replaying it produces a result block with no
-`server_tool_use` before it:
-
-```
-messages.1.content.1: unexpected `tool_use_id` found in
-`code_execution_tool_result` blocks … Each `code_execution_tool_result` block
-must have a corresponding `server_tool_use` block before it.
-```
-
-`dropUnansweredToolCalls` cannot catch this. The part **has** its output; it is
-simply not replayable.
-
-**Fix**, in `sanitiseHistory.ts`: `dropProviderExecutedTools`, applied to the
-UI messages **before** `convertToModelMessages`, where `providerExecuted` is
-still visible on the part.
-
-**And the reasoning goes with it — the first version traded one 400 for
-another:**
-
-```
-`thinking` or `redacted_thinking` blocks in the latest assistant message
-cannot be modified. These blocks must remain as they were in the original
-response.
-```
-
-That turn interleaved reasoning with its tool calls, so removing a block from
-the middle left thinking that no longer matched what was sent. Reasoning is
-therefore dropped **only from the messages actually being edited** — a turn we
-do not touch keeps its thinking intact and stays valid. Nothing is lost: what
-the model learned from the search is already in the answer it wrote.
-
-**Verified against the poisoned conversation itself**, not a fresh one — the
-transcript that had been failing answered its own follow-up correctly, so the
-repair heals histories already sitting in real browsers. Worth remembering as
-the test to run: a fix here has to heal, not just avoid.
-
-### Buttons and the follow-up gap, same day
-
-* Exit, Clear and Ask now share `--concierge-button-width` on the panel. Ask
-  was 84px against the header's 88, because it was sized by its own shorter
-  label; they sit 400px apart, which is exactly the distance at which 4px
-  reads as a mistake.
-* The follow-up was spaced twice. `presentResults`' `followUp` is one sentence
-  ending in "?", so it matched `AgentText`'s closing-question detection and
-  took 14.4px on the paragraph on top of 8px on its wrapper and the column's
-  own gap — 42px in total, the question a clear line adrift of the answer.
-  `AgentText` now takes `detectClosingQuestion`, off at that one call site
-  because the wrapper already styles the whole block. Gap measured after: 19px.
-
-### Home airport, header blur, one flight row — 2026-09-08
-
-* **Trips start from the member's home airport.** The column has existed since
-  the members area was built and the Flights page has read it since, but the
-  landing page kept its own copy in localStorage and the concierge knew nothing
-  about it — so the same member got three answers to "where do you fly from".
-  `lib/members/useHomeAirport.ts` is now the single reader.
-
-  Order, most deliberate first: an `origin` in the URL or an airport picked in
-  the popover, then the profile, then whatever the browser remembered.
-
-  **Two things had to be got right, and both were found by looking, not by
-  reasoning.** First, the column is free text and has held three shapes over
-  its life — a bare `CPH`, `CPH · Copenhagen Kastrup, DK`, and `Copenhagen
-  (CPH)`, which InspireView still parses by hand — so `readAirportCode` covers
-  all three and refuses anything it cannot read confidently (a bare
-  `[A-Z]{3}` sweep turns "San Francisco" into SAN).
-
-  Second, the profile value kept losing to a stale LHR. The auto-submit writes
-  `origin` into the URL and the searchParams effect reads it back, so a profile
-  value applied while an older URL was in flight was overwritten moments later
-  by an echo of what it had just replaced. The effect therefore **asserts**
-  rather than fills a blank, with `homeAirport` in its dependencies, and calls
-  `scheduleAutoSubmit()` when it changes the value — without that the panel
-  said "assume you depart from Copenhagen" over fares quoted from London, which
-  is worse than saying nothing.
-
-  Stated, not implied: the landing checkbox reads "Flights assume you depart
-  from Copenhagen", the city still being the control that changes it. The
-  concierge gets the code in its page context (`homeAirport`, sanitised as IATA
-  like every other field) and the prompt tells it to assume it, say so in one
-  clause, and ask when there is none. Verified: "a long weekend in Lisbon" with
-  no origin given returned CPH ⇆ LIS and "a nonstop out of Copenhagen each way".
-
-* **The scrolled header is blurred, and now fires on every page.** It was an
-  opaque band, and it was wired to `window.scrollY` — but Hotels, Flights and
-  Restaurants bound their layout to the viewport and scroll an inner pane
-  (§30, §33), so it never fired on the three pages where the header is hardest
-  to read. It now listens in the **capture** phase on the document, which sees
-  every scroller (`scroll` does not bubble).
-
-  A first version required the scroller to be half the viewport tall, to keep
-  dropdowns out of it. Restaurants scrolls two panes of roughly 220px, so the
-  guard excluded a page it was meant to fix; there is no size that separates
-  "the main window" from "a list", so there is no size test. `is-scrolled` is
-  `rgba(18, 24, 30, 0.78)` with `blur(14px) saturate(120%)`.
-
-* **Best price and fastest collapse into one row when they are the same.**
-  `pickHeadlineItineraries` used to fall back to the SECOND fastest whenever
-  the quickest was also the cheapest, purely so the two rows held different
-  objects — which produced exactly what it was avoiding: a "Fastest" row with
-  the same departure, arrival and duration as the row above, for more money.
-  The test is now duration, not identity: if nothing is strictly quicker than
-  the cheapest fare, `fastest` is null, `bestIsAlsoFastest` is set, and the one
-  row reads "Best price and fastest". Both callers carry the flag.
+The concierge gets the code in its page context (sanitised as IATA) and the prompt tells it to assume it, say so in one clause, and ask when there is none.
 
 ### Prerequisites
 
-* `ANTHROPIC_API_KEY` — server-only, never `NEXT_PUBLIC`. On Vercel: Sensitive,
-  **Preview and Production** (Preview included, or the preview cannot answer).
-* `NEXT_PUBLIC_AI_CHAT_ENABLED` — public flag, inlined at build time, so
-  flipping it needs a redeploy.
-* **A spend cap and usage alerts in the Anthropic Console.** The in-memory rate
-  limiter is per serverless instance, so the real ceiling is (instances × cap) —
-  a cost backstop, not a control. Swap the Map for Upstash if the site ever
-  opens past `/beta-login`.
-
-### Verified, and not
-
-Exercised in a browser against a real signed-in member: hotels, flights and
-restaurants in one answer; live prices on the cards; the blur and the summary;
-the conversation resuming across a page change; a bare `/hotels` resolving to
-the concierge's own picks; the Inspire mirror setting Month and Purpose; the
-scroll lock; the "Go to combined results" handoff.
-
-**Not exercised:** the button on `/flights` and `/restaurants`; an uncovered
-restaurant city; the "See relevant hotels" branch of the handoff; the daily rate
-limit; the triage decline path in the real UI; and web search — no query has yet
-gone near the allow-list at runtime, which is exactly the code path that took
-the whole feature down once.
+* `ANTHROPIC_API_KEY` — server-only, never `NEXT_PUBLIC`. On Vercel: Sensitive, **Preview and Production** (Preview included, or the preview cannot answer).
+* `NEXT_PUBLIC_AI_CHAT_ENABLED` — public flag, inlined at build time.
+* **A spend cap and usage alerts in the Anthropic Console.** The in-memory rate limiter is per serverless instance, so the real ceiling is (instances × cap) — a cost backstop, not a control. Swap the Map for Upstash if the site ever opens past `/beta-login`.
 
 ### Deliberately not built
 
-Chat on `/hotels/[hotelid]` or in the members area, any booking/payment/write
-tool, fine-tuning, pgvector, any markup on prices, and any change to the
-standalone Restaurants page's data or design.
+Chat on `/hotels/[hotelid]` or in the members area, any booking/payment/write tool, fine-tuning, pgvector, any markup on prices, and any change to the standalone Restaurants page.
 
 ---
 
-This document serves as the baseline context for all future OLTRA development sessions.
+This document is the baseline context for all OLTRA development sessions.
