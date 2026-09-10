@@ -350,7 +350,7 @@ Code uses `window.location.origin` for `redirectTo`. Both the Vercel URL and `ht
 
 ## 17. CURRENT STATE
 
-Hotels, Restaurants, Flights and Members UI are complete and stable on `main`; the AI concierge (§50) is on branch `ai-chat` behind a flag. Ratehawk supplies availability, pricing, room selection and images on the Hotels page; booking itself is still blocked (§32). Build passes `npm run build` and `npx tsc --noEmit` clean.
+Hotels, Restaurants, Flights and Members UI are complete and stable on `main`, and the AI concierge (§50) merged into `main` on 2026-09-10 — still behind its flag, default off. Ratehawk supplies availability, pricing, room selection and images on the Hotels page; booking itself is still blocked (§32). Build passes `npm run build` and `npx tsc --noEmit` clean.
 
 Live counts (hotel totals, published splits, per-award tallies) drift — query Directus rather than trusting a number written in this file.
 
@@ -941,15 +941,17 @@ The Railway service has **not** been created: no `etg-static-sync` service, no c
 Moved to `CLAUDE-ARCHIVE.md` — completed work. Read it there if this task touches it.
 
 ---
-## 50. THE AI CONCIERGE (branch `ai-chat`)
+## 50. THE AI CONCIERGE
 
 **Design history, mechanics and the bug log are in `CLAUDE-AI.md`. Read that file before changing anything in `src/lib/ai` or `src/components/ai` — it carries the failures this feature already had.**
 
 ### Status
 
-Branch `ai-chat`; PR #7 open. `main` has none of it. Head moves with every round — read it from git, not from here, and **local commits may be ahead of the pushed branch**: the 2026-09-10 work was committed and not pushed.
+**On `main` since 2026-09-10** — merged as a fast-forward of the 31 `ai-chat` commits, so the history stays the linear series §14 asks for. `ai-chat` is now a stale pointer at the same commit; work on `main` like everything else.
 
-Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, default off, so it can sit on production invisibly. The flag gates the route, the modal and the entry button. It was first built as a *mode* on the landing page behind a Classic/AI toggle; `5622166` made it a modal the whole site can open, and **everything below describes the current design**. `90bef47` (header greeting) and `58dc6eb` (beta-login hang) are **not** part of the feature — separate commits so they can be cherry-picked to `main`.
+Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, **default off**, which is what made merging safe: the flag gates the route, the modal and the entry button, so the code sits on production invisibly until the variable is set. **It is not set on Vercel** — setting it there is a deliberate, separate act, and needs a redeploy because Next inlines it at build time.
+
+It was first built as a *mode* on the landing page behind a Classic/AI toggle; `5622166` made it a modal the whole site can open, and **everything below describes the current design**.
 
 **Local prerequisite that is easy to lose an hour to**: `NEXT_PUBLIC_AI_CHAT_ENABLED=1` is in no committed environment — it goes in `.env.local` by hand. Without it the button doesn't render and `/api/chat` answers 404, which looks exactly like the feature being broken rather than switched off. Inlined at build time, so a change needs a dev-server restart locally and a redeploy on Vercel.
 
