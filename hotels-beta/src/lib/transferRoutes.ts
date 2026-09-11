@@ -205,6 +205,36 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "haul south - allow the better part of a day.",
   },
 
+  /* Val d'Isere - a NEGATIVE route, and the useful kind. There is no second
+   * airport and no onward flight: you land at Geneva and drive. Recorded
+   * precisely so the concierge stops hedging about "the transfer" on a leg
+   * that is simply a car up a valley.
+   *
+   * It is also the other half of the Turin fix. The gateway override moved the
+   * arrival airport; without this the answer still ended at "fly to Geneva,
+   * I'll confirm the transfer", when the drive is the least mysterious part of
+   * the journey.
+   *
+   * `arrangedByHotel` is deliberately unset. Unlike the safari camps, a
+   * Tarentaise transfer is as often a shared shuttle or a car the guest books
+   * as something the hotel handles, so claiming the hotel arranges it would be
+   * wrong for half the properties.
+   *
+   * The figures are Ulrik's, from checking the route himself: about 175km and
+   * three hours. Chambery and Lyon stay in the airport list rather than here —
+   * this file answers "how do I get there from the airport", not "which
+   * airport", and duplicating that choice in two places is how the two drift
+   * apart. */
+  "Val d'Isere": {
+    arriveAt: "GVA",
+    arriveAtLabel: "Geneva",
+    legs: [{ mode: "road", to: "the resort" }],
+    note:
+      "About three hours up the Tarentaise valley, roughly 175km. Shuttle " +
+      "buses and private transfers both run through the ski season. There is " +
+      "no onward flight - the drive is the whole of it.",
+  },
+
   // ---- Botswana ----
   "Okavango Delta": {
     arriveAt: "MUB",

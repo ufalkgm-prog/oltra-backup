@@ -347,6 +347,21 @@ far longer than the line across it. Reordering by distance instead would have
 made `pickPrimaryAirportForCity` — which favours the longest runway — answer
 **Lyon**, which is worse.
 
+**Val d'Isère then got a transfer route too**, and it is a NEGATIVE one of the
+useful kind: no second airport, no onward flight, you land at Geneva and drive
+about three hours up the Tarentaise, roughly 175km. That is the other half of
+the Turin fix — the override moved the arrival airport, but without the route
+the answer still ended at "fly to Geneva, I'll confirm the transfer", on the
+least mysterious leg of the journey.
+
+`arrangedByHotel` is deliberately unset there. Unlike a safari camp, a
+Tarentaise transfer is as often a shared shuttle or a car the guest books as
+something the hotel handles, so claiming the hotel arranges it would be wrong
+for half the properties. **Chambéry and Lyon stay in the airport list and out of
+the route**, because this file answers "how do I get there from the airport",
+not "which airport" — holding that choice in two places is how the two drift
+apart.
+
 **Third sighting of the stale transcript.** The first two post-fix answers still
 said Turin, quoting "about 59 km", our *old* stored value. It was not a stale
 module: the conversation already contained Turin, and the model elaborated on
