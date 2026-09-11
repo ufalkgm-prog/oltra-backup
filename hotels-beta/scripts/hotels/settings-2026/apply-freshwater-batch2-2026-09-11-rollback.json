@@ -1,0 +1,1529 @@
+[
+  {
+    "at": "2026-09-11T10:55:44.269Z",
+    "batch": "freshwater-2",
+    "changes": [
+      {
+        "id": "1004",
+        "name": "Four Seasons Hotel Cairo at Nile Plaza",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1005",
+        "name": "Four Seasons Hotel Cairo at The First Residence",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1081",
+        "name": "LUX* Chongzuo, Guangxi",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Countryside",
+            "Riverside"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "Countryside",
+            "Waterfront"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1105",
+        "name": "Four Seasons Hotel Hangzhou at West Lake",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1111",
+        "name": "Taj Lake Palace, Udaipur",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1113",
+        "name": "The Oberoi Mumbai",
+        "choice": "Oceanfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "Riverside"
+          ],
+          "primary_setting": "Riverside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1142",
+        "name": "The Ritz-Carlton, Kyoto",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1147",
+        "name": "The Windsor Hotel TOYA",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1197",
+        "name": "Anantara Riverside Bangkok Resort",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1198",
+        "name": "Avani+ Riverside Bangkok Hotel",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1210",
+        "name": "Mandarin Oriental, Bangkok",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1218",
+        "name": "SO/ Bangkok",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1222",
+        "name": "The Peninsula Bangkok",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1223",
+        "name": "The Siam",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1235",
+        "name": "The Reverie Saigon",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1328",
+        "name": "Fleur de Loire",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Countryside",
+            "Riverside"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "Countryside",
+            "Waterfront"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1346",
+        "name": "Hotel Royal",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1376",
+        "name": "Fairmont Hotel Vier Jahreszeiten",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1379",
+        "name": "The Fontenay Hamburg",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1415",
+        "name": "Four Seasons Hotel Gresham Palace Budapest",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1441",
+        "name": "Grand Hotel a Villa Feltrinelli",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1444",
+        "name": "Grand Hotel Fasano",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside",
+            "Countryside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": "Countryside"
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "Countryside"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": "Countryside"
+        }
+      },
+      {
+        "id": "1447",
+        "name": "Grand Hotel Tremezzo",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1458",
+        "name": "Il Sereno Lago di Como",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1461",
+        "name": "Mandarin Oriental, Lago di Como",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1468",
+        "name": "Passalacqua",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1469",
+        "name": "Portrait Firenze",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1484",
+        "name": "The St. Regis Venice",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Canalside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Canalside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1486",
+        "name": "Villa d'Este",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1488",
+        "name": "Villa e Palazzo Aminta",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside",
+            "Countryside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": "Countryside"
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "Countryside"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": "Countryside"
+        }
+      },
+      {
+        "id": "1495",
+        "name": "De L’Europe Amsterdam",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Canalside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Canalside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1496",
+        "name": "Hotel Okura Amsterdam",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Canalside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Canalside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1497",
+        "name": "Sofitel Legend The Grand Amsterdam Hotel",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Canalside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Canalside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1511",
+        "name": "The Torridon",
+        "choice": "Oceanfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1543",
+        "name": "Beau Rivage Palace",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1544",
+        "name": "Bürgenstock Hotel & Alpine Spa",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside",
+            "Mountains"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": "Mountains"
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "Mountains"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": "Mountains"
+        }
+      },
+      {
+        "id": "1546",
+        "name": "Fairmont Le Montreux Palace",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside",
+            "Mountains"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": "Mountains"
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "Mountains"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": "Mountains"
+        }
+      },
+      {
+        "id": "1547",
+        "name": "Four Seasons Hotel des Bergues",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1548",
+        "name": "Grand Hôtel du Lac",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1550",
+        "name": "Grand Hotel Les Trois Rois",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1551",
+        "name": "Grand Hotel National",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1556",
+        "name": "Hotel d'Angleterre Geneva",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1558",
+        "name": "La Réserve Genève Hotel & Spa",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1559",
+        "name": "La Réserve Eden au Lac Zurich",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1563",
+        "name": "Mandarin Oriental Palace, Luzern",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1565",
+        "name": "Park Hotel Vitznau",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1572",
+        "name": "THE VIEW Lugano",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1573",
+        "name": "The Woodward",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1579",
+        "name": "Ciragan Palace Kempinski",
+        "choice": "Oceanfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1581",
+        "name": "Four Seasons Hotel Istanbul at the Bosphorus",
+        "choice": "Oceanfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1586",
+        "name": "The Peninsula Istanbul",
+        "choice": "Oceanfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1601",
+        "name": "Four Seasons Hotel Abu Dhabi at Al Maryah Island",
+        "choice": "Waterfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "City",
+            "Canalside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Canalside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1610",
+        "name": "Rosewood Abu Dhabi",
+        "choice": "Waterfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "City",
+            "Canalside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Canalside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1620",
+        "name": "Fairmont Chateau Lake Louise",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1673",
+        "name": "Four Seasons Hotel New Orleans",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1689",
+        "name": "Edgewood Tahoe Resort",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1696",
+        "name": "Montage Palmetto Bluff",
+        "choice": "Waterfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "Riverside"
+          ],
+          "primary_setting": "Riverside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1730",
+        "name": "The Liberty Hotel",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1754",
+        "name": "The Ritz-Carlton Reynolds, Lake Oconee",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside"
+          ],
+          "primary_setting": "Lakeside",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1765",
+        "name": "Thompson Savannah",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1777",
+        "name": "Llao Llao Resort & Golf-Spa",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Mountains",
+            "Lakeside"
+          ],
+          "primary_setting": "Mountains",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "Mountains",
+            "Waterfront"
+          ],
+          "primary_setting": "Mountains",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1782",
+        "name": "Hotel das Cataratas",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Rainforest",
+            "Riverside"
+          ],
+          "primary_setting": "Rainforest",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "Rainforest",
+            "Waterfront"
+          ],
+          "primary_setting": "Rainforest",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1808",
+        "name": "Eichardt's Private Hotel",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Lakeside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1809",
+        "name": "Rosewood Matakauri",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Countryside",
+            "Lakeside"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "Countryside",
+            "Waterfront"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1832",
+        "name": "Rosewood Amsterdam",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "City",
+            "Canalside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Canalside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "1839",
+        "name": "Clayoquot Wilderness Lodge",
+        "choice": "Waterfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "Countryside",
+            "Riverside"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "Countryside",
+            "Waterfront"
+          ],
+          "primary_setting": "Countryside",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "2043",
+        "name": "Four Seasons Resort Bali at Sayan",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Riverside",
+            "Jungle"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "Jungle"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2049",
+        "name": "Rosewood Washington, D.C.",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Canalside",
+            "City"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "City"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2054",
+        "name": "Rosewood Schloss Fuschl",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Lakeside",
+            "Mountains"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "Mountains"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2058",
+        "name": "Rosewood Luang Prabang",
+        "choice": "Waterfront",
+        "judged": false,
+        "before": {
+          "setting": [
+            "Jungle",
+            "Riverside"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Jungle",
+            "Waterfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "3031",
+        "name": "Mandarin Oriental, Old Cataract, Aswan",
+        "choice": "Waterfront",
+        "judged": true,
+        "before": {
+          "setting": [
+            "Riverside",
+            "Clifftop"
+          ],
+          "primary_setting": "Riverside",
+          "secondary_setting": "Clifftop"
+        },
+        "after": {
+          "setting": [
+            "Waterfront"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": null
+        }
+      }
+    ]
+  }
+]

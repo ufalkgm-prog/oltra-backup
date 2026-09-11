@@ -750,14 +750,18 @@ A passive hotel shows **"Check availability on website"** linked to `www` (delib
 | Batch | Scope | Status |
 |---|---|---|
 | 1 | the 37 tagged `Waterfront` | **Applied 2026-09-10** — 36 written, 1 no-op, 0 failures, verified by re-read |
-| 2 | `Lakeside` + `Riverside` + `Canalside` (71) | Not started. Mechanical merge, no review needed |
+| 2 | `Lakeside` + `Riverside` + `Canalside` (71) | **Applied 2026-09-11** — 71 written, 0 failures, verified. All three values now at zero |
 | 3 | `Coastal` (31) + `Oceanfront` (35) | Not started. Verify against the 20-minute line |
 | 4 | `Seaside` (4) + `Clifftop` (5) | Not started. Retire |
 | 5 | `Beachfront` (~163) | Not started. Sweep for road-separated cases → `Beach` |
 
-Batch 1 artefacts: `scripts/hotels/settings-2026/apply-waterfront-batch1-2026-09-10.mjs` and its appending rollback record. **A one-time record of a reviewed session, not a tool** — copy the pattern for the next batch, per §24.
+Batch 2 artefacts: `apply-freshwater-batch2-2026-09-11.mjs` + rollback. Batch 1: `scripts/hotels/settings-2026/apply-waterfront-batch1-2026-09-10.mjs` and its appending rollback record. **A one-time record of a reviewed session, not a tool** — copy the pattern for the next batch, per §24.
 
 **Only the water tag is touched.** A hotel tagged `["City","Waterfront"]` keeps `City`; the water value is replaced in the array and in whichever of `primary_setting`/`secondary_setting` held it. Explicit instruction, and it is what makes a batch safe against rows whose other tags were never reviewed.
+
+**"Mechanical" was wrong, and checking cost one query.** Batch 2 was called a straight rename needing no review. Ten of the 71 turned out to be SALT water wearing a freshwater tag: the Oberoi Mumbai tagged `Riverside` while facing the Arabian Sea, three Bosphorus hotels the same, and Loch Torridon — a sea loch — tagged `Lakeside`, its own highlights calling it a "lakeside escape". A merge is only mechanical once you have looked at what is being merged.
+
+The three Bosphorus hotels were set to `Oceanfront` to match Mandarin Oriental Bosphorus from batch 1. **Four hotels on one strait had to agree**, and only the review surfaced that they did not.
 
 ### What the machine cannot decide, measured not assumed
 
