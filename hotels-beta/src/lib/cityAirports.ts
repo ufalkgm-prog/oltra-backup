@@ -485,8 +485,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SIG", label: "Fernando Luis Ribas Dominicci", distKm: 21, size: "medium", runwayM: 1621 }
   ],
   "Dubai": [
-    { iata: "DXB", label: "Dubai", distKm: 12, size: "large", runwayM: 8798 },
-    { iata: "DWC", label: "Al Maktoum", distKm: 35, size: "large", runwayM: 6338 }
+    { iata: "DXB", label: "Dubai", distKm: 19, size: "large", runwayM: 8798 },
+    { iata: "DWC", label: "Al Maktoum", distKm: 30, size: "large", runwayM: 6338 }
   ],
   "Dublin": [
     { iata: "DUB", label: "Dublin", distKm: 9, size: "large", runwayM: 7819 }
@@ -1356,6 +1356,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Rangali Island": [
     { iata: "VAM", label: "Villa Maamigili", distKm: 20, size: "medium", runwayM: 1800 }
+  ],
+  "Ras Al Khaimah": [
+    { iata: "RKT", label: "Ras Al Khaimah", distKm: 11, size: "large", runwayM: 3760 }
   ],
   "Ravello": [
     { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 25, size: "medium", runwayM: 1962 },

@@ -1,0 +1,1195 @@
+{
+  "at": "2026-09-11T13:39:56.923Z",
+  "field": "admin_region",
+  "beforeMeta": {
+    "id": 194,
+    "collection": "hotels",
+    "field": "admin_region",
+    "special": null,
+    "interface": "select-dropdown",
+    "options": {
+      "choices": [
+        {
+          "text": "Ad Dakhiliyah Governorate",
+          "value": "Ad Dakhiliyah Governorate"
+        },
+        {
+          "text": "Alajuela Province",
+          "value": "Alajuela Province"
+        },
+        {
+          "text": "Alberta",
+          "value": "Alberta"
+        },
+        {
+          "text": "Alif Dhaal Atoll",
+          "value": "Alif Dhaal Atoll"
+        },
+        {
+          "text": "Andalusia",
+          "value": "Andalusia"
+        },
+        {
+          "text": "Anguilla",
+          "value": "Anguilla"
+        },
+        {
+          "text": "Antigua",
+          "value": "Antigua"
+        },
+        {
+          "text": "Aosta Valley",
+          "value": "Aosta Valley"
+        },
+        {
+          "text": "Arizona",
+          "value": "Arizona"
+        },
+        {
+          "text": "Arusha Region",
+          "value": "Arusha Region"
+        },
+        {
+          "text": "Aswan Governorate",
+          "value": "Aswan Governorate"
+        },
+        {
+          "text": "Attica",
+          "value": "Attica"
+        },
+        {
+          "text": "Ba",
+          "value": "Ba"
+        },
+        {
+          "text": "Ba Ria-Vung Tau Province",
+          "value": "Ba Ria-Vung Tau Province"
+        },
+        {
+          "text": "Baa Atoll",
+          "value": "Baa Atoll"
+        },
+        {
+          "text": "Baden-Württemberg",
+          "value": "Baden-Württemberg"
+        },
+        {
+          "text": "Bahia",
+          "value": "Bahia"
+        },
+        {
+          "text": "Baja California Sur",
+          "value": "Baja California Sur"
+        },
+        {
+          "text": "Baku",
+          "value": "Baku"
+        },
+        {
+          "text": "Balearic Islands",
+          "value": "Balearic Islands"
+        },
+        {
+          "text": "Bali",
+          "value": "Bali"
+        },
+        {
+          "text": "Bangkok",
+          "value": "Bangkok"
+        },
+        {
+          "text": "Basel-Stadt",
+          "value": "Basel-Stadt"
+        },
+        {
+          "text": "Bavaria",
+          "value": "Bavaria"
+        },
+        {
+          "text": "Beijing Municipality",
+          "value": "Beijing Municipality"
+        },
+        {
+          "text": "Belgrade",
+          "value": "Belgrade"
+        },
+        {
+          "text": "Berkshire",
+          "value": "Berkshire"
+        },
+        {
+          "text": "Berlin",
+          "value": "Berlin"
+        },
+        {
+          "text": "Bern",
+          "value": "Bern"
+        },
+        {
+          "text": "Bourgogne-Franche-Comté",
+          "value": "Bourgogne-Franche-Comté"
+        },
+        {
+          "text": "British Columbia",
+          "value": "British Columbia"
+        },
+        {
+          "text": "Budapest",
+          "value": "Budapest"
+        },
+        {
+          "text": "Budva Municipality",
+          "value": "Budva Municipality"
+        },
+        {
+          "text": "Buenos Aires",
+          "value": "Buenos Aires"
+        },
+        {
+          "text": "Busan",
+          "value": "Busan"
+        },
+        {
+          "text": "Caicos Islands",
+          "value": "Caicos Islands"
+        },
+        {
+          "text": "Cairo Governorate",
+          "value": "Cairo Governorate"
+        },
+        {
+          "text": "Cakaudrove",
+          "value": "Cakaudrove"
+        },
+        {
+          "text": "California",
+          "value": "California"
+        },
+        {
+          "text": "Campania",
+          "value": "Campania"
+        },
+        {
+          "text": "Canary Islands",
+          "value": "Canary Islands"
+        },
+        {
+          "text": "Capital Region",
+          "value": "Capital Region"
+        },
+        {
+          "text": "Catalonia",
+          "value": "Catalonia"
+        },
+        {
+          "text": "Ceará",
+          "value": "Ceará"
+        },
+        {
+          "text": "Central Java",
+          "value": "Central Java"
+        },
+        {
+          "text": "Central Macedonia",
+          "value": "Central Macedonia"
+        },
+        {
+          "text": "Centre-Val de Loire",
+          "value": "Centre-Val de Loire"
+        },
+        {
+          "text": "Chiang Mai Province",
+          "value": "Chiang Mai Province"
+        },
+        {
+          "text": "Chiang Rai Province",
+          "value": "Chiang Rai Province"
+        },
+        {
+          "text": "Chobe District",
+          "value": "Chobe District"
+        },
+        {
+          "text": "Colorado",
+          "value": "Colorado"
+        },
+        {
+          "text": "Community of Madrid",
+          "value": "Community of Madrid"
+        },
+        {
+          "text": "Corsica",
+          "value": "Corsica"
+        },
+        {
+          "text": "County Clare",
+          "value": "County Clare"
+        },
+        {
+          "text": "County Dublin",
+          "value": "County Dublin"
+        },
+        {
+          "text": "County Laois",
+          "value": "County Laois"
+        },
+        {
+          "text": "County Limerick",
+          "value": "County Limerick"
+        },
+        {
+          "text": "County Mayo",
+          "value": "County Mayo"
+        },
+        {
+          "text": "Crete",
+          "value": "Crete"
+        },
+        {
+          "text": "Cusco Region",
+          "value": "Cusco Region"
+        },
+        {
+          "text": "Da Nang",
+          "value": "Da Nang"
+        },
+        {
+          "text": "Delhi",
+          "value": "Delhi"
+        },
+        {
+          "text": "Dhaalu Atoll",
+          "value": "Dhaalu Atoll"
+        },
+        {
+          "text": "District of Columbia",
+          "value": "District of Columbia"
+        },
+        {
+          "text": "Doha Municipality",
+          "value": "Doha Municipality"
+        },
+        {
+          "text": "Dorado",
+          "value": "Dorado"
+        },
+        {
+          "text": "Dubrovnik-Neretva County",
+          "value": "Dubrovnik-Neretva County"
+        },
+        {
+          "text": "East Nusa Tenggara",
+          "value": "East Nusa Tenggara"
+        },
+        {
+          "text": "Emirate of Abu Dhabi",
+          "value": "Emirate of Abu Dhabi"
+        },
+        {
+          "text": "Emirate of Dubai",
+          "value": "Emirate of Dubai"
+        },
+        {
+          "text": "Flacq District",
+          "value": "Flacq District"
+        },
+        {
+          "text": "Florida",
+          "value": "Florida"
+        },
+        {
+          "text": "Gaafu Alifu Atoll",
+          "value": "Gaafu Alifu Atoll"
+        },
+        {
+          "text": "Galápagos Province",
+          "value": "Galápagos Province"
+        },
+        {
+          "text": "Gandaki Province",
+          "value": "Gandaki Province"
+        },
+        {
+          "text": "Geneva",
+          "value": "Geneva"
+        },
+        {
+          "text": "Georgia",
+          "value": "Georgia"
+        },
+        {
+          "text": "Grand Cayman",
+          "value": "Grand Cayman"
+        },
+        {
+          "text": "Graubünden",
+          "value": "Graubünden"
+        },
+        {
+          "text": "Greater London",
+          "value": "Greater London"
+        },
+        {
+          "text": "Grenadines",
+          "value": "Grenadines"
+        },
+        {
+          "text": "Guanacaste Province",
+          "value": "Guanacaste Province"
+        },
+        {
+          "text": "Guanajuato",
+          "value": "Guanajuato"
+        },
+        {
+          "text": "Guangdong",
+          "value": "Guangdong"
+        },
+        {
+          "text": "Guangxi",
+          "value": "Guangxi"
+        },
+        {
+          "text": "Guerrero",
+          "value": "Guerrero"
+        },
+        {
+          "text": "Haa Dhaalu Atoll",
+          "value": "Haa Dhaalu Atoll"
+        },
+        {
+          "text": "Hainan",
+          "value": "Hainan"
+        },
+        {
+          "text": "Hamburg",
+          "value": "Hamburg"
+        },
+        {
+          "text": "Hampshire",
+          "value": "Hampshire"
+        },
+        {
+          "text": "Hanoi",
+          "value": "Hanoi"
+        },
+        {
+          "text": "Hardap Region",
+          "value": "Hardap Region"
+        },
+        {
+          "text": "Haute-Savoie",
+          "value": "Haute-Savoie"
+        },
+        {
+          "text": "Hawaii",
+          "value": "Hawaii"
+        },
+        {
+          "text": "Hawke's Bay",
+          "value": "Hawke's Bay"
+        },
+        {
+          "text": "Herceg Novi Municipality",
+          "value": "Herceg Novi Municipality"
+        },
+        {
+          "text": "Ho Chi Minh City",
+          "value": "Ho Chi Minh City"
+        },
+        {
+          "text": "Hokkaido",
+          "value": "Hokkaido"
+        },
+        {
+          "text": "Hong Kong",
+          "value": "Hong Kong"
+        },
+        {
+          "text": "Île-de-France",
+          "value": "Île-de-France"
+        },
+        {
+          "text": "Illinois",
+          "value": "Illinois"
+        },
+        {
+          "text": "Inhambane Province",
+          "value": "Inhambane Province"
+        },
+        {
+          "text": "Inner Islands",
+          "value": "Inner Islands"
+        },
+        {
+          "text": "Ionian Islands",
+          "value": "Ionian Islands"
+        },
+        {
+          "text": "Istanbul Province",
+          "value": "Istanbul Province"
+        },
+        {
+          "text": "Istria County",
+          "value": "Istria County"
+        },
+        {
+          "text": "Jakarta",
+          "value": "Jakarta"
+        },
+        {
+          "text": "Jalisco",
+          "value": "Jalisco"
+        },
+        {
+          "text": "Jerusalem District",
+          "value": "Jerusalem District"
+        },
+        {
+          "text": "Jiangsu",
+          "value": "Jiangsu"
+        },
+        {
+          "text": "Kaafu Atoll",
+          "value": "Kaafu Atoll"
+        },
+        {
+          "text": "Kadavu",
+          "value": "Kadavu"
+        },
+        {
+          "text": "Kajiado County",
+          "value": "Kajiado County"
+        },
+        {
+          "text": "Karnataka",
+          "value": "Karnataka"
+        },
+        {
+          "text": "Kedah",
+          "value": "Kedah"
+        },
+        {
+          "text": "Khanh Hoa Province",
+          "value": "Khanh Hoa Province"
+        },
+        {
+          "text": "Khomas Region",
+          "value": "Khomas Region"
+        },
+        {
+          "text": "Kien Giang Province",
+          "value": "Kien Giang Province"
+        },
+        {
+          "text": "Krabi Province",
+          "value": "Krabi Province"
+        },
+        {
+          "text": "Kuala Lumpur",
+          "value": "Kuala Lumpur"
+        },
+        {
+          "text": "KwaZulu-Natal",
+          "value": "KwaZulu-Natal"
+        },
+        {
+          "text": "Kyoto Prefecture",
+          "value": "Kyoto Prefecture"
+        },
+        {
+          "text": "Laamu Atoll",
+          "value": "Laamu Atoll"
+        },
+        {
+          "text": "Laikipia County",
+          "value": "Laikipia County"
+        },
+        {
+          "text": "Lazio",
+          "value": "Lazio"
+        },
+        {
+          "text": "Leeward Islands",
+          "value": "Leeward Islands"
+        },
+        {
+          "text": "Lhaviyani Atoll",
+          "value": "Lhaviyani Atoll"
+        },
+        {
+          "text": "Liguria",
+          "value": "Liguria"
+        },
+        {
+          "text": "Lima Region",
+          "value": "Lima Region"
+        },
+        {
+          "text": "Limpopo",
+          "value": "Limpopo"
+        },
+        {
+          "text": "Lisbon District",
+          "value": "Lisbon District"
+        },
+        {
+          "text": "Lombardy",
+          "value": "Lombardy"
+        },
+        {
+          "text": "Louisiana",
+          "value": "Louisiana"
+        },
+        {
+          "text": "Luang Prabang Province",
+          "value": "Luang Prabang Province"
+        },
+        {
+          "text": "Lucerne",
+          "value": "Lucerne"
+        },
+        {
+          "text": "Macau",
+          "value": "Macau"
+        },
+        {
+          "text": "Madeira",
+          "value": "Madeira"
+        },
+        {
+          "text": "Magallanes Region",
+          "value": "Magallanes Region"
+        },
+        {
+          "text": "Maharashtra",
+          "value": "Maharashtra"
+        },
+        {
+          "text": "Mahé",
+          "value": "Mahé"
+        },
+        {
+          "text": "Maldonado Department",
+          "value": "Maldonado Department"
+        },
+        {
+          "text": "Mara Region",
+          "value": "Mara Region"
+        },
+        {
+          "text": "María Trinidad Sánchez",
+          "value": "María Trinidad Sánchez"
+        },
+        {
+          "text": "Marrakech-Safi",
+          "value": "Marrakech-Safi"
+        },
+        {
+          "text": "Masovian Voivodeship",
+          "value": "Masovian Voivodeship"
+        },
+        {
+          "text": "Massachusetts",
+          "value": "Massachusetts"
+        },
+        {
+          "text": "Masvingo Province",
+          "value": "Masvingo Province"
+        },
+        {
+          "text": "Medina Province",
+          "value": "Medina Province"
+        },
+        {
+          "text": "Mendoza Province",
+          "value": "Mendoza Province"
+        },
+        {
+          "text": "Metro Manila",
+          "value": "Metro Manila"
+        },
+        {
+          "text": "Mexico City",
+          "value": "Mexico City"
+        },
+        {
+          "text": "Mie Prefecture",
+          "value": "Mie Prefecture"
+        },
+        {
+          "text": "Monaco",
+          "value": "Monaco"
+        },
+        {
+          "text": "Montana",
+          "value": "Montana"
+        },
+        {
+          "text": "Moscow",
+          "value": "Moscow"
+        },
+        {
+          "text": "Mpumalanga",
+          "value": "Mpumalanga"
+        },
+        {
+          "text": "Muğla Province",
+          "value": "Muğla Province"
+        },
+        {
+          "text": "Musandam Governorate",
+          "value": "Musandam Governorate"
+        },
+        {
+          "text": "Muscat Governorate",
+          "value": "Muscat Governorate"
+        },
+        {
+          "text": "Narok County",
+          "value": "Narok County"
+        },
+        {
+          "text": "Nayarit",
+          "value": "Nayarit"
+        },
+        {
+          "text": "Nevada",
+          "value": "Nevada"
+        },
+        {
+          "text": "New Mexico",
+          "value": "New Mexico"
+        },
+        {
+          "text": "New Providence",
+          "value": "New Providence"
+        },
+        {
+          "text": "New South Wales",
+          "value": "New South Wales"
+        },
+        {
+          "text": "New York",
+          "value": "New York"
+        },
+        {
+          "text": "Nidwalden",
+          "value": "Nidwalden"
+        },
+        {
+          "text": "Ninh Thuan Province",
+          "value": "Ninh Thuan Province"
+        },
+        {
+          "text": "Noonu Atoll",
+          "value": "Noonu Atoll"
+        },
+        {
+          "text": "Normandy",
+          "value": "Normandy"
+        },
+        {
+          "text": "North Carolina",
+          "value": "North Carolina"
+        },
+        {
+          "text": "North Holland",
+          "value": "North Holland"
+        },
+        {
+          "text": "North Rhine-Westphalia",
+          "value": "North Rhine-Westphalia"
+        },
+        {
+          "text": "North West",
+          "value": "North West"
+        },
+        {
+          "text": "North West District",
+          "value": "North West District"
+        },
+        {
+          "text": "North Yorkshire",
+          "value": "North Yorkshire"
+        },
+        {
+          "text": "Northern Cape",
+          "value": "Northern Cape"
+        },
+        {
+          "text": "Northern Province",
+          "value": "Northern Province"
+        },
+        {
+          "text": "Northern Territory",
+          "value": "Northern Territory"
+        },
+        {
+          "text": "Northland",
+          "value": "Northland"
+        },
+        {
+          "text": "Nouvelle-Aquitaine",
+          "value": "Nouvelle-Aquitaine"
+        },
+        {
+          "text": "Okinawa Prefecture",
+          "value": "Okinawa Prefecture"
+        },
+        {
+          "text": "Ontario",
+          "value": "Ontario"
+        },
+        {
+          "text": "Osaka Prefecture",
+          "value": "Osaka Prefecture"
+        },
+        {
+          "text": "Oslo",
+          "value": "Oslo"
+        },
+        {
+          "text": "Otago",
+          "value": "Otago"
+        },
+        {
+          "text": "Outer Islands",
+          "value": "Outer Islands"
+        },
+        {
+          "text": "Oxfordshire",
+          "value": "Oxfordshire"
+        },
+        {
+          "text": "Palawan",
+          "value": "Palawan"
+        },
+        {
+          "text": "Paphos District",
+          "value": "Paphos District"
+        },
+        {
+          "text": "Paraná",
+          "value": "Paraná"
+        },
+        {
+          "text": "Paro District",
+          "value": "Paro District"
+        },
+        {
+          "text": "Pays de la Loire",
+          "value": "Pays de la Loire"
+        },
+        {
+          "text": "Peloponnese",
+          "value": "Peloponnese"
+        },
+        {
+          "text": "Pennsylvania",
+          "value": "Pennsylvania"
+        },
+        {
+          "text": "Phang Nga Province",
+          "value": "Phang Nga Province"
+        },
+        {
+          "text": "Phnom Penh",
+          "value": "Phnom Penh"
+        },
+        {
+          "text": "Phu Yen Province",
+          "value": "Phu Yen Province"
+        },
+        {
+          "text": "Phuket Province",
+          "value": "Phuket Province"
+        },
+        {
+          "text": "Pichincha Province",
+          "value": "Pichincha Province"
+        },
+        {
+          "text": "Piedmont",
+          "value": "Piedmont"
+        },
+        {
+          "text": "Prachuap Khiri Khan Province",
+          "value": "Prachuap Khiri Khan Province"
+        },
+        {
+          "text": "Prague",
+          "value": "Prague"
+        },
+        {
+          "text": "Praslin",
+          "value": "Praslin"
+        },
+        {
+          "text": "Preah Sihanouk Province",
+          "value": "Preah Sihanouk Province"
+        },
+        {
+          "text": "Provence-Alpes-Côte d'Azur",
+          "value": "Provence-Alpes-Côte d'Azur"
+        },
+        {
+          "text": "Punakha District",
+          "value": "Punakha District"
+        },
+        {
+          "text": "Quang Nam Province",
+          "value": "Quang Nam Province"
+        },
+        {
+          "text": "Quebec",
+          "value": "Quebec"
+        },
+        {
+          "text": "Queensland",
+          "value": "Queensland"
+        },
+        {
+          "text": "Quintana Roo",
+          "value": "Quintana Roo"
+        },
+        {
+          "text": "Raa Atoll",
+          "value": "Raa Atoll"
+        },
+        {
+          "text": "Rajasthan",
+          "value": "Rajasthan"
+        },
+        {
+          "text": "Rhode Island",
+          "value": "Rhode Island"
+        },
+        {
+          "text": "Rio de Janeiro",
+          "value": "Rio de Janeiro"
+        },
+        {
+          "text": "Río Negro Province",
+          "value": "Río Negro Province"
+        },
+        {
+          "text": "Rivière du Rempart District",
+          "value": "Rivière du Rempart District"
+        },
+        {
+          "text": "Rivière Noire District",
+          "value": "Rivière Noire District"
+        },
+        {
+          "text": "Riyadh Province",
+          "value": "Riyadh Province"
+        },
+        {
+          "text": "Saint Barthélemy",
+          "value": "Saint Barthélemy"
+        },
+        {
+          "text": "Saint David Parish",
+          "value": "Saint David Parish"
+        },
+        {
+          "text": "Saint George Parish",
+          "value": "Saint George Parish"
+        },
+        {
+          "text": "Saint James",
+          "value": "Saint James"
+        },
+        {
+          "text": "Saint James Parish",
+          "value": "Saint James Parish"
+        },
+        {
+          "text": "Saint Martin",
+          "value": "Saint Martin"
+        },
+        {
+          "text": "Salzburg",
+          "value": "Salzburg"
+        },
+        {
+          "text": "San José Province",
+          "value": "San José Province"
+        },
+        {
+          "text": "Santiago Metropolitan Region",
+          "value": "Santiago Metropolitan Region"
+        },
+        {
+          "text": "São Paulo",
+          "value": "São Paulo"
+        },
+        {
+          "text": "Sardinia",
+          "value": "Sardinia"
+        },
+        {
+          "text": "Savoie",
+          "value": "Savoie"
+        },
+        {
+          "text": "Scotland",
+          "value": "Scotland"
+        },
+        {
+          "text": "Seoul",
+          "value": "Seoul"
+        },
+        {
+          "text": "Shanghai Municipality",
+          "value": "Shanghai Municipality"
+        },
+        {
+          "text": "Sichuan",
+          "value": "Sichuan"
+        },
+        {
+          "text": "Sicily",
+          "value": "Sicily"
+        },
+        {
+          "text": "Siem Reap Province",
+          "value": "Siem Reap Province"
+        },
+        {
+          "text": "Singapore",
+          "value": "Singapore"
+        },
+        {
+          "text": "Somerset",
+          "value": "Somerset"
+        },
+        {
+          "text": "Soufrière District",
+          "value": "Soufrière District"
+        },
+        {
+          "text": "South Aegean",
+          "value": "South Aegean"
+        },
+        {
+          "text": "South Australia",
+          "value": "South Australia"
+        },
+        {
+          "text": "South Carolina",
+          "value": "South Carolina"
+        },
+        {
+          "text": "South Holland",
+          "value": "South Holland"
+        },
+        {
+          "text": "South Sinai Governorate",
+          "value": "South Sinai Governorate"
+        },
+        {
+          "text": "South Tyrol",
+          "value": "South Tyrol"
+        },
+        {
+          "text": "Southern District",
+          "value": "Southern District"
+        },
+        {
+          "text": "Southern Province",
+          "value": "Southern Province"
+        },
+        {
+          "text": "St. Gallen",
+          "value": "St. Gallen"
+        },
+        {
+          "text": "Stockholm County",
+          "value": "Stockholm County"
+        },
+        {
+          "text": "Surat Thani Province",
+          "value": "Surat Thani Province"
+        },
+        {
+          "text": "Tabuk Province",
+          "value": "Tabuk Province"
+        },
+        {
+          "text": "Taipei City",
+          "value": "Taipei City"
+        },
+        {
+          "text": "Tanger-Tetouan-Al Hoceima",
+          "value": "Tanger-Tetouan-Al Hoceima"
+        },
+        {
+          "text": "Tel Aviv District",
+          "value": "Tel Aviv District"
+        },
+        {
+          "text": "Texas",
+          "value": "Texas"
+        },
+        {
+          "text": "Thaa Atoll",
+          "value": "Thaa Atoll"
+        },
+        {
+          "text": "Thimphu District",
+          "value": "Thimphu District"
+        },
+        {
+          "text": "Ticino",
+          "value": "Ticino"
+        },
+        {
+          "text": "Tochigi Prefecture",
+          "value": "Tochigi Prefecture"
+        },
+        {
+          "text": "Tokyo Metropolis",
+          "value": "Tokyo Metropolis"
+        },
+        {
+          "text": "Trøndelag",
+          "value": "Trøndelag"
+        },
+        {
+          "text": "Tuscany",
+          "value": "Tuscany"
+        },
+        {
+          "text": "Umbria",
+          "value": "Umbria"
+        },
+        {
+          "text": "Uri",
+          "value": "Uri"
+        },
+        {
+          "text": "Utah",
+          "value": "Utah"
+        },
+        {
+          "text": "Uttar Pradesh",
+          "value": "Uttar Pradesh"
+        },
+        {
+          "text": "Valais",
+          "value": "Valais"
+        },
+        {
+          "text": "Var",
+          "value": "Var"
+        },
+        {
+          "text": "Vaud",
+          "value": "Vaud"
+        },
+        {
+          "text": "Veneto",
+          "value": "Veneto"
+        },
+        {
+          "text": "Vermont",
+          "value": "Vermont"
+        },
+        {
+          "text": "Victoria",
+          "value": "Victoria"
+        },
+        {
+          "text": "Vienna",
+          "value": "Vienna"
+        },
+        {
+          "text": "Virgin Gorda",
+          "value": "Virgin Gorda"
+        },
+        {
+          "text": "Virginia",
+          "value": "Virginia"
+        },
+        {
+          "text": "Viseu District",
+          "value": "Viseu District"
+        },
+        {
+          "text": "Vorarlberg",
+          "value": "Vorarlberg"
+        },
+        {
+          "text": "Wangdue Phodrang District",
+          "value": "Wangdue Phodrang District"
+        },
+        {
+          "text": "Washington",
+          "value": "Washington"
+        },
+        {
+          "text": "West Nusa Tenggara",
+          "value": "West Nusa Tenggara"
+        },
+        {
+          "text": "Western Cape",
+          "value": "Western Cape"
+        },
+        {
+          "text": "Western Province",
+          "value": "Western Province"
+        },
+        {
+          "text": "Windward Islands",
+          "value": "Windward Islands"
+        },
+        {
+          "text": "Wisconsin",
+          "value": "Wisconsin"
+        },
+        {
+          "text": "Wyoming",
+          "value": "Wyoming"
+        },
+        {
+          "text": "Yangon Region",
+          "value": "Yangon Region"
+        },
+        {
+          "text": "Yucatán",
+          "value": "Yucatán"
+        },
+        {
+          "text": "Zanzibar",
+          "value": "Zanzibar"
+        },
+        {
+          "text": "Zhejiang",
+          "value": "Zhejiang"
+        },
+        {
+          "text": "Zurich",
+          "value": "Zurich"
+        }
+      ],
+      "allowOther": false,
+      "allowNone": false
+    },
+    "display": null,
+    "display_options": null,
+    "readonly": false,
+    "hidden": false,
+    "sort": 165,
+    "width": "full",
+    "translations": null,
+    "note": "The administrative unit the property sits in — state, province, canton, prefecture, emirate, governorate, county (Lombardy, Valais, Kyoto Prefecture, Emirate of Dubai). Distinct from `region`, which holds the continent, and from `state_province_county_island`, which holds the traveller-facing area name (Lake Como, Amalfi Coast, Zermatt). The two MAY hold the same value where the administrative unit is also what a traveller would type — Tuscany, Bali, Sicily. null means not yet classified. See CLAUDE.md §3.",
+    "conditions": null,
+    "required": false,
+    "group": null,
+    "validation": null,
+    "validation_message": null,
+    "searchable": true
+  }
+}

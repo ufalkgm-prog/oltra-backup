@@ -1,0 +1,25 @@
+[
+  {
+    "at": "2026-09-11T13:39:57.587Z",
+    "choiceAdded": "Emirate of Ras Al Khaimah",
+    "changes": [
+      {
+        "id": "1614",
+        "name": "The Ritz-Carlton, Ras Al Khaimah, Al Wadi Desert",
+        "before": {
+          "admin_region": "Emirate of Dubai",
+          "city": "Dubai"
+        },
+        "after": {
+          "admin_region": "Emirate of Ras Al Khaimah",
+          "city": "Ras Al Khaimah"
+        }
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T13:40:46.829Z",
+    "choiceAdded": null,
+    "changes": []
+  }
+]
