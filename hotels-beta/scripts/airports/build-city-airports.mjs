@@ -256,6 +256,81 @@ const GATEWAY_OVERRIDE = {
 
   // Andermatt had Lugano first at 74km and Zurich third. Zurich is the answer.
   Andermatt: ["ZRH", "BRN"],
+
+  /* ==== THE REST OF THE QUEUE, 2026-09-12 ====
+   *
+   * All 85 remaining candidates reviewed. 24 were genuine, listed below. The
+   * other 61 are left deliberately, in three groups, so a later pass does not
+   * re-litigate them:
+   *
+   * REAL AIRPORTS WITH SHORT RUNWAYS — the false positives this screen was
+   * always going to produce: Florence, Santorini (Oia, Imerovigli), Mykonos
+   * (eight keys), Perugia, Bristol for Bath, Samui (Bo Phut, Angthong),
+   * Jackson Hole for Teton Village, Porto Seguro for Trancoso, Con Dao, Lord
+   * Howe, Tambolaka for Sumba. Each is the airport guests actually use.
+   *
+   * THE SMALL AIRPORT IS THE ARRIVAL AIRPORT — island and reserve hops where
+   * a domestic strip is the end of the journey, and each already carries a
+   * transfer route saying so: the twelve Maldivian resorts, St Barth (three
+   * keys), Canouan (two), the BVI (three), Praslin and Desroches, Bora Bora,
+   * Lanai, Sabi Sand, Kruger, Skukuza, Okavango.
+   *
+   * NO GOOD COMMERCIAL ANSWER, left rather than guessed: Phinda (Mkuze takes
+   * the light-aircraft leg from Johannesburg and Durban at 228km would be a
+   * worse primary), Tswalu (charter to its own strip), Moyo Island, Gisakura
+   * (Kamembe is a real domestic hop and its route says so), Papas Beach,
+   * Montalcino, Lake Louise and Philipsburg — the last two already correct.
+   */
+
+  // United States. Four small fields standing in for the airport next door.
+  "Menlo Park": ["SFO", "SJC", "OAK"],        // San Carlos is a 799m GA field
+  "Kapalua, Maui": ["OGG"],                   // Kapalua 914m; Kahului is 26km
+  "Rancho Santa Fe": ["SAN"],                 // Carlsbad 1,493m; San Diego 29km
+  "Palmetto Bluff": ["SAV", "HHH"],           // Savannah 31km; Hilton Head stays second
+  Dorado: ["SJU"],                            // Isla Grande 1,621m; San Juan 32km
+
+  // Europe. In each of these the listed field has minimal scheduled service.
+  Casares: ["AGP", "GIB"],                    // Malaga is the Costa del Sol gateway
+  Lamego: ["OPO"],                            // Douro valley arrives through Porto
+  "Kingdom of Fife": ["EDI", "DND"],          // Dundee 1,400m; Edinburgh 56km
+  "St. Andrews": ["EDI", "DND"],
+  "Fort William": ["INV", "GLA"],             // Oban 1,264m
+  Gordes: ["MRS", "AVN"],                     // Provence arrives through Marseille
+  "Le Baux de Provence": ["MRS", "AVN"],
+  "Cerretto Langhe": ["TRN", "CUF"],          // the Langhe arrive through Turin
+  Elounda: ["HER", "JSH"],                    // Sitia is the far end of Crete; Heraklion 51km
+
+  /* Lugano is the exception I got wrong first time and am correcting for
+   * consistency. Its own airport is 4km away, which is why it was left alone
+   * when the five Lake Como villages moved off LUG — but the reason they moved
+   * is that Lugano has almost no scheduled service left, and that applies to
+   * Lugano itself. Malpensa first, its own airport second. */
+  Lugano: ["MXP", "LUG"],
+
+  // Elsewhere.
+  "Perez Zeledón": ["SJO"],                 // three strips listed, none sellable                   // three strips listed, none sellable
+  "Hua Hin": ["BKK", "HHQ"],                  // Hua Hin service is intermittent
+  Natales: ["PUQ", "PNT"],                    // Punta Arenas is the Torres del Paine gateway
+
+  /* Fiji and the Philippines: private-island resorts whose own descriptions
+   * name the gateway. Kokomo is "reached by seaplane or helicopter from NADI";
+   * Amanpulo is "reached by private aircraft" from Manila. The listed fields
+   * are the resorts' own strips, two of them with no runway length on record. */
+  "Kokomo Island": ["NAN"],
+  "Laucala Island": ["NAN"],
+  "Turtle Island": ["NAN"],
+  "Pamalican Island": ["MNL"],
+
+  /* Two East African rows that were pointing at a Kenyan LODGE AIRSTRIP.
+   * Namiri Plains is in the eastern SERENGETI, in Tanzania, and was mapped to
+   * MRE — the Mara Serena strip, in Kenya, across a border. Kilimanjaro is the
+   * gateway. Olarro Lodge is in the Mara and joins Masai Mara on Nairobi.
+   *
+   * Olarro also has a `city` of "Inakara Road" — its own text says "off Inakara
+   * Road near Ngoswani Village" — so its city is a STREET. Out of scope here
+   * and flagged in §51, but the airport is fixed either way. */
+  "Namiri Plains": ["JRO"],
+  "Inakara Road": ["NBO"],
   /* The same park, reached the same way. These two DO have a `city`, so they
    * were already in the mapping and are not part of the eight — but Kinigi
    * (One&Only Gorilla's Nest) and Ruhengeri (Wilderness Bisate) both carry

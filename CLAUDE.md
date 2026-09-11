@@ -1400,7 +1400,17 @@ airport **is** the arrival airport and each already has a transfer route.
 Johannesburg and its route says so, and Durban at 228km would be a worse
 primary, not a better one.
 
-Lugano itself keeps `LUG` — its own airport, and correct.
+**The queue was then worked to empty, 2026-09-12.** All 85 remaining candidates reviewed: **24 more genuine errors fixed, 61 reviewed and deliberately left.** 57 overrides now, and the audit reports **0 never-reviewed** — so a destination appearing in that line from here is genuinely new, not backlog.
+
+The 24: five US rows standing next to a bigger airport (**Menlo Park** on a 799m GA field with SFO 26km away, **Kapalua** on a 914m strip with Kahului at 26km, **Rancho Santa Fe**, **Palmetto Bluff**, **Dorado**); nine European fields with minimal service (**Casares** → Málaga, **Lamego** → Porto, **St Andrews** and **Fife** → Edinburgh, **Fort William** → Inverness, **Gordes** and **Le Baux** → Marseille, **Cerretto Langhe** → Turin, **Elounda** → Heraklion, since Sitia is the far end of Crete); **Perez Zeledón**, **Hua Hin**, **Natales** → Punta Arenas; four private-island resorts on their own strips (**Kokomo**, **Laucala**, **Turtle Island** → Nadi, **Amanpulo** → Manila), three of which name the gateway in their own descriptions.
+
+**Two rows were pointing at a lodge airstrip in the wrong country.** **Namiri Plains** is in the eastern Serengeti, in Tanzania, and was mapped to `MRE` — the Mara Serena strip, in Kenya, across a border. Now Kilimanjaro. **Olarro Lodge** joins Masai Mara on Nairobi — and its `city` is `Inakara Road`, which its own text confirms is a *street*: "off Inakara Road near Ngoswani Village". The airport is fixed; the street-as-city is flagged below.
+
+**I also reversed myself on Lugano.** I had left it alone as "its own airport, and correct" while moving the five Lake Como villages off `LUG`. But the reason they moved — Lugano has almost no scheduled service left — applies to Lugano itself. Malpensa first, its own airport second.
+
+**The audit caught my own accent slip on its first real run**: I typed `Perez Zeledon` where the city is `Perez Zeledón`, which made the override a dead key answering for nothing. Exactly the §49 trap, caught by a machine rather than by eye.
+
+Lugano now maps `MXP` then `LUG`.
 
 ### Due on the clock, not from this workflow
 

@@ -38,6 +38,61 @@ const QUIET = process.argv.includes("--quiet");
 /* A runway a narrowbody jet can use. Below this a destination has no airport an
  * ordinary international itinerary can be sold into, so the listed one is a
  * domestic hop at best — the shape behind Sossusvlei, Big Island and Cabo. */
+/* Candidates REVIEWED and deliberately left as they are, 2026-09-12, with the
+ * reason. Without this the audit reports 61 "open" destinations that have in
+ * fact all been looked at, and a genuinely new one — a hotel added next month
+ * in a place nobody has checked — would be invisible in the noise. That is the
+ * whole point of keeping it: after this, OPEN means UNREVIEWED. */
+const REVIEWED = {
+  // A real international airport that merely has a short runway.
+  "Florence": "FLR is Florence's own international airport",
+  "Perugia": "PEG is Perugia's own airport",
+  "Montalcino": "Florence at 82km is the right answer for the Val d'Orcia",
+  "Oia": "JTR is Santorini's international airport",
+  "Imerovigli": "JTR, as above",
+  "Papas Beach": "JTR, as above",
+  "Mykonos Town": "JMK is Mykonos's international airport",
+  "Ornos": "JMK", "Psarou": "JMK", "Elia Beach": "JMK", "Kalafati": "JMK",
+  "Megali Ammos": "JMK", "Platis Gialos Beach": "JMK",
+  "Agios Ioannis": "JMK", "Aleomandra": "JMK", "Ayios Yiannis": "JMK",
+  "Bath": "Bristol is a real international airport",
+  "Bo Phut": "USM is Samui's own airport", "Angthong": "USM, as above",
+  "Teton Village": "JAC is Jackson Hole's airport, with major-carrier service",
+  "Trancoso": "BPS serves Porto Seguro with real domestic flights",
+  "Con Dao Town": "VCS has scheduled service from Ho Chi Minh City",
+  "Lord Howe Island": "LDH has scheduled service from Sydney and Brisbane",
+  "Karoso Beach": "TMC has real service from Bali", "Nihiwatu Beach": "TMC, as above",
+  "Lake Louise": "already resolves to Calgary", "Philipsburg": "already resolves to Missoula",
+
+  /* The small airport IS the arrival airport — an island or reserve hop where a
+   * domestic strip ends the journey. Each carries a transfer route saying so. */
+  "Fasmendhoo Island": "Maldives hop", "Kihavah": "Maldives hop",
+  "Kunfunadhoo Island": "Maldives hop", "Landaa Giraavaru": "Maldives hop",
+  "Thiladhoo Island": "Maldives hop", "Voavah": "Maldives hop",
+  "Laamu": "Maldives hop", "Meradhoo Island": "Maldives hop",
+  "Maagau Island": "Maldives hop", "Rangali Island": "Maldives hop",
+  "Vommuli Island": "Maldives hop", "Maalifushi": "Maldives hop",
+  "Olhuveli": "Maldives hop",
+  "Gustavia": "St Barth; St Jean takes light aircraft only",
+  "Grand Cul-de-sac": "St Barth", "St. Barthelemy": "St Barth",
+  "Canouan Island": "regional flights via Barbados or St Vincent", "Carenage Bay": "Canouan",
+  "Moskito Island": "boat from Virgin Gorda", "Necker Island": "boat from Virgin Gorda",
+  "Spanish Town": "on Virgin Gorda itself",
+  "Anse Kerlan": "on Praslin", "Felicite Island": "boat from Praslin",
+  "Desroches Island": "domestic flight from Mahe",
+  "Bora Bora": "no international service; connects through Papeete",
+  "Lanai City": "connecting flight through Honolulu",
+  "Sabi Sand Reserve": "Skukuza, reached on a connecting flight through Johannesburg",
+  "Kruger National Park": "Skukuza, as above", "Skukuza Rest Camp": "Skukuza, as above",
+  "Okavango Delta": "Maun is the gateway into the Delta",
+
+  /* No good commercial answer, left rather than guessed. */
+  "Phinda Private Game Reserve": "Mkuze takes the light-aircraft leg from Johannesburg; Durban at 228km would be worse",
+  "Tswalu Kalahari Reserve": "charter to the reserve's own strip; no sellable alternative",
+  "Moyo Island": "boat from Sumbawa or charter from Bali; routings vary too much to pick one",
+  "Gisakura": "Kamembe is a genuine domestic hop from Kigali and its transfer route says so",
+};
+
 const JET_M = 2200;
 /* Far enough that the drive is a leg of its own rather than a detail. Masai
  * Mara sat at 214km and said nothing about it. */
@@ -157,13 +212,17 @@ for (const k of live) {
   rows.push({ k, n: hs.length, country: [...countries][0], aps, best,
               why: reasons.join(" + "), checked: overrides.has(k), routed: routeArrive.has(k) });
 }
-const open = rows.filter((r) => !r.checked).sort((a, b) => b.n - a.n || a.k.localeCompare(b.k));
+const sortQ = (a, b) => b.n - a.n || a.k.localeCompare(b.k);
+const reviewedLeft = rows.filter((r) => !r.checked && REVIEWED[r.k]).sort(sortQ);
+const open = rows.filter((r) => !r.checked && !REVIEWED[r.k]).sort(sortQ);
 const done = rows.filter((r) => r.checked);
 
 console.log(`\n  CANDIDATES — the signature every real error has carried\n`);
 console.log(`  candidate  ${String(rows.length).padStart(3)}  destinations carry it`);
 console.log(`             ${String(done.length).padStart(3)}  already hand-checked (an override exists)`);
-console.log(`             ${String(open.length).padStart(3)}  OPEN — the research queue, ${open.reduce((s, r) => s + r.n, 0)} hotels\n`);
+console.log(`             ${String(reviewedLeft.length).padStart(3)}  reviewed and deliberately left as they are`);
+console.log(`             ${String(open.length).padStart(3)}  OPEN — never reviewed, ${open.reduce((s, r) => s + r.n, 0)} hotels\n`);
+if (!open.length) console.log("  Queue empty: every candidate has been reviewed. A new destination will appear here.\n");
 const show = QUIET ? open.slice(0, 15) : open;
 console.log(`  htl  destination                 country          listed now                    why`);
 for (const r of show) {
