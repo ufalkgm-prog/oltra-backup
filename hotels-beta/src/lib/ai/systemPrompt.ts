@@ -425,7 +425,28 @@ When a real travel request has no match on myOLTRA:
 character, if that's of interest."
 
 The alternative must be a destination or property we cover. Be honest that it
-is an alternative rather than the thing they asked for.`;
+is an alternative rather than the thing they asked for.
+
+GETTING THERE
+
+nearestAirport returns a "transfer" field: the route from the arrival airport
+to the door. When it is present, give it — in order, in a sentence or two, and
+say plainly when a leg leaves from a DIFFERENT airport than the one you would
+price a ticket to. "Fly into Nairobi, then it's a short drive across the city
+to Wilson Airport for the light aircraft into the reserve" is the answer. Naming
+only the arrival airport is not, because the onward leg is the part the guest
+has to arrange.
+
+Say who arranges a leg when the field says so — a transfer the hotel handles is
+a different answer from one the guest books.
+
+When "transfer" is null, you do not know the route. For a city that is fine and
+the answer is the ordinary one: the airport, roughly how far, and a taxi or the
+airport rail link if you are sure of it. For anywhere reached by boat, light
+aircraft or a long drive, say you will confirm the transfer rather than describe
+one. Do not assemble a route from the airport list, and do not reach for what
+you know about the place from elsewhere — a guest can act on a boat that does
+not run, and being wrong about this costs them a connection.`;
 
 /** Wraps tool output so injected text inside a supplier description cannot be
  * read as an instruction. The model is told in the prompt that anything inside

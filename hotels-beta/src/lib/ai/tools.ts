@@ -3,6 +3,7 @@ import { tool, jsonSchema } from "ai";
 import { getHotels, type HotelRecord } from "@/lib/directus";
 import { filterHotelsByTags } from "@/lib/hotelFilters";
 import { getAirportsForCity, pickPrimaryAirportForCity } from "@/lib/cityAirports";
+import { getTransferRoute, hasAirportChange } from "@/lib/transferRoutes";
 import { getRestaurantCities, searchRestaurants as findRestaurants } from "@/lib/restaurants";
 import {
   buildGuestsArray,
@@ -870,8 +871,9 @@ const checkAvailability = tool({
 
 const nearestAirport = tool({
   description:
-    "Which airports serve a destination we cover, with distance. Use this for " +
-    "any airport question rather than searching the web.",
+    "Which airports serve a destination we cover, how far they are, and how a " +
+    "guest gets from the airport to the door. Use this for any airport or " +
+    "\"how do I get there\" question rather than searching the web.",
   inputSchema: jsonSchema<{ city: string }>({
     type: "object",
     properties: { city: { type: "string", description: "Exact myOLTRA city name." } },
@@ -881,6 +883,15 @@ const nearestAirport = tool({
   async execute({ city }) {
     const airports = getAirportsForCity(city);
     const primary = pickPrimaryAirportForCity(city);
+    /* The arrival airport is not the journey. For a reserve or an island the
+     * onward leg often departs from a DIFFERENT airport — Nairobi to Wilson to
+     * a Mara airstrip — and that leg is the part a guest has to arrange.
+     *
+     * `transfer: null` is a real answer and the prompt treats it as one. The
+     * model is handed nothing rather than asked not to guess, because a
+     * prompt-only rule of this shape gets skipped (§50) and an invented boat
+     * is something a guest can act on. */
+    const route = getTransferRoute(city);
     return asUntrustedData("airports", {
       city,
       found: airports.length > 0,
@@ -892,6 +903,15 @@ const nearestAirport = tool({
         label: a.label,
         distKm: a.distKm,
       })),
+      transfer: route
+        ? {
+            arriveAt: route.arriveAt,
+            arriveAtLabel: route.arriveAtLabel,
+            changesAirport: hasAirportChange(route),
+            legs: route.legs,
+            note: route.note ?? null,
+          }
+        : null,
     });
   },
 });

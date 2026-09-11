@@ -227,6 +227,10 @@ function inlineBold(text: string, keyBase: string): React.ReactNode[] {
   return nodes;
 }
 
+/* A closing question plus a follow-on sentence; longer than this and it is a
+ * paragraph, not a sign-off. */
+const CLOSING_QUESTION_MAX_CHARS = 180;
+
 function AgentText({
   text,
   /* Off when the caller is already styling the whole block as the question —
@@ -262,15 +266,27 @@ function AgentText({
    * When results are shown the question arrives in its own presentResults
    * field and is styled as such. Answering in prose there is no such field —
    * the question is simply the last sentence — so it was set like the rest of
-   * the answer and the two cases did not match. Last non-empty line, ending in
-   * a question mark, and not a bullet. */
+   * the answer and the two cases did not match. Last non-empty line, not a
+   * bullet, CONTAINING a question mark.
+   *
+   * Contains, not ends with. The first version tested `endsWith("?")` and
+   * missed every answer where the model asks and then adds a short
+   * instruction — "Shall I price the Copenhagen-Nairobi flights? Tell me when
+   * you're going." — a shape it writes routinely. Those lines fell through as
+   * ordinary prose, losing BOTH the italic and the 0.9rem break above, so the
+   * question sat tight against the answer reading as one more sentence of it:
+   * exactly the case this styling exists to prevent.
+   *
+   * The length cap is a guard, not a rule — it stops a long final paragraph
+   * that happens to contain a question being set entirely in italic. A real
+   * closing question plus its follow-on runs well under it. */
   const closingIndex = (() => {
     if (!detectClosingQuestion) return -1;
     for (let i = lines.length - 1; i >= 0; i -= 1) {
       const line = lines[i].trim();
       if (!line) continue;
       if (/^[-*•]\s+/.test(line)) return -1;
-      return line.endsWith("?") ? i : -1;
+      return line.includes("?") && line.length <= CLOSING_QUESTION_MAX_CHARS ? i : -1;
     }
     return -1;
   })();

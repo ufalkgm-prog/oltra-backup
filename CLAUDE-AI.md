@@ -180,3 +180,62 @@ After widening, the same query searched Tuscany with `Countryside`/`Hillside` an
 **"What does 'an open jaw' mean — is that slang?"** It is airline trade jargon, and it was in a tool description: `returnDate` read "leave unset on the legs of an open jaw". Eight other occurrences are code comments, which the model never sees and where the precise term is correct — so the leak was one string. Worth grepping the prose the model actually receives (`SYSTEM_PROMPT` plus every `description:` in `tools.ts`) separately from the comments around them.
 
 **And a self-inflicted one worth recording.** The first exhaustiveness check reported all 18 as missing, because it built `new Set([1479, …])` of numbers and compared against Directus ids, which come back as **strings** (§44). The script ran clean and told me nothing — the same shape §44 warns about, hit while verifying something else. `Number(h.id)` on both sides.
+
+### "How do I get there" — the arrival airport is not the journey (2026-09-11)
+
+Asked how to reach the Masai Mara, the concierge named Nairobi and stopped. It
+said nothing about the road transfer to **Wilson** or the light aircraft into
+the reserve — which is the half a guest actually has to arrange. It was not
+being careless: `cityAirports.ts` told it NBO, 214km, and nothing else exists.
+
+`src/lib/transferRoutes.ts` now holds the arrival-to-door route per
+DESTINATION, and `nearestAirport` returns it as a `transfer` field.
+
+**The two sources disagree on purpose, and that is the thing to understand
+before editing either.** `cityAirports.ts` deliberately EXCLUDES the Mara lodge
+airstrip (`MRE`) and North Caicos (`NCA`), because an airport there has to be
+one an international ticket can be priced to. `transferRoutes.ts` is the
+opposite — the airstrip is where the final leg lands. Don't reconcile them.
+
+**The invariant, which the first draft broke on four entries:** `arriveAt` is
+always an airport `CITY_AIRPORTS` lists for the same key, because that is what
+a flight card prices to. Sabi Sand was written `arriveAt: "JNB"` with a hop to
+Skukuza — so the concierge would have said "fly into Johannesburg" while the
+card beside it priced Skukuza. Connecting through a hub is ordinary routing the
+flight search already shows; it belongs in `note`, never in `legs`. **`legs` is
+strictly what happens after you land on the ticket.** Caught by a key-and-
+arrival check, not by reading the table.
+
+**The negative entries matter as much as the positive ones.** Volcanoes
+National Park, Kinigi and Ruhengeri record "by road from Kigali — there is no
+onward flight". Without a row the model is free to invent a hop, and a guest
+waiting for a plane that does not exist is the failure this table exists to
+prevent.
+
+**`transfer: null` is structural, not a prompt promise** — the same shape as
+the broad-set gate. The model is handed nothing rather than asked not to guess,
+because this file's own record is that prompt-only rules of that shape get
+skipped. The prompt says: for a city, answer normally; for anywhere reached by
+boat, light aircraft or a long drive, say you will confirm the transfer rather
+than describe one.
+
+**11 routes populated, and the candidate list is much longer** — 10
+destinations where we name a distant gateway and nothing else, ~93 where no
+jet-capable airport is listed at all (partly noise: Florence, Mykonos and
+Santorini are real international arrivals with short runways). See §51.
+
+### The closing question lost its italic when it was not the last thing said
+
+`AgentText` decided which line was the closing question with
+`line.endsWith("?")`. The model routinely asks and then adds a short
+instruction — *"Shall I price the Copenhagen–Nairobi flights? Tell me when
+you're going."* — so the `?` sits mid-line and detection failed. Because
+`.closingQuestion` carries both the italic and the `0.9rem` break, one missed
+match lost both, and the question sat tight under the answer reading as one
+more sentence of it: exactly what the styling exists to prevent.
+
+Now **contains** a question mark, with a length cap so a long final paragraph
+that happens to contain one is not set entirely in italic. Diagnosed by reading
+`getComputedStyle` on the live element — `class=""`, `fontStyle=normal`,
+`marginTop=0px` — which said in one line that the class was never applied,
+rather than that the CSS was losing.

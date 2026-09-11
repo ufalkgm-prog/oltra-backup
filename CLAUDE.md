@@ -1296,6 +1296,28 @@ which is already a ward of Monaco rather than a city with wards below it.
   the 99 rows added since id 2000 does. Ulrik reviewed rewrites and kept the
   existing copy: "I find the new suggestions too colourless."
 
+### Transfer routes for the concierge — 11 done, the rest open
+
+`src/lib/transferRoutes.ts` (2026-09-11, see CLAUDE-AI.md) holds the
+arrival-to-door route per destination, so the concierge stops answering "how do
+I get to the Masai Mara" with Nairobi and a full stop. **11 routes populated**;
+an absent entry makes it decline rather than guess, which is the point.
+
+Two candidate groups, both measurable by re-running the same check:
+
+* **10 destinations name a jet gateway far away and nothing else** — the onward
+  hop is missing, which is the Masai Mara shape. Done: Masai Mara, Amboseli.
+  Open: **Desroches (done), Chongzou, Lake Louise, Nikko, Pamushana,
+  Philipsburg, Sesriem, Sonop Farm**.
+* **~93 have no jet-capable airport listed**, so the gateway is missing. Partly
+  noise — Florence, Mykonos and Santorini are genuine international arrivals
+  that merely have short runways. The real ones are island and reserve hops:
+  Phinda, Grumeti, the Maldivian islands off Malé, St. Barthélemy off St
+  Maarten, Canouan, Praslin-served Seychelles, Big Island, Arenal.
+
+Populate only what is not in reasonable doubt. A wrong route is worse than an
+absent one — a guest can act on a boat that does not run.
+
 ### Due on the clock, not from this workflow
 
 **Ratehawk hotel status re-probe, due 2026-11-16** (§42, §43). It is the one
