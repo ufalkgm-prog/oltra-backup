@@ -141,7 +141,18 @@ The five filled: `Gwanghwamun` (Jongno-gu is the gu above it — Lumphini over P
 
 **The sweep now runs with no exemption list at all** and returns 0 on every condition — compound, parenthetical, city echo, prefix overlap, and any value over 30 characters. **247 populated.**
 
-**Noticed while checking siblings, recorded not changed:** `1467` Park Hyatt Milan holds `Piazza del Duomo` (a square), `1465` Palazzo Parigi holds `Borgonuovo` (a street in Brera), and `2028` Mandarin Oriental Doha holds `Msheireb Downtown Doha` (a development name, the `UpperHills` shape — the district is Msheireb). None would pass the rules applied above.
+**The last three were tidied the same day**: `1467` Park Hyatt Milan `Piazza del Duomo` → **`Duomo`** (a square → its quartiere), `1465` Palazzo Parigi `Borgonuovo` → **`Brera`**, and `2028` Mandarin Oriental Doha `Msheireb Downtown Doha` → **`Msheireb`** (a development name; the quarter is Msheireb — the `UpperHills` rule for the seventh time). Palazzo Parigi's was **doubly wrong**: Borgonuovo is a street, *and not this hotel's street* — its own text says it "occupies Corso di Porta Nuova". Whoever entered it was thinking of the right district and wrote down a road inside it.
+
+### `audit-local-area.mjs` — read-only, re-runnable
+
+The clean-up ended with a standing audit rather than a one-off answer, because the day's real lesson was that **a check which cannot see a defect reports zero exactly as confidently as a clean collection does**. It separates two classes deliberately:
+
+* **DEFECTS** — provably wrong under the rules above: compound separators (comma, slash *and* the word "and"), parentheticals, city echoes, region-level values, one district at two levels in a city, one district spelled two ways. **All six are at zero.** Any hit fails the run.
+* **CANDIDATES** — shaped like a defect, often legitimate; a hit means *look*, never *fix*, and they never fail the run. Street/square shapes (7), development shapes (9), landform shapes (25), over-long values (0), and one district name shared by two cities (Soho, deliberate). Most hits are correct — Palm Jumeirah contains "Palm", Jumeira Bay Island contains both "Bay" and "Island" — which is exactly why they are not defects.
+
+It also prints **coverage by city**, where a *partly*-filled city is the actionable signal rather than an empty one: 36 cities are partly filled, the largest being Shanghai 1/8, Beijing 3/9, Rome 6/12, Abu Dhabi 2/8, Chicago 1/7, Madrid 1/6 and Florence 1/6.
+
+**Found by that audit, and NOT a `local_area` problem: 8 published hotels have no `city` at all** — &Beyond Bateleur, Kichwa Tembo, Angama Amboseli, Angama Mara, Il Moran, Singita Kwitonda, Six Senses Shaharut and Clayoquot Wilderness. Each is a lodge whose reserve name sits in `state_province_county_island` instead, which §3 tolerates — but **`cityAirports.ts` is keyed by `city`, so all eight resolve to no airport in the landing flight teaser.** The earlier "published cities with no airport" check missed them because it only tested rows that *had* a city.
 
 **`admin_region` is LOCKED** as of 2026-09-11 — `select-dropdown`, `allowOther: false`, **291 choices** built from the stored values. A hotel in a genuinely new administrative region will not save until the list is extended (`scripts/hotels/geo-2026/lock-admin-region-2026-09-11.mjs` holds the pattern and a snapshot of the prior meta). `state_province_county_island` stays free text on purpose: traveller areas gain an entry with every new destination, so locking it trades one problem for another.
 
