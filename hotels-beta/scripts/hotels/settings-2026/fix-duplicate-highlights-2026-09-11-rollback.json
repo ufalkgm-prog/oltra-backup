@@ -1,0 +1,35 @@
+[
+  {
+    "at": "2026-09-11T11:20:06.540Z",
+    "changes": [
+      {
+        "id": 1601,
+        "from": "Canalside hotel with amazing views of the city",
+        "to": "Art-filled tower on Al Maryah Island with a two-floor spa and Japanese listening bar",
+        "why": "2,000+ artworks, the two-floor Pearl Spa and Saikindō — none shared with the Rosewood.",
+        "name": "Four Seasons Hotel Abu Dhabi at Al Maryah Island"
+      },
+      {
+        "id": 1610,
+        "from": "Canalside hotel with amazing views of the city",
+        "to": "Food-led waterfront address on Al Maryah with Cantonese cooking and a Shanghai speakeasy",
+        "why": "Its description's own pivot is 'Culinary life is a highlight' — Dai Pai Dong and Dragon's Tooth.",
+        "name": "Rosewood Abu Dhabi"
+      },
+      {
+        "id": 1615,
+        "from": "Classic beachfront luxury close to the city",
+        "to": "Corniche grande dame with butler service and a private underpass to its own beach club",
+        "why": "The marble underpass to Nation Riviera is its single most distinctive feature, and it explains the City + Beachfront tags.",
+        "name": "The St. Regis Abu Dhabi"
+      },
+      {
+        "id": 1616,
+        "from": "Classic beachfront luxury close to the city",
+        "to": "Dune-backed Saadiyat resort beside the Louvre, with golf and Mediterranean terraces",
+        "why": "Protected dunes, the Saadiyat Cultural District and the Gary Player course separate it from its sibling.",
+        "name": "The St. Regis Saadiyat Island Resort"
+      }
+    ]
+  }
+]

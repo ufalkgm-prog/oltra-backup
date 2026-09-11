@@ -787,12 +787,13 @@ Three factual corrections to `highlights`, applied 2026-09-11 in `fix-highlights
 * **1579 Çırağan Palace** — "on the river" → "on the Bosphorus". A strait, and naming it is better copy.
 * **1511 The Torridon** — "lakeside" → "lochside". Loch Torridon is a sea loch; the Scottish word is accurate and sidesteps the fresh-or-salt question that made the row a judgement call.
 
-**Still open — two pairs of hotels share an identical `highlights` line**, found by frequency-mapping the field across all 903 rows. Both pairs are in Abu Dhabi, and the line is what a results card shows, so two different hotels read the same in a list:
+**Two pairs of hotels shared an identical `highlights` line** — found by frequency-mapping the field across all 903 rows, the only duplicates in the collection, and both pairs in Abu Dhabi, which reads like one editing session rather than coincidence. The line is what a results card shows, so each pair looked like the same hotel in a list. Differentiated 2026-09-11 in `fix-duplicate-highlights-2026-09-11.mjs`, drafted from each hotel's own description and approved before writing: 1601/1610 on the art collection versus the Cantonese kitchen, 1615/1616 on the Corniche underpass versus the Saadiyat dunes. **0 duplicates remain.**
 
-* 1601 Four Seasons Al Maryah Island / 1610 Rosewood Abu Dhabi — "Canalside hotel with amazing views of the city"
-* 1615 The St. Regis Abu Dhabi / 1616 The St. Regis Saadiyat Island — "Classic beachfront luxury close to the city"
+### House style for `highlights`, measured not assumed
 
-Not fixed here: this needs new copy written, not a phrase corrected, and writing editorial content is Ulrik's call (§41). "Canalside" also now echoes a retired setting value.
+Worth knowing before writing one: **no terminal full stop** (0 of 903 rows have one), median length **76 characters** with p75 at 93, noun phrase first. Entries from id 2000 onward are the model — specific and concrete, e.g. "Contemporary Alpine sanctuary with cinematic Dolomite views, serious spa rituals and mountain dining".
+
+**113 rows still say "amazing"**, which the newer entries avoid and which reads as the salesy register §50's prompt rules out elsewhere. Not a correctness bug and not touched — a voice pass across 113 lines is editorial work, and §41 puts that with Ulrik.
 
 ---
 
