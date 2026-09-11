@@ -1212,4 +1212,83 @@ Chat on `/hotels/[hotelid]` or in the members area, any booking/payment/write to
 
 ---
 
+## 51. OPEN ITEMS — THE GEOGRAPHY WORKFLOW, PAUSED 2026-09-11
+
+Everything below was found and deliberately NOT fixed, each with the reason.
+Nothing here is a regression; the `local_area` clean-up closed with **335
+populated and all six `audit-local-area.mjs` defect classes at zero**. Re-run
+that script first when picking this up — it answers "is anything broken" in
+one command. This list is the separate question: "what did we choose to leave".
+
+### Decisions someone has to take (not bugs)
+
+* **Hong Kong is stored at ISLAND level** — 10 rows read `Hong Kong Island` or
+  `Kowloon`. Finer districts (Central, Wan Chai, Admiralty, Tsim Sha Tsui) are
+  defensible and were deliberately not used, because mixing two levels in one
+  city is the Midtown defect. Converting means all 10 or none.
+* **Rome is stored as LANDMARKS** — `Spanish Steps` ×5, `Colosseum`,
+  `Via Veneto` ×2, `Piazza della Repubblica`. Its rioni (Campo Marzio, Ludovisi,
+  Trevi, Monti) are the district-level answer. Converting touches 12 rows, and
+  the landmarks arguably serve a guest better. Same all-or-none shape.
+* **Abu Dhabi's three weakest values** — `Ras Al Akhdar` (Emirates Palace),
+  `Al Maqta` (Ritz-Carlton Grand Canal), `Al Khubeirah` (St. Regis). All tier B,
+  none named in the hotel's own description, and Abu Dhabi's districts are
+  poorly known. First to override if any of the 88 are wrong.
+
+### `local_area` values that would not pass the rules, left alone
+
+Reported by the audit as **candidates**, not defects — the run does not fail on
+them:
+
+| value | hotel | why it is questionable |
+|---|---|---|
+| `Hyde Park Corner` | The Lanesborough | a road junction; the district is Belgravia or Knightsbridge |
+| `Village centre` | Pan Deï Palais | a lowercase descriptor, not a name |
+| `Moyo Satonda National Park` | Amanwana | a national park |
+| `Mo Chu riverbank` | COMO Uma Punakha | a riverbank |
+| `Sand Hill Road` · `Midosuji Boulevard` | Rosewood Sand Hill · St. Regis Osaka | roads |
+| `Piazza del Popolo` · `Trafalgar Square` | Hotel de Russie · Corinthia London | squares |
+
+`Times Square` and `Madison Square` are **correct** — genuine New York district
+names — and should be left.
+
+### Coverage gaps that are real
+
+**21 cities have 3+ published hotels and no `local_area` at all.** Most are
+correctly empty per §3 (Courchevel 1850, St. Moritz, Lech Am Arlberg, Sabi Sand
+Reserve, Riviera Maya — a ski village or a reserve has no neighbourhoods). The
+genuinely urban ones are the gap: **Las Vegas (6), Amsterdam (5), Barcelona (5),
+Kuala Lumpur (4)**.
+
+### Airport mapping (`cityAirports.ts`)
+
+* **Menlo Park's only airport is San Carlos (799m)**, a general-aviation field,
+  where SFO is meant. A one-line `GATEWAY_OVERRIDE` entry.
+* **Grumeti Game Reserve** (Tanzania, Serengeti) lists `MRE` — a *Kenyan* lodge
+  airstrip — among its three. The gateway question there is Kilimanjaro or
+  Arusha versus the internal Seronera hop, and it needs a decision rather than
+  a rule.
+
+### Settled, so nobody re-opens them
+
+* **Rosewood Doha stays `city: "Doha"`** with `local_area: "Lusail Marina"`.
+  Lusail is administratively its own city, but it is 10.8km from central Doha,
+  shares DOH, is named "Rosewood Doha", and — measured — does not distort the
+  Doha centroid (removing it moves DOH 10.0 → 8.4km, both airports unchanged).
+  Contrast the Ras Al Khaimah row, which crossed an emirate line 90km out and
+  moved Dubai's DXB 12 → 19km. That was a bug; this is not.
+* **The eight lodges keep a blank `city`** (§3), and their airports come from
+  the traveller-area fallback.
+* **The `highlights` voice pass is declined**, not pending — 409 of 903 rows use
+  a filler word (*beautiful* 226, *stunning* 135, *amazing* 113), and only 1 of
+  the 99 rows added since id 2000 does. Ulrik reviewed rewrites and kept the
+  existing copy: "I find the new suggestions too colourless."
+
+### Due on the clock, not from this workflow
+
+**Ratehawk hotel status re-probe, due 2026-11-16** (§42, §43). It is the one
+maintenance job with no automation behind it.
+
+---
+
 This document is the baseline context for all OLTRA development sessions.
