@@ -150,7 +150,23 @@ The clean-up ended with a standing audit rather than a one-off answer, because t
 * **DEFECTS** — provably wrong under the rules above: compound separators (comma, slash *and* the word "and"), parentheticals, city echoes, region-level values, one district at two levels in a city, one district spelled two ways. **All six are at zero.** Any hit fails the run.
 * **CANDIDATES** — shaped like a defect, often legitimate; a hit means *look*, never *fix*, and they never fail the run. Street/square shapes (7), development shapes (9), landform shapes (25), over-long values (0), and one district name shared by two cities (Soho, deliberate). Most hits are correct — Palm Jumeirah contains "Palm", Jumeira Bay Island contains both "Bay" and "Island" — which is exactly why they are not defects.
 
-It also prints **coverage by city**, where a *partly*-filled city is the actionable signal rather than an empty one: 36 cities are partly filled, the largest being Shanghai 1/8, Beijing 3/9, Rome 6/12, Abu Dhabi 2/8, Chicago 1/7, Madrid 1/6 and Florence 1/6.
+It also prints **coverage by city**, where a *partly*-filled city is the actionable signal rather than an empty one.
+
+### Completing the 35 partly-filled cities (2026-09-11)
+
+**100 empty rows: 88 filled, 12 kept empty on purpose and asserted so.** `local_area` went 247 → **335**. Five cities remain partly filled and all five are *finished* — Marrakech 5/10, Saint-Tropez 2/5, Punakha 1/3, Abu Dhabi 7/8, Ubud 3/4 — because each blank says in its own description that it is not in a district, mostly that it is not in the city (Amanjena "just outside Marrakech", Villa Belrose "near Gassin", Qasr Al Sarab in the Liwa dunes ~200km out, COMO Shambhala "outside Ubud").
+
+**The rule that decided the most: a city's own house style wins.** These cities do not agree on what a district is, and one scheme imposed on all of them would have been wrong in both directions. **Rome stores landmarks** (Spanish Steps ×4, Colosseum), **Milan stores districts** — so Rome's new rows are landmarks (Via Veneto, Piazza della Repubblica) while Milan's lone square became `Duomo`. The same principle explains both. Where a city had no established value, the district won.
+
+The same rule keeps **Hong Kong at island level**: seven rows already read `Hong Kong Island` or `Kowloon`, so The Murray (Central), The Hari (Wan Chai) and Upper House (Admiralty) all became `Hong Kong Island`. Finer values would be defensible, but mixing two levels inside one city is the Midtown defect. Converting the seven was not asked for — flagged, not done.
+
+**49 tier A, 39 tier B.** Tokyo-style cities where every description names its neighbourhood are A; Abu Dhabi is the weak end, its three tier-B rows (`Ras Al Akhdar`, `Al Maqta`, `Al Khubeirah`) named in no description and listed in the script as the first to override.
+
+**The script pre-flights the RESULTING collection, not the current one** — it simulates all 88 writes and refuses to run if the result would contain a two-level city, a spelling split, a compound or a city echo. That caught a real error before it was written: `El Monteon` against the stored `El Monteón`. §49's "stripping accents is a data downgrade", caught by a machine rather than by eye. Three more new values needed the same correction by inspection, having nothing to collide with: `Zürichberg`, `Yıldız`, `Karaköy`.
+
+**Two coincidental homonyms are exempt in the audit, and they are not defects.** Chicago's `Gold Coast` trips the region-level check only because Australia's Gold Coast is a traveller area on a Queensland hotel; `Santa Croce` is a rione in Florence *and* a sestiere in Venice. Two places on two continents sharing a name is not an error.
+
+**Found, not fixed:** Rosewood Doha is filled `Lusail Marina`, but **Lusail is arguably its own city** — a planned city ~20km north in a different municipality, the same shape as the Ras Al Khaimah row where `city` was the real bug.
 
 **Found by that audit, and NOT a `local_area` problem: 8 published hotels have no `city` at all** — &Beyond Bateleur, Kichwa Tembo, Angama Amboseli, Angama Mara, Il Moran, Singita Kwitonda, Six Senses Shaharut and Clayoquot Wilderness. Each is a lodge whose reserve name sits in `state_province_county_island` instead, which §3 tolerates — but **`cityAirports.ts` is keyed by `city`, so all eight resolve to no airport in the landing flight teaser.** The earlier "published cities with no airport" check missed them because it only tested rows that *had* a city.
 

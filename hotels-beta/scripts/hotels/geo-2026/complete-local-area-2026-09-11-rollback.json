@@ -1,0 +1,803 @@
+[
+  {
+    "at": "2026-09-11T14:22:01.237Z",
+    "changes": [
+      {
+        "id": 1076,
+        "city": "Shanghai",
+        "value": "North Bund",
+        "tier": "A",
+        "why": "\"sits on the North Bund\"",
+        "name": "Banyan Tree Shanghai On The Bund",
+        "published": true
+      },
+      {
+        "id": 1078,
+        "city": "Shanghai",
+        "value": "Jing'an District",
+        "tier": "B",
+        "why": "Suhe Creek; the text names the Bund only as nearby",
+        "name": "Bulgari Hotel Shanghai",
+        "published": true
+      },
+      {
+        "id": 1080,
+        "city": "Shanghai",
+        "value": "Lujiazui",
+        "tier": "A",
+        "why": "\"occupies the Lujiazui address ... Set on Century Avenue\"",
+        "name": "Regent Shanghai",
+        "published": false
+      },
+      {
+        "id": 1095,
+        "city": "Shanghai",
+        "value": "The Bund",
+        "tier": "A",
+        "why": "\"on the historic Bund\"",
+        "name": "The Peninsula Shanghai",
+        "published": true
+      },
+      {
+        "id": 1096,
+        "city": "Shanghai",
+        "value": "Jing'an District",
+        "tier": "A",
+        "why": "\"beside Jing'an Park\"",
+        "name": "The PuLi Hotel & Spa",
+        "published": true
+      },
+      {
+        "id": 1100,
+        "city": "Shanghai",
+        "value": "Lujiazui",
+        "tier": "A",
+        "why": "\"occupies the upper floors of a Lujiazui tower\"",
+        "name": "The Ritz-Carlton, Shanghai",
+        "published": true
+      },
+      {
+        "id": 1102,
+        "city": "Shanghai",
+        "value": "The Bund",
+        "tier": "B",
+        "why": "199 Nanjing Road East, where the artery meets the Bund",
+        "name": "The Shanghai EDITION",
+        "published": true
+      },
+      {
+        "id": 1074,
+        "city": "Beijing",
+        "value": "Haidian District",
+        "tier": "B",
+        "why": "at the eastern edge of the Summer Palace, which is Haidian",
+        "name": "Summer Palace Hotel Beijing",
+        "published": false
+      },
+      {
+        "id": 1079,
+        "city": "Beijing",
+        "value": "Chaoyang District",
+        "tier": "A",
+        "why": "\"above Liangmahe in Chaoyang\"",
+        "name": "Four Seasons Hotel Beijing",
+        "published": true
+      },
+      {
+        "id": 1085,
+        "city": "Beijing",
+        "value": "Chaoyang District",
+        "tier": "A",
+        "why": "\"stands in Chaoyang's Central Business District\"",
+        "name": "Rosewood Beijing",
+        "published": true
+      },
+      {
+        "id": 1093,
+        "city": "Beijing",
+        "value": "Wangfujing",
+        "tier": "A",
+        "why": "\"an all-suite grande dame address in Wangfujing\"",
+        "name": "The Peninsula Beijing",
+        "published": true
+      },
+      {
+        "id": 1103,
+        "city": "Beijing",
+        "value": "Chaoyang District",
+        "tier": "B",
+        "why": "the diplomatic quarter by Jianguomen and the Silk Market",
+        "name": "The St. Regis Beijing",
+        "published": true
+      },
+      {
+        "id": 1813,
+        "city": "Beijing",
+        "value": "Qianmen",
+        "tier": "A",
+        "why": "\"a restored hutong neighbourhood close to Qianmen\"",
+        "name": "Mandarin Oriental, Qianmen",
+        "published": true
+      },
+      {
+        "id": 1424,
+        "city": "Rome",
+        "value": "Piazza della Repubblica",
+        "tier": "A",
+        "why": "\"curving around Piazza della Repubblica\"",
+        "name": "Anantara Palazzo Naiadi Rome",
+        "published": true
+      },
+      {
+        "id": 1431,
+        "city": "Rome",
+        "value": "Piazza Augusto Imperatore",
+        "tier": "A",
+        "why": "\"stands in Piazza Augusto Imperatore\"",
+        "name": "Bulgari Hotel Roma",
+        "published": true
+      },
+      {
+        "id": 1455,
+        "city": "Rome",
+        "value": "Via Veneto",
+        "tier": "A",
+        "why": "\"near Via Veneto ... by Porta Pinciana\"",
+        "name": "Hotel Splendide Royal",
+        "published": true
+      },
+      {
+        "id": 1470,
+        "city": "Rome",
+        "value": "Spanish Steps",
+        "tier": "A",
+        "why": "\"on Via Condotti ... moments from the Spanish Steps\"",
+        "name": "Portrait Roma",
+        "published": false
+      },
+      {
+        "id": 1476,
+        "city": "Rome",
+        "value": "Piazza Venezia",
+        "tier": "B",
+        "why": "Palazzo Salviati Cesi Mellini, the nearest of the three it names",
+        "name": "Six Senses Rome",
+        "published": true
+      },
+      {
+        "id": 1482,
+        "city": "Rome",
+        "value": "Via Veneto",
+        "tier": "A",
+        "why": "\"to the edge of Via Veneto\"",
+        "name": "The Rome EDITION",
+        "published": false
+      },
+      {
+        "id": 1601,
+        "city": "Abu Dhabi",
+        "value": "Al Maryah Island",
+        "tier": "A",
+        "why": "named in the hotel's own name and text",
+        "name": "Four Seasons Hotel Abu Dhabi at Al Maryah Island",
+        "published": true
+      },
+      {
+        "id": 1603,
+        "city": "Abu Dhabi",
+        "value": "Ras Al Akhdar",
+        "tier": "B",
+        "why": "West Corniche Road; the text names no district — WEAK",
+        "name": "Emirates Palace Mandarin Oriental Abu Dhabi",
+        "published": false
+      },
+      {
+        "id": 1610,
+        "city": "Abu Dhabi",
+        "value": "Al Maryah Island",
+        "tier": "A",
+        "why": "\"on Al Maryah Island\"",
+        "name": "Rosewood Abu Dhabi",
+        "published": true
+      },
+      {
+        "id": 1613,
+        "city": "Abu Dhabi",
+        "value": "Al Maqta",
+        "tier": "B",
+        "why": "\"beside Al Maqta Creek\" — WEAK",
+        "name": "The Ritz-Carlton Abu Dhabi, Grand Canal",
+        "published": true
+      },
+      {
+        "id": 1615,
+        "city": "Abu Dhabi",
+        "value": "Al Khubeirah",
+        "tier": "B",
+        "why": "Nation Towers on the Corniche; the text names no district — WEAK",
+        "name": "The St. Regis Abu Dhabi",
+        "published": true
+      },
+      {
+        "id": 1671,
+        "city": "Chicago",
+        "value": "Gold Coast",
+        "tier": "B",
+        "why": "\"Gold Coast dining at the doorstep\"",
+        "name": "Four Seasons Hotel Chicago",
+        "published": true
+      },
+      {
+        "id": 1702,
+        "city": "Chicago",
+        "value": "Gold Coast",
+        "tier": "A",
+        "why": "\"From this Gold Coast position\"",
+        "name": "Park Hyatt Chicago",
+        "published": true
+      },
+      {
+        "id": 1704,
+        "city": "Chicago",
+        "value": "The Loop",
+        "tier": "A",
+        "why": "\"From this Loop address\"",
+        "name": "Pendry Chicago",
+        "published": true
+      },
+      {
+        "id": 1728,
+        "city": "Chicago",
+        "value": "River North",
+        "tier": "B",
+        "why": "the former IBM Building at 330 N Wabash",
+        "name": "The Langham Chicago",
+        "published": true
+      },
+      {
+        "id": 1739,
+        "city": "Chicago",
+        "value": "Magnificent Mile",
+        "tier": "A",
+        "why": "\"beside the Water Tower and the Magnificent Mile\"",
+        "name": "The Peninsula Chicago",
+        "published": true
+      },
+      {
+        "id": 1766,
+        "city": "Chicago",
+        "value": "River North",
+        "tier": "A",
+        "why": "\"a commanding Near North Side address ... River North\"",
+        "name": "Trump International Hotel & Tower Chicago",
+        "published": true
+      },
+      {
+        "id": 1438,
+        "city": "Florence",
+        "value": "Santa Croce",
+        "tier": "B",
+        "why": "Borgo Pinti, in the Santa Croce rione",
+        "name": "Four Seasons Hotel Firenze",
+        "published": true
+      },
+      {
+        "id": 1469,
+        "city": "Florence",
+        "value": "Santa Maria Novella",
+        "tier": "B",
+        "why": "Lungarno Acciaiuoli, in the Santa Maria Novella rione",
+        "name": "Portrait Firenze",
+        "published": true
+      },
+      {
+        "id": 1481,
+        "city": "Florence",
+        "value": "Santa Maria Novella",
+        "tier": "A",
+        "why": "\"on Piazza Santa Maria Novella\"",
+        "name": "The Place Firenze",
+        "published": true
+      },
+      {
+        "id": 1483,
+        "city": "Florence",
+        "value": "Santa Maria Novella",
+        "tier": "B",
+        "why": "Piazza Ognissanti, in the same rione",
+        "name": "The St. Regis Florence",
+        "published": true
+      },
+      {
+        "id": 1485,
+        "city": "Florence",
+        "value": "Oltrarno",
+        "tier": "B",
+        "why": "\"above the Boboli Gardens, close to Porta Romana\"",
+        "name": "Villa Cora",
+        "published": true
+      },
+      {
+        "id": 1522,
+        "city": "Madrid",
+        "value": "Sol",
+        "tier": "B",
+        "why": "\"Centro Canalejas at the meeting point of Sol, Alcala\"",
+        "name": "Four Seasons Hotel Madrid",
+        "published": true
+      },
+      {
+        "id": 1529,
+        "city": "Madrid",
+        "value": "Los Jerónimos",
+        "tier": "B",
+        "why": "Plaza de la Lealtad, facing the Prado",
+        "name": "Mandarin Oriental, Ritz Madrid",
+        "published": true
+      },
+      {
+        "id": 1532,
+        "city": "Madrid",
+        "value": "Salamanca",
+        "tier": "A",
+        "why": "\"in Madrid's Salamanca district\"",
+        "name": "Rosewood Villa Magna",
+        "published": true
+      },
+      {
+        "id": 1537,
+        "city": "Madrid",
+        "value": "Sol",
+        "tier": "B",
+        "why": "\"on Plaza de Celenque, moments from Puerta del Sol\"",
+        "name": "The Madrid EDITION",
+        "published": true
+      },
+      {
+        "id": 1539,
+        "city": "Madrid",
+        "value": "Justicia",
+        "tier": "B",
+        "why": "\"between Chamberi, Tribunal and Chueca\" — the address is Justicia",
+        "name": "URSO Hotel & Spa",
+        "published": true
+      },
+      {
+        "id": 1187,
+        "city": "Singapore",
+        "value": "Orchard",
+        "tier": "B",
+        "why": "\"the quieter, leafy end of Orchard Boulevard\"",
+        "name": "Four Seasons Hotel Singapore",
+        "published": true
+      },
+      {
+        "id": 1188,
+        "city": "Singapore",
+        "value": "Marina Bay",
+        "tier": "A",
+        "why": "\"a privileged Marina Bay position at 5 Raffles Avenue\"",
+        "name": "Mandarin Oriental, Singapore",
+        "published": true
+      },
+      {
+        "id": 1189,
+        "city": "Singapore",
+        "value": "Civic District",
+        "tier": "B",
+        "why": "\"at 1 Beach Road, between the Civic District, Bugis, City Hall\"",
+        "name": "Raffles Singapore",
+        "published": true
+      },
+      {
+        "id": 1190,
+        "city": "Singapore",
+        "value": "Marina Bay",
+        "tier": "A",
+        "why": "\"stands in Marina Bay\"",
+        "name": "The Ritz-Carlton, Millenia Singapore",
+        "published": true
+      },
+      {
+        "id": 1542,
+        "city": "Zurich",
+        "value": "Altstadt",
+        "tier": "B",
+        "why": "Talstrasse at the lake end of Bahnhofstrasse, Kreis 1",
+        "name": "Baur au Lac",
+        "published": true
+      },
+      {
+        "id": 1559,
+        "city": "Zurich",
+        "value": "Seefeld",
+        "tier": "A",
+        "why": "\"on Utoquai, close to ... Seefeld\"",
+        "name": "La Réserve Eden au Lac Zurich",
+        "published": true
+      },
+      {
+        "id": 1571,
+        "city": "Zurich",
+        "value": "Zürichberg",
+        "tier": "A",
+        "why": "\"high on the Zürichberg above the city\"",
+        "name": "The Dolder Grand",
+        "published": true
+      },
+      {
+        "id": 1577,
+        "city": "Zurich",
+        "value": "Altstadt",
+        "tier": "A",
+        "why": "\"embedded in Zurich's Old Town ... just off Rennweg\"",
+        "name": "Widder Hotel",
+        "published": true
+      },
+      {
+        "id": 1337,
+        "city": "Saint-Tropez",
+        "value": "Village centre",
+        "tier": "A",
+        "why": "\"In the heart of Saint-Tropez, a short walk from Place des Lices\"",
+        "name": "Byblos Saint-Tropez",
+        "published": true
+      },
+      {
+        "id": 1091,
+        "city": "Hong Kong",
+        "value": "Hong Kong Island",
+        "tier": "B",
+        "why": "Cotton Tree Drive, Central — island level to match the seven siblings",
+        "name": "The Murray Hong Kong",
+        "published": true
+      },
+      {
+        "id": 1107,
+        "city": "Hong Kong",
+        "value": "Hong Kong Island",
+        "tier": "B",
+        "why": "Wan Chai — island level to match the seven siblings",
+        "name": "The Hari Hong Kong",
+        "published": true
+      },
+      {
+        "id": 1811,
+        "city": "Hong Kong",
+        "value": "Hong Kong Island",
+        "tier": "B",
+        "why": "Pacific Place, Admiralty — island level to match the seven siblings",
+        "name": "Upper House Hong Kong",
+        "published": true
+      },
+      {
+        "id": 1124,
+        "city": "Jakarta",
+        "value": "Kuningan",
+        "tier": "B",
+        "why": "Capital Place on Jalan Gatot Subroto",
+        "name": "Four Seasons Hotel Jakarta",
+        "published": true
+      },
+      {
+        "id": 1126,
+        "city": "Jakarta",
+        "value": "Menteng",
+        "tier": "B",
+        "why": "Jalan M.H. Thamrin by the Welcome Monument",
+        "name": "Mandarin Oriental, Jakarta",
+        "published": true
+      },
+      {
+        "id": 1128,
+        "city": "Jakarta",
+        "value": "Menteng",
+        "tier": "A",
+        "why": "\"the green avenues of Menteng\"",
+        "name": "Park Hyatt Jakarta",
+        "published": true
+      },
+      {
+        "id": 1445,
+        "city": "Capri",
+        "value": "Piazzetta",
+        "tier": "B",
+        "why": "\"on Via Camerelle, a short walk from the Piazzetta\"",
+        "name": "Grand Hotel Quisisana",
+        "published": false
+      },
+      {
+        "id": 1472,
+        "city": "Capri",
+        "value": "Tragara",
+        "tier": "A",
+        "why": "\"at the end of Via Tragara\"",
+        "name": "Punta Tragara",
+        "published": false
+      },
+      {
+        "id": 1829,
+        "city": "Capri",
+        "value": "Piazzetta",
+        "tier": "A",
+        "why": "\"stands just off Capri's Piazzetta\"",
+        "name": "Hotel La Palma",
+        "published": true
+      },
+      {
+        "id": 1667,
+        "city": "Miami Beach",
+        "value": "Mid-Beach",
+        "tier": "A",
+        "why": "\"oceanfront Collins Avenue in Mid-Beach\"",
+        "name": "Faena Hotel Miami Beach",
+        "published": true
+      },
+      {
+        "id": 1699,
+        "city": "Miami Beach",
+        "value": "Mid-Beach",
+        "tier": "A",
+        "why": "\"directly on the sands of Mid-Beach\"",
+        "name": "Nobu Hotel Miami Beach",
+        "published": true
+      },
+      {
+        "id": 1735,
+        "city": "Miami Beach",
+        "value": "Mid-Beach",
+        "tier": "A",
+        "why": "\"a prime Mid-Beach address at 29th Street\"",
+        "name": "The Miami Beach EDITION",
+        "published": true
+      },
+      {
+        "id": 1140,
+        "city": "Kyoto",
+        "value": "Nakagyo",
+        "tier": "B",
+        "why": "opposite Nijo-jo Castle, in Nakagyo ward",
+        "name": "Hotel The Mitsui Kyoto",
+        "published": true
+      },
+      {
+        "id": 1142,
+        "city": "Kyoto",
+        "value": "Nakagyo",
+        "tier": "B",
+        "why": "the Kamogawa by Nijo Ohashi, in Nakagyo ward",
+        "name": "The Ritz-Carlton, Kyoto",
+        "published": true
+      },
+      {
+        "id": 1149,
+        "city": "Kyoto",
+        "value": "Higashiyama",
+        "tier": "A",
+        "why": "\"woven into the historic slopes of Higashiyama\"",
+        "name": "Park Hyatt Kyoto",
+        "published": true
+      },
+      {
+        "id": 1579,
+        "city": "Istanbul",
+        "value": "Yıldız",
+        "tier": "B",
+        "why": "the Çırağan Palace grounds; mahalle level to match Kuruçeşme",
+        "name": "Ciragan Palace Kempinski",
+        "published": true
+      },
+      {
+        "id": 1581,
+        "city": "Istanbul",
+        "value": "Yıldız",
+        "tier": "B",
+        "why": "Atik Pasha Palace, ~200m from 1579, so the two must agree",
+        "name": "Four Seasons Hotel Istanbul at the Bosphorus",
+        "published": true
+      },
+      {
+        "id": 1586,
+        "city": "Istanbul",
+        "value": "Karaköy",
+        "tier": "A",
+        "why": "\"sits at the water's edge in Karaköy\"",
+        "name": "The Peninsula Istanbul",
+        "published": true
+      },
+      {
+        "id": 1271,
+        "city": "Vienna",
+        "value": "Mariahilf",
+        "tier": "B",
+        "why": "Mariahilfer Strasse 71, the 1060 side of the street it calls a border",
+        "name": "Hotel Motto",
+        "published": true
+      },
+      {
+        "id": 1272,
+        "city": "Vienna",
+        "value": "Innere Stadt",
+        "tier": "B",
+        "why": "directly opposite the State Opera, i.e. the 1st district",
+        "name": "Hotel Sacher Wien",
+        "published": true
+      },
+      {
+        "id": 1274,
+        "city": "Vienna",
+        "value": "Innere Stadt",
+        "tier": "A",
+        "why": "\"in Vienna's first district\"",
+        "name": "Palais Coburg",
+        "published": true
+      },
+      {
+        "id": 1779,
+        "city": "Rio de Janeiro",
+        "value": "Copacabana",
+        "tier": "A",
+        "why": "\"facing the curve of Copacabana from Avenida Atlantica\"",
+        "name": "Copacabana Palace",
+        "published": true
+      },
+      {
+        "id": 1783,
+        "city": "Rio de Janeiro",
+        "value": "Ipanema",
+        "tier": "A",
+        "why": "\"stands on the Ipanema waterfront\"",
+        "name": "Hotel Fasano Rio de Janeiro",
+        "published": true
+      },
+      {
+        "id": 1824,
+        "city": "Ubud",
+        "value": "Kedewatan",
+        "tier": "B",
+        "why": "Jalan Raya Kedewatan, matching the existing house value",
+        "name": "Mandapa, a Ritz-Carlton Reserve",
+        "published": true
+      },
+      {
+        "id": 1632,
+        "city": "Los Cabos",
+        "value": "Costa Palmas",
+        "tier": "A",
+        "why": "\"part of the Costa Palmas community\"",
+        "name": "Four Seasons Resort and Residences Los Cabos at Costa Palmas",
+        "published": true
+      },
+      {
+        "id": 1649,
+        "city": "Los Cabos",
+        "value": "Pedregal",
+        "tier": "A",
+        "why": "\"the rock of the Pedregal hillside\"",
+        "name": "Waldorf Astoria Los Cabos Pedregal",
+        "published": true
+      },
+      {
+        "id": 1231,
+        "city": "Ho Chi Minh City",
+        "value": "District 1",
+        "tier": "A",
+        "why": "\"From this central District 1 position\"",
+        "name": "Park Hyatt Saigon",
+        "published": true
+      },
+      {
+        "id": 1533,
+        "city": "Palma de Mallorca",
+        "value": "Old Town",
+        "tier": "B",
+        "why": "\"on its namesake square in Palma's old town\"",
+        "name": "Sant Francesc Hotel Singular",
+        "published": true
+      },
+      {
+        "id": 1764,
+        "city": "West Hollywood",
+        "value": "Sunset Strip",
+        "tier": "A",
+        "why": "\"At Sunset Boulevard and Doheny Drive ... the Sunset Strip\"",
+        "name": "The West Hollywood EDITION",
+        "published": true
+      },
+      {
+        "id": 1769,
+        "city": "Dana Point",
+        "value": "Monarch Beach",
+        "tier": "A",
+        "why": "\"the private Monarch Bay Beach Club\", and its own name",
+        "name": "Waldorf Astoria Monarch Beach",
+        "published": true
+      },
+      {
+        "id": 1787,
+        "city": "Santiago",
+        "value": "Lastarria",
+        "tier": "A",
+        "why": "\"stands in Lastarria\"",
+        "name": "The Singular Santiago",
+        "published": true
+      },
+      {
+        "id": 1593,
+        "city": "Doha",
+        "value": "Lusail Marina",
+        "tier": "A",
+        "why": "\"rises in Lusail's Marina District\" — but see the header on Lusail",
+        "name": "Rosewood Doha",
+        "published": false
+      },
+      {
+        "id": 1633,
+        "city": "Punta Mita",
+        "value": "Punta Mita Peninsula",
+        "tier": "A",
+        "why": "\"on the private Punta Mita peninsula\"",
+        "name": "Four Seasons Resort Punta Mita",
+        "published": true
+      },
+      {
+        "id": 1151,
+        "city": "Langkawi",
+        "value": "Datai Bay",
+        "tier": "A",
+        "why": "\"above Datai Bay\"",
+        "name": "The Datai Langkawi",
+        "published": true
+      },
+      {
+        "id": 1622,
+        "city": "Vancouver",
+        "value": "Downtown Vancouver",
+        "tier": "B",
+        "why": "900 Canada Place Way, matching the existing house value",
+        "name": "Fairmont Waterfront",
+        "published": true
+      },
+      {
+        "id": 1083,
+        "city": "Sanya",
+        "value": "Dadonghai",
+        "tier": "A",
+        "why": "\"a quiet sweep of Coral Bay at Dadonghai\"",
+        "name": "Mandarin Oriental, Sanya",
+        "published": true
+      },
+      {
+        "id": 1105,
+        "city": "Hangzhou",
+        "value": "Xihu District",
+        "tier": "B",
+        "why": "Lingyin Road; \"West Lake\" is the traveller area, not a district",
+        "name": "Four Seasons Hotel Hangzhou at West Lake",
+        "published": true
+      },
+      {
+        "id": 1795,
+        "city": "Sydney",
+        "value": "Circular Quay",
+        "tier": "B",
+        "why": "Loftus Street, at the Quay's edge",
+        "name": "Capella Sydney",
+        "published": true
+      },
+      {
+        "id": 1641,
+        "city": "Tepic-Puerto Vallarta",
+        "value": "El Monteón",
+        "tier": "B",
+        "why": "the Mandarina development, matching Rosewood Mandarina",
+        "name": "One&Only Mandarina, Riviera Nayarit",
+        "published": true
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T14:22:09.954Z",
+    "changes": []
+  }
+]

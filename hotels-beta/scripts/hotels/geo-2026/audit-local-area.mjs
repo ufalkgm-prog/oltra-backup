@@ -72,7 +72,14 @@ report("repeats its own city",
 // Region-level: the value is an admin_region or traveller area somewhere.
 const admins = new Set(all.map((h) => norm(h.admin_region)).filter(Boolean));
 const areas = new Set(all.map((h) => norm(h.state_province_county_island)).filter(Boolean));
-const KEEP_REGIONAL = new Set(["1186", "1245", "1793"]); // §3: Sentosa, Playa Grande, Punta del Este
+/* Exempt by §3, genuinely sub-city: Sentosa, Playa Grande, Punta del Este.
+ * Plus a COINCIDENTAL HOMONYM, which is a different thing and worth naming as
+ * such: Chicago's Gold Coast is a real neighbourhood, and it only trips this
+ * check because Australia's Gold Coast is a traveller area on a Queensland
+ * hotel. Two places on two continents sharing a name is not a defect. The same
+ * shape appears among the candidates below — "Santa Croce" is a rione in
+ * Florence AND a sestiere in Venice, both correct. */
+const KEEP_REGIONAL = new Set(["1186", "1245", "1793", "1671", "1702"]);
 report("region-level (matches an admin_region or traveller area)",
   filled.filter((h) => !KEEP_REGIONAL.has(String(h.id)) && (admins.has(V(h)) || areas.has(V(h)))), true,
   "three rows are exempt by §3 and excluded here");
