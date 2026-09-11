@@ -779,9 +779,20 @@ Retiring a value means converting the arrays **then** removing the choice from t
 
 **Scan unpublished rows when retiring, not just published.** Batch 2 scoped `published: true`, because every count in the review was about the live collection — so four unpublished hotels kept their fresh tags and the retire script refused. That guard is the whole point of it: Four Seasons Bangkok at Chao Phraya River, &Beyond Lake Manyara, Sandibe Okavango and Punakha River Lodge, all unambiguously fresh water, merged in `apply-freshwater-unpublished-2026-09-11.mjs`. An orphaned value on an unpublished row is exactly the one nobody notices.
 
-### Editorial follow-up, not applied
+### Editorial follow-ups
 
-* **id 1135, The St. Regis Bali** — highlights say "perched on a cliff"; it is not, and the description has it on the beachfront. A copy fix, deliberately left out of a settings script.
+Three factual corrections to `highlights`, applied 2026-09-11 in `fix-highlights-copy-2026-09-11.mjs` — each a single phrase, voice untouched, and each asserted against the stored text before writing so a hand-edit aborts the run rather than being overwritten:
+
+* **1135 St. Regis Bali** — "perched on a cliff" → "set on the beachfront". Nusa Dua is flat.
+* **1579 Çırağan Palace** — "on the river" → "on the Bosphorus". A strait, and naming it is better copy.
+* **1511 The Torridon** — "lakeside" → "lochside". Loch Torridon is a sea loch; the Scottish word is accurate and sidesteps the fresh-or-salt question that made the row a judgement call.
+
+**Still open — two pairs of hotels share an identical `highlights` line**, found by frequency-mapping the field across all 903 rows. Both pairs are in Abu Dhabi, and the line is what a results card shows, so two different hotels read the same in a list:
+
+* 1601 Four Seasons Al Maryah Island / 1610 Rosewood Abu Dhabi — "Canalside hotel with amazing views of the city"
+* 1615 The St. Regis Abu Dhabi / 1616 The St. Regis Saadiyat Island — "Classic beachfront luxury close to the city"
+
+Not fixed here: this needs new copy written, not a phrase corrected, and writing editorial content is Ulrik's call (§41). "Canalside" also now echoes a retired setting value.
 
 ---
 

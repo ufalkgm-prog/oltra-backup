@@ -1,0 +1,28 @@
+[
+  {
+    "at": "2026-09-11T11:14:06.547Z",
+    "changes": [
+      {
+        "id": 1135,
+        "from": "Tropical designer luxury perched on a cliff with stunning sea views and multiple dining options",
+        "to": "Tropical designer luxury set on the beachfront with stunning sea views and multiple dining options",
+        "why": "Nusa Dua is flat beachfront; there is no cliff.",
+        "name": "The St. Regis Bali Resort"
+      },
+      {
+        "id": 1579,
+        "from": "Opulent luxury, multiple restaurants and great setting on the river",
+        "to": "Opulent luxury, multiple restaurants and great setting on the Bosphorus",
+        "why": "The Bosphorus is a strait, and naming it is better copy than 'the river'.",
+        "name": "Ciragan Palace Kempinski"
+      },
+      {
+        "id": 1511,
+        "from": "Amazing lakeside escape",
+        "to": "Amazing lochside escape",
+        "why": "Loch Torridon is a sea loch, not a lake.",
+        "name": "The Torridon"
+      }
+    ]
+  }
+]
