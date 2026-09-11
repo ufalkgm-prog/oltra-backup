@@ -1282,14 +1282,85 @@ the obvious value — **Amsterdam (5), Barcelona (5), Geneva (4), Kuala Lumpur
 where only the Golden Triangle is a named district, and **Monte Carlo (3)**,
 which is already a ward of Monaco rather than a city with wards below it.
 
-### Airport mapping (`cityAirports.ts`)
+### Airport mapping (`cityAirports.ts`) — both closed 2026-09-12
 
-* **Menlo Park's only airport is San Carlos (799m)**, a general-aviation field,
-  where SFO is meant. A one-line `GATEWAY_OVERRIDE` entry.
-* **Grumeti Game Reserve** (Tanzania, Serengeti) lists `MRE` — a *Kenyan* lodge
-  airstrip — among its three. The gateway question there is Kilimanjaro or
-  Arusha versus the internal Seronera hop, and it needs a decision rather than
-  a rule.
+**Menlo Park was already fixed** in the queue pass of 2026-09-12 (`SFO`, `SJC`,
+`OAK`) and this list simply had not been updated — it sat here as open while
+the queue paragraph below listed it among the 24 fixed. Worth a note because
+the contradiction was *inside one section*: when a pass closes items, the open
+list is where the update gets forgotten.
+
+**The Grumeti entry understated it by a factor of four.** It reads as one
+destination with a Kenyan airstrip among its three. In fact **the Serengeti is
+one national park stored under five `city` values** — `Grumeti Game Reserve`
+(the three Singita lodges), `Kirawira` (&Beyond Grumeti River), `Serengeti`
+(Four Seasons), `Namiri Plains`, and nothing at all for the area key — so the
+park had **four independent answers**, three of them bush strips. The Volcanoes
+National Park lesson verbatim: fixing one lodge in a park leaves the park
+inconsistent. All four now read **`JRO` then `MWZ`**.
+
+* **Kilimanjaro first everywhere**, per the *best-first, not nearest-first*
+  contract the concierge tool documents — it is the northern circuit's
+  international gateway.
+* **Mwanza second, and it is genuinely the nearer one** for the western
+  corridor: measured, 146km from Kirawira and 159km from the Singita lodges
+  against 347km and 343km to Kilimanjaro. A 3,113m large airport with real
+  scheduled service, but regional rather than intercontinental, which is why
+  it is second and not first.
+* **Arusha (`ARK`) is deliberately absent, and it is the judgement call here.**
+  It has scheduled service and much of the Serengeti light-aircraft traffic
+  leaves from it — which makes it the **Wilson of Tanzania**, and §3 settled
+  Wilson: the international ticket lands at the international airport and the
+  light-aircraft hub belongs in the transfer route. It is named in all four
+  routes instead.
+
+**Why four destinations covering six lodges read as healthy for a year, and the
+reason this is the most useful thing in this entry: Seronera's runway is
+2,280m.** That clears `audit-airports.mjs`'s 2,200m jet test, at 27–83km, which
+clears its 120km test. Both screens passed. SEU is a gravel strip in the middle
+of the park with no international service and no ticket sellable from Europe —
+**length and distance cannot separate a small international airport from a long
+airstrip.**
+
+So the audit gained a **third screen, on airport TYPE**: OurAirports calls
+Seronera and Musoma `small_airport`, while Florence, Santorini and Mykonos —
+the false positives the other screens generate — are `medium_airport`. A
+`medium` field over 2,200m is not flagged, so Bolzano and Santorini do not
+re-enter the queue.
+
+**§37 records that filtering on type was tried and REVERTED** (it sent Missoula
+to Spokane, 319km). That is not this, and the distinction is the one §51
+already draws: there, type decided *which airport a guest is offered*; here it
+decides *which destination a human looks at*. A signal too crude to select an
+airport is fine for raising a question — a false positive costs a glance, not a
+wrong answer.
+
+**Measured before it was added**: 47 destinations have a small best airport, and
+**44 were already in `REVIEWED`** — the Maldivian hops, Mykonos, St Barth, Sabi
+Sand, Kruger, Phinda, Bora Bora, Lanai, Tswalu. The three genuinely new ones
+were the Serengeti keys. So the screen is almost entirely redundant with the
+existing queue *except* for the case that slipped through it, which is the best
+possible result: the blind spot has exactly one occurrence and it is now closed.
+Candidates 81 → 84, checked 20 → 23, still **0 never-reviewed**.
+
+**The screen was nearly inert on arrival, and that is its own lesson.** The
+audit's parser captured `iata`, `distKm` and `runwayM` — **not `size`** — so the
+type test would have read `undefined` on every airport and reported a clean
+queue, exactly the failure §3 describes: *a check which cannot see a defect
+reports zero as confidently as a clean collection does*. The parser now
+captures `size` and the audit **aborts** if any airport parses without a size or
+runway, rather than screening on a field it failed to read.
+
+**Transfer routes: four added, and they are deliberately NOT a copy of the Mara
+entry above them.** The Mara carries a hard road leg to Wilson because every
+scheduled Mara flight leaves from there — a fact. The Serengeti does not work
+that way: light aircraft run from Kilimanjaro *and* from Arusha depending on
+operator and day, so copying the Mara's shape would have invented a mandatory
+hour-long transfer many guests never make. The flight is the first leg and
+Arusha is a possibility in the note. **The airstrip is left unnamed** — the park
+has Seronera, Sasakwa, Kogatende and Grumeti, and which one a given lodge uses
+is in our data for none of the six. A vague route beats a guess a guest could
+act on. Routes 53 → 57, overrides 56 → 59.
 
 ### Settled, so nobody re-opens them
 
@@ -1310,7 +1381,7 @@ which is already a ward of Monaco rather than a city with wards below it.
 
 `src/lib/transferRoutes.ts` (2026-09-11, see CLAUDE-AI.md) holds the
 arrival-to-door route per destination, so the concierge stops answering "how do
-I get to the Masai Mara" with Nairobi and a full stop. **11 routes populated**;
+I get to the Masai Mara" with Nairobi and a full stop. **57 routes populated**;
 an absent entry makes it decline rather than guess, which is the point.
 
 Two candidate groups, both measurable by re-running the same check:
@@ -1343,11 +1414,14 @@ Two candidate groups, both measurable by re-running the same check:
   sitting on a 13,800-acre private reserve with no scheduled service near it.
   The road figure is deliberately loose ("the better part of a day") because
   360km of largely gravel road is not a number worth faking.
-* **~93 have no jet-capable airport listed**, so the gateway is missing. Partly
-  noise — Florence, Mykonos and Santorini are genuine international arrivals
-  that merely have short runways. The real ones are island and reserve hops:
-  Phinda, Grumeti, the Maldivian islands off Malé, St. Barthélemy off St
-  Maarten, Canouan, Praslin-served Seychelles, Big Island, Arenal.
+* **The ~93 with no jet-capable airport listed are worked through** — the queue
+  reached 0 never-reviewed on 2026-09-12. Much of it was noise, as suspected:
+  Florence, Mykonos and Santorini are genuine international arrivals that
+  merely have short runways. The real ones all have either an override or a
+  route now — Phinda, the Maldivian islands off Malé, St. Barthélemy off St
+  Maarten, Canouan, Praslin-served Seychelles, Big Island, Arenal, and the
+  Serengeti, which turned out to be four keys rather than the one this bullet
+  named.
 
 Populate only what is not in reasonable doubt. A wrong route is worse than an
 absent one — a guest can act on a boat that does not run.

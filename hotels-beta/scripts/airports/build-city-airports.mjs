@@ -335,7 +335,47 @@ const GATEWAY_OVERRIDE = {
    * Nairobi through the "Masai Mara" area key below instead. Deleting the row
    * without deleting this entry would leave a dead override — the DEFECT
    * audit-airports.mjs fires on, and caught once already on "Perez Zeledon". */
-  "Namiri Plains": ["JRO"],
+  /* ==== THE SERENGETI IS ONE PARK UNDER FIVE `city` VALUES, 2026-09-12 ====
+   *
+   * Six lodges, one national park, and `city` holds five different things:
+   * "Grumeti Game Reserve" (the three Singita lodges), "Kirawira" (&Beyond
+   * Grumeti River), "Serengeti" (Four Seasons) and "Namiri Plains" (its own
+   * name). Every one is a separate key here, computed from its own centroid,
+   * so the park had FOUR different answers — and three of them were bush
+   * strips. This is the Volcanoes National Park lesson exactly: fixing one
+   * lodge in a park leaves the park inconsistent, so all four move together.
+   *
+   * Namiri Plains was fixed a day earlier for being mapped to MRE — the Mara
+   * Serena strip, in KENYA, across an international border. The other three
+   * were left on Seronera (SEU) and Musoma, and Grumeti also listed MRE.
+   *
+   * WHY NOBODY CAUGHT THEM: Seronera's runway is 2,280m, which clears the
+   * audit's 2,200m jet test, at 27-83km, which clears its 120km test. So the
+   * screen declared the Serengeti healthy. SEU is a gravel strip in the middle
+   * of the park with no international service and no ticket you can buy from
+   * Europe. A long bush airstrip passes a length-and-distance test, which is
+   * the blind spot; audit-airports.mjs now also screens on airport TYPE, and
+   * the Serengeti is the only place in the collection it finds.
+   *
+   * JRO (Kilimanjaro, 3,600m) is the northern circuit's international
+   * gateway and goes first everywhere in the park, per the "best-first, not
+   * nearest-first" contract the concierge tool documents. MWZ (Mwanza
+   * International, 3,113m, on Lake Victoria) is second: a real large airport
+   * with scheduled service, and measurably the NEARER of the two for the
+   * western corridor — 146km from Kirawira and 150km from the Singita lodges,
+   * against 347km and 354km to Kilimanjaro. It is regional rather than
+   * intercontinental, which is why it is second rather than first.
+   *
+   * ARUSHA (ARK) IS DELIBERATELY ABSENT, and it is the nearest thing to a
+   * judgement call here. It has scheduled service and it is where much of the
+   * Serengeti light-aircraft traffic departs — but that makes it the Wilson of
+   * Tanzania, and §3 settled Wilson: the international ticket lands at the
+   * international airport, and the light-aircraft hub belongs in the transfer
+   * route. It is named in all four routes in transferRoutes.ts. */
+  "Namiri Plains": ["JRO", "MWZ"],
+  "Grumeti Game Reserve": ["JRO", "MWZ"],
+  Kirawira: ["JRO", "MWZ"],
+  Serengeti: ["JRO", "MWZ"],
   /* The same park, reached the same way. These two DO have a `city`, so they
    * were already in the mapping and are not part of the eight — but Kinigi
    * (One&Only Gorilla's Nest) and Ruhengeri (Wilderness Bisate) both carry

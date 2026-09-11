@@ -125,6 +125,78 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "Jomo Kenyatta — the two are different airports and the transfer between " +
       "them is by road.",
   },
+  /* THE SERENGETI, four keys for one park (see GATEWAY_OVERRIDE in
+   * build-city-airports.mjs for why `city` holds four different values).
+   *
+   * NOTE HOW THIS DIFFERS FROM THE MARA ABOVE, because the difference is the
+   * whole point of writing them separately. The Mara has a hard road leg to
+   * Wilson: every scheduled Mara flight leaves from there, so naming it is a
+   * fact. The Serengeti does NOT work that way — light aircraft run from
+   * Kilimanjaro itself AND from Arusha, depending on the operator and the
+   * day. Copying the Mara's shape here would have invented a mandatory
+   * hour-long transfer that many guests never make. So the flight is the
+   * first leg and Arusha is described in the note as a possibility, which is
+   * the honest shape and the reason this is not a copy-paste of the entry
+   * above it.
+   *
+   * The airstrip is deliberately unnamed in the legs. The park has several
+   * — Seronera, Sasakwa, Kogatende, Grumeti — and which one a given lodge
+   * uses is not in our data for any of the six. Naming one would be a guess a
+   * guest could act on, and §51's rule is that a wrong route is worse than a
+   * vague one. */
+  "Grumeti Game Reserve": {
+    arriveAt: "JRO",
+    arriveAtLabel: "Kilimanjaro",
+    legs: [
+      { mode: "light aircraft", to: "an airstrip in the park" },
+      { mode: "road", to: "the lodge", arrangedByHotel: true },
+    ],
+    note:
+      "Light aircraft into the Serengeti leave from Kilimanjaro and from " +
+      "Arusha, an hour west by road, depending on the operator and the day — " +
+      "the lodge arranges that leg with the stay. Mwanza, on Lake Victoria, " +
+      "is closer to the western corridor than Kilimanjaro and worth a look " +
+      "if it suits your routing.",
+  },
+  Kirawira: {
+    arriveAt: "JRO",
+    arriveAtLabel: "Kilimanjaro",
+    legs: [
+      { mode: "light aircraft", to: "an airstrip in the park" },
+      { mode: "road", to: "the lodge", arrangedByHotel: true },
+    ],
+    note:
+      "Light aircraft into the Serengeti leave from Kilimanjaro and from " +
+      "Arusha, an hour west by road, depending on the operator and the day — " +
+      "the lodge arranges that leg with the stay. Mwanza, on Lake Victoria, " +
+      "is closer to the western corridor than Kilimanjaro and worth a look " +
+      "if it suits your routing.",
+  },
+  Serengeti: {
+    arriveAt: "JRO",
+    arriveAtLabel: "Kilimanjaro",
+    legs: [
+      { mode: "light aircraft", to: "an airstrip in the park" },
+      { mode: "road", to: "the camp", arrangedByHotel: true },
+    ],
+    note:
+      "Light aircraft into the Serengeti leave from Kilimanjaro and from " +
+      "Arusha, an hour west by road, depending on the operator and the day — " +
+      "the camp arranges that leg with the stay.",
+  },
+  "Namiri Plains": {
+    arriveAt: "JRO",
+    arriveAtLabel: "Kilimanjaro",
+    legs: [
+      { mode: "light aircraft", to: "an airstrip in the park" },
+      { mode: "road", to: "the camp", arrangedByHotel: true },
+    ],
+    note:
+      "Light aircraft into the Serengeti leave from Kilimanjaro and from " +
+      "Arusha, an hour west by road, depending on the operator and the day — " +
+      "the camp arranges that leg with the stay. Namiri Plains sits in the " +
+      "eastern plains, a long game drive from the central airstrips.",
+  },
   "Amboseli National Park": {
     arriveAt: "NBO",
     arriveAtLabel: "Nairobi Jomo Kenyatta",

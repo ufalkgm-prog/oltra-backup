@@ -601,9 +601,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "AGS", label: "Augusta Regional At Bush Field", distKm: 114, size: "medium", runwayM: 4268 }
   ],
   "Grumeti Game Reserve": [
-    { iata: "SEU", label: "Seronera", distKm: 73, size: "small", runwayM: 2280 },
-    { iata: "MUZ", label: "Musoma", distKm: 82, size: "small", runwayM: 1600 },
-    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 105, size: "medium", runwayM: 1052 }
+    { iata: "JRO", label: "Kilimanjaro", distKm: 343, size: "large", runwayM: 3600 },
+    { iata: "MWZ", label: "Mwanza", distKm: 159, size: "large", runwayM: 3113 }
   ],
   "Gstaad": [
     { iata: "GVA", label: "Geneva", distKm: 94, size: "large", runwayM: 3900 },
@@ -754,8 +753,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "KGL", label: "Kigali", distKm: 86, size: "large", runwayM: 3500 }
   ],
   "Kirawira": [
-    { iata: "SEU", label: "Seronera", distKm: 75, size: "small", runwayM: 2280 },
-    { iata: "MUZ", label: "Musoma", distKm: 86, size: "small", runwayM: 1600 }
+    { iata: "JRO", label: "Kilimanjaro", distKm: 347, size: "large", runwayM: 3600 },
+    { iata: "MWZ", label: "Mwanza", distKm: 146, size: "large", runwayM: 3113 }
   ],
   "Koh Krabey Island": [
     { iata: "KOS", label: "Sihanouk", distKm: 10, size: "large", runwayM: 2500 }
@@ -1127,7 +1126,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "JMK", label: "Mykonos Island National", distKm: 2, size: "medium", runwayM: 1902 }
   ],
   "Namiri Plains": [
-    { iata: "JRO", label: "Kilimanjaro", distKm: 316, size: "large", runwayM: 3600 }
+    { iata: "JRO", label: "Kilimanjaro", distKm: 316, size: "large", runwayM: 3600 },
+    { iata: "MWZ", label: "Mwanza", distKm: 239, size: "large", runwayM: 3113 }
   ],
   "Nanjing": [
     { iata: "NKG", label: "Nanjing Lukou", distKm: 35, size: "large", runwayM: 7200 }
@@ -1498,7 +1498,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "ICN", label: "Incheon", distKm: 48, size: "large", runwayM: 15250 }
   ],
   "Serengeti": [
-    { iata: "SEU", label: "Seronera", distKm: 27, size: "small", runwayM: 2280 }
+    { iata: "JRO", label: "Kilimanjaro", distKm: 274, size: "large", runwayM: 3600 },
+    { iata: "MWZ", label: "Mwanza", distKm: 222, size: "large", runwayM: 3113 }
   ],
   "Sesriem": [
     { iata: "WDH", label: "Hosea Kutako", distKm: 302, size: "large", runwayM: 6099 }

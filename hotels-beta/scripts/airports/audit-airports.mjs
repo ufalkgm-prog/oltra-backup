@@ -86,12 +86,43 @@ const REVIEWED = {
   "Kruger National Park": "Skukuza, as above", "Skukuza Rest Camp": "Skukuza, as above",
   "Okavango Delta": "Maun is the gateway into the Delta",
 
+  /* The Serengeti: four keys, one park, all four overridden to Kilimanjaro
+   * then Mwanza on 2026-09-12. They still appear as candidates — Seronera is
+   * a small field — and `checked` is what clears them, but they are listed
+   * here too so the reason survives if an override is ever questioned. */
+  "Grumeti Game Reserve": "Kilimanjaro; Seronera is a gravel strip, see the override",
+  Kirawira: "Kilimanjaro, as above", Serengeti: "Kilimanjaro, as above",
+  "Namiri Plains": "Kilimanjaro, as above",
+
   /* No good commercial answer, left rather than guessed. */
   "Phinda Private Game Reserve": "Mkuze takes the light-aircraft leg from Johannesburg; Durban at 228km would be worse",
   "Tswalu Kalahari Reserve": "charter to the reserve's own strip; no sellable alternative",
   "Moyo Island": "boat from Sumbawa or charter from Bali; routings vary too much to pick one",
   "Gisakura": "Kamembe is a genuine domestic hop from Kigali and its transfer route says so",
 };
+
+/* A THIRD SCREEN, added 2026-09-12, because the two below missed the whole
+ * Serengeti. Seronera is a gravel strip in the middle of the park with no
+ * international service — and a 2,280m runway, 27km from Four Seasons
+ * Serengeti. It clears JET_M and it clears FAR_KM, so four destinations
+ * covering six lodges read as healthy while three of them pointed at bush
+ * airstrips and one at a strip in Kenya.
+ *
+ * Length and distance cannot separate "small international airport" from
+ * "long airstrip". Airport TYPE can: OurAirports calls Seronera and Musoma
+ * small_airport, while Florence, Santorini and Mykonos — the false positives
+ * the other screens generate — are medium_airport.
+ *
+ * §37 records that filtering on type was tried and REVERTED, because it sent
+ * Missoula to Spokane 319km away. That is not this. There it decided which
+ * airport a guest is offered; here it decides which destination a human
+ * looks at. §51: this audit is a research queue, not an output signal — so a
+ * signal too crude to select an airport can still be good enough to raise a
+ * question, and a false positive costs a glance rather than a wrong answer.
+ *
+ * A medium field over JET_M is NOT flagged: that is Bolzano and Santorini,
+ * real airports the other screens already argue about. */
+const SMALL_TYPES = new Set(["small", "small_airport"]);
 
 const JET_M = 2200;
 /* Far enough that the drive is a leg of its own rather than a detail. Masai
@@ -126,8 +157,8 @@ const airportsOf = new Map();
      * so the line failed to match and the destination parsed as having NO
      * airports — which this audit then reported as a defect in the data. It was
      * a defect in the audit. Read only the fields used. */
-    const m = l.match(/iata: "(\w{3})".*distKm: (\d+).*runwayM: (\d+)/);
-    if (key && m) airportsOf.get(key).push({ iata: m[1], d: +m[2], m: +m[3] });
+    const m = l.match(/iata: "(\w{3})".*distKm: (\d+).*size: "(\w+)".*runwayM: (\d+)/);
+    if (key && m) airportsOf.get(key).push({ iata: m[1], d: +m[2], size: m[3], m: +m[4] });
     if (key && l.trim() === "],") key = null;
   }
 }
@@ -193,6 +224,30 @@ const noAirport = [...new Set(pub.filter((h) => {
 D("published destination with no airport entry", noAirport,
   "the landing flight teaser resolves these to nothing");
 
+/* Prove the vocabulary before screening on it — and note what the FIRST
+ * draft of this guard got wrong, because the mistake is instructive. It
+ * checked for a missing `size`, which cannot happen: the regex above now
+ * requires that field, so a parse failure yields an EMPTY airport list and
+ * the emptyList check below already fails the run. It was dead code wearing
+ * the costume of a safety net.
+ *
+ * The mode that would genuinely pass unnoticed is a size value we do not
+ * recognise. `\w+` matches "small_airport" as happily as "small", so if the
+ * generator's vocabulary ever shifts, the regex still succeeds, the list is
+ * still non-empty, every count below still looks healthy — and the type
+ * screen quietly matches nothing. That is the Serengeti failure again, one
+ * level up: a screen that cannot see reports zero as confidently as a clean
+ * collection does. So assert the vocabulary itself. */
+const SIZE_VOCAB = new Set(["small", "medium", "large"]);
+const oddSizes = [...new Set([...airportsOf.values()].flat().map((a) => a.size))]
+  .filter((s) => !SIZE_VOCAB.has(s));
+if (oddSizes.length) {
+  console.error(`\n  ABORT: cityAirports.ts uses size values this audit does not know: ${oddSizes.join(", ")}`);
+  console.error("  The airport-TYPE screen matches on `small`, so it would silently stop");
+  console.error("  firing and the queue would read clean. Update SMALL_TYPES/SIZE_VOCAB.\n");
+  process.exit(1);
+}
+
 // ---- CANDIDATES: the research queue ----
 const rows = [];
 /* A key that parsed but holds no airports. Not expected; if it fires it means
@@ -207,6 +262,9 @@ for (const k of live) {
   const reasons = [];
   if (best.m < JET_M) reasons.push(`no jet-capable airport (best ${best.m}m)`);
   if (best.d > FAR_KM) reasons.push(`nearest jet airport ${best.d}km away`);
+  if (SMALL_TYPES.has(best.size)) {
+    reasons.push(`best airport is a ${best.size} field (${best.iata}, ${best.m}m)`);
+  }
   const countries = new Set(hs.map((h) => V(h.country)));
   if (!reasons.length) continue;
   rows.push({ k, n: hs.length, country: [...countries][0], aps, best,
