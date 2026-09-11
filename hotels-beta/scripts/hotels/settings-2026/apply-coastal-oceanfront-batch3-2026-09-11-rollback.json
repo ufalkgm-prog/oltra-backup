@@ -1,0 +1,272 @@
+[
+  {
+    "at": "2026-09-11T11:39:23.377Z",
+    "batch": "coastal-oceanfront-3",
+    "changes": [
+      {
+        "id": "1226",
+        "name": "Amanoi",
+        "choice": "Oceanfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1330",
+        "name": "Grand Hôtel du Cap Ferrat",
+        "choice": "Oceanfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1405",
+        "name": "Lesante Blu",
+        "choice": "Beachfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1429",
+        "name": "Borgo Santandrea",
+        "choice": "Oceanfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1443",
+        "name": "Grand Hotel Excelsior Vittoria",
+        "choice": "Oceanfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1617",
+        "name": "W Dubai - Mina Seyahi",
+        "choice": "Beachfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1647",
+        "name": "The Riviera Maya EDITION at Kanai",
+        "choice": "Beachfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1800",
+        "name": "Southern Ocean Lodge",
+        "choice": "Oceanfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": "Oceanfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2032",
+        "name": "Four Seasons Resort Maui at Wailea",
+        "choice": "Beachfront",
+        "collapsed": true,
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Oceanfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2041",
+        "name": "Four Seasons Resort Sharm El Sheikh",
+        "choice": "Beachfront",
+        "collapsed": true,
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Coastal"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "3021",
+        "name": "Four Seasons Resort and Residences AMAALA at Triple Bay",
+        "choice": "Beachfront",
+        "collapsed": true,
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Coastal"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": "Coastal"
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "3023",
+        "name": "Four Seasons Resort Mauritius at Anahita",
+        "choice": "Beachfront",
+        "collapsed": false,
+        "before": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "3027",
+        "name": "Six Senses AMAALA",
+        "choice": "Beachfront",
+        "collapsed": true,
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Coastal"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": "Coastal"
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      }
+    ]
+  }
+]

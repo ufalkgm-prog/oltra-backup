@@ -751,7 +751,7 @@ A passive hotel shows **"Check availability on website"** linked to `www` (delib
 |---|---|---|
 | 1 | the 37 tagged `Waterfront` | **Applied 2026-09-10** — 36 written, 1 no-op, 0 failures, verified by re-read |
 | 2 | `Lakeside` + `Riverside` + `Canalside` (71) | **Applied 2026-09-11** — 71 published + 4 unpublished written, 0 failures. All three values **retired from the choice lists** |
-| 3 | `Coastal` (31) + `Oceanfront` (35) | Not started. Verify against the 20-minute line |
+| 3 | `Coastal` + `Oceanfront` (99) | **Applied 2026-09-11** — 13 written, 86 confirmed unchanged, 0 failures |
 | 4 | `Seaside` + `Clifftop` (8 rows) | **Applied 2026-09-11** — 8 written, 0 failures. Both **retired from the choice lists** |
 | 5 | `Beachfront` (~163) | Not started. Sweep for road-separated cases → `Beach` |
 
@@ -762,6 +762,10 @@ Batch 2 artefacts: `apply-freshwater-batch2-2026-09-11.mjs` + rollback. Batch 1:
 **"Mechanical" was wrong, and checking cost one query.** Batch 2 was called a straight rename needing no review. Ten of the 71 turned out to be SALT water wearing a freshwater tag: the Oberoi Mumbai tagged `Riverside` while facing the Arabian Sea, three Bosphorus hotels the same, and Loch Torridon — a sea loch — tagged `Lakeside`, its own highlights calling it a "lakeside escape". A merge is only mechanical once you have looked at what is being merged.
 
 The three Bosphorus hotels were set to `Oceanfront` to match Mandarin Oriental Bosphorus from batch 1. **Four hotels on one strait had to agree**, and only the review surfaced that they did not.
+
+**A contradictory PAIR hides where a wrong tag does not.** Batch 3 found four hotels carrying two water values that cannot both hold — `Beachfront` + `Coastal` claims a private beach *and* twenty minutes from the water. Each half looks defensible alone, which is why they survived every earlier pass, and why text-signal triage misses them: nothing in the prose is wrong.
+
+**Check for them directly, and check the whole collection, not the batch's scope.** Batch 3's triage looked for `Coastal` + `Oceanfront` overlap and found none — but a row tagged `Beachfront` + `Coastal` enters the scope through its `Coastal` half while the contradiction sits in the other, so it read as a clean single-value row. Four more surfaced only in the post-write verification, which scanned all 903 rows for "more than one water value" rather than checking the ids the batch had touched. **Write that check into the verification of every batch.**
 
 ### What the machine cannot decide, measured not assumed
 
