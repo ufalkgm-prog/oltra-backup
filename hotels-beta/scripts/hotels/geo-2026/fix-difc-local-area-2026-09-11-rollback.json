@@ -1,0 +1,17 @@
+[
+  {
+    "at": "2026-09-11T13:43:39.218Z",
+    "changes": [
+      {
+        "id": "2039",
+        "name": "Four Seasons Hotel Dubai International Financial Centre",
+        "before": "Dubai International Financial Centre (DIFC)",
+        "after": "DIFC"
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T13:44:12.968Z",
+    "changes": []
+  }
+]

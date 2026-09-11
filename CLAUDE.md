@@ -127,7 +127,25 @@ Three were kept that the same test flagged, because they are genuinely below cit
 
 **A useful check fell out of it**: hotels more than 300km from the centroid of their own `admin_region`. It reports 16 and **none is a defect** — Reykjavik at 1369km from Copenhagen under the shared "Capital Region" entry (the Denmark/Iceland ambiguity the lock script already records), Queensland's 1,700km spread, California's Napa/Tahoe/SF. Read it as a prompt to look, not a list of errors — but it is the shape that would have caught 1614 years earlier.
 
-**Still flagged, not fixed:** `2039` holds `Dubai International Financial Centre (DIFC)`, a parenthetical where every sibling is a bare name; not wrong, just the only verbose one.
+**`2039` was the collection's only parenthetical** — `Dubai International Financial Centre (DIFC)`, a name stored beside its own abbreviation and, at 43 characters, the third longest value anywhere. Shortened to **`DIFC`** 2026-09-11: its own description says "anchors Gate Village in DIFC", a bare acronym is already house style (3021 and 3027 both hold `AMAALA`), and the long form repeated the city. Gate Village is not the answer despite being named first — it is a development inside DIFC, the `UpperHills` rule again.
+
+**The compound detector was too narrow all along, and this is the one to carry forward.** Every `local_area` pass on 2026-09-11 reported "0 compound values"; all of them only tested for a **comma**. Widening it to a slash and the word "and" found **seven more**, none of which any earlier sweep had ever reported:
+
+| | |
+|---|---|
+| `Caspian waterfront and Old City` | Four Seasons Baku |
+| `West Bay and The Corniche` | Four Seasons Doha |
+| `Gwanghwamun and Jongno-gu` | Four Seasons Seoul |
+| `Kauri Cliffs / Tepene Tablelands` | Rosewood Kauri Cliffs |
+| `Plaza de las Cortes / Landscape of Light` | The Palace, Madrid |
+| `Ascot / Windsor Great Park` | Coworth Park |
+| `Piazza della Repubblica / Porta Nuova` | Principe di Savoia |
+
+Plus **two rows holding a phrase that describes a location instead of naming one** — 3015 and 3016, both `Private concession bordering Moremi Game Reserve` — which no separator test catches at all.
+
+**None is fixed.** Each needs the per-row judgement the 17 comma-compounds got, and they are listed inside `fix-difc-local-area-2026-09-11.mjs` so its sweep reports them without failing: known work, not a regression. A *new* compound would still fail the run.
+
+**A detector beats a glance, and that list proves it twice.** Its first draft was assembled from the longest stored values and missed Doha, Seoul and Coworth Park — all short enough not to stand out — which the widened sweep caught on its first run.
 
 **The two Sohos are different places and spell differently.** New York's is **SoHo** — South of Houston Street, where the capital H is the abbreviation rather than styling. London's is **Soho**, an ordinary place name. The collection had them inverted; corrected 2026-09-11 along with `Meatpackling District` on two New York rows. Left as they were, the pair is the worst of both worlds: a case-insensitive grouping merges two unrelated districts, a case-sensitive filter splits one.
 
@@ -139,7 +157,7 @@ Three were kept that the same test flagged, because they are genuinely below cit
 
 **One deliberate exception: Aman New York stays `Midtown`.** It occupies the Crown Building at Fifth and 57th, which is the line Midtown East and West divide on, so picking a side is precision the address does not support. That is why a prefix-overlap check still reports New York.
 
-**The 17 compound values were split the same day, one judgement each** (`split-compound-local-area-2026-09-11.mjs`). None was internally wrong — each was used consistently within its city — but `local_area` holds one district, and **which half survives alternates**, so a mechanical "keep the first part" would have got eight of them backwards. Seven kept the finer half, because it is a real neighbourhood inside the district beside it: `Lumphini` (a khwaeng inside Pathum Wan), `Kuruçeşme`, `Wangfujing`, `Zhujiang New Town`, `Jardin Alpin`, `Fayun Village`, `Costa Palmas`. Eight kept the *broader* half, because the finer one is a landmark rather than a district — a road (`Estrada Monumental` → São Martinho), a square (`Plazoleta Nazarenas` → Historic Centre), two bays, a lake, a headland, a building complex (`UpperHills` → Futian District) and a hamlet (`Chunimeding` → Babesa). `Ban Nadueay Village` → `Ban Nadueay`: Lao *ban* already means village, so it read "Village Nadueay Village". Mandarin Oriental Cortina was **cleared** — `Via Rinaldo Menardi, near Cortina centre` is a street plus a phrase that is not a place name, and Cortina has no district to reduce it to. `local_area` now stands at **214 populated, 0 compound** — 216 after that pass, less the two cleared by the city fix below.
+**The 17 compound values were split the same day, one judgement each** (`split-compound-local-area-2026-09-11.mjs`). None was internally wrong — each was used consistently within its city — but `local_area` holds one district, and **which half survives alternates**, so a mechanical "keep the first part" would have got eight of them backwards. Seven kept the finer half, because it is a real neighbourhood inside the district beside it: `Lumphini` (a khwaeng inside Pathum Wan), `Kuruçeşme`, `Wangfujing`, `Zhujiang New Town`, `Jardin Alpin`, `Fayun Village`, `Costa Palmas`. Eight kept the *broader* half, because the finer one is a landmark rather than a district — a road (`Estrada Monumental` → São Martinho), a square (`Plazoleta Nazarenas` → Historic Centre), two bays, a lake, a headland, a building complex (`UpperHills` → Futian District) and a hamlet (`Chunimeding` → Babesa). `Ban Nadueay Village` → `Ban Nadueay`: Lao *ban* already means village, so it read "Village Nadueay Village". Mandarin Oriental Cortina was **cleared** — `Via Rinaldo Menardi, near Cortina centre` is a street plus a phrase that is not a place name, and Cortina has no district to reduce it to. `local_area` stood at 216 populated after that pass, 214 after the city fix below. **"0 compound" was only ever true of COMMA-separated values** — see the widened detector further down, which found seven more using a slash or the word "and".
 
 **Both rows that flagged then were fixed the same day** (`fix-salzburg-majorca-city-2026-09-11.mjs`), and in each the accurate value was already sitting in `local_area`:
 
