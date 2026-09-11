@@ -290,8 +290,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Calistoga": [
     { iata: "STS", label: "Charles M. Schulz Sonoma County", distKm: 23, size: "medium", runwayM: 3415 }
   ],
-  "Calvia": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 23, size: "large", runwayM: 6270 }
+  "Calvià": [
+    { iata: "PMI", label: "Palma de Mallorca", distKm: 19, size: "large", runwayM: 6270 }
   ],
   "Cancun": [
     { iata: "CUN", label: "Cancún", distKm: 9, size: "large", runwayM: 6300 }
@@ -644,6 +644,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Hoedspruit": [
     { iata: "HDS", label: "Eastgate / Air Force Base Hoedspruit", distKm: 21, size: "medium", runwayM: 6106 }
   ],
+  "Hof bei Salzburg": [
+    { iata: "SZG", label: "Salzburg", distKm: 19, size: "large", runwayM: 2750 }
+  ],
   "Hoi An": [
     { iata: "DAD", label: "Da Nang", distKm: 18, size: "large", runwayM: 6548 }
   ],
@@ -929,9 +932,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Madrid": [
     { iata: "MAD", label: "Adolfo Suárez Madrid-Barajas", distKm: 13, size: "large", runwayM: 15338 }
-  ],
-  "Majorca": [
-    { iata: "PMI", label: "Palma de Mallorca", distKm: 16, size: "large", runwayM: 6270 }
   ],
   "Malaga": [
     { iata: "AGP", label: "Málaga-Costa del Sol", distKm: 10, size: "large", runwayM: 5950 }
@@ -1416,9 +1416,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Saint-Tropez": [
     { iata: "LTT", label: "La Môle", distKm: 14, size: "small", runwayM: 1071 }
-  ],
-  "Salzburg": [
-    { iata: "SZG", label: "Salzburg", distKm: 19, size: "large", runwayM: 2750 }
   ],
   "San Francisco": [
     { iata: "OAK", label: "Oakland San Francisco Bay", distKm: 18, size: "large", runwayM: 7792 },

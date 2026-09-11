@@ -1,0 +1,47 @@
+[
+  {
+    "at": "2026-09-11T13:13:26.337Z",
+    "changes": [
+      {
+        "id": "2054",
+        "name": "Rosewood Schloss Fuschl",
+        "before": {
+          "city": "Salzburg",
+          "local_area": "Hof bei Salzburg",
+          "state_province_county_island": null
+        },
+        "after": {
+          "city": "Hof bei Salzburg",
+          "local_area": null,
+          "state_province_county_island": "Salzkammergut"
+        }
+      },
+      {
+        "id": "2023",
+        "name": "Mandarin Oriental, Mallorca",
+        "before": {
+          "city": "Majorca",
+          "local_area": "Calvià"
+        },
+        "after": {
+          "city": "Calvià",
+          "local_area": null
+        }
+      },
+      {
+        "id": "1518",
+        "name": "Castell Son Claret",
+        "before": {
+          "city": "Calvia"
+        },
+        "after": {
+          "city": "Calvià"
+        }
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T13:14:29.251Z",
+    "changes": []
+  }
+]
