@@ -1254,11 +1254,23 @@ names — and should be left.
 
 ### Coverage gaps that are real
 
-**21 cities have 3+ published hotels and no `local_area` at all.** Most are
-correctly empty per §3 (Courchevel 1850, St. Moritz, Lech Am Arlberg, Sabi Sand
-Reserve, Riviera Maya — a ski village or a reserve has no neighbourhoods). The
-genuinely urban ones are the gap: **Las Vegas (6), Amsterdam (5), Barcelona (5),
-Kuala Lumpur (4)**.
+**21 cities have 3+ published hotels and no `local_area` at all**, and the split
+is close to even — an earlier draft of this section named only four urban ones
+and undercounted by half, so here is the whole list.
+
+*Correctly empty per §3*, a ski village, resort or reserve having no
+neighbourhoods (11): Courchevel 1850 (8), St. Moritz (5), Riviera Maya (5),
+Sabi Sand Reserve (4), Lech Am Arlberg (4), Oia (4), Zermatt (3), Grumeti Game
+Reserve (3), Phinda Private Game Reserve (3), Providenciales (3), San Jose del
+Cabo (3).
+
+*Genuinely urban and therefore a real gap* (8): **Las Vegas (6)** — the Strip is
+the obvious value — **Amsterdam (5), Barcelona (5), Geneva (4), Kuala Lumpur
+(4), Cape Town (3), Berlin (3), Boston (3)**.
+
+*Marginal, decide when you get there* (2): **Beverly Hills (3)**, a small city
+where only the Golden Triangle is a named district, and **Monte Carlo (3)**,
+which is already a ward of Monaco rather than a city with wards below it.
 
 ### Airport mapping (`cityAirports.ts`)
 
