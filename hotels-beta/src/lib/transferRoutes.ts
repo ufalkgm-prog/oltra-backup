@@ -158,6 +158,25 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
     note: "By road from Kigali — there is no onward flight.",
   },
 
+  /* Namibia, and it is the Nairobi shape exactly: Windhoek has two airports and
+   * the onward flight leaves from the other one. Adding the WDH gateway
+   * override without this would have left the concierge saying "fly to
+   * Windhoek" and stopping, 300km short of the lodge - the same gap that
+   * started this file. */
+  Sesriem: {
+    arriveAt: "WDH",
+    arriveAtLabel: "Windhoek Hosea Kutako",
+    legs: [
+      { mode: "road", to: "Eros, Windhoek's second airport", toIata: "ERS" },
+      { mode: "light aircraft", to: "the lodge's own airstrip" },
+      { mode: "road", to: "the lodge", arrangedByHotel: true },
+    ],
+    note:
+      "Light aircraft to Sossusvlei leave from Eros, a short drive from the " +
+      "international terminal. Driving the whole way instead takes about five " +
+      "hours.",
+  },
+
   // ---- Botswana ----
   "Okavango Delta": {
     arriveAt: "MUB",

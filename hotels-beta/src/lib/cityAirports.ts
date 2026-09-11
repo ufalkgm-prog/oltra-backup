@@ -221,7 +221,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "EAS", label: "San Sebastián", distKm: 24, size: "medium", runwayM: 1754 }
   ],
   "Big Island": [
-    { iata: "MUE", label: "Waimea Kohala", distKm: 22, size: "medium", runwayM: 1584 }
+    { iata: "KOA", label: "Ellison Onizuka Kona at Keāhole", distKm: 30, size: "large", runwayM: 3353 }
   ],
   "Big Island, Ka`Upulehu-Kona HI": [
     { iata: "KOA", label: "Ellison Onizuka Kona at Keāhole", distKm: 11, size: "large", runwayM: 3353 }
@@ -395,7 +395,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "MID", label: "Manuel Crescencio Rejón", distKm: 30, size: "large", runwayM: 5500 }
   ],
   "Chongzou": [
-    { iata: "AEB", label: "Baise Bama", distKm: 114, size: "medium", runwayM: 2500 },
     { iata: "NNG", label: "Nanning Wuxu", distKm: 129, size: "large", runwayM: 3200 }
   ],
   "Cocoa Island": [
@@ -1174,9 +1173,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SKG", label: "Thessaloniki Macedonia", distKm: 65, size: "large", runwayM: 5850 }
   ],
   "Nikko": [
-    { iata: "FKS", label: "Fukushima", distKm: 99, size: "medium", runwayM: 2500 },
-    { iata: "IBR", label: "Ibaraki", distKm: 103, size: "large", runwayM: 5400 },
-    { iata: "NRT", label: "Narita", distKm: 134, size: "large", runwayM: 6500 }
+    { iata: "NRT", label: "Narita", distKm: 134, size: "large", runwayM: 6500 },
+    { iata: "HND", label: "Tokyo Haneda", distKm: 135, size: "large", runwayM: 11360 }
   ],
   "Ninh Van Bay": [
     { iata: "CXR", label: "Cam Ranh / Cam Ranh Air Base", distKm: 41, size: "large", runwayM: 6096 }
@@ -1228,9 +1226,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "CYU", label: "Cuyo", distKm: 67, size: "small", runwayM: 0 }
   ],
   "Pamushana": [
-    { iata: "VPY", label: "Chimoio", distKm: 266, size: "medium", runwayM: 2400 },
-    { iata: "PHW", label: "Hendrik Van Eck", distKm: 329, size: "medium", runwayM: 1369 },
-    { iata: "BEW", label: "Beira", distKm: 346, size: "large", runwayM: 2400 }
+    { iata: "HRE", label: "Robert Gabriel Mugabe", distKm: 356, size: "large", runwayM: 4725 }
   ],
   "Papas Beach": [
     { iata: "JTR", label: "Santorini", distKm: 33, size: "large", runwayM: 2197 },
@@ -1494,9 +1490,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SEU", label: "Seronera", distKm: 27, size: "small", runwayM: 2280 }
   ],
   "Sesriem": [
-    { iata: "LUD", label: "Luderitz", distKm: 222, size: "medium", runwayM: 2997 },
-    { iata: "WVB", label: "Walvis Bay", distKm: 237, size: "large", runwayM: 3500 },
-    { iata: "ERS", label: "Eros", distKm: 270, size: "medium", runwayM: 3255 }
+    { iata: "WDH", label: "Hosea Kutako", distKm: 302, size: "large", runwayM: 6099 }
   ],
   "Seven Mile Beach": [
     { iata: "GCM", label: "Owen Roberts", distKm: 5, size: "large", runwayM: 2398 }
@@ -1525,7 +1519,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SZK", label: "Skukuza", distKm: 4, size: "medium", runwayM: 1550 }
   ],
   "Sonop Farm": [
-    { iata: "LUD", label: "Luderitz", distKm: 162, size: "medium", runwayM: 2997 }
+    { iata: "WDH", label: "Hosea Kutako", distKm: 360, size: "large", runwayM: 6099 }
   ],
   "Sorrento": [
     { iata: "NAP", label: "Naples", distKm: 30, size: "large", runwayM: 2628 }

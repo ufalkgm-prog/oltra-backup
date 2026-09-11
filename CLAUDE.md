@@ -1305,10 +1305,25 @@ an absent entry makes it decline rather than guess, which is the point.
 
 Two candidate groups, both measurable by re-running the same check:
 
-* **10 destinations name a jet gateway far away and nothing else** — the onward
-  hop is missing, which is the Masai Mara shape. Done: Masai Mara, Amboseli.
-  Open: **Desroches (done), Chongzou, Lake Louise, Nikko, Pamushana,
-  Philipsburg, Sesriem, Sonop Farm**.
+* **The "jet gateway, far away" group is CLOSED** (2026-09-11). Six needed a
+  `GATEWAY_OVERRIDE`; **two needed nothing and are recorded as such so nobody
+  overrides them later** — Lake Louise already resolves to Calgary, and
+  Philipsburg to Missoula, which §37 records as the answer an earlier
+  airport-type filter got wrong by sending it to Spokane 319km off.
+
+  | destination | was | now | why |
+  |---|---|---|---|
+  | Pamushana | VPY, PHW, BEW | **HRE** | **all three were in the wrong country** — Chimoio and Beira are Mozambique, Hendrik Van Eck is South Africa. The lodge is in Zimbabwe |
+  | Nikko | FKS, IBR, NRT | **NRT + HND** | Fukushima and Ibaraki came first on distance; Nikko is reached from Tokyo, by train |
+  | Sesriem | LUD, WVB, ERS | **WDH** | Lüderitz is 80km closer and a small southern town nobody routes through |
+  | Sonop Farm | LUD | **WDH** | same |
+  | Big Island | MUE | **KOA** | Kona is 8km further and the island's actual gateway, 3,353m against 1,584m |
+  | Chongzou | AEB, NNG | **NNG** | Nanning has the international service; Baise Bama was 15km closer |
+
+  **Sesriem also got a transfer route**, because the override alone would have
+  left the concierge saying "fly to Windhoek" and stopping 300km short. It is
+  the Nairobi shape exactly: Windhoek has two airports and the light aircraft
+  leaves from the other one, Eros.
 * **~93 have no jet-capable airport listed**, so the gateway is missing. Partly
   noise — Florence, Mykonos and Santorini are genuine international arrivals
   that merely have short runways. The real ones are island and reserve hops:

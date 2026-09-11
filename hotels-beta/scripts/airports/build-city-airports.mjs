@@ -124,6 +124,45 @@ const GATEWAY_OVERRIDE = {
   "Masai Mara": ["NBO"],
   "Amboseli National Park": ["NBO"],
   "Volcanoes National Park": ["KGL"],
+
+  /* Added 2026-09-11 after checking the eight remaining "jet gateway, but far"
+   * destinations one by one. TWO OF THE EIGHT NEEDED NOTHING and are listed
+   * here so nobody overrides them later: Lake Louise already resolves to
+   * Calgary, and Philipsburg to Missoula - which §37 records as the answer an
+   * earlier airport-type filter got wrong by sending it to Spokane, 319km off.
+   * Nearest-wins gets both right on its own. */
+
+  // Chongzuo sits in Guangxi and Nanning is its gateway: 3,200m and real
+  // international service, against Baise Bama's small regional operation 15km
+  // closer. Distance alone could not separate them.
+  Chongzou: ["NNG"],
+
+  // Nikko is reached from TOKYO, by train. Nearest-wins offered Fukushima
+  // (99km) and Ibaraki (103km) ahead of it, and no guest has ever flown to
+  // either for Nikko. Narita and Haneda are 134km and 135km - equidistant in
+  // practice, so both are listed, nearest first.
+  Nikko: ["NRT", "HND"],
+
+  /* The worst of the set, and not a matter of degree: Singita Pamushana is in
+   * ZIMBABWE and none of its three mapped airports was — VPY is Chimoio in
+   * Mozambique, PHW is Hendrik Van Eck in South Africa, BEW is Beira, also
+   * Mozambique. Harare is the country's gateway, and guests continue by
+   * charter from there or from Johannesburg. Buffalo Range is nearer but
+   * carries no scheduled service, so it is not in the dataset at all. */
+  Pamushana: ["HRE"],
+
+  // Sossusvlei: Windhoek Hosea Kutako is the international gateway. Lüderitz
+  // is 80km closer and a small southern town nobody routes through.
+  Sesriem: ["WDH"],
+
+  // Sonop is in the Karas region, reached from Windhoek by charter or a long
+  // drive. Lüderitz again wins on distance and loses on service.
+  "Sonop Farm": ["WDH"],
+
+  // Mauna Lani is on the Kohala Coast. Kona is 8km further than
+  // Waimea-Kohala and is the island's actual gateway — 3,353m against 1,584m,
+  // and the only one of the two with mainland service.
+  "Big Island": ["KOA"],
   /* The same park, reached the same way. These two DO have a `city`, so they
    * were already in the mapping and are not part of the eight — but Kinigi
    * (One&Only Gorilla's Nest) and Ruhengeri (Wilderness Bisate) both carry
