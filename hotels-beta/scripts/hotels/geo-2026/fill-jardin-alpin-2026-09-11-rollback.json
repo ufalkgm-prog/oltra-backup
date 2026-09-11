@@ -1,0 +1,38 @@
+[
+  {
+    "at": "2026-09-11T21:38:36.248Z",
+    "value": "Jardin Alpin",
+    "changes": [
+      {
+        "id": "1313",
+        "name": "Airelles Courchevel",
+        "published": true
+      },
+      {
+        "id": "1317",
+        "name": "Aman Le Melezin",
+        "published": true
+      },
+      {
+        "id": "1322",
+        "name": "Cheval Blanc Courchevel",
+        "published": true
+      },
+      {
+        "id": "1343",
+        "name": "Hotel le Saint Roch",
+        "published": false
+      },
+      {
+        "id": "1352",
+        "name": "L'Apogee Courchevel",
+        "published": true
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T21:38:50.919Z",
+    "value": "Jardin Alpin",
+    "changes": []
+  }
+]
