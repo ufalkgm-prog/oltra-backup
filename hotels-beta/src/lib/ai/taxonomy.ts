@@ -19,10 +19,14 @@ import "server-only";
  * so keep them in step.
  */
 
+/* Lakeside, Riverside and Canalside were retired 2026-09-11 (§42B): every row
+ * carrying them was merged into Waterfront, and the choice lists on `setting`,
+ * `primary_setting` and `secondary_setting` no longer offer them. Leaving them
+ * here would hand the model three enum values that silently match nothing,
+ * which is the exact failure this file exists to prevent. */
 export const SETTING_VALUES = [
   "Beach",
   "Beachfront",
-  "Canalside",
   "City",
   "Clifftop",
   "Coastal",
@@ -31,14 +35,12 @@ export const SETTING_VALUES = [
   "Hillside",
   "Island",
   "Jungle",
-  "Lakeside",
   "Mountains",
   "Nature Reserve",
   "Oceanfront",
   "Overwater",
   "Private Island",
   "Rainforest",
-  "Riverside",
   "Seaside",
   "Waterfront",
   "Wildlife Reserve",

@@ -1,0 +1,92 @@
+[
+  {
+    "at": "2026-09-11T10:59:59.574Z",
+    "batch": "freshwater-unpublished",
+    "changes": [
+      {
+        "id": "1204",
+        "name": "Four Seasons Hotel Bangkok at Chao Phraya River",
+        "published": false,
+        "before": {
+          "setting": [
+            "City",
+            "Riverside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Waterfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "3007",
+        "name": "&Beyond Lake Manyara Tree Lodge",
+        "published": false,
+        "before": {
+          "setting": [
+            "Nature Reserve",
+            "Lakeside"
+          ],
+          "primary_setting": "Nature Reserve",
+          "secondary_setting": "Lakeside"
+        },
+        "after": {
+          "setting": [
+            "Nature Reserve",
+            "Waterfront"
+          ],
+          "primary_setting": "Nature Reserve",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "3015",
+        "name": "&Beyond Sandibe Okavango Safari Lodge",
+        "published": false,
+        "before": {
+          "setting": [
+            "Wildlife Reserve",
+            "Riverside"
+          ],
+          "primary_setting": "Wildlife Reserve",
+          "secondary_setting": "Riverside"
+        },
+        "after": {
+          "setting": [
+            "Wildlife Reserve",
+            "Waterfront"
+          ],
+          "primary_setting": "Wildlife Reserve",
+          "secondary_setting": "Waterfront"
+        }
+      },
+      {
+        "id": "3017",
+        "name": "&Beyond Punakha River Lodge",
+        "published": false,
+        "before": {
+          "setting": [
+            "Riverside",
+            "Mountains"
+          ],
+          "primary_setting": "Riverside",
+          "secondary_setting": "Mountains"
+        },
+        "after": {
+          "setting": [
+            "Waterfront",
+            "Mountains"
+          ],
+          "primary_setting": "Waterfront",
+          "secondary_setting": "Mountains"
+        }
+      }
+    ]
+  }
+]
