@@ -891,8 +891,38 @@ const nearestAirport = tool({
     additionalProperties: false,
   }),
   async execute({ city }) {
-    const airports = getAirportsForCity(city);
-    const primary = pickPrimaryAirportForCity(city);
+    /* Resolve a HOTEL NAME to its destination, because the model does not know
+     * our keys and cannot be expected to.
+     *
+     * Measured, not guessed: asked "how do I reach Soneva Fushi?" it called
+     * this tool once with city="Soneva Fushi" and got nothing, because the key
+     * is "Kunfunadhoo Island". Angama Mara had worked only by luck — its key is
+     * "Masai Mara", a name famous enough to guess. Nobody guesses Kunfunadhoo.
+     *
+     * Telling the model to look the city up first would be another optional
+     * step, and this file's record is that those get skipped. So the tool is
+     * forgiving instead: if the name matches no destination, try it as a hotel
+     * and use that hotel's own city — or its traveller area, for the eight
+     * wilderness lodges with no city (§3). `resolvedFrom` reports the swap so
+     * an answer can say which destination it is describing. */
+    let key = city;
+    let resolvedFrom: string | null = null;
+    if (getAirportsForCity(key).length === 0 && !getTransferRoute(key)) {
+      const matches = await getHotels({
+        fields: ["hotel_name", "city", "state_province_county_island"] as unknown as string[],
+        filter: { hotel_name: { _icontains: city } },
+        limit: 2,
+      });
+      const hit = matches[0] as unknown as Record<string, string | null> | undefined;
+      const candidate = (hit?.city ?? "").trim() || (hit?.state_province_county_island ?? "").trim();
+      if (matches.length === 1 && candidate) {
+        resolvedFrom = city;
+        key = candidate;
+      }
+    }
+
+    const airports = getAirportsForCity(key);
+    const primary = pickPrimaryAirportForCity(key);
     /* The arrival airport is not the journey. For a reserve or an island the
      * onward leg often departs from a DIFFERENT airport — Nairobi to Wilson to
      * a Mara airstrip — and that leg is the part a guest has to arrange.
@@ -901,9 +931,10 @@ const nearestAirport = tool({
      * model is handed nothing rather than asked not to guess, because a
      * prompt-only rule of this shape gets skipped (§50) and an invented boat
      * is something a guest can act on. */
-    const route = getTransferRoute(city);
+    const route = getTransferRoute(key);
     return asUntrustedData("airports", {
-      city,
+      city: key,
+      resolvedFrom,
       found: airports.length > 0,
       primary: primary
         ? { iata: primary.iata, label: primary.label, distKm: primary.distKm }

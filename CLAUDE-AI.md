@@ -254,7 +254,50 @@ has no entry, says it will confirm the routing rather than guess which link is
 running and pivots to the four properties; **Paris** gives the ordinary answer,
 CDG with the RER B and Orly, without over-hedging.
 
-**11 routes populated, and the candidate list is much longer** — 10
+**48 routes as of 2026-09-11** — the Kenyan and Rwandan reserves, Okavango,
+Sabi Sand and Kruger, Phinda, and the island hops: 20 Maldivian resorts, St
+Barthélemy, Praslin and North Island, Canouan, the BVI private islands, Con
+Dao, Sumba, Arenal, Bora Bora, Lanai, Desroches, Gisakura.
+
+**The Maldives are a helper, not twenty literals** (`maldives(iata, label)`), so
+a reviewer checks the shape once and then only the codes. And what it
+deliberately does NOT claim per resort is the point: whether the final leg is a
+seaplane from Malé or a domestic flight plus speedboat varies by resort and
+season, so the note says both and leaves the resort to confirm. Guessing it
+per property is the invention this file exists to stop.
+
+### The model does not know our destination keys, and cannot be expected to
+
+Asked "how do I reach Soneva Fushi?" it called the tool once with
+`city: "Soneva Fushi"` and got nothing — the key is **"Kunfunadhoo Island"**.
+Angama Mara had worked only by luck: its key is "Masai Mara", a name famous
+enough to guess. Nobody guesses Kunfunadhoo.
+
+Telling the model to look the city up first would be another optional step, and
+this file's record is that those get skipped. So **the tool resolves it
+server-side**: if the name matches no destination, it is tried as a hotel name
+and that hotel's own `city` — or its traveller area, for the eight lodges with
+no city (§3) — is used instead, reported back as `resolvedFrom`. Verified:
+`asked="Soneva Fushi" matches=1 city="Kunfunadhoo Island"`, and the answer then
+came back as the Maldives note verbatim.
+
+### A stale conclusion in the transcript outlives the fix
+
+Worth knowing when testing any of this. After the pre-fix turns where it had
+said "I don't have the routing for Soneva Fushi", it kept refusing across three
+more attempts — *"asking again doesn't change what I have"* — and the log shows
+**it stopped calling the tool at all**, 5.2s round trips with no tool line. It
+was reasoning from its own earlier answer in the transcript, not from the data.
+One of those refusals even claimed "that last attempt landed in South Africa",
+which no tool call supports.
+
+Two consequences. **Test a fix in a fresh conversation** — CLEAR first, or you
+are measuring the transcript rather than the code. And **the model's account of
+what it just did is not evidence**: it also claimed earlier to have "asked again
+under the resort's own name and under the atoll" when the log shows a single
+call. Only the log settles it.
+
+**Candidate list still open** — 10
 destinations where we name a distant gateway and nothing else, ~93 where no
 jet-capable airport is listed at all (partly noise: Florence, Mykonos and
 Santorini are real international arrivals with short runways). See §51.
