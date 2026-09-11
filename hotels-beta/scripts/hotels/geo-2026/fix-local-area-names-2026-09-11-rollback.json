@@ -1,0 +1,39 @@
+[
+  {
+    "at": "2026-09-11T12:35:05.770Z",
+    "changes": [
+      {
+        "id": 1688,
+        "from": "Meatpackling District",
+        "to": "Meatpacking District",
+        "why": "misspelling",
+        "name": "Gansevoort Meatpacking NYC",
+        "city": "New York"
+      },
+      {
+        "id": 1709,
+        "from": "Meatpackling District",
+        "to": "Meatpacking District",
+        "why": "misspelling",
+        "name": "Soho House New York",
+        "city": "New York"
+      },
+      {
+        "id": 1284,
+        "from": "SoHo",
+        "to": "Soho",
+        "why": "London's Soho takes no capital H",
+        "name": "Chateau Denmark",
+        "city": "London"
+      },
+      {
+        "id": 1720,
+        "from": "Soho",
+        "to": "SoHo",
+        "why": "New York's SoHo is South of Houston",
+        "name": "The Dominick",
+        "city": "New York"
+      }
+    ]
+  }
+]
