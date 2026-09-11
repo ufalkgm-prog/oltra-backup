@@ -1,0 +1,96 @@
+[
+  {
+    "at": "2026-09-11T11:42:28.857Z",
+    "batch": "contradictory-pairs",
+    "changes": [
+      {
+        "id": "2011",
+        "name": "Romazzino",
+        "dropped": [
+          "Coastal"
+        ],
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Coastal"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2046",
+        "name": "Kona Village, a Rosewood Resort",
+        "dropped": [
+          "Coastal"
+        ],
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Coastal"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2047",
+        "name": "Rosewood Baha Mar",
+        "dropped": [
+          "Coastal"
+        ],
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Coastal"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2059",
+        "name": "Rosewood Sanya",
+        "dropped": [
+          "Oceanfront"
+        ],
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Oceanfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      }
+    ]
+  }
+]

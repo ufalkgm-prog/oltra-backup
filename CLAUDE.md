@@ -751,7 +751,7 @@ A passive hotel shows **"Check availability on website"** linked to `www` (delib
 |---|---|---|
 | 1 | the 37 tagged `Waterfront` | **Applied 2026-09-10** — 36 written, 1 no-op, 0 failures, verified by re-read |
 | 2 | `Lakeside` + `Riverside` + `Canalside` (71) | **Applied 2026-09-11** — 71 published + 4 unpublished written, 0 failures. All three values **retired from the choice lists** |
-| 3 | `Coastal` + `Oceanfront` (99) | **Applied 2026-09-11** — 13 written, 86 confirmed unchanged, 0 failures |
+| 3 | `Coastal` + `Oceanfront` (99) | **Applied 2026-09-11** — 13 written, 86 unchanged, plus 4 contradictory pairs the triage missed. **0 rows now carry two water values** |
 | 4 | `Seaside` + `Clifftop` (8 rows) | **Applied 2026-09-11** — 8 written, 0 failures. Both **retired from the choice lists** |
 | 5 | `Beachfront` (~163) | Not started. Sweep for road-separated cases → `Beach` |
 
