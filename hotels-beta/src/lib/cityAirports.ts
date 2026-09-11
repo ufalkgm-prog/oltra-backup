@@ -57,6 +57,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "QSR", label: "Salerno Costa d'Amalfi", distKm: 28, size: "medium", runwayM: 1962 },
     { iata: "NAP", label: "Naples", distKm: 38, size: "large", runwayM: 2628 }
   ],
+  "Amboseli National Park": [
+    { iata: "NBO", label: "Jomo Kenyatta", distKm: 171, size: "large", runwayM: 4117 }
+  ],
   "Amphur Muang": [
     { iata: "KBV", label: "Krabi", distKm: 19, size: "large", runwayM: 3000 }
   ],
@@ -747,7 +750,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "DND", label: "Dundee", distKm: 18, size: "medium", runwayM: 1400 }
   ],
   "Kinigi": [
-    { iata: "KXO", label: "Kisoro", distKm: 23, size: "small", runwayM: 1200 }
+    { iata: "KGL", label: "Kigali", distKm: 86, size: "large", runwayM: 3500 }
   ],
   "Kirawira": [
     { iata: "SEU", label: "Seronera", distKm: 75, size: "small", runwayM: 2280 },
@@ -968,6 +971,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Marrakech": [
     { iata: "RAK", label: "Marrakesh Menara", distKm: 6, size: "large", runwayM: 3100 }
   ],
+  "Masai Mara": [
+    { iata: "NBO", label: "Jomo Kenyatta", distKm: 214, size: "large", runwayM: 4117 }
+  ],
   "Mashpi": [
     { iata: "UIO", label: "Mariscal Sucre", distKm: 67, size: "large", runwayM: 4098 }
   ],
@@ -1133,6 +1139,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Necker Island": [
     { iata: "VIJ", label: "Virgin Gorda", distKm: 11, size: "medium", runwayM: 945 },
     { iata: "EIS", label: "Terrance B. Lettsome", distKm: 21, size: "large", runwayM: 1415 }
+  ],
+  "Negev Desert": [
+    { iata: "ETM", label: "Ramon", distKm: 21, size: "large", runwayM: 3600 }
   ],
   "Neuvecelle": [
     { iata: "GVA", label: "Geneva", distKm: 41, size: "large", runwayM: 3900 }
@@ -1410,8 +1419,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "PUY", label: "Pula", distKm: 30, size: "large", runwayM: 2950 }
   ],
   "Ruhengeri": [
-    { iata: "KXO", label: "Kisoro", distKm: 28, size: "small", runwayM: 1200 },
-    { iata: "GOM", label: "Goma", distKm: 40, size: "large", runwayM: 2955 }
+    { iata: "KGL", label: "Kigali", distKm: 90, size: "large", runwayM: 3500 }
   ],
   "Rutherford": [
     { iata: "STS", label: "Charles M. Schulz Sonoma County", distKm: 35, size: "medium", runwayM: 3415 }
@@ -1675,6 +1683,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Vancouver": [
     { iata: "YVR", label: "Vancouver", distKm: 11, size: "large", runwayM: 8760 }
   ],
+  "Vancouver Island": [
+    { iata: "YAZ", label: "Tofino / Long Beach", distKm: 32, size: "medium", runwayM: 4571 }
+  ],
   "Velaa": [
     { iata: "NMF", label: "Maafaru", distKm: 29, size: "medium", runwayM: 2850 },
     { iata: "FND", label: "Funadhoo", distKm: 38, size: "small", runwayM: 0 }
@@ -1704,6 +1715,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Voavah": [
     { iata: "DRV", label: "Dharavandhoo", distKm: 19, size: "small", runwayM: 1189 }
+  ],
+  "Volcanoes National Park": [
+    { iata: "KGL", label: "Kigali", distKm: 84, size: "large", runwayM: 3500 }
   ],
   "Vommuli Island": [
     { iata: "VAM", label: "Villa Maamigili", distKm: 62, size: "medium", runwayM: 1800 },

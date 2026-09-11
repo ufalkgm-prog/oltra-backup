@@ -89,13 +89,59 @@ const MANUAL_EXCLUDE_IATA = new Set([
 ]);
 const EXCLUDED_TYPES = new Set(["heliport", "seaplane_base", "closed", "balloonport"]);
 
+/* WILDERNESS GATEWAYS — the practical arrival airport, where the nearest
+ * scheduled one is not it.
+ *
+ * §37 records this as a known soft spot and it finally bit: five wilderness
+ * destinations were added to this mapping on 2026-09-11 (they had keyed to
+ * nothing at all before, see the grouping block below), and three resolved to
+ * bush airstrips that no international itinerary can be sold to —
+ * Masai Mara -> a 1,052m "Mara Serena LODGE AIRSTRIP", Amboseli -> a 1,001m
+ * strip, Volcanoes National Park -> Kisoro, which is in UGANDA.
+ *
+ * AN EXCLUSION LIST WOULD HAVE MADE IT WORSE, which is why this is an override
+ * instead. Drop the Mara airstrip and the next nearest is Seronera in
+ * TANZANIA (134km); drop Kisoro and the next is Goma in the DEMOCRATIC
+ * REPUBLIC OF THE CONGO (50km). Nearest-wins cannot reach the right answer
+ * here by removing candidates, because the right answer is 214km away.
+ *
+ * A RUNWAY-LENGTH FILTER IS ALSO WRONG, though it looks tempting: the correct
+ * entries for Voavah (1,189m), Vommuli and the other Maldivian resorts are
+ * exactly this size, because there a small strip IS the arrival airport. And
+ * §37 already records that filtering on airport TYPE was tried and reverted —
+ * it sent Missoula to Spokane, 319km away.
+ *
+ * So each entry below is a per-destination decision, not a rule. Two of the
+ * five needed NO override and are deliberately absent: the Negev's Ramon
+ * (21km, 3,600m, international) and Clayoquot's Tofino (32km, jet-capable, and
+ * genuinely how guests arrive) are what the algorithm already chose.
+ *
+ * Distances are recomputed from the real centroid, so the number stays honest
+ * even though the choice was made by hand. */
+const GATEWAY_OVERRIDE = {
+  // Nairobi, not Wilson: WIL is where the safari light aircraft departs from,
+  // NBO is where the international ticket lands.
+  "Masai Mara": ["NBO"],
+  "Amboseli National Park": ["NBO"],
+  "Volcanoes National Park": ["KGL"],
+  /* The same park, reached the same way. These two DO have a `city`, so they
+   * were already in the mapping and are not part of the eight — but Kinigi
+   * (One&Only Gorilla's Nest) and Ruhengeri (Wilderness Bisate) both carry
+   * area "Volcanoes National Park", i.e. they are Singita Kwitonda's
+   * neighbours. Fixing only Kwitonda would have left three lodges in one park
+   * with two different answers, one of them a Ugandan airstrip. */
+  "Kinigi": ["KGL"],
+  "Ruhengeri": ["KGL"],
+};
+
+
 const MAX_RADIUS_KM = 400;
 const FAVORITE_RATIO = 1.5;
 const MAX_HUBS = 3;
 
 async function fetchHotels() {
   const res = await fetch(
-    `${DIRECTUS_URL}/items/hotels?fields=id,hotel_name,city,country,lat,lng&filter[published][_eq]=true&limit=-1`,
+    `${DIRECTUS_URL}/items/hotels?fields=id,hotel_name,city,country,state_province_county_island,lat,lng&filter[published][_eq]=true&limit=-1`,
     { headers: { Authorization: `Bearer ${DIRECTUS_TOKEN}` } }
   );
   if (!res.ok) throw new Error(`Directus fetch failed: ${res.status}`);
@@ -281,15 +327,36 @@ async function main() {
   const airports = loadAirports();
   console.log(`${hotels.length} published hotels, ${airports.length} candidate airports.`);
 
+  /* Group by `city`, falling back to the TRAVELLER AREA when a hotel has no
+   * city at all.
+   *
+   * Eight published hotels are in that position and every one is a wilderness
+   * lodge whose reserve name lives in `state_province_county_island` instead —
+   * the five Kenyan camps in the Masai Mara and Amboseli, Singita Kwitonda in
+   * Volcanoes National Park, Six Senses Shaharut in the Negev and Clayoquot on
+   * Vancouver Island. §3 tolerates the blank `city`, and it stays blank.
+   *
+   * This used to read `if (!city) continue`, which dropped all eight SILENTLY:
+   * they keyed to nothing here, so the landing flight teaser resolved them to
+   * no airport. Falling back to the area is enough on its own because
+   * `getAirportsForCity` is a plain case-insensitive string lookup and the
+   * destination dropdown already searches areas (§3) — "Masai Mara" as a key
+   * is reachable by exactly the search a visitor would run, so no consumer
+   * needed changing. */
   const groups = new Map();
+  let areaKeyed = 0;
   for (const h of hotels) {
     const city = (h.city || "").trim();
-    if (!city) continue;
+    const area = (h.state_province_county_island || "").trim();
+    const name = city || area;
+    if (!name) continue;
+    if (!city) areaKeyed += 1;
     const country = (h.country || "").trim();
-    const key = city + "|||" + country;
-    if (!groups.has(key)) groups.set(key, { city, hotels: [] });
+    const key = name + "|||" + country;
+    if (!groups.has(key)) groups.set(key, { city: name, hotels: [] });
     groups.get(key).hotels.push(h);
   }
+  if (areaKeyed) console.log(`${areaKeyed} hotels keyed by traveller area (no city).`);
 
   const results = [];
   for (const g of groups.values()) {
@@ -299,7 +366,20 @@ async function main() {
     const centroidLat = lats.reduce((a, b) => a + b, 0) / lats.length;
     const centroidLon = lons.reduce((a, b) => a + b, 0) / lons.length;
     const chosen = selectAirports(centroidLat, centroidLon, normalize(g.city), airports);
-    results.push({ city: g.city, airports: chosen });
+    /* An override returns the SAME SHAPE selectAirports does — the raw airport
+     * record plus distKm — because the emit step below reads a.name/a.type off
+     * it. Building a pre-formatted object here instead threw at emit time. */
+    const override = GATEWAY_OVERRIDE[g.city];
+    let finalAirports = chosen;
+    if (override) {
+      finalAirports = override.map((iata) => {
+        const a = airports.find((x) => x.iata === iata);
+        if (!a) throw new Error(`GATEWAY_OVERRIDE names ${iata} for ${g.city}, which is not in the dataset`);
+        return { ...a, distKm: haversineKm(centroidLat, centroidLon, a.lat, a.lon) };
+      });
+      console.log(`  gateway override: ${g.city} -> ${finalAirports.map((a) => `${a.iata} ${Math.round(a.distKm)}km`).join(", ")}`);
+    }
+    results.push({ city: g.city, airports: finalAirports });
   }
   results.sort((a, b) => a.city.localeCompare(b.city));
 
