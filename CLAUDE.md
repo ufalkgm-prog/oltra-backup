@@ -752,7 +752,7 @@ A passive hotel shows **"Check availability on website"** linked to `www` (delib
 | 1 | the 37 tagged `Waterfront` | **Applied 2026-09-10** — 36 written, 1 no-op, 0 failures, verified by re-read |
 | 2 | `Lakeside` + `Riverside` + `Canalside` (71) | **Applied 2026-09-11** — 71 published + 4 unpublished written, 0 failures. All three values **retired from the choice lists** |
 | 3 | `Coastal` (31) + `Oceanfront` (35) | Not started. Verify against the 20-minute line |
-| 4 | `Seaside` (4) + `Clifftop` (5) | Not started. Retire |
+| 4 | `Seaside` + `Clifftop` (8 rows) | **Applied 2026-09-11** — 8 written, 0 failures. Both **retired from the choice lists** |
 | 5 | `Beachfront` (~163) | Not started. Sweep for road-separated cases → `Beach` |
 
 Batch 2 artefacts: `apply-freshwater-batch2-2026-09-11.mjs` + rollback. Batch 1: `scripts/hotels/settings-2026/apply-waterfront-batch1-2026-09-10.mjs` and its appending rollback record. **A one-time record of a reviewed session, not a tool** — copy the pattern for the next batch, per §24.
@@ -771,9 +771,11 @@ The three Bosphorus hotels were set to `Oceanfront` to match Mandarin Oriental B
 
 So the Beachfront/Beach line is a human call in every case, which is why batches go through a review artifact (the §25 awards pattern) with a proposed value, the quoted evidence, and a confidence flag. In batch 1 Ulrik overrode 4 of 37 proposals — Six Senses Samui and Cap Estel to `Beachfront`, Fouquet's Saint-Barth to `Oceanfront`, and Baku left as `Waterfront`.
 
-Retiring a value means converting the arrays **then** removing the choice from the field's `meta.options.choices`, or the filter keeps offering a dead option (§44). `Lakeside`, `Riverside` and `Canalside` are done — **removed from all three fields**, `setting`, `primary_setting` and `secondary_setting`, which §44 locked to one shared list. `Seaside` and `Clifftop` are still live choices, pending batch 4.
+Retiring a value means converting the arrays **then** removing the choice from the field's `meta.options.choices`, or the filter keeps offering a dead option (§44). All five retirements are done — `Lakeside`, `Riverside`, `Canalside`, `Seaside` and `Clifftop` **removed from all three fields**, `setting`, `primary_setting` and `secondary_setting`, which §44 locked to one shared list. The `setting` vocabulary went 22 → 17.
 
-**A retire has two more consumers than the Directus field.** `lib/ai/taxonomy.ts` mirrors this vocabulary as a JSON Schema enum for the concierge, and a stale entry there hands the model a value that silently matches nothing (§50) — it went 22 → 19 in the same commit. Check `grep -rn "<value>" src/` before calling a retire finished.
+**The water vocabulary is now settled**: `Beachfront` (190), `Beach` (7), `Oceanfront` (62), `Waterfront` (75), `Coastal` (37). Five values, one meaning each. What remains in batches 3 and 5 is checking that hotels are in the *right* one, not that the vocabulary is right.
+
+**A retire has more consumers than the Directus field, and the grep is not optional.** `lib/ai/taxonomy.ts` mirrors this vocabulary as a JSON Schema enum for the concierge, where a stale entry hands the model a value that silently matches nothing (§50). Batch 4 found two more: `lib/ai/inspireMirror.ts` mapped `Seaside` into its beach purpose, and `tools.ts` named all seven old water values in the `settings` parameter description. **Three files, none of which the Directus change touches.** Always `grep -rn "<value>" src/` before calling a retire finished — and read the hits, since `members/defaults.ts` mentions "Lakeside estate" as demo prose and correctly stays.
 
 **Scan unpublished rows when retiring, not just published.** Batch 2 scoped `published: true`, because every count in the review was about the live collection — so four unpublished hotels kept their fresh tags and the retire script refused. That guard is the whole point of it: Four Seasons Bangkok at Chao Phraya River, &Beyond Lake Manyara, Sandibe Okavango and Punakha River Lodge, all unambiguously fresh water, merged in `apply-freshwater-unpublished-2026-09-11.mjs`. An orphaned value on an unpublished row is exactly the one nobody notices.
 

@@ -1,0 +1,170 @@
+[
+  {
+    "at": "2026-09-11T11:08:24.992Z",
+    "batch": "seaside-clifftop-4",
+    "changes": [
+      {
+        "id": "1115",
+        "name": "Alila Villas Uluwatu",
+        "choice": "__DROP__",
+        "before": {
+          "setting": [
+            "Coastal",
+            "Clifftop"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": "Clifftop"
+        },
+        "after": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": "Coastal",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1487",
+        "name": "Villa Igiea",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "City",
+            "Seaside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Seaside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Oceanfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Oceanfront"
+        }
+      },
+      {
+        "id": "1792",
+        "name": "Miraflores Park",
+        "choice": "Coastal",
+        "before": {
+          "setting": [
+            "City",
+            "Seaside"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Seaside"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Coastal"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Coastal"
+        }
+      },
+      {
+        "id": "2010",
+        "name": "Belmond Villa Sant'Andrea",
+        "choice": "__DROP__",
+        "before": {
+          "setting": [
+            "Beachfront",
+            "Seaside"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2012",
+        "name": "Belmond Reid's Palace",
+        "choice": "__DROP__",
+        "before": {
+          "setting": [
+            "Oceanfront",
+            "Clifftop"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2023",
+        "name": "Mandarin Oriental, Mallorca",
+        "choice": "Oceanfront",
+        "before": {
+          "setting": [
+            "Coastal",
+            "Seaside"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Oceanfront"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "2061",
+        "name": "Rosewood Kauri Cliffs",
+        "choice": "__DROP__",
+        "before": {
+          "setting": [
+            "Clifftop",
+            "Coastal"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Coastal"
+          ],
+          "primary_setting": null,
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "3008",
+        "name": "&Beyond Phinda Rock Lodge",
+        "choice": "__DROP__",
+        "before": {
+          "setting": [
+            "Wildlife Reserve",
+            "Clifftop"
+          ],
+          "primary_setting": "Wildlife Reserve",
+          "secondary_setting": "Clifftop"
+        },
+        "after": {
+          "setting": [
+            "Wildlife Reserve"
+          ],
+          "primary_setting": "Wildlife Reserve",
+          "secondary_setting": null
+        }
+      }
+    ]
+  }
+]

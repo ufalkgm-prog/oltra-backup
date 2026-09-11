@@ -48,7 +48,6 @@ const PURPOSE_RULES: { purpose: InspirePurpose; activities: string[]; settings: 
       "Oceanfront",
       "Overwater",
       "Private Island",
-      "Seaside",
     ],
   },
   {

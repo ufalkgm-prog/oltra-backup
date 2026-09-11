@@ -438,12 +438,14 @@ const searchHotels = tool({
         items: { type: "string", enum: [...SETTING_VALUES] },
         description:
           "Setting tags. Use only these exact values.\n" +
-          "The water-facing ones — Beachfront, Beach, Seaside, Coastal, " +
-          "Oceanfront, Waterfront, Clifftop — are not applied consistently " +
-          "across the collection: the whole Côte d'Azur is tagged Waterfront " +
-          "or Coastal and none of it Beachfront. For anything by the sea pass " +
-          "the whole family, not the one word the visitor used, or you will " +
-          "miss most of what we hold. They are OR'd, so this widens correctly.",
+          "The water ones now mean something precise: Beachfront is ON the " +
+          "sand, Beach has a road between, Oceanfront is the sea but no " +
+          "beach, Coastal is near the sea but not on it, and Waterfront is " +
+          "fresh water — rivers, lakes, canals. A sea question should still " +
+          "pass the sea family (Beachfront, Beach, Oceanfront, Coastal) " +
+          "rather than the one word the visitor used, because the line " +
+          "between them is finer than most people mean; they are OR'd, so " +
+          "that widens correctly. Pass Waterfront only for fresh water.",
       },
       styles: {
         type: "array",
