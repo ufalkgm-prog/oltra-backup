@@ -1,0 +1,123 @@
+[
+  {
+    "at": "2026-09-11T13:32:39.593Z",
+    "changes": [
+      {
+        "id": 1208,
+        "to": "Lumphini",
+        "tier": "B",
+        "why": "Langsuan Road; text names the khet, Pathum Wan",
+        "name": "Hotel Muse Bangkok",
+        "published": true
+      },
+      {
+        "id": 1214,
+        "to": "Lumphini",
+        "tier": "B",
+        "why": "Ploenchit Road; text names the khet, Pathumwan",
+        "name": "Rosewood Bangkok",
+        "published": true
+      },
+      {
+        "id": 1221,
+        "to": "Lumphini",
+        "tier": "B",
+        "why": "corner of Wireless and Ploenchit; text names only roads",
+        "name": "The Okura Prestige Bangkok",
+        "published": true
+      },
+      {
+        "id": 1224,
+        "to": "Lumphini",
+        "tier": "B",
+        "why": "Rajadamri Road; text says \"the Pathum Wan district\"",
+        "name": "The St. Regis Bangkok",
+        "published": true
+      },
+      {
+        "id": 1197,
+        "to": "Khlong San",
+        "tier": "B",
+        "why": "\"the Thonburi side of the Chao Phraya River\"",
+        "name": "Anantara Riverside Bangkok Resort",
+        "published": true
+      },
+      {
+        "id": 1198,
+        "to": "Khlong San",
+        "tier": "B",
+        "why": "same riverside complex as 1197",
+        "name": "Avani+ Riverside Bangkok Hotel",
+        "published": true
+      },
+      {
+        "id": 1222,
+        "to": "Khlong San",
+        "tier": "B",
+        "why": "\"the Thonburi side of the Chao Phraya River\"",
+        "name": "The Peninsula Bangkok",
+        "published": true
+      },
+      {
+        "id": 1201,
+        "to": "Yan Nawa",
+        "tier": "B",
+        "why": "300/2 Charoen Krung Road — past the Bang Rak line",
+        "name": "Capella Bangkok",
+        "published": true
+      },
+      {
+        "id": 1204,
+        "to": "Yan Nawa",
+        "tier": "B",
+        "why": "300/1 Charoen Krung Road — directly opposite 1201",
+        "name": "Four Seasons Hotel Bangkok at Chao Phraya River",
+        "published": false
+      },
+      {
+        "id": 1210,
+        "to": "Bang Rak",
+        "tier": "B",
+        "why": "48 Oriental Avenue; khwaeng and khet are both Bang Rak",
+        "name": "Mandarin Oriental, Bangkok",
+        "published": true
+      },
+      {
+        "id": 1192,
+        "to": "Phrom Phong",
+        "tier": "A",
+        "why": "\"between the Phrom Phong and Thonglor neighbourhoods\"",
+        "name": "137 Pillars Suites & Residences Bangkok",
+        "published": true
+      },
+      {
+        "id": 1199,
+        "to": "Sathorn",
+        "tier": "A",
+        "why": "\"occupies a 61-storey tower in Sathorn\"",
+        "name": "Banyan Tree Bangkok",
+        "published": true
+      },
+      {
+        "id": 1218,
+        "to": "Sathorn",
+        "tier": "B",
+        "why": "\"on North Sathorn Road ... Silom, Sathorn\"",
+        "name": "SO/ Bangkok",
+        "published": true
+      },
+      {
+        "id": 1223,
+        "to": "Dusit",
+        "tier": "A",
+        "why": "\"in Bangkok's Dusit district\"",
+        "name": "The Siam",
+        "published": true
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T13:32:59.036Z",
+    "changes": []
+  }
+]

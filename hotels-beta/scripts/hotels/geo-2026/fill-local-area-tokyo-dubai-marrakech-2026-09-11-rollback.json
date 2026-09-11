@@ -1,0 +1,261 @@
+[
+  {
+    "at": "2026-09-11T13:28:15.025Z",
+    "changes": [
+      {
+        "id": 1136,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Otemachi",
+        "tier": "A",
+        "why": "\"upper levels of Otemachi Tower\"",
+        "name": "Aman Tokyo",
+        "published": true
+      },
+      {
+        "id": 1137,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Yaesu",
+        "tier": "A",
+        "why": "\"Tokyo Midtown Yaesu\"",
+        "name": "Bulgari Tokyo",
+        "published": true
+      },
+      {
+        "id": 1138,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Otemachi",
+        "tier": "A",
+        "why": "\"upper floors of Otemachi One\"",
+        "name": "Four Seasons Hotel Tokyo at Otemachi",
+        "published": true
+      },
+      {
+        "id": 1139,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Roppongi",
+        "tier": "A",
+        "why": "\"inside Roppongi Hills\" — the district, not the development",
+        "name": "Grand Hyatt Tokyo",
+        "published": true
+      },
+      {
+        "id": 1141,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Marunouchi",
+        "tier": "A",
+        "why": "\"a privileged position in Marunouchi\"",
+        "name": "The Peninsula Tokyo",
+        "published": true
+      },
+      {
+        "id": 1144,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Roppongi",
+        "tier": "A",
+        "why": "\"Midtown Tower in Roppongi\"",
+        "name": "The Ritz-Carlton, Tokyo",
+        "published": true
+      },
+      {
+        "id": 1146,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Toranomon",
+        "tier": "A",
+        "why": "named in the hotel's own name and text",
+        "name": "The Tokyo Toranomon EDITION",
+        "published": true
+      },
+      {
+        "id": 1148,
+        "city": "Tokyo",
+        "from": null,
+        "to": "Nihonbashi",
+        "tier": "A",
+        "why": "\"crowns the Nihonbashi Mitsui Tower\"",
+        "name": "Mandarin Oriental, Tokyo",
+        "published": true
+      },
+      {
+        "id": 1819,
+        "city": "Tokyo",
+        "from": "Azabudai Hills",
+        "to": "Azabudai",
+        "tier": "A",
+        "why": "Azabudai Hills is a development; the district is Azabudai",
+        "name": "Janu Tokyo",
+        "published": true
+      },
+      {
+        "id": 1598,
+        "city": "Dubai",
+        "from": null,
+        "to": "Palm Jumeirah",
+        "tier": "A",
+        "why": "\"above the crescent of Palm Jumeirah\"",
+        "name": "Atlantis The Royal Dubai",
+        "published": true
+      },
+      {
+        "id": 1599,
+        "city": "Dubai",
+        "from": null,
+        "to": "Jumeira Bay Island",
+        "tier": "A",
+        "why": "\"occupies Jumeira Bay Island\" — an island district, the Sentosa case",
+        "name": "Bulgari Resort Dubai",
+        "published": true
+      },
+      {
+        "id": 1602,
+        "city": "Dubai",
+        "from": null,
+        "to": "Jumeirah 2",
+        "tier": "A",
+        "why": "\"Set on Jumeirah Beach Road in Jumeirah 2\"",
+        "name": "Four Seasons Resort Dubai at Jumeirah Beach",
+        "published": true
+      },
+      {
+        "id": 1606,
+        "city": "Dubai",
+        "from": null,
+        "to": "Palm Jumeirah",
+        "tier": "A",
+        "why": "\"western crescent of Palm Jumeirah\"",
+        "name": "One&Only The Palm, Dubai",
+        "published": true
+      },
+      {
+        "id": 1611,
+        "city": "Dubai",
+        "from": null,
+        "to": "Downtown Dubai",
+        "tier": "A",
+        "why": "\"a prime Downtown Dubai address\"",
+        "name": "The Dubai EDITION",
+        "published": false
+      },
+      {
+        "id": 1617,
+        "city": "Dubai",
+        "from": null,
+        "to": "Mina Seyahi",
+        "tier": "A",
+        "why": "\"the long-established Mina Seyahi resort precinct\"",
+        "name": "W Dubai - Mina Seyahi",
+        "published": true
+      },
+      {
+        "id": 1612,
+        "city": "Dubai",
+        "from": null,
+        "to": "Business Bay",
+        "tier": "B",
+        "why": "text says BETWEEN three districts; Marasi Drive is Business Bay",
+        "name": "The Lana",
+        "published": true
+      },
+      {
+        "id": 1604,
+        "city": "Dubai",
+        "from": null,
+        "to": "Jumeirah 1",
+        "tier": "B",
+        "why": "text names La Mer and Jumeirah Mosque, both Jumeirah 1, but not the sub-community",
+        "name": "Mandarin Oriental, Jumeira Dubai",
+        "published": true
+      },
+      {
+        "id": 1605,
+        "city": "Dubai",
+        "from": null,
+        "to": "Al Sufouh",
+        "tier": "B",
+        "why": "text names only what is near it; the estate itself is Al Sufouh",
+        "name": "One&Only Royal Mirage, Dubai",
+        "published": true
+      },
+      {
+        "id": 1600,
+        "city": "Dubai",
+        "from": null,
+        "to": "Umm Suqeim",
+        "tier": "B",
+        "why": "\"its own island off Jumeirah Beach\"; the mainland district is Umm Suqeim",
+        "name": "Jumeirah Burj Al Arab",
+        "published": false
+      },
+      {
+        "id": 1814,
+        "city": "Dubai",
+        "from": null,
+        "to": "Umm Suqeim",
+        "tier": "B",
+        "why": "\"beside Burj Al Arab\" — the same stretch, so the two agree",
+        "name": "Jumeirah Marsa Al Arab",
+        "published": true
+      },
+      {
+        "id": 1017,
+        "city": "Marrakech",
+        "from": null,
+        "to": "Medina",
+        "tier": "A",
+        "why": "\"at Bab El Ksour on the edge of Marrakech's medina\"",
+        "name": "El Fenn",
+        "published": true
+      },
+      {
+        "id": 1021,
+        "city": "Marrakech",
+        "from": null,
+        "to": "Medina",
+        "tier": "A",
+        "why": "\"just inside Marrakech's medina walls on Avenue Bab Jdid\"",
+        "name": "La Mamounia",
+        "published": true
+      },
+      {
+        "id": 1026,
+        "city": "Marrakech",
+        "from": null,
+        "to": "Medina",
+        "tier": "A",
+        "why": "\"just inside the city walls ... at the edge of the medina\"",
+        "name": "Royal Mansour",
+        "published": true
+      },
+      {
+        "id": 1024,
+        "city": "Marrakech",
+        "from": null,
+        "to": "Palmeraie",
+        "tier": "A",
+        "why": "\"in Marrakech's Palmeraie\"",
+        "name": "Palais Ronsard",
+        "published": true
+      },
+      {
+        "id": 1023,
+        "city": "Marrakech",
+        "from": "Hivernage district",
+        "to": "Hivernage",
+        "tier": "A",
+        "why": "redundant noun, the Giudecca Island case",
+        "name": "Nobu Marrakech",
+        "published": false
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T13:32:58.552Z",
+    "changes": []
+  }
+]
