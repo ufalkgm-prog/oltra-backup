@@ -467,6 +467,8 @@ git push git@github.com:ufalkgm-prog/oltra-backup.git main --force
 
 Verify in sync — **use the git protocol, not `gh`**. On Ulrik's Windows machine `gh api repos/.../oltra-beta/commits/main` 404s while the backup one works and `git` pushes fine: an authorization gap on the `gh` token (git uses Windows Credential Manager, `gh` its own keyring), not a missing repo. `gh auth refresh -h github.com` would likely clear it.
 
+**The gap is narrower than "`gh` is broken here", measured 2026-09-12: `gh run list --workflow=backup.yml` works.** It returns each run's status, commit subject and duration, which is exactly what §18 says to go to the Actions tab for — so backup-workflow status is reachable from the terminal even though the commits API is not. Useful when a push has landed and the backup ref is still behind: `gh run list` distinguishes *in progress* from *failed*, where a bare `git ls-remote` cannot.
+
 ```bash
 git ls-remote origin refs/heads/main
 git ls-remote https://github.com/ufalkgm-prog/oltra-backup.git refs/heads/main
