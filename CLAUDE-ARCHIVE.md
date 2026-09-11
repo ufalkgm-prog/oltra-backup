@@ -340,6 +340,8 @@ Computed by grepping every real consumer of each token first, not guessed:
 
 **Manual exclusions** — flagged `scheduled_service: yes` but business-aviation only: `TEB` (Teterboro), `LBG` (Paris-Le Bourget), `OPF` (Miami-Opa Locka). With these out, Paris correctly shows just CDG + Orly.
 
+`NCA` (North Caicos) joined them 2026-09-11 **for a different reason, and the difference matters if this is revisited**: it carries real scheduled inter-island service, so it is not a dataset false positive. It is excluded because of who is near it on this roster — the only two cities it served, Parrot Cay and Pine Cay, are private cays reached by BOAT from Leeward Marina on Providenciales, which both hotels' own descriptions state, so PLS is the arrival airport for each. Left in, the 25km tier-1 cut split two neighbouring cays 8km apart: Pine Cay got NCA and PLS, Parrot Cay got NCA alone with PLS stranded at 28km. **Reverse it if a hotel is ever added on North Caicos or Middle Caicos**, where NCA is genuinely the nearest airport for guests rather than for residents.
+
 Selection per city:
 
 1. **Same-city airports** — within 25km of the centroid, OR within 60km if the airport's own `name` or `municipality` starts with the city name (catches "London Luton" and "Milan Malpensa", whose `municipality` is a satellite town). **All** same-city matches are listed, uncapped — London shows 6, New York 3.

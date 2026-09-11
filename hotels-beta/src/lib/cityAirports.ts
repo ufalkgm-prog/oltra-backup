@@ -1245,6 +1245,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Paro": [
     { iata: "PBH", label: "Paro", distKm: 8, size: "large", runwayM: 2265 }
   ],
+  "Parrot Cay": [
+    { iata: "PLS", label: "Providenciales", distKm: 29, size: "large", runwayM: 2804 }
+  ],
   "Patong": [
     { iata: "HKT", label: "Phuket", distKm: 26, size: "large", runwayM: 3100 }
   ],
@@ -1282,7 +1285,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "PHX", label: "Phoenix Sky Harbor", distKm: 10, size: "large", runwayM: 9018 }
   ],
   "Pine Cay": [
-    { iata: "NCA", label: "North Caicos", distKm: 17, size: "medium", runwayM: 1294 },
     { iata: "PLS", label: "Providenciales", distKm: 21, size: "large", runwayM: 2804 }
   ],
   "Platis Gialos Beach": [
@@ -1316,7 +1318,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "LIH", label: "Lihue", distKm: 32, size: "large", runwayM: 3962 }
   ],
   "Providenciales": [
-    { iata: "PLS", label: "Providenciales", distKm: 12, size: "large", runwayM: 2804 }
+    { iata: "PLS", label: "Providenciales", distKm: 7, size: "large", runwayM: 2804 }
   ],
   "Psarou": [
     { iata: "JMK", label: "Mykonos Island National", distKm: 2, size: "medium", runwayM: 1902 }

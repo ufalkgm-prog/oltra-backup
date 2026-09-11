@@ -1,0 +1,21 @@
+[
+  {
+    "at": "2026-09-11T13:18:35.545Z",
+    "changes": [
+      {
+        "id": "1257",
+        "name": "COMO Parrot Cay",
+        "before": {
+          "city": "Providenciales"
+        },
+        "after": {
+          "city": "Parrot Cay"
+        }
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T13:21:12.036Z",
+    "changes": []
+  }
+]

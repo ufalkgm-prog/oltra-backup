@@ -71,6 +71,21 @@ const MANUAL_EXCLUDE_IATA = new Set([
   "TEB", // Teterboro (NYC) — business aviation only
   "LBG", // Paris-Le Bourget — business aviation / air show venue, not scheduled airline service
   "OPF", // Miami-Opa Locka Executive — business aviation only
+  // NCA (North Caicos) is a different case from the three above, and the
+  // distinction matters if this is ever revisited: it carries real scheduled
+  // inter-island service, so it is not a false positive in the dataset. It is
+  // excluded because of who is NEAR it on this roster. Both cities it serves
+  // here — Parrot Cay and Pine Cay — are private cays reached by BOAT from
+  // Leeward Marina on Providenciales, which both hotels' own descriptions
+  // state, so PLS is the arrival airport for each and a 1,294m inter-island
+  // strip is not. Left in, the 25km tier-1 cut split two neighbouring cays 8km
+  // apart: Pine Cay got NCA and PLS, Parrot Cay got NCA alone with PLS
+  // stranded at 28km.
+  // REVERSE THIS if a hotel is ever added on North Caicos or Middle Caicos,
+  // where NCA genuinely is the nearest airport for guests rather than for
+  // residents. Do NOT instead re-add an airport-type filter — that was tried
+  // and it sent Missoula to Spokane 319km away.
+  "NCA",
 ]);
 const EXCLUDED_TYPES = new Set(["heliport", "seaplane_base", "closed", "balloonport"]);
 
