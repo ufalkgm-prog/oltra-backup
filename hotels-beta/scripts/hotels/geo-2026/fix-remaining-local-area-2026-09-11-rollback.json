@@ -1,0 +1,101 @@
+[
+  {
+    "at": "2026-09-11T14:01:28.705Z",
+    "changes": [
+      {
+        "id": 2045,
+        "city": "Seoul",
+        "from": "Gwanghwamun and Jongno-gu",
+        "to": "Gwanghwamun",
+        "tier": "A",
+        "why": "\"stands on Saemunan-ro in Gwanghwamun\"; Jongno-gu is the gu above it",
+        "name": "Four Seasons Hotel Seoul",
+        "published": true
+      },
+      {
+        "id": 2062,
+        "city": "Madrid",
+        "from": "Plaza de las Cortes / Landscape of Light",
+        "to": "Barrio de las Letras",
+        "tier": "A",
+        "why": "a square and a UNESCO designation; the text names one district and it is this",
+        "name": "The Palace",
+        "published": true
+      },
+      {
+        "id": 2066,
+        "city": "Milan",
+        "from": "Piazza della Repubblica / Porta Nuova",
+        "to": "Porta Nuova",
+        "tier": "B",
+        "why": "a square normalising to its district — Grosvenor Square -> Mayfair",
+        "name": "Hotel Principe di Savoia",
+        "published": true
+      },
+      {
+        "id": 2038,
+        "city": "Doha",
+        "from": "West Bay and The Corniche",
+        "to": "West Bay",
+        "tier": "B",
+        "why": "the Corniche is a seafront promenade, i.e. a road",
+        "name": "Four Seasons Hotel Doha",
+        "published": true
+      },
+      {
+        "id": 2036,
+        "city": "Baku",
+        "from": "Caspian waterfront and Old City",
+        "to": "Sabail",
+        "tier": "B",
+        "why": "its text says the Old City walls \"rise just steps away\" — outside it; Sabail is the raion",
+        "name": "Four Seasons Hotel Baku",
+        "published": true
+      },
+      {
+        "id": 2065,
+        "city": "Sunningdale",
+        "from": "Ascot / Windsor Great Park",
+        "to": null,
+        "tier": "A",
+        "why": "\"lies IN Sunningdale\" — already its city; the two names are a park it borders and a town it is near",
+        "name": "Coworth Park",
+        "published": true
+      },
+      {
+        "id": 2061,
+        "city": "Matauri Bay",
+        "from": "Kauri Cliffs / Tepene Tablelands",
+        "to": null,
+        "tier": "A",
+        "why": "the estate echoes the hotel's own name; a 6,000-acre farm has no districts",
+        "name": "Rosewood Kauri Cliffs",
+        "published": true
+      },
+      {
+        "id": 3015,
+        "city": "Okavango Delta",
+        "from": "Private concession bordering Moremi Game Reserve",
+        "to": null,
+        "tier": "A",
+        "why": "a sentence, not a place name; identical on 3016 50km away",
+        "name": "&Beyond Sandibe Okavango Safari Lodge",
+        "published": false
+      },
+      {
+        "id": 3016,
+        "city": "Okavango Delta",
+        "from": "Private concession bordering Moremi Game Reserve",
+        "to": null,
+        "tier": "A",
+        "why": "a sentence, not a place name; identical on 3015 50km away",
+        "name": "&Beyond Nxabega Okavango Tented Camp",
+        "published": false
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T14:01:43.831Z",
+    "changes": []
+  }
+]
