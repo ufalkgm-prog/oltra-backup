@@ -1,0 +1,18 @@
+[
+  {
+    "at": "2026-09-11T22:42:33.883Z",
+    "changes": [
+      {
+        "id": "1593",
+        "before": {
+          "city": "Doha",
+          "state_province_county_island": null
+        },
+        "after": {
+          "city": "Lusail",
+          "state_province_county_island": "Doha"
+        }
+      }
+    ]
+  }
+]

@@ -166,7 +166,7 @@ The same rule keeps **Hong Kong at island level**: seven rows already read `Hong
 
 **Two coincidental homonyms are exempt in the audit, and they are not defects.** Chicago's `Gold Coast` trips the region-level check only because Australia's Gold Coast is a traveller area on a Queensland hotel; `Santa Croce` is a rione in Florence *and* a sestiere in Venice. Two places on two continents sharing a name is not an error.
 
-**Found, not fixed:** Rosewood Doha is filled `Lusail Marina`, but **Lusail is arguably its own city** — a planned city ~20km north in a different municipality, the same shape as the Ras Al Khaimah row where `city` was the real bug.
+**Rosewood Doha now reads `city: "Lusail"`** with `state_province_county_island: "Doha"` and `local_area: "Lusail Marina"` (2026-09-12, `fix-lusail-city-2026-09-12.mjs`). Its own text is the evidence: it "rises in Lusail's Marina District, a new waterfront quarter **north of central Doha**", and Souq Waqif and Msheireb are "reached **across the city**". **This section had the distance wrong** — it said "~20km north" against §51's 10.8km, neither checked against the row. Measured: **10.7km** from Souq Waqif, 8.7km from the centroid of the other two Doha hotels, 14.4km from DOH. §51 was right.
 
 **Found by that audit: 8 published hotels have no `city` at all** — &Beyond Bateleur, Kichwa Tembo, Angama Amboseli, Angama Mara, Il Moran, Singita Kwitonda, Six Senses Shaharut and Clayoquot Wilderness. Each is a lodge whose reserve name sits in `state_province_county_island` instead. **The `city` stays blank — Ulrik confirmed it** — so the fix went into `cityAirports.ts`, not the data (2026-09-11).
 
@@ -1364,12 +1364,50 @@ act on. Routes 53 → 57, overrides 56 → 59.
 
 ### Settled, so nobody re-opens them
 
-* **Rosewood Doha stays `city: "Doha"`** with `local_area: "Lusail Marina"`.
-  Lusail is administratively its own city, but it is 10.8km from central Doha,
-  shares DOH, is named "Rosewood Doha", and — measured — does not distort the
-  Doha centroid (removing it moves DOH 10.0 → 8.4km, both airports unchanged).
-  Contrast the Ras Al Khaimah row, which crossed an emirate line 90km out and
-  moved Dubai's DXB 12 → 19km. That was a bug; this is not.
+* ~~**Rosewood Doha stays `city: "Doha"`**~~ — **RE-OPENED AND CHANGED on
+  Ulrik's instruction, 2026-09-12.** It now reads `city: "Lusail"` with the
+  traveller area carrying `Doha`. The original reasoning is kept because it is
+  still true and still the argument the other way: 10.8km from central Doha,
+  shares DOH, named "Rosewood Doha", and it does not distort the Doha centroid
+  the way the Ras Al Khaimah row distorted Dubai's (removing it moves DOH 10.0
+  → 8.4km, both airports unchanged; RAK crossed an emirate line 90km out and
+  moved DXB 12 → 19km). **Being defensible was not the same as being right**:
+  Lusail is a city and the row now says so.
+
+  **The half that carries the lesson is `state_province_county_island`, not
+  `city`.** Setting `city: "Lusail"` alone would have made a hotel *called*
+  Rosewood Doha unfindable by searching Doha — the dropdown narrows hotel >
+  city > area > admin_region, and "Doha" would have vanished from the row at
+  every level. §3's rule is that the traveller area is null for a major city
+  "where `city` does the job"; the moment `city` says Lusail it stops doing
+  that job, because nobody types Lusail. So Doha moves up a level — the
+  Cernobbio/Lake Como shape, which is what the field is for. **A `city` fix
+  that drops the name the hotel is marketed under is half a fix.**
+
+  Measured before choosing it: that makes "Doha" a `city` on two rows and an
+  `area` on one, and **64 such collisions already exist** — Zermatt, Monte
+  Carlo, Riviera Maya, Kruger, Los Cabos — so it follows the collection's
+  dominant pattern rather than introducing a shape. The dropdown labels by
+  type, so the two entries read "Doha - City" and "Doha - Area".
+
+  **Still open, and deliberately so: `admin_region` stays `Doha Municipality`.**
+  Lusail is usually placed in **Al Daayen**, which would make this the Ras Al
+  Khaimah shape where *both* fields were wrong — but Lusail Marina is the
+  southernmost district, hard against West Bay Lagoon, and nothing available
+  here establishes which side of the municipal line it falls. The field is
+  locked (292 choices, `allowOther: false`) with no Al Daayen entry, so
+  changing it means extending the vocabulary first (§3's order — Directus does
+  not validate writes, so patching first succeeds and renders the value blank
+  and unselectable). **Extending a locked list to a value nobody has verified
+  is the wrong trade**, and leaving it keeps the concierge's never-null
+  narrowing axis pointing where a traveller thinks the hotel is. Whoever
+  settles the municipality closes this.
+
+  **And whoever publishes 1593 must rebuild `cityAirports.ts`.** The row is
+  unpublished and the generator filters `published=true`, so `Lusail` is no key
+  at all today. DOH at 14.4km will be the right answer once it is one — but
+  until the rebuild runs the flight teaser resolves Lusail to nothing.
+  `audit-airports.mjs` fires on exactly that, so the net exists.
 * **The eight lodges keep a blank `city`** (§3), and their airports come from
   the traveller-area fallback.
 * **The `highlights` voice pass is declined**, not pending — 409 of 903 rows use
