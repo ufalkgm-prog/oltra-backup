@@ -1,0 +1,57 @@
+[
+  {
+    "at": "2026-09-11T12:36:54.095Z",
+    "changes": [
+      {
+        "id": "1237",
+        "name": "Cap Juluca",
+        "value": "Maundays Bay"
+      },
+      {
+        "id": "1238",
+        "name": "Aurora Anguilla Resort & Golf Club",
+        "value": "Rendezvous Bay"
+      },
+      {
+        "id": "3006",
+        "name": "&Beyond Suyian Lodge",
+        "value": "Suyian Conservancy"
+      },
+      {
+        "id": "3008",
+        "name": "&Beyond Phinda Rock Lodge",
+        "value": "Phinda Private Game Reserve"
+      },
+      {
+        "id": "3009",
+        "name": "&Beyond Phinda Forest Lodge",
+        "value": "Phinda Private Game Reserve"
+      },
+      {
+        "id": "3010",
+        "name": "&Beyond Phinda Vlei Lodge",
+        "value": "Phinda Private Game Reserve"
+      },
+      {
+        "id": "3011",
+        "name": "&Beyond Phinda Zuka Lodge",
+        "value": "Phinda Private Game Reserve"
+      },
+      {
+        "id": "3012",
+        "name": "&Beyond Phinda Homestead",
+        "value": "Phinda Private Game Reserve"
+      },
+      {
+        "id": "3013",
+        "name": "&Beyond Phinda Mountain Lodge",
+        "value": "Phinda Private Game Reserve"
+      },
+      {
+        "id": "3014",
+        "name": "&Beyond Ngala Safari Lodge",
+        "value": "Ngala Private Game Reserve"
+      }
+    ]
+  }
+]
