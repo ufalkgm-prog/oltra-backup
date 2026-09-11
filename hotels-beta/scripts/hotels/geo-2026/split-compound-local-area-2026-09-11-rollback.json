@@ -1,0 +1,155 @@
+[
+  {
+    "at": "2026-09-11T13:04:24.086Z",
+    "changes": [
+      {
+        "id": 2006,
+        "from": "Lumphini, Pathum Wan",
+        "to": "Lumphini",
+        "why": "khwaeng inside Pathum Wan khet",
+        "name": "Aman Nai Lert",
+        "city": "Bangkok"
+      },
+      {
+        "id": 2021,
+        "from": "Kuruçeşme, Beşiktaş",
+        "to": "Kuruçeşme",
+        "why": "mahalle inside Beşiktaş",
+        "name": "Mandarin Oriental Bosphorus, Istanbul",
+        "city": "Istanbul"
+      },
+      {
+        "id": 2016,
+        "from": "Wangfujing, Dongcheng District",
+        "to": "Wangfujing",
+        "why": "quarter inside Dongcheng",
+        "name": "Mandarin Oriental Wangfujing",
+        "city": "Beijing"
+      },
+      {
+        "id": 2042,
+        "from": "Zhujiang New Town, Tianhe District",
+        "to": "Zhujiang New Town",
+        "why": "CBD inside Tianhe",
+        "name": "Four Seasons Hotel Guangzhou",
+        "city": "Guangzhou"
+      },
+      {
+        "id": 2051,
+        "from": "Jardin Alpin, Courchevel 1850",
+        "to": "Jardin Alpin",
+        "why": "the enclave; 1850 is the altitude village",
+        "name": "Rosewood Courchevel Le Jardin Alpin",
+        "city": "Courchevel"
+      },
+      {
+        "id": 3002,
+        "from": "Fayun Village, West Lake Scenic Area",
+        "to": "Fayun Village",
+        "why": "the settlement; the scenic area is region-level",
+        "name": "Amanfayun",
+        "city": "Hangzhou"
+      },
+      {
+        "id": 3001,
+        "from": "Costa Palmas, East Cape",
+        "to": "Costa Palmas",
+        "why": "the estate; East Cape is a coastal region",
+        "name": "Amanvari",
+        "city": "Los Cabos"
+      },
+      {
+        "id": 2012,
+        "from": "Estrada Monumental, São Martinho",
+        "to": "São Martinho",
+        "why": "Estrada Monumental is a road",
+        "name": "Belmond Reid's Palace",
+        "city": "Funchal"
+      },
+      {
+        "id": 2013,
+        "from": "Plazoleta Nazarenas, Historic Centre",
+        "to": "Historic Centre",
+        "why": "Plazoleta Nazarenas is a square",
+        "name": "Belmond Hotel Monasterio",
+        "city": "Cusco"
+      },
+      {
+        "id": 2011,
+        "from": "Romazzino Bay, Arzachena",
+        "to": "Arzachena",
+        "why": "Romazzino Bay is a bay",
+        "name": "Romazzino",
+        "city": "Costa Smeralda"
+      },
+      {
+        "id": 2025,
+        "from": "Navarino Bay, Costa Navarino",
+        "to": "Costa Navarino",
+        "why": "Navarino Bay is a bay",
+        "name": "Mandarin Oriental, Costa Navarino",
+        "city": "Pylos"
+      },
+      {
+        "id": 2054,
+        "from": "Lake Fuschl, Hof bei Salzburg",
+        "to": "Hof bei Salzburg",
+        "why": "Lake Fuschl is a lake",
+        "name": "Rosewood Schloss Fuschl",
+        "city": "Salzburg"
+      },
+      {
+        "id": 2023,
+        "from": "Punta Negra, Calvià",
+        "to": "Calvià",
+        "why": "Punta Negra is a headland",
+        "name": "Mandarin Oriental, Mallorca",
+        "city": "Majorca"
+      },
+      {
+        "id": 2018,
+        "from": "Futian District, UpperHills",
+        "to": "Futian District",
+        "why": "UpperHills is a development, not a district",
+        "name": "Mandarin Oriental Shenzhen",
+        "city": "Shenzhen"
+      },
+      {
+        "id": 3029,
+        "from": "Chunimeding, Babesa",
+        "to": "Babesa",
+        "why": "Chunimeding is the hamlet at the site; Babesa is the district",
+        "name": "Six Senses Thimphu",
+        "city": "Thimphu"
+      },
+      {
+        "id": 2058,
+        "from": "Ban Nadueay Village, Nahm Dong Valley",
+        "to": "Ban Nadueay",
+        "why": "Lao ban already means village",
+        "name": "Rosewood Luang Prabang",
+        "city": "Luang Prabang"
+      },
+      {
+        "id": 2020,
+        "from": "Via Rinaldo Menardi, near Cortina centre",
+        "to": null,
+        "why": "a street plus a phrase that is not a place name",
+        "name": "Mandarin Oriental Cortina",
+        "city": "Cortina d'Ampezzo"
+      },
+      {
+        "id": 1097,
+        "from": "DongCheng District",
+        "to": "Dongcheng District",
+        "why": "casing, to agree with 1077 and 2016",
+        "name": "The PuXuan Hotel & Spa",
+        "city": "Beijing"
+      }
+    ]
+  },
+  {
+    "at": "2026-09-11T13:05:01.882Z",
+    "changes": []
+  }
+]
