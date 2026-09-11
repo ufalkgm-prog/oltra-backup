@@ -1,0 +1,31 @@
+[
+  {
+    "at": "2026-09-11T12:21:55.321Z",
+    "changes": [
+      {
+        "id": 1287,
+        "from": "Hampshire",
+        "to": "Dogmersfield",
+        "why": "description: \"set in Dogmersfield Park, a 500-acre country estate in rural Hampshire\"",
+        "name": "Four Seasons Hotel Hampshire",
+        "admin": "Hampshire"
+      },
+      {
+        "id": 1147,
+        "from": "Hokkaido",
+        "to": "Toyako",
+        "why": "description: \"High above Lake Toya\" — the town on the lake, not the prefecture",
+        "name": "The Windsor Hotel TOYA",
+        "admin": "Hokkaido"
+      },
+      {
+        "id": 1631,
+        "from": "Quintana Roo",
+        "to": "Riviera Maya",
+        "why": "description: \"sits within Kanai... on the Riviera Maya\"; five siblings already use this value",
+        "name": "Etéreo",
+        "admin": "Quintana Roo"
+      }
+    ]
+  }
+]

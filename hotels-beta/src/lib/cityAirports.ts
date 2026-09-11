@@ -472,6 +472,11 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Djimbaran": [
     { iata: "DPS", label: "Denpasar I Gusti Ngurah Rai", distKm: 5, size: "large", runwayM: 2984 }
   ],
+  "Dogmersfield": [
+    { iata: "LHR", label: "London Heathrow", distKm: 38, size: "large", runwayM: 7559 },
+    { iata: "SOU", label: "Southampton", distKm: 47, size: "medium", runwayM: 1887 },
+    { iata: "LGW", label: "London Gatwick", distKm: 51, size: "large", runwayM: 5878 }
+  ],
   "Doha": [
     { iata: "DIA", label: "Doha", distKm: 6, size: "large", runwayM: 4572 },
     { iata: "DOH", label: "Hamad", distKm: 8, size: "large", runwayM: 9100 }
@@ -617,11 +622,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Hamburg": [
     { iata: "HAM", label: "Hamburg Helmut Schmidt", distKm: 8, size: "large", runwayM: 6916 }
   ],
-  "Hampshire": [
-    { iata: "LHR", label: "London Heathrow", distKm: 38, size: "large", runwayM: 7559 },
-    { iata: "SOU", label: "Southampton", distKm: 47, size: "medium", runwayM: 1887 },
-    { iata: "LGW", label: "London Gatwick", distKm: 51, size: "large", runwayM: 5878 }
-  ],
   "Hangzhou": [
     { iata: "HGH", label: "Hangzhou Xiaoshan", distKm: 31, size: "large", runwayM: 7000 }
   ],
@@ -646,11 +646,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Hoi An": [
     { iata: "DAD", label: "Da Nang", distKm: 18, size: "large", runwayM: 6548 }
-  ],
-  "Hokkaido": [
-    { iata: "OKD", label: "Sapporo Okadama", distKm: 77, size: "medium", runwayM: 1500 },
-    { iata: "CTS", label: "New Chitose", distKm: 79, size: "large", runwayM: 6000 },
-    { iata: "HKD", label: "Hakodate", distKm: 92, size: "large", runwayM: 3000 }
   ],
   "Honegg": [
     { iata: "ZRH", label: "Zürich", distKm: 53, size: "large", runwayM: 9808 },
@@ -1345,9 +1340,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Queenstown": [
     { iata: "ZQN", label: "Queenstown", distKm: 10, size: "large", runwayM: 2781 }
   ],
-  "Quintana Roo": [
-    { iata: "CZM", label: "Cozumel", distKm: 24, size: "large", runwayM: 2700 }
-  ],
   "Quito": [
     { iata: "UIO", label: "Mariscal Sucre", distKm: 21, size: "large", runwayM: 4098 }
   ],
@@ -1396,8 +1388,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "LBA", label: "Leeds Bradford", distKm: 28, size: "large", runwayM: 2250 }
   ],
   "Riviera Maya": [
-    { iata: "CZM", label: "Cozumel", distKm: 28, size: "large", runwayM: 2700 },
-    { iata: "CUN", label: "Cancún", distKm: 32, size: "large", runwayM: 6300 }
+    { iata: "CZM", label: "Cozumel", distKm: 27, size: "large", runwayM: 2700 },
+    { iata: "CUN", label: "Cancún", distKm: 33, size: "large", runwayM: 6300 }
   ],
   "Riyadh": [
     { iata: "RUH", label: "King Khalid", distKm: 30, size: "large", runwayM: 8410 }
@@ -1631,6 +1623,11 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Tourrettes": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 40, size: "large", runwayM: 5591 },
     { iata: "LTT", label: "La Môle", distKm: 47, size: "small", runwayM: 1071 }
+  ],
+  "Toyako": [
+    { iata: "OKD", label: "Sapporo Okadama", distKm: 77, size: "medium", runwayM: 1500 },
+    { iata: "CTS", label: "New Chitose", distKm: 79, size: "large", runwayM: 6000 },
+    { iata: "HKD", label: "Hakodate", distKm: 92, size: "large", runwayM: 3000 }
   ],
   "Tragaki Beach": [
     { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 9, size: "medium", runwayM: 2228 }

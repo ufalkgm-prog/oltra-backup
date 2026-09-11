@@ -108,7 +108,9 @@ Both are searchable levels in the destination dropdown (`StructuredDestinationFi
 
 **`admin_region` is LOCKED** as of 2026-09-11 — `select-dropdown`, `allowOther: false`, **291 choices** built from the stored values. A hotel in a genuinely new administrative region will not save until the list is extended (`scripts/hotels/geo-2026/lock-admin-region-2026-09-11.mjs` holds the pattern and a snapshot of the prior meta). `state_province_county_island` stays free text on purpose: traveller areas gain an entry with every new destination, so locking it trades one problem for another.
 
-**`city` holds a region name on a few rows** — Four Seasons Hampshire `city = Hampshire`, The Windsor Toya `city = Hokkaido`, Etéreo `city = Quintana Roo`. Their `admin_region` is correct; the `city` is not. Found 2026-09-11, not fixed.
+**`city` held a region name on three rows**, fixed 2026-09-11: Four Seasons Hampshire → `Dogmersfield`, The Windsor Toya → `Toyako`, Etéreo → `Riviera Maya` (matching five siblings, including the EDITION in the same Kanai development). `admin_region` was right on all three and was left alone. The other 107 rows where `city` equals `admin_region` are correct — city-states and cantons that share their city's name.
+
+**Changing a `city` means rebuilding `cityAirports.ts` in the same pass** (§37, §43, and §49's "geography values are join keys, not display strings"). All three old values were live keys there; the rebuild swapped them for the new ones, 514 → 513 cities. Etéreo joining `Riviera Maya` moved that group's centroid and earned it **CUN at 33km**, which it had not been offered before. Verify after: every published `city` must have an airport entry, or the landing flight teaser resolves it to nothing.
 
 Both are plain `text` columns. `admin_region` is now constrained by a locked choice list (below); `state_province_county_island` is still unconstrained, and §44 records what unconstrained text fields do here — this one had already drifted into `Giorgia` and `Boca Raton`.
 
@@ -818,7 +820,7 @@ Data that goes stale on a clock rather than when someone changes something. **Wh
 | Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests) |
 | Ratehawk static content (§48) | Daily | 2026-08-24 | automatic (Railway cron) | `etg-static-sync` — no manual step; check the Railway run log if room images go missing |
 | Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
-| City → airport mapping (§37) | When the roster's city list changes | 2026-08-31 | on demand | `build-city-airports.mjs` |
+| City → airport mapping (§37) | When the roster's city list changes | 2026-09-11 | on demand | `build-city-airports.mjs` |
 | Airport options list (§39) | With the above | 2026-08-31 | on demand | `build-airport-options.mjs` |
 
 * **Ratehawk status is the one needing a human to remember it.** The static-content row runs itself; it's listed so its existence and failure point are on the record.
