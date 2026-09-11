@@ -872,7 +872,10 @@ const checkAvailability = tool({
 const nearestAirport = tool({
   description:
     "Which airports serve a destination we cover, how far they are, and how a " +
-    "guest gets from the airport to the door. REQUIRED before answering any " +
+    "guest gets from the airport to the door. `airports` is ordered BEST FIRST, " +
+    "not nearest first, and distKm is straight-line distance — so do not call " +
+    "the first one the closest, and do not infer drive time from it: a road " +
+    "through mountains is far longer than the line across them. REQUIRED before answering any " +
     "question about which airport to use or how to reach a property — your own " +
     "knowledge of the route is not a substitute, because the transfer detail " +
     "here is ours and yours may be out of date or wrong for this property.",

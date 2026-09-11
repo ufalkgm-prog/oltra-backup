@@ -317,3 +317,38 @@ that happens to contain one is not set entirely in italic. Diagnosed by reading
 `getComputedStyle` on the live element — `class=""`, `fontStyle=normal`,
 `marginTop=0px` — which said in one line that the class was never applied,
 rather than that the CSS was losing.
+
+### Turin for Val d'Isère: a straight line crosses the Alps, a road does not
+
+Reported live. Asked how to reach Val d'Isère the concierge said **Turin** —
+because Turin is 59km away as the crow flies. The crow does not use the Fréjus
+tunnel. Geneva is 111km and about three hours by road, which is why everyone
+actually flies there, and Ulrik's own search confirmed it.
+
+Not one row. Checking all 68 Alpine destinations found the same fault
+repeatedly, always the same shape: **a small regional field wins on distance and
+the major hub every guest uses is absent from the list altogether.** Zermatt was
+the starkest — Milan, Lugano and Turin, not one Swiss airport. Twelve
+destinations got a `GATEWAY_OVERRIDE`.
+
+**It is not "always pick Geneva", and the counter-example is the proof:**
+Cervinia keeps **Turin**, because Cervinia is in the Aosta Valley on the Italian
+side and Turin genuinely is its gateway. Chamonix, Megève and Andermatt already
+listed their hub and were left alone.
+
+**Then the ordering bit back.** Overridden entries are ordered by usefulness,
+not distance — Geneva ahead of Chambéry even though Chambéry is closer, because
+Chambéry is largely winter charter. The model read position one as nearest and
+wrote *"Geneva … the closest of the three at around 111 km"*, then contradicted
+itself one clause later with *"CMF nearer at 88 km"*. Fixed at the source rather
+than by reordering: the tool description now says `airports` is **best-first,
+not nearest-first**, that `distKm` is straight-line, and that a mountain road is
+far longer than the line across it. Reordering by distance instead would have
+made `pickPrimaryAirportForCity` — which favours the longest runway — answer
+**Lyon**, which is worse.
+
+**Third sighting of the stale transcript.** The first two post-fix answers still
+said Turin, quoting "about 59 km", our *old* stored value. It was not a stale
+module: the conversation already contained Turin, and the model elaborated on
+itself. CLEAR, and it answered Geneva immediately. Same lesson as Soneva Fushi
+— **test in a fresh conversation or you are measuring the transcript.**

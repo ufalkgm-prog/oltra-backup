@@ -163,6 +163,50 @@ const GATEWAY_OVERRIDE = {
   // Waimea-Kohala and is the island's actual gateway — 3,353m against 1,584m,
   // and the only one of the two with mainland service.
   "Big Island": ["KOA"],
+
+  /* ==== THE ALPS: a straight line crosses the mountains, a road does not ====
+   *
+   * Reported live, 2026-09-11: asked how to reach Val d'Isere the concierge
+   * answered TURIN, because Turin is 59km away as the crow flies. The crow does
+   * not use the Frejus tunnel. Geneva is 115km and about three hours by road,
+   * which is why everyone actually flies there.
+   *
+   * Checking the other 67 Alpine destinations found the same fault repeatedly,
+   * and always the same shape: a small regional field wins on distance and the
+   * major hub every guest uses is absent from the list altogether. Zermatt was
+   * the starkest — Milan, Lugano and Turin, not one Swiss airport.
+   *
+   * TWO THINGS THIS IS NOT. It is not "always pick Geneva": Cervinia keeps
+   * TURIN, because Cervinia is in the Aosta Valley on the Italian side and
+   * Turin is genuinely its gateway. And it is not every resort: Chamonix,
+   * Megeve and Andermatt already list their hub and are left alone.
+   *
+   * ORDERING. Elsewhere in this file entries are nearest-first. Overridden
+   * entries are ordered by USEFULNESS instead — Geneva ahead of Chambery for
+   * Val d'Isere even though Chambery is closer, because Chambery is largely
+   * winter charter. `pickPrimaryAirportForCity` favours the biggest airport
+   * anyway, so this only affects display order. */
+
+  // France, Savoie. Chambery is closer and seasonal; Lyon is the year-round
+  // alternative.
+  "Val d'Isere": ["GVA", "CMF", "LYS"],
+  Courchevel: ["GVA", "CMF", "LYS"],
+  "Courchevel 1850": ["GVA", "CMF", "LYS"],
+  "Les Belleville": ["GVA", "CMF", "LYS"],
+
+  // Switzerland, Valais and Bernese Oberland. Zermatt had no Swiss airport at
+  // all; Milan stays as a real third option via the Simplon.
+  Zermatt: ["GVA", "ZRH", "MXP"],
+  "Crans-Montana": ["GVA", "ZRH"],
+  Gstaad: ["GVA", "ZRH"],
+
+  // Switzerland, Graubunden. Zurich was missing from all three.
+  "St. Moritz": ["ZRH", "MXP"],
+  Arosa: ["ZRH"],
+  "Bad Ragaz": ["ZRH"],
+
+  // Austria, Arlberg. Innsbruck is nearer, Zurich is the hub most guests use.
+  "Lech Am Arlberg": ["ZRH", "INN"],
   /* The same park, reached the same way. These two DO have a `city`, so they
    * were already in the mapping and are not part of the eight — but Kinigi
    * (One&Only Gorilla's Nest) and Ruhengeri (Wilderness Bisate) both carry

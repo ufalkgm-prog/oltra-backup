@@ -104,9 +104,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "KIT", label: "Kithira", distKm: 122, size: "small", runwayM: 1461 }
   ],
   "Arosa": [
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 79, size: "medium", runwayM: 2265 },
-    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 100, size: "large", runwayM: 3015 },
-    { iata: "LUG", label: "Lugano", distKm: 104, size: "medium", runwayM: 1415 }
+    { iata: "ZRH", label: "Zürich", distKm: 114, size: "large", runwayM: 9808 }
   ],
   "Arue Tahiti": [
     { iata: "MOZ", label: "Moorea Temae", distKm: 55, size: "medium", runwayM: 1230 },
@@ -138,8 +136,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "JMK", label: "Mykonos Island National", distKm: 3, size: "medium", runwayM: 1902 }
   ],
   "Bad Ragaz": [
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 54, size: "medium", runwayM: 2265 },
-    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 75, size: "large", runwayM: 3015 }
+    { iata: "ZRH", label: "Zürich", distKm: 88, size: "large", runwayM: 9808 }
   ],
   "Baden-Baden": [
     { iata: "FKB", label: "Karlsruhe Baden-Baden", distKm: 12, size: "large", runwayM: 2983 }
@@ -430,17 +427,18 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "OLB", label: "Olbia Costa Smeralda", distKm: 23, size: "large", runwayM: 2745 }
   ],
   "Courchevel": [
+    { iata: "GVA", label: "Geneva", distKm: 101, size: "large", runwayM: 3900 },
     { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64, size: "medium", runwayM: 2020 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 71, size: "medium", runwayM: 2475 },
-    { iata: "TRN", label: "Turin", distKm: 83, size: "large", runwayM: 3300 }
+    { iata: "LYS", label: "Lyon Saint-Exupéry", distKm: 125, size: "large", runwayM: 6670 }
   ],
   "Courchevel 1850": [
+    { iata: "GVA", label: "Geneva", distKm: 100, size: "large", runwayM: 3900 },
     { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64, size: "medium", runwayM: 2020 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 71, size: "medium", runwayM: 2475 },
-    { iata: "TRN", label: "Turin", distKm: 83, size: "large", runwayM: 3300 }
+    { iata: "LYS", label: "Lyon Saint-Exupéry", distKm: 125, size: "large", runwayM: 6670 }
   ],
   "Crans-Montana": [
-    { iata: "BRN", label: "Bern", distKm: 67, size: "medium", runwayM: 3695 }
+    { iata: "GVA", label: "Geneva", distKm: 104, size: "large", runwayM: 3900 },
+    { iata: "ZRH", label: "Zürich", distKm: 152, size: "large", runwayM: 9808 }
   ],
   "Cusco": [
     { iata: "CUZ", label: "Alejandro Velasco Astete", distKm: 5, size: "large", runwayM: 3397 }
@@ -604,7 +602,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 105, size: "medium", runwayM: 1052 }
   ],
   "Gstaad": [
-    { iata: "BRN", label: "Bern", distKm: 51, size: "medium", runwayM: 3695 }
+    { iata: "GVA", label: "Geneva", distKm: 94, size: "large", runwayM: 3900 },
+    { iata: "ZRH", label: "Zürich", distKm: 145, size: "large", runwayM: 9808 }
   ],
   "Guanacaste": [
     { iata: "LIR", label: "Daniel Oduber Quirós", distKm: 16, size: "large", runwayM: 2750 }
@@ -863,12 +862,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "MRS", label: "Marseille Provence", distKm: 27, size: "large", runwayM: 5870 }
   ],
   "Lech Am Arlberg": [
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 53, size: "medium", runwayM: 2265 },
-    { iata: "FDH", label: "Bodensee Friedrichshafen", distKm: 70, size: "large", runwayM: 3015 }
+    { iata: "ZRH", label: "Zürich", distKm: 123, size: "large", runwayM: 9808 },
+    { iata: "INN", label: "Innsbruck", distKm: 91, size: "large", runwayM: 2350 }
   ],
   "Les Belleville": [
+    { iata: "GVA", label: "Geneva", distKm: 102, size: "large", runwayM: 3900 },
     { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 58, size: "medium", runwayM: 2020 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 70, size: "medium", runwayM: 2475 }
+    { iata: "LYS", label: "Lyon Saint-Exupéry", distKm: 118, size: "large", runwayM: 6670 }
   ],
   "Lhaviyani Atoll": [
     { iata: "NMF", label: "Maafaru", distKm: 32, size: "medium", runwayM: 2850 }
@@ -1545,9 +1545,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "BGI", label: "Grantley Adams", distKm: 19, size: "large", runwayM: 3353 }
   ],
   "St. Moritz": [
-    { iata: "LUG", label: "Lugano", distKm: 91, size: "medium", runwayM: 1415 },
-    { iata: "BGY", label: "Il Caravaggio", distKm: 92, size: "large", runwayM: 3588 },
-    { iata: "ACH", label: "Sankt Gallen Altenrhein", distKm: 112, size: "medium", runwayM: 2265 }
+    { iata: "ZRH", label: "Zürich", distKm: 146, size: "large", runwayM: 9808 },
+    { iata: "MXP", label: "Milan Malpensa", distKm: 129, size: "large", runwayM: 7840 }
   ],
   "Stockholm": [
     { iata: "BMA", label: "Stockholm-Bromma", distKm: 8, size: "medium", runwayM: 1668 },
@@ -1667,9 +1666,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "RSI", label: "Red Sea", distKm: 34, size: "large", runwayM: 3700 }
   ],
   "Val d'Isere": [
-    { iata: "TRN", label: "Turin", distKm: 59, size: "large", runwayM: 3300 },
-    { iata: "NCY", label: "Annecy Meythet", distKm: 87, size: "medium", runwayM: 2475 },
-    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 88, size: "medium", runwayM: 2020 }
+    { iata: "GVA", label: "Geneva", distKm: 111, size: "large", runwayM: 3900 },
+    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 88, size: "medium", runwayM: 2020 },
+    { iata: "LYS", label: "Lyon Saint-Exupéry", distKm: 150, size: "large", runwayM: 6670 }
   ],
   "Vallee": [
     { iata: "FSC", label: "Figari Sud-Corse", distKm: 12, size: "large", runwayM: 2480 }
@@ -1771,9 +1770,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "ZNZ", label: "Abeid Amani Karume", distKm: 8, size: "large", runwayM: 3022 }
   ],
   "Zermatt": [
-    { iata: "MXP", label: "Milan Malpensa", distKm: 87, size: "large", runwayM: 7840 },
-    { iata: "LUG", label: "Lugano", distKm: 90, size: "medium", runwayM: 1415 },
-    { iata: "TRN", label: "Turin", distKm: 91, size: "large", runwayM: 3300 }
+    { iata: "GVA", label: "Geneva", distKm: 129, size: "large", runwayM: 3900 },
+    { iata: "ZRH", label: "Zürich", distKm: 172, size: "large", runwayM: 9808 },
+    { iata: "MXP", label: "Milan Malpensa", distKm: 87, size: "large", runwayM: 7840 }
   ],
   "Zurich": [
     { iata: "ZRH", label: "Zürich", distKm: 10, size: "large", runwayM: 9808 }
