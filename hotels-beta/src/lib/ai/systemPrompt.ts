@@ -429,6 +429,13 @@ is an alternative rather than the thing they asked for.
 
 GETTING THERE
 
+CALL nearestAirport FIRST. Every question about which airport to use, or how
+to reach a property, starts with that call — before you write anything. You
+know a great deal about airports and transfers, and that knowledge is exactly
+the problem here: it is not specific to this property, it can be out of date,
+and it cannot tell you which field a light aircraft leaves from this season.
+Answering from it, however confident you feel, is the one thing not allowed.
+
 nearestAirport returns a "transfer" field: the route from the arrival airport
 to the door. When it is present, give it — in order, in a sentence or two, and
 say plainly when a leg leaves from a DIFFERENT airport than the one you would

@@ -219,6 +219,41 @@ skipped. The prompt says: for a city, answer normally; for anywhere reached by
 boat, light aircraft or a long drive, say you will confirm the transfer rather
 than describe one.
 
+**IT DID NOT WORK ON THE FIRST TRY, AND THE REASON IS THE REUSABLE PART.** The
+data was right, the tool returned it, and the concierge still hedged: *"the
+light aircraft usually leaves from a different Nairobi field... let me confirm
+the exact transfer."* A temporary `console.log` in the tool's `execute` settled
+it in one line — **`nearestAirport` was never called at all.** The model knew
+enough about Nairobi to answer unaided and did.
+
+Two things that misled me before the log, both worth remembering. Its answer
+said "about 215 km", which matches our stored 214km closely enough that I read
+it as proof the tool had fired; Nairobi–Mara simply *is* about that far, so the
+number was coincidence. And the hedging itself looked like the new
+`transfer: null` branch working, when it was just the model being careful.
+**Neither the figures in an answer nor its tone tell you whether a tool ran.**
+
+The fix was to make the call obligatory rather than available — the prompt said
+what to do *with* `transfer`, never that it must fetch it, which is this file's
+oldest lesson restated: an optional step the prompt does not demand gets
+skipped. The tool description now says REQUIRED and that the model's own
+knowledge is not a substitute; the prompt says call it before writing anything,
+and names the reason (your knowledge is not specific to this property and
+cannot know which field a light aircraft leaves from this season).
+
+The parameter description changed too, and it mattered: it read "Exact myOLTRA
+city name", but eight wilderness lodges have no city (§3) and the key is their
+traveller area. It now says "a city or a traveller area". Asked about **Angama
+Mara**, the model then passed **"Masai Mara"** — the log confirms
+`route=FOUND NBO` — so it resolved a hotel name to the right destination key
+unaided.
+
+Verified in the browser across three shapes: **Masai Mara** names Wilson as a
+separate airport and credits the camp with the last leg; **St Barthélemy**, which
+has no entry, says it will confirm the routing rather than guess which link is
+running and pivots to the four properties; **Paris** gives the ordinary answer,
+CDG with the RER B and Orly, without over-hedging.
+
 **11 routes populated, and the candidate list is much longer** — 10
 destinations where we name a distant gateway and nothing else, ~93 where no
 jet-capable airport is listed at all (partly noise: Florence, Mykonos and

@@ -872,11 +872,21 @@ const checkAvailability = tool({
 const nearestAirport = tool({
   description:
     "Which airports serve a destination we cover, how far they are, and how a " +
-    "guest gets from the airport to the door. Use this for any airport or " +
-    "\"how do I get there\" question rather than searching the web.",
+    "guest gets from the airport to the door. REQUIRED before answering any " +
+    "question about which airport to use or how to reach a property — your own " +
+    "knowledge of the route is not a substitute, because the transfer detail " +
+    "here is ours and yours may be out of date or wrong for this property.",
   inputSchema: jsonSchema<{ city: string }>({
     type: "object",
-    properties: { city: { type: "string", description: "Exact myOLTRA city name." } },
+    properties: {
+      city: {
+        type: "string",
+        description:
+          "The destination as we name it — a city (\"Paris\") or a traveller " +
+          "area (\"Masai Mara\", \"Okavango Delta\"). Use the obvious name; an " +
+          "unknown one simply returns found: false.",
+      },
+    },
     required: ["city"],
     additionalProperties: false,
   }),
