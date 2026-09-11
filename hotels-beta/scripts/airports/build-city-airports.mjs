@@ -321,16 +321,21 @@ const GATEWAY_OVERRIDE = {
   "Turtle Island": ["NAN"],
   "Pamalican Island": ["MNL"],
 
-  /* Two East African rows that were pointing at a Kenyan LODGE AIRSTRIP.
-   * Namiri Plains is in the eastern SERENGETI, in Tanzania, and was mapped to
-   * MRE — the Mara Serena strip, in Kenya, across a border. Kilimanjaro is the
-   * gateway. Olarro Lodge is in the Mara and joins Masai Mara on Nairobi.
+  /* An East African row that was pointing at a Kenyan LODGE AIRSTRIP. Namiri
+   * Plains is in the eastern SERENGETI, in Tanzania, and was mapped to MRE —
+   * the Mara Serena strip, in Kenya, across a border. Kilimanjaro is the
+   * gateway.
    *
-   * Olarro also has a `city` of "Inakara Road" — its own text says "off Inakara
-   * Road near Ngoswani Village" — so its city is a STREET. Out of scope here
-   * and flagged in §51, but the airport is fixed either way. */
+   * "Inakara Road": ["NBO"] SAT HERE and has been removed. Olarro Lodge is in
+   * the Mara and needed Nairobi, which that entry gave it — but through a key
+   * that should never have existed: its `city` held a STREET, its own text
+   * reading "off Inakara Road near Ngoswani Village". The city was cleared
+   * (`fix-olarro-city-2026-09-12.mjs`) to match its four Masai Mara siblings,
+   * all of which have a blank city by convention, so Olarro now reaches
+   * Nairobi through the "Masai Mara" area key below instead. Deleting the row
+   * without deleting this entry would leave a dead override — the DEFECT
+   * audit-airports.mjs fires on, and caught once already on "Perez Zeledon". */
   "Namiri Plains": ["JRO"],
-  "Inakara Road": ["NBO"],
   /* The same park, reached the same way. These two DO have a `city`, so they
    * were already in the mapping and are not part of the eight — but Kinigi
    * (One&Only Gorilla's Nest) and Ruhengeri (Wilderness Bisate) both carry

@@ -689,9 +689,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Imerovigli": [
     { iata: "JTR", label: "Santorini", distKm: 7, size: "large", runwayM: 2197 }
   ],
-  "Inakara Road": [
-    { iata: "NBO", label: "Jomo Kenyatta", distKm: 149, size: "large", runwayM: 4117 }
-  ],
   "Interlaken": [
     { iata: "BRN", label: "Bern", distKm: 37, size: "medium", runwayM: 3695 }
   ],
@@ -980,7 +977,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "RAK", label: "Marrakesh Menara", distKm: 6, size: "large", runwayM: 3100 }
   ],
   "Masai Mara": [
-    { iata: "NBO", label: "Jomo Kenyatta", distKm: 214, size: "large", runwayM: 4117 }
+    { iata: "NBO", label: "Jomo Kenyatta", distKm: 201, size: "large", runwayM: 4117 }
   ],
   "Mashpi": [
     { iata: "UIO", label: "Mariscal Sucre", distKm: 67, size: "large", runwayM: 4098 }
