@@ -367,3 +367,39 @@ said Turin, quoting "about 59 km", our *old* stored value. It was not a stale
 module: the conversation already contained Turin, and the model elaborated on
 itself. CLEAR, and it answered Geneva immediately. Same lesson as Soneva Fushi
 — **test in a fresh conversation or you are measuring the transcript.**
+
+### It denied real inventory, and the cause was a missing parameter
+
+Found while testing the Courchevel transfer routes. Asked "how do we get to
+Cheval Blanc Courchevel, and to La Bouitte?" the concierge opened with
+**"Neither Cheval Blanc nor La Bouitte is in the myOLTRA collection"**. Both
+are — ids 1322 and 1347.
+
+`searchHotels` had **no name parameter at all**: geography and character only.
+So "is X in the collection?" was a question the tool could not be asked. The
+model did the only thing available, searched `city: "Courchevel"`, got the one
+property filed under that exact value, and concluded the rest were not ours.
+
+**A data split made it certain rather than merely likely.** Cheval Blanc's city
+is **"Courchevel 1850"** — a different city value for the same resort, with
+eight hotels under it against Courchevel's one. A city search could never have
+found it, however the model phrased the query.
+
+`name` now exists, filtering `hotel_name` with `_icontains`, and the tool
+description says geography is the wrong instrument for that question and never
+to call a named property outside the collection without having searched its
+name. After the fix: *"We have both — Cheval Blanc in Courchevel 1850 and La
+Bouitte above Saint-Martin-de-Belleville"*, each with its Geneva route, and
+Cheval Blanc correctly flagged as not bookable here.
+
+**Denying real inventory deserves to sit above the other failures in this
+file.** Naming a hotel we do not have is embarrassing; telling a guest we
+cannot offer one we can loses the booking and reads as incompetence. It also
+went unnoticed through every earlier test, because every one of those asked
+about a destination rather than a property by name.
+
+**Still open, and a data question rather than a code one:** Courchevel and
+Courchevel 1850 are two `city` values for one resort, which is why the eight
+1850 properties and Rosewood never appear in the same search. Merging them
+would touch `cityAirports.ts` and the `local_area` work; splitting the
+difference is what the `name` search now papers over.

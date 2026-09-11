@@ -235,6 +235,57 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "no onward flight - the drive is the whole of it.",
   },
 
+  /* The rest of the Tarentaise, same shape as Val d'Isere above: Geneva, then
+   * road, no onward flight.
+   *
+   * HOW THE DURATIONS WERE ARRIVED AT, because they are weaker than Val
+   * d'Isere's and should be treated that way. Val d'Isere's 175km / three
+   * hours was checked by Ulrik. These are scaled from it by straight-line
+   * distance to Geneva - Val d'Isere 111km, Courchevel 101km, Les Belleville
+   * 102km - which lands both at roughly two and a half hours. Consistent
+   * arithmetic, not an independently verified figure, so "about" is doing real
+   * work in the notes.
+   *
+   * Les Belleville is a commune spanning three villages at very different
+   * heights, and the drive differs by a good half hour between them. It is
+   * resolved here rather than left vague because the hotel's own description
+   * places it: La Bouitte is "in the hamlet of Saint-Marcel above
+   * Saint-Martin-de-Belleville" - the LOWEST of the three, so a shorter climb
+   * than Val Thorens. Had we held a Val Thorens property this would need to be
+   * two entries, not one.
+   *
+   * NOT CLAIMED: the train. Moutiers is the railhead for all of these and the
+   * ski TGV genuinely serves it, but adding a rail leg here and not to Val
+   * d'Isere would make the set inconsistent, and asserting seasonal service is
+   * the kind of guess this file exists to avoid. Worth adding to all four
+   * together if anyone confirms the timetable. */
+  Courchevel: {
+    arriveAt: "GVA",
+    arriveAtLabel: "Geneva",
+    legs: [{ mode: "road", to: "the resort" }],
+    note:
+      "About two and a half hours, roughly 150km - up the Tarentaise and then " +
+      "the climb from Moutiers. Shuttle buses and private transfers both run " +
+      "through the ski season, and there is no onward flight.",
+  },
+  "Courchevel 1850": {
+    arriveAt: "GVA",
+    arriveAtLabel: "Geneva",
+    legs: [{ mode: "road", to: "the resort" }],
+    note:
+      "About two and a half hours, roughly 150km - up the Tarentaise and then " +
+      "the climb from Moutiers to the 1850 level. Shuttle buses and private " +
+      "transfers both run through the ski season, and there is no onward flight.",
+  },
+  "Les Belleville": {
+    arriveAt: "GVA",
+    arriveAtLabel: "Geneva",
+    legs: [{ mode: "road", to: "the hotel" }],
+    note:
+      "About two and a half hours, roughly 145km, the last stretch climbing " +
+      "from Moutiers to Saint-Martin-de-Belleville. No onward flight.",
+  },
+
   // ---- Botswana ----
   "Okavango Delta": {
     arriveAt: "MUB",

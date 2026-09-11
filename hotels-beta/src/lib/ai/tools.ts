@@ -370,10 +370,16 @@ const searchHotels = tool({
     "results come back ordered by how many of your tags each one carries.\n\n" +
     "If the result is too broad to recommend you get counts and narrowing " +
     "options back instead of properties, with `tooBroadToShow: true`. That is " +
-    "not an error and not an empty result: it means ask, then search again.",
+    "not an error and not an empty result: it means ask, then search again.\n\n" +
+    "TO CHECK WHETHER WE HOLD A NAMED PROPERTY, pass `name` and nothing " +
+    "else. Geography is the wrong instrument for that question and will tell " +
+    "you we do not have a hotel we do: searching the city misses any sibling " +
+    "filed under a neighbouring one. Never say a named property is outside " +
+    "the collection without having searched its name.",
   inputSchema: jsonSchema<{
     macroRegion?: string;
     region?: string;
+    name?: string;
     country?: string;
     adminRegion?: string;
     area?: string;
@@ -428,6 +434,12 @@ const searchHotels = tool({
           "Masai Mara. Interchangeable with `adminRegion`. A region name like " +
           "Tuscany returns everything in it, cities included — narrow with " +
           "`settings` (Countryside, City) rather than by leaving hotels out.",
+      },
+      name: {
+        type: "string",
+        description:
+          "Part of a hotel name. Use alone to answer whether we hold a named " +
+          "property; matching is case-insensitive and partial.",
       },
       city: { type: "string", description: "Exact city name." },
       // Enumerated, not free text. These are locked vocabularies (§44), and a
@@ -523,6 +535,17 @@ const searchHotels = tool({
 
     if (input.region) and.push({ region: { _eq: input.region } });
     if (country) and.push({ country: { _eq: country } });
+    /* A name search, added 2026-09-11 after the concierge told a visitor that
+     * "neither Cheval Blanc nor La Bouitte is in the myOLTRA collection" when
+     * both are. There was no way for it to ask: this tool searched geography
+     * only, so the model searched `city: "Courchevel"`, got the one property
+     * filed under that exact value, and concluded the rest were not ours.
+     * Cheval Blanc is filed under "Courchevel 1850" - a DIFFERENT city value
+     * for the same resort - so a city search could never have found it.
+     *
+     * Denying real inventory is worse than anything else this tool can get
+     * wrong: a guest is told we cannot offer a hotel we can. */
+    if (input.name) and.push({ hotel_name: { _icontains: input.name } });
     if (city) and.push({ city: { _eq: city } });
 
     /* `area` and `adminRegion` are one geography slot, matched against BOTH
