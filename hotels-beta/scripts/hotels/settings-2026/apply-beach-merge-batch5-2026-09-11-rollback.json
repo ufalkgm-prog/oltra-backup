@@ -1,0 +1,169 @@
+[
+  {
+    "at": "2026-09-11T11:49:28.649Z",
+    "batch": "beach-merge-5",
+    "changes": [
+      {
+        "id": "1083",
+        "name": "Mandarin Oriental, Sanya",
+        "kind": "merge",
+        "before": {
+          "setting": [
+            "Beach",
+            "Island"
+          ],
+          "primary_setting": "Beach",
+          "secondary_setting": "Island"
+        },
+        "after": {
+          "setting": [
+            "Beachfront",
+            "Island"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": "Island"
+        }
+      },
+      {
+        "id": "1181",
+        "name": "Velaa Private Island",
+        "kind": "merge",
+        "before": {
+          "setting": [
+            "Beach",
+            "Private Island"
+          ],
+          "primary_setting": "Beach",
+          "secondary_setting": "Private Island"
+        },
+        "after": {
+          "setting": [
+            "Beachfront",
+            "Private Island"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": "Private Island"
+        }
+      },
+      {
+        "id": "1247",
+        "name": "Excellence Oyster Bay",
+        "kind": "merge",
+        "before": {
+          "setting": [
+            "Beach"
+          ],
+          "primary_setting": "Beach",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1333",
+        "name": "Le Majestic Cannes",
+        "kind": "merge",
+        "before": {
+          "setting": [
+            "City",
+            "Beach"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beach"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Beachfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beachfront"
+        }
+      },
+      {
+        "id": "1385",
+        "name": "Bill & Coo Mykonos",
+        "kind": "merge",
+        "before": {
+          "setting": [
+            "Beach"
+          ],
+          "primary_setting": "Beach",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1526",
+        "name": "Hotel Arts Barcelona",
+        "kind": "merge",
+        "before": {
+          "setting": [
+            "City",
+            "Beach"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beach"
+        },
+        "after": {
+          "setting": [
+            "City",
+            "Beachfront"
+          ],
+          "primary_setting": "City",
+          "secondary_setting": "Beachfront"
+        }
+      },
+      {
+        "id": "1687",
+        "name": "Hotel Casa del Mar",
+        "kind": "merge",
+        "before": {
+          "setting": [
+            "Beach"
+          ],
+          "primary_setting": "Beach",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        }
+      },
+      {
+        "id": "1798",
+        "name": "Emirates Wolgan Valley",
+        "kind": "retag",
+        "note": "Blue Mountains conservancy, 3 hours inland; its own highlights say mountain views",
+        "before": {
+          "setting": [
+            "Beachfront"
+          ],
+          "primary_setting": "Beachfront",
+          "secondary_setting": null
+        },
+        "after": {
+          "setting": [
+            "Mountains"
+          ],
+          "primary_setting": "Mountains",
+          "secondary_setting": null
+        }
+      }
+    ]
+  }
+]

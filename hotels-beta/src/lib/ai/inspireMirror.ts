@@ -41,7 +41,6 @@ const PURPOSE_RULES: { purpose: InspirePurpose; activities: string[]; settings: 
     purpose: "beach",
     activities: ["Beach", "Snorkeling", "Diving", "Watersports", "Sailing"],
     settings: [
-      "Beach",
       "Beachfront",
       "Coastal",
       "Island",

@@ -1,0 +1,218 @@
+{
+  "at": "2026-09-11T11:49:36.024Z",
+  "retired": [
+    "Beach"
+  ],
+  "before": {
+    "setting": [
+      {
+        "text": "Beach",
+        "value": "Beach"
+      },
+      {
+        "text": "Beachfront",
+        "value": "Beachfront"
+      },
+      {
+        "text": "City",
+        "value": "City"
+      },
+      {
+        "text": "Coastal",
+        "value": "Coastal"
+      },
+      {
+        "text": "Countryside",
+        "value": "Countryside"
+      },
+      {
+        "text": "Desert",
+        "value": "Desert"
+      },
+      {
+        "text": "Hillside",
+        "value": "Hillside"
+      },
+      {
+        "text": "Island",
+        "value": "Island"
+      },
+      {
+        "text": "Jungle",
+        "value": "Jungle"
+      },
+      {
+        "text": "Mountains",
+        "value": "Mountains"
+      },
+      {
+        "text": "Nature Reserve",
+        "value": "Nature Reserve"
+      },
+      {
+        "text": "Oceanfront",
+        "value": "Oceanfront"
+      },
+      {
+        "text": "Overwater",
+        "value": "Overwater"
+      },
+      {
+        "text": "Private Island",
+        "value": "Private Island"
+      },
+      {
+        "text": "Rainforest",
+        "value": "Rainforest"
+      },
+      {
+        "text": "Waterfront",
+        "value": "Waterfront"
+      },
+      {
+        "text": "Wildlife Reserve",
+        "value": "Wildlife Reserve"
+      }
+    ],
+    "primary_setting": [
+      {
+        "text": "Beach",
+        "value": "Beach"
+      },
+      {
+        "text": "Beachfront",
+        "value": "Beachfront"
+      },
+      {
+        "text": "City",
+        "value": "City"
+      },
+      {
+        "text": "Coastal",
+        "value": "Coastal"
+      },
+      {
+        "text": "Countryside",
+        "value": "Countryside"
+      },
+      {
+        "text": "Desert",
+        "value": "Desert"
+      },
+      {
+        "text": "Hillside",
+        "value": "Hillside"
+      },
+      {
+        "text": "Island",
+        "value": "Island"
+      },
+      {
+        "text": "Jungle",
+        "value": "Jungle"
+      },
+      {
+        "text": "Mountains",
+        "value": "Mountains"
+      },
+      {
+        "text": "Nature Reserve",
+        "value": "Nature Reserve"
+      },
+      {
+        "text": "Oceanfront",
+        "value": "Oceanfront"
+      },
+      {
+        "text": "Overwater",
+        "value": "Overwater"
+      },
+      {
+        "text": "Private Island",
+        "value": "Private Island"
+      },
+      {
+        "text": "Rainforest",
+        "value": "Rainforest"
+      },
+      {
+        "text": "Waterfront",
+        "value": "Waterfront"
+      },
+      {
+        "text": "Wildlife Reserve",
+        "value": "Wildlife Reserve"
+      }
+    ],
+    "secondary_setting": [
+      {
+        "text": "Beach",
+        "value": "Beach"
+      },
+      {
+        "text": "Beachfront",
+        "value": "Beachfront"
+      },
+      {
+        "text": "City",
+        "value": "City"
+      },
+      {
+        "text": "Coastal",
+        "value": "Coastal"
+      },
+      {
+        "text": "Countryside",
+        "value": "Countryside"
+      },
+      {
+        "text": "Desert",
+        "value": "Desert"
+      },
+      {
+        "text": "Hillside",
+        "value": "Hillside"
+      },
+      {
+        "text": "Island",
+        "value": "Island"
+      },
+      {
+        "text": "Jungle",
+        "value": "Jungle"
+      },
+      {
+        "text": "Mountains",
+        "value": "Mountains"
+      },
+      {
+        "text": "Nature Reserve",
+        "value": "Nature Reserve"
+      },
+      {
+        "text": "Oceanfront",
+        "value": "Oceanfront"
+      },
+      {
+        "text": "Overwater",
+        "value": "Overwater"
+      },
+      {
+        "text": "Private Island",
+        "value": "Private Island"
+      },
+      {
+        "text": "Rainforest",
+        "value": "Rainforest"
+      },
+      {
+        "text": "Waterfront",
+        "value": "Waterfront"
+      },
+      {
+        "text": "Wildlife Reserve",
+        "value": "Wildlife Reserve"
+      }
+    ]
+  }
+}
