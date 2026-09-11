@@ -106,7 +106,11 @@ Three things that look like bugs and aren't:
 
 Both are searchable levels in the destination dropdown (`StructuredDestinationField`), narrowing hotel > city > area > admin_region > country > region. `local_area` is **not** searchable — it holds neighbourhoods (Mayfair, Kowloon).
 
-Both are plain `text` with `interface: null`, i.e. unconstrained; §44 records what unconstrained text fields do here, and this one had already drifted. Locking them to a choice list is a deferred follow-up, not a decision taken.
+**`admin_region` is LOCKED** as of 2026-09-11 — `select-dropdown`, `allowOther: false`, **291 choices** built from the stored values. A hotel in a genuinely new administrative region will not save until the list is extended (`scripts/hotels/geo-2026/lock-admin-region-2026-09-11.mjs` holds the pattern and a snapshot of the prior meta). `state_province_county_island` stays free text on purpose: traveller areas gain an entry with every new destination, so locking it trades one problem for another.
+
+**`city` holds a region name on a few rows** — Four Seasons Hampshire `city = Hampshire`, The Windsor Toya `city = Hokkaido`, Etéreo `city = Quintana Roo`. Their `admin_region` is correct; the `city` is not. Found 2026-09-11, not fixed.
+
+Both are plain `text` columns. `admin_region` is now constrained by a locked choice list (below); `state_province_county_island` is still unconstrained, and §44 records what unconstrained text fields do here — this one had already drifted into `Giorgia` and `Boca Raton`.
 
 Other fields:
 

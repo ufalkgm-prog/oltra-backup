@@ -574,7 +574,7 @@ All apply scripts: dry-run by default, re-read each row before patching, **appen
 
 ### Not done
 
-* **Neither field is locked to a choice list** — both `text` / `interface: null`. §44's lesson is that cleaning without locking resets the clock, and this column had already drifted into `Giorgia` and `Boca Raton`. Deferred deliberately: `admin_region` is a bounded vocabulary and a good candidate; traveller areas keep growing, and ~290 choices is a long dropdown where every new destination needs a schema edit.
+* **`admin_region` was locked on 2026-09-11** (§3), `state_province_county_island` deliberately not — traveller areas keep growing, and ~290 choices is already a long dropdown where every new destination needs a schema edit. The concern that prompted the deferral was real: this column had drifted into `Giorgia` and `Boca Raton`, and §44's lesson is that cleaning without locking resets the clock.
 * **`local_area` is untouched** and still holds neighbourhoods. Ulrik flagged a separate pass for it.
 
 ---
