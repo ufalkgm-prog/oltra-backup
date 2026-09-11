@@ -1350,6 +1350,58 @@ Two candidate groups, both measurable by re-running the same check:
 Populate only what is not in reasonable doubt. A wrong route is worse than an
 absent one — a guest can act on a boat that does not run.
 
+### `audit-airports.mjs` — the research queue for the 96% nobody checked
+
+Built 2026-09-11 after a fair challenge: this session's airport fixes were all
+**exception entries**, so the nearest-wins algorithm's flaw is intact wherever
+nobody looked — and what got looked at was whatever Ulrik flagged, biasing
+coverage towards the places he can evaluate.
+
+**It is a research queue, NOT an output signal, and that was the decision.**
+Surfacing a confidence flag to the guest would hedge on ~14% of the roster,
+mostly on false positives, and a hedge the guest cannot act on is noise — they
+have no better source than we do. On the Turin case a hedge would have produced
+"Turin, though worth confirming", still the wrong airport. The same flag as a
+queue gets it **fixed**. Unknowns should become knowns, not caveats.
+
+Same split as `audit-local-area.mjs`. **DEFECTS** (any hit fails the run, all at
+zero): a gateway override or transfer route whose destination no longer exists,
+a route whose `arriveAt` is not among that destination's airports, a published
+destination with no airport at all. **CANDIDATES**: no jet-capable airport
+listed, or the jet airport over 120km away — the signature every real error has
+carried.
+
+**The audit's first finding was a bug in itself**, which is the right lesson
+about screens: Marmaris parsed as having *no airports*, because its label is
+`"Rhodes \"Diagoras\""` and the inner quote ended the regex capture early. The
+data was fine. It now parses only the fields it uses.
+
+**Top slice worked: 95 → 85 open, 123 → 107 hotels, 21 → 33 overrides.**
+
+| fixed | was | now | why |
+|---|---|---|---|
+| Saint-Tropez, Ramatuelle, La Croix-Valmer | LTT | **NCE + TLN** | La Môle is a 1,071m private-jet strip with no sellable scheduled service — a flight search against it returns nothing |
+| Lake Como ×5 (Blevio, Cernobbio, Moltrasio, Torno, Tremezzina) | LUG | **MXP + LIN + BGY** | Lugano wins on distance and is a 1,415m Swiss field with almost no service |
+| Cabo San Lucas | CSW | **SJD** | Cabo San Lucas Intl is the small field; Los Cabos is 28km further and where flights land |
+| Arenal | FON | **SJO + LIR** | La Fortuna is an 800m strip |
+| Stresa | LUG=MXP tie | **MXP** | tie broken towards 7,840m of runway |
+| Andermatt | LUG first | **ZRH** | Zurich was third at 91km |
+
+**Arenal's transfer route moved with it** — it read `arriveAt: "FON"`, which the
+airport change would have made invalid. That is the invariant this file broke
+once on Sabi Sand, and the audit now checks it.
+
+**Four big hits were FALSE POSITIVES and are deliberately not overridden**,
+because a real international airport can have a short runway: Florence (1560m),
+Santorini (2197m), Mykonos (1902m), Bristol for Bath (2011m). Sabi Sand,
+Kruger, Okavango, Bora Bora, Lanai and St Barth flag too, but there the small
+airport **is** the arrival airport and each already has a transfer route.
+**Phinda is left alone on purpose**: Mkuze takes the light-aircraft leg from
+Johannesburg and its route says so, and Durban at 228km would be a worse
+primary, not a better one.
+
+Lugano itself keeps `LUG` — its own airport, and correct.
+
 ### Due on the clock, not from this workflow
 
 **Ratehawk hotel status re-probe, due 2026-11-16** (§42, §43). It is the one

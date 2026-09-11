@@ -73,9 +73,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "HER", label: "Heraklion Nikos Kazantzakis", distKm: 14, size: "large", runwayM: 4280 }
   ],
   "Andermatt": [
-    { iata: "LUG", label: "Lugano", distKm: 74, size: "medium", runwayM: 1415 },
-    { iata: "BRN", label: "Bern", distKm: 89, size: "medium", runwayM: 3695 },
-    { iata: "ZRH", label: "Zürich", distKm: 91, size: "large", runwayM: 9808 }
+    { iata: "ZRH", label: "Zürich", distKm: 91, size: "large", runwayM: 9808 },
+    { iata: "BRN", label: "Bern", distKm: 89, size: "medium", runwayM: 3695 }
   ],
   "Angthong": [
     { iata: "USM", label: "Samui", distKm: 15, size: "large", runwayM: 2060 }
@@ -96,7 +95,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 14, size: "large", runwayM: 5591 }
   ],
   "Arenal": [
-    { iata: "FON", label: "La Fortuna Arenal", distKm: 13, size: "medium", runwayM: 800 }
+    { iata: "SJO", label: "Juan Santamaría", distKm: 77, size: "large", runwayM: 3012 },
+    { iata: "LIR", label: "Daniel Oduber Quirós", distKm: 94, size: "large", runwayM: 2750 }
   ],
   "Argolida": [
     { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 96, size: "large", runwayM: 7800 },
@@ -231,7 +231,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "MRY", label: "Monterey", distKm: 40, size: "medium", runwayM: 3255 }
   ],
   "Blevio": [
-    { iata: "LUG", label: "Lugano", distKm: 23, size: "medium", runwayM: 1415 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 38, size: "large", runwayM: 7840 },
+    { iata: "LIN", label: "Milano Linate", distKm: 47, size: "large", runwayM: 2442 },
+    { iata: "BGY", label: "Il Caravaggio", distKm: 51, size: "large", runwayM: 3588 }
   ],
   "Blois": [
     { iata: "TUF", label: "Tours Val de Loire", distKm: 49, size: "medium", runwayM: 2404 }
@@ -279,7 +281,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "BEB", label: "Benbecula", distKm: 110, size: "medium", runwayM: 3045 }
   ],
   "Cabo San Lucas": [
-    { iata: "CSW", label: "Cabo San Lucas", distKm: 7, size: "medium", runwayM: 2133 }
+    { iata: "SJD", label: "Los Cabos", distKm: 35, size: "large", runwayM: 3000 }
   ],
   "Cairo": [
     { iata: "CAI", label: "Cairo", distKm: 19, size: "large", runwayM: 11300 }
@@ -341,7 +343,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "PSA", label: "Pisa", distKm: 69, size: "large", runwayM: 5785 }
   ],
   "Cernobbio": [
-    { iata: "LUG", label: "Lugano", distKm: 22, size: "medium", runwayM: 1415 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 36, size: "large", runwayM: 7840 },
+    { iata: "LIN", label: "Milano Linate", distKm: 47, size: "large", runwayM: 2442 },
+    { iata: "BGY", label: "Il Caravaggio", distKm: 53, size: "large", runwayM: 3588 }
   ],
   "Cerretto Langhe": [
     { iata: "CUF", label: "Cuneo", distKm: 34, size: "medium", runwayM: 2104 }
@@ -801,7 +805,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SNR", label: "Saint-Nazaire-Montoir", distKm: 20, size: "medium", runwayM: 2400 }
   ],
   "La Croix-Valmer": [
-    { iata: "LTT", label: "La Môle", distKm: 9, size: "small", runwayM: 1071 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 72, size: "large", runwayM: 5591 },
+    { iata: "TLN", label: "Toulon-Hyères", distKm: 38, size: "medium", runwayM: 4022 }
   ],
   "La Jolla": [
     { iata: "SAN", label: "San Diego", distKm: 20, size: "large", runwayM: 2865 }
@@ -1044,7 +1049,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "GBE", label: "Sir Seretse Khama", distKm: 48, size: "large", runwayM: 4000 }
   ],
   "Moltrasio": [
-    { iata: "LUG", label: "Lugano", distKm: 22, size: "medium", runwayM: 1415 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 38, size: "large", runwayM: 7840 },
+    { iata: "LIN", label: "Milano Linate", distKm: 48, size: "large", runwayM: 2442 },
+    { iata: "BGY", label: "Il Caravaggio", distKm: 52, size: "large", runwayM: 3588 }
   ],
   "Mont-Peleron": [
     { iata: "GVA", label: "Geneva", distKm: 61, size: "large", runwayM: 3900 },
@@ -1346,7 +1353,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "UIO", label: "Mariscal Sucre", distKm: 21, size: "large", runwayM: 4098 }
   ],
   "Ramatuelle": [
-    { iata: "LTT", label: "La Môle", distKm: 14, size: "small", runwayM: 1071 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 69, size: "large", runwayM: 5591 },
+    { iata: "TLN", label: "Toulon-Hyères", distKm: 42, size: "medium", runwayM: 4022 }
   ],
   "Rancho Santa Fe": [
     { iata: "CLD", label: "McClellan-Palomar", distKm: 18, size: "medium", runwayM: 1493 }
@@ -1419,7 +1427,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SZK", label: "Skukuza", distKm: 12, size: "medium", runwayM: 1550 }
   ],
   "Saint-Tropez": [
-    { iata: "LTT", label: "La Môle", distKm: 14, size: "small", runwayM: 1071 }
+    { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 64, size: "large", runwayM: 5591 },
+    { iata: "TLN", label: "Toulon-Hyères", distKm: 44, size: "medium", runwayM: 4022 }
   ],
   "San Francisco": [
     { iata: "OAK", label: "Oakland San Francisco Bay", distKm: 18, size: "large", runwayM: 7792 },
@@ -1548,8 +1557,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "ARN", label: "Stockholm-Arlanda", distKm: 36, size: "large", runwayM: 8301 }
   ],
   "Stresa": [
-    { iata: "LUG", label: "Lugano", distKm: 33, size: "medium", runwayM: 1415 },
-    { iata: "MXP", label: "Milan Malpensa", distKm: 33, size: "large", runwayM: 7840 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 33, size: "large", runwayM: 7840 },
+    { iata: "LIN", label: "Milano Linate", distKm: 77, size: "large", runwayM: 2442 }
   ],
   "Sunningdale": [
     { iata: "LHR", label: "London Heathrow", distKm: 13, size: "large", runwayM: 7559 }
@@ -1607,7 +1616,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "HND", label: "Tokyo Haneda", distKm: 14, size: "large", runwayM: 11360 }
   ],
   "Torno": [
-    { iata: "LUG", label: "Lugano", distKm: 23, size: "medium", runwayM: 1415 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 39, size: "large", runwayM: 7840 },
+    { iata: "LIN", label: "Milano Linate", distKm: 48, size: "large", runwayM: 2442 },
+    { iata: "BGY", label: "Il Caravaggio", distKm: 50, size: "large", runwayM: 3588 }
   ],
   "Toronto": [
     { iata: "YTZ", label: "Billy Bishop Toronto City", distKm: 2, size: "medium", runwayM: 2110 },
@@ -1634,7 +1645,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "BPS", label: "Porto Seguro", distKm: 20, size: "large", runwayM: 2000 }
   ],
   "Tremezzina": [
-    { iata: "LUG", label: "Lugano", distKm: 25, size: "medium", runwayM: 1415 }
+    { iata: "MXP", label: "Milan Malpensa", distKm: 55, size: "large", runwayM: 7840 },
+    { iata: "LIN", label: "Milano Linate", distKm: 60, size: "large", runwayM: 2442 },
+    { iata: "BGY", label: "Il Caravaggio", distKm: 51, size: "large", runwayM: 3588 }
   ],
   "Trondheim": [
     { iata: "TRD", label: "Trondheim, Værnes", distKm: 26, size: "large", runwayM: 2759 }

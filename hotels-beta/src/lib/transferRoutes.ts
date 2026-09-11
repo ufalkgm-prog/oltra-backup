@@ -482,13 +482,18 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
     legs: [{ mode: "road", to: "the hotel", arrangedByHotel: true }],
     note: "Tambolaka is a short flight from Bali, then about an hour by road.",
   },
+  /* Arenal moved from FON to SJO when the airport queue was worked: La Fortuna
+   * is an 800m strip, and the route had to move with it or `arriveAt` would no
+   * longer be an airport this destination lists — the invariant this file broke
+   * once already, on Sabi Sand. The drive is now the whole of the answer. */
   Arenal: {
-    arriveAt: "FON",
-    arriveAtLabel: "La Fortuna",
-    legs: [{ mode: "road", to: "the hotel", arrangedByHotel: true }],
+    arriveAt: "SJO",
+    arriveAtLabel: "San Jose Juan Santamaria",
+    legs: [{ mode: "road", to: "the hotel" }],
     note:
-      "La Fortuna is a short domestic hop from San Jose, or roughly two and a " +
-      "half hours by road.",
+      "About two and a half hours north-west by road. A short domestic hop to " +
+      "La Fortuna is possible instead, and Liberia is the other international " +
+      "gateway if it suits your routing better.",
   },
 };
 

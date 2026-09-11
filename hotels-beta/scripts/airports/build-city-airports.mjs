@@ -212,6 +212,50 @@ const GATEWAY_OVERRIDE = {
 
   // Austria, Arlberg. Innsbruck is nearer, Zurich is the hub most guests use.
   "Lech Am Arlberg": ["ZRH", "INN"],
+
+  /* ==== FROM THE audit-airports.mjs QUEUE, top slice, 2026-09-11 ====
+   *
+   * Worked by hotel count. Four of the biggest hits were FALSE POSITIVES and
+   * are deliberately absent, because a real international airport can have a
+   * short runway: Florence (FLR, 1560m), Santorini (JTR, 2197m), Mykonos
+   * (JMK, 1902m) and Bristol for Bath (2011m) are all correct as they stand.
+   * Sabi Sand, Kruger, Okavango, Bora Bora, Lanai and St Barth flag too but
+   * their small airport IS the arrival airport and each already carries a
+   * transfer route. Phinda is left alone on purpose: Mkuze takes the
+   * light-aircraft leg from Johannesburg and its route already says so, and
+   * Durban at 228km would be a worse primary, not a better one. */
+
+  // The Gulf of Saint-Tropez. La Mole is a 1,071m private-jet strip with no
+  // sellable scheduled service, so a flight search against it returns nothing.
+  // Nice is the gateway; Toulon is nearer and real.
+  "Saint-Tropez": ["NCE", "TLN"],
+  Ramatuelle: ["NCE", "TLN"],
+  "La Croix-Valmer": ["NCE", "TLN"],
+
+  // Cabo San Lucas International is the small field; Los Cabos, 28km further,
+  // is where the flights actually land.
+  "Cabo San Lucas": ["SJD"],
+
+  // La Fortuna is an 800m strip. San Jose is the gateway, Liberia a real
+  // alternative for the north-west. Arenal's TRANSFER ROUTE moves with this
+  // — it read arriveAt: "FON", which this change would have made invalid.
+  Arenal: ["SJO", "LIR"],
+
+  // Lake Como. Lugano wins on distance and is a 1,415m Swiss field with almost
+  // no service; Milan is how everyone arrives. Lugano itself keeps LUG, which
+  // is its own airport and correct.
+  Blevio: ["MXP", "LIN", "BGY"],
+  Cernobbio: ["MXP", "LIN", "BGY"],
+  Moltrasio: ["MXP", "LIN", "BGY"],
+  Torno: ["MXP", "LIN", "BGY"],
+  Tremezzina: ["MXP", "LIN", "BGY"],
+
+  // Lake Maggiore: Malpensa was already tied with Lugano at 33km. Break the
+  // tie towards the one with 7,840m of runway.
+  Stresa: ["MXP", "LIN"],
+
+  // Andermatt had Lugano first at 74km and Zurich third. Zurich is the answer.
+  Andermatt: ["ZRH", "BRN"],
   /* The same park, reached the same way. These two DO have a `city`, so they
    * were already in the mapping and are not part of the eight — but Kinigi
    * (One&Only Gorilla's Nest) and Ruhengeri (Wilderness Bisate) both carry
