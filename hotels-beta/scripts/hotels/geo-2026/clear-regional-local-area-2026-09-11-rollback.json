@@ -1,0 +1,140 @@
+[
+  {
+    "at": "2026-09-11T12:31:55.696Z",
+    "changes": [
+      {
+        "id": "1013",
+        "name": "One&Only Le Saint Geran, Mauritius",
+        "city": "Poste De Flacq",
+        "value": "East Coast",
+        "area": "East Coast"
+      },
+      {
+        "id": "1015",
+        "name": "The Residence Mauritius",
+        "city": "Belle Mare",
+        "value": "East Coast",
+        "area": "East Coast"
+      },
+      {
+        "id": "1203",
+        "name": "COMO Point Yamu",
+        "city": "Thalang",
+        "value": "Phang Nga Bay",
+        "area": "Phuket"
+      },
+      {
+        "id": "1441",
+        "name": "Grand Hotel a Villa Feltrinelli",
+        "city": "Gargnano",
+        "value": "Lake Garda",
+        "area": "Lake Garda"
+      },
+      {
+        "id": "1444",
+        "name": "Grand Hotel Fasano",
+        "city": "Gardone Riviera",
+        "value": "Lake Garda",
+        "area": "Lake Garda"
+      },
+      {
+        "id": "1447",
+        "name": "Grand Hotel Tremezzo",
+        "city": "Tremezzina",
+        "value": "Lake Como",
+        "area": "Lake Como"
+      },
+      {
+        "id": "1458",
+        "name": "Il Sereno Lago di Como",
+        "city": "Torno",
+        "value": "Lake Como",
+        "area": "Lake Como"
+      },
+      {
+        "id": "1461",
+        "name": "Mandarin Oriental, Lago di Como",
+        "city": "Blevio",
+        "value": "Lake Como",
+        "area": "Lake Como"
+      },
+      {
+        "id": "1468",
+        "name": "Passalacqua",
+        "city": "Moltrasio",
+        "value": "Lake Como",
+        "area": "Lake Como"
+      },
+      {
+        "id": "1486",
+        "name": "Villa d'Este",
+        "city": "Cernobbio",
+        "value": "Lake Como",
+        "area": "Lake Como"
+      },
+      {
+        "id": "1488",
+        "name": "Villa e Palazzo Aminta",
+        "city": "Stresa",
+        "value": "Lake Maggiore",
+        "area": "Lake Maggiore"
+      },
+      {
+        "id": "1534",
+        "name": "Six Senses Ibiza",
+        "city": "Sant Joan de Labritja",
+        "value": "North Coast",
+        "area": "Ibiza"
+      },
+      {
+        "id": "1561",
+        "name": "Le Mirador Resort & Spa",
+        "city": "Mont-Peleron",
+        "value": "Lake Geneva",
+        "area": "Lake Geneva"
+      },
+      {
+        "id": "1565",
+        "name": "Park Hotel Vitznau",
+        "city": "Vitznau",
+        "value": "Lake Lucerne",
+        "area": "Lake Lucerne"
+      },
+      {
+        "id": "1659",
+        "name": "Auberge du Soleil",
+        "city": "Rutherford",
+        "value": "Napa Valley",
+        "area": "Napa Valley"
+      },
+      {
+        "id": "1678",
+        "name": "Four Seasons Resort and Residences Jackson Hole",
+        "city": "Teton Village",
+        "value": "Jackson Hole",
+        "area": "Jackson Hole"
+      },
+      {
+        "id": "2034",
+        "name": "Four Seasons Tamarindo",
+        "city": "La Manzanilla",
+        "value": "Costalegre",
+        "area": "Costalegre"
+      },
+      {
+        "id": "3007",
+        "name": "&Beyond Lake Manyara Tree Lodge",
+        "city": "Lake Manyara",
+        "value": "Lake Manyara National Park",
+        "area": "Lake Manyara National Park"
+      },
+      {
+        "id": "3030",
+        "name": "Six Senses Gangtey",
+        "city": "Gangtey",
+        "value": "Phobjikha Valley",
+        "area": "Phobjikha Valley"
+      }
+    ]
+  }
+]

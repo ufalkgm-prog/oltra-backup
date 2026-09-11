@@ -106,6 +106,14 @@ Three things that look like bugs and aren't:
 
 Both are searchable levels in the destination dropdown (`StructuredDestinationField`), narrowing hotel > city > area > admin_region > country > region. `local_area` is **not** searchable — it holds neighbourhoods (Mayfair, Kowloon).
 
+**`local_area` is strictly sub-city** — neighbourhoods and districts only: Mayfair, Meatpacking, the Paris arrondissements. **Not** a travel area. 19 rows were cleared on 2026-09-11 for holding a region-level value, `Lake Como` among them appearing as a "neighbourhood" across five different towns, which is the inverse of a district: one area spanning many towns rather than one town divided. 17 of the 19 were exact duplicates of `state_province_county_island`, so nothing was lost.
+
+Three were kept that the same test flagged, because they are genuinely below city level and only matched for appearing in the area field too: Capella Singapore's **Sentosa Island**, Amanera's **Playa Grande**, and Fasano's **Punta del Este** — the last because `city` there reads "Maldonado", the department, so `local_area` holds the more accurate of the two.
+
+**Coverage is uneven and that is not all a gap.** 227 of 903 rows carry one. London (30/30), New York (21/21), Paris (19/19), Milan and Venice are complete; Bangkok (1/15), Dubai (2/14), Marrakech (1/10) and Tokyo (1/9) are not. But ~33 cities are correctly empty — Courchevel, Zermatt, Oia, Sabi Sand — because a ski village or a game reserve has no neighbourhoods. Judge coverage against whether the city HAS districts, not against the row count.
+
+**Known problems, not yet fixed** (from the same screen): `Meatpackling District` on two New York rows; **SoHo and Soho inverted** — New York's is SoHo, London's is Soho, and the collection has them the wrong way round; 10 rows repeating the city verbatim (six Phinda lodges, Ngala, Suyian); and three cities disagreeing with themselves — New York carrying `Midtown`, `Midtown East`, `Midtown West` *and* `Midtown Manhattan`, Venice `Giudecca` and `Giudecca Island`.
+
 **`admin_region` is LOCKED** as of 2026-09-11 — `select-dropdown`, `allowOther: false`, **291 choices** built from the stored values. A hotel in a genuinely new administrative region will not save until the list is extended (`scripts/hotels/geo-2026/lock-admin-region-2026-09-11.mjs` holds the pattern and a snapshot of the prior meta). `state_province_county_island` stays free text on purpose: traveller areas gain an entry with every new destination, so locking it trades one problem for another.
 
 **`city` held a region name on three rows**, fixed 2026-09-11: Four Seasons Hampshire → `Dogmersfield`, The Windsor Toya → `Toyako`, Etéreo → `Riviera Maya` (matching five siblings, including the EDITION in the same Kanai development). `admin_region` was right on all three and was left alone. The other 107 rows where `city` equals `admin_region` are correct — city-states and cantons that share their city's name.
