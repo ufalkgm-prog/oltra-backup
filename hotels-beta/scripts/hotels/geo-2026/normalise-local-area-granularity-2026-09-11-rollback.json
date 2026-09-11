@@ -1,0 +1,103 @@
+[
+  {
+    "at": "2026-09-11T12:42:11.969Z",
+    "changes": [
+      {
+        "id": 1721,
+        "from": "Midtown",
+        "to": "NoMad",
+        "why": "description: \"at Fifth Avenue and 28th Street in NoMad\"",
+        "name": "The Fifth Avenue Hotel",
+        "city": "New York"
+      },
+      {
+        "id": 1835,
+        "from": "Midtown",
+        "to": "Midtown East",
+        "why": "description: \"on Madison Avenue at 50th Street\"",
+        "name": "Lotte New York Palace",
+        "city": "New York"
+      },
+      {
+        "id": 3020,
+        "from": "Midtown Manhattan",
+        "to": "Midtown East",
+        "why": "description: \"57 East 57th Street, between Park and Madison\"",
+        "name": "Four Seasons Hotel New York",
+        "city": "New York"
+      },
+      {
+        "id": 1293,
+        "from": "West End",
+        "to": "Covent Garden",
+        "why": "description: \"stands on the Strand where Covent Garden... are within a few minutes\"",
+        "name": "ME London",
+        "city": "London"
+      },
+      {
+        "id": 1308,
+        "from": "West End",
+        "to": "Marylebone",
+        "why": "Portland Place, at the top of Regent Street",
+        "name": "The Langham London",
+        "city": "London"
+      },
+      {
+        "id": 2056,
+        "from": "Mayfair, Grosvenor Square",
+        "to": "Mayfair",
+        "why": "Grosvenor Square is a square, not a finer district",
+        "name": "The Chancery Rosewood",
+        "city": "London"
+      },
+      {
+        "id": 2064,
+        "from": "Mayfair, Park Lane",
+        "to": "Mayfair",
+        "why": "Park Lane is a street, not a finer district",
+        "name": "45 Park Lane",
+        "city": "London"
+      },
+      {
+        "id": 1427,
+        "from": "Giudecca Island",
+        "to": "Giudecca",
+        "why": "the district is Giudecca; Island is a redundant noun",
+        "name": "Hotel Cipriani",
+        "city": "Venice"
+      },
+      {
+        "id": 1423,
+        "from": "Grand Canal",
+        "to": "San Polo",
+        "why": "description: \"in the San Polo district\"",
+        "name": "Aman Venice",
+        "city": "Venice"
+      },
+      {
+        "id": 1466,
+        "from": "Grand Canal",
+        "to": "Santa Croce",
+        "why": "description: \"a restored 16th-century palazzo in Santa Croce\"",
+        "name": "Palazzo Venart Luxury Hotel",
+        "city": "Venice"
+      },
+      {
+        "id": 1479,
+        "from": "Grand Canal",
+        "to": "San Marco",
+        "why": "sestiere not named in its description — from outside the data",
+        "name": "The Gritti Palace",
+        "city": "Venice"
+      },
+      {
+        "id": 1484,
+        "from": "Grand Canal",
+        "to": "San Marco",
+        "why": "sestiere not named in its description — from outside the data",
+        "name": "The St. Regis Venice",
+        "city": "Venice"
+      }
+    ]
+  }
+]

@@ -116,7 +116,13 @@ Three were kept that the same test flagged, because they are genuinely below cit
 
 **A value identical to `city` is not a district** — it is the same fact twice. 10 such rows were cleared 2026-09-11: the six Phinda lodges, Ngala, Suyian and two Anguilla bays. `city` was correct on every one and kept, since §3's own convention is that a lodge uses the reserve name as its city.
 
-**Still open:** three cities disagree with themselves about granularity — New York carries `Midtown`, `Midtown East`, `Midtown West` *and* `Midtown Manhattan`; Venice `Giudecca` and `Giudecca Island`; London `Mayfair` plus `Mayfair, Grosvenor Square` and `Mayfair, Park Lane`. That is a decision rather than a correction, and whatever it settles on becomes the pattern for whoever fills Bangkok's 14 empty rows.
+**The rule, set 2026-09-11: the most precise value that is still a DISTRICT.** Two halves, and they pull opposite ways — `Midtown East` beats `Midtown`, `Covent Garden` beats `West End`; but Park Lane is a street, Grosvenor Square and Petersplatz are squares, and the Grand Canal is a waterway, so those normalise *back* to the district they sit in. 13 rows fixed: London's Mayfair compounds, Vienna's `Innere Stadt, Petersplatz`, Venice's four `Grand Canal` rows to their sestieri (San Polo, Santa Croce, San Marco ×2), `Giudecca Island` → `Giudecca`, and New York's Midtown variants.
+
+**Paris keeps arrondissements.** They are the city's own district system, and going finer — Saint-Germain, Le Marais — would mix two schemes for no gain; the 6th already *is* Saint-Germain.
+
+**One deliberate exception: Aman New York stays `Midtown`.** It occupies the Crown Building at Fifth and 57th, which is the line Midtown East and West divide on, so picking a side is precision the address does not support. That is why a prefix-overlap check still reports New York.
+
+**Not every compound is wrong.** 17 remain — `Lumphini, Pathum Wan`, `Zhujiang New Town, Tianhe District`, `Kuruçeşme, Beşiktaş` — and each is used consistently within its city, so none is an internal contradiction. They need the same district-versus-street judgement one at a time, and in several the *broader* half is the district (`Estrada Monumental, São Martinho`), so a mechanical "keep the first part" rule would get them wrong.
 
 **`admin_region` is LOCKED** as of 2026-09-11 — `select-dropdown`, `allowOther: false`, **291 choices** built from the stored values. A hotel in a genuinely new administrative region will not save until the list is extended (`scripts/hotels/geo-2026/lock-admin-region-2026-09-11.mjs` holds the pattern and a snapshot of the prior meta). `state_province_county_island` stays free text on purpose: traveller areas gain an entry with every new destination, so locking it trades one problem for another.
 
