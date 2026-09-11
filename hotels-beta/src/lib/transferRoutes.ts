@@ -177,6 +177,34 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "hours.",
   },
 
+  /* Sonop, 360km south of Windhoek and the WEAKEST ENTRY IN THIS FILE — the
+   * one to check first if any of these are wrong.
+   *
+   * Neither this lodge's description nor Sossusvlei's says a word about
+   * arriving, so unlike almost every other route here there is no in-data
+   * evidence at all. What it rests on instead: Eros is Namibia's light-aircraft
+   * hub, which is the same mechanism already encoded for Sesriem in the same
+   * country and the same region (both are Hardap), and the lodge sits on a
+   * 13,800-acre private reserve with no scheduled service anywhere near it.
+   *
+   * The road figure is deliberately loose. It is 360km against Sesriem's 302km,
+   * much of it gravel, so "the better part of a day" is the honest form of a
+   * number I do not have. Worth confirming with Zannier before anyone leans on
+   * it. */
+  "Sonop Farm": {
+    arriveAt: "WDH",
+    arriveAtLabel: "Windhoek Hosea Kutako",
+    legs: [
+      { mode: "road", to: "Eros, Windhoek's second airport", toIata: "ERS" },
+      { mode: "light aircraft", to: "the lodge's airstrip" },
+      { mode: "road", to: "the camp", arrangedByHotel: true },
+    ],
+    note:
+      "Light aircraft into the southern Namib leave from Eros, a short drive " +
+      "from the international terminal. Driving the whole way instead is a long " +
+      "haul south - allow the better part of a day.",
+  },
+
   // ---- Botswana ----
   "Okavango Delta": {
     arriveAt: "MUB",

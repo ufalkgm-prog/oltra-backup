@@ -1320,10 +1320,19 @@ Two candidate groups, both measurable by re-running the same check:
   | Big Island | MUE | **KOA** | Kona is 8km further and the island's actual gateway, 3,353m against 1,584m |
   | Chongzou | AEB, NNG | **NNG** | Nanning has the international service; Baise Bama was 15km closer |
 
-  **Sesriem also got a transfer route**, because the override alone would have
-  left the concierge saying "fly to Windhoek" and stopping 300km short. It is
-  the Nairobi shape exactly: Windhoek has two airports and the light aircraft
-  leaves from the other one, Eros.
+  **Sesriem and Sonop Farm also got transfer routes**, because the override
+  alone would have left the concierge saying "fly to Windhoek" and stopping
+  300km short. Both are the Nairobi shape exactly: Windhoek has two airports
+  and the light aircraft leaves from the other one, Eros.
+
+  **Sonop is the weakest entry in `transferRoutes.ts`** and the first to check
+  if any prove wrong. Unlike almost every other route there is **no in-data
+  evidence at all** — neither its description nor Sossusvlei's mentions
+  arriving. It rests on Eros being Namibia's light-aircraft hub, the same
+  mechanism already encoded for Sesriem in the same region, and on the lodge
+  sitting on a 13,800-acre private reserve with no scheduled service near it.
+  The road figure is deliberately loose ("the better part of a day") because
+  360km of largely gravel road is not a number worth faking.
 * **~93 have no jet-capable airport listed**, so the gateway is missing. Partly
   noise — Florence, Mykonos and Santorini are genuine international arrivals
   that merely have short runways. The real ones are island and reserve hops:
