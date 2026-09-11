@@ -190,7 +190,12 @@ const GATEWAY_OVERRIDE = {
   // France, Savoie. Chambery is closer and seasonal; Lyon is the year-round
   // alternative.
   "Val d'Isere": ["GVA", "CMF", "LYS"],
-  Courchevel: ["GVA", "CMF", "LYS"],
+  // Courchevel is filed by ALTITUDE LEVEL, never bare — the resort is a stack
+  // of villages at different heights and which one a hotel sits in decides the
+  // ski access and the price. All ten properties are at 1850; a bare
+  // "Courchevel" key existed only because one row had lost its level, and was
+  // removed with it. A future property at Moriond or Le Praz needs its own
+  // entry here, not a fallback.
   "Courchevel 1850": ["GVA", "CMF", "LYS"],
   "Les Belleville": ["GVA", "CMF", "LYS"],
 

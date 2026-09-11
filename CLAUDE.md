@@ -186,6 +186,10 @@ Reverse lookups stay sensible — NBO → Amboseli National Park, KGL → Volcan
 
 **`city` held a region name on five rows**, all fixed 2026-09-11: Four Seasons Hampshire → `Dogmersfield`, The Windsor Toya → `Toyako`, Etéreo → `Riviera Maya` (matching five siblings, including the EDITION in the same Kanai development), then Rosewood Schloss Fuschl and Mandarin Oriental Mallorca above. `admin_region` was right on every one and was left alone. The other 107 rows where `city` equals `admin_region` are correct — city-states and cantons that share their city's name.
 
+**Courchevel is filed by ALTITUDE LEVEL, never bare.** The resort is a stack of villages at different heights — 1850, Moriond (1650), Village (1550), Le Praz (1300), La Tania — and which one a hotel sits in decides the ski access, the walk to dinner and the price. `city` therefore reads **`Courchevel 1850`**, and a bare `Courchevel` is a defect, not a shorthand. All ten properties are at 1850 and every one says so in its own description; we hold nothing at the other levels, so a property added there needs its own `city` value and its own `cityAirports`/`transferRoutes` entries rather than a fallback.
+
+Fixed 2026-09-11 on one row, and it was self-inflicted: Rosewood Le Jardin Alpin read `city: "Courchevel"` with `local_area: "Jardin Alpin, Courchevel 1850"`. Splitting that compound to `Jardin Alpin` was right for `local_area` — the enclave is the finer district — but it left the row with **no trace of 1850 anywhere**, because its city had never carried it. The altitude had been sitting in the wrong field all along. The two now divide cleanly: **`city` carries the altitude village, `local_area` the enclave inside it.** Removing the bare key also took the dead plain-`Courchevel` entries out of `GATEWAY_OVERRIDE` and `transferRoutes.ts`, and `inspire/cityMetadata.ts` — already keyed on `Courchevel 1850` — began matching Rosewood for the first time.
+
 **Changing a `city` means rebuilding `cityAirports.ts` in the same pass** (§37, §43, and §49's "geography values are join keys, not display strings"). Every old value was a live key there. The first rebuild swapped three, 514 → 513 cities; the second removed `Majorca`, `Salzburg` and `Calvia` and added `Calvià` and `Hof bei Salzburg`, 513 → 512 — one fewer because two groups merged into one town. Merging also moved that centroid, so `Calvià`'s distance to PMI went 23 → 19km; splitting Parrot Cay out of Providenciales tightened that one 12 → 7km. **Read what the rebuild actually produced — do not assume it.** Parrot Cay came back with North Caicos (NCA, 12km) and PLS excluded at 28km, a worse answer than before the city was touched, because tier 1 takes every airport within 25km and returns only those. `NCA` is now in the generator's exclusion list (§37) and both cays resolve to PLS, 513 cities. Etéreo joining `Riviera Maya` moved that group's centroid and earned it **CUN at 33km**, which it had not been offered before. Verify after: every published `city` must have an airport entry, or the landing flight teaser resolves it to nothing.
 
 Both are plain `text` columns. `admin_region` is now constrained by a locked choice list (below); `state_province_county_island` is still unconstrained, and §44 records what unconstrained text fields do here — this one had already drifted into `Giorgia` and `Boca Raton`.
@@ -1259,7 +1263,7 @@ is close to even — an earlier draft of this section named only four urban ones
 and undercounted by half, so here is the whole list.
 
 *Correctly empty per §3*, a ski village, resort or reserve having no
-neighbourhoods (11): Courchevel 1850 (8), St. Moritz (5), Riviera Maya (5),
+neighbourhoods (10): St. Moritz (5), Riviera Maya (5),
 Sabi Sand Reserve (4), Lech Am Arlberg (4), Oia (4), Zermatt (3), Grumeti Game
 Reserve (3), Phinda Private Game Reserve (3), Providenciales (3), San Jose del
 Cabo (3).

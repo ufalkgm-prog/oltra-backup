@@ -398,8 +398,12 @@ cannot offer one we can loses the booking and reads as incompetence. It also
 went unnoticed through every earlier test, because every one of those asked
 about a destination rather than a property by name.
 
-**Still open, and a data question rather than a code one:** Courchevel and
-Courchevel 1850 are two `city` values for one resort, which is why the eight
-1850 properties and Rosewood never appear in the same search. Merging them
-would touch `cityAirports.ts` and the `local_area` work; splitting the
-difference is what the `name` search now papers over.
+**Resolved, and in the opposite direction to the one I proposed.** I suggested
+merging `Courchevel 1850` into `Courchevel`; Ulrik stopped it, correctly —
+that would have discarded the altitude level, which decides ski access and
+price and is among the first things a guest asks. Courchevel is a stack of
+villages at different heights, so the fix was to make every row carry its
+level, not to strip them. One row was wrong (Rosewood), all ten are now
+`Courchevel 1850`, and the bare key is gone. The `name` search stays useful on
+its own merits — "is X in the collection?" is still a question geography cannot
+answer — but it is no longer papering over a split. See §3.

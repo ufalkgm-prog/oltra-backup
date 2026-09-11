@@ -426,11 +426,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Costa Smeralda": [
     { iata: "OLB", label: "Olbia Costa Smeralda", distKm: 23, size: "large", runwayM: 2745 }
   ],
-  "Courchevel": [
-    { iata: "GVA", label: "Geneva", distKm: 101, size: "large", runwayM: 3900 },
-    { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64, size: "medium", runwayM: 2020 },
-    { iata: "LYS", label: "Lyon Saint-Exupéry", distKm: 125, size: "large", runwayM: 6670 }
-  ],
   "Courchevel 1850": [
     { iata: "GVA", label: "Geneva", distKm: 100, size: "large", runwayM: 3900 },
     { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 64, size: "medium", runwayM: 2020 },

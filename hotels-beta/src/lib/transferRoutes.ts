@@ -259,15 +259,10 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
    * d'Isere would make the set inconsistent, and asserting seasonal service is
    * the kind of guess this file exists to avoid. Worth adding to all four
    * together if anyone confirms the timetable. */
-  Courchevel: {
-    arriveAt: "GVA",
-    arriveAtLabel: "Geneva",
-    legs: [{ mode: "road", to: "the resort" }],
-    note:
-      "About two and a half hours, roughly 150km - up the Tarentaise and then " +
-      "the climb from Moutiers. Shuttle buses and private transfers both run " +
-      "through the ski season, and there is no onward flight.",
-  },
+  /* Only the 1850 key: Courchevel is filed by altitude level and all ten of
+   * our properties are at 1850. A plain "Courchevel" route existed briefly and
+   * was removed when the last row without a level was corrected — a fallback
+   * key would quietly answer for Moriond or Le Praz, whose drives differ. */
   "Courchevel 1850": {
     arriveAt: "GVA",
     arriveAtLabel: "Geneva",
