@@ -1,5 +1,5 @@
 - [RateHawk/ETG integration status](project_ratehawk_integration.md) — matching/images/availability done, certification-prep landed 2026-08-10 (CLAUDE.md §26-32); booking still blocked pending ETG
-- [Project context is three files](feedback_claude_md_source_of_truth.md) — CLAUDE.md (auto-loaded, 150k cap), CLAUDE-ARCHIVE.md, CLAUDE-AI.md; check size in chars before adding
+- [Where project context lives](feedback_claude_md_source_of_truth.md) — CLAUDE.md every session + five path-scoped .claude/rules/ files; CLAUDE-AI.md and CLAUDE-ARCHIVE.md on demand; the 150k cap was never real
 - [Diagnose live before fixing](feedback_diagnose_before_fixing.md) — verify assumed API/data shapes with a throwaway script first, flag doc/code contradictions instead of silently resolving (data only — not UI)
 - [Never act unprompted: UI tests, commits, pushes](project_no_unsolicited_ui_testing.md) — don't drive the browser to check a UI change, and don't commit/push, unless asked; main takes direct pushes, no PR or branch (CLAUDE.md §14)
 - [2026-08-11 UI fix session](project_ui_fix_session_2026-08-11.md) — pointer only; rollback map is in CLAUDE.md §33 (commits c507f57, 799e614)

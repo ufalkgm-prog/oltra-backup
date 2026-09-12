@@ -1,0 +1,157 @@
+---
+paths:
+  - "**/src/lib/ai/**"
+  - "**/src/components/ai/**"
+  - "**/src/app/api/chat/**"
+  - "**/src/app/AiResultFrames.tsx"
+  - "**/src/app/api/ai/**"
+---
+
+<!-- Split out of CLAUDE.md on 2026-09-12. The text is moved verbatim and the
+     section numbers are unchanged, so every §N cross-reference still resolves.
+     This file loads automatically when Claude reads a file matching `paths`
+     above; CLAUDE.md keeps a one-line pointer to it for the cases where the
+     work starts before any such file is opened. -->
+
+# CONCIERGE
+
+The AI concierge's rules — the structural no-prices guarantee, the tool set, the caps, and the prompt's own failure history. CLAUDE-AI.md holds the mechanics and the bug log; read that too before changing anything here.
+
+---
+
+## 50. THE AI CONCIERGE
+
+**Design history, mechanics and the bug log are in `CLAUDE-AI.md`. Read that file before changing anything in `src/lib/ai` or `src/components/ai` — it carries the failures this feature already had.**
+
+### Status
+
+**On `main` since 2026-09-10** — merged as a fast-forward of the 31 `ai-chat` commits, so the history stays the linear series §14 asks for. `ai-chat` is now a stale pointer at the same commit; work on `main` like everything else.
+
+Behind `NEXT_PUBLIC_AI_CHAT_ENABLED`, **default off**, which is what made merging safe: the flag gates the route, the modal and the entry button, so the code sits on production invisibly until the variable is set. **It is not set on Vercel** — setting it there is a deliberate, separate act, and needs a redeploy because Next inlines it at build time.
+
+It was first built as a *mode* on the landing page behind a Classic/AI toggle; `5622166` made it a modal the whole site can open, and **everything below describes the current design**.
+
+**Local prerequisite that is easy to lose an hour to**: `NEXT_PUBLIC_AI_CHAT_ENABLED=1` is in no committed environment — it goes in `.env.local` by hand. Without it the button doesn't render and `/api/chat` answers 404, which looks exactly like the feature being broken rather than switched off. Inlined at build time, so a change needs a dev-server restart locally and a redeploy on Vercel.
+
+### What it is
+
+A second way into the site: describe the trip in prose, get curated hotels, flights and restaurants back in the existing cards. Discovery and steering only — it never books, never takes payment, and every tool it reaches is read-only.
+
+### The one design decision that matters
+
+**The no-prices rule is structural, not a prompt promise.** `searchHotels`, `checkAvailability` and `searchFlights` fetch real rates, use them to rank and to test any ceiling the visitor named, then **discard the amount**. The model receives `{available, priceRank, withinBudget}` and never a figure, so it cannot leak a price it was never given — under any framing, including direct pressure. Every number on screen is fetched by the card from the same batch route the structured search uses.
+
+If a future change hands the model a raw amount "just for context", that guarantee is gone and the prompt becomes the only defence. Don't.
+
+### Route and tools
+
+`src/app/api/chat/route.ts` holds `ANTHROPIC_API_KEY` and nothing else does. Guard order is deliberate: **flag** (404) → **session** (401, before the key check, so an unauthenticated caller learns nothing about our configuration) → **rate limit** → **input caps** → **triage**.
+
+Triage is `claude-haiku-4-5` classifying travel / probe / other before any Opus spend, and a second independent judgement: a jailbreak that talks the main model round still has to pass a classifier with no tools and no history. It **fails open** on error — refusing everyone during a transient outage is worse. A decline streams back as a normal assistant message, not a JSON error, so the client has one code path.
+
+Tools, all read-only: `searchHotels`, `getHotelDetails`, `checkAvailability`, `searchFlights`, `nearestAirport`, `searchRestaurants`, `webSearch`, plus `presentResults` — not a data tool but how the model hands the UI a structured result set. The client renders from that tool call rather than parsing names out of prose, which would break the moment the model rephrased.
+
+`nearestAirport` costs nothing — `cityAirports.ts` already covers every hotel city. **Do not add a Google Places call for this.** `checkAvailability` skips passive hotels (§42).
+
+**A tool parameter whose valid values are a closed set should be an `enum`, not a described string.** Live testing had the model inventing plausible taxonomy tags — "quiet", "secluded", "wellness" — matching nothing and spending two extra round trips recovering, silently, on every query. `lib/ai/taxonomy.ts` mirrors the locked §44 vocabularies as JSON Schema enums. Safe to hardcode because those fields are `allowOther: false`; refresh from `GET /fields/hotels/{field}` if they move, since a stale entry silently matches nothing.
+
+`searchRestaurants` searches one city, built on `getRestaurantsByCity` so the concierge sees exactly what the Restaurants page would, alias fallback included. Cuisine and type narrow in JS, because a Directus `_eq` would miss "Modern French" for "French". An empty result distinguishes **"we do not cover this city"** from **"nothing matched those filters"**, because only the first should send the visitor elsewhere. Restaurants follow the **same in-inventory rule hotels have**: never name one that did not come back from the tool, however well known.
+
+### Ranking: fit, not decoration (2026-09-10)
+
+**`ext_points` must never order a candidate list.** It counts external accreditations, which is orthogonal to what was asked, and sorting by it turned every answer into a trophy cabinet. Asked for a family ski trip, the tool matched 53, cut to 40 by awards rank, and the 13 it dropped were the least decorated — eight of them carrying the `Family` tag, including Suvretta House, Les Fermes de Marie and Rosewood Courchevel. The model then picked four grand hotels from what survived, having never seen the family-strongest.
+
+Order is now **tag-match count → `editor_rank` → `ext_points` as a last tiebreak only**, in `relevanceSort`. `filterHotelsByTags` ORs within a field (§4), so a hotel matching one of three requested tags passes the same test as one matching all three: right for inclusion, wrong for ordering.
+
+Awards survive only as `awards` labels on each candidate, and the prompt says they are not a ranking — name them **only when the visitor asks about accreditation itself** ("which are Michelin-starred", "the Forbes five-star ones"), or in passing when an award is the reason a hotel fits a stated need. The model is never given the `ext_points` number.
+
+### Caps, and the broad-set gate
+
+| Constant | Value | Why |
+|---|---|---|
+| `MAX_HOTEL_CANDIDATES` | 120 | Context ceiling, not an editorial one. Narrowing is the concierge's job. |
+| `BROAD_RESULT_LIMIT` | 20 | Above this, ask before showing |
+| `MAX_AVAILABILITY_IDS` | 120 | Matches the candidate cap so the availability count covers every candidate |
+
+**`/api/ai/hotels` imports `MAX_HOTEL_CANDIDATES` and must never sit below it.** It held its own literal `40`, which agreed with the old tool cap by coincidence rather than construction — so raising the tool cap silently truncated a 67-hotel answer to 40 cards, with nothing in the UI to say so.
+
+**Above `BROAD_RESULT_LIMIT`, `searchHotels` returns counts and `narrowBy` axes INSTEAD of properties**, with `tooBroadToShow: true`. The model cannot present a set it was not given, so "ask before showing a directory" is structural rather than a prompt line — and §50's own testing shows prompt-only rules of this shape get skipped. Counted on what the visitor would see: available properties when dates are known, matches otherwise. `showAll: true` is the escape hatch, and it is **required** — without it "just show me all of them" loops forever.
+
+Each `narrowBy` axis reports `covers` out of `of`. Not every axis explains the whole set: `state_province_county_island` is null for a major city (§3), so it described half of Italy and read Tuscany as 2 where 10 hotels sit. `admin_region` is never null and is the axis to prefer.
+
+### Colloquial geography — `lib/ai/macroRegions.ts`
+
+"The Alps", "the Caribbean", "Scandinavia" are how people describe where they want to go and **none is a value in any column**. `area: "Alps"` matched nothing, cost a wasted round trip every time, and the blind retry searched the world — returning Colorado and Alberta for an Alpine question.
+
+18 terms, exposed as a `macroRegion` **enum** (the §44 lesson: a closed set is an enum, not a described string). `region` — the continent column, which already holds "Caribbean" and "South Pacific" — is exposed too, and had never been reachable. A macro term is also resolved out of `country`/`area`/`adminRegion`/`city`, because the model does not always reach for a new parameter.
+
+* **Mountain ranges intersect with a `setting` tag.** Administrative regions alone put Munich, Lausanne and Vevey in the Alps; requiring `Mountains` strips exactly those and keeps every real one.
+* **Values matching nothing today are deliberate** — Tyrol, Idaho, Trentino, Malta, Finland, Belgium. They are the boundary as a person draws it, so a future hotel there needs no code change. Verified as genuine absences, not typos. **Do not "clean" them out.**
+* A search that still matches nothing returns `didYouMean`: real values with the parameter each belongs to, matched by bounded Levenshtein — containment alone scores "Tirol" against "Tyrol" at zero, which is the case the feature exists for.
+
+**`area` and `adminRegion` are one geography slot** — each matches *both* columns, OR'd. They are separate fields with separate meanings (§3), but they legitimately hold the same value (Tuscany, Bali, Sicily), and the traveller field is deliberately null for a major city. Matching `area: "Tuscany"` against the traveller column alone returned **2 hotels of the 10 in Tuscany**, dropping every Florence property plus Il Pellicano and Forte dei Marmi, which sit under their own sub-areas. The model cannot know which of two near-identical fields holds the name it wants, and guessing wrong must widen the search rather than gut it. Narrowing a region to what was meant is then the model's job, via `settings` — which is what it does: the same query now searches Tuscany with `Countryside`/`Hillside` and says so.
+
+### Never say aloud the words we use to explain the data
+
+The concierge told a visitor "an open jaw works nicely here". That is airline trade jargon for flying into one city and home from another, and it came **from our own tool description** — `returnDate` said "leave unset on the legs of an open jaw". Vocabulary written to describe a data shape to the model got reused as house voice.
+
+The prompt now carries a general rule, because this class recurs: instructions and tool descriptions name things precisely so the model can act on them, and much of that vocabulary is jargon a guest has never met. Not "open jaw"; not "passive" or "not integrated" (§42) — "we can't book that one here"; never "macroRegion", "setting tags", "candidates", "the tool", or a supplier's name. **If a phrase would look at home in a schema, it does not go in an answer.** When adding a tool description, write it so that a sentence lifted from it verbatim would still sound like a concierge.
+
+### Dates: never invent one (2026-09-10)
+
+**A question about which hotels we have is not a question about a particular week.** Answering it against a week the model chose prices the wrong stay and hides everything sold out then.
+
+No timing given — no dates, month, season — means **omit `stay`** from `searchHotels` and `presentResults`. Cards render without prices, which is the honest answer, and the follow-up asks when. Asked about price with no dates: ask for timing, do not guess a week to produce a figure.
+
+**Dates in the page's search form are an offer, not an assumption.** They may be dates the concierge itself proposed earlier: `AiResultsSync` writes an answer's dates into the URL (§8), `LandingSearchPanel` reads them back and republishes them as page context, and the model then treats its own guess as the visitor's stated wish. A leftover ski week priced a beach question in France. `pageContext` now says "filled into the search form" rather than "for", so the model can tell form contents from intent.
+
+### What the panel says, and what the page shows
+
+`hotelIds` is **every** property that fits and becomes the cards; `rationales` is the **five to eight** the panel names. They are the same list only when the set is small.
+
+* **The count in the framing is `hotelIds.length`** — not how many matched, not how many are free. Three numbers are in play and only one is the answer; say two only when both matter ("Ten of the thirty-nine have rooms that week").
+* **Named properties lead the card order.** `highlightsFirst` reorders `hotelIds` before it reaches the store, so the footnote's promise — "these come first on the page behind, with the other N below" — is one the page keeps.
+* `MAX_NAMED = 8` is a hard UI cap, independent of how many rationales arrive.
+* The footnote claims prices **only when a stay was passed**; without one the cards are blank.
+
+### Water-proximity tags are inconsistent — §42B
+
+`Beachfront`, `Beach`, `Seaside`, `Coastal`, `Oceanfront`, `Waterfront`, `Clifftop` are not applied consistently, and the §42B reclassification has never run. The whole Côte d'Azur is `Waterfront` or `Coastal` and **none of it `Beachfront`**, so "beachfront hotels in France" returned 3 — Deauville, La Baule, Biarritz — and missed Hôtel du Cap Eden-Roc, Cheval Blanc Saint-Tropez and the rest.
+
+The `settings` parameter description tells the model to pass the whole family for anything by the sea, which took that answer from 3 to 17. **That is a patch over the data, not a fix.** §42B is still the real answer.
+
+### The system prompt
+
+Read-only tools, no booking or payment, the confidentiality block, the non-travel decline wording, the no-result wording, adjacent questions bounded to inventory, the restaurant in-inventory rule, page context, answer-then-offer-the-handoff, the in-chat summary rule, and the `searchTags` requirement.
+
+**Keep `SYSTEM_PROMPT` byte-stable per deploy.** It carries the prompt cache breakpoint. Anything per-request — the date, the page context — goes in a *later* system block. The call-level `cacheControl` this replaced caches the **last** cacheable block, which would have been the volatile one: the cache would have missed on every request while looking correctly configured. **If `usage.cache_read_input_tokens` is persistently zero, check this first.**
+
+**A prompt change is a code change, and it regresses like one.** Two fixes were caused by the fix before them: tightening for brevity produced wording the model read as permission to ask *instead of* showing results, so it replied helpfully and rendered no cards. Nothing failed; there was simply no `presentResults` call — invisible unless you notice `/api/chat` wasn't followed by `/api/ai/hotels`. **After editing `systemPrompt.ts`, run a real query in a browser and check the tool fired.**
+
+**"The best" — the one question answered with a question.** Asked "the 3 best hotels in Paris" it named three and called them "the three that stand above the rest". **There is no ranking behind the collection, so that was invented.** It now answers with "I can highly recommend all hotels on myOLTRA" plus a request for something to judge on, and holds it under pressure. **The exception is deliberately narrow and the prompt says so twice**, per the regression above: it applies only when there is nothing to rank by. "Hotels in Paris" still searches and shows, as does any request carrying a quarter, a spa, a brand, a budget or a date.
+
+### AI SDK v7 — where training priors are wrong
+
+`ai@7` + `@ai-sdk/anthropic@4` + `@ai-sdk/react`. Verified against the installed `.d.ts`, not recalled:
+
+* `useChat` is in **`@ai-sdk/react`**, not `ai`.
+* Tool params are **`inputSchema`**, not `parameters`.
+* **`convertToModelMessages` is async** — await it.
+* `useChat` does not manage input; the caller owns the text state and calls `sendMessage({ text })`. Per-request data goes in the second argument: `sendMessage({text}, {body: {...}})`.
+* **`role: "system"` is rejected inside `messages`.** It goes through `instructions`, which accepts a string, one system message, or an **array** — the array form is what makes a cached prefix plus volatile suffixes possible.
+* A `ToolUIPart` in state `input-streaming` has `input?: DeepPartial<…>` — partial, and typed as such.
+* `stopWhen` takes an array; `hasToolCall(name)` is exported alongside `stepCountIs(n)`.
+* `TripType` in `duffelNormalizer.ts` is `'one-way'`, not `'oneway'`.
+* `buildGuestsArray(adults, kids, ages, rooms)` is positional.
+
+### Prerequisites
+
+* `ANTHROPIC_API_KEY` — server-only, never `NEXT_PUBLIC`. On Vercel: Sensitive, **Preview and Production** (Preview included, or the preview cannot answer).
+* `NEXT_PUBLIC_AI_CHAT_ENABLED` — public flag, inlined at build time.
+* **A spend cap and usage alerts in the Anthropic Console.** The in-memory rate limiter is per serverless instance, so the real ceiling is (instances × cap) — a cost backstop, not a control. Swap the Map for Upstash if the site ever opens past `/beta-login`.
+
+### Deliberately not built
+
+Chat on `/hotels/[hotelid]` or in the members area, any booking/payment/write tool, fine-tuning, pgvector, any markup on prices, and any change to the standalone Restaurants page.
+
+---
