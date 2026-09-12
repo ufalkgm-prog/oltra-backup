@@ -970,7 +970,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "AXA", label: "Clayton J. Lloyd", distKm: 19, size: "medium", runwayM: 1665 }
   ],
   "Marmaris": [
-    { iata: "RHO", label: "Rhodes \"Diagoras\"", distKm: 40, size: "large", runwayM: 3306 }
+    { iata: "DLM", label: "Dalaman", distKm: 67, size: "large", runwayM: 3000 },
+    { iata: "BJV", label: "Milas Bodrum", distKm: 64, size: "large", runwayM: 5940 }
   ],
   "Marrakech": [
     { iata: "RAK", label: "Marrakesh Menara", distKm: 6, size: "large", runwayM: 3100 }
@@ -1809,8 +1810,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
  * NOT a blanket "first entry wins". For everything else the list is
  * nearest-first, where the first entry is the closest strip and not the
  * gateway - New York's nearest to the hotel centroid is LaGuardia and the
- * answer has to be JFK. So the size rule stays for the other 458
- * destinations and only these 59 read position one as the answer. */
+ * answer has to be JFK. So the size rule stays for the other 457
+ * destinations and only these 60 read position one as the answer. */
 const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "amboseli national park",
   "andermatt",
@@ -1845,6 +1846,7 @@ const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "lech am arlberg",
   "les belleville",
   "lugano",
+  "marmaris",
   "masai mara",
   "menlo park",
   "moltrasio",

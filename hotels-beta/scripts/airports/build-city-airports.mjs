@@ -229,6 +229,32 @@ const GATEWAY_OVERRIDE = {
    * light-aircraft leg from Johannesburg and its route already says so, and
    * Durban at 228km would be a worse primary, not a better one. */
 
+  /* MARMARIS listed ONE airport and it was RHODES - a Greek island, in another
+   * country, 40km away as the line goes and 7h28 by road and ferry. Dalaman,
+   * its actual gateway, was not in the list at all.
+   *
+   * The audit could never have raised it: every screen there is about runway
+   * length, distance and airport size, and RHO is a large airport with a
+   * 3,306m runway 40km away. It surfaced only once the last leg was measured -
+   * a seven-and-a-half-hour "drive" to a destination 40km off is a shape
+   * nothing else in this file could see. That is the argument for measuring the
+   * transfer even where the airport list looks healthy.
+   *
+   * Ulrik confirmed the gateway and the ordering. Dalaman is 1h28 from Marmaris
+   * town by road (measured 95km, against his 90-100km and 1h15-1h30 - the two
+   * agree). Bodrum is the backup and stays listed, because it is a real
+   * alternative when the fare or the timing is much better, but second: his
+   * figure for it is about three hours and the measurement 1h55, and either way
+   * it is the longer road.
+   *
+   * RHODES IS DROPPED RATHER THAN DEMOTED, which is the Pamushana rule - an
+   * airport in the wrong country is not a worse option, it is the wrong
+   * question, and pricing Copenhagen to Rhodes for a Marmaris stay is simply an
+   * error. The Rhodes catamaran is a genuine 50-minute crossing and a guest
+   * already in the Dodecanese may well use it, so it is recorded where a route
+   * belongs: the note on transferRoutes.ts. */
+  Marmaris: ["DLM", "BJV"],
+
   // The Gulf of Saint-Tropez. La Mole is a 1,071m private-jet strip with no
   // sellable scheduled service, so a flight search against it returns nothing.
   // Nice is the gateway; Toulon is nearer and real.

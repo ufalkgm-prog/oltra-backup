@@ -448,12 +448,33 @@ async function main() {
    * without --refresh and without re-querying anything. */
   const unroutable = [...noRoad].filter((k) => UNROUTABLE_BY_API[k]).sort();
   for (const k of unroutable) noRoad.delete(k);
+  /* Pruning below may remove one of these too, so it is filtered again at
+   * emit rather than trusted here. */
   const unlisted = Object.keys(UNROUTABLE_BY_API).filter((k) => !unroutable.includes(k));
   if (unlisted.length) {
     console.log(
       `\nUNROUTABLE_BY_API lists ${unlisted.length} pair(s) that did not come back road-less — ` +
         `stale entries, or a key that never existed: ${unlisted.join(", ")}`
     );
+  }
+
+  /* PRUNE PAIRS THAT NO LONGER EXIST. Changing a destination's airport list
+   * leaves its old entries behind - Marmaris kept a 7h28 figure for Rhodes
+   * after Rhodes was dropped from the list - and audit-airports.mjs has a
+   * defect class for exactly that. Pruning here rather than leaving it to the
+   * audit means the rebuild that changes the list also cleans up after itself,
+   * in the same pass, which is the rule §51 states for overrides. */
+  const livePairs = new Set(
+    [...pairsByCity].flatMap(([city, iatas]) => iatas.map((iata) => `${city}|${iata}`))
+  );
+  const pruned = [...times.keys(), ...noRoad, ...unroutable].filter((k) => !livePairs.has(k));
+  if (pruned.length) {
+    console.log(`\nPRUNED ${pruned.length} entr${pruned.length === 1 ? "y" : "ies"} for pairs that no longer exist:`);
+    for (const k of pruned) console.log(`  ${k}`);
+    for (const k of pruned) {
+      times.delete(k);
+      noRoad.delete(k);
+    }
   }
 
   const keys = [...times.keys()].sort();

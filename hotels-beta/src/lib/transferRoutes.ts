@@ -494,7 +494,47 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
     note: "Canouan takes regional flights, most often connecting through Barbados or St Vincent.",
   },
 
-  /* ---- Zermatt. A car-free village is not an unreachable one. ----
+  /* ---- Marmaris. The gateway was in the wrong country until 2026-09-12. ----
+   *
+   * Detail from Ulrik, who knows the coast. Two things about it are worth
+   * keeping beyond the route itself.
+   *
+   * THE PROPERTY IS NOT IN THE TOWN. Our one Marmaris hotel is D Maris Bay, out
+   * on the Hisaronu bay some 30 minutes west of Marmaris itself - so the
+   * measured road time is 1h58 from Dalaman where the town is 1h28. Both are
+   * right; they are different places, and the stored figure is to the hotel,
+   * which is what a guest is actually asking about.
+   *
+   * NO FARES HERE, and that is structural rather than an oversight. This note
+   * is handed to the model by `nearestAirport`, and §50's guarantee is that the
+   * concierge is never given a figure it could quote. Ulrik's transfer price
+   * was a useful number and it is deliberately left out; "booked in advance" is
+   * the part the guest needs.
+   *
+   * The Rhodes catamaran is in the note rather than the legs because it is not
+   * what happens after you land on the ticket - it is a different way of
+   * arriving altogether, and a real one for someone already in the Dodecanese.
+   * Bodrum stays out of the note for the standing reason: this file answers how
+   * you get there from the airport, not which airport, and holding that choice
+   * in two places is how the two drift apart. */
+  Marmaris: {
+    arriveAt: "DLM",
+    arriveAtLabel: "Dalaman",
+    legs: [{ mode: "road", to: "the hotel" }],
+    note:
+      "Dalaman is the gateway - about an hour and a half to Marmaris town and " +
+      "closer to two hours on to the bay, where the hotel is. A private " +
+      "transfer booked in advance is the straightforward option; the airport " +
+      "shuttle buses meet flights but only run as far as the Marmaris bus " +
+      "station, which leaves you a taxi short of the door. A car is worth it if " +
+      "the plan includes Datca, Bozburun or the Loryma peninsula. Bodrum is a " +
+      "second airport and about half an hour further by road, so it is worth it " +
+      "only when the flights are much better. If the trip starts in the " +
+      "Dodecanese, the catamaran from Rhodes takes about fifty minutes and runs " +
+      "most days in season.",
+  },
+
+  /* ---- Zermatt. A car-free village is not an unreachable one. ---- 
    *
    * Corrected twice by Ulrik, and both corrections are in the entry. The
    * transfer drives the whole way to Zermatt's own transfer station - Tasch is
