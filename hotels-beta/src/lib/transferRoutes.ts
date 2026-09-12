@@ -494,6 +494,37 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
     note: "Canouan takes regional flights, most often connecting through Barbados or St Vincent.",
   },
 
+  /* ---- Zermatt. A car-free village is not an unreachable one. ----
+   *
+   * Corrected twice by Ulrik, and both corrections are in the entry. The
+   * transfer drives the whole way to Zermatt's own transfer station - Tasch is
+   * where you change if you are arriving by TRAIN, not where the road ends -
+   * and the last ten minutes are an electric taxi, which is the only kind of
+   * vehicle the village allows. The rail alternative exists and is deliberately
+   * described as the second-best option rather than omitted: it means handling
+   * luggage through a change at Tasch, which is not what this clientele wants
+   * after a flight.
+   *
+   * Geneva is `arriveAt` because it is Zermatt's hand-ordered first airport
+   * (§37), and the invariant requires an airport CITY_AIRPORTS lists for the
+   * same key. Measured road times, including the allowance past Tasch: Geneva
+   * 3h10, Malpensa 3h09, Zurich 4h00 - so the ranking has real numbers here now
+   * and no longer treats the village as unreachable by road. */
+  Zermatt: {
+    arriveAt: "GVA",
+    arriveAtLabel: "Geneva",
+    legs: [
+      { mode: "road", to: "Zermatt's transfer station, at the edge of the village" },
+      { mode: "road", to: "the hotel by electric taxi, about ten minutes", arrangedByHotel: true },
+    ],
+    note:
+      "Zermatt allows no petrol cars, so the transfer hands you over to an " +
+      "electric taxi at the village transfer station and the hotel takes it " +
+      "from there. About three hours up the Rhone valley from Geneva. The train " +
+      "via Tasch is the alternative, but it means a change with all your " +
+      "luggage and is not usually worth it.",
+  },
+
   // ---- British Virgin Islands. Spanish Town is on Virgin Gorda itself; the
   // other two are private islands off it, so the final leg is by water. ----
   "Spanish Town": {

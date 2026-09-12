@@ -292,6 +292,79 @@ if (QUIET && open.length > show.length) console.log(`  ... and ${open.length - s
 console.log(`\n  A hit is not a verdict. Florence, Mykonos and Santorini appear here because`);
 console.log(`  a real international airport can have a short runway. Work the queue by`);
 console.log(`  hotel count and convert findings into GATEWAY_OVERRIDE entries.\n`);
+/* ---- THE LAST LEG: src/lib/transferTimes.ts ----
+ *
+ * The ranking adds the flight and the drive together, so a pair with no answer
+ * of any kind silently drops out of the comparison and the ordering falls back
+ * to air time alone. That is a defect, not a candidate: the fix is one command.
+ *
+ * Read the file's own three categories rather than inferring from a blank,
+ * because they mean different things — measured, no road at all, and a road the
+ * routing API cannot see. Conflating them is how "Seoul has no road from its
+ * airport" would get written down as a fact. */
+{
+  const ttPath = path.join(ROOT, "src", "lib", "transferTimes.ts");
+  if (!fs.existsSync(ttPath)) {
+    D("no transferTimes.ts at all", ["run scripts/airports/build-transfer-times.mjs"]);
+  } else {
+    const tt = fs.readFileSync(ttPath, "utf8");
+    const timed = new Map(
+      [...tt.matchAll(/"([^"]+\|[A-Z]{3})": \{ minutes: (\d+), km: (\d+) \}/g)]
+        .map((m) => [m[1], { min: +m[2], km: +m[3] }])
+    );
+    const setOf = (name) => {
+      const at = tt.indexOf(`${name}: ReadonlySet<string> = new Set([`);
+      if (at < 0) return new Set();
+      const body = tt.slice(at, tt.indexOf("]);", at));
+      return new Set([...body.matchAll(/"([^"]+\|[A-Z]{3})"/g)].map((m) => m[1]));
+    };
+    const noRoad = setOf("NO_ROAD_ROUTE");
+    const unroutable = new Set(
+      [...tt.matchAll(/^ {2}"([^"]+\|[A-Z]{3})":$/gm)].map((m) => m[1])
+    );
+
+    /* Same guard as SIZE_VOCAB above, for the same reason: a parser that reads
+     * nothing reports a clean file exactly as confidently as a clean file does.
+     * 743 pairs exist, so a handful means the shape changed under the regex. */
+    if (timed.size + noRoad.size + unroutable.size < 100) {
+      console.error(`\n  ABORT: parsed only ${timed.size} timed pairs from transferTimes.ts.`);
+      console.error("  This audit is misreading the file, which matters more than anything below.\n");
+      process.exit(1);
+    }
+
+    const pairs = live.flatMap((k) => airportsOf.get(k).map((a) => `${k}|${a.iata}`));
+    const unanswered = pairs.filter(
+      (key) => !timed.has(key) && !noRoad.has(key) && !unroutable.has(key)
+    );
+    D("airport pair with no last-leg answer of any kind", unanswered,
+      "run scripts/airports/build-transfer-times.mjs — it is incremental and only prices these");
+
+    const stale = [...timed.keys(), ...noRoad, ...unroutable].filter((key) => !pairs.includes(key));
+    D("last-leg entry for a pair that no longer exists", stale,
+      "a renamed city or a changed airport list leaves these behind, answering for nothing");
+
+    if (!QUIET) {
+      /* CANDIDATES. Neither of these is wrong — the Serengeti really is ten
+       * hours by road, which is why nobody drives it and why it has a transfer
+       * route instead — but both are the shape a bad centroid or a misplaced
+       * airport would also take. */
+      const kmh = (t) => t.km / Math.max(1 / 60, t.min / 60);
+      const ferrySuspect = [...timed.entries()].filter(([, t]) => t.km > 20 && kmh(t) < 25);
+      const veryLong = [...timed.entries()].filter(([, t]) => t.min > 240);
+      console.log(`\n  LAST LEG — ${timed.size} measured, ${noRoad.size} with no road, ${unroutable.size} the API cannot route\n`);
+      console.log(`  candidate  ${String(ferrySuspect.length).padStart(3)}  averaging under 25km/h — a ferry or a boat is inside the figure`);
+      for (const [key, t] of ferrySuspect.sort((a, b) => b[1].min - a[1].min).slice(0, 12)) {
+        console.log(`        ${key.padEnd(34)} ${String(t.min).padStart(4)}min ${String(t.km).padStart(4)}km  ${Math.round(kmh(t))}km/h`);
+      }
+      console.log(`  candidate  ${String(veryLong.length).padStart(3)}  over four hours by road — check it is a drive anyone makes`);
+      for (const [key, t] of veryLong.sort((a, b) => b[1].min - a[1].min).slice(0, 12)) {
+        console.log(`        ${key.padEnd(34)} ${String(t.min).padStart(4)}min ${String(t.km).padStart(4)}km`);
+      }
+      console.log();
+    }
+  }
+}
+
   if (emptyList.length) {
     console.log(`  PARSE WARNING - ${emptyList.length} destination(s) parsed with no airports: ${emptyList.join(", ")}`);
     console.log("  This audit is misreading cityAirports.ts, not the mapping being empty.");
