@@ -580,3 +580,82 @@ All apply scripts: dry-run by default, re-read each row before patching, **appen
 * **`local_area` is untouched** and still holds neighbourhoods. Ulrik flagged a separate pass for it.
 
 ---
+
+---
+
+## 42B. WATER-PROXIMITY SETTING RECLASSIFICATION (redefined and started 2026-09-10)
+
+**These definitions replace the ones agreed 2026-08-16, and one pair is inverted — read the table, do not go from memory.**
+
+| Value | Means |
+|---|---|
+| `Beachfront` | On an actual sandy beach, **nothing between** the hotel and the sand |
+| `Beach` | Overlooking the beach with a **road or small obstruction** between — under 5 minutes' walk |
+| `Oceanfront` | On the ocean but **not a beach**, including clifftops a limited distance above it |
+| `Waterfront` | **All other water** — rivers, lakes, canals. Absorbs `Lakeside`, `Riverside`, `Canalside` |
+| `Coastal` | Near the ocean but not on it — a clifftop 20+ minutes from reaching the water |
+| `Seaside`, `Clifftop` | **To be retired**, reclassified into the above |
+
+**`Beach` and `Beachfront` swapped meaning.** August had `Beachfront` = "truly on the beach" and `Beach` = "walking distance". September makes `Beach` the *weaker* value. Ulrik was offered both directions and chose this one deliberately, because the existing 163 `Beachfront` rows mostly do sit on sand and stay correct — the alternative moved ~130 records for no gain. A guest filtering "Beachfront" gets the stronger set.
+
+**`Waterfront` is now the generic for fresh water**, so `Lakeside` (34), `Riverside` (29) and `Canalside` (8) retire into it. This removes Lakeside as a filter facet, which was flagged and accepted.
+
+### Progress
+
+| Batch | Scope | Status |
+|---|---|---|
+| 1 | the 37 tagged `Waterfront` | **Applied 2026-09-10** — 36 written, 1 no-op, 0 failures, verified by re-read |
+| 2 | `Lakeside` + `Riverside` + `Canalside` (71) | **Applied 2026-09-11** — 71 published + 4 unpublished written, 0 failures. All three values **retired from the choice lists** |
+| 3 | `Coastal` + `Oceanfront` (99) | **Applied 2026-09-11** — 13 written, 86 unchanged, plus 4 contradictory pairs the triage missed. **0 rows now carry two water values** |
+| 4 | `Seaside` + `Clifftop` (8 rows) | **Applied 2026-09-11** — 8 written, 0 failures. Both **retired from the choice lists** |
+| 5 | `Beachfront` (200) | **Applied 2026-09-11** — `Beach` retired into it, one bad row retagged. §42B complete |
+
+Batch 2 artefacts: `apply-freshwater-batch2-2026-09-11.mjs` + rollback. Batch 1: `scripts/hotels/settings-2026/apply-waterfront-batch1-2026-09-10.mjs` and its appending rollback record. **A one-time record of a reviewed session, not a tool** — copy the pattern for the next batch, per §24.
+
+**Only the water tag is touched.** A hotel tagged `["City","Waterfront"]` keeps `City`; the water value is replaced in the array and in whichever of `primary_setting`/`secondary_setting` held it. Explicit instruction, and it is what makes a batch safe against rows whose other tags were never reviewed.
+
+**"Mechanical" was wrong, and checking cost one query.** Batch 2 was called a straight rename needing no review. Ten of the 71 turned out to be SALT water wearing a freshwater tag: the Oberoi Mumbai tagged `Riverside` while facing the Arabian Sea, three Bosphorus hotels the same, and Loch Torridon — a sea loch — tagged `Lakeside`, its own highlights calling it a "lakeside escape". A merge is only mechanical once you have looked at what is being merged.
+
+The three Bosphorus hotels were set to `Oceanfront` to match Mandarin Oriental Bosphorus from batch 1. **Four hotels on one strait had to agree**, and only the review surfaced that they did not.
+
+**A contradictory PAIR hides where a wrong tag does not.** Batch 3 found four hotels carrying two water values that cannot both hold — `Beachfront` + `Coastal` claims a private beach *and* twenty minutes from the water. Each half looks defensible alone, which is why they survived every earlier pass, and why text-signal triage misses them: nothing in the prose is wrong.
+
+**Check for them directly, and check the whole collection, not the batch's scope.** Batch 3's triage looked for `Coastal` + `Oceanfront` overlap and found none — but a row tagged `Beachfront` + `Coastal` enters the scope through its `Coastal` half while the contradiction sits in the other, so it read as a clean single-value row. Four more surfaced only in the post-write verification, which scanned all 903 rows for "more than one water value" rather than checking the ids the batch had touched. **Write that check into the verification of every batch.**
+
+### What the machine cannot decide, measured not assumed
+
+**OSM is not a usable signal for this roster.** Tested live 2026-09-10: Velaa Private Island returned **zero** `natural=beach` polygons — a Maldivian resort that is nothing but sand — confirming §42B's original worry about coverage outside Europe. Measuring to a polygon's `center` also put One&Only Le Saint Géran 637m from a beach it sits on; distance must be to the nearest vertex, not the centroid. Both Overpass mirrors then returned 504 partway through six queries, so 268 of them was never realistic.
+
+**Our own editorial text does not settle it either.** Across the 268 in-scope hotels, "direct beach access" appears 8 times and "across the road" **zero**. The descriptions are evocative, not diagnostic — they establish that there is a beach, never what lies between it and the hotel.
+
+So the Beachfront/Beach line is a human call in every case, which is why batches go through a review artifact (the §25 awards pattern) with a proposed value, the quoted evidence, and a confidence flag. In batch 1 Ulrik overrode 4 of 37 proposals — Six Senses Samui and Cap Estel to `Beachfront`, Fouquet's Saint-Barth to `Oceanfront`, and Baku left as `Waterfront`.
+
+Retiring a value means converting the arrays **then** removing the choice from the field's `meta.options.choices`, or the filter keeps offering a dead option (§44). All five retirements are done — `Lakeside`, `Riverside`, `Canalside`, `Seaside` and `Clifftop` **removed from all three fields**, `setting`, `primary_setting` and `secondary_setting`, which §44 locked to one shared list. The `setting` vocabulary went 22 → 17.
+
+**§42B is complete.** Final vocabulary — `Beachfront` (200), `Waterfront` (75), `Oceanfront` (62), `Coastal` (25). Four values, one meaning each, `setting` down from 22 choices to 16, and **0 rows carrying a retired value, two water values, a duplicate tag or an empty setting**.
+
+**`Beach` was retired rather than populated**, and that is the interesting decision. It was meant to hold "a road between the hotel and the sand" — but settling that needs a per-hotel judgement across 194 rows, OSM cannot answer it for this roster, and our own editorial text says "across the road" ZERO times in 268 descriptions. The distinction cost more than it was worth, so `Beachfront` now means at or on the beach without claiming how many metres. **A category nobody can populate reliably is worse than no category**: it looks like information and is noise.
+
+**`Beach` is STILL a valid `activities` value.** Only the `setting` one retired. Removing both from `taxonomy.ts` would have silently broken the Inspire beach purpose, whose mapping uses the activity — caught by reading the grep hits rather than acting on the count.
+
+**A retire has more consumers than the Directus field, and the grep is not optional.** `lib/ai/taxonomy.ts` mirrors this vocabulary as a JSON Schema enum for the concierge, where a stale entry hands the model a value that silently matches nothing (§50). Batch 4 found two more: `lib/ai/inspireMirror.ts` mapped `Seaside` into its beach purpose, and `tools.ts` named all seven old water values in the `settings` parameter description. **Three files, none of which the Directus change touches.** Always `grep -rn "<value>" src/` before calling a retire finished — and read the hits, since `members/defaults.ts` mentions "Lakeside estate" as demo prose and correctly stays.
+
+**Scan unpublished rows when retiring, not just published.** Batch 2 scoped `published: true`, because every count in the review was about the live collection — so four unpublished hotels kept their fresh tags and the retire script refused. That guard is the whole point of it: Four Seasons Bangkok at Chao Phraya River, &Beyond Lake Manyara, Sandibe Okavango and Punakha River Lodge, all unambiguously fresh water, merged in `apply-freshwater-unpublished-2026-09-11.mjs`. An orphaned value on an unpublished row is exactly the one nobody notices.
+
+### Editorial follow-ups
+
+Three factual corrections to `highlights`, applied 2026-09-11 in `fix-highlights-copy-2026-09-11.mjs` — each a single phrase, voice untouched, and each asserted against the stored text before writing so a hand-edit aborts the run rather than being overwritten:
+
+* **1135 St. Regis Bali** — "perched on a cliff" → "set on the beachfront". Nusa Dua is flat.
+* **1579 Çırağan Palace** — "on the river" → "on the Bosphorus". A strait, and naming it is better copy.
+* **1511 The Torridon** — "lakeside" → "lochside". Loch Torridon is a sea loch; the Scottish word is accurate and sidesteps the fresh-or-salt question that made the row a judgement call.
+
+**Two pairs of hotels shared an identical `highlights` line** — found by frequency-mapping the field across all 903 rows, the only duplicates in the collection, and both pairs in Abu Dhabi, which reads like one editing session rather than coincidence. The line is what a results card shows, so each pair looked like the same hotel in a list. Differentiated 2026-09-11 in `fix-duplicate-highlights-2026-09-11.mjs`, drafted from each hotel's own description and approved before writing: 1601/1610 on the art collection versus the Cantonese kitchen, 1615/1616 on the Corniche underpass versus the Saadiyat dunes. **0 duplicates remain.**
+
+### House style for `highlights`, measured not assumed
+
+Worth knowing before writing one: **no terminal full stop** (0 of 903 rows have one), median length **76 characters** with p75 at 93, noun phrase first. Entries from id 2000 onward are the model — specific and concrete, e.g. "Contemporary Alpine sanctuary with cinematic Dolomite views, serious spa rituals and mountain dining".
+
+**113 rows still say "amazing"**, which the newer entries avoid and which reads as the salesy register §50's prompt rules out elsewhere. Not a correctness bug and not touched — a voice pass across 113 lines is editorial work, and §41 puts that with Ulrik.
+
+---

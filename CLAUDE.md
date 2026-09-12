@@ -822,82 +822,33 @@ A passive hotel shows **"Check availability on website"** linked to `www` (delib
 
 ---
 
-## 42B. WATER-PROXIMITY SETTING RECLASSIFICATION (redefined and started 2026-09-10)
+## 42B. WATER-PROXIMITY SETTING — COMPLETE (2026-09-11)
 
-**These definitions replace the ones agreed 2026-08-16, and one pair is inverted — read the table, do not go from memory.**
+**The five batches, the review artefacts, the ten salt-water rows wearing
+freshwater tags, the contradictory pairs and the retirements are in
+`CLAUDE-ARCHIVE.md`.** Read it there before touching `setting`, `primary_setting`
+or `secondary_setting`. Four rules survive here because they are still live:
 
-| Value | Means |
-|---|---|
-| `Beachfront` | On an actual sandy beach, **nothing between** the hotel and the sand |
-| `Beach` | Overlooking the beach with a **road or small obstruction** between — under 5 minutes' walk |
-| `Oceanfront` | On the ocean but **not a beach**, including clifftops a limited distance above it |
-| `Waterfront` | **All other water** — rivers, lakes, canals. Absorbs `Lakeside`, `Riverside`, `Canalside` |
-| `Coastal` | Near the ocean but not on it — a clifftop 20+ minutes from reaching the water |
-| `Seaside`, `Clifftop` | **To be retired**, reclassified into the above |
-
-**`Beach` and `Beachfront` swapped meaning.** August had `Beachfront` = "truly on the beach" and `Beach` = "walking distance". September makes `Beach` the *weaker* value. Ulrik was offered both directions and chose this one deliberately, because the existing 163 `Beachfront` rows mostly do sit on sand and stay correct — the alternative moved ~130 records for no gain. A guest filtering "Beachfront" gets the stronger set.
-
-**`Waterfront` is now the generic for fresh water**, so `Lakeside` (34), `Riverside` (29) and `Canalside` (8) retire into it. This removes Lakeside as a filter facet, which was flagged and accepted.
-
-### Progress
-
-| Batch | Scope | Status |
-|---|---|---|
-| 1 | the 37 tagged `Waterfront` | **Applied 2026-09-10** — 36 written, 1 no-op, 0 failures, verified by re-read |
-| 2 | `Lakeside` + `Riverside` + `Canalside` (71) | **Applied 2026-09-11** — 71 published + 4 unpublished written, 0 failures. All three values **retired from the choice lists** |
-| 3 | `Coastal` + `Oceanfront` (99) | **Applied 2026-09-11** — 13 written, 86 unchanged, plus 4 contradictory pairs the triage missed. **0 rows now carry two water values** |
-| 4 | `Seaside` + `Clifftop` (8 rows) | **Applied 2026-09-11** — 8 written, 0 failures. Both **retired from the choice lists** |
-| 5 | `Beachfront` (200) | **Applied 2026-09-11** — `Beach` retired into it, one bad row retagged. §42B complete |
-
-Batch 2 artefacts: `apply-freshwater-batch2-2026-09-11.mjs` + rollback. Batch 1: `scripts/hotels/settings-2026/apply-waterfront-batch1-2026-09-10.mjs` and its appending rollback record. **A one-time record of a reviewed session, not a tool** — copy the pattern for the next batch, per §24.
-
-**Only the water tag is touched.** A hotel tagged `["City","Waterfront"]` keeps `City`; the water value is replaced in the array and in whichever of `primary_setting`/`secondary_setting` held it. Explicit instruction, and it is what makes a batch safe against rows whose other tags were never reviewed.
-
-**"Mechanical" was wrong, and checking cost one query.** Batch 2 was called a straight rename needing no review. Ten of the 71 turned out to be SALT water wearing a freshwater tag: the Oberoi Mumbai tagged `Riverside` while facing the Arabian Sea, three Bosphorus hotels the same, and Loch Torridon — a sea loch — tagged `Lakeside`, its own highlights calling it a "lakeside escape". A merge is only mechanical once you have looked at what is being merged.
-
-The three Bosphorus hotels were set to `Oceanfront` to match Mandarin Oriental Bosphorus from batch 1. **Four hotels on one strait had to agree**, and only the review surfaced that they did not.
-
-**A contradictory PAIR hides where a wrong tag does not.** Batch 3 found four hotels carrying two water values that cannot both hold — `Beachfront` + `Coastal` claims a private beach *and* twenty minutes from the water. Each half looks defensible alone, which is why they survived every earlier pass, and why text-signal triage misses them: nothing in the prose is wrong.
-
-**Check for them directly, and check the whole collection, not the batch's scope.** Batch 3's triage looked for `Coastal` + `Oceanfront` overlap and found none — but a row tagged `Beachfront` + `Coastal` enters the scope through its `Coastal` half while the contradiction sits in the other, so it read as a clean single-value row. Four more surfaced only in the post-write verification, which scanned all 903 rows for "more than one water value" rather than checking the ids the batch had touched. **Write that check into the verification of every batch.**
-
-### What the machine cannot decide, measured not assumed
-
-**OSM is not a usable signal for this roster.** Tested live 2026-09-10: Velaa Private Island returned **zero** `natural=beach` polygons — a Maldivian resort that is nothing but sand — confirming §42B's original worry about coverage outside Europe. Measuring to a polygon's `center` also put One&Only Le Saint Géran 637m from a beach it sits on; distance must be to the nearest vertex, not the centroid. Both Overpass mirrors then returned 504 partway through six queries, so 268 of them was never realistic.
-
-**Our own editorial text does not settle it either.** Across the 268 in-scope hotels, "direct beach access" appears 8 times and "across the road" **zero**. The descriptions are evocative, not diagnostic — they establish that there is a beach, never what lies between it and the hotel.
-
-So the Beachfront/Beach line is a human call in every case, which is why batches go through a review artifact (the §25 awards pattern) with a proposed value, the quoted evidence, and a confidence flag. In batch 1 Ulrik overrode 4 of 37 proposals — Six Senses Samui and Cap Estel to `Beachfront`, Fouquet's Saint-Barth to `Oceanfront`, and Baku left as `Waterfront`.
-
-Retiring a value means converting the arrays **then** removing the choice from the field's `meta.options.choices`, or the filter keeps offering a dead option (§44). All five retirements are done — `Lakeside`, `Riverside`, `Canalside`, `Seaside` and `Clifftop` **removed from all three fields**, `setting`, `primary_setting` and `secondary_setting`, which §44 locked to one shared list. The `setting` vocabulary went 22 → 17.
-
-**§42B is complete.** Final vocabulary — `Beachfront` (200), `Waterfront` (75), `Oceanfront` (62), `Coastal` (25). Four values, one meaning each, `setting` down from 22 choices to 16, and **0 rows carrying a retired value, two water values, a duplicate tag or an empty setting**.
-
-**`Beach` was retired rather than populated**, and that is the interesting decision. It was meant to hold "a road between the hotel and the sand" — but settling that needs a per-hotel judgement across 194 rows, OSM cannot answer it for this roster, and our own editorial text says "across the road" ZERO times in 268 descriptions. The distinction cost more than it was worth, so `Beachfront` now means at or on the beach without claiming how many metres. **A category nobody can populate reliably is worse than no category**: it looks like information and is noise.
-
-**`Beach` is STILL a valid `activities` value.** Only the `setting` one retired. Removing both from `taxonomy.ts` would have silently broken the Inspire beach purpose, whose mapping uses the activity — caught by reading the grep hits rather than acting on the count.
-
-**A retire has more consumers than the Directus field, and the grep is not optional.** `lib/ai/taxonomy.ts` mirrors this vocabulary as a JSON Schema enum for the concierge, where a stale entry hands the model a value that silently matches nothing (§50). Batch 4 found two more: `lib/ai/inspireMirror.ts` mapped `Seaside` into its beach purpose, and `tools.ts` named all seven old water values in the `settings` parameter description. **Three files, none of which the Directus change touches.** Always `grep -rn "<value>" src/` before calling a retire finished — and read the hits, since `members/defaults.ts` mentions "Lakeside estate" as demo prose and correctly stays.
-
-**Scan unpublished rows when retiring, not just published.** Batch 2 scoped `published: true`, because every count in the review was about the live collection — so four unpublished hotels kept their fresh tags and the retire script refused. That guard is the whole point of it: Four Seasons Bangkok at Chao Phraya River, &Beyond Lake Manyara, Sandibe Okavango and Punakha River Lodge, all unambiguously fresh water, merged in `apply-freshwater-unpublished-2026-09-11.mjs`. An orphaned value on an unpublished row is exactly the one nobody notices.
-
-### Editorial follow-ups
-
-Three factual corrections to `highlights`, applied 2026-09-11 in `fix-highlights-copy-2026-09-11.mjs` — each a single phrase, voice untouched, and each asserted against the stored text before writing so a hand-edit aborts the run rather than being overwritten:
-
-* **1135 St. Regis Bali** — "perched on a cliff" → "set on the beachfront". Nusa Dua is flat.
-* **1579 Çırağan Palace** — "on the river" → "on the Bosphorus". A strait, and naming it is better copy.
-* **1511 The Torridon** — "lakeside" → "lochside". Loch Torridon is a sea loch; the Scottish word is accurate and sidesteps the fresh-or-salt question that made the row a judgement call.
-
-**Two pairs of hotels shared an identical `highlights` line** — found by frequency-mapping the field across all 903 rows, the only duplicates in the collection, and both pairs in Abu Dhabi, which reads like one editing session rather than coincidence. The line is what a results card shows, so each pair looked like the same hotel in a list. Differentiated 2026-09-11 in `fix-duplicate-highlights-2026-09-11.mjs`, drafted from each hotel's own description and approved before writing: 1601/1610 on the art collection versus the Cantonese kitchen, 1615/1616 on the Corniche underpass versus the Saadiyat dunes. **0 duplicates remain.**
-
-### House style for `highlights`, measured not assumed
-
-Worth knowing before writing one: **no terminal full stop** (0 of 903 rows have one), median length **76 characters** with p75 at 93, noun phrase first. Entries from id 2000 onward are the model — specific and concrete, e.g. "Contemporary Alpine sanctuary with cinematic Dolomite views, serious spa rituals and mountain dining".
-
-**113 rows still say "amazing"**, which the newer entries avoid and which reads as the salesy register §50's prompt rules out elsewhere. Not a correctness bug and not touched — a voice pass across 113 lines is editorial work, and §41 puts that with Ulrik.
-
----
+* **Final vocabulary, four values, one meaning each**: `Beachfront` (200, at or
+  on the sand), `Waterfront` (75, all fresh water), `Oceanfront` (62, on the
+  ocean but not a beach), `Coastal` (25, near it but not on it). `Beach`,
+  `Lakeside`, `Riverside`, `Canalside`, `Seaside` and `Clifftop` are **retired
+  from all three fields** — `setting` went 22 choices to 16. 0 rows carry a
+  retired value, two water values, a duplicate tag or an empty setting.
+* **`Beach` is still a valid `activities` value.** Only the `setting` one
+  retired, and removing both would have silently broken the Inspire beach
+  purpose.
+* **A retire has more consumers than the Directus field.** `grep -rn "<value>"
+  src/` before calling one finished, and READ the hits: `lib/ai/taxonomy.ts`
+  mirrors this vocabulary as an enum for the concierge, `inspireMirror.ts` maps
+  values into purposes, `tools.ts` names them in a parameter description, and
+  `members/defaults.ts` mentions "Lakeside estate" as demo prose and correctly
+  stays. **Scan unpublished rows too** — four kept fresh tags when a batch
+  scoped `published: true`.
+* **House style for `highlights`, measured**: no terminal full stop (0 of 903),
+  median 76 characters, noun phrase first; entries from id 2000 on are the
+  model. 409 rows use a filler word (*beautiful* 226, *stunning* 135, *amazing*
+  113) and the voice pass is **declined, not pending** — §51.
 
 ## 43. RECURRING DATA MAINTENANCE — SCHEDULE
 
@@ -910,6 +861,7 @@ Data that goes stale on a clock rather than when someone changes something. **Wh
 | Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
 | City → airport mapping (§37) | When the roster's city list changes | 2026-09-12 | on demand | `build-city-airports.mjs` |
 | Airport options list (§39) | With the above | 2026-08-31 | on demand | `build-airport-options.mjs` |
+| Last-leg transfer times (§52) | With the above | 2026-09-12 | on demand | `build-transfer-times.mjs` — incremental, so a re-run after one new destination costs cents |
 
 * **Ratehawk status is the one needing a human to remember it.** The static-content row runs itself; it's listed so its existence and failure point are on the record.
 * Award refreshes are event-driven — T+L published its 2026 list a week before a session happened to check. Annually is a reminder to *look*, not a deadline.
@@ -927,6 +879,14 @@ Data that goes stale on a clock rather than when someone changes something. **Wh
   ```bash
   node -e 'const f=require("fs"),a=f.readFileSync("src/lib/cityAirports.ts","utf8"),o=f.readFileSync("src/lib/airportOptions.ts","utf8");const m=[...new Set([...a.matchAll(/iata: "(\w{3})"/g)].map(x=>x[1]))].filter(c=>!o.includes(`"${c}"`));console.log(m.length?"MISSING: "+m:"ok")'
   ```
+
+* **A second invariant since §52: every (destination, airport) pair needs a
+  last-leg answer.** `audit-airports.mjs` fails the run on a pair with none,
+  because the gateway ranking then silently drops that airport out of the
+  door-to-door comparison and falls back to air time. New destinations arrive
+  with no transfer time at all, so **`build-transfer-times.mjs` belongs in the
+  same pass as the other two builds** — it is incremental and only prices what
+  it has no answer for.
 
 ---
 ## 44. TAXONOMY FIELDS LOCKED + HIGHLIGHTS TYPO PASS (2026-08-16)
@@ -1252,7 +1212,7 @@ node scripts/airports/audit-airports.mjs            # 4 classes, 0 unreviewed
 task until it is zero again. This list is the separate question: "what did we
 choose to leave".
 
-**State at the pause**: 517 destinations, 59 gateway overrides, 57 transfer
+**State at the pause**: 517 destinations, 59 gateway overrides, 58 transfer
 routes, `local_area` 340, the airport research queue empty (0 never-reviewed,
 so a destination appearing there is genuinely new rather than backlog).
 
@@ -1445,7 +1405,8 @@ act on. Routes 53 → 57, overrides 56 → 59.
 
 `src/lib/transferRoutes.ts` (2026-09-11, see CLAUDE-AI.md) holds the
 arrival-to-door route per destination, so the concierge stops answering "how do
-I get to the Masai Mara" with Nairobi and a full stop. **57 routes populated**;
+I get to the Masai Mara" with Nairobi and a full stop. **58 routes populated**
+(Zermatt was added 2026-09-12, §52);
 an absent entry makes it decline rather than guess, which is the point.
 
 Two candidate groups, both measurable by re-running the same check:
@@ -1556,6 +1517,221 @@ Lugano now maps `MXP` then `LUG`.
 
 **Ratehawk hotel status re-probe, due 2026-11-16** (§42, §43). It is the one
 maintenance job with no automation behind it.
+
+---
+
+## 52. THE AIRPORT IS CHOSEN ON THE WHOLE JOURNEY (2026-09-12)
+
+Three faults reported together, and they turned out to be one: **nothing in the
+codebase knew how long the last leg takes**, so no airport choice anywhere could
+weigh the flight against the drive.
+
+`cityAirports.ts` holds straight-line `distKm` and forbids reading drive time
+off it (§37, §51 — a line crosses the Alps, a road does not). `transferRoutes.ts`
+holds modes, legs and who arranges them, and **not one duration**. So "which
+airport" was answered by a rule about the PLACE, never about the journey, and
+the concierge could recommend the airport with the shortest transfer while
+adding a change of planes that cost more than it saved.
+
+### The measured case, which is the whole argument
+
+Courchevel 1850 from Copenhagen. Geneva is 2h49 by road, Chambéry 1h40 — so
+anything reading the transfer alone answers **Chambéry**, which is largely
+winter charter and reached with a connection. Door to door: **Geneva 4h54,
+Chambéry 6h42.** The hour saved on the ground is paid for twice over in the air.
+
+### What was built
+
+* **`src/lib/transferTimes.ts`** (generated) — driving time per (destination,
+  airport) pair, measured by Google Distance Matrix to the same hotel centroid
+  `distKm` uses. **670 timed pairs, 69 with no road, 4 the API cannot route.**
+  743 elements, **$3.71**, on the key the restaurant geocoder already uses.
+  Its own file rather than a field inside `cityAirports.ts`, because that file
+  is rebuilt on every roster change and a rebuild without a Google key would
+  silently drop every time it holds.
+* **`src/lib/flights/gatewayRanking.ts`** — adds the flight and the transfer and
+  ranks. Shared by the concierge and the classic pages, because two
+  implementations of this is how the two halves came to disagree in the first
+  place.
+* **`compareGateways`** — a concierge tool; see `CLAUDE-AI.md`.
+* **`scripts/airports/build-transfer-times.mjs`** and
+  **`verify-gateway-ranking.mts`** (run with `npx tsx`, not a dependency).
+
+**Per destination × airport, not per hotel** — the option that was on the table.
+Ten Courchevel hotels share one road from Geneva, and a per-hotel copy of it is
+ten values that can drift apart; it follows `transferRoutes.ts` for that reason.
+
+### `pickPrimaryAirportForCity` could not see the curation — the classic half
+
+It sorted by size then runway, so **Val d'Isère and Courchevel resolved to LYON
+and Zermatt to ZURICH** on the Flights page and in saved trips, while the
+concierge read the same list in order and said Geneva. One roster, two answers.
+The generator's own comment said the hand-ordering "only affects display order";
+it did not. Overridden keys are now emitted as `CURATED_GATEWAY_ORDER` (59 of
+517) and their first entry is the primary. **Not a blanket "first wins"** — for
+everything else position one is the nearest strip, and New York has to stay JFK.
+
+### `ZERO_RESULTS` IS A QUESTION, NOT AN ANSWER — three tables, not one
+
+The first run reported 76 pairs with no road route, and **two different kinds of
+wrong were hiding in it.**
+
+**Seoul was in the list, from both its airports**, which cannot be true: Google
+publishes no driving directions anywhere in South Korea. That one was caught
+because it is absurd on its face. So `UNROUTABLE_BY_API` holds the four where a
+road exists and the instrument cannot see it — Seoul ×2, Skukuza's unmapped
+reserve tracks, Zhuhai across the Macau border — with the reason on each, so the
+file never asserts something false and nobody "fixes" Seoul from memory.
+
+**Zermatt was the other kind, and it took two corrections from Ulrik.** All five
+points tested in the village returned ZERO_RESULTS, because no engine routes a
+car into a car-free village. First reading: "there is no road" — wrong. Second:
+"the road stops at Täsch" — also wrong; **Täsch is where you change if you come
+by TRAIN.** The road runs to Zermatt's own transfer station, a permitted
+transfer drives it, and an electric taxi covers the last ten minutes to any
+hotel. So `ROAD_CONTINUES_PAST` measures to the last routable point and adds a
+**stated allowance** for the rest (20 minutes), emitted as `ROAD_ALLOWANCES` so
+a partly-stated figure is never read as fully measured. Zermatt now has real
+numbers: **Geneva 3h10, Malpensa 3h09, Zurich 4h00.**
+
+**The lesson generalises past both.** A routing engine's refusal describes the
+engine's rules for private cars, not the world: it cannot see a mapping
+restriction, a border checkpoint, an unmapped track, or a village that admits
+only electric vehicles. The three tables are exclusive and the generator throws
+if a destination lands in two.
+
+**Transit mode is not the fix either, measured rather than assumed.** Google does
+answer Seoul in transit (ICN 1h45, GMP 1h04) — and answered Zermatt at 5h37 from
+Geneva where the rail time is about four hours, because a transit result depends
+on the minute it was asked about. A baked value that moves with the timetable is
+worse than an absent one.
+
+### THE TRAP THAT MATTERS MOST: the Duffel token is `duffel_test`
+
+**That environment fabricates a nonstop on every route.** Measured: CPH–AXA
+returns a single segment, "Duffel Airways", **10h31 nonstop to Anguilla**;
+CPH–CMF a nonstop British Airways to Chambéry. Real routes merely have more of
+it — CPH–GVA returns 89 offers against 2 — and every one is one segment.
+
+Everywhere else this is harmless, because a card displays what the supplier said
+and a test fare is obviously a test fare. Here it **decides**: fed invented
+nonstops, every airport looks equally reachable, the shortest drive wins, and
+the environment reproduces the exact bug the ranking removes — looking like a
+failed fix. So `flightDataIsSynthetic()` gates it: the tool declines to rank and
+says so, and the landing page leaves its blocks in curated order. **Verify the
+production token is a live one, or this feature does nothing in production
+either.**
+
+### A DIRECT FLIGHT OUTRANKS TOTAL TRAVEL TIME, and on a short flight it nearly always wins
+
+Two tiers, both stated as **the saving a stop must deliver**, because that is the
+figure with a meaning — the multiplier the comparator needs is derived from it
+(requiring a saving of *s* means scoring the connection at `1/(1-s)` of its
+length).
+
+| | A stop is offered only if it cuts | Scored at |
+|---|---|---|
+| **`STOP_MUST_SAVE_SHARE`** | **25%** of the door-to-door time | 1.33× |
+| **`SHORT_HAUL_STOP_MUST_SAVE_SHARE`** | **40%**, when the best direct flight is under 4 hours (`SHORT_HAUL_FLIGHT_MINUTES`) | 1.67× |
+
+**The short-haul tier is the important half, and it is Ulrik's:** *"I would much
+rather drive another hour than risk a stop."* On a short hop the change of planes
+is most of the misery of the journey while the saving is small in absolute terms
+whatever it looks like as a percentage, so the bar is deliberately near-prohibitive.
+It is a high bar and not a ban — a stop saving 59% of a short journey still wins.
+
+**The tier is chosen ONCE per comparison, from the best DIRECT flight** — "flights
+under four hours", not journeys. It has to be decided once: a per-candidate test
+would judge a 5h connection by the loose rule while judging the 2h direct it
+competes with by the strict one. With no direct anywhere in the list every
+candidate is penalised alike, so the tier changes no ordering and the fastest
+flight of any kind stands in.
+
+**Three wrong answers before this one.** 45 minutes let a stop win by saving
+three quarters of an hour. A flat three hours could never be cleared on a short
+trip however much of it was saved — Toulon direct at 4h beat Nice-with-a-stop at
+3h, a quarter of the journey thrown away to avoid one change. A flat fifth then
+treated a two-hour flight and a twelve-hour one as the same problem. Each was
+overruled by Ulrik, and the record of the three is kept because **all three
+looked reasonable when written**.
+
+**The penalty lives in the comparator, which is why it is minutes rather than a
+rule** — adding a constant to one side is a transitive ordering, so the sort is
+well defined. It replaced a promotion pass that was not, and a non-transitive
+comparator returns a different answer depending on which pairs the sort happens
+to compare.
+
+**`CURATED_GRACE_MINUTES = 45`** is the one promotion left: a hand-ordered first
+choice keeps its place unless it loses by more than 45 minutes. From Copenhagen
+both Geneva and Lyon are nonstop and the totals put **Lyon ahead for Courchevel
+by nineteen minutes**; nineteen minutes, measured to a centroid on a no-traffic
+estimate, is not grounds to overturn a recorded human decision.
+
+**But curation may NOT put a change of planes ahead of a direct flight, at any
+margin — and that limit is stated rather than left to the arithmetic.** The first
+version compared raw totals and answered a connection over a direct 25 minutes
+behind it; comparing PENALISED minutes fixed it only while the penalty was three
+flat hours, and the moment it became proportional the connection came back,
+landing 42 minutes behind, inside the grace. **Twice the same defect from two
+different numbers means the rule was missing, not mistuned.** The two claims are
+separate: curation records *which airport guests use for a place* and can settle
+a close call between comparable journeys; whether *this* guest has to change
+planes is not a fact about the place at all.
+
+**Curation also applies where there is NO road time**, which is where it was
+wrong for a different reason. Gating the promotion on having door-to-door totals
+looked reasonable — no totals, nothing to be close on — but the destinations
+without a road time are the reserves and the islands, **exactly the ones whose
+gateway was chosen by hand**. The verifier caught it: the Serengeti answered
+**MWZ**, because Mwanza came back 18 minutes quicker in the air than
+Kilimanjaro, and §51 put Kilimanjaro first deliberately as the northern
+circuit's international gateway. Eighteen minutes of air time is not a reason to
+unpick that. Zermatt moved the same way and for the same reason — Zurich is 20
+minutes quicker in the air, Geneva is the hand-ordered choice, and Geneva now
+holds.
+
+**A nonstop airport is timed on its NONSTOP.** An earlier version marked a
+candidate direct if any itinerary was, while building its total from the
+*quickest* itinerary — so an airport could be called direct and timed as a
+connection. If we would book the nonstop, the nonstop's duration is the one that
+goes in the total; `fastestFlightMinutes` still reports the quickest of any kind
+separately.
+
+All the constants are stated judgements, not measurements, and each is one named
+export away from being retuned. `verify-gateway-ranking.mts` covers **nine cases
+and four property assertions**, and has caught five real defects: the promotion
+order, the direct-flight timing, curation overreaching at two different
+penalties, and curation not applying at all where there is no road time. Four
+cases exist purely to pin the margins on both sides of both tiers, so a future
+retune cannot move a line silently.
+
+**Every case says whether it is a REAL timetable or a CONSTRUCTED probe**, and
+that labelling earns its keep: an earlier version had Toulon holding the
+Copenhagen direct and Nice needing a connection, which is backwards, and reading
+it against what you know of the route makes you doubt the logic rather than the
+fixture. A probe must be shaped by the rule it probes without also pretending to
+be a fact about a route.
+
+### Never invent a transfer duration
+
+A destination whose last leg is a light aircraft, boat or seaplane has no road
+time worth adding — **the drive to Namiri Plains measures ten hours and nobody
+makes it** — so those rank on flying time and say the transfer is still to be
+confirmed. Same for no-road and unmeasured pairs, and for a measured figure that
+cannot be true of any vehicle: Spanish Town from Tortola is 13km in 91 minutes,
+9km/h, a ferry wait folded into a drive. `transferRoutes.ts` stays the answer a
+guest is given.
+
+### Found by the new data, not fixed
+
+* **Marmaris lists only RHO** — Rhodes, a Greek island 40km away as the line
+  goes and **7h28 by road-and-ferry**, in another country. Dalaman (DLM), its
+  real gateway about 1h30 away, is not in the list at all. The clearest
+  `GATEWAY_OVERRIDE` candidate since Turin, and the audit never caught it
+  because RHO is a large airport with a 3,306m runway.
+* **Papas Beach** measures 5h05 from Paros and 3h36 from Naxos, both
+  ferry-inclusive, which suggests the centroid is not on the island its airports
+  are on. Worth ten minutes with a map.
 
 ---
 

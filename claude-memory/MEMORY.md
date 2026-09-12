@@ -6,3 +6,4 @@
 - [Don't ask at every step](feedback_dont_ask_at_every_step.md) — carry a task through its implied follow-through steps; ask only when the answer changes what gets built
 - [Data staging lives in oltra-agents](project_oltra_agents_split.md) — new hotel/restaurant content is generated and staged there, not in oltra-beta (CLAUDE.md §41)
 - [Verify manual steps yourself](feedback_verify_manual_steps.md) — a "done, I ran it" report is a starting point for verification, not proof
+- [Bash heredocs eat backslashes](feedback_bash_heredoc_eats_backslashes.md) — quoted heredocs still strip one level; write patch scripts with Write and run by path

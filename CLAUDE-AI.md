@@ -407,3 +407,157 @@ level, not to strip them. One row was wrong (Rosewood), all ten are now
 `Courchevel 1850`, and the bare key is gone. The `name` search stays useful on
 its own merits — "is X in the collection?" is still a question geography cannot
 answer — but it is no longer papering over a split. See §3.
+
+### `compareGateways` — which airport, for THIS guest (2026-09-12)
+
+Reported by Ulrik: the concierge would name the airport with the shortest
+transfer, even when reaching it meant a change of planes that cost more than the
+drive it saved. It was not being careless — `nearestAirport` returns a list
+ordered best-first by a rule about the PLACE, and nothing it holds depends on
+where the visitor starts from. The answer cannot be right without the origin,
+and the tool had no way to want one.
+
+`compareGateways(city, origin, departureDate, …)` searches every candidate
+airport **in parallel**, adds each flight to its measured road transfer
+(`transferTimes.ts`, §52) and returns them ranked with the totals worked out.
+
+**The arithmetic is done server-side for this file's oldest reason.** A rule the
+model applies itself is a rule it can skip — see the broad-set gate and the
+no-prices guarantee. It is handed the order, and the tool description tells it to
+take the order and never to re-rank on distance.
+
+`nearestAirport` gained `transferMinutes` per airport at the same time, because
+"how far is the hotel from the airport" is asked constantly and `distKm` is a
+straight line: Val d'Isère is 111km from Geneva and **3h17** by road, and reading
+the first number as the second is what once answered Turin.
+
+**Both tools now share `resolveDestinationKey`.** The hotel-name fallback was
+inside `nearestAirport`, and `compareGateways` is called with exactly the same
+names — Soneva Fushi, Angama Mara — so a second copy would have answered the
+same question differently depending on which tool was asked.
+
+**The plain-words rule bit again, pre-emptively.** The ranking's internal bases
+are `onward-leg`, `no-road-route`, `unroutable`, `implausible` — every one of
+them a phrase at home in a schema, and the open-jaw lesson says those reach
+answers. So the tool never returns them: `transferSentence()` converts each into
+what to SAY ("the last stretch is not a drive — give the route as it stands and
+do not put a time on it").
+
+### It cannot be tested locally, and the reason is worth reading first
+
+**`DUFFEL_ACCESS_TOKEN` here is a `duffel_test` token, and that environment
+fabricates a nonstop on every route.** CPH–AXA returns one segment, "Duffel
+Airways", 10h31 nonstop to Anguilla. CPH–CMF returns a nonstop British Airways
+to Chambéry.
+
+Fed that, every airport looks equally reachable, the shortest drive wins, and
+**the environment reproduces the exact bug the tool removes** — so a local test
+looks like a failed fix. `flightDataIsSynthetic()` therefore gates the
+comparison: the tool skips the searches and returns the standing order with a
+basis line saying flight times cannot be compared here. Verify the production
+token is live, or the feature is inert there too.
+
+Which leaves the decision logic to be checked another way:
+`scripts/airports/verify-gateway-ranking.mts`, four cases, run with `npx tsx`
+(**not** a dependency — §14). It earned its place immediately.
+
+### A direct flight outranks total travel time — and my first two attempts at it were wrong
+
+The rule Ulrik asked for: a direct ranks above a quicker connection in most
+cases, only a significant saving on total travel time should overturn it, and a
+SHORT flight should hardly ever be broken up at all — *"I would much rather
+drive another hour than risk a stop."* That is `STOP_MUST_SAVE_SHARE = 0.25`
+with `SHORT_HAUL_STOP_MUST_SAVE_SHARE = 0.4` under four hours in the air. §52
+has the table and the reasoning.
+
+**Attempt one made it 45 minutes**, which meant a stop won by saving three
+quarters of an hour. Far too generous to the connection, and not what was asked.
+
+**Attempt two put the preference in the wrong place.** It was a promotion pass
+applied after the sort, and I ran curation last on the reasoning that a person's
+decision outranks a heuristic. That made the direct-flight test **dead code on
+all 59 hand-ordered destinations** — most of the Alpine and Mediterranean
+resorts where the question even arises. The verifier caught it on a case I had
+written expecting a pass: Saint-Tropez answered Nice-with-a-connection over a
+nonstop to Toulon 25 minutes behind it.
+
+**Attempt three made it a flat three hours, and Ulrik overruled it for a
+proportion.** He is right, and the case that proves it is short-haul: on a
+five-hour journey no stop can ever clear a three-hour bar, however much of the
+journey it saves, so Toulon direct at 4h beat Nice-with-a-stop at 3h — a quarter
+of the trip thrown away to avoid one change of planes. I had argued in the file
+that flat was deliberate; that comment is gone, because it was wrong rather than
+merely superseded.
+
+**Attempt four was a flat fifth, and it treated a two-hour flight and a
+twelve-hour one as the same problem.** They are not, and Ulrik's correction is
+the one that matters most in this collection: a short flight should hardly ever
+be broken up, because the stop is most of the misery and the saving is small
+whatever the percentage says. Hence the two tiers. Read §52's table rather than
+this paragraph for the current figures.
+
+**A worked example of why the shape mattered more than the number.** Both of the
+last two changes arrived with the numbers already stated by Ulrik, and both
+still needed a design decision I got wrong first: proportional broke curation's
+grace (a fifth of five and a half hours is 67 minutes, so a rejected connection
+landed back inside 45 minutes of the leader), and the two-tier version needed
+the tier decided ONCE per comparison rather than per candidate, or a 5h
+connection is judged by the loose rule while the 2h direct it competes with is
+judged by the strict one.
+
+Expressing the preference as MINUTES rather than as a rule fixed both. A flat
+addition to one side is transitive, so it belongs in the comparator and the sort
+is well defined; the promotion pass it replaced was not transitive, and such a
+comparator returns different answers depending on which pairs get compared. The
+single promotion left — curation — now reads the **penalised** figure, so it can
+protect its place against a comparable alternative but cannot resurrect a
+connection the ordering just rejected.
+
+**And a defect the winner alone could never have shown.** A candidate was marked
+direct if ANY itinerary was nonstop, while its total was built from the
+*quickest* itinerary — so an airport with a 3h20 direct and a 2h30 connection
+was labelled direct and timed at 2h30. `fastestNonstopMinutes` is now carried
+separately and the total is built from the flight we would actually book. It is
+asserted directly in the verifier rather than through a chosen airport, because
+the airport it picks is the same either way.
+
+**Then the opposite gap: curation was gated on having door-to-door totals.** No
+totals, nothing to be close on — reasonable, and wrong, because the destinations
+with no road time are the reserves and the islands, which are exactly the
+hand-chosen ones. The Serengeti answered Mwanza on 18 minutes of air time over
+the Kilimanjaro §51 had deliberately put first. The grace now applies to flying
+time where that is all there is.
+
+### A car-free village is not an unreachable one (58 transfer routes)
+
+Zermatt had no road time at all, and the reason was a routing engine's rules
+rather than the world: no engine will drive a car into a car-free village, so
+five points in it returned ZERO_RESULTS. **I read that as "no road" and then, on
+correction, as "the road stops at Täsch" — both wrong.** Täsch is the TRAIN
+change. The road runs to Zermatt's own transfer station, a permitted transfer
+drives the whole way, and the last ten minutes are an electric taxi, the only
+kind of vehicle allowed in the village. The rail alternative exists and means
+handling luggage through a change at Täsch, which is not what this clientele
+wants after a flight.
+
+Both halves are now encoded: measured times through `ROAD_CONTINUES_PAST`
+(Geneva 3h10, Malpensa 3h09, Zurich 4h00, including a stated 20-minute allowance
+past the last routable point) and a `transferRoutes.ts` entry naming the
+handover and the taxi, with the train as the second-best option rather than
+omitted. The concierge previously had to say it would confirm the transfer to
+Zermatt; it can now give it.
+
+**Worth carrying forward: I corrected the same fact twice from the same evidence
+and got it wrong twice.** Both times a ZERO_RESULTS was read as a fact about the
+place. It is a fact about the engine's rules for private cars, and for a
+destination this clientele actually goes to, that difference is the whole
+answer.
+
+### The classic pages had the other half of the same fault
+
+Worth knowing when changing either, because the two are now one implementation:
+`pickPrimaryAirportForCity` sorted by size and runway, so the Flights page and
+saved trips resolved Val d'Isère and Courchevel to **Lyon** and Zermatt to
+**Zurich** while the concierge said Geneva. The landing teaser already searched
+every candidate airport, so it needed no new request — only the ordering and a
+label, from the same `rankGateways`. See §52.
