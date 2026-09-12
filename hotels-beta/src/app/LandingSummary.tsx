@@ -12,6 +12,13 @@ import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
 import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
+import {
+  factsFromDurations,
+  formatJourneyMinutes,
+  rankGateways,
+  type GatewayFlightFacts,
+  type RankedGateway,
+} from "@/lib/flights/gatewayRanking";
 import HotelSmallCard, { type SmallCardAvailability } from "@/components/hotels/HotelSmallCard";
 import styles from "./page.module.css";
 
@@ -119,6 +126,11 @@ export default function LandingSummary({
         fastest: Itinerary | null;
         bestIsAlsoFastest: boolean;
         isOneWay: boolean;
+        /* Every outbound found, not just the two headline rows, because the
+         * gateway ranking below needs the quickest flight and the fewest stops
+         * on the route - and the quickest itinerary is regularly not one of the
+         * two the cards show. */
+        durations: { minutes: number; stops: number }[];
       }
     | { status: "empty" }
     | { status: "error"; message: string };
@@ -126,6 +138,12 @@ export default function LandingSummary({
   const cabinKey = (iata: string, cabin: CabinKey) => `${iata}__${cabin}`;
 
   const [flightResults, setFlightResults] = useState<Record<string, CabinResult>>({});
+  /* Set by the search route when the offers came from Duffel's test
+   * environment, which invents a nonstop on every route. The ordering below
+   * would then be real drives against invented flights, so it is not applied at
+   * all - the blocks stay in their curated order and nothing is labelled
+   * quickest. See duffelClient.flightDataIsSynthetic. */
+  const [syntheticFlights, setSyntheticFlights] = useState(false);
 
   useEffect(() => {
     if (!showFlights || !canSearchFlights) {
@@ -168,6 +186,7 @@ export default function LandingSummary({
           .then(async (res) => {
             const json = await res.json();
             if (cancelled) return;
+            if (json.synthetic) setSyntheticFlights(true);
             if (!json.ok) {
               setFlightResults((prev) => ({
                 ...prev,
@@ -185,9 +204,20 @@ export default function LandingSummary({
             }
             const { bestPrice, fastest, bestIsAlsoFastest } =
               pickHeadlineItineraries(itineraries);
+            const durations = itineraries
+              .map((itinerary) => itinerary.outbound)
+              .filter(Boolean)
+              .map((leg) => ({ minutes: leg.durationMinutes, stops: leg.stops }));
             setFlightResults((prev) => ({
               ...prev,
-              [key]: { status: "ready", bestPrice, fastest, bestIsAlsoFastest, isOneWay },
+              [key]: {
+                status: "ready",
+                bestPrice,
+                fastest,
+                bestIsAlsoFastest,
+                isOneWay,
+                durations,
+              },
             }));
           })
           .catch((err) => {
@@ -208,6 +238,43 @@ export default function LandingSummary({
       controllers.forEach((c) => c.abort());
     };
   }, [showFlights, canSearchFlights, candidateAirports, origin, fromDate, toDate, adults, kids]);
+
+  /* THE SAME RANKING THE CONCIERGE USES, on the results this page has already
+   * fetched.
+   *
+   * The point of item three: the concierge now weighs the flight and the
+   * transfer together, and the classic page must not answer differently. It
+   * costs no extra request - every candidate airport is already searched here,
+   * so the durations are in hand and only the ordering changes.
+   *
+   * Null while any candidate is still searching, so the blocks stay in their
+   * curated order until there is something real to rank on rather than
+   * reshuffling as each response lands. */
+  const gatewayRanking = useMemo(() => {
+    if (candidateAirports.length === 0 || syntheticFlights) return null;
+    const facts: Record<string, GatewayFlightFacts> = {};
+    for (const airport of candidateAirports) {
+      const states = CABINS.map((cabin) => flightResults[cabinKey(airport.iata, cabin.key)]);
+      if (states.some((state) => !state || state.status === "loading")) return null;
+      const durations = states.flatMap((state) =>
+        state && state.status === "ready" ? state.durations : []
+      );
+      facts[airport.iata] = factsFromDurations(durations);
+    }
+    return rankGateways(destinationCity, facts, candidateAirports);
+  }, [candidateAirports, flightResults, destinationCity, syntheticFlights]);
+
+  /* Ordered blocks, each with its ranking if there is one. One list so the
+   * header and the rows cannot disagree about which airport they describe. */
+  const airportBlocks = useMemo(() => {
+    if (!gatewayRanking) {
+      return candidateAirports.map((airport) => ({ airport, ranked: null as RankedGateway | null }));
+    }
+    return gatewayRanking.ranked.flatMap((ranked) => {
+      const airport = candidateAirports.find((a) => a.iata === ranked.iata);
+      return airport ? [{ airport, ranked }] : [];
+    });
+  }, [gatewayRanking, candidateAirports]);
 
   const [availabilityById, setAvailabilityById] = useState<Record<string, SmallCardAvailability>>({});
 
@@ -495,14 +562,33 @@ export default function LandingSummary({
             </div>
           ) : (
             <div className={styles.flightDetailList}>
-              {candidateAirports.map((airport) => (
+              {airportBlocks.map(({ airport, ranked }) => (
                 <div className={styles.airportBlock} key={airport.iata}>
                   <div className={styles.airportBlockHeader}>
                     <span className={styles.airportBlockTitle}>
                       {airport.label} ({airport.iata})
+                      {/* Only claimed when every candidate had both halves of
+                          the journey, and only worth saying when there is more
+                          than one airport to be quickest of. */}
+                      {ranked?.recommended &&
+                      gatewayRanking?.comparable &&
+                      airportBlocks.length > 1 ? (
+                        <span className={styles.airportBlockBest}>
+                          Quickest overall
+                          {ranked.totalMinutes !== null
+                            ? ` · ${formatJourneyMinutes(ranked.totalMinutes)} door to door`
+                            : ""}
+                        </span>
+                      ) : null}
                     </span>
                     <span className={styles.airportBlockDistance}>
-                      {airport.distKm} km from {destinationCity} centre
+                      {/* The road time when we have measured it, because the
+                          straight-line figure this used to show is the number
+                          that once answered Turin for Val d'Isere: 59km across
+                          the Alps, three hours around them. */}
+                      {ranked?.transferMinutes !== null && ranked?.transferMinutes !== undefined
+                        ? `${formatJourneyMinutes(ranked.transferMinutes)} by road to ${destinationCity}`
+                        : `${airport.distKm} km from ${destinationCity} centre`}
                     </span>
                   </div>
 

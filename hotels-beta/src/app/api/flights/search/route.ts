@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { CabinClass, CreateOfferRequestPassenger, OfferRequest } from '@duffel/api/types'
-import { getDuffel } from '@/lib/flights/duffelClient'
+import { flightDataIsSynthetic, getDuffel } from '@/lib/flights/duffelClient'
 
 type SliceInput = { origin: string; destination: string; departureDate: string }
 
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
   const key = JSON.stringify({ slices: slices.map(s => `${s.origin}${s.destination}${s.departure_date}`), adults, children, infants, cabinClass })
   const cached = cache.get(key)
   if (cached && cached.expiresAt > Date.now()) {
-    return NextResponse.json({ ok: true, offers: cached.offers, cached: true })
+    return NextResponse.json({ ok: true, offers: cached.offers, cached: true, synthetic: flightDataIsSynthetic() })
   }
 
   const passengers: CreateOfferRequestPassenger[] = [
@@ -96,7 +96,12 @@ export async function POST(req: NextRequest) {
     const offers: OfferWithoutServices[] = response.data.offers ?? []
     cache.set(key, { offers, expiresAt: Date.now() + CACHE_TTL_MS })
 
-    return NextResponse.json({ ok: true, offers })
+    /* `synthetic` says the offers came from Duffel's test environment, which
+     * fabricates a nonstop on every route (see duffelClient). The browser
+     * cannot read the token, and the landing page now DECIDES which airport to
+     * put first from these durations - so it has to be told, or it ranks on
+     * fiction and looks confident about it. */
+    return NextResponse.json({ ok: true, offers, synthetic: flightDataIsSynthetic() })
   } catch (err) {
     console.error('[Duffel search]', err)
     const message = err instanceof Error ? err.message : 'Flight search failed'

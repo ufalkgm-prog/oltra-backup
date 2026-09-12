@@ -4,6 +4,11 @@ import { getHotels, type HotelRecord } from "@/lib/directus";
 import { filterHotelsByTags } from "@/lib/hotelFilters";
 import { getAirportsForCity, pickPrimaryAirportForCity } from "@/lib/cityAirports";
 import { getTransferRoute, hasAirportChange } from "@/lib/transferRoutes";
+import {
+  rankGateways,
+  resolveTransfer,
+  type TransferBasis,
+} from "@/lib/flights/gatewayRanking";
 import { getRestaurantCities, searchRestaurants as findRestaurants } from "@/lib/restaurants";
 import {
   buildGuestsArray,
@@ -892,6 +897,58 @@ const checkAvailability = tool({
   },
 });
 
+/* A HOTEL NAME RESOLVED TO A DESTINATION KEY, because the model does not know
+ * our keys and cannot be expected to.
+ *
+ * Measured, not guessed: asked "how do I reach Soneva Fushi?" the concierge
+ * called nearestAirport once with city="Soneva Fushi" and got nothing, because
+ * the key is "Kunfunadhoo Island". Angama Mara had worked only by luck - its
+ * key is "Masai Mara", a name famous enough to guess. Nobody guesses
+ * Kunfunadhoo.
+ *
+ * Telling the model to look the city up first would be another optional step,
+ * and CLAUDE-AI.md's record is that those get skipped. So the tools are
+ * forgiving instead. Shared by nearestAirport and compareGateways, or the two
+ * would answer the same question differently depending on which one was asked
+ * - and compareGateways is called on exactly the same names. */
+async function resolveDestinationKey(
+  city: string
+): Promise<{ city: string; resolvedFrom: string | null }> {
+  if (getAirportsForCity(city).length > 0 || getTransferRoute(city)) {
+    return { city, resolvedFrom: null };
+  }
+  const matches = await getHotels({
+    fields: ["hotel_name", "city", "state_province_county_island"] as unknown as string[],
+    filter: { hotel_name: { _icontains: city } },
+    limit: 2,
+  });
+  const hit = matches[0] as unknown as Record<string, string | null> | undefined;
+  /* Its traveller area, for the eight wilderness lodges with no city (§3). */
+  const candidate = (hit?.city ?? "").trim() || (hit?.state_province_county_island ?? "").trim();
+  if (matches.length === 1 && candidate) return { city: candidate, resolvedFrom: city };
+  return { city, resolvedFrom: null };
+}
+
+/** What to SAY about the last leg, not what we call it internally. §50's rule:
+ * a phrase at home in a schema does not go in an answer, and "onward-leg" or
+ * "unroutable" would have gone straight into one. */
+function transferSentence(basis: TransferBasis, minutes: number | null): string {
+  switch (basis) {
+    case "road":
+      return minutes !== null
+        ? `About ${Math.round(minutes)} minutes by road.`
+        : "By road.";
+    case "onward-leg":
+      return "The last stretch is not a drive - call nearestAirport for the route and give it as it stands. Do not put a time on it.";
+    case "no-road-route":
+      return "There is no road from this airport - say you will confirm how the last stretch works rather than describing one.";
+    case "unroutable":
+    case "implausible":
+    case "unmeasured":
+      return "We have not measured this transfer - say it will be confirmed rather than estimating it.";
+  }
+}
+
 const nearestAirport = tool({
   description:
     "Which airports serve a destination we cover, how far they are, and how a " +
@@ -917,35 +974,11 @@ const nearestAirport = tool({
     additionalProperties: false,
   }),
   async execute({ city }) {
-    /* Resolve a HOTEL NAME to its destination, because the model does not know
-     * our keys and cannot be expected to.
-     *
-     * Measured, not guessed: asked "how do I reach Soneva Fushi?" it called
-     * this tool once with city="Soneva Fushi" and got nothing, because the key
-     * is "Kunfunadhoo Island". Angama Mara had worked only by luck — its key is
-     * "Masai Mara", a name famous enough to guess. Nobody guesses Kunfunadhoo.
-     *
-     * Telling the model to look the city up first would be another optional
-     * step, and this file's record is that those get skipped. So the tool is
-     * forgiving instead: if the name matches no destination, try it as a hotel
-     * and use that hotel's own city — or its traveller area, for the eight
-     * wilderness lodges with no city (§3). `resolvedFrom` reports the swap so
-     * an answer can say which destination it is describing. */
-    let key = city;
-    let resolvedFrom: string | null = null;
-    if (getAirportsForCity(key).length === 0 && !getTransferRoute(key)) {
-      const matches = await getHotels({
-        fields: ["hotel_name", "city", "state_province_county_island"] as unknown as string[],
-        filter: { hotel_name: { _icontains: city } },
-        limit: 2,
-      });
-      const hit = matches[0] as unknown as Record<string, string | null> | undefined;
-      const candidate = (hit?.city ?? "").trim() || (hit?.state_province_county_island ?? "").trim();
-      if (matches.length === 1 && candidate) {
-        resolvedFrom = city;
-        key = candidate;
-      }
-    }
+    /* `resolvedFrom` reports the swap when a hotel name was resolved to its
+     * destination, so an answer can say which destination it is describing. */
+    const resolved = await resolveDestinationKey(city);
+    const key = resolved.city;
+    const resolvedFrom = resolved.resolvedFrom;
 
     const airports = getAirportsForCity(key);
     const primary = pickPrimaryAirportForCity(key);
@@ -965,11 +998,23 @@ const nearestAirport = tool({
       primary: primary
         ? { iata: primary.iata, label: primary.label, distKm: primary.distKm }
         : null,
-      airports: airports.map((a) => ({
-        iata: a.iata,
-        label: a.label,
-        distKm: a.distKm,
-      })),
+      /* `transferMinutes` is the MEASURED drive from that airport to the
+       * destination, and it is here rather than left to be inferred from
+       * distKm because distKm is a straight line: Val d'Isere is 111km from
+       * Geneva and three and a quarter hours by road, and reading the first
+       * number as the second is what once answered Turin. Null means we do not
+       * have a drive time - either because there is no road, or because the
+       * last stretch is a flight or a boat, which is what `transfer` below
+       * describes. Never fill it in from your own knowledge. */
+      airports: airports.map((a) => {
+        const leg = resolveTransfer(key, a.iata);
+        return {
+          iata: a.iata,
+          label: a.label,
+          distKm: a.distKm,
+          transferMinutes: leg.minutes,
+        };
+      }),
       transfer: route
         ? {
             arriveAt: route.arriveAt,
@@ -979,6 +1024,161 @@ const nearestAirport = tool({
             note: route.note ?? null,
           }
         : null,
+    });
+  },
+});
+
+/* WHICH AIRPORT, FOR THIS GUEST. The one question `nearestAirport` cannot
+ * answer, because the answer depends on where they start.
+ *
+ * The failure it removes, reported by Ulrik: a destination with several airports
+ * was being answered from the airport list alone, so the nearest or the
+ * hand-first one won and the flight it took to get there was never weighed.
+ * Courchevel is the clean case - Chambery is an hour closer by road than
+ * Geneva, and from most origins you reach Chambery with a connection that costs
+ * more than the hour. A shorter drive is not a shorter journey.
+ *
+ * THE RANKING IS COMPUTED, NOT PROMPTED. The model receives the order and the
+ * totals already worked out, the same reason it receives price ranks instead of
+ * prices: a rule it has to apply itself is a rule it can skip. */
+const compareGateways = tool({
+  description:
+    "Compare the airports serving one destination BY TOTAL TRAVEL TIME from a " +
+    "given departure airport — the flight and the transfer added together — and " +
+    "return them in order, best first. REQUIRED before naming an airport, or " +
+    "passing flight legs to presentResults, whenever the destination has more " +
+    "than one airport and you know where the visitor is flying from. The " +
+    "ordering is already done: take it. Never re-rank it on distance, and never " +
+    "prefer an airport because the drive is shorter — that is the mistake this " +
+    "exists to prevent, because the drive it saves is usually paid for twice " +
+    "over by the change of planes needed to get there.",
+  inputSchema: jsonSchema<{
+    city: string;
+    origin: string;
+    departureDate: string;
+    returnDate?: string;
+    adults?: number;
+    children?: number;
+    cabinClass?: string;
+  }>({
+    type: "object",
+    properties: {
+      city: {
+        type: "string",
+        description:
+          "The destination as we name it — a city (\"Courchevel 1850\") or a " +
+          "traveller area (\"Masai Mara\"). A hotel name is resolved to its " +
+          "destination, as in nearestAirport.",
+      },
+      origin: {
+        type: "string",
+        description:
+          "IATA code the visitor departs from. Use the one they named, or their " +
+          "home airport from the page context. Without it there is nothing to " +
+          "compare and the tool says so.",
+      },
+      departureDate: { type: "string", description: "yyyy-mm-dd" },
+      returnDate: { type: "string", description: "yyyy-mm-dd" },
+      adults: { type: "number" },
+      children: { type: "number" },
+      cabinClass: {
+        type: "string",
+        enum: ["economy", "premium_economy", "business", "first"],
+      },
+    },
+    required: ["city", "origin", "departureDate"],
+    additionalProperties: false,
+  }),
+  async execute(input) {
+    const { city, origin, ...rest } = input;
+    const key = await resolveDestinationKey(city);
+    const airports = getAirportsForCity(key.city);
+
+    if (!airports.length) {
+      return asUntrustedData("gateways", {
+        city: key.city,
+        resolvedFrom: key.resolvedFrom,
+        found: false,
+      });
+    }
+
+    const from = origin.trim().toUpperCase();
+    const { flightDataIsSynthetic } = await import("@/lib/flights/duffelClient");
+
+    /* TWO CASES WHERE NOTHING IS SEARCHED, and they must not be dressed up as a
+     * comparison. Returning `rankGateways` over an empty set of flight facts
+     * reads every airport as `flies: false` and says "nothing flies to any of
+     * these airports on those dates" - which for a one-airport destination is
+     * not a finding, it is the absence of a search.
+     *
+     *   * ONE AIRPORT. Nothing to compare, and two Duffel searches to discover
+     *     that would be pure latency. The transfer still comes back, because
+     *     "how far is the hotel from the airport" is asked here just as often.
+     *   * A DUFFEL TEST TOKEN. That environment returns a fabricated nonstop on
+     *     every route, so the totals would rank real drives against invented
+     *     flights and hand back the shortest drive - the exact fault this tool
+     *     exists to remove, stated with false confidence. */
+    const synthetic = flightDataIsSynthetic();
+    if (airports.length === 1 || synthetic) {
+      return asUntrustedData("gateways", {
+        city: key.city,
+        resolvedFrom: key.resolvedFrom,
+        found: true,
+        from,
+        compared: false,
+        basis:
+          airports.length === 1
+            ? "One airport serves this destination, so there is nothing to compare - give it, with the transfer."
+            : "Flight times cannot be compared in this environment, so this is our standing order for the destination: the airport listed first is the one guests use. Give it plainly and do not call it the quickest.",
+        rankedOnWholeJourney: false,
+        airports: airports.map((a) => {
+          const leg = resolveTransfer(key.city, a.iata);
+          return {
+            iata: a.iata,
+            label: a.label,
+            transferMinutes: leg.minutes,
+            transfer: transferSentence(leg.basis, leg.minutes),
+          };
+        }),
+      });
+    }
+
+    const { gatewayFlightFacts } = await import("./flightSearch");
+    const facts = await gatewayFlightFacts({
+      ...rest,
+      origin: from,
+      destinations: airports.map((a) => a.iata).filter((iata) => iata !== from),
+    });
+
+    const comparison = rankGateways(key.city, facts, airports);
+    return asUntrustedData("gateways", {
+      city: key.city,
+      resolvedFrom: key.resolvedFrom,
+      found: true,
+      from,
+      compared: true,
+      /* Named "basis" rather than "note" so it reads as the grounds for the
+       * order, which is what the model needs to decide how firmly to state it. */
+      basis: comparison.basis,
+      rankedOnWholeJourney: comparison.comparable,
+      airports: comparison.ranked.map((g) => ({
+        iata: g.iata,
+        label: g.label,
+        recommended: g.recommended,
+        flies: g.flies,
+        nonstop: g.nonstop,
+        /* The flight we would put them on - the nonstop where there is one,
+         * even if some connection is quicker on paper. `totalMinutes` is built
+         * from this, not from the quickest itinerary of any kind. */
+        flightMinutes: g.flightMinutes,
+        stops: g.minStops,
+        transferMinutes: g.transferMinutes,
+        totalMinutes: g.totalMinutes,
+        /* Plain words, because §50's rule is that anything at home in a schema
+         * must not reach an answer. The model is reading this to decide what to
+         * SAY, so it is written as what to say. */
+        transfer: transferSentence(g.transferBasis, g.transferMinutes),
+      })),
     });
   },
 });
@@ -1304,6 +1504,7 @@ export const conciergeTools = {
   getHotelDetails,
   checkAvailability,
   nearestAirport,
+  compareGateways,
   searchFlights,
   searchRestaurants,
   presentResults,

@@ -453,6 +453,25 @@
   white-space: nowrap;
 }
 
+/* The quickest airport door to door. A recessed chip like the rest of the
+   badges (§35), muted rather than coloured: it marks one block among two or
+   three, and the blocks are already in that order, so it confirms the ordering
+   rather than shouting over it. Lower-case despite sitting inside an uppercase
+   title, because it is a sentence and not a label. */
+.airportBlockBest {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--oltra-field-border);
+  border-radius: var(--oltra-radius-sm);
+  background: var(--oltra-field-bg);
+  color: var(--oltra-badge-text);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
 .cabinGroup {
   display: grid;
   gap: 0.5rem;

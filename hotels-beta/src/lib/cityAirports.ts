@@ -1796,6 +1796,83 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
 };
 
+/* Destinations whose airport list is HAND-ORDERED by usefulness rather than by
+ * distance - every GATEWAY_OVERRIDE above. The distinction has to survive into
+ * the generated file, because `pickPrimaryAirportForCity` cannot tell the two
+ * orders apart by looking at the entries: its size-then-runway rule answers
+ * Lyon for Val d'Isere and Courchevel and Zurich for Zermatt, which is exactly
+ * the choice the override was written to overturn. A comment in the generator
+ * used to say the ordering "only affects display order"; it did not - it was
+ * also deciding the Flights page's preselected destination and the airport a
+ * saved trip prices to.
+ *
+ * NOT a blanket "first entry wins". For everything else the list is
+ * nearest-first, where the first entry is the closest strip and not the
+ * gateway - New York's nearest to the hotel centroid is LaGuardia and the
+ * answer has to be JFK. So the size rule stays for the other 458
+ * destinations and only these 59 read position one as the answer. */
+const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
+  "amboseli national park",
+  "andermatt",
+  "arenal",
+  "arosa",
+  "bad ragaz",
+  "big island",
+  "blevio",
+  "cabo san lucas",
+  "casares",
+  "cernobbio",
+  "cerretto langhe",
+  "chongzou",
+  "courchevel 1850",
+  "crans-montana",
+  "dorado",
+  "elounda",
+  "fort william",
+  "gordes",
+  "grumeti game reserve",
+  "gstaad",
+  "hua hin",
+  "kapalua, maui",
+  "kingdom of fife",
+  "kinigi",
+  "kirawira",
+  "kokomo island",
+  "la croix-valmer",
+  "lamego",
+  "laucala island",
+  "le baux de provence",
+  "lech am arlberg",
+  "les belleville",
+  "lugano",
+  "masai mara",
+  "menlo park",
+  "moltrasio",
+  "namiri plains",
+  "natales",
+  "nikko",
+  "palmetto bluff",
+  "pamalican island",
+  "pamushana",
+  "perez zeledón",
+  "ramatuelle",
+  "rancho santa fe",
+  "ruhengeri",
+  "saint-tropez",
+  "serengeti",
+  "sesriem",
+  "sonop farm",
+  "st. andrews",
+  "st. moritz",
+  "stresa",
+  "torno",
+  "tremezzina",
+  "turtle island",
+  "val d'isere",
+  "volcanoes national park",
+  "zermatt",
+]);
+
 function normalizeCityKey(city: string): string {
   return city.trim().toLowerCase();
 }
@@ -1812,16 +1889,46 @@ export function getAirportsForCity(city: string): CityAirport[] {
   return LOOKUP[normalizeCityKey(city)] ?? [];
 }
 
+/** True when this destination's airport list was ordered BY HAND rather than by
+ * distance, so position one is somebody's decision about which airport guests
+ * actually use.
+ *
+ * Exported because `gatewayRanking.ts` has to know the difference. Ranking on
+ * total travel time puts Lyon ahead of Geneva for Courchevel by nineteen
+ * minutes, and Geneva is there because a person concluded that is where
+ * everyone flies. A fresh heuristic should not overturn that on a margin
+ * measured to a hotel centroid - so a curated first choice keeps its place
+ * unless the difference is material. For every other destination position one
+ * is merely the nearest strip and carries no such claim. */
+export function hasCuratedGatewayOrder(city: string): boolean {
+  if (!city) return false;
+  return CURATED_GATEWAY_ORDER.has(normalizeCityKey(city));
+}
+
 const SIZE_ORDER: Record<CityAirport["size"], number> = { large: 0, medium: 1, small: 2 };
 
 /** The single airport to preselect when something needs one code for a city
  * (e.g. the Flights page resolving a destination handed over from Hotels).
- * Favours the biggest airport, not the closest: New York's nearest to the
- * hotel centroid is LaGuardia, but the gateway a traveller expects is JFK.
- * Distance only breaks ties. */
+ *
+ * A hand-ordered destination answers with its FIRST entry, because there a
+ * human has already decided which airport a guest actually uses and the
+ * size rule contradicts them: it sent Val d'Isere and Courchevel to Lyon and
+ * Zermatt to Zurich, while the concierge - reading the same list in order -
+ * said Geneva. One roster, two answers, and the classic pages had the wrong
+ * one.
+ *
+ * Everywhere else the list is nearest-first, so the biggest airport wins and
+ * distance only breaks ties: New York's nearest to the hotel centroid is
+ * LaGuardia, and the gateway a traveller expects is JFK.
+ *
+ * This knows nothing about where the guest starts from. When an origin and
+ * dates are known, rank on the whole journey instead - see
+ * lib/flights/gatewayRanking.ts, which adds the flight and the transfer
+ * together so a shorter drive cannot win by adding a connection. */
 export function pickPrimaryAirportForCity(city: string): CityAirport | null {
   const airports = getAirportsForCity(city);
   if (airports.length === 0) return null;
+  if (CURATED_GATEWAY_ORDER.has(normalizeCityKey(city))) return airports[0];
   return [...airports].sort(
     (a, b) =>
       SIZE_ORDER[a.size] - SIZE_ORDER[b.size] ||
