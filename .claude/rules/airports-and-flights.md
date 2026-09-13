@@ -261,8 +261,11 @@ stands, so both the override and the route were answering for nothing. Among
 `Kimana Sanctuary`. The route still flies Wilson → Amboseli airstrip, because
 that is where the scheduled flights land, about 45 minutes' drive from the
 lodge. Kimana's own strip takes private charters only, so it went into the note.
-**The row's traveller area is now blank**, so a search for "Amboseli" will not
-find the lodge. That is a §3 data question, left for whoever edited the row.
+**The row's traveller area had been left blank**, so a search for "Amboseli"
+no longer found the lodge. Set to `Amboseli` on Ulrik's instruction the same day
+(`set-angama-amboseli-area-2026-09-13.mjs`, rollback file beside it), the
+Cernobbio / Lake Como shape. The airport key stays `Kimana Sanctuary`, because
+the generator keys on `city` whenever there is one.
 
 ### Settled, so nobody re-opens them
 
