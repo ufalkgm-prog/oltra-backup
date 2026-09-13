@@ -8,7 +8,7 @@ import { collapseReturnLegs } from "@/lib/ai/flightLegs";
 import { stripLeadingName } from "@/lib/ai/rationale";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
-import type { AiQueryState, AiResultSet } from "@/lib/ai/types";
+import { EMPTY_RESULT_SET, type AiQueryState, type AiResultSet } from "@/lib/ai/types";
 import styles from "./AiConcierge.module.css";
 
 /* The conversation, and the summary of what it found.
@@ -47,6 +47,7 @@ type PresentInput = {
     departureDate: string;
     returnDate?: string;
     cabin?: string;
+    details?: string;
   }[];
   stay?: {
     checkIn?: string;
@@ -68,7 +69,12 @@ type PresentInput = {
  * hands us a structured result set through a tool rather than us parsing hotel
  * names out of its prose — prose parsing would break the moment it phrased
  * something differently. */
-function readLatestPresentation(messages: UIMessage[]): {
+function flightKey(origin?: string, destination?: string, depart?: string, ret?: string): string {
+  const code = (value?: string) => (value ?? "").trim().toUpperCase();
+  return `${code(origin)}-${code(destination)}-${depart ?? ""}-${ret ?? ""}`;
+}
+
+type Presentation = {
   toolCallId: string;
   framing: string;
   followUp: string;
@@ -77,10 +83,22 @@ function readLatestPresentation(messages: UIMessage[]): {
    * store keeps whatever it is not told about. */
   results: Partial<AiResultSet>;
   query: Partial<AiQueryState>;
-} | null {
+};
+
+function readLatestPresentation(messages: UIMessage[]): Presentation | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const message = messages[i];
-    if (message.role !== "assistant") continue;
+    const found = readPresentation(messages[i]);
+    if (found) return found;
+  }
+  return null;
+}
+
+/** The completed presentResults call in ONE message, if it has one. Split out
+ * of readLatestPresentation so an earlier answer can be redrawn from its own
+ * call rather than vanishing when a newer one arrives. */
+function readPresentation(message: UIMessage): Presentation | null {
+  {
+    if (message.role !== "assistant") return null;
 
     for (let j = message.parts.length - 1; j >= 0; j -= 1) {
       const part = message.parts[j];
@@ -154,6 +172,23 @@ function readLatestPresentation(messages: UIMessage[]): {
         results.highlightIds = highlightIds;
       }
       if (input.flights) {
+        /* Flight details are shown only for a journey this turn actually
+           SEARCHED, airports and dates matching. Found live on the first run
+           (2026-09-13): the model searched Copenhagen-LINATE and presented the
+           leg as Copenhagen-MALPENSA, so the times and airlines under the
+           Malpensa line described a different airport. The tool description
+           already said "these exact airports"; this makes the panel incapable
+           of showing a mismatch rather than trusting that it was read. */
+        const searched = new Set(
+          message.parts
+            .filter((p) => isToolUIPart(p) && getToolName(p) === "searchFlights")
+            .map((p) => {
+              const s = (isToolUIPart(p) ? p.input : undefined) as
+                | { origin?: string; destination?: string; departureDate?: string; returnDate?: string }
+                | undefined;
+              return flightKey(s?.origin, s?.destination, s?.departureDate, s?.returnDate);
+            })
+        );
         // Collapsed here rather than at the frame, so the summary, the cards,
         // the handoff URL and the Flights page's trip type all read the same
         // one round trip.
@@ -166,6 +201,10 @@ function readLatestPresentation(messages: UIMessage[]): {
               departureDate: leg.departureDate,
               returnDate: leg.returnDate ?? "",
               cabin: leg.cabin ?? "economy",
+              ...(leg.details &&
+              searched.has(flightKey(leg.origin, leg.destination, leg.departureDate, leg.returnDate))
+                ? { details: leg.details }
+                : {}),
             }))
         );
       }
@@ -373,9 +412,16 @@ function highlightsFirst(ids: number[], highlightIds: number[]): number[] {
  * the model wrote, so a name here can never disagree with the card beside it.
  * The rationale is the model's. No prices: the summary is deliberately
  * incapable of carrying one. */
-function ResultSummary() {
-  const { results, query, pageContext } = useAiSearch();
-  const { hotels, restaurants, loading } = useAiResultRecords();
+function ResultSummary({ past }: { past?: Presentation }) {
+  const store = useAiSearch();
+  const { pageContext } = store;
+  /* An EARLIER answer, redrawn further up the transcript, reads its own call:
+     its own ids, rationales and flights, not whatever the store holds now. */
+  const results: AiResultSet = past ? { ...EMPTY_RESULT_SET, ...past.results } : store.results;
+  const query = past ? past.query : store.query;
+  const { hotels, restaurants, loading } = useAiResultRecords(
+    past ? { hotelIds: results.hotelIds, restaurantIds: results.restaurantIds } : undefined
+  );
 
   /* The cards price themselves from the stay, so with no dates there is
      nothing on them to see. Saying "with prices and availability" regardless
@@ -500,6 +546,9 @@ function ResultSummary() {
                   {" "}
                   — {shortDate(leg.departureDate)}
                   {leg.returnDate ? ` – ${shortDate(leg.returnDate)}` : ""}
+                  {/* The options themselves, in the model's words from
+                      searchFlights: airlines, direct or not, times each way. */}
+                  {leg.details ? `. ${leg.details}` : ""}
                 </span>
               </li>
             ))}
@@ -521,7 +570,10 @@ function ResultSummary() {
           first reading: it named a UI part ("cards") and a location without
           saying what to do. Every behind-the-panel variant now says where the
           results are, how to see them, and that closing loses nothing. */}
-      <p className={styles.summaryFootnote}>
+      {/* Not under an earlier answer: the window behind shows the LATEST one,
+          so pointing there from further up would send the visitor to results
+          for a different question. */}
+      {past ? null : <p className={styles.summaryFootnote}>
         {alsoBehind > 0
           ? rendersBehind
             ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REVIEW_BEHIND}`
@@ -533,7 +585,7 @@ function ResultSummary() {
             : rendersBehind
               ? `The results of your query are listed in the window behind this panel. ${REVIEW_BEHIND}`
               : "The cards are open with the link below."}
-      </p>
+      </p>}
     </div>
   );
 }
@@ -732,9 +784,14 @@ export default function AiConversation() {
         {messages.map((message, index) => {
           const text = messageText(message);
           const anchorsAnswer = index === presentationIndex;
-          // A turn with no prose still renders, if it is the one that carried
-          // the answer.
-          if (!text.trim() && !anchorsAnswer) return null;
+          /* EARLIER ANSWERS STAY ON SCREEN (Ulrik, 2026-09-13). Only the latest
+             answer used to be drawn, from the store; an earlier turn that
+             answered purely through presentResults has no prose, so the moment
+             a newer answer arrived it rendered as nothing and the transcript
+             read as though the concierge had never replied. Each such turn is
+             now redrawn from its own call. */
+          const pastAnswer = anchorsAnswer ? null : readPresentation(message);
+          if (!text.trim() && !anchorsAnswer && !pastAnswer) return null;
 
           const row = text.trim() ? (
             <div
@@ -744,6 +801,21 @@ export default function AiConversation() {
               {message.role === "user" ? text : <AgentText text={text} />}
             </div>
           ) : null;
+
+          if (pastAnswer) {
+            return (
+              <Fragment key={message.id}>
+                <p className={styles.framing}>{pastAnswer.framing}</p>
+                <ResultSummary past={pastAnswer} />
+                {pastAnswer.followUp ? (
+                  <div className={`${styles.turnAgent} ${styles.followUp}`}>
+                    <AgentText text={pastAnswer.followUp} detectClosingQuestion={false} />
+                  </div>
+                ) : null}
+                {row}
+              </Fragment>
+            );
+          }
 
           return anchorsAnswer ? (
             <Fragment key={message.id}>

@@ -117,14 +117,50 @@ export async function searchFlightOffers(input: FlightSearchInput) {
     return { ok: true as const, route, flies: false, options: [] };
   }
 
-  // Rank by fare and discard the fare. Same principle as checkAvailability:
-  // the model can order and compare, but has no figure it could quote.
-  const ranked = [...itineraries]
+  /* WHICH OPTIONS THE MODEL SEES, 2026-09-13.
+   *
+   * This used to be the six cheapest, which on a real route is often six fare
+   * brands of the same one or two flights, some leaving at 06:00 or landing
+   * after midnight - so the concierge could say little beyond "it flies". Ulrik
+   * wants the answer to name the most relevant options: airlines, direct or
+   * not, and the departure times each way, at hours a guest would choose.
+   *
+   * So: one entry per SCHEDULE (the same flights sold as several fares are one
+   * option to a traveller, and the cheapest fare stands for it), each flagged
+   * for civilised hours, ordered civilised first, then fewest stops, then
+   * shortest, then cheapest. The fare still only survives as a rank. */
+  const priced = [...itineraries]
     .filter((it) => Number.isFinite(it.priceEur))
-    .sort((a, b) => a.priceEur - b.priceEur)
-    .slice(0, 6);
+    .sort((a, b) => a.priceEur - b.priceEur);
 
-  const describe = (leg: (typeof ranked)[number]["outbound"] | undefined) =>
+  type Leg = (typeof priced)[number]["outbound"];
+  const signature = (leg: Leg | undefined) =>
+    leg ? `${leg.departTime}>${leg.arriveTime}>${leg.airlines.map((a) => a.name).join("+")}>${leg.stops}` : "";
+  const bySchedule = new Map<string, (typeof priced)[number]>();
+  for (const it of priced) {
+    const key = `${signature(it.outbound)}|${signature(it.inbound)}`;
+    if (!bySchedule.has(key)) bySchedule.set(key, it);
+  }
+  const schedules = [...bySchedule.values()];
+  const priceRank = new Map(schedules.map((it, index) => [it, index + 1]));
+
+  const totalStops = (it: (typeof priced)[number]) => it.outbound.stops + (it.inbound?.stops ?? 0);
+  const totalMinutes = (it: (typeof priced)[number]) =>
+    it.outbound.durationMinutes + (it.inbound?.durationMinutes ?? 0);
+  const civilised = (it: (typeof priced)[number]) =>
+    civilisedHours(it.outbound) && (!it.inbound || civilisedHours(it.inbound));
+
+  const chosen = [...schedules]
+    .sort(
+      (a, b) =>
+        Number(civilised(b)) - Number(civilised(a)) ||
+        totalStops(a) - totalStops(b) ||
+        totalMinutes(a) - totalMinutes(b) ||
+        (priceRank.get(a) ?? 0) - (priceRank.get(b) ?? 0)
+    )
+    .slice(0, MAX_FLIGHT_OPTIONS);
+
+  const describe = (leg: Leg | undefined) =>
     leg
       ? {
           depart: leg.departTime,
@@ -133,6 +169,7 @@ export async function searchFlightOffers(input: FlightSearchInput) {
           stops: leg.stops,
           via: leg.layovers.map((l) => l.name),
           airlines: leg.airlines.map((a) => a.name),
+          civilisedHours: civilisedHours(leg),
         }
       : null;
 
@@ -140,13 +177,35 @@ export async function searchFlightOffers(input: FlightSearchInput) {
     ok: true as const,
     route,
     flies: true,
-    note: "Ranks only. No fares are provided; the flight cards display live prices.",
-    options: ranked.map((itinerary, index) => ({
-      priceRank: index + 1,
+    directAvailable: schedules.some((it) => totalStops(it) === 0),
+    note:
+      "Most relevant first: civilised hours, then fewest stops, then shortest. " +
+      "Times are local. priceRank is 1 for the cheapest schedule; no fares are " +
+      "provided - the flight cards display live prices.",
+    options: chosen.map((itinerary) => ({
+      priceRank: priceRank.get(itinerary) ?? 0,
       outbound: describe(itinerary.outbound),
       inbound: describe(itinerary.inbound),
     })),
   };
+}
+
+/* How many schedules the model is given. Enough to offer a morning and an
+ * evening choice each way on a well-served route, few enough to stay a shortlist. */
+const MAX_FLIGHT_OPTIONS = 8;
+
+/* A guest's hours, not an airline's: leave from 07:00 and land by 23:00 the
+ * same day. Both times are local (Duffel's departing_at/arriving_at carry no
+ * offset), and a "+1" on the arrival means it lands the next day. A long-haul
+ * overnight flight fails this by design and still reaches the model - the flag
+ * orders the list, it does not filter it, because on some routes the red-eye is
+ * the only way. */
+function civilisedHours(leg: { departTime: string; arriveTime: string }): boolean {
+  const hour = (time: string) => Number(time.slice(0, 2));
+  const nextDay = /\+\d/.test(leg.arriveTime);
+  const depart = hour(leg.departTime);
+  const arrive = hour(leg.arriveTime);
+  return depart >= 7 && !nextDay && arrive < 23;
 }
 
 /* HOW LONG IT TAKES TO FLY THERE, per candidate airport, with no fare in the

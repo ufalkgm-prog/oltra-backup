@@ -144,6 +144,10 @@ export type AiFlightLeg = {
   departureDate: string;
   returnDate: string;
   cabin: string;
+  /** The concierge's one-line account of the options on this journey —
+   * airlines, direct or with stops, and the departure times each way — taken
+   * from searchFlights. Never a fare; the cards carry those. */
+  details?: string;
 };
 
 export const EMPTY_RESULT_SET: AiResultSet = {

@@ -96,8 +96,15 @@ function load(
   return promise;
 }
 
-export function useAiResultRecords(): Records & { loading: boolean } {
-  const { results } = useAiSearch();
+/* `ids` defaults to the CURRENT answer in the store. The concierge passes an
+ * earlier answer's own ids when it redraws that answer further up the
+ * transcript — same cache, so a turn already fetched this session costs
+ * nothing. */
+export function useAiResultRecords(
+  ids?: { hotelIds: number[]; restaurantIds: number[] }
+): Records & { loading: boolean } {
+  const { results: current } = useAiSearch();
+  const results = ids ?? current;
   const key = keyOf(results.hotelIds, results.restaurantIds);
   const seeded = cache.get(key);
 

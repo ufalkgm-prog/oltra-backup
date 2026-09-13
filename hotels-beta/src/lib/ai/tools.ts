@@ -1328,6 +1328,7 @@ const presentResults = tool({
       departureDate: string;
       returnDate?: string;
       cabin?: string;
+      details?: string;
     }[];
     stay?: {
       checkIn?: string;
@@ -1444,6 +1445,17 @@ const presentResults = tool({
                 "and home from another — those are two separate one-way legs.",
             },
             cabin: { type: "string" },
+            details: {
+              type: "string",
+              description:
+                "One or two short sentences the visitor reads under this " +
+                "journey: the most relevant options from searchFlights for " +
+                "these exact airports and dates - the airlines, direct or with " +
+                "stops (and where), and the departure times to choose from on " +
+                "the way out and, for a round trip, on the way back. Prefer " +
+                "options at civilised hours. Only what searchFlights returned; " +
+                "leave it out if you did not search this journey. Never a fare.",
+            },
           },
           required: ["origin", "destination", "departureDate"],
           additionalProperties: false,

@@ -51,6 +51,8 @@ export function collapseReturnLegs(legs: AiFlightLeg[]): AiFlightLeg[] {
       ...leg,
       returnDate: legs[mirror].departureDate,
       cabin: leg.cabin || legs[mirror].cabin,
+      // Each half may describe its own direction; the return is one line.
+      details: [leg.details, legs[mirror].details].filter(Boolean).join(" ") || undefined,
     });
   }
 
