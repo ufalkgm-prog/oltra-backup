@@ -36,12 +36,18 @@ const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN;
 if (!DIRECTUS_URL) throw new Error("Missing env DIRECTUS_URL");
 if (!DIRECTUS_TOKEN) throw new Error("Missing env DIRECTUS_TOKEN");
 
+// Mirrors the live Directus choice lists (GET /fields/hotels/{field}) as of 2026-09-13.
+// Refresh these whenever a value is retired; a stale entry here lets a batch write a value
+// the dropdowns no longer offer. Retired so far:
+//   setting 2026-09-11 — Beach, Canalside, Clifftop, Lakeside, Riverside, Seaside (§42B)
+//   style   2026-09-13 — Camp, Chinese, Cottages, Intimate
+//   activities — Biking, Jeep safari (no longer offered by Directus)
 const TAXONOMY = {
   activities: [
-    "Archery", "Badminton", "Beach", "Biking", "Boating", "Bowling", "Casino",
+    "Archery", "Badminton", "Beach", "Boating", "Bowling", "Casino",
     "Cycling", "Diving", "Falconry", "Family", "Fishing", "Fitness", "Gastronomy",
     "Golf", "Gorilla Hiking", "Hiking", "Horseback riding", "Hunting", "Ice skating",
-    "Jeep safari", "Kayaking", "Nature", "Padel", "Paragliding", "Rafting", "Safari",
+    "Kayaking", "Nature", "Padel", "Paragliding", "Rafting", "Safari",
     "Sailing", "Shopping", "Sightseeing", "Skiing", "Snorkeling", "Spa", "Tennis",
     "Watersports", "Whalewatching", "Wilderness safari", "Wildlife", "Wine",
   ],
@@ -51,23 +57,22 @@ const TAXONOMY = {
     "Telegraph Best Hotels in the World",
   ],
   setting: [
-    "Beach", "Beachfront", "Canalside", "City", "Clifftop", "Coastal", "Countryside",
-    "Desert", "Hillside", "Island", "Jungle", "Lakeside", "Mountains", "Nature Reserve",
-    "Oceanfront", "Overwater", "Private Island", "Rainforest", "Riverside", "Seaside",
-    "Waterfront", "Wildlife Reserve",
+    "Beachfront", "City", "Coastal", "Countryside", "Desert", "Hillside", "Island",
+    "Jungle", "Mountains", "Nature Reserve", "Oceanfront", "Overwater", "Private Island",
+    "Rainforest", "Waterfront", "Wildlife Reserve",
   ],
   style: [
-    "African", "Alpine", "Art Deco", "Camp", "Chinese", "Colonial", "Contemporary",
-    "Cottages", "Design", "Grand", "Historical", "Intimate", "Lodge", "Mediterranean",
-    "Middle Eastern", "Oriental", "Safari Lodge", "Tented Camp", "Traditional", "Tropical",
+    "African", "Alpine", "Art Deco", "Colonial", "Contemporary", "Design", "Grand",
+    "Historical", "Lodge", "Mediterranean", "Middle Eastern", "Oriental", "Safari Lodge",
+    "Tented Camp", "Traditional", "Tropical",
   ],
 };
 
-// The editorial single-select companions to the setting/style tag arrays. Unlike setting/style —
-// which are locked to their choices in Directus (meta.options.allowOther = false) — these four are
-// plain nullable text columns with no meta.options.choices at all (confirmed via GET /fields/hotels),
-// so this script is the only place their vocabulary can be enforced. They draw on the same
-// vocabularies as the tag arrays above.
+// The editorial single-select companions to the setting/style tag arrays. They are plain text
+// columns, but since §44 they carry the same locked choice lists as setting/style
+// (meta.options.allowOther = false). Directus does not re-check existing rows when a list changes,
+// so this script still validates them before writing. They draw on the same vocabularies as the
+// tag arrays above.
 const SINGLE_SELECT_TAXONOMY = {
   primary_setting: TAXONOMY.setting,
   secondary_setting: TAXONOMY.setting,
