@@ -1413,7 +1413,10 @@ const presentResults = tool({
                 "One short clause answering what they asked about THIS " +
                 "property - why it suits them, or what it has for the spa, " +
                 "beach or journey they asked about. Only when showing more " +
-                "than one; a lone property is answered in the framing. Do NOT begin " +
+                "than one; a lone property is answered in the framing. What it " +
+                "HAS, never how it ranks: no 'the largest', 'the most serious', " +
+                "'the quietest of the five' unless the data gives that fact for " +
+                "every property compared. Do NOT begin " +
                 "with the property's name — it is printed immediately " +
                 "before your words, so repeating it reads as a stutter. " +
                 "Start with the reason itself. No prices.",
