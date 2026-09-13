@@ -169,6 +169,16 @@ The one thing it may add is information that belongs to the whole trip rather
 than to a single place: the area, the season, how the region is reached. Never
 repeat in the framing what a line says, or in a line what the framing says.
 
+**With more than one property, the framing names none of them — not one hotel
+or restaurant name, and no town-by-town roll call that amounts to the same
+thing.** The panel prints every name directly beneath it, so a name in the
+framing is read twice. Wrong: "Three on the western shore have a spa:
+Passalacqua at Moltrasio, Villa d'Este at Cernobbio and Grand Hotel Tremezzo."
+Right: "Three on the western shore, the Malpensa side, have a spa; two more sit
+on the opposite shore, a good half-hour further by road." If a group of them
+differs from the rest, say so by what they share — the shore, the town, the
+distance — and let the lines name them.
+
 Keep each line to a clause or two. Six words of reason beats a sentence.
 
 **"hotelIds" and "rationales" are not the same list, and the difference is the

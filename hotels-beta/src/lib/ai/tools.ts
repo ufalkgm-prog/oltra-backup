@@ -1353,8 +1353,9 @@ const presentResults = tool({
           "One or two editorial sentences. No prices, no lists. With ONE " +
           "property this is the whole answer - name it and answer what they " +
           "asked about it here. With several it introduces the set and " +
-          "anything true of the whole trip; each property's own detail goes " +
-          "in its rationale.",
+          "anything true of the whole trip, and names NONE of the properties - " +
+          "their names are printed beneath it; each property's own detail " +
+          "goes in its rationale.",
       },
       // Calling this tool ENDS YOUR TURN — say everything here. A separate
       // message afterwards cost a whole extra model round trip (measured at
