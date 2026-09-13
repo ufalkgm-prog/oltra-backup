@@ -38,10 +38,15 @@ export type TriageVerdict =
   | { allow: false; reply: string };
 
 /* The decline wording. Kept identical for PROBE and OTHER on purpose: a
- * different response to a probe tells the prober they found something. */
+ * different response to a probe tells the prober they found something.
+ *
+ * Reworded 2026-09-13 to the courteous offer the concierge's follow-ups use.
+ * "Tell me where you're thinking of going and I'll take it from there" read as
+ * an instruction, and restaurants were missing from what it covers. The
+ * prompt's own decline line (systemPrompt.ts, "Declining") says the same. */
 const DECLINE =
-  "I'm only able to help with travel — destinations, hotels and flights on myOLTRA. " +
-  "Tell me where you're thinking of going and I'll take it from there.";
+  "I'm afraid I can only help with travel — hotels, flights and restaurants on myOLTRA. " +
+  "If you would like help planning a trip, please let me know where you are thinking of going.";
 
 export async function triageMessage(text: string): Promise<TriageVerdict> {
   try {
