@@ -19,8 +19,10 @@ const TRIAGE_SYSTEM = `Classify one message sent to a luxury travel website's co
 
 Reply with exactly one word:
 
-TRAVEL — anything about destinations, hotels, flights, when to go, weather,
-airports, journeys, or continuing such a conversation. Vague replies inside a
+TRAVEL — anything about destinations, hotels, flights, restaurants, when to go,
+weather, airports, journeys, or continuing such a conversation. Also what to do
+and see at a destination: attractions, museums, exhibitions, bars, nightclubs,
+musicals, opera, concerts, sporting events and matches, shopping, day trips. Vague replies inside a
 travel conversation ("somewhere quieter", "yes", "the second one", "March")
 count as TRAVEL.
 

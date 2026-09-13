@@ -2,7 +2,11 @@ import "server-only";
 import { tool, jsonSchema } from "ai";
 import { getHotels, type HotelRecord } from "@/lib/directus";
 import { filterHotelsByTags } from "@/lib/hotelFilters";
-import { getAirportsForCity, pickPrimaryAirportForCity } from "@/lib/cityAirports";
+import {
+  getAirportsForCity,
+  hasCuratedGatewayOrder,
+  pickPrimaryAirportForCity,
+} from "@/lib/cityAirports";
 import { getTransferRoute, hasAirportChange } from "@/lib/transferRoutes";
 import {
   rankGateways,
@@ -1120,6 +1124,20 @@ const compareGateways = tool({
      *     exists to remove, stated with false confidence. */
     const synthetic = flightDataIsSynthetic();
     if (airports.length === 1 || synthetic) {
+      /* "THE ONE GUESTS USE" IS TRUE ONLY OF A HAND-ORDERED LIST (2026-09-13).
+       * This basis used to say it of every destination, and for most of them
+       * the list is nearest-first: London's first entry is London City, the
+       * airport nearest the hotel centroid, so the concierge told a guest
+       * "London City is the one our guests use from Copenhagen" - a claim
+       * nothing in our data makes. A curated destination keeps its order and
+       * the claim; any other leads with its main airport by size, the same
+       * choice the Flights page makes, and is described as exactly that. */
+      const curated = hasCuratedGatewayOrder(key.city);
+      const primary = pickPrimaryAirportForCity(key.city);
+      const ordered =
+        curated || !primary
+          ? airports
+          : [primary, ...airports.filter((a) => a.iata !== primary.iata)];
       return asUntrustedData("gateways", {
         city: key.city,
         resolvedFrom: key.resolvedFrom,
@@ -1129,9 +1147,11 @@ const compareGateways = tool({
         basis:
           airports.length === 1
             ? "One airport serves this destination, so there is nothing to compare - give it, with the transfer."
-            : "Flight times cannot be compared in this environment, so this is our standing order for the destination: the airport listed first is the one guests use. Give it plainly and do not call it the quickest.",
+            : curated
+              ? "Flight times cannot be compared in this environment, so this is our standing order for the destination, set by hand: the airport listed first is the one guests use. Give it plainly and do not call it the quickest."
+              : "Flight times cannot be compared in this environment. The airport listed first is simply the destination's main airport; nobody has decided it is the one guests use. Name the options plainly, and never say which one guests use, which is quickest or which is best.",
         rankedOnWholeJourney: false,
-        airports: airports.map((a) => {
+        airports: ordered.map((a) => {
           const leg = resolveTransfer(key.city, a.iata);
           return {
             iata: a.iata,
