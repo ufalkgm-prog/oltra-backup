@@ -43,19 +43,19 @@ export const SETTING_VALUES = [
   "Wildlife Reserve",
 ] as const;
 
+/* Camp, Chinese, Cottages and Intimate were retired 2026-09-13: every row
+ * carrying them was retagged from its description, and the choice list on
+ * `style` no longer offers them. Intimate described size rather than style.
+ * Kept out of the enum for the same reason as the retired settings above. */
 export const STYLE_VALUES = [
   "African",
   "Alpine",
   "Art Deco",
-  "Camp",
-  "Chinese",
   "Colonial",
   "Contemporary",
-  "Cottages",
   "Design",
   "Grand",
   "Historical",
-  "Intimate",
   "Lodge",
   "Mediterranean",
   "Middle Eastern",
