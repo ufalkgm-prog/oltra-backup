@@ -338,6 +338,10 @@ function shortDate(iso: string): string {
  * getting expansive is the one screen the visitor can actually read. */
 const MAX_NAMED = 8;
 
+/* Ulrik's wording, 2026-09-13. The second half matters as much as the first:
+ * a visitor told to close the panel needs to know the conversation survives. */
+const REVIEW_BEHIND = "Close this window to review — you can reopen this concierge chat anytime.";
+
 /** Put the properties the concierge named at the head of the list.
  *
  * The panel names a handful and the page behind carries the whole set, so the
@@ -500,17 +504,21 @@ function ResultSummary() {
       {/* When the panel has named only some of them, say where the rest are and
           that these lead the list — the order is guaranteed by highlightsFirst,
           so this is a promise the page behind actually keeps. */}
+      {/* "The cards are on the page behind this panel" was unclear to Ulrik on
+          first reading: it named a UI part ("cards") and a location without
+          saying what to do. Every behind-the-panel variant now says where the
+          results are, how to see them, and that closing loses nothing. */}
       <p className={styles.summaryFootnote}>
         {alsoBehind > 0
           ? rendersBehind
-            ? `These come first on the page behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}.`
+            ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REVIEW_BEHIND}`
             : `These come first on the cards, with the other ${alsoBehind} below — open them with the link below.`
           : priced
             ? rendersBehind
-              ? "Prices and availability are on the cards behind this panel."
+              ? `The results of your query, with prices and availability, are listed in the window behind this panel. ${REVIEW_BEHIND}`
               : "Prices and availability are on the cards — open them with the link below."
             : rendersBehind
-              ? "The cards are on the page behind this panel."
+              ? `The results of your query are listed in the window behind this panel. ${REVIEW_BEHIND}`
               : "The cards are open with the link below."}
       </p>
     </div>
