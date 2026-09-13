@@ -76,7 +76,8 @@ Cards are fixed `height: 96px`, three rows: `dep → arr` + duration + (i); airl
 Everything below was found and deliberately NOT fixed, each with the reason.
 Nothing here is a regression. Two standing audits answer "is anything broken"
 in two commands. **They were both at zero at the pause; the airport audit is
-not any more — see *Unpublished hotels leave dead keys* below**:
+went to 56 and back to zero on 2026-09-13 — see *Unpublished hotels leave
+parked keys* below**:
 
 ```bash
 node scripts/hotels/geo-2026/audit-local-area.mjs   # 6 classes, 340 populated
@@ -223,7 +224,7 @@ has Seronera, Sasakwa, Kogatende and Grumeti, and which one a given lodge uses
 is in our data for none of the six. A vague route beats a guess a guest could
 act on. Routes 53 → 57, overrides 56 → 59.
 
-### Unpublished hotels leave dead keys — 21 DEFECT rows, awaiting a decision (2026-09-13)
+### Unpublished hotels leave parked keys — kept, on Ulrik's decision (2026-09-13)
 
 Between the pause and 2026-09-13 the published count fell **853 → 801**, and
 the airport audit went from 0 to 56 defects without a line of code changing.
@@ -243,11 +244,25 @@ re-measure, and git has the old values). **Kruger's centroid moved** when one
 of its hotels went, gaining HDS and PHW, so all three of its pairs were
 re-measured.
 
-**What remains is 9 gateway overrides and 12 transfer routes keyed on
-destinations with no published hotel.** They are hand-researched, and a
-republished hotel needs them back, so they were **left rather than deleted**.
-Whoever decides whether those hotels are coming back should either delete the
-entries or accept the defect count until they return.
+**That left 9 gateway overrides and 12 transfer routes keyed on destinations
+with no published hotel.** Ulrik: *"Keep the unpublished entries, they'll come
+back."* So `audit-airports.mjs` now reports a key whose destination exists only
+among UNPUBLISHED hotels as **parked** (15 keys), not as a defect. **Do not
+delete a parked entry.** On republish nothing needs doing to it: the rebuild
+restores the key, and the audit fails on the missing last-leg pairs until
+`build-transfer-times.mjs` has measured them.
+
+**The check got sharper, not looser**, and it proved that on its first run. A
+key matching no hotel at all, published or not, is still a defect, and exactly
+one was: **`Amboseli National Park`**. Angama Amboseli's row had gained city
+`Kimana Sanctuary`, the private sanctuary east of the park where the lodge
+stands, so both the override and the route were answering for nothing. Among
+21 standing defects it would have been invisible. Both were re-keyed to
+`Kimana Sanctuary`. The route still flies Wilson → Amboseli airstrip, because
+that is where the scheduled flights land, about 45 minutes' drive from the
+lodge. Kimana's own strip takes private charters only, so it went into the note.
+**The row's traveller area is now blank**, so a search for "Amboseli" will not
+find the lodge. That is a §3 data question, left for whoever edited the row.
 
 ### Settled, so nobody re-opens them
 

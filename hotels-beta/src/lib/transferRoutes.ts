@@ -197,14 +197,24 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "the camp arranges that leg with the stay. Namiri Plains sits in the " +
       "eastern plains, a long game drive from the central airstrips.",
   },
-  "Amboseli National Park": {
+  /* Angama Amboseli, in the Kimana Sanctuary east of the park - keyed
+   * "Amboseli National Park" until its row gained that city (2026-09-13). The
+   * scheduled Safarilink and AirKenya flights from Wilson still land at the
+   * park's own strip, about 45 minutes' game drive from the lodge; the closer
+   * Kimana strip takes private charters only, so it is in the note and not a
+   * leg. */
+  "Kimana Sanctuary": {
     arriveAt: "NBO",
     arriveAtLabel: "Nairobi Jomo Kenyatta",
     legs: [
       { mode: "road", to: "Wilson Airport, on the other side of Nairobi", toIata: "WIL" },
       { mode: "light aircraft", to: "Amboseli airstrip", toIata: "ASV" },
-      { mode: "road", to: "the camp", arrangedByHotel: true },
+      { mode: "road", to: "the lodge, a game drive of about 45 minutes", arrangedByHotel: true },
     ],
+    note:
+      "A private charter can land at the Kimana airstrip instead, much closer " +
+      "to the lodge. By road the whole way from Nairobi is three and a half to " +
+      "four hours.",
   },
 
   // ---- Rwanda: the negative case, and it matters as much as the others.

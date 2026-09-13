@@ -122,7 +122,12 @@ const GATEWAY_OVERRIDE = {
   // Nairobi, not Wilson: WIL is where the safari light aircraft departs from,
   // NBO is where the international ticket lands.
   "Masai Mara": ["NBO"],
-  "Amboseli National Park": ["NBO"],
+  // Angama Amboseli. Keyed "Amboseli National Park" (its traveller area, with a
+  // blank city) until the row was given city "Kimana Sanctuary" - the private
+  // sanctuary east of the park where the lodge actually stands. Re-keyed
+  // 2026-09-13 so the override follows the hotel rather than answering for
+  // nothing; the audit's no-hotel-at-all check is what found it.
+  "Kimana Sanctuary": ["NBO"],
   "Volcanoes National Park": ["KGL"],
 
   /* Added 2026-09-11 after checking the eight remaining "jet gateway, but far"

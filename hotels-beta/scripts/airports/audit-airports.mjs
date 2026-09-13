@@ -202,12 +202,37 @@ const D = (label, rows, note) => {
 console.log(`\n  airport audit — ${live.length} destinations with hotels, ${pub.length} published hotels`);
 console.log(`  ${overrides.size} gateway overrides, ${routeArrive.size} transfer routes\n`);
 
+/* PARKED, not dead: a hand-maintained key whose destination still exists, but
+ * only among UNPUBLISHED hotels. Ulrik's decision, 2026-09-13, when 52 hotels
+ * were unpublished at once: keep them, they will come back. The generator maps
+ * published hotels only, so their keys leave cityAirports.ts - but the override
+ * and the route are researched by hand and a republish needs them back.
+ *
+ * Counting them as defects would have left this run failing on 21 rows
+ * indefinitely, and a standing count is where a real rename goes unseen: the
+ * "Perez Zeledon" accent slip would have been row 22. So the test is now
+ * sharper, not looser - a key matching NO hotel at all, published or not, is
+ * still a defect. On republish nothing needs doing here: the rebuild restores
+ * the key, and the missing last-leg pairs fail the run below until
+ * build-transfer-times.mjs has measured them. */
+const unpub = all.filter((h) => !h.published);
+const parkedFor = (k) => unpub.filter((h) => V(h.city) === k || (!V(h.city) && V(h.state_province_county_island) === k));
+const deadOverrides = [...overrides.keys()].filter((k) => !live.includes(k));
+const deadRoutes = [...routeArrive.keys()].filter((k) => !live.includes(k) && !airportsOf.has(k));
+
 // DEFECT: a hand-maintained key that matches no destination any more.
 D("gateway override for a destination that no longer exists",
-  [...overrides.keys()].filter((k) => !live.includes(k)).map((k) => `${JSON.stringify(k)} — remove it, or the resort it was for has been renamed`),
+  deadOverrides.filter((k) => !parkedFor(k).length).map((k) => `${JSON.stringify(k)} — remove it, or the resort it was for has been renamed`),
   "a dead key silently answers for nothing, and hides that the live key has no override");
 D("transfer route for a destination that no longer exists",
-  [...routeArrive.keys()].filter((k) => !live.includes(k) && !airportsOf.has(k)).map((k) => `${JSON.stringify(k)}`));
+  deadRoutes.filter((k) => !parkedFor(k).length).map((k) => `${JSON.stringify(k)}`));
+
+const parked = [...new Set([...deadOverrides, ...deadRoutes])].filter((k) => parkedFor(k).length).sort();
+console.log(`  parked     ${String(parked.length).padStart(3)}  override or route kept for a destination whose hotels are all unpublished`);
+for (const k of parked) {
+  const what = [overrides.has(k) && "override", routeArrive.has(k) && "route"].filter(Boolean).join(" + ");
+  console.log(`        ${JSON.stringify(k)} — ${what}, ${parkedFor(k).length} unpublished`);
+}
 
 // DEFECT: a route whose arrival airport is not one this destination lists.
 D("transfer route whose arriveAt is not in that destination's airport list",
