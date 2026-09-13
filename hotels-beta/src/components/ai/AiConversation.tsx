@@ -330,7 +330,10 @@ function AgentText({
          prices, please provide the dates for your stay." has no question mark,
          and without this it would sit upright in a prose answer while the same
          sentence is italic in the presentResults follow-up. */
-      const closing = line.includes("?") || /^if you (want|wish|would like|'d like)\b/i.test(line);
+      /* Any "If you…" offer: the model varies the verb ("If you tell me your
+         dates, I'd be glad to…"), and the narrower want/wish/would-like list
+         missed that one on its first appearance. */
+      const closing = line.includes("?") || /^if you\b/i.test(line);
       return closing && line.length <= CLOSING_QUESTION_MAX_CHARS ? i : -1;
     }
     return -1;
