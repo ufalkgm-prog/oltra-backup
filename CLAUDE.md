@@ -152,7 +152,7 @@ Key variables: `shouldShowResults`, `shouldShowFeatured`, `effectiveView`.
 
 Selection: first hotel auto-selected when results load; selection persists if still in the result set, else falls back to the first result.
 
-Featured-mode cycling: the pool is every hotel with at least one real photo — `hasHotelPhotos()` in `cardHelpers.ts`, Ratehawk preferred, Agoda fallback (§29) — with no ext_points restriction. Random shuffle with ≥30 positions between repeats across cycle boundaries (same algorithm as `LandingBackground.buildCycle`), via `featuredCycleRef` / `featuredTailRef`, advancing every 5s.
+Featured-mode cycling: the pool is every hotel with at least one real photo — `hasHotelPhotos()` in `cardHelpers.ts`, Ratehawk images (§29) — with no ext_points restriction. Random shuffle with ≥30 positions between repeats across cycle boundaries (same algorithm as `LandingBackground.buildCycle`), via `featuredCycleRef` / `featuredTailRef`, advancing every 5s.
 
 ---
 
@@ -445,7 +445,7 @@ It also says: *"Do not merge, copy, or move content between the two."* This sect
 
 ### What the 2026-08-16 promotion taught
 
-32 records (ids 3001–3032) were promoted in three passes — create, write `ratehawk_hid`, apply images — each verified by an independent readback, no failures. A subset was then **unpublished**: ETG carried no images for them and Agoda photos were empty, so they were live with no image source.
+32 records (ids 3001–3032) were promoted in three passes — create, write `ratehawk_hid`, apply images — each verified by an independent readback, no failures. A subset was then **unpublished**: ETG carried no images for them, so they were live with no image source.
 
 **The rule is no longer "published tracks the ETG match". It is:**
 

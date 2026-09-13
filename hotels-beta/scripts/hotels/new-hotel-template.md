@@ -112,21 +112,6 @@ booking_notes:     # any internal ops notes
 
 ---
 
-## AGODA
-
-```
-agoda_hotel_id:  # numeric Agoda property ID
-agoda_photo1:    # full image URL
-agoda_photo2:    # full image URL
-agoda_photo3:    # full image URL
-agoda_photo4:    # full image URL
-agoda_photo5:    # full image URL
-```
-
-*Note: at least agoda_photo1 must be populated for the hotel to appear in featured cycling.*
-
----
-
 ## GEO
 
 ```
@@ -142,7 +127,7 @@ lng:  # decimal, 5 d.p., e.g. 139.76202
 
 - [ ] description written (60–100 words, editorial tone)
 - [ ] lat / lng populated
-- [ ] agoda_hotel_id matched and at least one agoda photo URL confirmed
+- [ ] ratehawk_hid matched and ETG images present (no match or no images: stays unpublished)
 - [ ] ext_points and editor_rank set
 - [ ] award boolean flags checked
 - [ ] booking fields completed or booking_provider set to "none"

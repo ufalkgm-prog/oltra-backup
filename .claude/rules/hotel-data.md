@@ -154,7 +154,6 @@ Other fields:
 * Award booleans, one column per accolade: `best50`, `cn`, `forbes5`, `michelin3keys`, `telegraph`, `tl100`, `aaa5d`
 * Links: `www`, `insta`
 * Booking: `booking_provider`, `booking_URL` (capital URL — `official_website_booking_url` does not exist), `booking_enabled`, `booking_label`, `booking_hotel_ref`, `booking_notes`
-* Agoda: `agoda_hotel_id`, `agoda_photo1`–`5`
 * Ratehawk: `ratehawk_hid`, `ratehawk_image_1`–`50` (+ `_category`), `ratehawk_status` (§42), and the static-content fields in §48
 * Geo: `lat` / `lng` — Directus reports these as `type: "integer"` but `schema.data_type` is `numeric` and decimals round-trip intact. **Never `Math.trunc` a coordinate** (§40).
 

@@ -4,7 +4,6 @@ paths:
   - "**/src/app/api/ratehawk/**"
   - "**/etg-proxy/**"
   - "**/etg-static-sync/**"
-  - "**/src/lib/agoda/**"
 ---
 
 <!-- Split out of CLAUDE.md on 2026-09-12. The text is moved verbatim and the
