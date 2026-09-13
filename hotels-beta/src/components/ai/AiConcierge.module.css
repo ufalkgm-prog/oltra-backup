@@ -331,6 +331,21 @@
   color: var(--oltra-text-muted);
 }
 
+/* "Not available at myOLTRA yet." — the last sentence under a hotel we cannot
+   price, in italic so it reads as a note about the hotel rather than as part
+   of the concierge's reason for it. */
+.notSoldHere {
+  color: var(--oltra-text-muted);
+  font-style: italic;
+}
+
+/* The same note for a lone hotel, which has no list line to sit on. */
+.notSoldHereSolo {
+  margin: 0;
+  color: var(--oltra-text-muted);
+  font-style: italic;
+}
+
 /* The one aside inside the answer, and set as an aside: smaller and muted, so
    it reads as a note about the interface rather than as another sentence from
    the concierge. Said plainly because the summary deliberately carries no

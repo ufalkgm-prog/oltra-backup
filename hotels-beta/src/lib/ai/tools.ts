@@ -1417,7 +1417,8 @@ const presentResults = tool({
                 "than one; a lone property is answered in the framing. What it " +
                 "HAS, never how it ranks: no 'the largest', 'the most serious', " +
                 "'the quietest of the five' unless the data gives that fact for " +
-                "every property compared. Do NOT begin " +
+                "every property compared. Never say it cannot be priced or " +
+                "booked here - the panel adds that note itself. Do NOT begin " +
                 "with the property's name — it is printed immediately " +
                 "before your words, so repeating it reads as a stutter. " +
                 "Start with the reason itself. No prices.",

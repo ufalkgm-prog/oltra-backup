@@ -390,6 +390,9 @@ const MAX_NAMED = 8;
  * a visitor told to close the panel needs to know the conversation survives. */
 const REVIEW_BEHIND = "Close this window to review — you can reopen this concierge chat anytime.";
 
+/* Ulrik's standard wording for a hotel we cannot price or book. */
+const NOT_SOLD_HERE = "Not available at myOLTRA yet.";
+
 /** Put the properties the concierge named at the head of the list.
  *
  * The panel names a handful and the page behind carries the whole set, so the
@@ -483,8 +486,25 @@ function ResultSummary({ past }: { past?: Presentation }) {
   const listHotels = hotels.length > 1;
   const listRestaurants = restaurants.length > 1;
 
+  /* THE STANDARD LINE FOR A HOTEL WE CANNOT PRICE (Ulrik, 2026-09-13):
+     "Not available at myOLTRA yet.", italic, the last sentence under that
+     hotel — never in the intro. The model used to say it in its own words in
+     the framing ("two of the five aren't sold through us, so they appear
+     without a price"), which read as though the panel itself carried prices,
+     and never said which two. Drawn from the record rather than asked of the
+     model, so the wording cannot drift and the right hotels get it: passive,
+     or no supplier id at all — the same test searchHotels' `bookableHere` and
+     the member price route apply. */
+  const notSoldHere = (hotel: { ratehawk_status: string | null; ratehawk_hid: number | null }) =>
+    hotel.ratehawk_status === "passive" || !hotel.ratehawk_hid;
+  const loneHotel = !listHotels && hotels.length === 1 ? hotels[0] : null;
+
   return (
     <div className={styles.summary}>
+      {loneHotel && notSoldHere(loneHotel) ? (
+        <p className={styles.notSoldHereSolo}>{NOT_SOLD_HERE}</p>
+      ) : null}
+
       {listHotels && hotelPicks.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
@@ -498,7 +518,18 @@ function ResultSummary({ past }: { past?: Presentation }) {
               return (
                 <li key={`h-${hotel.id}`} className={styles.summaryItem}>
                   <span className={styles.summaryName}>{hotel.hotel_name}</span>
-                  {why ? <span className={styles.summaryReason}> — {why}</span> : null}
+                  {why ? (
+                    <span className={styles.summaryReason}>
+                      {" "}
+                      — {/* The model often ends a line without a full stop,
+                          and the note then ran on as part of it: "…from
+                          Malpensa Not available at myOLTRA yet." */}
+                      {notSoldHere(hotel) && !/[.!?]$/.test(why.trim()) ? `${why.trim()}.` : why}
+                    </span>
+                  ) : null}
+                  {notSoldHere(hotel) ? (
+                    <span className={styles.notSoldHere}> {NOT_SOLD_HERE}</span>
+                  ) : null}
                 </li>
               );
             })}
