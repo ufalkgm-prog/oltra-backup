@@ -75,7 +75,8 @@ Cards are fixed `height: 96px`, three rows: `dep → arr` + duration + (i); airl
 
 Everything below was found and deliberately NOT fixed, each with the reason.
 Nothing here is a regression. Two standing audits answer "is anything broken"
-in two commands, and **both are at zero across all ten defect classes**:
+in two commands. **They were both at zero at the pause; the airport audit is
+not any more — see *Unpublished hotels leave dead keys* below**:
 
 ```bash
 node scripts/hotels/geo-2026/audit-local-area.mjs   # 6 classes, 340 populated
@@ -221,6 +222,32 @@ Arusha is a possibility in the note. **The airstrip is left unnamed** — the pa
 has Seronera, Sasakwa, Kogatende and Grumeti, and which one a given lodge uses
 is in our data for none of the six. A vague route beats a guess a guest could
 act on. Routes 53 → 57, overrides 56 → 59.
+
+### Unpublished hotels leave dead keys — 21 DEFECT rows, awaiting a decision (2026-09-13)
+
+Between the pause and 2026-09-13 the published count fell **853 → 801**, and
+the airport audit went from 0 to 56 defects without a line of code changing.
+The trigger was one new gap: **Aman Sveti Stefan was published with no airport
+entry.** Fixed from the resort's own "Getting here" page, confirmed by Ulrik —
+`"Sveti Stefan": ["TIV", "TGD", "DBV"]` plus a transfer route. Measured to the
+door: Tivat 46min, Podgorica 1h14, Dubrovnik 2h26. Aman's own range for
+Dubrovnik is 2.5–4 hours, **because of the border**, which a no-traffic drive
+time cannot see, so the route's note carries it. Dubrovnik is in Croatia and
+is not the Pamushana case: the resort names it as a gateway.
+
+**The rebuild that fixed it also dropped 35 keys**, one per destination whose
+hotels are all now unpublished (the Serengeti lodges, Necker, Moscow,
+Saint-Barth, Pylos…). That is the generator's contract, not a loss:
+`build-transfer-times.mjs` pruned their measured pairs with them (~$0.25 to
+re-measure, and git has the old values). **Kruger's centroid moved** when one
+of its hotels went, gaining HDS and PHW, so all three of its pairs were
+re-measured.
+
+**What remains is 9 gateway overrides and 12 transfer routes keyed on
+destinations with no published hotel.** They are hand-researched, and a
+republished hotel needs them back, so they were **left rather than deleted**.
+Whoever decides whether those hotels are coming back should either delete the
+entries or accept the defect count until they return.
 
 ### Settled, so nobody re-opens them
 

@@ -330,6 +330,24 @@ const GATEWAY_OVERRIDE = {
   "Cerretto Langhe": ["TRN", "CUF"],          // the Langhe arrive through Turin
   Elounda: ["HER", "JSH"],                    // Sitia is the far end of Crete; Heraklion 51km
 
+  /* Sveti Stefan, 2026-09-13. Aman Sveti Stefan was published with no key here
+   * at all. Left to itself the generator lists TIVAT ALONE - it is inside the
+   * 25km same-city radius, so nothing else is ever considered - and Tivat is
+   * right as the first answer but a small airport, so a guest with no good
+   * flight to it was offered nothing else.
+   *
+   * The three are the resort's own published arrival airports, in its order
+   * (aman.com, "Getting here"), confirmed by Ulrik: Tivat about 40 minutes,
+   * Podgorica about an hour and a half, Dubrovnik the longest.
+   *
+   * DUBROVNIK IS IN CROATIA AND IS NOT THE PAMUSHANA CASE. Pamushana's airports
+   * were in the wrong country because none of them was a gateway to it; this
+   * one is named by the resort itself, is a large airport with far more
+   * European service than either Montenegrin field, and is a normal way to
+   * arrive. What it costs is a border crossing, which no drive time here
+   * models - the transfer route says so. */
+  "Sveti Stefan": ["TIV", "TGD", "DBV"],
+
   /* Lugano is the exception I got wrong first time and am correcting for
    * consistency. Its own airport is 4km away, which is why it was left alone
    * when the five Lake Como villages moved off LUG — but the reason they moved

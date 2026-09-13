@@ -534,7 +534,27 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "most days in season.",
   },
 
-  /* ---- Zermatt. A car-free village is not an unreachable one. ---- 
+  /* ---- Sveti Stefan, 2026-09-13. Three airports, one of them across a border.
+   *
+   * From the resort's own "Getting here" page, confirmed by Ulrik. Measured to
+   * the door: Tivat 46 minutes, Podgorica 1h14, Dubrovnik 2h26. Aman gives
+   * Dubrovnik as 2.5 to 4 hours, and the gap is the Croatian-Montenegrin border,
+   * which a no-traffic drive time cannot see - so the note carries it.
+   *
+   * `arrangedByHotel` is deliberately unset: the resort arranges private cars
+   * from all three, but arranging is not including, and the field means both. */
+  "Sveti Stefan": {
+    arriveAt: "TIV",
+    arriveAtLabel: "Tivat",
+    legs: [{ mode: "road", to: "the resort" }],
+    note:
+      "Tivat is the nearest airport, about 45 minutes down the coast road. " +
+      "Podgorica is about an hour and a quarter away and Dubrovnik, in Croatia, " +
+      "about two and a half hours, plus the border crossing, which can add a " +
+      "good deal in high summer. The resort arranges private cars from all three.",
+  },
+
+  /* ---- Zermatt. A car-free village is not an unreachable one. ----
    *
    * Corrected twice by Ulrik, and both corrections are in the entry. The
    * transfer drives the whole way to Zermatt's own transfer station - Tasch is
