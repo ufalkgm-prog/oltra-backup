@@ -286,7 +286,13 @@ function AgentText({
       const line = lines[i].trim();
       if (!line) continue;
       if (/^[-*•]\s+/.test(line)) return -1;
-      return line.includes("?") && line.length <= CLOSING_QUESTION_MAX_CHARS ? i : -1;
+      /* Or a courteous offer, which is how the prompt now asks for the date
+         request (2026-09-13): "If you want me to check availability and
+         prices, please provide the dates for your stay." has no question mark,
+         and without this it would sit upright in a prose answer while the same
+         sentence is italic in the presentResults follow-up. */
+      const closing = line.includes("?") || /^if you (want|wish|would like|'d like)\b/i.test(line);
+      return closing && line.length <= CLOSING_QUESTION_MAX_CHARS ? i : -1;
     }
     return -1;
   })();

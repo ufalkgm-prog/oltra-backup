@@ -1361,8 +1361,11 @@ const presentResults = tool({
       followUp: {
         type: "string",
         description:
-          "Optional. One short question to continue the conversation, e.g. " +
-          "'Shall I price it in business too?'. Omit it if nothing useful " +
+          "Optional. One short, courteous offer or question to continue the " +
+          "conversation, e.g. 'If you want me to check availability and " +
+          "prices, please provide the dates for your stay.' or 'Shall I price " +
+          "it in business too?'. Never a bare demand such as 'When are you " +
+          "going?'. Omit it if nothing useful " +
           "remains to ask. Never put the answer here — that is the framing.",
       },
       hotelIds: {
