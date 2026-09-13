@@ -499,6 +499,18 @@ function ResultSummary({ past }: { past?: Presentation }) {
     hotel.ratehawk_status === "passive" || !hotel.ratehawk_hid;
   const loneHotel = !listHotels && hotels.length === 1 ? hotels[0] : null;
 
+  /* An earlier single-hotel answer that we CAN price draws nothing at all here
+     — no list, no note, and no footnote under a past answer — and an empty
+     block still took the transcript's gap, leaving a blank line between the
+     answer and its question. */
+  const drawsAnything =
+    !past ||
+    Boolean(loneHotel && notSoldHere(loneHotel)) ||
+    (listHotels && hotelPicks.length > 0) ||
+    (listRestaurants && restaurantPicks.length > 0) ||
+    results.flights.length > 0;
+  if (!drawsAnything) return null;
+
   return (
     <div className={styles.summary}>
       {loneHotel && notSoldHere(loneHotel) ? (

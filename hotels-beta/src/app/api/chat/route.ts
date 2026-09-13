@@ -38,6 +38,25 @@ import {
  * pass — every rejection happens before any spend on the conversation model. */
 
 export const runtime = "nodejs";
+
+/** The words the visitor last read from the concierge: its prose, plus the
+ * framing and follow-up of a presentResults call — which is where most answers
+ * and nearly every offer live, and which carry no text part of their own. */
+function previousReplyText(history: UIMessage[]): string {
+  const last = [...history].reverse().find((message) => message.role === "assistant");
+  if (!last) return "";
+  const pieces: string[] = [];
+  for (const part of last.parts ?? []) {
+    if (part.type === "text") {
+      pieces.push((part as { text: string }).text);
+    } else if (part.type === "tool-presentResults") {
+      const input = (part as { input?: { framing?: unknown; followUp?: unknown } }).input;
+      if (typeof input?.framing === "string") pieces.push(input.framing);
+      if (typeof input?.followUp === "string") pieces.push(input.followUp);
+    }
+  }
+  return pieces.join("\n");
+}
 export const maxDuration = 60;
 
 function reject(status: number, error: string) {
@@ -118,7 +137,11 @@ export async function POST(req: Request) {
   //    A decline is streamed back as a normal assistant message rather than a
   //    JSON error, so the client has one code path and the visitor sees a
   //    reply rather than a failure. It costs nothing beyond the Haiku call.
-  const verdict = await triageMessage(latestText);
+  //
+  //    With the concierge's previous reply as context, so a follow-up that
+  //    takes up its own offer ("List the others") is not read in isolation
+  //    and declined as off-topic. See triage.ts.
+  const verdict = await triageMessage(latestText, previousReplyText(trimmed.slice(0, -1)));
   if (verdict.allow === false) {
     return createUIMessageStreamResponse({
       stream: createUIMessageStream({

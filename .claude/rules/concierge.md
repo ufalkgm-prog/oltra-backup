@@ -47,7 +47,9 @@ If a future change hands the model a raw amount "just for context", that guarant
 
 `src/app/api/chat/route.ts` holds `ANTHROPIC_API_KEY` and nothing else does. Guard order is deliberate: **flag** (404) → **session** (401, before the key check, so an unauthenticated caller learns nothing about our configuration) → **rate limit** → **input caps** → **triage**.
 
-Triage is `claude-haiku-4-5` classifying travel / probe / other before any Opus spend, and a second independent judgement: a jailbreak that talks the main model round still has to pass a classifier with no tools and no history. It **fails open** on error — refusing everyone during a transient outage is worse. A decline streams back as a normal assistant message, not a JSON error, so the client has one code path.
+Triage is `claude-haiku-4-5` classifying travel / probe / other before any Opus spend, and a second independent judgement: a jailbreak that talks the main model round still has to pass a classifier with no tools.
+
+**It sees the concierge's previous reply as fenced context (2026-09-13), and must.** With the new message alone, "List the others" — accepting the concierge's own offer to show the other decorated Paris hotels — read as off-topic and was declined. `previousReplyText` in the route passes the last assistant prose plus its `presentResults` framing and follow-up, tail-capped at 700 characters; the classifier is told it is context only and cannot turn a probe into travel. Verified: the follow-up now answers, and a mid-conversation system-prompt probe and a homework request are still declined. It **fails open** on error — refusing everyone during a transient outage is worse. A decline streams back as a normal assistant message, not a JSON error, so the client has one code path.
 
 Tools, all read-only: `searchHotels`, `getHotelDetails`, `checkAvailability`, `searchFlights`, `nearestAirport`, `searchRestaurants`, `webSearch`, plus `presentResults` — not a data tool but how the model hands the UI a structured result set. The client renders from that tool call rather than parsing names out of prose, which would break the moment the model rephrased.
 
