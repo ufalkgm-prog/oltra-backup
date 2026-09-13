@@ -266,6 +266,17 @@ function inlineBold(text: string, keyBase: string): React.ReactNode[] {
   return nodes;
 }
 
+/* Every bullet starts with a capital (Ulrik, 2026-09-13). The model writes list
+ * items as sentence fragments — "a spa (21 have one)" — and a prompt line is
+ * the kind of rule this file records being skipped, so the display does it.
+ * Skips a leading `**` so a bolded lead is capitalised inside the bold. */
+function capitaliseFirst(text: string): string {
+  const match = /^(\*\*)?(\p{Ll})/u.exec(text);
+  if (!match) return text;
+  const at = match[1] ? 2 : 0;
+  return text.slice(0, at) + text[at].toUpperCase() + text.slice(at + 1);
+}
+
 /* A closing question plus a follow-on sentence; longer than this and it is a
  * paragraph, not a sign-off. */
 const CLOSING_QUESTION_MAX_CHARS = 180;
@@ -342,7 +353,7 @@ function AgentText({
   lines.forEach((line, index) => {
     const bullet = /^\s*[-*•]\s+(.*)$/.exec(line);
     if (bullet) {
-      bullets.push({ key: `l${index}`, text: bullet[1] });
+      bullets.push({ key: `l${index}`, text: capitaliseFirst(bullet[1]) });
       return;
     }
     flushBullets();
@@ -452,7 +463,9 @@ function ResultSummary({ past }: { past?: Presentation }) {
 
   const reason = (id: number | string, name: string | null) => {
     const raw = results.rationales[String(id)] ?? "";
-    return raw ? stripLeadingName(raw, name ?? "") : "";
+    // Capitalised so every line in a list reads the same way, whichever case
+    // the model happened to start it in.
+    return raw ? capitaliseFirst(stripLeadingName(raw, name ?? "")) : "";
   };
 
   /* Name the shortlist, not the whole result set.
