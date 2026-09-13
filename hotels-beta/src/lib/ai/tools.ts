@@ -1348,7 +1348,12 @@ const presentResults = tool({
     properties: {
       framing: {
         type: "string",
-        description: "One or two editorial sentences. No prices, no lists.",
+        description:
+          "One or two editorial sentences. No prices, no lists. With ONE " +
+          "property this is the whole answer - name it and answer what they " +
+          "asked about it here. With several it introduces the set and " +
+          "anything true of the whole trip; each property's own detail goes " +
+          "in its rationale.",
       },
       // Calling this tool ENDS YOUR TURN — say everything here. A separate
       // message afterwards cost a whole extra model round trip (measured at
@@ -1401,7 +1406,10 @@ const presentResults = tool({
             reason: {
               type: "string",
               description:
-                "One short clause saying why it suits them. Do NOT begin " +
+                "One short clause answering what they asked about THIS " +
+                "property - why it suits them, or what it has for the spa, " +
+                "beach or journey they asked about. Only when showing more " +
+                "than one; a lone property is answered in the framing. Do NOT begin " +
                 "with the property's name — it is printed immediately " +
                 "before your words, so repeating it reads as a stutter. " +
                 "Start with the reason itself. No prices.",

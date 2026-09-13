@@ -112,6 +112,8 @@ No timing given — no dates, month, season — means **omit `stay`** from `sear
 * **The count in the framing is `hotelIds.length`** — not how many matched, not how many are free. Three numbers are in play and only one is the answer; say two only when both matter ("Ten of the thirty-nine have rooms that week").
 * **Named properties lead the card order.** `highlightsFirst` reorders `hotelIds` before it reaches the store, so the footnote's promise — "these come first on the page behind, with the other N below" — is one the page keeps.
 * `MAX_NAMED = 8` is a hard UI cap, independent of how many rationales arrive.
+* **One property is an answer, not a list (2026-09-13).** A lone hotel or restaurant gets no heading and no bullet — `ResultSummary` draws a group only above one entry — and the prompt puts the whole answer, name included, in `framing`. It used to print "Hotel" over a single bullet repeating a name the answer had just given.
+* **Several: the lines answer the question per property, the framing only introduces the set** (count, dates) plus anything true of the whole trip or area. Asked about spa and sea access on the Amalfi Coast, each line now says what that hotel has for both, and the framing carries only how swimming works on that coast.
 * The footnote claims prices **only when a stay was passed**; without one the cards are blank.
 
 ### Water-proximity tags are inconsistent — §42B

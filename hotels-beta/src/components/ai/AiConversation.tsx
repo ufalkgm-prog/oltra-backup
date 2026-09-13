@@ -417,14 +417,23 @@ function ResultSummary() {
   const alsoBehind =
     hotels.length - hotelPicks.length + (restaurants.length - restaurantPicks.length);
 
+  /* ONE PROPERTY IS AN ANSWER, NOT A LIST (Ulrik, 2026-09-13). Asked what Aman
+     Sveti Stefan is like, how to get there and whether the spa is good, the
+     concierge answered all three in the framing — and the panel then printed a
+     "Hotel" heading over a one-bullet list repeating the name, which read as
+     the start of a list that never came. A lone hotel or restaurant is named
+     in the framing instead (the prompt requires it), so its group is not
+     drawn. Structural rather than a prompt line: the model cannot be talked
+     into drawing a heading it is never given. */
+  const listHotels = hotels.length > 1;
+  const listRestaurants = restaurants.length > 1;
+
   return (
     <div className={styles.summary}>
-      {hotelPicks.length ? (
+      {listHotels && hotelPicks.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {hotels.length === 1
-              ? "Hotel"
-              : hotelPicks.length < hotels.length
+            {hotelPicks.length < hotels.length
                 ? "For example"
                 : "Hotels"}
           </div>
@@ -442,12 +451,10 @@ function ResultSummary() {
         </div>
       ) : null}
 
-      {restaurantPicks.length ? (
+      {listRestaurants && restaurantPicks.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {restaurants.length === 1
-              ? "Restaurant"
-              : restaurantPicks.length < restaurants.length
+            {restaurantPicks.length < restaurants.length
                 ? "For example"
                 : "Restaurants"}
           </div>
