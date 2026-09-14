@@ -6,6 +6,11 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  // Both pinned to this app directory. Left unset, file tracing infers its
+  // root from the nearest lockfile it finds above, and a leftover one at the
+  // repo root (since deleted) made it disagree with turbopack.root, so every
+  // build warned that the two must match.
+  outputFileTracingRoot: __dirname,
   turbopack: {
     root: __dirname,
   },
