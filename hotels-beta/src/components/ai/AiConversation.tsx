@@ -416,6 +416,13 @@ function shortDate(iso: string): string {
  * a visitor told to close the panel needs to know the conversation survives. */
 const REVIEW_BEHIND = "Close this window to review — you can reopen this concierge chat anytime.";
 
+/* The same promise for the pages where nothing renders behind the panel and the
+ * results are one link away (Ulrik, 2026-09-14). "Cards" is our word for a UI
+ * part, not a guest's: the earlier "Prices and availability are on the cards"
+ * survived the 2026-09-13 rewording because only the behind-the-panel variants
+ * were changed. */
+const RESUME_CHAT = "You can resume this chat anytime.";
+
 /* Ulrik's standard wording for a hotel we cannot price or book. */
 const NOT_SOLD_HERE = "Not available at myOLTRA yet.";
 
@@ -471,10 +478,44 @@ function ResultSummary({ past }: { past?: Presentation }) {
   }
 
   const page = pageContext?.page ?? "landing";
-  const rendersBehind =
-    page === "landing" ||
-    (page === "hotels" && results.hotelIds.length > 0) ||
-    (page === "flights" && results.flights.length > 0);
+
+  /* WHICH PARTS OF THE ANSWER ARE BEHIND THIS PANEL, per type (2026-09-14).
+     This was one yes/no for the whole answer, true on the Flights page as soon
+     as the answer had a flight — so a hotels-and-flights answer there said the
+     hotels were "listed first in the window behind this panel" when the Flights
+     page shows only the flight. The landing page renders every type; Hotels
+     and Flights render their own type only; nothing renders behind elsewhere. */
+  type Part = "hotels" | "flights" | "restaurants";
+  const answerParts: Part[] = [
+    ...(results.hotelIds.length ? (["hotels"] as const) : []),
+    ...(results.flights.length ? (["flights"] as const) : []),
+    ...(results.restaurantIds.length ? (["restaurants"] as const) : []),
+  ];
+  const shownBehind = (part: Part) =>
+    page === "landing" || (page === "hotels" && part === "hotels") || (page === "flights" && part === "flights");
+  const partsBehind = answerParts.filter(shownBehind);
+  const partsElsewhere = answerParts.filter((part) => !shownBehind(part));
+  const rendersBehind = partsElsewhere.length === 0;
+  // "flight" when the answer has one journey; the others are always plural.
+  const partName = (part: Part) =>
+    part === "flights" && results.flights.length === 1 ? "flight" : part;
+  const listParts = (parts: Part[]) => {
+    const names = parts.map(partName);
+    return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0] ?? "";
+  };
+  const verb = (parts: Part[]) =>
+    parts.length === 1 && partName(parts[0]) === "flight" ? "is" : "are";
+
+  /* Where the link under the panel goes, in a guest's words. It mirrors the
+     modal's handoff: a restaurants-only answer asked on the Restaurants page
+     links to that page; anything else links to the main page. */
+  const linkedPage =
+    page === "restaurants" &&
+    results.restaurantIds.length > 0 &&
+    !results.hotelIds.length &&
+    !results.flights.length
+      ? "the Restaurants page"
+      : "the main page";
 
   const reason = (id: number | string, name: string | null) => {
     const raw = results.rationales[String(id)] ?? "";
@@ -664,17 +705,27 @@ function ResultSummary({ past }: { past?: Presentation }) {
           so pointing there from further up would send the visitor to results
           for a different question. */}
       {past ? null : <p className={styles.summaryFootnote}>
-        {alsoBehind > 0
+        {partsBehind.length > 0 && partsElsewhere.length > 0
+          ? /* Split: part of the answer is behind the panel, the rest is one
+               link away — say which is where. */
+            `The ${listParts(partsBehind)} ${verb(partsBehind)} in the window behind this panel. The ${listParts(partsElsewhere)}${
+              priced && partsElsewhere.includes("hotels") ? ", with prices and availability," : ""
+            } ${verb(partsElsewhere)} on the main page${
+              alsoBehind > 0 && !partsBehind.includes("hotels") && !partsBehind.includes("restaurants")
+                ? ` — the ones named here first, with the other ${alsoBehind} after them`
+                : ""
+            }. Open it using the link below. ${RESUME_CHAT}`
+          : alsoBehind > 0
           ? rendersBehind
             ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REVIEW_BEHIND}`
-            : `These come first on the cards, with the other ${alsoBehind} below — open them with the link below.`
+            : `These are listed first on ${linkedPage}, with the other ${alsoBehind} after them${priced ? " — all with prices and availability" : ""}. Open it using the link below. ${RESUME_CHAT}`
           : priced
             ? rendersBehind
               ? `The results of your query, with prices and availability, are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : "Prices and availability are on the cards — open them with the link below."
+              : `Prices and availability are on ${linkedPage} — open it using the link below. ${RESUME_CHAT}`
             : rendersBehind
               ? `The results of your query are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : "The cards are open with the link below."}
+              : `The results are on ${linkedPage} — open it using the link below. ${RESUME_CHAT}`}
       </p>}
     </div>
   );

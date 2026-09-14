@@ -55,10 +55,25 @@ export function allHotelsHref(query: AiQueryState): string {
  * mode on the Flights page is for — an open jaw flattened into a return would
  * send the traveller home from an airport they are not in. */
 export function flightsHref(query: AiQueryState, results: AiResultSet): string {
-  const params = queryStateToParams(query);
+  /* The journey, the dates and the guests — nothing else (Ulrik, 2026-09-14).
+     This used to start from queryStateToParams, so the Flights page URL
+     arrived carrying the answer's hotel city, admin region, settings and
+     activities: filters the Flights page has no use for, approximating an
+     answer that was really a chosen set. The destination now travels as the
+     exact airport searched, not as a city for the page to resolve. */
+  const params = new URLSearchParams();
+  if (query.adults > 0) params.set("adults", String(query.adults));
+  if (query.kids > 0) params.set("kids", String(query.kids));
+  query.childrenAges.forEach((age, index) => {
+    if (index < 6) params.set(`kid_age_${index + 1}`, String(age));
+  });
+
   const legs = results.flights;
   const first = legs[0];
-  if (!first) return `/flights?${params.toString()}`;
+  if (!first) {
+    if (query.origin.trim()) params.set("origin", query.origin.trim());
+    return `/flights?${params.toString()}`;
+  }
 
   params.set("origin", first.origin);
   params.set("cabin", FLIGHTS_PAGE_CABIN[first.cabin] ?? "Economy");
@@ -70,12 +85,11 @@ export function flightsHref(query: AiQueryState, results: AiResultSet): string {
     legs.slice(0, 5).forEach((leg, i) => {
       params.set(`leg${i + 1}`, `${leg.origin}-${leg.destination}-${leg.departureDate}`);
     });
-    // The single depart/return pair means nothing for a multi-city trip, and
-    // leaving the hotel stay in them shows dates that belong to a room.
-    params.delete("from");
-    params.delete("to");
+    // No from/to here: a single depart/return pair means nothing for a
+    // multi-city trip, and the hotel stay's dates belong to a room.
   } else {
     params.set("tripType", first.returnDate ? "return" : "oneway");
+    params.set("destination", first.destination);
     params.set("from", first.departureDate);
     if (first.returnDate) params.set("to", first.returnDate);
     else params.delete("to");

@@ -113,6 +113,7 @@ function hasFlightSearchParams(searchParams: PageSearchParams): boolean {
       normalizeParam(searchParams.city) ||
       normalizeParam(searchParams.country) ||
       normalizeParam(searchParams.region) ||
+      normalizeParam(searchParams.destination) ||
       normalizeParam(searchParams.from) ||
       normalizeParam(searchParams.to) ||
       normalizeParam(searchParams.adults) ||
@@ -194,8 +195,16 @@ function buildInitialSearch(searchParams: PageSearchParams): SearchState {
   // silently reverted to blank on any revisit that didn't carry it as a URL
   // param (e.g. navigating back via the header "Flights" link).
   const originParam = normalizeParam(searchParams.origin) || normalizeParam(source.origin);
+  // An explicit airport wins: the concierge hands over the exact airport it
+  // searched (`destination=HND`), where resolving a city would pick the city's
+  // main airport by size and could quietly change the answer's flight.
+  const destinationParam = normalizeParam(searchParams.destination);
   const cityHandover = normalizeParam(source.city) || normalizeParam(source.q);
-  const resolvedTo = cityHandover ? resolveAirportCode(cityHandover) : "";
+  const resolvedTo = destinationParam
+    ? resolveAirportCode(destinationParam)
+    : cityHandover
+      ? resolveAirportCode(cityHandover)
+      : "";
 
   const cabinParam = normalizeParam(searchParams.cabin);
   const validCabins = ["Economy", "Premium Economy", "Business", "First"] as const;

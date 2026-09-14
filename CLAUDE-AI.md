@@ -608,6 +608,37 @@ on the landing page itself, and typing a new destination over it. The Flights
 page has no tag box — its fields are airports, which the concierge fills as a
 real route — so it is unchanged.
 
+### Say where each part of an answer is, and hand Flights only the journey (2026-09-14)
+
+Two faults from one test on the Flights page ("business class Copenhagen to
+Tokyo in early April, and where should we stay?"):
+
+* **The footnote said the hotels were "listed first in the window behind this
+  panel"** — but the Flights page renders only flights. `rendersBehind` was one
+  boolean for the whole answer, true as soon as the answer had a flight. It is
+  now worked out per part (landing renders all; Hotels and Flights their own
+  type; nothing elsewhere), and a split answer says which part is where: "The
+  flight is in the window behind this panel. The hotels, with prices and
+  availability, are on the main page — the ones named here first, with the
+  other 2 after them. Open it using the link below. You can resume this chat
+  anytime."
+* **The link-away variants still said "cards"** ("Prices and availability are on
+  the cards"): the 2026-09-13 rewording had changed only the behind-the-panel
+  variants. They now say "on the main page — open it using the link below. You
+  can resume this chat anytime." (or "the Restaurants page" for a restaurants
+  answer there), and the prompt lists "cards" among the words never said aloud.
+* **`flightsHref` no longer starts from `queryStateToParams`.** The Flights URL
+  was arriving with the answer's city, admin region, settings and activities.
+  Ulrik: the AI inserts no filters other than dates and guests. It now carries
+  the journey (origin, cabin, trip type, legs), dates and guests only, and the
+  destination as the exact airport searched (`destination=HND`), which
+  FlightsView reads ahead of resolving a city — resolving "Tokyo" would pick the
+  city's main airport by size and could quietly change the flight.
+
+Verified on the stored Tokyo answer: the split footnote above, a Flights URL of
+`adults, origin, cabin, tripType, destination, from, to` and nothing else, and
+the form showing CPH → HND, Return.
+
 ### Hotels in several places, flights to only one of them (2026-09-14)
 
 Reported live. "Best hotels in Spain on the water", then dates and "provide

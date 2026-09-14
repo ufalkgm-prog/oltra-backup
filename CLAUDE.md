@@ -478,9 +478,9 @@ Data that goes stale on a clock rather than when someone changes something. **Wh
 | Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests) |
 | Ratehawk static content (§48) | Daily | 2026-08-24 | automatic (Railway cron) | `etg-static-sync` — no manual step; check the Railway run log if room images go missing |
 | Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
-| City → airport mapping (§37) | When the roster's city list changes | 2026-09-13 | on demand | `build-city-airports.mjs` |
+| City → airport mapping (§37) | When the roster's city list changes | 2026-09-14 | on demand | `build-city-airports.mjs` |
 | Airport options list (§39) | With the above | 2026-08-31 | on demand | `build-airport-options.mjs` |
-| Last-leg transfer times (§52) | With the above | 2026-09-13 | on demand | `build-transfer-times.mjs` — incremental, so a re-run after one new destination costs cents |
+| Last-leg transfer times (§52) | With the above | 2026-09-14 | on demand | `build-transfer-times.mjs` — incremental, so a re-run after one new destination costs cents |
 
 * **Ratehawk status is the one needing a human to remember it.** The static-content row runs itself; it's listed so its existence and failure point are on the record.
 * Award refreshes are event-driven — T+L published its 2026 list a week before a session happened to check. Annually is a reminder to *look*, not a deadline.

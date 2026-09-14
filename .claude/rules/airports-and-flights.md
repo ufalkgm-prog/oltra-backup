@@ -267,6 +267,25 @@ no longer found the lodge. Set to `Amboseli` on Ulrik's instruction the same day
 Cernobbio / Lake Como shape. The airport key stays `Kimana Sanctuary`, because
 the generator keys on `city` whenever there is one.
 
+### Rule 1 hides a metro's second airport — Tokyo, Kyoto and Taipei fixed (2026-09-14)
+
+Found in concierge testing: "flying from Copenhagen, everything comes in through
+Haneda". **Tokyo listed HND alone.** `selectAirports` rule 1 keeps every
+airport within 25km, or within 60km whose name or municipality starts with the
+city name — and a same-city hit ends the search. Haneda (14km, municipality
+Tokyo) qualified; Narita (58km, municipality Narita) never entered the pool.
+`GATEWAY_OVERRIDE` now reads `Tokyo: ["HND", "NRT"]`, which also makes Tokyo
+hand-ordered (Haneda first: far nearer the city, and where the Copenhagen direct
+lands). Transfer measured, `Tokyo|NRT` 63min; audit clean; invariant ok.
+
+**The same blind spot, checked across 31 big metros, found two more, fixed the
+same day with the INTERNATIONAL airport first:** **Kyoto** had Itami alone and
+now reads `KIX, ITM` (Kansai 91min by road); **Taipei** had Songshan alone and
+now reads `TPE, TSA` (Taoyuan 40min). 55 hand-ordered destinations. The audit
+cannot see this class: the listed airport is large, near and scheduled, so every
+screen passes. Checking a metro means asking "is its main INTERNATIONAL airport
+in the list", not "is the listed one plausible".
+
 ### Settled, so nobody re-opens them
 
 * ~~**Rosewood Doha stays `city: "Doha"`**~~ — **RE-OPENED AND CHANGED on

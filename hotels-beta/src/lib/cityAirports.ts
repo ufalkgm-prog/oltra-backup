@@ -765,6 +765,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "ZTH", label: "Zakynthos Dionysios Solomos", distKm: 23, size: "medium", runwayM: 2228 }
   ],
   "Kyoto": [
+    { iata: "KIX", label: "Kansai", distKm: 81, size: "large", runwayM: 7500 },
     { iata: "ITM", label: "Osaka Itami", distKm: 39, size: "large", runwayM: 4827 }
   ],
   "La Baule": [
@@ -1500,6 +1501,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SYD", label: "Sydney Kingsford Smith", distKm: 10, size: "large", runwayM: 8930 }
   ],
   "Taipei": [
+    { iata: "TPE", label: "Taiwan Taoyuan", distKm: 32, size: "large", runwayM: 7010 },
     { iata: "TSA", label: "Taipei Songshan", distKm: 1, size: "large", runwayM: 2605 }
   ],
   "Tangalle": [
@@ -1532,7 +1534,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "DRV", label: "Dharavandhoo", distKm: 12, size: "small", runwayM: 1189 }
   ],
   "Tokyo": [
-    { iata: "HND", label: "Tokyo Haneda", distKm: 14, size: "large", runwayM: 11360 }
+    { iata: "HND", label: "Tokyo Haneda", distKm: 14, size: "large", runwayM: 11360 },
+    { iata: "NRT", label: "Narita", distKm: 58, size: "large", runwayM: 6500 }
   ],
   "Torno": [
     { iata: "MXP", label: "Milan Malpensa", distKm: 39, size: "large", runwayM: 7840 },
@@ -1701,8 +1704,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
  * NOT a blanket "first entry wins". For everything else the list is
  * nearest-first, where the first entry is the closest strip and not the
  * gateway - New York's nearest to the hotel centroid is LaGuardia and the
- * answer has to be JFK. So the size rule stays for the other 431
- * destinations and only these 52 read position one as the answer. */
+ * answer has to be JFK. So the size rule stays for the other 428
+ * destinations and only these 55 read position one as the answer. */
 const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "andermatt",
   "arenal",
@@ -1726,6 +1729,7 @@ const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "kapalua, maui",
   "kingdom of fife",
   "kinigi",
+  "kyoto",
   "la croix-valmer",
   "lamego",
   "laucala island",
@@ -1751,6 +1755,8 @@ const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "st. moritz",
   "stresa",
   "sveti stefan",
+  "taipei",
+  "tokyo",
   "torno",
   "tremezzina",
   "turtle island",

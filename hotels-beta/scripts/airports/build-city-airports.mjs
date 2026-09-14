@@ -437,6 +437,24 @@ const GATEWAY_OVERRIDE = {
    * with two different answers, one of them a Ugandan airstrip. */
   "Kinigi": ["KGL"],
   "Ruhengeri": ["KGL"],
+
+  /* Tokyo listed HANEDA ONLY (2026-09-14, found in concierge testing: "flying
+   * from Copenhagen, everything comes in through Haneda"). Rule 1 kept Haneda
+   * because its municipality is "Tokyo" and it sits 14km from the centroid, and
+   * a same-city hit stops the search - so Narita, 60km out in a municipality
+   * called Narita, never entered the pool. It is Tokyo's other international
+   * gateway and many long-haul routes land there. Haneda stays first: nearer
+   * the city by a long way, and the airport of the direct flight from
+   * Copenhagen. */
+  Tokyo: ["HND", "NRT"],
+  /* The same rule-1 blind spot, fixed the same day. Here the missing airport is
+   * the INTERNATIONAL one, so it goes first. Kyoto had Itami alone - near, but
+   * almost entirely domestic - while Kansai (KIX), where a long-haul ticket
+   * lands, sat outside the pool. Taipei had Songshan alone, a city airport with
+   * a handful of regional routes, while Taoyuan (TPE), the international
+   * gateway, was missing. */
+  Kyoto: ["KIX", "ITM"],
+  Taipei: ["TPE", "TSA"],
 };
 
 
