@@ -841,7 +841,16 @@ export default function AiConversation() {
   useEffect(() => {
     if (!ready || seededRef.current) return;
     seededRef.current = true;
-    if (stored.length) setMessages(stored);
+    if (stored.length) {
+      setMessages(stored);
+      /* The stored answer is already in the store, so mark it applied. Without
+         this, every time the concierge opened (this component mounts with the
+         modal) the persist effect re-applied the latest answer with a fresh
+         presentedAt — an old answer re-dated as new, which put its dates back
+         into the landing form and let AiResultsSync treat it as a new answer
+         that overrides a search made since (found 2026-09-14). */
+      appliedPresentationRef.current = readLatestPresentation(stored)?.toolCallId ?? null;
+    }
   }, [ready, stored, setMessages]);
 
   // Persist, and lift any new result set into the shared store so the cards,

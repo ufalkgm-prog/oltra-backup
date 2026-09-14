@@ -608,6 +608,35 @@ on the landing page itself, and typing a new destination over it. The Flights
 page has no tag box — its fields are airports, which the concierge fills as a
 real route — so it is unchanged.
 
+### The landing date box kept an old answer's dates (2026-09-14)
+
+Found on "a long weekend in Lisbon next month": the answer was priced for 15-18
+October while the landing search box read **3-10 April**, left over from the ski
+answer before it. A visitor touching the form would have searched April.
+
+**Three direct retries all worked**, and that was the clue. The concierge puts
+its dates into the form (`appliedStayRef`) without touching the URL, so the URL
+can hold older dates than the form. LandingSearchPanel's URL-sync effect was
+keyed on the `initialSearchParams` OBJECT, so any re-render of the page with
+the same URL gave it a new object and re-ran it, copying the URL's older dates
+back over the answer's. The Lisbon question came straight after a code edit,
+and the dev rebuild re-rendered the page; the retries had no edit in between.
+**Reproduced deliberately** by re-saving `app/page.tsx` while the box and URL
+disagreed: the box reverted within a second. A production server refetch has the
+same shape. The effect is now keyed on the URL's content string; after the same
+forced re-render the box held the answer's dates.
+
+**A second fault found while logging it:** opening the concierge re-dated the
+latest stored answer. AiConversation mounts with the modal, re-seeds the stored
+messages, and its persist effect applied the latest presentation again with a
+fresh `presentedAt` — so every open made an old answer look new, re-applying its
+dates to the landing form and letting AiResultsSync treat it as a new answer
+that overrides a search made since. Seeding now marks the stored presentation as
+applied; verified by opening the concierge and watching `presentedAt` stay put.
+
+**Worth keeping from this: when a bug will not reproduce, ask what was different
+about the run that showed it** — here, a file edit a minute earlier.
+
 ### Four faults from one family ski question on Hotels (2026-09-14)
 
 "A family ski week in the Alps over Easter with our two kids aged 8 and 11,

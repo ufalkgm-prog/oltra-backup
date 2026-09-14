@@ -155,6 +155,14 @@ export default function LandingSearchPanel({
     buildComparableSearchKey(initialSearchParams)
   );
 
+  /* Synced when the URL's CONTENT changes, not whenever the props object is
+     new. The concierge puts its dates into the form without touching the URL,
+     so the URL can hold older dates than the form; keyed on identity, any
+     re-render of the page with the same URL (a dev rebuild, a server refetch)
+     re-ran this and put those older dates back over the answer's — the box read
+     3-10 April beside results for 15-18 October (2026-09-14). */
+  const initialSearchContent = JSON.stringify(initialSearchParams);
+
   useEffect(() => {
     const key = buildComparableSearchKey(initialSearchParams);
     if (key) {
@@ -172,7 +180,9 @@ export default function LandingSearchPanel({
     setIncludeFlights(
       normalizeParam(initialSearchParams.include_flights) === "1"
     );
-  }, [initialSearchParams]);
+    // Keyed on the content string above on purpose; see its comment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSearchContent]);
 
   // On mount: if the URL has no params, restore the last search from sessionStorage
   // so navigating away and back doesn't clear the form.
