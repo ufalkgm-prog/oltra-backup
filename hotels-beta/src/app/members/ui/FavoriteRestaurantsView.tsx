@@ -40,7 +40,7 @@ export default function FavoriteRestaurantsView() {
 
         if (!active) return;
         setItems(next);
-      } catch (error) {
+      } catch {
         if (!active) return;
         setErrorMessage("Could not load favorite restaurants.");
       } finally {
@@ -114,7 +114,7 @@ export default function FavoriteRestaurantsView() {
       await deleteFavoriteRestaurantBrowser(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
       setStatusMessage("Favorite restaurant removed.");
-    } catch (error) {
+    } catch {
       setErrorMessage("Could not remove favorite restaurant.");
     }
   }

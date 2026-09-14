@@ -12,7 +12,6 @@ interface SearchForm {
   cabinClass: CabinClass
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyJson = any
 
 export default function FlightsTestPage() {

@@ -91,13 +91,14 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
       />
       {open && matches.length > 0 && (
         <div className={`oltra-dropdown-panel ${styles.autocompletePanel}`}>
-          <div className="oltra-dropdown-list">
+          <div className="oltra-dropdown-list" role="listbox" aria-label={label}>
             {matches.map(opt => (
               <button
                 key={opt.value}
                 type="button"
                 className="oltra-dropdown-item"
                 role="option"
+                aria-selected={opt.value === value}
                 onPointerDown={e => {
                   e.preventDefault()
                   onChange(opt.value, opt)

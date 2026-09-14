@@ -39,7 +39,6 @@ const TEMP_BAND_SOURCE_ID = "inspire-temp-bands";
 const TEMP_BAND_LAYER_ID = "inspire-temp-band";
 const TEMP_LABEL_SOURCE_ID = "inspire-temp-labels";
 const TEMP_LABEL_LAYER_ID = "inspire-temp-label";
-const FLIGHT_KM_PER_HOUR = 750;
 
 const BAND_STEP_LAT = 6;
 const BAND_STEP_LNG = 10;

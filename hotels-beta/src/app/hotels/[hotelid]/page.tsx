@@ -198,9 +198,11 @@ export default async function HotelDetailPage({
           {agodaPhotos.length > 0 ? (
             <div className="mb-8 grid gap-3 sm:grid-cols-2">
               {agodaPhotos.slice(0, 5).map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element -- Agoda's CDN serves the photo sized; see HotelsView
                 <img
                   key={i}
                   src={src}
+                  alt={i === 0 ? (hotel.hotel_name ?? "Hotel photo") : ""}
                   className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
                 />
               ))}

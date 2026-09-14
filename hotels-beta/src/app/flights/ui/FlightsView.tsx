@@ -2237,6 +2237,9 @@ function AirlineMarks({ airlines }: { airlines: AirlineRef[] }) {
   return (
     <span className={styles.airlineMarks}>
       {withLogo.map(a => (
+        // Plain <img>: Duffel's logo host is not in images.remotePatterns, and
+        // onError hides a logo that fails rather than showing a broken image.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           key={a.iataCode || a.name}
           src={a.logoUrl!}

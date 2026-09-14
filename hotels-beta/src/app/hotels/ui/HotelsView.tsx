@@ -521,35 +521,6 @@ function getPriceSummary(searchParams: PageSearchParams, currency: string): stri
   return [`Price / total stay: up to ${max} ${currency}`];
 }
 
-function formHasMeaningfulSearchInput(form: HTMLFormElement): boolean {
-  const data = new FormData(form);
-
-  const keys = [
-    "q",
-    "city",
-    "state",
-    "admin_region",
-    "country",
-    "region",
-    "local_area",
-    "affiliation",
-    "activities",
-    "awards",
-    "settings",
-    "styles",
-  ];
-
-  return keys.some((key) => {
-    const value = data.get(key);
-    return typeof value === "string" && value.trim() !== "";
-  });
-}
-
-function setParamOrDelete(params: URLSearchParams, key: string, value: string) {
-  if (value.trim()) params.set(key, value);
-  else params.delete(key);
-}
-
 function formatDisplayDate(value: string): string {
   if (!value) return "";
 
@@ -626,18 +597,6 @@ export default function HotelsView(props: {
       )
   );
 
-  const hasPendingSearchInput = Boolean(
-    normalizeParam(searchParams.q) ||
-      normalizeParam(searchParams.city) ||
-      normalizeParam(searchParams.country) ||
-      normalizeParam(searchParams.region) ||
-      normalizeParam(searchParams.local_area) ||
-      normalizeParam(searchParams.affiliation) ||
-      normalizeParam(searchParams.activities) ||
-      normalizeParam(searchParams.awards) ||
-      normalizeParam(searchParams.settings) ||
-      normalizeParam(searchParams.styles)
-  );
 
   const hasCountrySelected = selected.country.length > 0;
   const shouldShowResults =
@@ -856,9 +815,6 @@ export default function HotelsView(props: {
   const [viewMode, setViewMode] = useState<ViewMode>("featured");
   const [descExpanded, setDescExpanded] = useState(false);
 
-  const [hasPendingSearchInputLocal, setHasPendingSearchInputLocal] = useState(
-    hasPendingSearchInput
-  );
   const [isSubmittingSearch, setIsSubmittingSearch] = useState(false);
   const [simpleSearchSubmitted, setSimpleSearchSubmitted] = useState("0");
 
@@ -867,10 +823,9 @@ export default function HotelsView(props: {
 
   useEffect(() => {
     setIsSubmittingSearch(false);
-    setHasPendingSearchInputLocal(hasPendingSearchInput);
     setSimpleSearchSubmitted("0");
     setAvailabilitySearchDirty(false);
-  }, [searchParams, hasPendingSearchInput]);
+  }, [searchParams]);
 
   useEffect(() => {
     setFiltersOpen(selected.filters_open === "1");
@@ -1397,6 +1352,11 @@ export default function HotelsView(props: {
     }
 
     map.resize();
+    // selectedHotelId is read above only to mark the initial selection. The
+    // effect after this one keeps data-selected in step on every selection;
+    // depending on it here would rebuild every marker and refit the map each
+    // time a hotel is picked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveView, visibleHotels, mapReady]);
 
   useEffect(() => {
@@ -1746,6 +1706,22 @@ export default function HotelsView(props: {
     };
   }, [selectedHotel?.id, selectedHotel?.ratehawk_image_1]);
 
+  // Children's ages from the URL, as one value the effects below can depend
+  // on. Memoised on the joined raw params rather than on searchParams itself,
+  // which is a new object on every navigation: the room and availability
+  // fetches should re-run when an age changes, not whenever the URL does.
+  const childrenAgesKey = [1, 2, 3, 4, 5, 6]
+    .map((i) => normalizeParam(searchParams[`kid_age_${i}`]))
+    .join("|");
+  const childrenAges = useMemo(() => {
+    const ages: number[] = [];
+    for (const raw of childrenAgesKey.split("|")) {
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed)) ages.push(Math.max(0, Math.floor(parsed)));
+    }
+    return ages;
+  }, [childrenAgesKey]);
+
   // Auto-fetches the selected hotel's room list (no button — rooms should
   // just be displayed). Pre-selects the headline combo (N copies of the
   // cheapest qualifying room) once loaded.
@@ -1768,7 +1744,7 @@ export default function HotelsView(props: {
         residency: residencyValue,
         adults: guestSelection.adults,
         kids: guestSelection.kids,
-        childrenAges: getChildrenAgesFromSearchParams(),
+        childrenAges,
         rooms,
       }),
     })
@@ -1807,6 +1783,7 @@ export default function HotelsView(props: {
     residencyValue,
     guestSelection.adults,
     guestSelection.kids,
+    childrenAges,
     bedroomsValue,
   ]);
 
@@ -1860,49 +1837,6 @@ export default function HotelsView(props: {
   const isFavorited = Boolean(
     selectedHotel && favoriteHotelIds.has(String(selectedHotel.id))
   );
-
-    function replaceSearchParams(
-    updates: Record<string, string>,
-    extraDeletes: string[] = []
-  ) {
-    const params = new URLSearchParams();
-
-    for (const [k, v] of Object.entries(searchParams)) {
-      if (v === undefined) continue;
-
-      if (Array.isArray(v)) {
-        for (const vv of v) params.append(k, vv);
-      } else {
-        params.set(k, String(v));
-      }
-    }
-
-    for (const key of extraDeletes) {
-      params.delete(key);
-    }
-
-    for (const [key, value] of Object.entries(updates)) {
-      if (value.trim()) params.set(key, value);
-      else params.delete(key);
-    }
-
-    params.set("search_submitted", "1");
-
-    const href = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.replace(href, { scroll: false });
-  }
-
-  function getChildrenAgesFromSearchParams(): number[] {
-    const ages: number[] = [];
-
-    for (let i = 1; i <= 6; i += 1) {
-      const raw = normalizeParam(searchParams[`kid_age_${i}`]);
-      const parsed = Number(raw);
-      if (Number.isFinite(parsed)) ages.push(Math.max(0, Math.floor(parsed)));
-    }
-
-    return ages;
-  }
 
   useEffect(() => {
     if (!shouldShowResults || !visibleHotels.length) {
@@ -1961,7 +1895,7 @@ export default function HotelsView(props: {
             residency: residencyValue,
             adults: guestSelection.adults,
             kids: guestSelection.kids,
-            childrenAges: getChildrenAgesFromSearchParams(),
+            childrenAges,
             rooms,
           }),
         });
@@ -2024,6 +1958,7 @@ export default function HotelsView(props: {
     residencyValue,
     guestSelection.adults,
     guestSelection.kids,
+    childrenAges,
     bedroomsValue,
     searchParams,
   ]);
@@ -2101,7 +2036,7 @@ export default function HotelsView(props: {
         rooms: bedroomsValue ? Number(bedroomsValue) : null,
         adults: hasGuestDetails ? guestSelection.adults : null,
         kids: hasGuestDetails ? guestSelection.kids : null,
-        childrenAges: getChildrenAgesFromSearchParams(),
+        childrenAges,
         // The headline total is stored alongside the room picks so Saved
         // trips can show a price even for a hotel saved without choosing
         // rooms. Indicative only - rates are re-fetched live at booking.
@@ -2180,7 +2115,7 @@ async function handleCreateTripAndAddHotel() {
       rooms: bedroomsValue ? Number(bedroomsValue) : null,
       adults: hasGuestDetails ? guestSelection.adults : null,
       kids: hasGuestDetails ? guestSelection.kids : null,
-      childrenAges: getChildrenAgesFromSearchParams(),
+      childrenAges,
       priceAmount: roomSelectionTotal > 0 ? roomSelectionTotal : selectedHotelHeadlineTotal,
       priceCurrency: roomSelectionCurrency,
     });
@@ -2280,9 +2215,7 @@ async function handleCreateTripAndAddHotel() {
               action="/hotels"
               method="GET"
               className="grid gap-[14px] md:grid-cols-12 md:gap-[14px]"
-              onChange={(e) => {
-                const form = e.currentTarget;
-                setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
+              onChange={() => {
                 setAvailabilitySearchDirty(true);
               }}
               onSubmit={(e) => {
@@ -2790,9 +2723,7 @@ async function handleCreateTripAndAddHotel() {
                   action="/hotels"
                   method="GET"
                   className="grid gap-[14px]"
-                  onChange={(e) => {
-                    const form = e.currentTarget;
-                    setHasPendingSearchInputLocal(formHasMeaningfulSearchInput(form));
+                  onChange={() => {
                     setAvailabilitySearchDirty(true);
                   }}
                   onSubmit={(e) => {
@@ -2889,6 +2820,10 @@ async function handleCreateTripAndAddHotel() {
               <div className="relative">
                 <div className="grid gap-3 sm:grid-cols-3">
                   {featuredStripImages.map((image, index) => (
+                    // Plain <img> for supplier photos throughout this file: the
+                    // Ratehawk/Agoda CDNs already serve the requested size, and
+                    // next/image would re-optimise (and bill) each one again.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       key={`${featuredHotelId}-${index}`}
                       src={image}
@@ -3014,6 +2949,7 @@ async function handleCreateTripAndAddHotel() {
                       onClick={() => setLightboxOpen(true)}
                       className="block w-full overflow-hidden rounded-[var(--oltra-radius-lg)]"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- supplier CDN photo, see the featured strip */}
                       <img
                         src={
                           selectedHotelImages[selectedImageIndex] ??
@@ -3043,6 +2979,7 @@ async function handleCreateTripAndAddHotel() {
                               : "bg-[var(--oltra-field-bg)] hover:bg-[var(--oltra-field-bg-strong)]",
                           ].join(" ")}
                         >
+                          {/* eslint-disable-next-line @next/next/no-img-element -- supplier CDN photo, see the featured strip */}
                           <img
                             src={image.url}
                             alt=""
@@ -3121,6 +3058,7 @@ async function handleCreateTripAndAddHotel() {
                               >
                                 <div className="h-16 w-20 shrink-0 overflow-hidden rounded-[var(--oltra-radius-sm)]">
                                   {thumb ? (
+                                    // eslint-disable-next-line @next/next/no-img-element -- supplier CDN photo, see the featured strip
                                     <img
                                       src={thumb}
                                       alt=""
@@ -3238,6 +3176,7 @@ async function handleCreateTripAndAddHotel() {
                                         }`}
                                       >
                                         {room.images.map((img, i) => (
+                                          // eslint-disable-next-line @next/next/no-img-element -- supplier CDN photo, see the featured strip
                                           <img
                                             key={i}
                                             src={resolveRatehawkUrl(img.url, RATEHAWK_LARGE_SIZE)}
@@ -3616,6 +3555,7 @@ async function handleCreateTripAndAddHotel() {
                           </button>
 
                           <div className="flex h-[min(72vh,720px)] min-w-0 flex-1 items-center justify-center overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- supplier CDN photo at its own intrinsic size (object-contain) */}
                             <img
                               src={
                                 selectedHotelImages[selectedImageIndex] ??

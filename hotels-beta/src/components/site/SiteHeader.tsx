@@ -247,6 +247,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       <div className="oltra-site-header__inner">
         <div className="oltra-site-header__brand">
           <Link href="/" className="oltra-site-header__logo" aria-label="Go to OLTRA home">
+            {/* eslint-disable-next-line @next/next/no-img-element -- an SVG wordmark; next/image does not optimise SVG */}
             <img
               src="/images/myOLTRA.svg"
               alt="OLTRA"

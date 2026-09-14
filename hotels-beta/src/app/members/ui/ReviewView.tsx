@@ -73,13 +73,6 @@ function ratingToNumber(value: string): number {
   return Number.isFinite(numeric) && numeric >= 1 && numeric <= 5 ? numeric : 0;
 }
 
-function hasAtLeastOneNumericRating(ratings: Record<RatingField, string>) {
-  return Object.values(ratings).some((value) => {
-    const numeric = Number(value);
-    return Number.isFinite(numeric) && numeric >= 1 && numeric <= 5;
-  });
-}
-
 function buildTargetLabel(option: ReviewTargetOption): string {
   return (
     option.label ||

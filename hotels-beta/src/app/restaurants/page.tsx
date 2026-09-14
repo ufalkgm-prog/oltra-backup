@@ -97,7 +97,6 @@ export default async function RestaurantsPage({
         city={activeCity}
         cityOptions={cityOptions}
         restaurants={restaurants}
-        mapRestaurants={restaurants}
         selectedHotel={
           selectedHotel && selectedHotel.lat != null && selectedHotel.lng != null
             ? {

@@ -56,7 +56,6 @@ type Props = {
   city: string;
   cityOptions: string[];
   restaurants: RestaurantRecord[];
-  mapRestaurants: RestaurantRecord[];
   selectedHotel?: HotelPin | null;
 };
 
@@ -82,7 +81,6 @@ export default function RestaurantsMapView({
   city,
   cityOptions,
   restaurants,
-  mapRestaurants,
   selectedHotel = null,
 }: Props) {
   const router = useRouter();
@@ -781,6 +779,11 @@ export default function RestaurantsMapView({
     // filtered to empty — leave map where it is
 
     map.resize();
+    // selectedRestaurant is read above only to mark the initial selection. The
+    // effect after this one keeps data-selected in step on every selection;
+    // depending on it here would rebuild every marker and refit the map each
+    // time a restaurant is picked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city, restaurants, filteredRestaurants, mapReady, selectedHotel, router]);
 
   useEffect(() => {
