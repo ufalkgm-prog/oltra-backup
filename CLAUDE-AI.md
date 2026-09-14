@@ -32,6 +32,8 @@ Exit is a labelled button, not a bare glyph — the visitor is mid-conversation 
 
 The modal reuses the hotel photo lightbox's pattern: `createPortal` to `document.body`, `.oltra-modal-scrim`, `.oltra-modal-panel`, Esc and click-outside. **Portalled for a concrete reason**: `.oltra-page__content` is `position: relative; z-index: 1` and therefore its own stacking context, so a panel inside it can never clear the fixed header however high its z-index (§45). The one addition is **blur** — `--oltra-modal-blur`, on this scrim only, since blurring behind the photo lightbox would blur the photo's own context.
 
+**Placement (2026-09-14).** On the landing page the panel opens *exactly over the search frame* — same left edge, width and top — because `LandingSearchPanel` carries `data-ai-concierge-anchor` and the modal measures that element in a layout effect before first paint and on resize, with the top kept at least 16px on screen. Any page can opt in the same way; without an anchor the panel stays centred. The header is the site's brand block scaled down: the myOLTRA wordmark with "AI Concierge" as a route label under it.
+
 **Scroll containment.** Locking `<body>` alone was not enough: the scrolling element is usually `<html>`, so a wheel over the scrim still moved the page. Both are locked, with `overscroll-behavior: contain` on the scrim and transcript, and the scrollbar's width added back as body padding while the lock holds. Everything is restored on cleanup **including unmount** — a stray `overflow: hidden` on `<html>` would silently freeze the next page.
 
 ### The answer, and the in-chat summary

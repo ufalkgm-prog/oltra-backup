@@ -154,6 +154,17 @@
      with padding, so the buttons stay visually trim. */
   --oltra-btn-hit-size: 44px;
 
+  /* SELECTION CONTROLS — which one is chosen, not an action: the header menu
+     and the Flights trip-type tabs. Semisquare (radius-md), 2px edge. Chosen
+     is sage with the standard label; the others wear passive colours (tabs)
+     or no edge at all (header); hover lifts the edge to the neutral grey. */
+  --oltra-choice-rim: var(--oltra-btn-passive-rim);
+  --oltra-choice-label: var(--oltra-btn-passive-label);
+  --oltra-choice-rim-hover: var(--oltra-btn-neutral-rim);
+  --oltra-choice-label-hover: var(--oltra-btn-neutral-label);
+  --oltra-choice-rim-selected: var(--oltra-btn-primary-rim);
+  --oltra-choice-label-selected: var(--oltra-btn-label);
+
   /* Decorative edges and lifts — added 2026-08-16, finishing the token
      migration §35 started (it covered text only; borders and backgrounds were
      still ~130 hardcoded rgba(255,255,255,a) literals across 12 files, the
@@ -1280,8 +1291,10 @@ button.oltra-select {
   gap: 0.38rem;
   min-height: 36px;
   padding: 0 12px;
-  border: 1.5px solid transparent;
-  border-radius: 11px;
+  /* A selection control, drawn like the Flights trip-type tabs: semisquare,
+     2px edge, grey on hover, sage on the page you are on (§35A). */
+  border: var(--oltra-btn-rim-width) solid transparent;
+  border-radius: var(--oltra-radius-md);
   color: var(--oltra-text-primary);
   text-decoration: none;
   font-size: 0.98rem;
@@ -1315,21 +1328,19 @@ button.oltra-select {
   opacity: 0.7;
 }
 
-.oltra-site-header__nav-link.is-active,
-.oltra-site-header__action-link.is-active {
-  border-color: rgba(255, 255, 255, 0.38);
-}
-
 .oltra-site-header__nav-link:hover,
 .oltra-site-header__action-link:hover {
   text-decoration: none;
-  border-color: rgba(255, 255, 255, 0.38);
+  border-color: var(--oltra-choice-rim-hover);
   background: transparent;
 }
 
-.oltra-site-header__nav:has(.oltra-site-header__nav-link:hover)
-  .oltra-site-header__nav-link.is-active:not(:hover) {
-  border-color: transparent;
+/* The current page stays sage while another item is hovered: grey and sage
+   are different enough to show both, so the old rule that hid the active edge
+   during a hover went. */
+.oltra-site-header__nav-link.is-active,
+.oltra-site-header__action-link.is-active {
+  border-color: var(--oltra-choice-rim-selected);
 }
 
 .oltra-site-header__nav-link--disabled {

@@ -57,6 +57,30 @@
   gap: 1rem;
 }
 
+/* The site header's brand block, smaller: the myOLTRA wordmark with the
+   section name under it, left-aligned, as "Hotels" sits under the main logo.
+   The header's logo is clamp(32px, 3vw, 46px); this is about two thirds. */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.brandLogo {
+  display: block;
+  width: auto;
+  height: clamp(22px, 2vw, 30px);
+  object-fit: contain;
+  /* The same optical nudge the header applies to the wordmark, scaled. */
+  transform: translateX(-3px);
+}
+
+.brandTitle {
+  margin-top: 4px;
+  font-size: 0.62rem;
+}
+
 /* A labelled Exit, not a bare ×. The photo lightbox can afford a glyph because
    nothing else is happening in it; here the visitor is mid-conversation and
    needs to know the exchange survives leaving. Exit and Clear size to their
@@ -397,4 +421,17 @@
   .input {
     flex: 1 1 100%;
   }
+}
+
+/* Opened over a page frame that asked for it (the landing search panel, via
+   data-ai-concierge-anchor): the panel takes that frame's left edge, width and
+   top from inline styles, so the scrim stops centring and padding it. After
+   the media query so it wins at every width. */
+.scrim.scrimAnchored {
+  justify-content: flex-start;
+  padding: 0 0 2rem;
+}
+
+.scrimAnchored .panel {
+  max-width: none;
 }

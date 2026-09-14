@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
@@ -47,6 +47,38 @@ export default function AiConciergeModal() {
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   const close = useCallback(() => setConciergeOpen(false), [setConciergeOpen]);
+
+  /* Where the panel opens. A page can mark one frame with
+   * data-ai-concierge-anchor — the landing page marks its search panel — and
+   * the concierge then opens exactly over it: same left edge, same width, same
+   * top. Anywhere else it stays centred.
+   *
+   * A layout effect, so the measurement lands before the first paint (no jump
+   * from centred to anchored), and before the scroll lock below takes the
+   * scrollbar away. The lock pads <body> by the scrollbar's width, so the frame
+   * does not move when it does. The top is kept on screen in case the page was
+   * scrolled past the frame. */
+  const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(
+    null
+  );
+
+  useLayoutEffect(() => {
+    if (!conciergeOpen) return;
+
+    const measure = () => {
+      const frame = document.querySelector<HTMLElement>("[data-ai-concierge-anchor]");
+      if (!frame) {
+        setAnchor(null);
+        return;
+      }
+      const rect = frame.getBoundingClientRect();
+      setAnchor({ top: Math.max(rect.top, 16), left: rect.left, width: rect.width });
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [conciergeOpen]);
 
   /* Esc closes, and the page underneath stops scrolling entirely.
    *
@@ -143,20 +175,30 @@ export default function AiConciergeModal() {
 
   return createPortal(
     <div
-      className={`oltra-modal-scrim ${styles.scrim}`}
+      className={`oltra-modal-scrim ${styles.scrim} ${anchor ? styles.scrimAnchored : ""}`}
       onClick={close}
       role="presentation"
     >
       <div
         ref={panelRef}
         className={`oltra-modal-panel ${styles.panel}`}
+        style={
+          anchor
+            ? { marginTop: anchor.top, marginLeft: anchor.left, width: anchor.width }
+            : undefined
+        }
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="myOLTRA concierge"
+        aria-label="myOLTRA AI Concierge"
       >
         <div className={styles.header}>
-          <span className="oltra-label">Concierge</span>
+          <div className={styles.brand}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- the same
+                SVG wordmark the site header renders with a plain <img>. */}
+            <img src="/images/myOLTRA.svg" alt="myOLTRA" className={styles.brandLogo} />
+            <span className={`oltra-route-label ${styles.brandTitle}`}>AI Concierge</span>
+          </div>
           {/* Clear sits beside Exit rather than down in the input row: both
               are things you do to the whole conversation, not to the message
               you are writing, and next to Ask it read as a third way to send.

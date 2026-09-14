@@ -87,6 +87,7 @@ Supersedes every earlier button instruction, including §35's filled sage. Speci
 * **Yes/No pairs are always the same width** — `.oltra-btn-pair`.
 * **Over photography** a surface carries `.oltra-over-image`, which puts `--oltra-btn-scrim` under its buttons. On the brightest hero photo the bare sage rim fell to about 1.5:1 through the 72% landing glass.
 * **No clickable italic anywhere except the AI button** — italic now means AI. The italic delete links became Destructive pills, and the /flights "info" pill stayed inverted but upright.
+* **Selection controls share one look (`--oltra-choice-*`)**: the header menu and the Flights trip-type tabs. Semisquare (`--oltra-radius-md`), 2px edge. The chosen one is sage (`#8AA884`, standard label); unchosen tabs wear passive colours, while unchosen header items have no edge. Hover lifts the edge to neutral grey `#9AA39E`. The current page stays sage while another item is hovered.
 * **Controls are not actions** and keep their shapes: tabs, steppers, carousel arrows, close icons, calendar cells, nav links, selectable rows, disclosures, text links in prose. The destination-field chip keeps its pill as a declared exception.
 * The Hotels search button says **SEARCH**; what's missing is the popup, not the label.
 

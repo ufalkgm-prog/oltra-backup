@@ -33,8 +33,9 @@
   gap: 8px;
 }
 
-/* A segmented control, not an action, so it stays off the button standard.
-   These are the values it used to borrow from .oltra-button-secondary. */
+/* A selection control, not an action, so it keeps its semisquare shape rather
+   than the pill. Colours are the shared --oltra-choice-* set: the chosen trip
+   type is sage, the other two wear passive grey (§35A). */
 .tripTypeTabs button {
   display: inline-flex;
   align-items: center;
@@ -43,10 +44,10 @@
   min-height: 34px;
   height: 34px;
   padding: 0 8px;
-  border: 1px solid #6c8c6a;
-  border-radius: 4px;
+  border: var(--oltra-btn-rim-width) solid var(--oltra-choice-rim);
+  border-radius: var(--oltra-radius-md);
   background: transparent;
-  color: #cbd0cb;
+  color: var(--oltra-choice-label);
   font: inherit;
   font-size: 0.76rem;
   font-weight: 400;
@@ -63,13 +64,14 @@
 }
 
 .tripTypeTabs button:hover {
-  opacity: 0.95;
+  border-color: var(--oltra-choice-rim-hover);
+  color: var(--oltra-choice-label-hover);
 }
 
-.segmentButtonActive {
-  background: rgba(20, 32, 48, 0.55) !important;
-  color: var(--oltra-text-primary) !important;
-  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+/* Compound so it beats the hover rule above without !important. */
+.tripTypeTabs button.segmentButtonActive {
+  border-color: var(--oltra-choice-rim-selected);
+  color: var(--oltra-choice-label-selected);
 }
 
 .fieldGrid {

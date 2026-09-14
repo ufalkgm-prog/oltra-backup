@@ -2457,12 +2457,15 @@ async function handleCreateTripAndAddHotel() {
               ) : null}
 
               {!compactTopMode ? (
-                <div className="md:col-span-12 grid items-start gap-[14px] md:grid-cols-[minmax(0,1.45fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
+                /* Filters left, SEARCH right, one width. That width is the first
+                   track of the field grid above (1.45fr of 4.6fr, less its three
+                   14px gaps), so Filters still lines up under the date field. */
+                <div className="md:col-span-12 flex flex-col gap-[14px] md:flex-row md:items-start md:justify-between">
                   <button
                     type="button"
                     onClick={() => updateFiltersOpen(!filtersOpen)}
                     aria-expanded={filtersOpen}
-                    className="oltra-btn oltra-btn--block"
+                    className="oltra-btn w-full md:w-[calc((100%_-_42px)*1.45/4.6)]"
                   >
                     Filters
                   </button>
@@ -2492,7 +2495,7 @@ async function handleCreateTripAndAddHotel() {
                     disabled={searchBusy}
                     aria-disabled={!searchBusy && Boolean(searchPassiveReason)}
                     data-reason={!searchBusy && searchPassiveReason ? searchPassiveReason : undefined}
-                    className="oltra-btn oltra-btn--block md:col-start-2 md:col-span-3"
+                    className="oltra-btn w-full md:w-[calc((100%_-_42px)*1.45/4.6)]"
                   >
                     {searchBusy || isSubmittingSearch ? (
                       <span
@@ -2951,12 +2954,14 @@ async function handleCreateTripAndAddHotel() {
                   </div>
                 </div>
 
-                {/* Row 1 right: switch button */}
-                <div className="col-span-12 flex justify-end lg:col-span-4">
+                {/* Row 1 right: switch button — the full width of this
+                    col-span-4 track, the same track and width as SAVE TO TRIP
+                    further down. */}
+                <div className="col-span-12 lg:col-span-4">
                   <button
                     type="button"
                     onClick={() => setViewMode("map")}
-                    className="oltra-btn"
+                    className="oltra-btn oltra-btn--block"
                   >
                     Switch to map view
                   </button>

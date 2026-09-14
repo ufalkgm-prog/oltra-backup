@@ -509,10 +509,14 @@ export default function LandingSearchPanel({
      whole panel, which is why the panel had to know about it; now it opens
      over the page as a modal and closes again, so the search panel is never in
      a "mode" and renders one way only. The only trace left is the button in
-     the destination field. */
+     the destination field — and data-ai-concierge-anchor, which tells the
+     modal to open exactly over this frame. */
 
   return (
-    <div className={`oltra-glass oltra-panel oltra-over-image ${styles.searchPanel} ${styles.landingGlass}`}>
+    <div
+      className={`oltra-glass oltra-panel oltra-over-image ${styles.searchPanel} ${styles.landingGlass}`}
+      data-ai-concierge-anchor=""
+    >
       <form
         ref={formRef}
         action="/"

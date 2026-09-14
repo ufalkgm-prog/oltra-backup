@@ -1048,6 +1048,7 @@ export default function FlightsView({ searchParams }: Props) {
                       key={value}
                       type="button"
                       onClick={() => setTripType(value)}
+                      aria-pressed={search.tripType === value}
                       className={search.tripType === value ? styles.segmentButtonActive : undefined}
                     >
                       {label}
