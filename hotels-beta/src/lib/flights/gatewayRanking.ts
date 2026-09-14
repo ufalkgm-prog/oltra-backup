@@ -31,6 +31,7 @@
 import {
   getAirportsForCity,
   hasCuratedGatewayOrder,
+  pickPrimaryAirportForCity,
   type CityAirport,
 } from "@/lib/cityAirports";
 import { getTransferRoute } from "@/lib/transferRoutes";
@@ -444,6 +445,32 @@ export function rankGateways(
     stopMustSave,
     shortHaulFlights,
   };
+}
+
+/** A destination's airports in their STANDING order, for when no origin and
+ * dates are there to rank on: a hand-ordered list as a person ordered it, any
+ * other led by its main airport (`pickPrimaryAirportForCity`) — the order the
+ * Flights page uses too. Shared by the concierge's compareGateways fallback and
+ * the airport printed under each hotel in its answer, so the airport a hotel
+ * line names is the one the tool would have named first. */
+export function standingGatewayOrder(city: string): CityAirport[] {
+  const airports = getAirportsForCity(city);
+  if (airports.length < 2 || hasCuratedGatewayOrder(city)) return airports;
+  const primary = pickPrimaryAirportForCity(city);
+  return primary ? [primary, ...airports.filter((a) => a.iata !== primary.iata)] : airports;
+}
+
+/** The standing airports for one HOTEL: its city, or — for the lodges that
+ * have none (§3) — its traveller area, which is how cityAirports keys them. */
+export function standingGatewaysForHotel(hotel: {
+  city?: string | null;
+  state_province_county_island?: string | null;
+}): CityAirport[] {
+  const city = (hotel.city ?? "").trim();
+  const fromCity = city ? standingGatewayOrder(city) : [];
+  if (fromCity.length) return fromCity;
+  const area = (hotel.state_province_county_island ?? "").trim();
+  return area ? standingGatewayOrder(area) : [];
 }
 
 /** Facts for one airport from a set of already-normalised itineraries — the

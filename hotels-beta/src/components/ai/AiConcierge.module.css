@@ -323,6 +323,13 @@
   color: var(--oltra-text-muted);
 }
 
+/* "Fly into Málaga-Costa del Sol (AGP)." after a hotel's reason, when the
+   answer has flights: the airport that hotel is reached through, from our
+   data. Upright and primary, because it is a fact to act on, not a note. */
+.summaryAirport {
+  color: var(--oltra-text-primary);
+}
+
 /* "Not available at myOLTRA yet." — the last sentence under a hotel we cannot
    price, in italic so it reads as a note about the hotel rather than as part
    of the concierge's reason for it. */

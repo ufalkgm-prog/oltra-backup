@@ -555,6 +555,62 @@ place. It is a fact about the engine's rules for private cars, and for a
 destination this clientele actually goes to, that difference is the whole
 answer.
 
+### Hotels in several places, flights to only one of them (2026-09-14)
+
+Reported live. "Best hotels in Spain on the water", then dates and "provide
+relevant flights": six hotels across Ibiza, Mallorca, Barcelona and the Costa
+del Sol, a framing that walked through which airport served which, and **one**
+flight — Copenhagen to Ibiza — closing "Shall I price the flights to M\u00e1laga,
+Barcelona or Palma instead?". Four airports named, one flown to.
+
+Nothing required more. `presentResults.flights` was always an array, but the
+prompt's flight rules were all written for ONE destination (search the airport
+you present; compareGateways before choosing among a destination's airports),
+and searching four airports meant four round trips. The model took the cheap
+reading.
+
+**Fixed in three layers, the structural ones first.**
+
+* **Each hotel carries its airport, from our data.** `searchHotels` candidates
+  gained `airport` (first of the destination's standing order —
+  `standingGatewaysForHotel` in `gatewayRanking.ts`, the same order the
+  compareGateways fallback and the Flights page use), and `/api/ai/hotels`
+  attaches `airports` to every card record server-side (the table is 80KB and
+  stays out of the bundle). The panel prints "Fly into Málaga-Costa del Sol
+  (AGP)." after each hotel's reason, only in an answer that has flights.
+* **The display completes the legs** (`lib/ai/hotelGateways.ts`): any airport a
+  named hotel needs that no presented leg flies to gets a leg copying the first
+  leg's origin, dates and cabin, ordered to follow the hotels. It carries no
+  `details` (those are shown only for a searched journey), but the landing
+  frame searches it live like any other. Only an outbound set — every leg from
+  the same origin on the same dates — is completed; an open jaw is the route the
+  visitor described and is left alone. The panel and the landing frames both
+  call it, from the same named set (`namedHotels`, `MAX_NAMED` moved there so
+  the two cannot disagree).
+* **Then the model is asked, and made able cheaply.** `searchFlights` takes
+  `destinations` (up to six, searched in parallel); the prompt says to present a
+  journey to EACH airport the named hotels use, in one call, not to narrate the
+  airports in the framing, and never to offer an airport already presented.
+
+Verified in the dev browser on the same two questions: one searchFlights call
+with `destinations: [IBZ, AGP, BCN, PMI]`, four legs each with details, every
+hotel line naming its airport, and the closing question now "If one island or
+coast appeals more than the others, I can narrow it down further." — the offer
+to price other airports gone because there were none left to offer.
+
+**`M\u00e1laga` was the model, not our data.** Nothing stored holds an escape
+(grepped `src/`; the framing of the same answer said "Málaga" correctly). The
+model occasionally writes a non-ASCII character in a tool argument as a JSON
+escape with the backslash itself escaped, so the parsed string carries a
+literal `á`. `decodeStrayEscapes` in `rationale.ts` now runs over every
+model-authored string the panel shows — framing, followUp, rationales, flight
+details and prose. \uXXXX only; nothing else of that kind has been seen.
+
+**And the live answer said "Duffel Airways"** — the airline only Duffel's test
+environment invents (see *It cannot be tested locally* above). So production's
+`DUFFEL_ACCESS_TOKEN` is a `duffel_test` token: the flight details on the live
+beta are fabricated and compareGateways declines to rank there.
+
 ### The classic pages had the other half of the same fault
 
 Worth knowing when changing either, because the two are now one implementation:

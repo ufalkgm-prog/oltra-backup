@@ -53,11 +53,13 @@ export default function AiConciergeModal() {
    * the concierge then opens exactly over it: same left edge, same width, same
    * top. Anywhere else it stays centred.
    *
-   * A layout effect, so the measurement lands before the first paint (no jump
-   * from centred to anchored), and before the scroll lock below takes the
-   * scrollbar away. The lock pads <body> by the scrollbar's width, so the frame
-   * does not move when it does. The top is kept on screen in case the page was
-   * scrolled past the frame. */
+   * A layout effect, so the first measurement lands before the first paint (no
+   * jump from centred to anchored). It is taken again on the next frame,
+   * because the scroll lock below runs after it and does move the frame:
+   * removing the scrollbar re-centres the page, and the body padding that
+   * replaces it does not cancel that out — measured live, the panel sat 5px
+   * right of the frame on a first-paint reading alone. The top is kept on
+   * screen in case the page was scrolled past the frame. */
   const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(
     null
   );
@@ -76,8 +78,12 @@ export default function AiConciergeModal() {
     };
 
     measure();
+    const settle = window.requestAnimationFrame(measure);
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    return () => {
+      window.cancelAnimationFrame(settle);
+      window.removeEventListener("resize", measure);
+    };
   }, [conciergeOpen]);
 
   /* Esc closes, and the page underneath stops scrolling entirely.

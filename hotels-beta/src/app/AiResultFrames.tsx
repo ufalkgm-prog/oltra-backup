@@ -16,6 +16,7 @@ import SaveToTripControl, {
 import { addHotelToTripBrowser } from "@/lib/members/db";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
+import { MAX_NAMED, completeLegsForHotels, namedHotels } from "@/lib/ai/hotelGateways";
 import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
 import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
 import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
@@ -317,8 +318,17 @@ export default function AiResultFrames() {
     query.destination.adminRegion ||
     query.destination.country;
 
+  /* The flight legs to draw: the answer's own, plus one to every airport the
+     hotels the panel names are reached through — the same completion the panel
+     applies, so the frame and the panel list the same journeys. */
+  const flightLegs = completeLegsForHotels(
+    results.flights,
+    namedHotels(hotels, results.highlightIds),
+    MAX_NAMED
+  );
+
   const showHotels = results.hotelIds.length > 0;
-  const showFlights = results.flights.length > 0;
+  const showFlights = flightLegs.length > 0;
   const showRestaurants = results.restaurantIds.length > 0;
 
   // Nothing to frame yet — the concierge panel carries the conversation.
@@ -442,7 +452,7 @@ export default function AiResultFrames() {
                 exactly as it did before; with two it is how an open jaw gets
                 shown at all. */}
             <div className={styles.aiFlightLegs}>
-              {results.flights.map((leg) => (
+              {flightLegs.map((leg) => (
                 <FlightLegPanel
                   key={`${leg.origin}-${leg.destination}-${leg.departureDate}-${leg.returnDate}`}
                   leg={leg}

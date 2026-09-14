@@ -5,7 +5,13 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isToolUIPart, getToolName, type UIMessage } from "ai";
 import { useAiConversation, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { collapseReturnLegs } from "@/lib/ai/flightLegs";
-import { stripLeadingName } from "@/lib/ai/rationale";
+import {
+  MAX_NAMED,
+  completeLegsForHotels,
+  gatewayForHotel,
+  namedHotels,
+} from "@/lib/ai/hotelGateways";
+import { decodeStrayEscapes, stripLeadingName } from "@/lib/ai/rationale";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
 import { EMPTY_RESULT_SET, type AiQueryState, type AiResultSet } from "@/lib/ai/types";
@@ -118,7 +124,9 @@ function readPresentation(message: UIMessage): Presentation | null {
 
       const rationales: Record<string, string> = {};
       for (const entry of input.rationales ?? []) {
-        if (entry?.id != null && entry.reason) rationales[String(entry.id)] = entry.reason;
+        if (entry?.id != null && entry.reason) {
+          rationales[String(entry.id)] = decodeStrayEscapes(entry.reason);
+        }
       }
 
       // The stay is what makes the cards price themselves. Without it they
@@ -179,14 +187,26 @@ function readPresentation(message: UIMessage): Presentation | null {
            Malpensa line described a different airport. The tool description
            already said "these exact airports"; this makes the panel incapable
            of showing a mismatch rather than trusting that it was read. */
+        // One searchFlights call may cover several airports ("destinations"),
+        // so each of them counts as searched.
         const searched = new Set(
           message.parts
             .filter((p) => isToolUIPart(p) && getToolName(p) === "searchFlights")
-            .map((p) => {
+            .flatMap((p) => {
               const s = (isToolUIPart(p) ? p.input : undefined) as
-                | { origin?: string; destination?: string; departureDate?: string; returnDate?: string }
+                | {
+                    origin?: string;
+                    destination?: string;
+                    destinations?: string[];
+                    departureDate?: string;
+                    returnDate?: string;
+                  }
                 | undefined;
-              return flightKey(s?.origin, s?.destination, s?.departureDate, s?.returnDate);
+              return [s?.destination, ...(s?.destinations ?? [])]
+                .filter(Boolean)
+                .map((destination) =>
+                  flightKey(s?.origin, destination, s?.departureDate, s?.returnDate)
+                );
             })
         );
         // Collapsed here rather than at the frame, so the summary, the cards,
@@ -203,7 +223,7 @@ function readPresentation(message: UIMessage): Presentation | null {
               cabin: leg.cabin ?? "economy",
               ...(leg.details &&
               searched.has(flightKey(leg.origin, leg.destination, leg.departureDate, leg.returnDate))
-                ? { details: leg.details }
+                ? { details: decodeStrayEscapes(leg.details) }
                 : {}),
             }))
         );
@@ -211,8 +231,8 @@ function readPresentation(message: UIMessage): Presentation | null {
 
       return {
         toolCallId: part.toolCallId,
-        framing: input.framing,
-        followUp: input.followUp ?? "",
+        framing: decodeStrayEscapes(input.framing),
+        followUp: decodeStrayEscapes(input.followUp ?? ""),
         query,
         results,
       };
@@ -374,10 +394,12 @@ function AgentText({
 }
 
 function messageText(message: UIMessage): string {
-  return message.parts
-    .filter((part): part is { type: "text"; text: string } => part.type === "text")
-    .map((part) => part.text)
-    .join("");
+  return decodeStrayEscapes(
+    message.parts
+      .filter((part): part is { type: "text"; text: string } => part.type === "text")
+      .map((part) => part.text)
+      .join("")
+  );
 }
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
@@ -389,13 +411,6 @@ function shortDate(iso: string): string {
 }
 
 
-/** Most the panel will ever read out, however many the model wrote lines for.
- *
- * The panel is a spoken answer, not a listing — past eight names it stops being
- * something anyone takes in, and the page behind is where a set is browsed. A
- * hard cap here rather than trust in the prompt, because the cost of the model
- * getting expansive is the one screen the visitor can actually read. */
-const MAX_NAMED = 8;
 
 /* Ulrik's wording, 2026-09-13. The second half matters as much as the first:
  * a visitor told to close the panel needs to know the conversation survives. */
@@ -483,8 +498,20 @@ function ResultSummary({ past }: { past?: Presentation }) {
     return (picked.length ? picked : items).slice(0, MAX_NAMED);
   };
 
-  const hotelPicks = shortlist(hotels);
+  const hotelPicks = namedHotels(hotels, results.highlightIds);
   const restaurantPicks = shortlist(restaurants);
+
+  /* Flights to every airport the named hotels are reached through, following
+     the hotels' order, and each hotel line names its airport — but only in an
+     answer that has flights at all. An answer about hotels alone gets no
+     airport lines. See lib/ai/hotelGateways.ts. */
+  const flights = completeLegsForHotels(results.flights, hotelPicks, MAX_NAMED);
+  const showAirports = flights.length > 0;
+  const airportLine = (hotel: (typeof hotels)[number]) => {
+    if (!showAirports) return null;
+    const gateway = gatewayForHotel(hotel, flights);
+    return gateway ? `Fly into ${gateway.label} (${gateway.iata}).` : null;
+  };
   const alsoBehind =
     hotels.length - hotelPicks.length + (restaurants.length - restaurantPicks.length);
 
@@ -521,7 +548,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
     Boolean(loneHotel && notSoldHere(loneHotel)) ||
     (listHotels && hotelPicks.length > 0) ||
     (listRestaurants && restaurantPicks.length > 0) ||
-    results.flights.length > 0;
+    flights.length > 0;
   if (!drawsAnything) return null;
 
   return (
@@ -540,6 +567,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
           <ul className={styles.summaryList}>
             {hotelPicks.map((hotel) => {
               const why = reason(hotel.id, hotel.hotel_name);
+              const airport = airportLine(hotel);
               return (
                 <li key={`h-${hotel.id}`} className={styles.summaryItem}>
                   <span className={styles.summaryName}>{hotel.hotel_name}</span>
@@ -547,11 +575,14 @@ function ResultSummary({ past }: { past?: Presentation }) {
                     <span className={styles.summaryReason}>
                       {" "}
                       — {/* The model often ends a line without a full stop,
-                          and the note then ran on as part of it: "…from
+                          and a note after it then ran on as part of it: "…from
                           Malpensa Not available at myOLTRA yet." */}
-                      {notSoldHere(hotel) && !/[.!?]$/.test(why.trim()) ? `${why.trim()}.` : why}
+                      {(notSoldHere(hotel) || airport) && !/[.!?]$/.test(why.trim())
+                        ? `${why.trim()}.`
+                        : why}
                     </span>
                   ) : null}
+                  {airport ? <span className={styles.summaryAirport}> {airport}</span> : null}
                   {notSoldHere(hotel) ? (
                     <span className={styles.notSoldHere}> {NOT_SOLD_HERE}</span>
                   ) : null}
@@ -583,13 +614,13 @@ function ResultSummary({ past }: { past?: Presentation }) {
         </div>
       ) : null}
 
-      {results.flights.length ? (
+      {flights.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {results.flights.length === 1 ? "Flight" : "Flights"}
+            {flights.length === 1 ? "Flight" : "Flights"}
           </div>
           <ul className={styles.summaryList}>
-            {results.flights.map((leg) => (
+            {flights.map((leg) => (
               <li
                 key={`f-${leg.origin}-${leg.destination}-${leg.departureDate}`}
                 className={styles.summaryItem}

@@ -11,6 +11,8 @@ import { getTransferRoute, hasAirportChange } from "@/lib/transferRoutes";
 import {
   rankGateways,
   resolveTransfer,
+  standingGatewayOrder,
+  standingGatewaysForHotel,
   type TransferBasis,
 } from "@/lib/flights/gatewayRanking";
 import { getRestaurantCities, searchRestaurants as findRestaurants } from "@/lib/restaurants";
@@ -121,6 +123,11 @@ function candidateShape(hotel: HotelRecord) {
     // out. The model should still recommend these; it just must not promise
     // they can be priced here.
     bookableHere: hotel.ratehawk_status !== "passive" && Boolean(hotel.ratehawk_hid),
+    // The airport this hotel is reached through, as an IATA code: the first of
+    // its destination's standing order. The panel prints the same airport
+    // under the hotel's name, so a set spanning several airports can be flown
+    // to every one of them without a nearestAirport call per city.
+    airport: standingGatewaysForHotel(hotel)[0]?.iata ?? "",
   };
 }
 
@@ -1050,8 +1057,10 @@ const compareGateways = tool({
     "Compare the airports serving one destination BY TOTAL TRAVEL TIME from a " +
     "given departure airport — the flight and the transfer added together — and " +
     "return them in order, best first. REQUIRED before naming an airport, or " +
-    "passing flight legs to presentResults, whenever the destination has more " +
-    "than one airport and you know where the visitor is flying from. The " +
+    "passing flight legs to presentResults, whenever ONE destination has more " +
+    "than one airport and you know where the visitor is flying from. Not for " +
+    "hotels spread across several destinations: fly to each hotel's own " +
+    "\"airport\" from searchHotels instead. The " +
     "ordering is already done: take it. Never re-rank it on distance, and never " +
     "prefer an airport because the drive is shorter — that is the mistake this " +
     "exists to prevent, because the drive it saves is usually paid for twice " +
@@ -1133,11 +1142,7 @@ const compareGateways = tool({
        * the claim; any other leads with its main airport by size, the same
        * choice the Flights page makes, and is described as exactly that. */
       const curated = hasCuratedGatewayOrder(key.city);
-      const primary = pickPrimaryAirportForCity(key.city);
-      const ordered =
-        curated || !primary
-          ? airports
-          : [primary, ...airports.filter((a) => a.iata !== primary.iata)];
+      const ordered = standingGatewayOrder(key.city);
       return asUntrustedData("gateways", {
         city: key.city,
         resolvedFrom: key.resolvedFrom,
@@ -1203,14 +1208,22 @@ const compareGateways = tool({
   },
 });
 
+/* Most searchFlights will run in one call. The panel names at most eight hotels,
+ * and they rarely span more than four airports; past six this is a sweep, not
+ * an answer. */
+const MAX_FLIGHT_DESTINATIONS = 6;
+
 const searchFlights = tool({
   description:
     "Check whether a route flies on given dates and how the options compare. " +
     "Returns routing, timings and a price rank — never an amount. The flight " +
-    "cards show live fares.",
+    "cards show live fares. Give one airport in \"destination\", or several " +
+    "in \"destinations\" to search them all at once — use that when the " +
+    "hotels you are presenting fly into different airports.",
   inputSchema: jsonSchema<{
     origin: string;
-    destination: string;
+    destination?: string;
+    destinations?: string[];
     departureDate: string;
     returnDate?: string;
     adults?: number;
@@ -1220,7 +1233,15 @@ const searchFlights = tool({
     type: "object",
     properties: {
       origin: { type: "string", description: "IATA code." },
-      destination: { type: "string", description: "IATA code." },
+      destination: { type: "string", description: "IATA code, for one airport." },
+      destinations: {
+        type: "array",
+        items: { type: "string" },
+        maxItems: MAX_FLIGHT_DESTINATIONS,
+        description:
+          "IATA codes, for several airports searched in parallel with the same " +
+          "origin and dates — one per airport the presented hotels fly into.",
+      },
       departureDate: { type: "string", description: "yyyy-mm-dd" },
       returnDate: { type: "string", description: "yyyy-mm-dd" },
       adults: { type: "number" },
@@ -1230,13 +1251,40 @@ const searchFlights = tool({
         enum: ["economy", "premium_economy", "business", "first"],
       },
     },
-    required: ["origin", "destination", "departureDate"],
+    required: ["origin", "departureDate"],
     additionalProperties: false,
   }),
   async execute(input) {
     const { searchFlightOffers } = await import("./flightSearch");
-    const offers = await searchFlightOffers(input);
-    return asUntrustedData("flights", offers);
+    const { destination, destinations, ...rest } = input;
+    const codes = [
+      ...new Set(
+        [destination, ...(destinations ?? [])]
+          .map((code) => (code ?? "").trim().toUpperCase())
+          .filter(Boolean)
+      ),
+    ].slice(0, MAX_FLIGHT_DESTINATIONS);
+
+    if (!codes.length) {
+      return asUntrustedData("flights", {
+        ok: false,
+        note: "Give an airport in destination or destinations.",
+      });
+    }
+
+    if (codes.length === 1) {
+      return asUntrustedData("flights", await searchFlightOffers({ ...rest, destination: codes[0] }));
+    }
+
+    // In parallel: these are independent Duffel searches, and in series four
+    // airports would be four round trips of waiting.
+    const searches = await Promise.all(
+      codes.map(async (code) => ({
+        destination: code,
+        ...(await searchFlightOffers({ ...rest, destination: code })),
+      }))
+    );
+    return asUntrustedData("flights", { byDestination: searches });
   },
 });
 
@@ -1388,7 +1436,8 @@ const presentResults = tool({
           "prices, please provide the dates for your stay.' or 'Shall I price " +
           "it in business too?'. Never a bare demand such as 'When are you " +
           "going?'. Omit it if nothing useful " +
-          "remains to ask. Never put the answer here — that is the framing.",
+          "remains to ask. Never put the answer here — that is the framing. " +
+          "Never offer flights to an airport already in \"flights\".",
       },
       hotelIds: {
         type: "array",
@@ -1456,6 +1505,10 @@ const presentResults = tool({
       // round-trip fares.
       flights: {
         type: "array",
+        description:
+          "One entry per journey. When the hotels you name are reached through " +
+          "different airports, one entry for EACH of those airports, same origin " +
+          "and dates.",
         items: {
           type: "object",
           properties: {

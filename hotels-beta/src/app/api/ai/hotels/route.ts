@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getItems } from "@/lib/directus";
 import { MAX_HOTEL_CANDIDATES } from "@/lib/ai/config";
 import type { AiHotelCard } from "@/lib/ai/types";
+import { standingGatewaysForHotel } from "@/lib/flights/gatewayRanking";
 
 /* Card data for the AI results region.
  *
@@ -19,6 +20,8 @@ const CARD_FIELDS = [
   "id",
   "hotel_name",
   "city",
+  // Only to find the airport of a lodge with no city (§3); not shown.
+  "state_province_county_island",
   "country",
   "affiliation",
   "highlights",
@@ -58,13 +61,27 @@ export async function POST(request: Request) {
 
     if (!requested.length) return NextResponse.json({ ok: true, hotels: [] });
 
-    const rows = await getItems<AiHotelCard>("hotels", {
+    const rows = await getItems<
+      Omit<AiHotelCard, "airports"> & { state_province_county_island: string | null }
+    >("hotels", {
       fields: CARD_FIELDS,
       filter: { _and: [{ id: { _in: requested } }, { published: { _eq: true } }] },
       limit: -1,
     });
 
-    const byId = new Map(rows.map((row) => [String(row.id), row]));
+    /* Each hotel's airports, so the concierge panel can print the one a hotel
+       is reached through and list a flight to every airport its answer spans. */
+    const byId = new Map<string, AiHotelCard>(
+      rows.map(({ state_province_county_island, ...row }) => [
+        String(row.id),
+        {
+          ...row,
+          airports: standingGatewaysForHotel({ city: row.city, state_province_county_island }).map(
+            (a) => ({ iata: a.iata, label: a.label })
+          ),
+        },
+      ])
+    );
     const ordered = requested
       .map((id) => byId.get(id))
       .filter((row): row is AiHotelCard => Boolean(row));

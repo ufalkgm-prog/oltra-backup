@@ -190,4 +190,8 @@ export type AiHotelCard = {
   booking_URL: string | null;
   booking_enabled: boolean | null;
   booking_hotel_ref: string | null;
+  /** The airports this hotel is reached through, best first (its destination's
+   * standing order), added by /api/ai/hotels. Server-side because the airport
+   * table is ~80KB and has no business in the browser bundle. */
+  airports: { iata: string; label: string }[];
 };

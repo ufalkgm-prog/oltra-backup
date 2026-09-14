@@ -7,6 +7,23 @@
 
 const WORDS = /[^\p{L}\p{N}]+/u;
 
+/* "Shall I price the flights to M\u00e1laga…" (2026-09-14, live).
+ *
+ * Nothing in our data holds an escape: every airport and city label is stored
+ * as real UTF-8, and the framing of the same answer said "Málaga" correctly.
+ * The model occasionally writes a non-ASCII character in a tool argument as a
+ * JSON escape and then escapes the backslash too, so after parsing the string
+ * carries a literal backslash-u sequence. A prompt line cannot reliably stop an
+ * encoding slip, so the display decodes it: every string the model authors for
+ * the panel passes through here. Only the \uXXXX form — nothing else of that
+ * kind has been seen, and decoding more would risk altering real text. */
+export function decodeStrayEscapes(text: string): string {
+  if (!text.includes("\\u")) return text;
+  return text.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
+}
+
 export function tokens(value: string): string[] {
   return value.toLowerCase().split(WORDS).filter(Boolean);
 }
