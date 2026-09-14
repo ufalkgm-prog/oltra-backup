@@ -128,10 +128,11 @@
   /* Focus: a ring outside the rim, never a rim colour change. 11.16 / 9.32. */
   --oltra-btn-focus-ring: #f5f2ec;
 
-  /* Behind a button that can sit over photography (the landing glass panels,
-     the map). Not a fill of the button's own — a wash under it that keeps
-     the rim above 3:1 on the brightest hero photo. */
-  --oltra-btn-scrim: rgba(20, 26, 25, 0.5);
+  /* The one fill a button may have: over photography (the landing glass
+     panels, the map) it is solid site background, no shadow (Ulrik,
+     2026-09-14). That puts every rim and label on exactly the ground the
+     contrast figures above were measured against, whatever the photo does. */
+  --oltra-btn-over-image-bg: var(--oltra-bg-color);
 
   /* Formats. Full: 8/20 + 13px on a 14px line = 34px, the control height, so
      a Full button lines up with the fields beside it. Condensed: carried over
@@ -835,7 +836,7 @@ button.oltra-select {
    Layout helpers: .oltra-btn--block (full width), .oltra-btn-pair (a Yes/No
    pair, always equal width), .oltra-btn--stack-top/-bottom (two stacked card
    buttons whose hit areas split the gap), .oltra-over-image (a surface
-   over photography — adds the scrim).
+   over photography — its buttons get a solid site-background fill).
 
    Sizing lives in these classes, not in utilities: this file is unlayered,
    so it beats any Tailwind utility on the same property (§45).
@@ -1072,18 +1073,22 @@ button.oltra-select {
   bottom: calc((var(--oltra-btn-hit-size) - var(--oltra-btn-condensed-height)) / -2);
 }
 
-/* Over photography: a wash under the button keeps the rim readable on the
-   brightest hero image. Applied by context, so the button markup does not
-   need to know where it sits. */
+/* Over photography: a solid fill of the site background and no shadow, so the
+   rim and label sit on the same ground as everywhere else however bright the
+   photo behind is. It replaced a translucent scrim with a soft halo, which
+   still let the photo show through. Applied by context, so the button markup
+   does not need to know where it sits.
+
+   Not the AI button, which sits inside the destination field rather than on
+   the photo, and not a button inside a popup, which sits on the popup panel. */
 .oltra-over-image .oltra-btn {
-  box-shadow:
-    inset 0 0 0 999px var(--oltra-btn-scrim),
-    0 0 12px 2px var(--oltra-btn-scrim);
+  background: var(--oltra-btn-over-image-bg);
+  box-shadow: none;
 }
 
 .oltra-over-image .oltra-btn--ai,
 .oltra-over-image .oltra-popup-panel .oltra-btn {
-  box-shadow: none;
+  background: transparent;
 }
 
 .oltra-chip {
