@@ -1403,6 +1403,7 @@ const presentResults = tool({
       checkOut?: string;
       adults?: number;
       kids?: number;
+      childrenAges?: number[];
       rooms?: number;
     };
     destination?: {
@@ -1551,6 +1552,11 @@ const presentResults = tool({
           checkOut: { type: "string", description: "yyyy-mm-dd" },
           adults: { type: "number" },
           kids: { type: "number" },
+          childrenAges: {
+            type: "array",
+            items: { type: "number" },
+            description: "Each child's age, the same you searched and checked with.",
+          },
           rooms: { type: "number" },
         },
         additionalProperties: false,
@@ -1559,6 +1565,10 @@ const presentResults = tool({
       // and hand the destination on.
       destination: {
         type: "object",
+        description:
+          "A real city, area, admin region or country that every presented " +
+          "property shares — never a region name such as \"The Alps\" or " +
+          "\"The Caribbean\". Leave it out when the properties span several places.",
         properties: {
           city: { type: "string" },
           area: { type: "string" },

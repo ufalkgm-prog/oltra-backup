@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
-import { flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
+import { restaurantsHref } from "@/lib/ai/handoff";
 import AiConversation from "./AiConversation";
 import styles from "./AiConcierge.module.css";
 
@@ -159,13 +159,14 @@ export default function AiConciergeModal() {
 
     // Specific to the page it was asked from.
     if (pageVertical && covered.length === 1 && covered[0] === pageVertical) {
-      const href =
-        pageVertical === "hotels"
-          ? hotelsHref(query, results)
-          : pageVertical === "flights"
-            ? flightsHref(query, results)
-            : restaurantsHref(query);
-      return { href, label: `See relevant ${VERTICAL_LABEL[pageVertical]}` };
+      /* Hotels and Flights already show the answer behind the panel
+         (AiResultsSync writes it into their URL), so a link to the same page
+         is a way to go where you are standing — the landing page's reason for
+         having none, found 2026-09-14 on a hotels answer asked on Hotels. The
+         Restaurants page keeps its own city list, so its link still leads
+         somewhere new. */
+      if (pageVertical !== "restaurants") return null;
+      return { href: restaurantsHref(query), label: `See relevant ${VERTICAL_LABEL[pageVertical]}` };
     }
 
     if (page === "landing") return null;

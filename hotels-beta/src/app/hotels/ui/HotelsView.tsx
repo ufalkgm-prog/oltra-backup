@@ -868,8 +868,12 @@ export default function HotelsView(props: {
      context, not the transcript, so a streaming reply does not re-render the
      page. */
   const { markClassicSearch } = useAiActions();
-  const { results: aiResults, presentedAt: aiPresentedAt, searchedAt: aiSearchedAt } =
-    useAiSearch();
+  const {
+    ready: aiReady,
+    results: aiResults,
+    presentedAt: aiPresentedAt,
+    searchedAt: aiSearchedAt,
+  } = useAiSearch();
   const aiHotelsPending =
     aiResults.hotelIds.length > 0 && aiResultsAreCurrent(aiResults, aiPresentedAt, aiSearchedAt);
 
@@ -900,6 +904,11 @@ export default function HotelsView(props: {
 
   useEffect(() => {
     if (hasHotelSearchContext(searchParams)) return;
+    // Not before the concierge store has loaded from sessionStorage: until
+    // then an empty store reads as "no answer waiting", and the restore ran on
+    // the first render and landed a previous answer's city as tags (found
+    // 2026-09-14, after the guard below had passed its first test by timing).
+    if (!aiReady) return;
     // A concierge answer is about to be written in by AiResultsSync. Restoring
     // the shared session here would race it and land the answer's city as tags.
     if (aiHotelsPending) return;
@@ -931,7 +940,7 @@ export default function HotelsView(props: {
 
     params.set("search_submitted", "1");
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, router, pathname, aiHotelsPending]);
+  }, [searchParams, router, pathname, aiReady, aiHotelsPending]);
 
   useEffect(() => {
     const hasAnythingToSave =

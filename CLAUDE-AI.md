@@ -61,7 +61,7 @@ One conversation site-wide, in `sessionStorage` under `oltra_ai_concierge_v1`; c
 * **Restaurants is deliberately NOT synced.** It already resolves its city from the shared cross-page session when it arrives without `?city=`, and the store mirrors the destination into exactly that session. Mounting both would give two effects racing to `router.replace` the same param.
 * **Inspire** holds filters in local state and cannot be handed a URL — it sets its own Month and Purpose instead.
 
-`lib/ai/handoff.ts` is the single implementation of every handoff URL, so the modal's link and a frame's button cannot disagree. **The handoff offers one option, chosen by scope**: answer matches the page's subject → "See relevant hotels / flights / restaurants"; wider or about something else → "Go to combined results on main page"; on landing, none — it *is* the combined page. Three links under a conversation is a menu, and the answer has already said what it found.
+`lib/ai/handoff.ts` is the single implementation of every handoff URL, so the modal's link and a frame's button cannot disagree. **The handoff offers one option, chosen by scope**: answer matches the page's subject → "See relevant restaurants" on Restaurants (Hotels and Flights get none, since the answer is already behind the panel there — 2026-09-14); wider or about something else → "Go to combined results on main page"; on landing, none — it *is* the combined page. Three links under a conversation is a menu, and the answer has already said what it found.
 
 ### Inspire mirrors the query, via `searchTags`
 
@@ -607,6 +607,43 @@ fresh `/hotels` and `/` then stayed clear. **Not exercised:** removing the token
 on the landing page itself, and typing a new destination over it. The Flights
 page has no tag box — its fields are airports, which the concierge fills as a
 real route — so it is unchanged.
+
+### Four faults from one family ski question on Hotels (2026-09-14)
+
+"A family ski week in the Alps over Easter with our two kids aged 8 and 11,
+ski-in ski-out, under 1,500 euros a night", asked on the Hotels page.
+
+* **The curated token regressed, by timing.** A bare `/hotels` rewrote itself as
+  `city=Tokyo&state=Caribbean&admin_region=Tokyo Metropolis` before the answer
+  arrived. Two causes. The Hotels session restore ran on the FIRST render, when
+  the concierge store had not yet hydrated from sessionStorage, so the
+  "answer waiting" guard read an empty store and let it through — the earlier
+  verification passed only because hydration happened to win. It now also waits
+  for `ready`. And the store's mirror MERGED each answer's destination into the
+  shared session, and the merge drops empty values, so question one's
+  "Caribbean" area survived under question three's Tokyo city. The mirror now
+  clears the session destination and copies the store's, every presentation.
+* **Children's ages never reached the page.** The concierge searched and priced
+  with ages 8 and 11, but `presentResults.stay` had no field for them, so the
+  page priced "2 children" of no age. `stay.childrenAges` added; readPresentation
+  carries it into the query, and the Hotels URL now reads `kid_age_1=8&kid_age_2=11`.
+* **`destination: {area: "The Alps"}`.** A colloquial region is not a value any
+  hotel row holds, so "See all hotels in The Alps" and the shared session both
+  searched a place that does not exist. **The model kept sending it after the
+  tool description was changed to forbid it** — the display filter is what holds.
+  `macroRegionTerms.ts` (browser-safe names and aliases, split out of the
+  server-only `macroRegions.ts`, which asserts at load that the two agree) lets
+  readPresentation drop such a value.
+* **"See relevant hotels" on the Hotels page** linked to where the visitor
+  already was, the results behind the panel. Hotels and Flights now get no link
+  for an answer about their own vertical — the landing page's rule. Restaurants
+  keeps its link, because that page keeps its own city list.
+
+Verified with a follow-up ("the week after Easter instead?"): the stored stay
+carried `childrenAges: [8, 11]`, the URL gained both ages, the model's
+`area: "The Alps"` left the store's destination empty and the shared session
+with no area, and the panel offered no link. A bare `/hotels` then arrived as
+`?ids=` with the single curated token.
 
 ### Say where each part of an answer is, and hand Flights only the journey (2026-09-14)
 

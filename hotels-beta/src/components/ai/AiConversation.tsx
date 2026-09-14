@@ -12,6 +12,7 @@ import {
   namedHotels,
 } from "@/lib/ai/hotelGateways";
 import { decodeStrayEscapes, stripLeadingName } from "@/lib/ai/rationale";
+import { isMacroRegionTerm } from "@/lib/ai/macroRegionTerms";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
 import { EMPTY_RESULT_SET, type AiQueryState, type AiResultSet } from "@/lib/ai/types";
@@ -60,6 +61,7 @@ type PresentInput = {
     checkOut?: string;
     adults?: number;
     kids?: number;
+    childrenAges?: number[];
     rooms?: number;
   };
   destination?: {
@@ -90,6 +92,12 @@ type Presentation = {
   results: Partial<AiResultSet>;
   query: Partial<AiQueryState>;
 };
+
+/** A destination value, unless it is one of our colloquial regions. */
+function placeOnly(value: string | undefined): string {
+  const trimmed = (value ?? "").trim();
+  return isMacroRegionTerm(trimmed) ? "" : trimmed;
+}
 
 function readLatestPresentation(messages: UIMessage[]): Presentation | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -141,14 +149,32 @@ function readPresentation(message: UIMessage): Presentation | null {
         ...(stay.checkOut ? { to: stay.checkOut } : {}),
         ...(typeof stay.adults === "number" ? { adults: Math.max(1, stay.adults) } : {}),
         ...(typeof stay.kids === "number" ? { kids: Math.max(0, stay.kids) } : {}),
+        /* The ages the concierge priced with. Without them the stay reached the
+           page as "2 children" of no age, so the page priced a different stay
+           from the one the answer checked (found 2026-09-14). */
+        ...(Array.isArray(stay.childrenAges)
+          ? {
+              childrenAges: stay.childrenAges
+                .map((age) => Number(age))
+                .filter((age) => Number.isFinite(age) && age >= 0 && age <= 17)
+                .map((age) => Math.floor(age)),
+            }
+          : {}),
         ...(typeof stay.rooms === "number" ? { bedrooms: Math.max(1, stay.rooms) } : {}),
         ...(dest.city || dest.area || dest.adminRegion || dest.country
           ? {
+              /* A colloquial region is not a place a hotel row holds. The model
+                 sometimes passes one ("area": "The Alps"), and written into a
+                 page URL or the shared session it searched a place that does
+                 not exist — "See all hotels in The Alps" found nothing. Such a
+                 value is dropped; the rest of the destination stands, and an
+                 all-region destination clears the previous one rather than
+                 leaving it in place. */
               destination: {
-                city: dest.city ?? "",
-                area: dest.area ?? "",
-                adminRegion: dest.adminRegion ?? "",
-                country: dest.country ?? "",
+                city: placeOnly(dest.city),
+                area: placeOnly(dest.area),
+                adminRegion: placeOnly(dest.adminRegion),
+                country: placeOnly(dest.country),
               },
             }
           : {}),

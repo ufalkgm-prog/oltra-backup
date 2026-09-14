@@ -1,4 +1,5 @@
 import "server-only";
+import { MACRO_REGION_TERMS, normaliseRegionTerm as normalise } from "./macroRegionTerms";
 
 /* Geography a traveller uses that the database does not store.
  *
@@ -250,18 +251,18 @@ export const MACRO_REGIONS: MacroRegion[] = [
  * the difference between the model using this and the model guessing (§50). */
 export const MACRO_REGION_NAMES = MACRO_REGIONS.map((r) => r.name);
 
-/** Accent- and case-blind, and tolerant of a leading "the". Directus values
- * keep their accents (Graubünden, Côte d'Azur); what a visitor types often
- * does not. */
-function normalise(term: string): string {
-  return term
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^the /, "");
+/* The browser recognises these names from macroRegionTerms.ts, which cannot
+ * import this server-only module. Fail loudly at load if a region is added,
+ * renamed or given a new alias here without the same change there. */
+{
+  const key = (name: string, aliases: string[]) => [name, ...aliases].join("|");
+  const shared = new Set(MACRO_REGION_TERMS.map((t) => key(t.name, t.aliases)));
+  const drift = MACRO_REGIONS.filter((r) => !shared.has(key(r.name, r.aliases)));
+  if (drift.length || shared.size !== MACRO_REGIONS.length) {
+    throw new Error(
+      `macroRegionTerms.ts is out of step with macroRegions.ts: ${drift.map((r) => r.name).join(", ") || "count differs"}`
+    );
+  }
 }
 
 const BY_TERM = new Map<string, MacroRegion>();

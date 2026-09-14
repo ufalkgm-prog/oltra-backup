@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import type { UIMessage } from "ai";
-import { mergeHotelFlightSearch } from "@/lib/searchSession";
+import { clearHotelFlightDestination, mergeHotelFlightSearch } from "@/lib/searchSession";
 import {
   EMPTY_QUERY_STATE,
   EMPTY_RESULT_SET,
@@ -259,6 +259,14 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     mirrorPending.current = false;
 
     const { destination, from, to, adults, kids, bedrooms, origin } = state.query;
+    /* The answer's destination REPLACES the session's, it is not merged into
+       it. The merge drops empty values, so an answer naming only a city left
+       the previous answer's area in place: after a Caribbean answer and then a
+       Tokyo one, the session read city Tokyo with area Caribbean, and the
+       Hotels page restored exactly that as tags. Cleared on every presentation:
+       the store's own destination already carries forward whatever an answer
+       did not change, so the session simply copies it. */
+    clearHotelFlightDestination();
     mergeHotelFlightSearch({
       city: destination.city,
       state: destination.area,
