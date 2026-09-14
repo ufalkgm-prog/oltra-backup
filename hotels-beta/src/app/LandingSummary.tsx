@@ -481,12 +481,12 @@ export default function LandingSummary({
   return (
     <div className={styles.summaryGrid}>
       {showHotels ? (
-        <div className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}>
+        <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}>
           <div className={styles.summaryHeaderRow}>
             <div className="oltra-label">{hotelHeaderLabel || "Hotels"}</div>
             <Link
               href={hotelsHref}
-              className={`oltra-button-primary ${styles.summaryTopButton}`}
+              className="oltra-btn"
               prefetch={false}
             >
               Go to hotels
@@ -508,6 +508,12 @@ export default function LandingSummary({
                 if (kids > 0) hotelParams.set("kids", String(kids));
                 hotelParams.set("submitted", "1");
                 const hotelHref = `/hotels?${hotelParams.toString()}`;
+                const bookingHref = bookingHrefFor(h, {
+                  from: fromDate,
+                  to: toDate,
+                  adults,
+                  kids,
+                });
                 return (
                 <HotelSmallCard
                   key={String(h.id)}
@@ -518,12 +524,7 @@ export default function LandingSummary({
                       ? availabilityById[String(h.id)] ?? { status: "loading" }
                       : { status: "idle" }
                   }
-                  bookingHref={bookingHrefFor(h, {
-                    from: fromDate,
-                    to: toDate,
-                    adults,
-                    kids,
-                  })}
+                  bookingHref={bookingHref}
                   renderSaveControl={() => (
                     <SaveToTripControl
                       onSave={(tripId) => handleSaveHotel(tripId, h)}
@@ -531,8 +532,11 @@ export default function LandingSummary({
                       label="SAVE"
                       compact
                       align="right"
-                      /* --xs matches the BOOK button rendered inside the card. */
-                      className="oltra-button-secondary oltra-button--xs w-full"
+                      /* Condensed, matching the button the card renders above
+                         it; stacked with it only when there is one. */
+                      className={`oltra-btn oltra-btn--condensed oltra-btn--block${
+                        bookingHref ? " oltra-btn--stack-bottom" : ""
+                      }`}
                     />
                   )}
                 />
@@ -544,12 +548,12 @@ export default function LandingSummary({
       ) : null}
 
       {showFlights ? (
-        <div className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}>
+        <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}>
           <div className={styles.summaryHeaderRow}>
             <div className="oltra-label">Flights</div>
             <Link
               href={flightsHref}
-              className={`oltra-button-primary ${styles.summaryTopButton}`}
+              className="oltra-btn"
               prefetch={false}
             >
               Go to flights

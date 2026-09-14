@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -47,7 +47,19 @@ export default function LoginView() {
     return () => data.subscription.unsubscribe();
   }, [supabase]);
 
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+
   const loginEnabled = isValidEmail(email) && password.length > 0;
+  // LOG IN stays clickable while incomplete (passive, not disabled): the reason
+  // shows on hover, and a click moves focus to the first field still missing.
+  const loginBlockedReason = loginEnabled
+    ? undefined
+    : !email && !password
+      ? "Enter your email and password"
+      : !isValidEmail(email)
+        ? "Enter a valid email"
+        : "Enter your password";
 
   function goTo(v: View) {
     setError("");
@@ -59,7 +71,10 @@ export default function LoginView() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (!loginEnabled) return;
+    if (!loginEnabled) {
+      (isValidEmail(email) ? passwordRef : emailRef).current?.focus();
+      return;
+    }
     setLoading(true);
     setError("");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -179,10 +194,17 @@ export default function LoginView() {
           {view === "login" ? (
             <>
               <div className="oltra-label members-login-panel__title">MEMBERS LOGIN</div>
-              <form onSubmit={handleLogin} className="members-form-stack members-login-panel__form">
+              {/* noValidate: the browser's own type="email" bubble would
+                  pre-empt the passive LOG IN and its focus move. */}
+              <form
+                onSubmit={handleLogin}
+                className="members-form-stack members-login-panel__form"
+                noValidate
+              >
                 <div className="members-form-field">
                   <label className="oltra-label">E-MAIL</label>
                   <input
+                    ref={emailRef}
                     className="oltra-input"
                     type="email"
                     value={email}
@@ -194,6 +216,7 @@ export default function LoginView() {
                 <div className="members-form-field">
                   <label className="oltra-label">PASSWORD</label>
                   <input
+                    ref={passwordRef}
                     className="oltra-input"
                     type="password"
                     value={password}
@@ -207,15 +230,17 @@ export default function LoginView() {
                 <div className="members-login-panel__top-actions">
                   <button
                     type="submit"
-                    className={`${loginEnabled ? "oltra-button-primary" : "oltra-button-secondary members-login-panel__inactive"} members-action-button members-login-panel__login`}
-                    disabled={loading || !loginEnabled}
+                    className="oltra-btn"
+                    aria-disabled={!loginEnabled}
+                    data-reason={loginBlockedReason}
+                    disabled={loading}
                   >
                     LOG IN
                   </button>
 
                   <button
                     type="button"
-                    className="oltra-button-primary members-action-button members-login-panel__create"
+                    className="oltra-btn members-login-panel__create"
                     onClick={() => goTo("signup")}
                     disabled={loading}
                   >
@@ -226,7 +251,7 @@ export default function LoginView() {
                 <div className="members-login-panel__oauth">
                   <button
                     type="button"
-                    className="oltra-button-primary members-action-button"
+                    className="oltra-btn oltra-btn--block"
                     onClick={handleOAuth}
                     disabled={loading}
                   >
@@ -291,7 +316,7 @@ export default function LoginView() {
                 <div className="members-login-panel__top-actions">
                   <button
                     type="submit"
-                    className="oltra-button-primary members-action-button"
+                    className="oltra-btn oltra-btn--block"
                     disabled={loading}
                   >
                     {loading ? "Creating…" : "CREATE ACCOUNT"}
@@ -299,7 +324,7 @@ export default function LoginView() {
 
                   <button
                     type="button"
-                    className="oltra-button-secondary members-action-button"
+                    className="oltra-btn oltra-btn--block"
                     onClick={() => goTo("login")}
                     disabled={loading}
                   >
@@ -340,7 +365,7 @@ export default function LoginView() {
                 <div className="members-login-panel__top-actions">
                   <button
                     type="submit"
-                    className="oltra-button-primary members-action-button"
+                    className="oltra-btn oltra-btn--block"
                     disabled={loading}
                   >
                     {loading ? "Saving…" : "SAVE PASSWORD"}
@@ -369,7 +394,7 @@ export default function LoginView() {
                 <div className="members-login-panel__top-actions">
                   <button
                     type="submit"
-                    className="oltra-button-primary members-action-button"
+                    className="oltra-btn oltra-btn--block"
                     disabled={loading}
                   >
                     {loading ? "Sending…" : "SEND RESET LINK"}
@@ -377,7 +402,7 @@ export default function LoginView() {
 
                   <button
                     type="button"
-                    className="oltra-button-secondary members-action-button"
+                    className="oltra-btn oltra-btn--block"
                     onClick={() => goTo("login")}
                     disabled={loading}
                   >

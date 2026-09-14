@@ -39,7 +39,7 @@ type Props = {
   /** Open the panel upward - for controls near the bottom of a scroll pane. */
   dropUp?: boolean;
   disabled?: boolean;
-  /** Confirm the save on the trigger itself ("Saved", italic, for a few
+  /** Confirm the save on the trigger itself ("SAVED", for a few
    * seconds) instead of printing a line of text under it. For surfaces where a
    * text confirmation would reflow the layout - the flights price cards sit in
    * a fixed-height grid. Errors still print, since they need to be read. */
@@ -249,8 +249,8 @@ export default function SaveToTripControl({
                 />
 
                 {/* Deliberately not `disabled`: a disabled button fires no
-                    click, so it can never say why. Reads as inactive, and
-                    explains itself when pressed. */}
+                    click, so it can never say why. Reads as passive, shows the
+                    reason on hover, and explains itself when pressed. */}
                 <button
                   type="button"
                   onClick={() => {
@@ -262,10 +262,8 @@ export default function SaveToTripControl({
                   }}
                   disabled={busy}
                   aria-disabled={Boolean(createBlockedReason)}
-                  className={`oltra-dropdown-item${
-                    createBlockedReason ? " oltra-dropdown-item--inactive" : ""
-                  }`}
-                  title={createBlockedReason ?? undefined}
+                  data-reason={createBlockedReason ?? undefined}
+                  className="oltra-btn oltra-btn--condensed oltra-btn--block"
                 >
                   {busy ? "Saving..." : "Create new trip"}
                 </button>
@@ -290,9 +288,8 @@ export default function SaveToTripControl({
         }}
         disabled={disabled || busy}
         className={className}
-        style={justSaved ? { fontStyle: "italic" } : undefined}
       >
-        {justSaved ? "Saved" : busy ? "SAVING..." : label}
+        {justSaved ? "SAVED" : busy ? "SAVING..." : label}
       </button>
 
       {error || (message && !confirmInTrigger) ? (

@@ -79,6 +79,81 @@
   --oltra-button-inactive-border: #6c8c6a;
   --oltra-button-inactive-text: #f5f2ec;
 
+  /* THE BUTTON STANDARD (2026-09-14) — five variants, nothing else. Every
+     action on the site is .oltra-btn plus at most one variant and one format
+     modifier (classes further down). Transparent, 2px rim, pill radius, no
+     fill/shadow/gradient. Decided against /theme-test and a decision sheet;
+     the reasoning for each value is in design-system.md §35A.
+
+     Steps: hover = rim +8% HSL lightness, pressed = rim −4% and label dimmed.
+     Pressed is the smaller step because darkening is what pushes a rim
+     under 3:1. Contrast vs base #2C3634 / panel #374240. */
+  --oltra-btn-rim-width: 2px;
+  --oltra-btn-label: #f5f2ec;
+  --oltra-btn-label-press: #eae4d8;
+
+  /* Primary: 4.76 / 3.98 */
+  --oltra-btn-primary-rim: #8aa884;
+  --oltra-btn-primary-rim-hover: #a1b99c;
+  --oltra-btn-primary-rim-press: #7fa078;
+
+  /* Destructive: 4.19 / 3.50. The specified #C0756A was 2.97:1 on panel,
+     where confirmations live; its pressed step lands back on it. */
+  --oltra-btn-destructive-rim: #c98479;
+  --oltra-btn-destructive-rim-hover: #d59f96;
+  --oltra-btn-destructive-rim-press: #c3776a;
+
+  /* Passive (entries incomplete, or nothing to do): 2.47 / 2.07, label
+     3.37 / 2.82. Deliberately below 3:1 — an inactive control — but lifted
+     from the field border (#3E4947, 1.12 on panel) so it stays visible. No
+     hover or pressed state. */
+  --oltra-btn-passive-rim: #67716e;
+  --oltra-btn-passive-label: #7e8783;
+
+  /* Neutral: an ACTIVE grey, for actions that leave OLTRA without booking
+     here (a hotel we cannot sell: "Check availability on website"). Rim
+     4.81 / 4.02, muted label 7.97 / 6.66. Sits apart from passive by rim
+     brightness and by having hover/pressed states. */
+  --oltra-btn-neutral-rim: #9aa39e;
+  --oltra-btn-neutral-rim-hover: #afb6b3;
+  --oltra-btn-neutral-rim-press: #8f9994;
+  --oltra-btn-neutral-label: #cbd0cb;
+
+  /* AI — the one declared exception: label matches rim, bold italic, and the
+     only italic anywhere in the interface. 6.58 / 5.50 as text. */
+  --oltra-btn-ai: #a8c4a2;
+  --oltra-btn-ai-hover: #bfd4bb;
+  --oltra-btn-ai-press: #9cbc96;
+
+  /* Focus: a ring outside the rim, never a rim colour change. 11.16 / 9.32. */
+  --oltra-btn-focus-ring: #f5f2ec;
+
+  /* Behind a button that can sit over photography (the landing glass panels,
+     the map). Not a fill of the button's own — a wash under it that keeps
+     the rim above 3:1 on the brightest hero photo. */
+  --oltra-btn-scrim: rgba(20, 26, 25, 0.5);
+
+  /* Formats. Full: 8/20 + 13px on a 14px line = 34px, the control height, so
+     a Full button lines up with the fields beside it. Condensed: carried over
+     unchanged from the old .oltra-button--xs (22px, 0 6px, 0.58rem, 0.14em),
+     the size the landing/concierge Save and Book already shared. */
+  --oltra-btn-full-padding-y: 8px;
+  --oltra-btn-full-padding-x: 20px;
+  --oltra-btn-full-font-size: 13px;
+  --oltra-btn-full-line-height: 14px;
+  --oltra-btn-full-tracking: 0.16em;
+  --oltra-btn-condensed-height: 22px;
+  --oltra-btn-condensed-padding-x: 6px;
+  --oltra-btn-condensed-font-size: 0.58rem;
+  --oltra-btn-condensed-tracking: 0.14em;
+  --oltra-btn-ai-font-size: 12px;
+  --oltra-btn-ai-padding-y: 4px;
+  --oltra-btn-ai-padding-x: 12px;
+
+  /* Touch target, reached with a pseudo-element past the rim rather than
+     with padding, so the buttons stay visually trim. */
+  --oltra-btn-hit-size: 44px;
+
   /* Decorative edges and lifts — added 2026-08-16, finishing the token
      migration §35 started (it covered text only; borders and backgrounds were
      still ~130 hardcoded rgba(255,255,255,a) literals across 12 files, the
@@ -726,71 +801,278 @@ button.oltra-select {
   color: rgba(250, 252, 255, 0.98);
 }
 
-/* Buttons */
-.oltra-button,
-.oltra-button-primary,
-.oltra-button-secondary,
 .oltra-chip {
   font: inherit;
   cursor: pointer;
 }
 
-.oltra-button,
-.oltra-button-secondary,
-.oltra-button-primary {
+/* ==========================================================================
+   THE BUTTON STANDARD (2026-09-14)
+
+   Every action is `.oltra-btn`, which is Primary + Full by default:
+
+     variant   .oltra-btn--destructive | --neutral | --ai
+     format    .oltra-btn--condensed  (inside a card or list row)
+     passive   aria-disabled="true"   (plus data-reason="Add dates to continue")
+
+   Passive is an ATTRIBUTE, not a class, on purpose: a Primary/Passive button
+   is one element whose state flips, and aria-disabled (unlike `disabled`)
+   still takes a click, so the page can move focus to the missing field. The
+   reason shows as a popup on hover. A real `disabled` is left for busy
+   states ("Saving…") and keeps the variant's look.
+
+   Layout helpers: .oltra-btn--block (full width), .oltra-btn-pair (a Yes/No
+   pair, always equal width), .oltra-btn--stack-top/-bottom (two stacked card
+   buttons whose hit areas split the gap), .oltra-over-image (a surface
+   over photography — adds the scrim).
+
+   Sizing lives in these classes, not in utilities: this file is unlayered,
+   so it beats any Tailwind utility on the same property (§45).
+   ========================================================================== */
+
+.oltra-btn {
+  --btn-rim: var(--oltra-btn-primary-rim);
+  --btn-rim-hover: var(--oltra-btn-primary-rim-hover);
+  --btn-rim-press: var(--oltra-btn-primary-rim-press);
+  --btn-label: var(--oltra-btn-label);
+  --btn-label-press: var(--oltra-btn-label-press);
+
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--oltra-button-height);
-  height: var(--oltra-button-height);
-  padding: 0 18px;
-  border-radius: var(--oltra-radius-md);
-  font-size: 0.76rem;
+  gap: 8px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--oltra-btn-full-padding-y) var(--oltra-btn-full-padding-x);
+  border: var(--oltra-btn-rim-width) solid var(--btn-rim);
+  border-radius: var(--oltra-radius-pill);
+  background: transparent;
+  box-shadow: none;
+  color: var(--btn-label);
+  font-family: var(--oltra-font-sans);
+  font-size: var(--oltra-btn-full-font-size);
+  font-style: normal;
   font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.16em;
+  line-height: var(--oltra-btn-full-line-height);
+  letter-spacing: var(--oltra-btn-full-tracking);
   text-transform: uppercase;
   text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    opacity 160ms ease;
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
-.oltra-button,
-.oltra-button-secondary {
-  border: 1px solid var(--oltra-button-inactive-border);
-  background: var(--oltra-button-inactive-bg);
-  color: var(--oltra-button-inactive-text);
+/* Hit area: centred on the button, never smaller than 44x44. */
+.oltra-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: var(--oltra-btn-hit-size);
+  min-height: var(--oltra-btn-hit-size);
+  transform: translate(-50%, -50%);
 }
 
-.oltra-button-primary,
-.oltra-button--active {
-  border: 1px solid transparent;
-  background: var(--oltra-button-active-bg);
-  color: var(--oltra-button-active-text);
-}
-
-.oltra-button:hover,
-.oltra-button-primary:hover,
-.oltra-button-secondary:hover {
+.oltra-btn:hover {
+  border-color: var(--btn-rim-hover);
+  color: var(--btn-label);
   text-decoration: none;
-  opacity: 0.95;
 }
 
-/* Compact action button for dense cards (landing hotel cards: Book + Save).
-   Written as a compound selector so it beats the single-class button rules
-   above regardless of where it sits in the cascade - the two buttons it has to
-   keep matched are rendered by different components. */
-.oltra-button.oltra-button--xs,
-.oltra-button-primary.oltra-button--xs,
-.oltra-button-secondary.oltra-button--xs {
-  height: 22px;
-  min-height: 22px;
-  padding: 0 6px;
-  font-size: 0.58rem;
-  letter-spacing: 0.14em;
+.oltra-btn:active {
+  border-color: var(--btn-rim-press);
+  color: var(--btn-label-press);
+}
+
+.oltra-btn:focus {
+  outline: none;
+}
+
+.oltra-btn:focus-visible {
+  outline: 2px solid var(--oltra-btn-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Busy ("Saving…") — keeps its variant, just stops reacting. */
+.oltra-btn:disabled {
+  cursor: default;
+  border-color: var(--btn-rim);
+  color: var(--btn-label);
+}
+
+.oltra-btn--block {
+  width: 100%;
+}
+
+/* ---- variants ---- */
+
+.oltra-btn--destructive {
+  --btn-rim: var(--oltra-btn-destructive-rim);
+  --btn-rim-hover: var(--oltra-btn-destructive-rim-hover);
+  --btn-rim-press: var(--oltra-btn-destructive-rim-press);
+}
+
+.oltra-btn--neutral {
+  --btn-rim: var(--oltra-btn-neutral-rim);
+  --btn-rim-hover: var(--oltra-btn-neutral-rim-hover);
+  --btn-rim-press: var(--oltra-btn-neutral-rim-press);
+  --btn-label: var(--oltra-btn-neutral-label);
+  --btn-label-press: var(--oltra-btn-neutral-label);
+}
+
+/* The label matches the rim and moves with it. */
+.oltra-btn--ai {
+  --btn-rim: var(--oltra-btn-ai);
+  --btn-rim-hover: var(--oltra-btn-ai-hover);
+  --btn-rim-press: var(--oltra-btn-ai-press);
+  --btn-label: var(--oltra-btn-ai);
+  --btn-label-press: var(--oltra-btn-ai-press);
+
+  padding: var(--oltra-btn-ai-padding-y) var(--oltra-btn-ai-padding-x);
+  font-size: var(--oltra-btn-ai-font-size);
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.oltra-btn--ai:hover {
+  color: var(--btn-rim-hover);
+}
+
+.oltra-btn--ai:active {
+  color: var(--btn-label-press);
+}
+
+/* ---- passive ---- */
+
+.oltra-btn[aria-disabled="true"],
+.oltra-btn[aria-disabled="true"]:hover,
+.oltra-btn[aria-disabled="true"]:active {
+  border-color: var(--oltra-btn-passive-rim);
+  color: var(--oltra-btn-passive-label);
+  cursor: default;
+}
+
+/* The reason, as a popup on hover. Uses ::before because ::after is the hit
+   area. Anchored to the button's right edge and above it, so it stays inside
+   a right-aligned action column. */
+.oltra-btn[aria-disabled="true"][data-reason]::before {
+  content: attr(data-reason);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 30;
+  width: max-content;
+  max-width: 260px;
+  padding: 7px 10px;
+  border: var(--oltra-dropdown-border);
+  border-radius: var(--oltra-radius-md);
+  background: var(--oltra-field-bg-solid);
+  box-shadow: var(--oltra-dropdown-shadow);
+  color: var(--oltra-text-primary);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 120ms ease,
+    visibility 120ms ease;
+}
+
+.oltra-btn[aria-disabled="true"][data-reason]:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ---- formats ---- */
+
+.oltra-btn--condensed {
+  height: var(--oltra-btn-condensed-height);
+  min-height: var(--oltra-btn-condensed-height);
+  padding: 0 var(--oltra-btn-condensed-padding-x);
+  font-size: var(--oltra-btn-condensed-font-size);
+  line-height: 1;
+  letter-spacing: var(--oltra-btn-condensed-tracking);
+}
+
+/* Neutral carries its caveat INSIDE the button ("Check availability on
+   website"), so it wraps rather than truncating, in sentence case with light
+   tracking - uppercase at 0.14em cannot fit "AVAILABILITY" in a 74px card
+   column. */
+.oltra-btn--neutral.oltra-btn--condensed {
+  height: auto;
+  padding-block: 4px;
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: normal;
+  text-align: center;
+}
+
+/* ---- layout helpers ---- */
+
+/* Yes / No, Cancel / Proceed: always the same width, whatever the labels. */
+.oltra-btn-pair {
+  display: inline-grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 10px;
+}
+
+.oltra-btn-pair > .oltra-btn {
+  width: 100%;
+}
+
+/* Two stacked card buttons: each hit area reaches outward but only to the
+   middle of the gap between them, so no tap lands on the wrong one. Set the
+   gap on the container as --oltra-btn-stack-gap (default 6px). */
+.oltra-btn--stack-top::after,
+.oltra-btn--stack-bottom::after {
+  top: auto;
+  bottom: auto;
+  height: auto;
+  min-height: 0;
+  transform: translateX(-50%);
+}
+
+.oltra-btn--stack-top::after {
+  top: calc((var(--oltra-btn-hit-size) - var(--oltra-btn-condensed-height)) / -2);
+  bottom: calc(var(--oltra-btn-stack-gap, 6px) / -2);
+}
+
+.oltra-btn--stack-bottom::after {
+  top: calc(var(--oltra-btn-stack-gap, 6px) / -2);
+  bottom: calc((var(--oltra-btn-hit-size) - var(--oltra-btn-condensed-height)) / -2);
+}
+
+/* Over photography: a wash under the button keeps the rim readable on the
+   brightest hero image. Applied by context, so the button markup does not
+   need to know where it sits. */
+.oltra-over-image .oltra-btn {
+  box-shadow:
+    inset 0 0 0 999px var(--oltra-btn-scrim),
+    0 0 12px 2px var(--oltra-btn-scrim);
+}
+
+.oltra-over-image .oltra-btn--ai,
+.oltra-over-image .oltra-popup-panel .oltra-btn {
+  box-shadow: none;
 }
 
 .oltra-chip {
@@ -1257,14 +1539,6 @@ details > summary::-webkit-details-marker {
   gap: 0;
 }
 
-.members-login-panel .members-login-panel__actions {
-  margin-top: 14px;
-}
-
-.members-login-panel .members-login-panel__social {
-  margin-top: 10px;
-}
-
 .members-login-panel {
   padding: 20px 24px;
 }
@@ -1284,21 +1558,6 @@ details > summary::-webkit-details-marker {
 .members-login-panel .members-form-field .oltra-label {
   display: block;
   margin-bottom: 6px;
-}
-
-.members-login-panel__submit {
-  margin-top: 14px;
-}
-
-.members-login-panel__submit-button,
-.members-login-panel__create {
-  width: 100%;
-}
-
-.members-login-panel__oauth {
-  display: flex;
-  gap: 12px;
-  margin-top: 10px;
 }
 
 .members-login-panel__oauth {
@@ -1329,28 +1588,15 @@ details > summary::-webkit-details-marker {
   color: var(--oltra-text-primary);
 }
 
-.members-login-panel .members-action-button {
-  width: 100%;
-}
-
 .members-login-panel__top-actions {
   display: flex;
   gap: 12px;
   margin-top: 14px;
 }
 
-.members-login-panel__login {
-  flex: 0 0 140px; /* smaller fixed width */
-}
-
 .members-login-panel__create {
   flex: 1 1 auto;
   white-space: nowrap;
-}
-
-.members-login-panel__inactive {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .members-login-panel__hint {
@@ -1382,12 +1628,6 @@ details > summary::-webkit-details-marker {
   .members-login-panel__forgot {
     align-self: flex-start;
   }
-}
-
-.oltra-button-muted {
-  border: 1px solid var(--oltra-border-soft);
-  background: rgba(28, 38, 48, 0.5);
-  color: var(--oltra-text-primary);
 }
 
 .hotel-marker {
@@ -1444,42 +1684,6 @@ details > summary::-webkit-details-marker {
   margin-top: 8px;
   font-size: 0.78rem;
   line-height: 1.4;
-  color: var(--oltra-text-secondary);
-}
-
-.oltra-button-function {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--oltra-button-height);
-  height: var(--oltra-button-height);
-  padding: 0 18px;
-  border-radius: var(--oltra-radius-md);
-  border: 1px solid var(--oltra-border-soft);
-  background: rgba(220, 232, 240, 0.16);
-  color: var(--oltra-text-primary);
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    opacity 160ms ease;
-}
-
-.oltra-button-function:hover {
-  background: rgba(220, 232, 240, 0.22);
-  border-color: var(--oltra-border-medium);
-  color: var(--oltra-text-primary);
-  text-decoration: none;
-}
-
-.oltra-button-secondary {
   color: var(--oltra-text-secondary);
 }
 
@@ -1653,38 +1857,6 @@ details > summary::-webkit-details-marker {
   font-size: 0.78rem;
   line-height: 1.4;
   color: var(--oltra-text-secondary);
-}
-
-.oltra-button-map-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--oltra-button-height);
-  height: var(--oltra-button-height);
-  padding: 0 18px;
-  border-radius: var(--oltra-radius-md);
-  border: 1px solid var(--oltra-border-medium);
-  background: rgba(34, 40, 46, 0.82);
-  color: var(--oltra-text-primary);
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    opacity 160ms ease;
-}
-
-.oltra-button-map-toggle:hover {
-  background: rgba(40, 46, 52, 0.9);
-  border-color: var(--oltra-border-strong);
-  color: var(--oltra-text-primary);
-  text-decoration: none;
 }
 
 .oltra-map-canvas {

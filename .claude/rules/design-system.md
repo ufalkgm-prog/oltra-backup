@@ -30,7 +30,7 @@ Supersedes §34's shipped text colours. A fully prescriptive spec from Ulrik, sh
 
 **Badges/chips** are recessed like fields, with their own `--oltra-badge-text` token (aliases muted) so badge colour can't drift from body text by accident.
 
-**Buttons** keep the sage family, recomputed: active `--oltra-button-active-bg: #7ba079` with **dark** text `#232c2a`; inactive transparent fill, `--oltra-button-inactive-border: #6c8c6a`, primary text. **Gold buttons were never shipped and are not pending** — §34 flagged that as an open decision; §35 settled it as recomputed sage.
+**Buttons** — superseded by §35A. The sage fill `#7ba079` survives only as `--oltra-button-active-bg` / `--oltra-favorite-mark` for non-button uses (the date-range fill, the favourite mark). **Gold buttons were never shipped and are not pending.**
 
 **Error**: `--oltra-error-text: #ff8a71`. **Type size**: metadata/secondary raised from 11px to 12px wherever it appears.
 
@@ -53,5 +53,41 @@ Changing what a token *resolves to* does nothing for components holding literal 
 * **The Info pill** (`.infoButton`: `background:#fff; color:#111`) — a deliberately inverted control, not a theme colour.
 * **`@media print` `#000`/`#fff`** in `members.css` — paper is white.
 * **`/editor/*` and `TopNav.tsx`** — an internal tool that doesn't follow the design system, and dead code (`TopNav` is never imported anywhere).
+
+---
+
+## 35A. THE BUTTON STANDARD (2026-09-14)
+
+Supersedes every earlier button instruction, including §35's filled sage. Specified by Ulrik, audited on `/theme-test` (the full inventory is `src/app/theme-test/buttonInventory.ts`), and every open point settled on a decision sheet before anything shipped. **The template is one block in `oltra-theme.css`** — tokens `--oltra-btn-*`, classes `.oltra-btn*` — and every page draws from it. Never restyle a button locally: no fill, shadow, radius, height, padding, font-size or italic utility on a `.oltra-btn`.
+
+**Construction**: transparent, 2px rim, 999px pill, uppercase with tracking. Pills are for actions only; fields, cards, panels, dropdowns and badges keep the crisp radius scale.
+
+| Variant | Class | Rim | Label | When |
+|---|---|---|---|---|
+| Primary | `.oltra-btn` | `#8AA884` | `#F5F2EC` | every action, including secondary ones (Cancel, No, Exit, Log out, Close) |
+| Destructive | `--destructive` | **`#C98479`** | `#F5F2EC` | delete, remove, terminate, Clear |
+| Passive | `aria-disabled="true"` + `data-reason` | **`#67716E`** | `#7E8783` | entries incomplete, or nothing to do |
+| Neutral | `--neutral` | `#9AA39E` | `#CBD0CB` | active grey: leaving OLTRA for a hotel we cannot sell ("Check availability on website"), caveat inside the button |
+| AI | `--ai` | `#A8C4A2` | = rim, bold italic | the AI mode entry point only |
+
+**Formats**: Full 8/20 + 13px on a 14px line (= 34px, the control height) for page, modal, form and search actions. Condensed (`--condensed`) for anything inside a card or list row: **22px, 0 6px, 0.58rem, 0.14em** — the old `.oltra-button--xs`, which the landing/concierge Book and Save already shared; the /flights price-card pair (24px, and not matching each other) was brought onto it. No fixed widths on buttons; `--block` fills a column.
+
+**States**: hover rim +8% lightness; pressed rim −4% and label `#EAE4D8`; focus a 2px `#F5F2EC` ring offset 2px (never a rim change); passive has neither. Pressed is the smaller step because darkening is what fails 3:1.
+
+### The values that moved from the spec, and why
+
+* **Destructive `#C0756A` → `#C98479`.** The specified value was 2.97:1 on the panel, which is where confirmations live. The new one is 3.50:1, and its pressed step lands back on `#C0756A`.
+* **Passive rim `#3E4947` → `#67716E`, same 2px as the others.** The field border was 1.12:1 on the panel and read as a thinner line than the active rims. It is still deliberately under 3:1 (2.07 panel) — WCAG 1.4.11 exempts inactive controls — but visible.
+* `#A8C4A2` passes as text (5.50:1 on panel, 4.98 pressed), so the AI label needed no brighter value.
+
+### Behaviour that is part of the standard
+
+* **Passive is an attribute, not a class.** `aria-disabled` still takes a click, so a form can move focus to the first missing field; `data-reason` renders as a hover popup (`::before` — `::after` is the 44px hit area). A real `disabled` is only for busy states and keeps the variant's look. "Nothing to do" states (already checked, no changes, a cap, logged out) are passive with a reason and no focus move.
+* **Hit areas** reach 44px via `::after`, never padding. Two stacked card buttons use `--stack-top` / `--stack-bottom`, which split the gap between them instead of overlapping.
+* **Yes/No pairs are always the same width** — `.oltra-btn-pair`.
+* **Over photography** a surface carries `.oltra-over-image`, which puts `--oltra-btn-scrim` under its buttons. On the brightest hero photo the bare sage rim fell to about 1.5:1 through the 72% landing glass.
+* **No clickable italic anywhere except the AI button** — italic now means AI. The italic delete links became Destructive pills, and the /flights "info" pill stayed inverted but upright.
+* **Controls are not actions** and keep their shapes: tabs, steppers, carousel arrows, close icons, calendar cells, nav links, selectable rows, disclosures, text links in prose. The destination-field chip keeps its pill as a declared exception.
+* The Hotels search button says **SEARCH**; what's missing is the popup, not the label.
 
 ---

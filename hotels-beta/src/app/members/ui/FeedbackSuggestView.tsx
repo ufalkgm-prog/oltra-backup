@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
 
 const TOPIC_OPTIONS = [
@@ -9,15 +9,36 @@ const TOPIC_OPTIONS = [
   { value: "general", label: "General suggestions/comments" },
 ];
 
+const MIN_MESSAGE_LENGTH = 20;
+
 export default function FeedbackSuggestView() {
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const topicFieldRef = useRef<HTMLDivElement | null>(null);
+  const messageRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // The first thing still missing, which is what Send's hover reason names and
+  // where a click on the passive Send moves focus.
+  const missing = !topic
+    ? "topic"
+    : message.trim().length < MIN_MESSAGE_LENGTH
+      ? "message"
+      : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (missing === "topic") {
+      topicFieldRef.current?.querySelector("button")?.focus();
+      return;
+    }
+    if (missing === "message") {
+      messageRef.current?.focus();
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -43,8 +64,13 @@ export default function FeedbackSuggestView() {
 
   return (
     <section className="oltra-glass members-section">
-      <form className="members-form-stack" onSubmit={handleSubmit}>
-        <div className="members-form-field members-form-field--quarter">
+      {/* noValidate: the browser's own "fill out this field" bubble would jump
+          ahead of the passive Send and focus the wrong field. */}
+      <form className="members-form-stack" onSubmit={handleSubmit} noValidate>
+        <div
+          ref={topicFieldRef}
+          className="members-form-field members-form-field--quarter"
+        >
           <label className="oltra-label">TOPIC</label>
           <OltraSelect
             name="feedbackTopic"
@@ -59,6 +85,7 @@ export default function FeedbackSuggestView() {
         <div className="members-form-field">
           <label className="oltra-label">MESSAGE</label>
           <textarea
+            ref={messageRef}
             className="oltra-textarea members-textarea"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -72,18 +99,21 @@ export default function FeedbackSuggestView() {
         ) : null}
 
         <div className="members-form-actions">
-          {(() => {
-            const canSend = !isSubmitting && !!topic && message.trim().length >= 20;
-            return (
-              <button
-                type="submit"
-                className={`${canSend ? "oltra-button-primary" : "oltra-button-secondary"} members-action-button`}
-                disabled={!canSend}
-              >
-                {isSubmitting ? "Sending..." : "Send"}
-              </button>
-            );
-          })()}
+          <button
+            type="submit"
+            className="oltra-btn"
+            aria-disabled={Boolean(missing)}
+            data-reason={
+              missing === "topic"
+                ? "Choose a topic to continue"
+                : missing === "message"
+                  ? `Write at least ${MIN_MESSAGE_LENGTH} characters to continue`
+                  : undefined
+            }
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Sending..." : "Send"}
+          </button>
         </div>
       </form>
     </section>

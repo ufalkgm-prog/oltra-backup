@@ -223,7 +223,7 @@ export default function FlightResultRow({
         <div className={styles.flightRowActions}>
           <button
             type="button"
-            className={`oltra-button-primary oltra-button--xs ${styles.flightBookButton}`}
+            className="oltra-btn oltra-btn--condensed"
             onClick={() => handleBook(flight.offerId)}
           >
             BOOK
@@ -234,7 +234,7 @@ export default function FlightResultRow({
             label="SAVE"
             compact
             align="right"
-            className={`oltra-button-secondary oltra-button--xs ${styles.flightBookButton}`}
+            className="oltra-btn oltra-btn--condensed"
           />
         </div>
       </div>

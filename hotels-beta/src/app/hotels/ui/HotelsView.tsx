@@ -52,10 +52,7 @@ import {
   RATEHAWK_THUMB_SIZE,
   resolveRatehawkUrl,
 } from "@/lib/hotels/cardHelpers";
-import {
-  getMemberActionButtonClass,
-  getMemberActionLoginMessage,
-} from "@/lib/members/memberActionUi";
+import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import {
   mergeHotelFlightSearch,
   readHotelFlightSearch,
@@ -665,6 +662,10 @@ export default function HotelsView(props: {
   const router = useRouter();
   const pathname = usePathname();
   const tripPickerRef = useRef<HTMLDivElement | null>(null);
+  // Wrappers around the date and guest controls, so a click on the passive
+  // SEARCH button can focus the first incomplete one.
+  const datesFieldRef = useRef<HTMLDivElement | null>(null);
+  const guestsFieldRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -822,10 +823,29 @@ export default function HotelsView(props: {
   const topAvailabilityChecked =
     ratehawkResultAvailabilityStatus === "loaded" && !availabilitySearchDirty;
 
-  const topAvailabilityButtonDisabled =
-    !searchIsActive ||
-    ratehawkResultAvailabilityStatus === "loading" ||
-    topAvailabilityChecked;
+  // The SEARCH button is busy (a real `disabled`) only while a check runs.
+  // Otherwise it stays clickable and goes passive with a hover reason; a click
+  // on a passive button with missing entries moves focus to the first one.
+  // Bedrooms defaults to 1 and residency is auto-detected, so in practice only
+  // dates and guests go missing.
+  const searchBusy = ratehawkResultAvailabilityStatus === "loading";
+  const searchNeedsDates = !datesAreValid;
+  const searchNeedsGuests = !hasGuestDetails;
+  const searchPassiveReason = resultCountTooLarge
+    ? "Narrow your search to 50 hotels or fewer to check availability"
+    : searchNeedsDates && searchNeedsGuests
+      ? "Add dates and guests to continue"
+      : searchNeedsDates
+        ? fromValue && toValue
+          ? "Choose a stay of 42 nights or fewer"
+          : "Add dates to continue"
+        : searchNeedsGuests
+          ? "Add guests to continue"
+          : !searchIsActive
+            ? "Add stay details to continue"
+            : topAvailabilityChecked
+              ? "Availability already checked for these dates and guests"
+              : "";
 
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -2359,7 +2379,7 @@ async function handleCreateTripAndAddHotel() {
                   ) : null}
 
                   <div className="md:col-span-12 grid gap-[14px] md:grid-cols-[minmax(0,1.45fr)_minmax(0,1.45fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
-                    <div className="md:col-span-2 min-w-0" data-oltra-control="true">
+                    <div ref={datesFieldRef} className="md:col-span-2 min-w-0" data-oltra-control="true">
                       <DateRangePicker
                         fromValue={fromValue}
                         toValue={toValue}
@@ -2375,7 +2395,7 @@ async function handleCreateTripAndAddHotel() {
                       />
                     </div>
 
-                    <div className="relative min-w-0" data-oltra-control="true">
+                    <div ref={guestsFieldRef} className="relative min-w-0" data-oltra-control="true">
                       <div className="oltra-label">Guests</div>
                       <GuestSelector
                         initialValue={guestSelection}
@@ -2441,43 +2461,50 @@ async function handleCreateTripAndAddHotel() {
                   <button
                     type="button"
                     onClick={() => updateFiltersOpen(!filtersOpen)}
-                    className={`${filtersOpen ? "oltra-button-function" : "oltra-button-primary"} h-[var(--oltra-button-height)] w-full whitespace-nowrap`}
+                    aria-expanded={filtersOpen}
+                    className="oltra-btn oltra-btn--block"
                   >
                     Filters
                   </button>
 
                   <button
                     type="submit"
-                    onClick={saveCurrentHotelFlightSearch}
-                    disabled={topAvailabilityButtonDisabled}
-                    title={searchDisabledReason || undefined}
-                    className={[
-                      "min-h-[var(--oltra-button-height)] w-full md:col-start-2 md:col-span-3 text-[0.68rem] tracking-[0.12em]",
-                      searchIsActive && !topAvailabilityButtonDisabled
-                        ? "oltra-button-primary"
-                        : "oltra-button-secondary",
-                    ].join(" ")}
+                    onClick={(e) => {
+                      // aria-disabled does not block the click (or the form's
+                      // implicit Enter submit, which arrives as a click here).
+                      if (searchPassiveReason) {
+                        e.preventDefault();
+                        if (resultCountTooLarge) return;
+                        const field = searchNeedsDates
+                          ? datesFieldRef.current
+                          : searchNeedsGuests
+                            ? guestsFieldRef.current
+                            : null;
+                        field
+                          ?.querySelector<HTMLElement>(
+                            'button:not([disabled]), input:not([type="hidden"]):not([disabled])'
+                          )
+                          ?.focus();
+                        return;
+                      }
+                      saveCurrentHotelFlightSearch();
+                    }}
+                    disabled={searchBusy}
+                    aria-disabled={!searchBusy && Boolean(searchPassiveReason)}
+                    data-reason={!searchBusy && searchPassiveReason ? searchPassiveReason : undefined}
+                    className="oltra-btn oltra-btn--block md:col-start-2 md:col-span-3"
                   >
-                    <span className="inline-flex min-w-0 items-center justify-center gap-2">
-                      {isSubmittingSearch ? (
-                        <span
-                          className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-current border-t-transparent"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span className="line-clamp-2 text-center leading-snug">
-                        {ratehawkResultAvailabilityStatus === "loading"
-                          ? "CHECKING..."
-                          : topAvailabilityChecked
-                            ? "AVAILABILITY CHECKED"
-                            : searchIsActive && ratehawkResultAvailabilityStatus === "error"
-                              ? "COULDN'T CHECK — TAP TO RETRY"
-                              : searchIsActive
-                                ? "CHECK AVAILABILITY"
-                                : searchDisabledReason.charAt(0) +
-                                  searchDisabledReason.slice(1).toLowerCase()}
-                      </span>
-                    </span>
+                    {searchBusy || isSubmittingSearch ? (
+                      <span
+                        className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-current border-t-transparent"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    {searchBusy
+                      ? "SEARCHING…"
+                      : !searchPassiveReason && ratehawkResultAvailabilityStatus === "error"
+                        ? "RETRY"
+                        : "SEARCH"}
                   </button>
                 </div>
               ) : null}
@@ -2584,14 +2611,26 @@ async function handleCreateTripAndAddHotel() {
                   const cardUnavailable =
                     !cardPassive && ratehawkCardAvailability?.status === "unavailable";
 
+                  const selectCard = () => {
+                    const id = String(h.id);
+                    setSelectedHotelId(id);
+                    setPinnedHotelId(id);
+                  };
+
+                  // A div, not a <button>: a passive hotel's card holds a
+                  // website link, and a link inside a button is invalid HTML.
                   return (
-                    <button
+                    <div
                       key={String(h.id)}
-                      type="button"
-                      onClick={() => {
-                        const id = String(h.id);
-                        setSelectedHotelId(id);
-                        setPinnedHotelId(id);
+                      role="button"
+                      tabIndex={0}
+                      onClick={selectCard}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          selectCard();
+                        }
                       }}
                       className={[
                         "oltra-output w-full cursor-pointer text-left transition",
@@ -2634,7 +2673,8 @@ async function handleCreateTripAndAddHotel() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="hotel-availability-note block hover:underline"
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                  className="oltra-btn oltra-btn--neutral oltra-btn--condensed oltra-btn--block"
                                 >
                                   Check availability on website
                                 </a>
@@ -2710,11 +2750,11 @@ async function handleCreateTripAndAddHotel() {
                               <div className="truncate text-[11px] text-[color:var(--oltra-text-muted)]">
                                 {featuredAwards.map((award) => award.label).join(" · ")}
                               </div>
-                            ) : null}                            
+                            ) : null}
                           </div>
                         </div>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -2882,11 +2922,11 @@ async function handleCreateTripAndAddHotel() {
               <div className="overflow-hidden rounded-[var(--oltra-radius-lg)] border border-white/12 bg-[rgba(18,28,36,0.22)]">
                 <div ref={mapRef} className="h-[760px] w-full" />
 
-                <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+                <div className="oltra-over-image pointer-events-none absolute inset-x-0 top-4 flex justify-center">
                   <button
                     type="button"
                     onClick={() => setViewMode("details")}
-                    className="oltra-button-map-toggle pointer-events-auto"
+                    className="oltra-btn pointer-events-auto"
                   >
                     Switch to hotel view
                   </button>
@@ -2916,7 +2956,7 @@ async function handleCreateTripAndAddHotel() {
                   <button
                     type="button"
                     onClick={() => setViewMode("map")}
-                    className="oltra-button-function"
+                    className="oltra-btn"
                   >
                     Switch to map view
                   </button>
@@ -3319,7 +3359,7 @@ async function handleCreateTripAndAddHotel() {
                         href={selectedHotelBookingHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex h-[var(--oltra-button-height)] w-full items-center justify-center rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-[12px] text-[color:var(--oltra-text-muted)] underline underline-offset-4 hover:text-[color:var(--oltra-text-primary)]"
+                        className="oltra-btn oltra-btn--block"
                       >
                         {selectedHotelBookingLabel}
                       </a>
@@ -3409,10 +3449,7 @@ async function handleCreateTripAndAddHotel() {
                               </div>
                             )}
 
-                            <div
-                              className="mt-3 border-t border-[var(--oltra-field-border)] pt-3"
-                              title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
-                            >
+                            <div className="mt-3 border-t border-[var(--oltra-field-border)] pt-3">
                               <div className="oltra-subheader">Create new trip</div>
 
                               <div className="mt-2 flex flex-col gap-2">
@@ -3442,10 +3479,8 @@ async function handleCreateTripAndAddHotel() {
                                   }}
                                   disabled={creatingTrip}
                                   aria-disabled={Boolean(createTripBlockedReason)}
-                                  className={`oltra-dropdown-item${
-                                    createTripBlockedReason ? " oltra-dropdown-item--inactive" : ""
-                                  }`}
-                                  title={createTripBlockedReason ?? undefined}
+                                  data-reason={createTripBlockedReason ?? undefined}
+                                  className="oltra-btn oltra-btn--condensed oltra-btn--block"
                                 >
                                   {creatingTrip ? "Creating..." : "Create new trip"}
                                 </button>
@@ -3483,10 +3518,9 @@ async function handleCreateTripAndAddHotel() {
 
                           setShowTripPicker((prev) => !prev);
                         }}
-                        className={`${getMemberActionButtonClass(
-                          isMemberLoggedIn
-                        )} w-full`}
+                        className="oltra-btn oltra-btn--block"
                         aria-disabled={!isMemberLoggedIn}
+                        data-reason={isMemberLoggedIn ? undefined : "Log in to save to a trip"}
                       >
                         SAVE TO TRIP
                       </button>
@@ -3495,6 +3529,9 @@ async function handleCreateTripAndAddHotel() {
                     <button
                       type="button"
                       onClick={() => {
+                        // Passive when already favourited: nothing to do.
+                        if (isMemberLoggedIn && isFavorited) return;
+
                         setMemberActionMessage("");
                         setMemberActionError("");
 
@@ -3507,11 +3544,20 @@ async function handleCreateTripAndAddHotel() {
 
                         void handleAddHotelToFavorites();
                       }}
-                      disabled={memberActionLoading !== null || isFavorited}
-                      className={`${getMemberActionButtonClass(
-                        isMemberLoggedIn && !isFavorited
-                      )} w-full`}
-                      aria-disabled={!isMemberLoggedIn || isFavorited}
+                      disabled={memberActionLoading !== null}
+                      className="oltra-btn oltra-btn--block"
+                      aria-disabled={
+                        memberActionLoading === null && (!isMemberLoggedIn || isFavorited)
+                      }
+                      data-reason={
+                        memberActionLoading !== null
+                          ? undefined
+                          : !isMemberLoggedIn
+                            ? "Log in to add favourites"
+                            : isFavorited
+                              ? "Already in favourites"
+                              : undefined
+                      }
                     >
                       {memberActionLoading === "favorite"
                         ? "ADDING..."

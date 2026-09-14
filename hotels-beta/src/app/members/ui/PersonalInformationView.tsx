@@ -243,6 +243,8 @@ export default function PersonalInformationView() {
     [profile, savedProfile]
   );
 
+  const familyCapReached = profile.familyMembers.length >= MAX_FAMILY_MEMBERS;
+
   useEffect(() => {
     let active = true;
 
@@ -591,21 +593,23 @@ export default function PersonalInformationView() {
               ) : null}
 
               <div className="members-profile-save-row">
+                {/* Passive, not disabled, when nothing has changed - the
+                    reason shows on hover. handleSave already ignores the
+                    click. Disabled only while the save is in flight. */}
                 <button
                   type="button"
-                  className={[
-                    isDirty ? "oltra-button-primary" : "oltra-button-secondary",
-                    "members-action-button",
-                  ].join(" ")}
+                  className="oltra-btn"
                   onClick={handleSave}
-                  disabled={!isDirty || isSaving}
+                  aria-disabled={!isDirty}
+                  data-reason={!isDirty ? "No changes to save" : undefined}
+                  disabled={isSaving}
                 >
                   {isSaving ? "Saving..." : justSaved ? "Saved" : "Save"}
                 </button>
 
                 <button
                   type="button"
-                  className="oltra-button-secondary members-action-button"
+                  className="oltra-btn"
                   onClick={handleLogout}
                 >
                   Log out
@@ -614,7 +618,7 @@ export default function PersonalInformationView() {
 
               <button
                 type="button"
-                className="members-text-danger-action"
+                className="oltra-btn oltra-btn--destructive"
                 onClick={() => setShowTerminatePrompt(true)}
               >
                 Terminate membership
@@ -630,9 +634,14 @@ export default function PersonalInformationView() {
           <div className="members-family-block__actions">
             <button
               type="button"
-              className="oltra-button-primary members-action-button"
+              className="oltra-btn"
               onClick={addFamilyMember}
-              disabled={profile.familyMembers.length >= MAX_FAMILY_MEMBERS}
+              aria-disabled={familyCapReached}
+              data-reason={
+                familyCapReached
+                  ? `Up to ${MAX_FAMILY_MEMBERS} family members`
+                  : undefined
+              }
             >
               Add family member
             </button>
@@ -697,7 +706,7 @@ export default function PersonalInformationView() {
                 <div className="members-family-actions">
                   <button
                     type="button"
-                    className="members-text-danger-action"
+                    className="oltra-btn oltra-btn--destructive oltra-btn--condensed"
                     onClick={() => removeFamilyMember(member.id)}
                   >
                     Delete member
@@ -717,23 +726,25 @@ export default function PersonalInformationView() {
             </div>
 
             <div className="members-leave-modal__actions">
-              <button
-                type="button"
-                className="oltra-button-primary members-action-button"
-                onClick={() => handleLeaveDecision(true)}
-                disabled={isSaving}
-              >
-                Yes
-              </button>
+              <div className="oltra-btn-pair">
+                <button
+                  type="button"
+                  className="oltra-btn"
+                  onClick={() => handleLeaveDecision(true)}
+                  disabled={isSaving}
+                >
+                  Yes
+                </button>
 
-              <button
-                type="button"
-                className="oltra-button-secondary members-action-button"
-                onClick={() => handleLeaveDecision(false)}
-                disabled={isSaving}
-              >
-                No
-              </button>
+                <button
+                  type="button"
+                  className="oltra-btn"
+                  onClick={() => handleLeaveDecision(false)}
+                  disabled={isSaving}
+                >
+                  No
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -747,21 +758,23 @@ export default function PersonalInformationView() {
             </div>
 
             <div className="members-leave-modal__actions">
-              <button
-                type="button"
-                className="members-confirm-danger-button members-action-button"
-                onClick={handleTerminateMembership}
-              >
-                Yes
-              </button>
+              <div className="oltra-btn-pair">
+                <button
+                  type="button"
+                  className="oltra-btn oltra-btn--destructive"
+                  onClick={handleTerminateMembership}
+                >
+                  Yes
+                </button>
 
-              <button
-                type="button"
-                className="oltra-button-primary members-action-button"
-                onClick={() => setShowTerminatePrompt(false)}
-              >
-                No
-              </button>
+                <button
+                  type="button"
+                  className="oltra-btn"
+                  onClick={() => setShowTerminatePrompt(false)}
+                >
+                  No
+                </button>
+              </div>
             </div>
           </div>
         </div>

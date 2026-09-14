@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { DEFAULT_FAVORITE_RESTAURANTS } from "@/lib/members/defaults";
 import type { FavoriteRestaurant } from "@/lib/members/types";
 import {
@@ -199,15 +200,23 @@ export default function FavoriteRestaurantsView() {
                     : null}
 
                   <div className="members-item__actions">
-                    <button
-                      type="button"
-                      className="oltra-button-primary members-action-button"
+                    {/* The Restaurants page takes only ?city= (no selection
+                        param), so this opens the restaurant's city. Without a
+                        live record the page picks its own default city. */}
+                    <Link
+                      href={
+                        record?.city
+                          ? `/restaurants?${new URLSearchParams({ city: record.city }).toString()}`
+                          : "/restaurants"
+                      }
+                      className="oltra-btn oltra-btn--condensed"
+                      prefetch={false}
                     >
                       View restaurant
-                    </button>
+                    </Link>
                     <button
                       type="button"
-                      className="members-text-danger-action"
+                      className="oltra-btn oltra-btn--destructive oltra-btn--condensed"
                       onClick={() => handleDelete(item.id)}
                     >
                       Delete

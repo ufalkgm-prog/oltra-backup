@@ -162,6 +162,10 @@ function resolveAirportCode(value: string): string {
 const LEG_PARAM = /^([A-Za-z]{3})-([A-Za-z]{3})-(\d{4}-\d{2}-\d{2})$/;
 const MAX_MULTI_CITY_LEGS = 5;
 
+/** What stops a search: the reason the passive Search button shows, and where
+ * the missing field sits (see focusSearchBlocker). */
+type SearchBlocker = { reason: string; path: number[] | "guests" };
+
 function readLegParams(searchParams: PageSearchParams): MultiCityLeg[] {
   const legs: MultiCityLeg[] = [];
   for (let i = 1; i <= MAX_MULTI_CITY_LEGS; i += 1) {
@@ -725,14 +729,61 @@ export default function FlightsView({ searchParams }: Props) {
     return map;
   }, [filteredItineraries, isOneWay, isMultiple]);
 
-  const canSearch = useMemo(() => {
+  // The first entry a search still needs, in form order - what the passive
+  // Search button names, and the field its click moves focus to.
+  const searchBlocker = useMemo((): SearchBlocker | null => {
     if (isMultiple) {
-      return search.multiCity.every(l => l.from && l.to && l.date) && search.adults > 0;
+      for (let i = 0; i < search.multiCity.length; i += 1) {
+        const leg = search.multiCity[i];
+        const flight = `for flight ${i + 1}`;
+        if (!leg.from) return { reason: `Add a departure airport ${flight} to continue`, path: [i, 0] };
+        if (!leg.to) return { reason: `Add a destination ${flight} to continue`, path: [i, 1] };
+        if (!leg.date) return { reason: `Add a date ${flight} to continue`, path: [i, 2] };
+      }
+    } else {
+      if (!search.from) return { reason: "Add a departure airport to continue", path: [0] };
+      if (!search.to) return { reason: "Add a destination to continue", path: [1] };
+      if (!search.departDate) {
+        return { reason: isReturnTrip ? "Add dates to continue" : "Add a date to continue", path: [2] };
+      }
+      if (isReturnTrip && !search.returnDate) return { reason: "Add a return date to continue", path: [2] };
     }
-    if (!search.from || !search.to || !search.departDate || search.adults < 1) return false;
-    if (isReturnTrip && !search.returnDate) return false;
-    return true;
+    if (search.adults < 1) return { reason: "Add guests to continue", path: "guests" };
+    return null;
   }, [isMultiple, isReturnTrip, search]);
+
+  // The field components take no ref, so the field is found through the
+  // markup: `path` indexes into the single-route grid ([column]) or the
+  // multi-city rows ([leg, column]), then focuses that field's own input or
+  // date trigger (never the date range's hidden inputs).
+  const searchFieldsRef = useRef<HTMLDivElement | null>(null);
+  const guestsFieldRef = useRef<HTMLDivElement | null>(null);
+  function focusSearchBlocker(blocker: SearchBlocker) {
+    const field =
+      blocker.path === "guests"
+        ? guestsFieldRef.current
+        : blocker.path.reduce<Element | null | undefined>(
+            (el, index) => el?.children[index],
+            searchFieldsRef.current
+          );
+    field?.querySelector<HTMLElement>('input:not([type="hidden"]), button')?.focus();
+  }
+
+  // What the current results were searched with. isDirty alone misses a form
+  // that changed without markDirty (the URL handoff effect above), which
+  // would leave the Search button passive over a route it never ran.
+  const searchKey = useMemo(
+    () =>
+      JSON.stringify(
+        isMultiple
+          ? [search.tripType, search.multiCity.map(l => [l.from, l.to, l.date]), search.adults, search.children, search.cabin]
+          : [search.tripType, search.from, search.to, search.departDate, isReturnTrip ? search.returnDate : "", search.adults, search.children, search.cabin]
+      ),
+    [isMultiple, isReturnTrip, search]
+  );
+  const [lastSearchKey, setLastSearchKey] = useState("");
+  // A failed search stays runnable, so "Please try again" can be acted on.
+  const searchUpToDate = !isDirty && !searchError && searchKey === lastSearchKey;
 
   const handleSearch = useCallback(async () => {
     if (isMultiple) {
@@ -743,6 +794,7 @@ export default function FlightsView({ searchParams }: Props) {
     }
     setIsLoading(true);
     setIsDirty(false);
+    setLastSearchKey(searchKey);
     setSearchError(null);
     setSelectedOutboundId("");
     setSelectedReturnId("");
@@ -786,7 +838,7 @@ export default function FlightsView({ searchParams }: Props) {
     } finally {
       setIsLoading(false);
     }
-  }, [search, isReturnTrip, isMultiple]);
+  }, [search, searchKey, isReturnTrip, isMultiple]);
 
   const handleBook = useCallback(async (offerId: string) => {
     try {
@@ -909,6 +961,8 @@ export default function FlightsView({ searchParams }: Props) {
   }
 
   function deleteLastMultiCityLeg() {
+    // The button is passive (aria-disabled, still clickable) at one leg.
+    if (search.multiCity.length <= 1) return;
     setSearch(current => {
       const newLegs = current.multiCity.slice(0, -1);
       if (!newLegs.length) return current;
@@ -994,10 +1048,7 @@ export default function FlightsView({ searchParams }: Props) {
                       key={value}
                       type="button"
                       onClick={() => setTripType(value)}
-                      className={[
-                        "oltra-button-secondary",
-                        search.tripType === value ? styles.segmentButtonActive : "",
-                      ].join(" ")}
+                      className={search.tripType === value ? styles.segmentButtonActive : undefined}
                     >
                       {label}
                     </button>
@@ -1006,7 +1057,7 @@ export default function FlightsView({ searchParams }: Props) {
               </div>
 
               {isMultiple ? (
-                <div className={styles.multiCityStack}>
+                <div className={styles.multiCityStack} ref={searchFieldsRef}>
                   {search.multiCity.map((leg, index) => {
                     const prevDate = index > 0 ? search.multiCity[index - 1]?.date : undefined;
                     const minLegDate = prevDate ?? todayIso;
@@ -1034,24 +1085,26 @@ export default function FlightsView({ searchParams }: Props) {
                   <div className={styles.multiCityButtons}>
                     <button
                       type="button"
-                      className={search.multiCity.length < 5 ? "oltra-button-primary" : "oltra-button-secondary"}
+                      className="oltra-btn"
                       onClick={addMultiCityLeg}
-                      disabled={search.multiCity.length >= 5}
+                      aria-disabled={search.multiCity.length >= MAX_MULTI_CITY_LEGS}
+                      data-reason={search.multiCity.length >= MAX_MULTI_CITY_LEGS ? `Up to ${MAX_MULTI_CITY_LEGS} flights` : undefined}
                     >
                       Add flight
                     </button>
                     <button
                       type="button"
-                      className={search.multiCity.length > 1 ? "oltra-button-primary" : "oltra-button-secondary"}
+                      className="oltra-btn oltra-btn--destructive"
                       onClick={deleteLastMultiCityLeg}
-                      disabled={search.multiCity.length <= 1}
+                      aria-disabled={search.multiCity.length <= 1}
+                      data-reason={search.multiCity.length <= 1 ? "At least one flight is needed" : undefined}
                     >
                       Delete flight
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className={styles.fieldGrid}>
+                <div className={styles.fieldGrid} ref={searchFieldsRef}>
                   <AirportAutocomplete
                     label="From"
                     value={search.from}
@@ -1084,7 +1137,7 @@ export default function FlightsView({ searchParams }: Props) {
               )}
 
               <div className={styles.guestCabinGrid}>
-                <div>
+                <div ref={guestsFieldRef}>
                   <label className="oltra-label">Guests</label>
                   <GuestSelector
                     initialValue={{ adults: search.adults, kids: search.children, kidAges: [] }}
@@ -1109,9 +1162,25 @@ export default function FlightsView({ searchParams }: Props) {
 
               <button
                 type="button"
-                className={isDirty && canSearch ? "oltra-button-primary" : "oltra-button-secondary"}
-                onClick={handleSearch}
-                disabled={isLoading || !canSearch}
+                className="oltra-btn oltra-btn--block"
+                onClick={() => {
+                  if (searchBlocker) {
+                    focusSearchBlocker(searchBlocker);
+                    return;
+                  }
+                  if (searchUpToDate) return;
+                  void handleSearch();
+                }}
+                disabled={isLoading}
+                aria-disabled={!isLoading && (Boolean(searchBlocker) || searchUpToDate)}
+                data-reason={
+                  isLoading
+                    ? undefined
+                    : searchBlocker?.reason ??
+                      (searchUpToDate
+                        ? "These results are up to date — change the search to run it again"
+                        : undefined)
+                }
               >
                 {isLoading ? "Searching…" : "Search"}
               </button>
@@ -2125,33 +2194,31 @@ function PriceCard({
       <span className={styles.priceCardAmount}>
         {currency} {format(itinerary.priceEur, itinerary.currency)}
       </span>
+      {/* Every caller that shows the buttons passes `active` and onSaveToTrip
+          (the return pane's cards are priceOnly), so there is no inactive
+          BOOK/SAVE state to draw. */}
       {!priceOnly && (
         <div className={styles.priceCardButtonRow}>
           <button
             type="button"
-            className={active ? styles.bookButtonActive : styles.bookButtonInactive}
-            onClick={() => active && onBook(itinerary.offerId)}
-            disabled={!active}
+            className="oltra-btn oltra-btn--condensed"
+            onClick={() => onBook(itinerary.offerId)}
           >
             BOOK
           </button>
           {/* Same picker as Hotels/Restaurants - saving used to go straight to
               whatever default trip the db helper picked, with no way to tell
               where it landed. */}
-          {active && onSaveToTrip ? (
+          {onSaveToTrip ? (
             <SaveToTripControl
               onSave={(tripId) => onSaveToTrip(tripId, itinerary)}
               label="SAVE"
               compact
               align="right"
               confirmInTrigger
-              className={styles.savePillButton}
+              className="oltra-btn oltra-btn--condensed"
             />
-          ) : (
-            <button type="button" className={styles.bookButtonInactive} disabled>
-              SAVE
-            </button>
-          )}
+          ) : null}
         </div>
       )}
     </div>

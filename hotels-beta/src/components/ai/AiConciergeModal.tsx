@@ -165,17 +165,13 @@ export default function AiConciergeModal() {
             {hasConversation ? (
               <button
                 type="button"
-                className={`oltra-button-secondary ${styles.exit} ${styles.clear}`}
+                className="oltra-btn oltra-btn--destructive"
                 onClick={requestClear}
               >
                 Clear
               </button>
             ) : null}
-            <button
-              type="button"
-              className={`oltra-button-secondary ${styles.exit}`}
-              onClick={close}
-            >
+            <button type="button" className="oltra-btn" onClick={close}>
               Exit
             </button>
           </div>
@@ -187,7 +183,7 @@ export default function AiConciergeModal() {
           <div className={styles.handoffs}>
             <button
               type="button"
-              className={styles.handoff}
+              className="oltra-btn"
               onClick={() => {
                 // Close first, then navigate: the results are already in the
                 // store, so there is nothing to wait for — and leaving the

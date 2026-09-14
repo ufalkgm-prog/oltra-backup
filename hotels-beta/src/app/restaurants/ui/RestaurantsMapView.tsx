@@ -7,10 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import {
   getMemberActionAccessBrowser,
 } from "@/lib/members/db";
-import {
-  getMemberActionButtonClass,
-  getMemberActionLoginMessage,
-} from "@/lib/members/memberActionUi";
+import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { readHotelFlightSearch } from "@/lib/searchSession";
 
@@ -1087,7 +1084,8 @@ export default function RestaurantsMapView({
                             disabled={tripLimitReached}
                           />
 
-                          {/* Stays clickable when blocked so it can say why. */}
+                          {/* Stays clickable when blocked so it can say why;
+                              passive, with the reason on hover. */}
                           <button
                             type="button"
                             onClick={() => {
@@ -1100,10 +1098,8 @@ export default function RestaurantsMapView({
                             }}
                             disabled={creatingTrip}
                             aria-disabled={Boolean(createTripBlockedReason)}
-                            className={`oltra-dropdown-item${
-                              createTripBlockedReason ? " oltra-dropdown-item--inactive" : ""
-                            }`}
-                            title={createTripBlockedReason ?? undefined}
+                            data-reason={createTripBlockedReason ?? undefined}
+                            className="oltra-btn oltra-btn--condensed oltra-btn--block"
                           >
                             {creatingTrip ? "Creating..." : "Create new trip"}
                           </button>
@@ -1125,7 +1121,9 @@ export default function RestaurantsMapView({
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* Condensed and stacked, the card-action pattern: each hit
+                    area reaches only to the middle of the 6px gap. */}
+                <div className="flex flex-col gap-1.5">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -1141,8 +1139,9 @@ export default function RestaurantsMapView({
 
                       setShowTripPicker((prev) => !prev);
                     }}
-                    className={`${getMemberActionButtonClass(isMemberLoggedIn)} w-full`}
+                    className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-top"
                     aria-disabled={!isMemberLoggedIn}
+                    data-reason={isMemberLoggedIn ? undefined : "Log in to save to a trip"}
                   >
                     {memberActionLoading === "trip" ? "SAVING..." : "SAVE TO TRIP"}
                   </button>
@@ -1160,8 +1159,9 @@ export default function RestaurantsMapView({
 
                       void handleAddRestaurantToFavorites();
                     }}
-                    className={`${getMemberActionButtonClass(isMemberLoggedIn)} w-full`}
+                    className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-bottom"
                     aria-disabled={!isMemberLoggedIn}
+                    data-reason={isMemberLoggedIn ? undefined : "Log in to add favourites"}
                   >
                     {memberActionLoading === "favorite"
                       ? "ADDING..."

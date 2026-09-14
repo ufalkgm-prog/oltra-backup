@@ -9,8 +9,6 @@ export const config = {
   matcher: [
     "/members/:path*",
     "/login",
-    "/forgot-password",
-    "/update-password",
     "/auth/callback",
   ],
 };

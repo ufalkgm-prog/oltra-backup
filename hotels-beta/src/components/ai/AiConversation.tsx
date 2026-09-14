@@ -918,22 +918,23 @@ export default function AiConversation() {
           disabled={busy}
         />
         {busy ? (
-          <button
-            type="button"
-            className={`oltra-button-secondary ${styles.action}`}
-            onClick={() => stop()}
-          >
+          <button type="button" className="oltra-btn" onClick={() => stop()}>
             Stop
           </button>
         ) : (
-          /* Standard active/passive pair: primary while there is something to
-             send, secondary when there is not. */
+          /* Passive, not disabled, while there is nothing to send: a click
+             moves focus to the question field instead of submitting (submit()
+             also ignores an empty draft, which covers Enter). */
           <button
             type="submit"
-            className={`${
-              draft.trim() ? "oltra-button-primary" : "oltra-button-secondary"
-            } ${styles.action}`}
-            disabled={!draft.trim()}
+            className="oltra-btn"
+            aria-disabled={!draft.trim()}
+            data-reason={draft.trim() ? undefined : "Type a question to continue"}
+            onClick={(event) => {
+              if (draft.trim()) return;
+              event.preventDefault();
+              inputRef.current?.focus();
+            }}
             aria-label="Send"
           >
             Ask

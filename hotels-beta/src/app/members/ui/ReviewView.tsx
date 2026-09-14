@@ -117,6 +117,8 @@ export default function ReviewView({
   const [errorMessage, setErrorMessage] = useState("");
 
   const dateVisitedRef = useRef<HTMLInputElement | null>(null);
+  const typeFieldRef = useRef<HTMLDivElement | null>(null);
+  const targetFieldRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!errorMessage && !statusMessage) return;
@@ -153,7 +155,25 @@ export default function ReviewView({
 
   const canChooseTarget = Boolean(reviewType);
   const canCompleteReview = Boolean(reviewType && selectedItemId);
-  const canSubmit = canCompleteReview && Boolean(dateVisited) && !isSubmitting;
+
+  // The first thing still missing: Send review's hover reason names it, and a
+  // click on the passive button moves focus there.
+  const missing = !reviewType
+    ? "type"
+    : !selectedItemId
+      ? "target"
+      : !dateVisited
+        ? "date"
+        : null;
+
+  const missingReason =
+    missing === "type"
+      ? "Choose what you're reviewing to continue"
+      : missing === "target"
+        ? `Choose the ${reviewType} to continue`
+        : missing === "date"
+          ? "Add the date you visited to continue"
+          : undefined;
 
   function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
     ref.current?.focus();
@@ -190,11 +210,20 @@ export default function ReviewView({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!reviewType || !selectedItemId) {
-      setErrorMessage("Please select type and hotel or restaurant.");
-      setStatusMessage("");
+    if (missing === "type") {
+      typeFieldRef.current?.querySelector("button")?.focus();
       return;
     }
+    if (missing === "target") {
+      targetFieldRef.current?.querySelector("input")?.focus();
+      return;
+    }
+    if (missing === "date") {
+      openDatePicker(dateVisitedRef);
+      return;
+    }
+    // Narrowed for TypeScript; `missing` has already covered both.
+    if (!reviewType || !selectedItemId) return;
 
     try {
       setIsSubmitting(true);
@@ -242,7 +271,10 @@ export default function ReviewView({
     <section className="oltra-glass members-section">
       <form className="members-form-stack" onSubmit={handleSubmit}>
         <div className="members-review-start">
-          <div className="members-form-field members-form-field--rating-width">
+          <div
+            ref={typeFieldRef}
+            className="members-form-field members-form-field--rating-width"
+          >
             <label className="oltra-label">TYPE</label>
             <OltraSelect
               name="reviewType"
@@ -256,6 +288,7 @@ export default function ReviewView({
 
           <div className="members-review-target-row">
             <div
+              ref={targetFieldRef}
               className={[
                 "members-form-field",
                 "members-form-field--two-rating-width",
@@ -405,11 +438,10 @@ export default function ReviewView({
         <div className="members-form-actions">
           <button
             type="submit"
-            className={[
-              canSubmit ? "oltra-button-primary" : "oltra-button-secondary",
-              "members-action-button",
-            ].join(" ")}
-            disabled={!canSubmit}
+            className="oltra-btn"
+            aria-disabled={Boolean(missing)}
+            data-reason={missingReason}
+            disabled={isSubmitting}
           >
             {isSubmitting ? "Sending..." : "Send review"}
           </button>

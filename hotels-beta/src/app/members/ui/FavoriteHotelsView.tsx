@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { DEFAULT_FAVORITE_HOTELS } from "@/lib/members/defaults";
 import type { FavoriteHotel } from "@/lib/members/types";
 import {
@@ -26,6 +27,16 @@ function getHotelImage(item: FavoriteHotel): string | null {
   }
 
   return thumbnail;
+}
+
+/* The main Hotels page searched for this one hotel - the same /hotels?q=…
+   handoff LandingSummary's hotel cards use (CLAUDE.md §15), minus the dates
+   and guests a favourite does not carry. */
+function buildHotelHref(hotelName: string): string {
+  const params = new URLSearchParams();
+  params.set("q", hotelName);
+  params.set("submitted", "1");
+  return `/hotels?${params.toString()}`;
 }
 
 export default function FavoriteHotelsView() {
@@ -205,16 +216,17 @@ export default function FavoriteHotelsView() {
                     ) : null}
 
                     <div className="members-item__actions">
-                      <button
-                        type="button"
-                        className="oltra-button-primary members-action-button"
+                      <Link
+                        href={buildHotelHref(item.name)}
+                        className="oltra-btn oltra-btn--condensed"
+                        prefetch={false}
                       >
                         View hotel
-                      </button>
+                      </Link>
 
                       <button
                         type="button"
-                        className="members-text-danger-action"
+                        className="oltra-btn oltra-btn--destructive oltra-btn--condensed"
                         onClick={() => handleDelete(item.id)}
                       >
                         Delete

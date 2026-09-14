@@ -33,21 +33,10 @@ export async function updateSession(request: NextRequest) {
 
   const isMembersRoute = request.nextUrl.pathname.startsWith("/members");
   const isLoginRoute = request.nextUrl.pathname.startsWith("/login");
-  const isForgotPasswordRoute =
-    request.nextUrl.pathname.startsWith("/forgot-password");
-  const isUpdatePasswordRoute =
-    request.nextUrl.pathname.startsWith("/update-password");
   const isAuthCallbackRoute =
     request.nextUrl.pathname.startsWith("/auth/callback");
 
-  if (
-    isMembersRoute &&
-    !user &&
-    !isLoginRoute &&
-    !isForgotPasswordRoute &&
-    !isUpdatePasswordRoute &&
-    !isAuthCallbackRoute
-  ) {
+  if (isMembersRoute && !user && !isLoginRoute && !isAuthCallbackRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);

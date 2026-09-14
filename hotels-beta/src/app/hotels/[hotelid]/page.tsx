@@ -1,6 +1,7 @@
 // src/app/hotels/[hotelid]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import PageShell from "@/components/site/PageShell";
 import { directusFetchJson } from "@/lib/directus";
 import {
   buildBookingLink,
@@ -172,189 +173,196 @@ export default async function HotelDetailPage({
   const bookingHref = buildBookingLink(hotel, bookingSearchParams);
   const bookingLabel = hotel.booking_label?.trim() || "BOOK";
 
+  // Same dark shell and tokens as the rest of the site (this page used to be
+  // light zinc Tailwind). PageShell renders the <main>, header and background.
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      {/* Top nav */}
-      <div className="mb-10 flex items-center justify-between">
-        <Link href="/hotels" className="text-sm text-zinc-600 hover:text-zinc-900">
-          ← Back to hotels
-        </Link>
+    <PageShell current="Hotels">
+      <div className="mx-auto w-full max-w-5xl">
+        {/* Top nav */}
+        <div className="mb-10 flex items-center justify-between">
+          <Link
+            href="/hotels"
+            className="text-sm text-[color:var(--oltra-text-muted)] hover:text-[color:var(--oltra-text-primary)]"
+          >
+            ← Back to hotels
+          </Link>
 
-        <div className="text-xs text-zinc-500">
-          {hotel.affiliation ? <span>{hotel.affiliation}</span> : null}
+          <div className="text-xs text-[color:var(--oltra-text-muted)]">
+            {hotel.affiliation ? <span>{hotel.affiliation}</span> : null}
+          </div>
         </div>
-      </div>
 
-      {/* Hero */}
-      <header className="mb-10">
+        {/* Hero */}
+        <header className="mb-10">
 
-        {agodaPhotos.length > 0 ? (
-          <div className="mb-8 grid gap-3 sm:grid-cols-2">
-            {agodaPhotos.slice(0, 5).map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
-              />
+          {agodaPhotos.length > 0 ? (
+            <div className="mb-8 grid gap-3 sm:grid-cols-2">
+              {agodaPhotos.slice(0, 5).map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="oltra-photo-placeholder mb-8 h-[320px] rounded-[var(--oltra-radius-lg)]">
+              Photos coming soon
+            </div>
+          )}
+
+          <h1 className="text-4xl font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+            {hotel.hotel_name ?? "Hotel"}
+          </h1>
+
+          {loc ? (
+            <p className="mt-3 text-base text-[color:var(--oltra-text-muted)]">{loc}</p>
+          ) : (
+            <p className="mt-3 text-base text-[color:var(--oltra-text-muted)]"> </p>
+          )}
+
+          {/* Editorial “chips” — very restrained, recessed like the Hotels page badges */}
+          <div className="mt-6 flex flex-wrap gap-2">
+            {settings.slice(0, 3).map((s) => (
+              <span
+                key={`setting-${s}`}
+                className="rounded-full border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 py-1 text-xs text-[color:var(--oltra-badge-text)]"
+              >
+                {s}
+              </span>
+            ))}
+            {styles.slice(0, 3).map((s) => (
+              <span
+                key={`style-${s}`}
+                className="rounded-full border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 py-1 text-xs text-[color:var(--oltra-badge-text)]"
+              >
+                {s}
+              </span>
+            ))}
+            {awards.slice(0, 2).map((s) => (
+              <span
+                key={`award-${s}`}
+                className="rounded-full border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 py-1 text-xs text-[color:var(--oltra-badge-text)]"
+              >
+                {s}
+              </span>
             ))}
           </div>
-        ) : (
-          <div className="mb-8 flex h-[320px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-xs font-medium uppercase tracking-[0.14em] text-zinc-400">
-            Photos coming soon
-          </div>
-        )}
-        
-        <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
-          {hotel.hotel_name ?? "Hotel"}
-        </h1>
+        </header>
 
-        {loc ? (
-          <p className="mt-3 text-base text-zinc-600">{loc}</p>
-        ) : (
-          <p className="mt-3 text-base text-zinc-500"> </p>
-        )}
-
-        {/* Editorial “chips” — very restrained */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          {settings.slice(0, 3).map((s) => (
-            <span
-              key={`setting-${s}`}
-              className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-700"
-            >
-              {s}
-            </span>
-          ))}
-          {styles.slice(0, 3).map((s) => (
-            <span
-              key={`style-${s}`}
-              className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-700"
-            >
-              {s}
-            </span>
-          ))}
-          {awards.slice(0, 2).map((s) => (
-            <span
-              key={`award-${s}`}
-              className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-700"
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      </header>
-
-      {/* Body */}
-      <section className="grid gap-10 md:grid-cols-[1.3fr_0.7fr]">
-        {/* Editorial narrative */}
-        <article className="min-w-0">
-          {hotel.highlights ? (
-            <div className="mb-8">
-              <h2 className="text-sm font-semibold tracking-wide text-zinc-900">
-                Highlights
-              </h2>
-              <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-zinc-700">
-                {hotel.highlights}
-              </p>
-            </div>
-          ) : null}
-
-          {hotel.description ? (
-            <div className="mb-8">
-              <h2 className="text-sm font-semibold tracking-wide text-zinc-900">
-                Description
-              </h2>
-              <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-zinc-700">
-                {hotel.description}
-              </p>
-            </div>
-          ) : null}
-
-          {activities.length > 0 ? (
-            <div className="mb-2">
-              <h2 className="text-sm font-semibold tracking-wide text-zinc-900">
-                Activities
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-zinc-700">
-                {activities.join(" · ")}
-              </p>
-            </div>
-          ) : null}
-        </article>
-
-        {/* Key facts */}
-        <aside className="md:pl-6">
-          <div className="rounded-2xl border border-zinc-200 p-6">
-            <h2 className="text-sm font-semibold tracking-wide text-zinc-900">
-              Key facts
-            </h2>
-
-            <dl className="mt-5 space-y-3 text-sm">
-              {hotel.total_rooms_suites_villas != null ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">Total rooms/suites/villas</dt>
-                  <dd className="text-zinc-900">{String(hotel.total_rooms_suites_villas)}</dd>
-                </div>
-              ) : null}
-
-              {hotel.editor_rank != null ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">Editor rank</dt>
-                  <dd className="text-zinc-900">{String(hotel.editor_rank)}</dd>
-                </div>
-              ) : null}
-
-              {hotel.ext_points != null ? (
-                <div className="flex items-baseline justify-between gap-4">
-                  <dt className="text-zinc-600">External points</dt>
-                  <dd className="text-zinc-900">{String(hotel.ext_points)}</dd>
-                </div>
-              ) : null}
-            </dl>
-
-            {(hotel.www || hotel.insta) && (
-              <div className="mt-6 border-t border-zinc-200 pt-5">
-                <h3 className="text-xs font-semibold tracking-wide text-zinc-900">
-                  Links
-                </h3>
-                <div className="mt-3 flex flex-col gap-2 text-sm">
-                  {hotel.www ? (
-                    <a
-                      href={hotel.www}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-zinc-700 hover:text-zinc-950 underline underline-offset-4 decoration-zinc-300"
-                    >
-                      Website
-                    </a>
-                  ) : null}
-                  {hotel.insta ? (
-                    <a
-                      href={hotel.insta}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-zinc-700 hover:text-zinc-950 underline underline-offset-4 decoration-zinc-300"
-                    >
-                      Instagram
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            )}
-            {bookingHref ? (
-              <div className="mt-6 border-t border-zinc-200 pt-5">
-                <a
-                  href={bookingHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center rounded-full border border-zinc-300 px-4 py-2 text-sm tracking-[0.16em] text-zinc-900 transition hover:bg-zinc-50"
-                >
-                  {bookingLabel}
-                </a>
+        {/* Body */}
+        <section className="grid gap-10 md:grid-cols-[1.3fr_0.7fr]">
+          {/* Editorial narrative */}
+          <article className="min-w-0">
+            {hotel.highlights ? (
+              <div className="mb-8">
+                <h2 className="text-sm font-semibold tracking-wide text-[color:var(--oltra-text-primary)]">
+                  Highlights
+                </h2>
+                <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-[color:var(--oltra-text-primary)]">
+                  {hotel.highlights}
+                </p>
               </div>
             ) : null}
-          </div>
-        </aside>
-      </section>
-    </main>
+
+            {hotel.description ? (
+              <div className="mb-8">
+                <h2 className="text-sm font-semibold tracking-wide text-[color:var(--oltra-text-primary)]">
+                  Description
+                </h2>
+                <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-[color:var(--oltra-text-primary)]">
+                  {hotel.description}
+                </p>
+              </div>
+            ) : null}
+
+            {activities.length > 0 ? (
+              <div className="mb-2">
+                <h2 className="text-sm font-semibold tracking-wide text-[color:var(--oltra-text-primary)]">
+                  Activities
+                </h2>
+                <p className="mt-3 text-base leading-relaxed text-[color:var(--oltra-text-primary)]">
+                  {activities.join(" · ")}
+                </p>
+              </div>
+            ) : null}
+          </article>
+
+          {/* Key facts */}
+          <aside className="md:pl-6">
+            <div className="oltra-glass oltra-panel">
+              <h2 className="text-sm font-semibold tracking-wide text-[color:var(--oltra-text-primary)]">
+                Key facts
+              </h2>
+
+              <dl className="mt-5 space-y-3 text-sm">
+                {hotel.total_rooms_suites_villas != null ? (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-[color:var(--oltra-text-muted)]">Total rooms/suites/villas</dt>
+                    <dd className="text-[color:var(--oltra-text-primary)]">{String(hotel.total_rooms_suites_villas)}</dd>
+                  </div>
+                ) : null}
+
+                {hotel.editor_rank != null ? (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-[color:var(--oltra-text-muted)]">Editor rank</dt>
+                    <dd className="text-[color:var(--oltra-text-primary)]">{String(hotel.editor_rank)}</dd>
+                  </div>
+                ) : null}
+
+                {hotel.ext_points != null ? (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-[color:var(--oltra-text-muted)]">External points</dt>
+                    <dd className="text-[color:var(--oltra-text-primary)]">{String(hotel.ext_points)}</dd>
+                  </div>
+                ) : null}
+              </dl>
+
+              {(hotel.www || hotel.insta) && (
+                <div className="mt-6 border-t border-[var(--oltra-field-border)] pt-5">
+                  <h3 className="text-xs font-semibold tracking-wide text-[color:var(--oltra-text-primary)]">
+                    Links
+                  </h3>
+                  <div className="mt-3 flex flex-col gap-2 text-sm">
+                    {hotel.www ? (
+                      <a
+                        href={hotel.www}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[color:var(--oltra-text-muted)] underline underline-offset-4 hover:text-[color:var(--oltra-text-primary)]"
+                      >
+                        Website
+                      </a>
+                    ) : null}
+                    {hotel.insta ? (
+                      <a
+                        href={hotel.insta}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[color:var(--oltra-text-muted)] underline underline-offset-4 hover:text-[color:var(--oltra-text-primary)]"
+                      >
+                        Instagram
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+              {bookingHref ? (
+                <div className="mt-6 border-t border-[var(--oltra-field-border)] pt-5">
+                  <a
+                    href={bookingHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="oltra-btn oltra-btn--block"
+                  >
+                    {bookingLabel}
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          </aside>
+        </section>
+      </div>
+    </PageShell>
   );
 }

@@ -33,10 +33,37 @@
   gap: 8px;
 }
 
+/* A segmented control, not an action, so it stays off the button standard.
+   These are the values it used to borrow from .oltra-button-secondary. */
 .tripTypeTabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding-left: 8px;
-  padding-right: 8px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid #6c8c6a;
+  border-radius: 4px;
+  background: transparent;
+  color: #cbd0cb;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.tripTypeTabs button:hover {
+  opacity: 0.95;
 }
 
 .segmentButtonActive {
@@ -80,9 +107,11 @@
   gap: var(--oltra-gap-md);
 }
 
+/* Flex, not a 2-column grid: the buttons size to their labels, and "Delete
+   flight" is wider than half the column. */
 .multiCityButtons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -501,22 +530,6 @@
   gap: 12px;
 }
 
-.multiLegChange {
-  font-size: 0.74rem;
-  letter-spacing: 0.14em;
-  background: transparent;
-  border: 1px solid var(--oltra-border-medium);
-  border-radius: var(--oltra-radius-sm, 6px);
-  color: var(--oltra-text-secondary);
-  padding: 4px 10px;
-  cursor: pointer;
-}
-
-.multiLegChange:hover {
-  background: var(--oltra-surface-lift);
-  color: var(--oltra-text-primary);
-}
-
 .multiPinnedSelectable {
   display: grid;
   grid-template-columns: 80px 1fr;
@@ -733,7 +746,6 @@
   background: #fff;
   color: #111;
   font-size: 0.66rem;
-  font-style: italic;
   font-weight: 400;
   line-height: 1;
   cursor: pointer;
@@ -1156,95 +1168,20 @@
   white-space: nowrap;
 }
 
-.multiChangeLegButton {
-  flex-shrink: 0;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: transparent;
-  border: 1px solid var(--oltra-border-medium);
-  border-radius: var(--oltra-radius-sm, 6px);
-  color: var(--oltra-text-secondary);
-  padding: 3px 8px;
-  cursor: pointer;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
-}
-
-.multiChangeLegButton:hover {
-  background: var(--oltra-surface-lift);
-  color: var(--oltra-text-primary);
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-/* Grid, not flex: the two cells must be exactly equal, and flex sized them by
-   content instead (measured 63.2px BOOK vs 49.6px SAVE - "BOOK" is wider at
-   this size/letter-spacing, and the row is only ~119px so there was never
-   enough slack for flex-grow to even them out). minmax(0,1fr) also stops the
-   automatic minimum size from re-expanding a cell. SaveToTripControl renders
-   its trigger inside a positioning wrapper, so the wrapper - not the button -
-   is the grid item; the button fills it via width:100%. */
+/* Placement only - BOOK and SAVE are Condensed .oltra-btn pills sized to their
+   labels. A centred flex row rather than two fixed ~56px cells, so the wider
+   transient SAVE labels ("SAVING...") overflow symmetrically into the card's
+   padding instead of past its right edge. SaveToTripControl renders its
+   trigger inside a positioning wrapper, which is the row's item; flex on it
+   keeps the inline-flex button from sitting on a text baseline. */
 .priceCardButtonRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 6px;
 }
 
 .priceCardButtonRow > div {
   display: flex;
-  min-width: 0;
-}
-
-.bookButtonActive,
-.bookButtonInactive {
-  flex: 1;
-  min-width: 0;
-  height: 24px;
-  border-radius: var(--oltra-radius-md);
-  font-size: 0.62rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  padding: 0 6px;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
-}
-
-.savePillButton {
-  width: 100%;
-  min-width: 0;
-  height: 24px;
-  border-radius: var(--oltra-radius-sm, 6px);
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  padding: 0 6px;
-  background: transparent;
-  border: 1px solid var(--oltra-border-medium);
-  color: var(--oltra-text-secondary);
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
-}
-
-.savePillButton:hover {
-  background: var(--oltra-surface-lift);
-  color: var(--oltra-text-primary);
-}
-
-.bookButtonActive {
-  background: var(--oltra-button-active-bg);
-  border: 1px solid transparent;
-  color: var(--oltra-button-active-text);
-}
-
-.bookButtonActive:hover {
-  opacity: 0.95;
-}
-
-.bookButtonInactive {
-  background: transparent;
-  border: 1px solid var(--oltra-border-medium);
-  color: var(--oltra-text-secondary);
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .matchBadgeWeak {
@@ -1310,11 +1247,6 @@
   white-space: nowrap;
 }
 
-.searchButtonDirty {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
 .staticCard {
   position: relative;
   border: 1px solid var(--oltra-field-border);
@@ -1345,32 +1277,4 @@
   font-size: 0.82rem;
   color: var(--oltra-text-secondary);
   padding: 12px 0;
-}
-
-.bookingBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
-  background: var(--oltra-surface-lift-soft);
-  border: 1px solid var(--oltra-glass-border);
-  border-radius: var(--oltra-radius-md);
-}
-
-.bookingBarInfo {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.bookingBarCurrency {
-  font-size: 0.72rem;
-  opacity: 0.65;
-}
-
-.bookingBarAmount {
-  font-size: 1.55rem;
-  letter-spacing: -0.04em;
-  line-height: 1;
 }

@@ -1,8 +1,9 @@
 /* The concierge modal and the conversation inside it.
  *
  * The conversation rules below are ported from the landing page's ask* block,
- * which is where this UI grew up — same sizes, same shared button classes,
- * same faded-red Clear. They moved here because the concierge is no longer a
+ * which is where this UI grew up. Every button in it is the site's .oltra-btn
+ * (Clear the destructive variant), so nothing here styles a button. They
+ * moved here because the concierge is no longer a
  * landing-page feature, and leaving them in page.module.css would mean four
  * other pages importing the landing page's stylesheet to render a modal.
  *
@@ -37,12 +38,6 @@
 }
 
 .panel {
-  /* One width for every button in the panel — Exit, Clear, Ask and Stop.
-     They are the same kind of control and sit 400px apart vertically, which
-     is exactly the distance at which a 4px difference reads as a mistake
-     rather than as nothing. Declared once so the four cannot drift (§46:
-     equal-looking is not equal). */
-  --concierge-button-width: 88px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -64,39 +59,12 @@
 
 /* A labelled Exit, not a bare ×. The photo lightbox can afford a glyph because
    nothing else is happening in it; here the visitor is mid-conversation and
-   needs to know the exchange survives leaving. */
-/* A fixed width, not a min-width. On min-width the longest word won and the
-   buttons came out at whatever their own labels needed. */
-.exit {
-  flex: 0 0 auto;
-  width: var(--concierge-button-width);
-}
-
+   needs to know the exchange survives leaving. Exit and Clear size to their
+   labels (the button standard removed fixed widths). */
 .headerActions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-/* Clear is Exit, in red. Same class, same size, same fill — only the border
-   moves off the sage pair onto the faded red used for warnings (§35/§46),
-   because it is the one control here that throws work away.
-
-   Compound, so it beats .oltra-button-secondary's own border regardless of
-   which stylesheet loads first; a single .clear would tie on specificity and
-   lose to load order (§45). */
-.exit.clear {
-  border-color: var(--oltra-error-text);
-}
-
-.exit.clear:hover {
-  border-color: var(--oltra-error-text);
-  color: var(--oltra-error-text);
-}
-
-.exit.clear:focus-visible {
-  outline: 2px solid var(--oltra-error-text);
-  outline-offset: 2px;
 }
 
 /* ── the conversation ─────────────────────────────────────────────────── */
@@ -399,48 +367,18 @@
   border-color: var(--oltra-border-medium);
 }
 
-/* Geometry only — Ask and Stop wear the shared button classes so they match
-   every other button on the site, active and passive. The width is the
-   header's width: Ask sat 4px narrower than Exit above it, because "Ask" is
-   a shorter word than "Clear" and both were sized by their content. */
-.action {
-  flex: 0 0 auto;
-  width: var(--concierge-button-width);
-}
-
 /* ── handoffs ─────────────────────────────────────────────────────────── */
 
-/* Where this answer can be seen in full. Text actions rather than buttons:
-   the offer is made in the model's own words just above, and three filled
-   buttons under a conversation would read as the main event. */
+/* Where this answer can be seen in full: one Primary Full .oltra-btn (the
+   button standard made handoff links pills). There is only ever one, so it
+   cannot read as a menu of buttons under the conversation. */
 .handoffs {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 1.1rem;
-  padding-top: 0.15rem;
+  padding-top: 0.6rem;
   border-top: 1px solid var(--oltra-border-subtle);
   margin-top: 0.15rem;
-}
-
-.handoff {
-  appearance: none;
-  background: none;
-  border: 0;
-  padding: 0.35rem 0;
-  font-family: var(--oltra-font-sans);
-  font-size: 13px;
-  color: var(--oltra-text-muted);
-  cursor: pointer;
-  transition: color 160ms ease;
-}
-
-.handoff:hover {
-  color: var(--oltra-text-primary);
-}
-
-.handoff:focus-visible {
-  outline: 2px solid var(--oltra-button-active-bg);
-  outline-offset: 2px;
 }
 
 @media (max-width: 700px) {

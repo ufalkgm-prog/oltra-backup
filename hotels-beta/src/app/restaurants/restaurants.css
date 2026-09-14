@@ -376,7 +376,7 @@
   min-width: 0;
 }
 
-/* The member's own favourites, in the same sage the active buttons use. */
+/* The member's own favourites, in the sage fill the old active buttons used. */
 .restaurant-favorite-mark {
   margin-right: 6px;
   color: var(--oltra-favorite-mark);

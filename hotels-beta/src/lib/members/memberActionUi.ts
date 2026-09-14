@@ -5,7 +5,3 @@ export function getMemberActionLoginMessage(action: MemberActionKind): string {
     ? "Log in to add to trip."
     : "Log in to add favorites.";
 }
-
-export function getMemberActionButtonClass(isLoggedIn: boolean): string {
-  return isLoggedIn ? "oltra-button-primary" : "oltra-button-secondary";
-}

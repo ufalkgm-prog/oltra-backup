@@ -1,0 +1,406 @@
+/* Button standard proposal, 2026-09-14 — sandbox only.
+ *
+ * Nothing here is imported outside /theme-test. The classes are written so the
+ * same rules can be lifted into oltra-theme.css once the mapping is approved;
+ * the `.is*` state classes exist only so this page can show hover / pressed /
+ * focus side by side without anyone having to hover.
+ *
+ * Colours come in as custom properties on the element (see ButtonStandard.tsx)
+ * so the "as specified" and "proposed" palettes render from one set of rules.
+ */
+
+.wrap {
+  margin: 16px 24px 0;
+  max-width: 1200px;
+  font-family: var(--oltra-font-sans);
+  color: #f5f2ec;
+}
+
+.surface {
+  background: #2c3634;
+  border: 1px solid #3e4947;
+  border-radius: 6px;
+  padding: 18px 20px;
+}
+
+.surface + .surface {
+  margin-top: 12px;
+}
+
+.panel {
+  background: #374240;
+}
+
+.h3 {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #cbd0cb;
+  font-weight: 400;
+}
+
+.lede {
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #cbd0cb;
+  max-width: 860px;
+}
+
+.lede strong {
+  color: #f5f2ec;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 22px;
+}
+
+.row + .row {
+  margin-top: 16px;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.cellLabel {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cbd0cb;
+}
+
+/* ---- The button ------------------------------------------------------- */
+
+.btn {
+  /* Supplied per element: --rim, --rim-hover, --rim-press, --label,
+     --label-press. */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  border: 2px solid var(--rim);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--label);
+  font-family: var(--oltra-font-sans);
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hit area extended past the rim, not by padding: the pseudo-element is
+   centred on the button and never smaller than 44x44. */
+.btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  transform: translate(-50%, -50%);
+}
+
+.showHit .btn::after {
+  outline: 1px dashed rgba(255, 138, 113, 0.75);
+}
+
+.full {
+  padding: 8px 20px;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Carried over unchanged from .oltra-button--xs: 22px tall, 0 6px padding,
+   0.58rem type, 0.14em tracking. Only the treatment changes. */
+.condensed {
+  height: 22px;
+  padding: 0 6px;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ai {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+.btn:not([aria-disabled="true"]):hover,
+.btn.isHover {
+  border-color: var(--rim-hover);
+}
+
+.ai:not([aria-disabled="true"]):hover,
+.ai.isHover {
+  color: var(--rim-hover);
+}
+
+.btn:not([aria-disabled="true"]):active,
+.btn.isPressed {
+  border-color: var(--rim-press);
+  color: var(--label-press);
+}
+
+.btn:focus {
+  outline: none;
+}
+
+.btn:focus-visible,
+.btn.isFocus {
+  outline: 2px solid var(--focus-ring, #f5f2ec);
+  outline-offset: 2px;
+}
+
+.btn[aria-disabled="true"] {
+  cursor: default;
+}
+
+/* ---- Passive demo ----------------------------------------------------- */
+
+.demoForm {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 180px)) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.demoField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.demoField input {
+  height: 34px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #3e4947;
+  background: #232c2a;
+  color: #f5f2ec;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color-scheme: dark;
+}
+
+.demoField input:focus-visible {
+  outline: 2px solid #f5f2ec;
+  outline-offset: 2px;
+}
+
+.helper {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #cbd0cb;
+  min-height: 16px;
+}
+
+/* ---- Search-label proposal -------------------------------------------- */
+
+.tipAnchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid #738783;
+  background: #374240;
+  color: #f5f2ec;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 3;
+}
+
+.tipAnchor:hover .tip,
+.tipAnchor:focus-within .tip {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Over imagery ----------------------------------------------------- */
+
+.photoRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.photo {
+  position: relative;
+  height: 120px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px;
+  background-size: cover;
+  background-position: center;
+}
+
+.photoCaption {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f5f2ec;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* The scrim sits behind the buttons only - a soft dark pool, no hard edge. */
+.scrim {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, rgba(20, 26, 25, 0.55), rgba(20, 26, 25, 0.35) 70%, rgba(20, 26, 25, 0));
+}
+
+/* ---- Tables ----------------------------------------------------------- */
+
+.table {
+  overflow-x: auto;
+  border: 1px solid #3e4947;
+  border-radius: 4px;
+}
+
+.table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.74rem;
+}
+
+.table th,
+.table td {
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #3e4947;
+}
+
+.table th {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cbd0cb;
+  font-weight: 600;
+  background: #232c2a;
+}
+
+.table td {
+  color: #f5f2ec;
+}
+
+.table td.muted {
+  color: #cbd0cb;
+}
+
+.mono {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.7rem;
+}
+
+.pass {
+  color: #a8c4a2;
+}
+
+.fail {
+  color: #ff8a71;
+  font-weight: 600;
+}
+
+.swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  vertical-align: -2px;
+  margin-right: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid #3e4947;
+  background: #232c2a;
+  color: #cbd0cb;
+  white-space: nowrap;
+}
+
+.tagFlag {
+  border-color: rgba(255, 138, 113, 0.5);
+  color: #ff8a71;
+}
+
+.flagList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #f5f2ec;
+}
+
+.flagList li + li {
+  margin-top: 6px;
+}
+
+.flagList em {
+  font-style: normal;
+  color: #cbd0cb;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #cbd0cb;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .demoForm,
+  .photoRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

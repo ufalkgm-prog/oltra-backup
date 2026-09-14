@@ -237,6 +237,10 @@ export default function SavedTripsView() {
   const [currentNotes, setCurrentNotes] = useState("");
   const [warningItemId, setWarningItemId] = useState<string | null>(null);
   const [tripPendingDelete, setTripPendingDelete] = useState<SavedTrip | null>(null);
+  const [itemPendingDelete, setItemPendingDelete] = useState<{
+    section: "hotels" | "restaurants" | "flights";
+    itemId: string;
+  } | null>(null);
   const [showItinerary, setShowItinerary] = useState(false);
   const [refreshStates, setRefreshStates] = useState<
     Record<string, RefreshState>
@@ -594,7 +598,7 @@ export default function SavedTripsView() {
 
           <button
             type="button"
-            className="oltra-button-primary members-action-button"
+            className="oltra-btn"
             onClick={() => setShowItinerary(true)}
           >
             Itinerary
@@ -602,7 +606,7 @@ export default function SavedTripsView() {
 
           <button
             type="button"
-            className="members-text-danger-action members-trip-delete"
+            className="oltra-btn oltra-btn--destructive"
             onClick={() => setTripPendingDelete(selectedTrip)}
           >
             Delete trip
@@ -645,7 +649,7 @@ export default function SavedTripsView() {
             showThumb
             refreshStates={refreshStates}
             onRefreshPrice={(item) => refreshItemPrice("hotels", item)}
-            onDelete={(id) => deleteTripItem("hotels", id)}
+            onDelete={(id) => setItemPendingDelete({ section: "hotels", itemId: id })}
             onBook={handleBook}
           />
           <TripSection
@@ -653,13 +657,15 @@ export default function SavedTripsView() {
             items={flightItems}
             refreshStates={refreshStates}
             onRefreshPrice={(item) => refreshItemPrice("flights", item)}
-            onDelete={(id) => deleteTripItem("flights", id)}
+            onDelete={(id) => setItemPendingDelete({ section: "flights", itemId: id })}
             onBook={handleBook}
           />
           <TripSection
             title="RESTAURANTS"
             items={restaurantItems}
-            onDelete={(id) => deleteTripItem("restaurants", id)}
+            onDelete={(id) =>
+              setItemPendingDelete({ section: "restaurants", itemId: id })
+            }
             onBook={handleBook}
           />
         </div>
@@ -680,20 +686,22 @@ export default function SavedTripsView() {
             proceed with booking.
           </div>
           <div className="members-warning-panel__actions">
-            <button
-              type="button"
-              className="oltra-button-secondary members-action-button"
-              onClick={() => setWarningItemId(null)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="oltra-button-primary members-action-button"
-              onClick={proceedWithWarning}
-            >
-              Proceed anyway
-            </button>
+            <div className="oltra-btn-pair">
+              <button
+                type="button"
+                className="oltra-btn"
+                onClick={() => setWarningItemId(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="oltra-btn"
+                onClick={proceedWithWarning}
+              >
+                Proceed anyway
+              </button>
+            </div>
           </div>
         </section>
       ) : null}
@@ -709,24 +717,58 @@ export default function SavedTripsView() {
               ?
             </div>
             <div className="members-leave-modal__actions">
-              <button
-                type="button"
-                className="members-confirm-danger-button members-action-button"
-                onClick={async () => {
-                  const tripId = tripPendingDelete.id;
-                  setTripPendingDelete(null);
-                  await deleteTrip(tripId);
-                }}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                className="oltra-button-primary members-action-button"
-                onClick={() => setTripPendingDelete(null)}
-              >
-                No
-              </button>
+              <div className="oltra-btn-pair">
+                <button
+                  type="button"
+                  className="oltra-btn oltra-btn--destructive"
+                  onClick={async () => {
+                    const tripId = tripPendingDelete.id;
+                    setTripPendingDelete(null);
+                    await deleteTrip(tripId);
+                  }}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  className="oltra-btn"
+                  onClick={() => setTripPendingDelete(null)}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {itemPendingDelete ? (
+        <div className="members-leave-overlay">
+          <div className="oltra-glass oltra-panel members-leave-modal">
+            <div className="members-leave-modal__text">
+              Remove this item from the trip?
+            </div>
+            <div className="members-leave-modal__actions">
+              <div className="oltra-btn-pair">
+                <button
+                  type="button"
+                  className="oltra-btn oltra-btn--destructive"
+                  onClick={async () => {
+                    const { section, itemId } = itemPendingDelete;
+                    setItemPendingDelete(null);
+                    await deleteTripItem(section, itemId);
+                  }}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  className="oltra-btn"
+                  onClick={() => setItemPendingDelete(null)}
+                >
+                  No
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -817,7 +859,7 @@ function TripSection({
                     <div className="members-item__price-refresh">
                       <button
                         type="button"
-                        className="members-text-action"
+                        className="oltra-btn oltra-btn--condensed"
                         disabled={refreshStates?.[item.id]?.status === "loading"}
                         onClick={() => onRefreshPrice(item)}
                       >
@@ -848,14 +890,16 @@ function TripSection({
                   <div className="members-item__actions">
                     <button
                       type="button"
-                      className="oltra-button-primary members-action-button"
+                      className="oltra-btn oltra-btn--condensed"
                       onClick={() => onBook(item.id, item.bookUrl, item.hasOverlapWarning)}
                     >
                       Book
                     </button>
+                    {/* Not immediate: onDelete opens the "Remove this item"
+                        confirm in SavedTripsView. */}
                     <button
                       type="button"
-                      className="members-text-danger-action"
+                      className="oltra-btn oltra-btn--destructive oltra-btn--condensed"
                       onClick={() => onDelete(item.id)}
                     >
                       Delete

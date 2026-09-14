@@ -512,7 +512,7 @@ export default function LandingSearchPanel({
      the destination field. */
 
   return (
-    <div className={`oltra-glass oltra-panel ${styles.searchPanel} ${styles.landingGlass}`}>
+    <div className={`oltra-glass oltra-panel oltra-over-image ${styles.searchPanel} ${styles.landingGlass}`}>
       <form
         ref={formRef}
         action="/"

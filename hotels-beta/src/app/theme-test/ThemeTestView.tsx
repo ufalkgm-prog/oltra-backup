@@ -7,33 +7,14 @@ import type { HotelRecord } from "@/lib/directus";
 import OltraSelect from "@/components/site/OltraSelect";
 import GuestSelector from "@/components/site/GuestSelector";
 import HotelSmallCard from "@/components/hotels/HotelSmallCard";
+import ButtonStandard from "./ButtonStandard";
+import { ratio } from "./contrast";
 import styles from "./ThemeTestView.module.css";
 
 let _ml: typeof maplibregl | null = null;
 async function loadMaplibre(): Promise<typeof maplibregl> {
   if (!_ml) _ml = (await import("maplibre-gl")).default;
   return _ml;
-}
-
-// --- Contrast math, mirrored from the audit script so the on-page table is
-// computed live rather than a hand-typed copy of numbers from chat. ---
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace("#", "");
-  return [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16)) as [number, number, number];
-}
-function relLum([r, g, b]: [number, number, number]): number {
-  const f = (c: number) => {
-    c /= 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-}
-function ratio(a: string, b: string): number {
-  const L1 = relLum(hexToRgb(a));
-  const L2 = relLum(hexToRgb(b));
-  const hi = Math.max(L1, L2);
-  const lo = Math.min(L1, L2);
-  return (hi + 0.05) / (lo + 0.05);
 }
 
 // FINAL PALETTE, 2026-08-13 — mirrors the values now shipped into
@@ -491,7 +472,11 @@ export default function ThemeTestView({ sampleHotels }: { sampleHotels: HotelRec
         </p>
       </div>
 
-      <div className={styles.introSectionTitle}>Contrast table (required, computed live)</div>
+      <ButtonStandard />
+
+      <div className={styles.introSectionTitle}>
+        Palette contrast table (2026-08-13 — its button rows are superseded by the button standard above)
+      </div>
       <ContrastTable />
 
       <div className={styles.introSectionTitle}>Radius scale — before / after (unchanged this pass)</div>

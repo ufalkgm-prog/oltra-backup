@@ -351,7 +351,7 @@ export default function AiResultFrames() {
       >
         {showHotels ? (
           <div
-            className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}
+            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}
           >
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
@@ -360,7 +360,7 @@ export default function AiResultFrames() {
               </div>
               <Link
                 href={hotelsHref(query, results)}
-                className={`oltra-button-primary ${styles.summaryTopButton}`}
+                className="oltra-btn"
                 prefetch={false}
               >
                 Go to hotels
@@ -370,6 +370,12 @@ export default function AiResultFrames() {
             <div className={styles.smallCardsList}>
               {hotels.map((hotel) => {
                 const record = hotel as unknown as HotelRecord;
+                const bookingHref = bookingHrefFor(record, {
+                  from: query.from,
+                  to: query.to,
+                  adults: query.adults,
+                  kids: query.kids,
+                });
                 return (
                   <HotelSmallCard
                     key={String(hotel.id)}
@@ -381,12 +387,7 @@ export default function AiResultFrames() {
                         ? availability[String(hotel.id)] ?? { status: "loading" }
                         : { status: "idle" }
                     }
-                    bookingHref={bookingHrefFor(record, {
-                      from: query.from,
-                      to: query.to,
-                      adults: query.adults,
-                      kids: query.kids,
-                    })}
+                    bookingHref={bookingHref}
                     renderSaveControl={() => (
                       <SaveToTripControl
                         onSave={(tripId) => handleSaveHotel(tripId, record)}
@@ -394,9 +395,12 @@ export default function AiResultFrames() {
                         label="SAVE"
                         compact
                         align="right"
-                        /* --xs and w-full match the BOOK button rendered
-                           inside the card, so the pair is one size. */
-                        className="oltra-button-secondary oltra-button--xs w-full"
+                        /* Condensed and block, matching the button rendered
+                           inside the card so the pair is one size; stacked
+                           with it only when there is one. */
+                        className={`oltra-btn oltra-btn--condensed oltra-btn--block${
+                          bookingHref ? " oltra-btn--stack-bottom" : ""
+                        }`}
                       />
                     )}
                   />
@@ -407,7 +411,7 @@ export default function AiResultFrames() {
             {destinationLabel ? (
               <Link
                 href={allHotelsHref(query)}
-                className={styles.aiEscape}
+                className={`oltra-btn ${styles.aiEscape}`}
                 prefetch={false}
               >
                 See all hotels in {destinationLabel}
@@ -418,7 +422,7 @@ export default function AiResultFrames() {
 
         {showFlights ? (
           <div
-            className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}
+            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}
           >
             <div className={styles.summaryHeaderRow}>
               {/* Just "Flights". Every leg block below states its own route
@@ -427,7 +431,7 @@ export default function AiResultFrames() {
               <div className="oltra-label">Flights</div>
               <Link
                 href={flightsHref(query, results)}
-                className={`oltra-button-primary ${styles.summaryTopButton}`}
+                className="oltra-btn"
                 prefetch={false}
               >
                 Go to flights
@@ -454,7 +458,7 @@ export default function AiResultFrames() {
 
         {showRestaurants ? (
           <div
-            className={`oltra-glass oltra-panel ${styles.summaryColumn} ${styles.landingGlass}`}
+            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}
           >
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
@@ -465,7 +469,7 @@ export default function AiResultFrames() {
               {query.destination.city ? (
                 <Link
                   href={restaurantsHref(query)}
-                  className={`oltra-button-primary ${styles.summaryTopButton}`}
+                  className="oltra-btn"
                   prefetch={false}
                 >
                   Go to restaurants

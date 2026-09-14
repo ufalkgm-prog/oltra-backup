@@ -95,6 +95,10 @@ export default function HotelSmallCard({
 
   const rightBlock = (() => {
     if (isPassive) {
+      // With a website to send the guest to, the caveat is the button label
+      // below (one neutral button instead of a note plus BOOK), so it is not
+      // repeated here. Without one, the note is all there is to say.
+      if (bookingHref) return null;
       return (
         <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           Check availability on website
@@ -169,12 +173,17 @@ export default function HotelSmallCard({
               e.stopPropagation();
               window.open(bookingHref, "_blank", "noopener,noreferrer");
             }}
-            /* Sizing lives in .oltra-button--xs, not an inline style: the Save
-               control beside it is rendered by the caller, and the two have to
-               match. */
-            className="oltra-button-primary oltra-button--xs w-full"
+            /* Sizing lives in .oltra-btn--condensed, not an inline style: the
+               Save control below it is rendered by the caller, and the two have
+               to match. A hotel we cannot sell gets the neutral button instead
+               of BOOK, carrying its caveat as the label. */
+            className={`oltra-btn ${
+              isPassive ? "oltra-btn--neutral " : ""
+            }oltra-btn--condensed oltra-btn--block${
+              renderSaveControl ? " oltra-btn--stack-top" : ""
+            }`}
           >
-            BOOK
+            {isPassive ? "Check availability on website" : "BOOK"}
           </button>
         ) : null}
         {/* Stacked, not side by side: the save control opens a trip picker

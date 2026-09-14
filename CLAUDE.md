@@ -23,7 +23,7 @@ The five rule files, and what opens each:
 | `airports-and-flights.md` | §7B, §51, §52 | `scripts/airports`, the geography scripts, `lib/flights`, the Flights page |
 | `etg-ratehawk.md` | §32, §42, §47, §48 | `lib/ratehawk`, the ETG proxy, the static sync |
 | `concierge.md` | §50 | `lib/ai`, `components/ai`, the chat route |
-| `design-system.md` | §35 | any `.tsx` or `.css` |
+| `design-system.md` | §35, §35A (buttons) | any `.tsx` or `.css` |
 
 **Section numbers are global and unchanged.** §26 is §26 wherever it lives, and
 every moved section leaves a one-line pointer here, so a `§N` reference always
@@ -236,7 +236,7 @@ Do not create a branch either — this repo's history is a deliberate linear ser
 
 Files: `/src/components/site/LandingBackground.tsx`, `/src/app/LandingSearchPanel.tsx`, `/src/app/LandingSummary.tsx`.
 
-**LandingBackground** — 49 images in `/public/images/landing/`, cross-fade + Ken Burns motion, `buildCycle` guarantees ≥20 positions between repeats. **No dark overlay** — the `rgba(0,0,0,0.34)` layer was removed.
+**LandingBackground** — 49 images in `/public/images/landing/`, cross-fade + Ken Burns motion, `buildCycle` guarantees ≥20 positions between repeats. **A 5% dark overlay, nothing heavier** — the `rgba(0,0,0,0.34)` layer was removed, and the 10% one that outlived it was halved on 2026-09-14. Buttons over the photo get their legibility from `.oltra-over-image` (§35A), not from the overlay.
 
 **LandingSummary** — each hotel card links to `/hotels?q=<name>&from=&to=&adults=N&submitted=1`, i.e. the main Hotels page, **not** the standalone `/hotels/[hotelid]` page (which exists but is not part of the intended UX flow).
 

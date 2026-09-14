@@ -232,53 +232,6 @@
   text-transform: lowercase;
 }
 
-.searchButtonWrap {
-  display: none;
-}
-
-.searchButton,
-.searchButtonPassive {
-  width: 100%;
-  min-width: 0;
-  white-space: normal;
-  height: auto;
-  min-height: var(--oltra-button-height);
-  padding-top: 6px;
-  padding-bottom: 6px;
-  line-height: 1.25;
-  text-align: center;
-}
-
-.searchButtonInner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  white-space: normal;
-  line-height: 1.25;
-  text-align: center;
-}
-
-.searchButtonPassive {
-  border-radius: var(--oltra-radius-md);
-  border: 1px solid var(--oltra-border-soft);
-  background: var(--oltra-surface-lift-soft);
-  color: var(--oltra-text-disabled);
-  cursor: not-allowed;
-  font-size: 0.76rem;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.16em;
-  text-transform: none;
-  min-height: var(--oltra-button-height);
-  height: var(--oltra-button-height);
-  padding: 0 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .kidAgesBlock {
   margin-top: 0.25rem;
 }
@@ -331,14 +284,6 @@
   align-self: center;
 }
 
-.includeSearchButtonWrap {
-  grid-column: 4 / 6;
-  display: flex;
-  align-items: center;
-  justify-content: stretch;
-  min-width: 0;
-}
-
 .includeLabel {
   margin-left: 2px;
 }
@@ -386,19 +331,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  /* Wraps at three frames, where "3 restaurants in Paris" and its button no
-     longer fit on one line — the button drops below the label instead of the
-     label breaking into two lines beside it. */
+  /* Wraps at three frames, where "3 restaurants in Paris" and its Full
+     button no longer fit on one line — the button drops below the label
+     instead of the label breaking into two lines beside it, and the button is
+     never shrunk to make it fit. */
   flex-wrap: wrap;
-}
-
-.summaryTopButton {
-  min-width: 0;
-  height: 30px;
-  padding: 0 14px;
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  white-space: nowrap;
 }
 
 .summaryActionsRight {
@@ -516,17 +453,6 @@
   display: flex;
 }
 
-/* Fixed width so BOOK and SAVE match exactly - content sizing left them 3px
-   apart, and the Save control sits inside its own positioning wrapper so there
-   is no shared flex track to even them out. Height/type come from
-   .oltra-button--xs, which the hotel pane's pair also carries, so all four
-   buttons across both panes are one size. */
-.flightBookButton {
-  width: 84px;
-  min-width: 0;
-  padding: 0 6px;
-}
-
 .flightLegsGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -550,8 +476,8 @@
 }
 
 /* At that width the legend cannot keep label, price, BOOK and SAVE on one
-   line. Wrapping is the honest answer; shrinking the buttons would break the
-   equal-width pairing they were given in §46. */
+   line. Wrapping is the honest answer; the Condensed buttons size to their
+   labels and are never shrunk below that. */
 .flightRowLegendTight {
   flex-wrap: wrap;
   row-gap: 0.4rem;
@@ -675,19 +601,6 @@
   font-size: 0.95rem;
   line-height: 1.6;
   color: var(--oltra-text-secondary);
-}
-
-.summaryActions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding-left: 0.35rem;
-}
-
-.summaryButton {
-  min-width: 168px;
-  white-space: nowrap;
 }
 
 .summaryRows {
@@ -887,18 +800,10 @@
 }
 
 /* The way out of the concierge's pick and into everything we hold there.
-   A quiet text link: the filled button above it is the primary action. */
+   A Full .oltra-btn; this only keeps it at its label's width at the start of
+   the frame's grid, rather than stretched across the column. */
 .aiEscape {
-  align-self: flex-start;
-  font-size: 12px;
-  color: var(--oltra-text-muted);
-  text-decoration: none;
-  transition: color 160ms ease;
-}
-
-.aiEscape:hover {
-  color: var(--oltra-text-primary);
-  text-decoration: underline;
+  justify-self: start;
 }
 
 /* ------------------------------------------------ ask: flight legs --- */

@@ -7,3 +7,4 @@
 - [Data staging lives in oltra-agents](project_oltra_agents_split.md) — new hotel/restaurant content is generated and staged there, not in oltra-beta (CLAUDE.md §41)
 - [Verify manual steps yourself](feedback_verify_manual_steps.md) — a "done, I ran it" report is a starting point for verification, not proof
 - [Bash heredocs eat backslashes](feedback_bash_heredoc_eats_backslashes.md) — quoted heredocs still strip one level; write patch scripts with Write and run by path
+- [Subagents write CRLF](feedback_subagents_write_crlf.md) — parallel agents flipped whole files to CRLF on 2026-09-14; check and normalize to LF before review

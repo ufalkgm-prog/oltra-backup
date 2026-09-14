@@ -36,7 +36,7 @@ export default function AiModeButton({ placement, label = "AI mode" }: Props) {
       type="button"
       // Inside a <form> on the landing and Hotels pages, so the type matters:
       // a default-type button there submits the search on click.
-      className={`${styles.button} ${
+      className={`oltra-btn oltra-btn--ai ${
         placement === "corner" ? styles.corner : styles.inline
       }`}
       aria-haspopup="dialog"
@@ -50,7 +50,6 @@ export default function AiModeButton({ placement, label = "AI mode" }: Props) {
         setConciergeOpen(true);
       }}
     >
-      <span className={styles.mark} aria-hidden="true" />
       {label}
     </button>
   );

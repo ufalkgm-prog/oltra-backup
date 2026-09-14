@@ -110,95 +110,88 @@ export default function TripItineraryDocument({
 
   return createPortal(
     <div className="members-leave-overlay itinerary-overlay">
-      <div className="oltra-panel itinerary-modal">
+      <div className="itinerary-frame">
+        {/* On a dark bar above the paper, not on it: the button standard is
+            drawn for the site's dark surfaces, and the controls are not part
+            of the document being printed. */}
         <div className="itinerary-modal__toolbar">
           <div className="oltra-label">Itinerary</div>
           <div className="itinerary-modal__toolbar-actions">
-            <button
-              type="button"
-              className="oltra-button-primary members-action-button"
-              onClick={handlePrint}
-            >
+            <button type="button" className="oltra-btn" onClick={handlePrint}>
               Print / Save as PDF
             </button>
-            <button
-              type="button"
-              className="oltra-button-secondary members-action-button"
-              onClick={handleSend}
-            >
+            <button type="button" className="oltra-btn" onClick={handleSend}>
               Send
             </button>
-            <button
-              type="button"
-              className="oltra-button-secondary members-action-button"
-              onClick={onClose}
-            >
+            <button type="button" className="oltra-btn" onClick={onClose}>
               Close
             </button>
           </div>
         </div>
 
-        <div className="itinerary-document">
-          <header className="itinerary-document__header">
-            <h2 className="itinerary-document__title">{itinerary.tripName}</h2>
-            <dl className="itinerary-summary">
-              {itinerary.summaryFacts.map((fact) => (
-                <div className="itinerary-fact" key={fact.label}>
-                  <dt>{fact.label}</dt>
-                  <dd>{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </header>
+        <div className="oltra-panel itinerary-modal">
+          <div className="itinerary-document">
+            <header className="itinerary-document__header">
+              <h2 className="itinerary-document__title">{itinerary.tripName}</h2>
+              <dl className="itinerary-summary">
+                {itinerary.summaryFacts.map((fact) => (
+                  <div className="itinerary-fact" key={fact.label}>
+                    <dt>{fact.label}</dt>
+                    <dd>{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </header>
 
-          {warnings.length ? (
-            <section className="itinerary-warnings">
-              {warnings.map((warning) => (
-                <p className="itinerary-warning" key={warning.id}>
-                  <span className="itinerary-warning__label">
-                    Important note:
-                  </span>{" "}
-                  {warning.message}
-                </p>
-              ))}
-            </section>
-          ) : null}
+            {warnings.length ? (
+              <section className="itinerary-warnings">
+                {warnings.map((warning) => (
+                  <p className="itinerary-warning" key={warning.id}>
+                    <span className="itinerary-warning__label">
+                      Important note:
+                    </span>{" "}
+                    {warning.message}
+                  </p>
+                ))}
+              </section>
+            ) : null}
 
-          {isEmpty ? (
-            <div className="members-empty">
-              Nothing saved to this trip yet.
-            </div>
-          ) : null}
+            {isEmpty ? (
+              <div className="members-empty">
+                Nothing saved to this trip yet.
+              </div>
+            ) : null}
 
-          {itinerary.days.map((day) => (
-            <section className="itinerary-day" key={day.date}>
-              <h3 className="itinerary-day__heading">{day.heading}</h3>
-              {day.entries.map((entry) => (
-                <EntryBlock entry={entry} key={entry.id} />
-              ))}
-            </section>
-          ))}
+            {itinerary.days.map((day) => (
+              <section className="itinerary-day" key={day.date}>
+                <h3 className="itinerary-day__heading">{day.heading}</h3>
+                {day.entries.map((entry) => (
+                  <EntryBlock entry={entry} key={entry.id} />
+                ))}
+              </section>
+            ))}
 
-          {itinerary.unscheduled.length ? (
-            <section className="itinerary-day">
-              <h3 className="itinerary-day__heading">Not yet scheduled</h3>
-              {itinerary.unscheduled.map((entry) => (
-                <EntryBlock entry={entry} key={entry.id} />
-              ))}
-            </section>
-          ) : null}
+            {itinerary.unscheduled.length ? (
+              <section className="itinerary-day">
+                <h3 className="itinerary-day__heading">Not yet scheduled</h3>
+                {itinerary.unscheduled.map((entry) => (
+                  <EntryBlock entry={entry} key={entry.id} />
+                ))}
+              </section>
+            ) : null}
 
-          {trimmedNotes ? (
-            <section className="itinerary-day itinerary-notes">
-              <h3 className="itinerary-day__heading">Trip notes</h3>
-              <p className="itinerary-notes__body">{trimmedNotes}</p>
-            </section>
-          ) : null}
+            {trimmedNotes ? (
+              <section className="itinerary-day itinerary-notes">
+                <h3 className="itinerary-day__heading">Trip notes</h3>
+                <p className="itinerary-notes__body">{trimmedNotes}</p>
+              </section>
+            ) : null}
 
-          <footer className="itinerary-document__footer">
-            Booking references, flight numbers, terminals and baggage
-            allowances appear here once each item is booked.
-          </footer>
+            <footer className="itinerary-document__footer">
+              Booking references, flight numbers, terminals and baggage
+              allowances appear here once each item is booked.
+            </footer>
+          </div>
         </div>
       </div>
     </div>,
