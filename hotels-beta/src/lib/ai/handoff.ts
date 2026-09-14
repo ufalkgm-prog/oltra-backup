@@ -21,10 +21,24 @@ const FLIGHTS_PAGE_CABIN: Record<string, string> = {
   first: "First",
 };
 
-/** The exact set the concierge picked, pinned by id. */
+/** The exact set the concierge picked, pinned by id — and ONLY that, plus the
+ * stay (Ulrik, 2026-09-14).
+ *
+ * This used to carry the answer's geography and its setting/activity tags too,
+ * so the Hotels page arrived with "Country: Spain · Setting: Beachfront ·
+ * Setting: Coastal" in its destination box: tags approximating an answer that
+ * was really a hand-picked list, and editing them edited a search nobody ran.
+ * The page now shows a single "AI curated results" token for `?ids=`. The
+ * geography still reaches the rest of the site through the shared session and
+ * the "See all hotels in X" link (allHotelsHref), which is where a search by
+ * place belongs. */
 export function hotelsHref(query: AiQueryState, results: AiResultSet): string {
+  if (!results.hotelIds.length) return allHotelsHref(query);
   const params = queryStateToParams(query);
-  if (results.hotelIds.length) params.set("ids", results.hotelIds.join(","));
+  for (const key of ["city", "state", "admin_region", "country", "settings", "activities"]) {
+    params.delete(key);
+  }
+  params.set("ids", results.hotelIds.join(","));
   params.set("search_submitted", "1");
   return `/hotels?${params.toString()}`;
 }

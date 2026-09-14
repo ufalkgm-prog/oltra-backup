@@ -10,6 +10,8 @@ metadata:
 
 On 2026-09-14 four parallel migration subagents left 7 of ~30 edited files converted wholesale to CRLF (the repo is `eol=lf`), which made every line of those files show as changed. Git's "CRLF will be replaced by LF" warning on `git diff --stat` was the only signal.
 
+It recurred later the same day from a main-session edit (searchSession.ts), so it is not subagent-specific.
+
 **Why:** a whole-file line-ending flip hides the real diff from review and would land as a noisy commit.
 
 **How to apply:** after any subagent edits, run `file <changed files> | grep -i crlf` (or watch for the git warning) and strip `\r` from those files before reviewing the diff. Relatedly, [[feedback-bash-heredoc-eats-backslashes]] — write patch scripts with the Write tool, and give `cut`/replace helpers an explicit meaning for an empty end marker.

@@ -62,7 +62,7 @@ const MEANINGFUL: Record<Page, string[]> = {
 };
 
 export default function AiResultsSync({ page }: { page: Page }) {
-  const { ready, results, query, presentedAt } = useAiSearch();
+  const { ready, results, query, presentedAt, searchedAt } = useAiSearch();
   const router = useRouter();
 
   /** The newest presentation this page has already reflected. Anything above
@@ -78,10 +78,13 @@ export default function AiResultsSync({ page }: { page: Page }) {
     if (appliedAt.current === null) {
       const current = new URLSearchParams(window.location.search);
       const hasSearch = MEANINGFUL[page].some((key) => current.get(key));
-      // Arriving on a page that already has a search: treat whatever the
-      // concierge said earlier as already dealt with, and wait for something
-      // genuinely new.
-      appliedAt.current = hasSearch ? presentedAt : 0;
+      // Arriving on a page that already has a search, or with the answer
+      // already superseded — a classic search since, or the visitor removing
+      // its "AI curated results" token: treat whatever the concierge said
+      // earlier as dealt with, and wait for something genuinely new. Without
+      // the second test, clearing the curated set and then clicking Hotels in
+      // the header brought it straight back.
+      appliedAt.current = hasSearch || searchedAt > presentedAt ? presentedAt : 0;
     }
 
     if (presentedAt <= appliedAt.current) return;
@@ -99,7 +102,7 @@ export default function AiResultsSync({ page }: { page: Page }) {
     if (!href) return;
 
     router.replace(href);
-  }, [ready, page, results, query, presentedAt, router]);
+  }, [ready, page, results, query, presentedAt, searchedAt, router]);
 
   return null;
 }

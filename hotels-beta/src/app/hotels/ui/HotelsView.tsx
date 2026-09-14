@@ -54,9 +54,11 @@ import {
 } from "@/lib/hotels/cardHelpers";
 import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import {
+  clearHotelFlightDestination,
   mergeHotelFlightSearch,
   readHotelFlightSearch,
 } from "@/lib/searchSession";
+import { aiResultsAreCurrent, useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import type { RatehawkGroupedRoom, RatehawkHeadline } from "@/lib/ratehawk/types";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -241,8 +243,29 @@ function clampText(s: string | undefined | null, max = 160): string {
   return t.slice(0, max).replace(/\s+\S*$/, "") + "…";
 }
 
+/** What removing the "AI curated results" token takes out of the URL: the
+ * pinned set and any destination or tag params that came with it. Dates,
+ * guests and rooms are the visitor's stay, not the answer, so they stay. */
+const CURATED_DROPS = new Set([
+  "ids",
+  "q",
+  "city",
+  "state",
+  "admin_region",
+  "country",
+  "region",
+  "local_area",
+  "activities",
+  "settings",
+  "search_submitted",
+]);
+
 function hasHotelSearchContext(params: PageSearchParams): boolean {
   return Boolean(
+    // The concierge's pinned set is a search in its own right. Without this a
+    // curated URL carrying no dates read as bare, and the session restore
+    // replaced it with the answer's city as tags.
+    normalizeParam(params.ids) ||
     normalizeParam(params.q) ||
       normalizeParam(params.city) ||
       normalizeParam(params.state) ||
@@ -840,8 +863,46 @@ export default function HotelsView(props: {
     setBedroomsValue(normalizeParam(searchParams.bedrooms) || "1");
   }, [searchParams]);
 
+  /* The concierge, as far as this page is concerned: whether its hotel answer
+     is still the current one, and how to mark it dismissed. Reads the search
+     context, not the transcript, so a streaming reply does not re-render the
+     page. */
+  const { markClassicSearch } = useAiActions();
+  const { results: aiResults, presentedAt: aiPresentedAt, searchedAt: aiSearchedAt } =
+    useAiSearch();
+  const aiHotelsPending =
+    aiResults.hotelIds.length > 0 && aiResultsAreCurrent(aiResults, aiPresentedAt, aiSearchedAt);
+
+  /* "AI curated results" as the one token in the destination box while the
+     page is pinned to the concierge's set (`?ids=`). Removing it drops the set
+     and the concierge's destination with it; the dates and guests stay. */
+  const curatedIds = selected.ids.join(",");
+  const curatedDestination = curatedIds
+    ? {
+        key: curatedIds,
+        ids: curatedIds,
+        onRemove: () => {
+          markClassicSearch();
+          clearHotelFlightDestination();
+          const params = new URLSearchParams();
+          for (const [key, value] of Object.entries(searchParams)) {
+            if (value === undefined || CURATED_DROPS.has(key)) continue;
+            for (const v of Array.isArray(value) ? value : [value]) params.append(key, v);
+          }
+          startTransition(() => {
+            router.replace(params.toString() ? `/hotels?${params.toString()}` : "/hotels", {
+              scroll: false,
+            });
+          });
+        },
+      }
+    : undefined;
+
   useEffect(() => {
     if (hasHotelSearchContext(searchParams)) return;
+    // A concierge answer is about to be written in by AiResultsSync. Restoring
+    // the shared session here would race it and land the answer's city as tags.
+    if (aiHotelsPending) return;
 
     const saved = readHotelFlightSearch();
     if (!saved) return;
@@ -870,7 +931,7 @@ export default function HotelsView(props: {
 
     params.set("search_submitted", "1");
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [searchParams, router, pathname]);
+  }, [searchParams, router, pathname, aiHotelsPending]);
 
   useEffect(() => {
     const hasAnythingToSave =
@@ -2278,6 +2339,7 @@ async function handleCreateTripAndAddHotel() {
                 wrapperClassName="md:col-span-12 pt-[2px]"
                 busy={isPending}
                 trailingControl={<AiModeButton placement="inline" />}
+                curated={curatedDestination}
               />
 
               {!compactTopMode ? (
@@ -2783,6 +2845,7 @@ async function handleCreateTripAndAddHotel() {
                     dataset={props.suggestions}
                     busy={isPending}
                     trailingControl={<AiModeButton placement="inline" />}
+                    curated={curatedDestination}
                   />
 
                   {showNarrowFurtherMessage ? (

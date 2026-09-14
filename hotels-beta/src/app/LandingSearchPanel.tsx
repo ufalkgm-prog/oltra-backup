@@ -7,12 +7,12 @@ import GuestSelector from "@/components/site/GuestSelector";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AiModeButton from "@/components/ai/AiModeButton";
-import { useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
+import { aiResultsAreCurrent, useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
-import { mergeHotelFlightSearch } from "@/lib/searchSession";
+import { clearHotelFlightDestination, mergeHotelFlightSearch } from "@/lib/searchSession";
 import {
   normalizeParam,
   readGuestSelection,
@@ -78,7 +78,12 @@ export default function LandingSearchPanel({
   /* Safe to read here despite the transcript streaming a token at a time: this
      context is memoised on its individual fields, so appending a token leaves
      query and presentedAt identical and the value keeps its identity. */
-  const { query: aiQuery, presentedAt } = useAiSearch();
+  const { query: aiQuery, presentedAt, searchedAt, results: aiResults } = useAiSearch();
+
+  /* While the frames below are the concierge's, the destination box says so
+     with one "AI curated results" token rather than tags approximating the
+     answer. Same test LandingResults uses to choose the frames. */
+  const showsAiResults = aiResultsAreCurrent(aiResults, presentedAt, searchedAt);
 
   const [effectiveSearchParams, setEffectiveSearchParams] =
     useState<PageSearchParams>(initialSearchParams);
@@ -528,6 +533,24 @@ export default function LandingSearchPanel({
                thing — it knows nothing about the concierge beyond having a
                slot at the end of its input row. */
             trailingControl={<AiModeButton placement="inline" />}
+            curated={
+              showsAiResults
+                ? {
+                    key: String(presentedAt),
+                    /* Removing it drops the curated set: stamped as superseded
+                       (so the frames give way, here and on the Hotels page),
+                       the concierge's destination cleared from the shared
+                       session so nothing restores it as tags, and the page
+                       re-run without a destination — which shows nothing. The
+                       conversation itself is untouched. */
+                    onRemove: () => {
+                      markClassicSearch();
+                      clearHotelFlightDestination();
+                      navigateWithParams(true);
+                    },
+                  }
+                : undefined
+            }
           />
 
           <div className={styles.dateRangeField}>

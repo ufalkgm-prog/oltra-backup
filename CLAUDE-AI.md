@@ -67,6 +67,10 @@ One conversation site-wide, in `sessionStorage` under `oltra_ai_concierge_v1`; c
 
 Exiting leaves Inspire showing what was asked. `presentResults` gained **`searchTags`** — the locked setting and activity tags actually searched on, since geography and dates alone cannot express *what kind of trip* it is — and `lib/ai/inspireMirror.ts` maps them to Inspire's five purposes, keyed on `presentedAt` so it applies once per answer and never fights a hand-picked filter. `queryStateToParams` now also emits `settings` and `activities`, so the Hotels handoff arrives with those facets pre-selected.
 
+**Superseded for the Hotels handoff (2026-09-14):** `hotelsHref` no longer
+carries geography, settings or activities — only `ids` and the stay. See
+*"AI curated results"* below. `allHotelsHref` still sends the geography.
+
 Two lessons: **adding the field was not enough — the model ignored it**, verified by reading the stored tool input where `searchTags` simply wasn't among the keys. **An optional field the prompt does not demand gets skipped.** And **rule order matters**: a ski hotel is nearly always tagged `Mountains` too, so `ski` is tested first or every ski answer lands on Mountains. An answer fitting none of the five leaves the selector alone.
 
 ### Recency: which results the landing page shows
@@ -554,6 +558,55 @@ and got it wrong twice.** Both times a ZERO_RESULTS was read as a fact about the
 place. It is a fact about the engine's rules for private cars, and for a
 destination this clientele actually goes to, that difference is the whole
 answer.
+
+### "AI curated results" — one token, not tags that approximate the answer (2026-09-14)
+
+Ulrik: after an AI session the destination box on the landing and Hotels pages
+held tags reconstructing the answer — "Country: Spain · Setting: Beachfront ·
+Setting: Coastal" — which is not what the concierge chose (it hand-picked a
+list), and editing them edited a search nobody ran. Now it holds ONE token,
+**"AI curated results"**, while the page shows the concierge's set; removing it
+makes the results disappear. The results themselves are unchanged.
+
+**Where the tags came from, which was two paths on Hotels.** `hotelsHref` wrote
+the answer's city/country plus `settings`/`activities` next to `ids`, and those
+became tokens. Separately, a bare `/hotels` restores the last search from the
+shared session — which the store mirrors the concierge's destination into — and
+that effect raced AiResultsSync's `router.replace`, so the city could land even
+without the handoff's params.
+
+**The mechanism:**
+
+* `StructuredDestinationField` takes `curated: { key, ids?, onRemove }`. While
+  set, the box renders only the curated token, and the hidden destination
+  inputs post NOTHING — otherwise the landing auto-submit on a date change
+  would post the page's older city back as a search and supersede the answer.
+  `ids`, on Hotels, is posted as a hidden field so the page's own submits keep
+  the set (before this, a date change there dropped `ids`, which the form's
+  preserved-params list excluded). Picking a destination replaces the token
+  with an ordinary search.
+* **One test of "is the answer current"**, `aiResultsAreCurrent` in the store:
+  results exist and `presentedAt >= searchedAt`. LandingResults, the landing
+  field and the Hotels page all use it.
+* **Removing the token** stamps `searchedAt` (markClassicSearch), clears the
+  destination from the shared session (`clearHotelFlightDestination`, stay
+  kept), and re-runs the page without a destination. The conversation is not
+  touched. **AiResultsSync's arrival rule now also skips an answer with
+  `searchedAt > presentedAt`**, or clicking Hotels in the header re-applied the
+  set the visitor had just removed.
+* Hotels: `?ids=` counts as a search in `hasHotelSearchContext`, and the session
+  restore stands down while a current concierge hotel answer is waiting to be
+  written in.
+
+Verified in the dev browser ("Hotels on Lake Como with a spa"): landing showed
+the one token with no destination fields posted and the 5 hotels behind it; a
+bare `/hotels` arrived as `?ids=…` (5 ids, no city or tags) with the same token;
+removing it left `?adults&bedrooms`, the featured view, `searchedAt >
+presentedAt`, the transcript intact and the shared session with no city; a
+fresh `/hotels` and `/` then stayed clear. **Not exercised:** removing the token
+on the landing page itself, and typing a new destination over it. The Flights
+page has no tag box — its fields are airports, which the concierge fills as a
+real route — so it is unchanged.
 
 ### Hotels in several places, flights to only one of them (2026-09-14)
 

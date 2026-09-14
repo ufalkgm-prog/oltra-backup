@@ -381,6 +381,21 @@ export function useAiConversation(): AiConversationValue {
   return ctx;
 }
 
+/** Whether the concierge's answer is what the page should be showing: it has
+ * results, and nothing superseded it — neither a classic search nor the
+ * visitor removing the "AI curated results" token (both stamp `searchedAt`).
+ * One definition for the landing frames, the destination field's curated token
+ * and the Hotels page's arrival sync, so the three cannot disagree. */
+export function aiResultsAreCurrent(
+  results: AiResultSet,
+  presentedAt: number,
+  searchedAt: number
+): boolean {
+  const hasResults =
+    results.hotelIds.length > 0 || results.flights.length > 0 || results.restaurantIds.length > 0;
+  return hasResults && presentedAt >= searchedAt;
+}
+
 /** The setters only. Use this from a page component — reading the full store
  * there would re-render the whole page on every streamed token. */
 export function useAiActions(): AiActions {

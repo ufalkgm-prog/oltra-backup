@@ -1,6 +1,6 @@
 "use client";
 
-import { useAiSearch } from "@/lib/ai/aiSearchStore";
+import { aiResultsAreCurrent, useAiSearch } from "@/lib/ai/aiSearchStore";
 import AiResultFrames from "./AiResultFrames";
 
 /* Which results the landing page is showing.
@@ -22,15 +22,11 @@ import AiResultFrames from "./AiResultFrames";
 export default function LandingResults({ summary }: { summary: React.ReactNode }) {
   const { results, presentedAt, searchedAt } = useAiSearch();
 
-  const hasAiResults =
-    results.hotelIds.length > 0 ||
-    results.flights.length > 0 ||
-    results.restaurantIds.length > 0;
-
   // Whichever happened last wins. Without the comparison, running a classic
   // search after an AI answer left the AI frames on screen and the new search
   // looked like it had done nothing — the URL had changed and the page had
-  // not. Neither result set is discarded, so both stay one action away.
-  if (hasAiResults && presentedAt >= searchedAt) return <AiResultFrames />;
+  // not. Removing the "AI curated results" token counts as that later act too.
+  // Neither result set is discarded, so both stay one action away.
+  if (aiResultsAreCurrent(results, presentedAt, searchedAt)) return <AiResultFrames />;
   return <>{summary}</>;
 }

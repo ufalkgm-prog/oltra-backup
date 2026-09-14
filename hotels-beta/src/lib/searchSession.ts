@@ -49,6 +49,21 @@ export function mergeHotelFlightSearch(values: SharedTravelSearch) {
   });
 }
 
+/** Drops the destination from the shared search, keeping the stay (dates,
+ * guests, origin). For when the visitor dismisses the concierge's curated
+ * results: the concierge mirrors its destination in here, and the Hotels page
+ * restores a bare URL from it — so without this, clearing "AI curated results"
+ * brought the answer's city straight back as a tag search. */
+export function clearHotelFlightDestination() {
+  const current = readHotelFlightSearch();
+  if (!current) return;
+  const stay: SharedTravelSearch = { ...current };
+  for (const key of ["q", "city", "state", "admin_region", "country", "region", "hotelId"] as const) {
+    delete stay[key];
+  }
+  saveHotelFlightSearch(stay);
+}
+
 export function readHotelFlightSearch(): SharedTravelSearch | null {
   if (typeof window === "undefined") return null;
 

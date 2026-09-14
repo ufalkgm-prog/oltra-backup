@@ -49,7 +49,27 @@ type Props = {
    * callers happen to pass the concierge button; a third could pass nothing
    * and be unaffected. */
   trailingControl?: React.ReactNode;
+  /** Set while the page is showing the AI concierge's curated results.
+   *
+   * The box then holds ONE token, "AI curated results", instead of tags that
+   * approximate the answer (Ulrik, 2026-09-14): a city plus Beachfront plus
+   * Coastal is not what the concierge chose, and editing those tags edited a
+   * search nobody ran. Removing the token calls `onRemove`, which is how the
+   * page drops the curated set. Choosing a destination instead replaces it with
+   * an ordinary search.
+   *
+   * `key` changes when a new answer arrives, so a token dismissed earlier does
+   * not stay dismissed for a later answer. `ids`, when given, is posted as a
+   * hidden field so the page's own form submits (a date change) keep the set. */
+  curated?: { key: string; ids?: string; onRemove: () => void };
 };
+
+const CURATED_LABEL = "AI curated results";
+
+/* One shared empty list while the curated token shows, so the memos and the
+   state-report effect below see a stable dependency rather than a new array on
+   every render. */
+const NO_TOKENS: Token[] = [];
 
 function normalizeParam(v: string | string[] | undefined): string {
   if (!v) return "";
@@ -291,6 +311,7 @@ export default function StructuredDestinationField({
   onStateChange,
   busy = false,
   trailingControl,
+  curated,
 }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -298,11 +319,19 @@ export default function StructuredDestinationField({
   const lastReportedStateRef = useRef<string>("");
   const externalSyncKeyRef = useRef("");
 
-  const [tokens, setTokens] = useState<Token[]>(() =>
+  const [storedTokens, setTokens] = useState<Token[]>(() =>
     buildInitialTokens(searchParams, dataset).filter((t) =>
       allowedTypes.includes(t.type)
     )
   );
+
+  /* The curated token replaces the destination tokens entirely — for display
+     AND for the hidden fields below, so an auto-submit while it is showing
+     cannot post the page's older city or tags back as a search. Dismissal is
+     remembered per answer (`curated.key`). */
+  const [dismissedCuratedKey, setDismissedCuratedKey] = useState<string | null>(null);
+  const showCurated = Boolean(curated) && dismissedCuratedKey !== curated?.key;
+  const tokens = showCurated ? NO_TOKENS : storedTokens;
   const [typedValue, setTypedValue] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -587,8 +616,26 @@ export default function StructuredDestinationField({
     }
   }
 
+  function removeCurated() {
+    if (!curated) return;
+    suppressNextFocusOpenRef.current = true;
+    setDismissedCuratedKey(curated.key);
+    setTokens([]);
+    setTypedValue("");
+    setOpen(false);
+    // The page decides what dropping the curated set means (and navigates),
+    // so this does not submit the form as removing an ordinary token does.
+    curated.onRemove();
+  }
+
   function addToken(item: SuggestionItem) {
-    setTokens((prev) => {
+    // Choosing a destination while the curated token shows starts an ordinary
+    // search from scratch: the page's older tokens are not revived under it.
+    const replacingCurated = showCurated;
+    if (replacingCurated && curated) setDismissedCuratedKey(curated.key);
+
+    setTokens((stored) => {
+      const prev = replacingCurated ? [] : stored;
       const isMulti = item.type === "purpose" || item.type === "setting";
 
       if (isMulti) {
@@ -672,6 +719,18 @@ export default function StructuredDestinationField({
             if (!isSingleHotel) inputRef.current?.focus();
           }}
         >
+          {showCurated ? (
+            <button
+              type="button"
+              onClick={removeCurated}
+              className={styles.tokenPill}
+              title={`${CURATED_LABEL} — remove to clear them`}
+            >
+              <span className={styles.tokenPillLabel}>{CURATED_LABEL}</span>
+              <span className={styles.tokenPillClose}>×</span>
+            </button>
+          ) : null}
+
           {tokens.map((token) => (
             <button
               key={`${token.type}-${token.id ?? token.value}`}
@@ -823,6 +882,9 @@ export default function StructuredDestinationField({
         name="settings"
         value={settingTokens.map((token) => token.id ?? token.value).join(",")}
       />
+      {showCurated && curated?.ids ? (
+        <input type="hidden" name="ids" value={curated.ids} />
+      ) : null}
     </div>
   );
 }
