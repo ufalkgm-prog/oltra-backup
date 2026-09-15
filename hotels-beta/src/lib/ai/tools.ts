@@ -808,6 +808,18 @@ const searchHotels = tool({
       ...nearInfo,
       hotels: shaped,
       ...(ranked ? { availability: ranked } : {}),
+      /* NOTHING FREE ON THOSE DATES (2026-09-15). Asked about Iceland "next
+         September", the concierge chose 10-17 September, found no rates at the
+         one hotel we hold, and presented it for that dead week anyway — its
+         card showing no availability, the follow-up offering flights for the
+         same dates. Said here, where the model reads it, not only in the
+         prompt. */
+      ...(availableCount === 0
+        ? {
+            noneAvailable:
+              "None of these has rooms for those dates. If you chose the dates yourself (the visitor gave only a month or a season), check other windows in that period with checkAvailability before presenting, and present the dates that work. If the visitor gave these exact dates, say plainly that nothing we hold is free then and offer other dates. Never present hotels for dates none of them can be booked, and never offer flights for those dates.",
+          }
+        : {}),
     });
   },
 });
