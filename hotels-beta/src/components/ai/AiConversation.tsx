@@ -712,12 +712,12 @@ function ResultSummary({ past }: { past?: Presentation }) {
         {why ? (
           <span className={styles.summaryReason}>
             {" "}
-            — {/* The model often ends a line without a full stop,
-                and a note after it then ran on as part of it: "…from
-                Malpensa Not available at myOLTRA yet." */}
-            {(notSoldHere(hotel) || airport) && !/[.!?]$/.test(why.trim())
-              ? `${why.trim()}.`
-              : why}
+            — {/* The model often ends a line without a full stop, and a
+                note after it then ran on as part of it: "…from Malpensa Not
+                available at myOLTRA yet." Closed on every line, note or not:
+                only lines with a note used to get one, so the Aman line ended
+                in a stop and the six beneath it did not (2026-09-15). */}
+            {/[.!?]$/.test(why.trim()) ? why.trim() : `${why.trim()}.`}
           </span>
         ) : null}
         {airport ? <span className={styles.summaryAirport}> {airport}</span> : null}
