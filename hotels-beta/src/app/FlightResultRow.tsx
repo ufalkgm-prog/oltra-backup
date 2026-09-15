@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { createPortal } from "react-dom";
+import FlightDetailsPopup from "./flights/ui/FlightDetailsPopup";
+import flightsStyles from "./flights/ui/FlightsView.module.css";
 import SaveToTripControl, {
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
@@ -115,13 +118,34 @@ export function describeStops(flight: FlightLeg): string {
  * inferred from the order they sat in. Duration moved off the end of the times
  * line onto its own: right-aligned there it drifted away from the times it
  * describes, and it was the first thing to wrap as the column narrowed. */
-export function FlightDetailCard({ flight }: { flight: FlightLeg }) {
+export function FlightDetailCard({
+  flight,
+  onInfo,
+}: {
+  flight: FlightLeg;
+  /** Opens the Flights page's details popup for this leg — the same "info"
+   * pill and popup, on the landing page's cards too (Ulrik, 2026-09-15). */
+  onInfo?: (flight: FlightLeg) => void;
+}) {
   const airlineLabel = flight.airlines.length
     ? flight.airlines.map((a) => a.name).join(" + ")
     : flight.airline;
 
   return (
-    <div className={styles.flightCardInner}>
+    <div className={`${styles.flightCardInner} ${onInfo ? styles.flightCardWithInfo : ""}`}>
+      {onInfo ? (
+        <button
+          type="button"
+          className={flightsStyles.infoButton}
+          onClick={(event) => {
+            event.stopPropagation();
+            onInfo(flight);
+          }}
+          aria-label="Flight details"
+        >
+          info
+        </button>
+      ) : null}
       <div className={styles.flightCardTimes}>
         <span className={styles.flightCardRoute}>
           {flight.originCode}–{flight.destinationCode}
@@ -163,6 +187,8 @@ export default function FlightResultRow({
   tripDefaults,
   columns = 1,
 }: Props) {
+  const [detail, setDetail] = useState<FlightLeg | null>(null);
+
   const handleBook = useCallback(async (offerId: string) => {
     try {
       const res = await fetch("/api/flights/book-link", {
@@ -204,6 +230,15 @@ export default function FlightResultRow({
 
   return (
     <div className={styles.flightDetailRow}>
+      {/* Portalled: the row sits inside a glass frame whose backdrop-filter
+          makes it the containing block for fixed elements, so the popup's
+          full-screen backdrop would otherwise be clipped to the frame. */}
+      {detail && typeof document !== "undefined"
+        ? createPortal(
+            <FlightDetailsPopup flight={detail} onClose={() => setDetail(null)} />,
+            document.body
+          )
+        : null}
       <div
         className={`${styles.flightRowLegend} ${
           columns === 3 ? styles.flightRowLegendTight : ""
@@ -243,8 +278,10 @@ export default function FlightResultRow({
           columns === 3 ? styles.flightLegsStacked : ""
         }`}
       >
-        <FlightDetailCard flight={flight.outbound} />
-        {!isOneWay && flight.inbound ? <FlightDetailCard flight={flight.inbound} /> : null}
+        <FlightDetailCard flight={flight.outbound} onInfo={setDetail} />
+        {!isOneWay && flight.inbound ? (
+          <FlightDetailCard flight={flight.inbound} onInfo={setDetail} />
+        ) : null}
       </div>
     </div>
   );

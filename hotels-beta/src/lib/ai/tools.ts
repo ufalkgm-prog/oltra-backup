@@ -35,7 +35,22 @@ import {
   matchesMacroSetting,
   resolveMacroRegion,
 } from "./macroRegions";
-import { REGION_VALUES } from "./macroRegionTerms";
+import { REGION_VALUES, normaliseRegionTerm } from "./macroRegionTerms";
+
+/* What guests call an area that our data names differently. "French Riviera"
+ * searched nothing and cost a round trip (2026-09-15): the 17 hotels there
+ * are filed under the traveller area "Côte d'Azur". Keys are normalised the
+ * way macro-region names are (accent- and case-blind, no leading "the"). */
+const AREA_ALIASES: Record<string, string> = {
+  "french riviera": "Côte d'Azur",
+  "cote d azur": "Côte d'Azur",
+  "riviera francaise": "Côte d'Azur",
+};
+
+function resolveAreaAlias(value: string | undefined): string | undefined {
+  if (!value) return value;
+  return AREA_ALIASES[normaliseRegionTerm(value)] ?? value;
+}
 import { distanceFromPlace, findNearPlace, nearSummary, sortByDistance } from "./nearPlace";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { toPreferredAirlines, type PreferredAirline } from "./preferredAirlines";
@@ -556,9 +571,9 @@ const searchHotels = tool({
       value && !resolveMacroRegion(value) ? value : undefined;
 
     const country = literal(input.country);
-    const adminRegion = literal(input.adminRegion);
-    const area = literal(input.area);
-    const city = literal(input.city);
+    const adminRegion = literal(resolveAreaAlias(input.adminRegion));
+    const area = literal(resolveAreaAlias(input.area));
+    const city = literal(resolveAreaAlias(input.city));
 
     if (input.region) and.push({ region: { _eq: input.region } });
     if (country) and.push({ country: { _eq: country } });
@@ -1736,6 +1751,11 @@ const presentResults = tool({
       // checkAvailability.
       stay: {
         type: "object",
+        description:
+          "The dates and the party. Pass the party (adults, kids, childrenAges, " +
+          "rooms) WHENEVER the visitor has described it, even with no dates — " +
+          "\"two rooms with 2 adults in each\" is adults 4, rooms 2. Add " +
+          "checkIn/checkOut only when they have given timing.",
         properties: {
           checkIn: { type: "string", description: "yyyy-mm-dd" },
           checkOut: { type: "string", description: "yyyy-mm-dd" },
@@ -1784,11 +1804,13 @@ const presentResults = tool({
         },
         additionalProperties: false,
       },
-      /* ONE DESTINATION AT A TIME (Ulrik, 2026-09-15). The pages price one stay,
-         so a split trip put its mountain hotel on the city's dates. The first
-         place is the ordinary fields above; every later place is listed here
-         and named in the panel only. Flights are unaffected: a multi-leg
-         journey is already one `flights` entry per leg. */
+      /* A TRIP IN SEVERAL PLACES (Ulrik, 2026-09-15). A single stay priced a
+         split trip's mountain hotel on the city's dates. The first place is
+         the ordinary fields above and is what Hotels, Flights and Restaurants
+         show; every later place is listed here with its own dates, and the
+         landing page lists the whole trip stay by stay. Flights are
+         unaffected: a multi-leg journey is already one `flights` entry per
+         leg. */
       laterStops: {
         type: "array",
         description:
@@ -1796,8 +1818,8 @@ const presentResults = tool({
           "then the Atlas) — never for alternatives spread across places. " +
           "hotelIds, restaurantIds, stay and destination describe the FIRST " +
           "place; each later place goes here, in travel order, with its own " +
-          "dates and the ids you checked for it there. The panel lists them " +
-          "by name and tells the visitor to ask for the next place when ready. " +
+          "dates and the ids you checked for it there. The main page lists " +
+          "every place's hotels and restaurants under its own place and dates. " +
           "Give rationales for their ids as usual.",
         items: {
           type: "object",

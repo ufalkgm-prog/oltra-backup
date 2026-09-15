@@ -80,6 +80,19 @@ drops empty values, so a previous party's ages would otherwise survive.
 Verified: a Paris answer for two children aged 9 and 12 left the form, the
 session and a bare reload of `/` all at `kids=2&kid_age_1=9&kid_age_2=12`.
 
+**The landing page froze when an answer's party differed from its saved search
+(2026-09-15).** "Maximum update depth exceeded": GuestSelector's sync effect and
+its emit effect ran in the same commit, so the emit saw the OLD selection,
+found it different from the key the sync had just recorded, and sent it up; the
+parent handed it back down and the two values alternated for ever. It only
+showed once the landing form began taking the concierge's party (the child fix
+above) and a Paris family search (2+2) was restored under a 2-adult answer. The
+emit now waits until the synced value has rendered (`pendingSyncKeyRef`), and
+the selection key normalises the ages array to one slot per child so a resize
+cannot read as a change. Found with temporary render logging after the dev
+overlay pinned the error on innocent components (LandingBackground,
+useAiPageContext).
+
 **Walking distance from a named place (2026-09-15).** `near` on searchHotels and
 searchRestaurants; see concierge.md for the mechanics. Verified on the Rome
 question: `near: "Pantheon, Rome"` resolved to Piazza della Rotonda, the ten Rome

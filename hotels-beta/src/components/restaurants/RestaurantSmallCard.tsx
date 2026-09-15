@@ -27,12 +27,18 @@ type Props = {
   restaurant: RestaurantRecord;
   href?: string;
   columns?: SmallCardColumns;
+  /** A SaveToTripControl, supplied by the caller — the same arrangement as
+   * HotelSmallCard, so the card need not know about trips. Added 2026-09-15 so
+   * a restaurant from the concierge's trip can be saved like its hotels and
+   * flights. */
+  renderSaveControl?: () => React.ReactNode;
 };
 
 export default function RestaurantSmallCard({
   restaurant,
   href,
   columns = 1,
+  renderSaveControl,
 }: Props) {
   const layout = LAYOUT[columns];
 
@@ -82,6 +88,14 @@ export default function RestaurantSmallCard({
       {awards ? (
         <div className="mt-1.5 min-w-0 text-[11px] break-words text-[color:var(--oltra-text-muted)]">
           {awards}
+        </div>
+      ) : null}
+
+      {/* Inside the card's link, so a click on the control or its trip picker
+          must not follow it — the same guard HotelSmallCard's actions carry. */}
+      {renderSaveControl ? (
+        <div className="mt-2 flex justify-end" onClick={(e) => e.preventDefault()}>
+          {renderSaveControl()}
         </div>
       ) : null}
     </div>

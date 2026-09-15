@@ -164,6 +164,13 @@ export default function AiConciergeModal() {
     const pageVertical: Vertical | null =
       page === "hotels" || page === "flights" || page === "restaurants" ? page : null;
 
+    /* A trip in several places is shown whole only on the main page (Ulrik,
+       2026-09-15), so every other page offers the way there, even when the
+       answer is purely its own vertical. */
+    if ((results.laterStops ?? []).length > 0) {
+      return page === "landing" ? null : { href: "/", label: "Go to combined results on main page" };
+    }
+
     // Specific to the page it was asked from.
     if (pageVertical && covered.length === 1 && covered[0] === pageVertical) {
       /* Every vertical page already shows its own part of the answer behind

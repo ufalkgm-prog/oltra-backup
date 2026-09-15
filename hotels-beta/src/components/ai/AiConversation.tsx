@@ -739,9 +739,26 @@ function ResultSummary({ past }: { past?: Presentation }) {
             — {/[.!?]$/.test(why.trim()) ? why : `${why.trim()}.`}
           </span>
         ) : null}
-        <span className={styles.summaryAirport}> {michelinStatus(restaurant)}.</span>
+        {/* With no reason the status follows the name directly, and read as
+            part of it — "La Palme d'Or Michelin 1 star." (2026-09-15). */}
+        <span className={styles.summaryAirport}>
+          {why ? " " : " — "}
+          {michelinStatus(restaurant)}.
+        </span>
       </li>
     );
+  };
+
+  /* Restaurants under their own city, whatever stop they belong to (Ulrik,
+     2026-09-15): a stop called "Côte d'Azur" held Nice and Cannes under one
+     heading. In first-appearance order, so the trip's order holds. */
+  const restaurantsByCity = (list: (typeof restaurants)[number][]) => {
+    const groups = new Map<string, (typeof restaurants)[number][]>();
+    for (const restaurant of list) {
+      const city = restaurant.city?.trim() || "";
+      groups.set(city, [...(groups.get(city) ?? []), restaurant]);
+    }
+    return [...groups.entries()];
   };
 
   /* Each later place's properties, in the order the model gave them. */
@@ -757,38 +774,39 @@ function ResultSummary({ past }: { past?: Presentation }) {
     };
   });
 
-  /* ONE DESTINATION AT A TIME — Ulrik's wording, 2026-09-15. The pages show
-     the first place only, priced on its own dates; this says so and tells the
-     visitor how to reach the next. Where the first place's properties are
-     depends on the page, the same per-part rule as the ordinary footnote. */
+  /* THE WHOLE TRIP ON THE MAIN PAGE (Ulrik, 2026-09-15; replacing "one
+     destination at a time" from earlier the same day). The landing page lists
+     every stay's hotels under that stay's place and dates, restaurants under
+     each city, and the flights; the other pages show the first place only. So
+     the panel says how the trip is laid out, where to see it, and how to keep
+     it: SAVE on each choice builds the itinerary in Members, Saved trips. */
   const multiStopFootnote = (() => {
     if (!multiStop) return "";
-    const next = laterStops[0];
-    const stopParts = answerParts.filter((part) => part !== "flights");
-    const behind = stopParts.filter(shownBehind);
-    const elsewhere = stopParts.filter((part) => !shownBehind(part));
-    const inFirst = firstPlace ? ` in ${firstPlace}` : "";
+    const places = [firstPlace, ...laterStops.map((stop) => stop.place)].filter(Boolean);
+    const placeList =
+      places.length > 1
+        ? `${places.slice(0, -1).join(", ")} and then ${places[places.length - 1]}`
+        : places[0] ?? "";
+    const hasRestaurants =
+      results.restaurantIds.length > 0 || laterStops.some((stop) => stop.restaurantIds.length);
+    const hasFlights = results.flights.length > 0;
+    // Only when there are dates to show: an undated trip printed "each under
+    // its dates" over headers that carried none (2026-09-15).
+    const hasDates = Boolean(query.from) || laterStops.some((stop) => stop.checkIn);
+    const layout =
+      `the hotels stay by stay — ${placeList}${hasDates ? " — each under its dates" : ""}` +
+      (hasRestaurants ? ", the restaurants under each city" : "") +
+      (hasFlights ? ", and the flights" : "");
     const where =
       page === "landing"
-        ? `the ${listParts(stopParts)}${inFirst} on this page. Close this window to have a look, then`
-        : !elsewhere.length
-          ? `the ${listParts(stopParts)}${inFirst} behind this window. Have a look and then`
-          : !behind.length
-            ? `the ${listParts(stopParts)}${inFirst} on the main page. Have a look using the link below, then`
-            : `the ${listParts(behind)}${inFirst} behind this window and the ${listParts(elsewhere)} on the main page. Have a look and then`;
-    const nextParts: Part[] = [
-      ...(next.hotelIds.length ? (["hotels"] as const) : []),
-      ...(next.restaurantIds.length ? (["restaurants"] as const) : []),
-    ];
-    const flightNote =
-      results.flights.length && page === "flights"
-        ? `The ${partName("flights")} ${verb(["flights"])} in the window behind this panel. `
-        : "";
-    return (
-      `${flightNote}I can only show you details for one destination at a time. ` +
-      `So, first I have listed ${where} return to the AI Concierge window and ask me ` +
-      `to list the ${listParts(nextParts.length ? nextParts : ["hotels"])} in ${next.place}.`
-    );
+        ? `When you close this window, the whole trip is listed on this page: ${layout}.`
+        : `I can only show the full trip on the main page — open it using the link below. There you will find ${layout}.`;
+    const keep =
+      "Pick your favourites there and use SAVE on your choice in each city" +
+      (hasFlights ? ", on your flights" : "") +
+      (hasRestaurants ? " and on the restaurants" : "") +
+      " — your full itinerary then appears under Members, in Saved trips.";
+    return `${where} ${keep} ${page === "landing" ? REOPEN_CHAT : RESUME_CHAT}`;
   })();
 
   return (
@@ -813,14 +831,18 @@ function ResultSummary({ past }: { past?: Presentation }) {
         </div>
       ) : null}
 
-      {listRestaurants && restaurantPicks.length ? (
+      {listRestaurants && restaurantPicks.length && multiStop
+        ? restaurantsByCity(restaurantPicks).map(([city, list]) => (
+            <div key={`rc-${city}`} className={styles.summaryGroup}>
+              <div className={styles.summaryHeading}>{stopHeading("Restaurants", city || firstPlace)}</div>
+              <ul className={styles.summaryList}>{list.map(restaurantItem)}</ul>
+            </div>
+          ))
+        : null}
+      {listRestaurants && restaurantPicks.length && !multiStop ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {multiStop
-              ? stopHeading("Restaurants", firstPlace)
-              : restaurantPicks.length < restaurants.length
-                ? "For example"
-                : "Restaurants"}
+            {restaurantPicks.length < restaurants.length ? "For example" : "Restaurants"}
           </div>
           <ul className={styles.summaryList}>{restaurantPicks.map(restaurantItem)}</ul>
         </div>
@@ -836,14 +858,14 @@ function ResultSummary({ past }: { past?: Presentation }) {
               <ul className={styles.summaryList}>{stopHotels.map(hotelItem)}</ul>
             </div>
           ) : null}
-          {stopRestaurants.length ? (
-            <div className={styles.summaryGroup}>
+          {restaurantsByCity(stopRestaurants).map(([city, list]) => (
+            <div key={`rc-${stop.place}-${city}`} className={styles.summaryGroup}>
               <div className={styles.summaryHeading}>
-                {stopHeading("Restaurants", stop.place)}
+                {stopHeading("Restaurants", city || stop.place)}
               </div>
-              <ul className={styles.summaryList}>{stopRestaurants.map(restaurantItem)}</ul>
+              <ul className={styles.summaryList}>{list.map(restaurantItem)}</ul>
             </div>
-          ) : null}
+          ))}
         </Fragment>
       ))}
 

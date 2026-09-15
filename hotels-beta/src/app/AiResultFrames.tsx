@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HotelSmallCard, {
   type SmallCardAvailability,
@@ -13,14 +13,15 @@ import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
 import SaveToTripControl, {
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
-import { addHotelToTripBrowser } from "@/lib/members/db";
+import { addHotelToTripBrowser, addRestaurantToTripBrowser } from "@/lib/members/db";
+import type { RestaurantRecord } from "@/app/restaurants/types";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { MAX_NAMED, completeLegsForHotels, namedHotels } from "@/lib/ai/hotelGateways";
 import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
 import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
-import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
-import type { AiFlightLeg } from "@/lib/ai/types";
+import FlightResultRow, { pickHeadlineItineraries, type TripDefaults } from "./FlightResultRow";
+import type { AiFlightLeg, AiHotelCard, AiQueryState } from "@/lib/ai/types";
 import styles from "./page.module.css";
 
 /* The concierge's results, on the landing page.
@@ -194,11 +195,29 @@ function FlightLegPanel({
   );
 }
 
-/* No props: it reads the shared store directly, so it can sit as its own frame
- * below the search panel — the same relationship LandingSummary has to it. */
-export default function AiResultFrames() {
-  const { results, query } = useAiSearch();
-  const { hotels, restaurants, loading } = useAiResultRecords();
+/* One stay's hotels: its own live prices for its own dates, and its own SAVE
+ * carrying those dates into the trip. A component per stay since 2026-09-15,
+ * when the landing page began showing a whole multi-stop trip at once — each
+ * group under a header naming its place and dates, priced for that stay, so the
+ * Atlas hotels are never priced on the Marrakech nights. A single-place answer
+ * is one stay with no header, exactly as before. */
+function HotelStayGroup({
+  heading,
+  hotels,
+  from,
+  to,
+  query,
+  columns,
+  tripDefaults,
+}: {
+  heading: { place: string; dates: string } | null;
+  hotels: AiHotelCard[];
+  from: string;
+  to: string;
+  query: AiQueryState;
+  columns: SmallCardColumns;
+  tripDefaults: TripDefaults;
+}) {
   const [availability, setAvailability] = useState<Record<string, SmallCardAvailability>>({});
 
   // Live prices, via the same batch route the structured landing summary uses.
@@ -207,7 +226,7 @@ export default function AiResultFrames() {
     const priceable = hotels.filter(
       (h) => h.ratehawk_hid && h.ratehawk_status !== "passive"
     );
-    if (!priceable.length || !query.from || !query.to) {
+    if (!priceable.length || !from || !to) {
       setAvailability({});
       return;
     }
@@ -222,8 +241,8 @@ export default function AiResultFrames() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         hids: priceable.map((h) => h.ratehawk_hid),
-        checkInDate: query.from,
-        checkOutDate: query.to,
+        checkInDate: from,
+        checkOutDate: to,
         adults: query.adults,
         kids: query.kids,
         childrenAges: query.childrenAges,
@@ -269,7 +288,7 @@ export default function AiResultFrames() {
     return () => {
       cancelled = true;
     };
-  }, [hotels, query.from, query.to, query.adults, query.kids, query.bedrooms, query.currency, query.childrenAges]);
+  }, [hotels, from, to, query.adults, query.kids, query.bedrooms, query.currency, query.childrenAges]);
 
   /* Hotels get the same BOOK and SAVE pair the flight rows have, through the
    * same SaveToTripControl every other surface uses — the card already
@@ -283,10 +302,10 @@ export default function AiResultFrames() {
         hotelDirectusId: String(hotel.id),
         name: hotel.hotel_name ?? "Hotel",
         location: [hotel.city, hotel.country].filter(Boolean).join(" · "),
-        stayLabel: query.from && query.to ? `${query.from} – ${query.to}` : null,
+        stayLabel: from && to ? `${from} – ${to}` : null,
         thumbnail: getHotelThumbnail(hotel),
-        checkIn: query.from || null,
-        checkOut: query.to || null,
+        checkIn: from || null,
+        checkOut: to || null,
       });
       return {
         message:
@@ -297,26 +316,157 @@ export default function AiResultFrames() {
               : "Saved to trip.",
       };
     },
-    [query.from, query.to]
+    [from, to]
   );
 
-  const tripDefaults = useMemo(
-    () => ({
-      destination:
-        query.destination.city ||
-        query.destination.area ||
-        query.destination.country ||
-        null,
-      periodLabel: query.from && query.to ? `${query.from} – ${query.to}` : null,
-    }),
-    [query.destination, query.from, query.to]
+  const hotelCardParams = (name: string) => {
+    const p = new URLSearchParams();
+    p.set("q", name);
+    if (from) p.set("from", from);
+    if (to) p.set("to", to);
+    if (query.adults > 0) p.set("adults", String(query.adults));
+    if (query.kids > 0) p.set("kids", String(query.kids));
+    p.set("submitted", "1");
+    return `/hotels?${p.toString()}`;
+  };
+
+  return (
+    <>
+      {heading ? <StayHeading place={heading.place} dates={heading.dates} /> : null}
+      {hotels.map((hotel) => {
+        const record = hotel as unknown as HotelRecord;
+        const bookingHref = bookingHrefFor(record, {
+          from,
+          to,
+          adults: query.adults,
+          kids: query.kids,
+        });
+        return (
+          <HotelSmallCard
+            key={String(hotel.id)}
+            hotel={record}
+            href={hotelCardParams(hotel.hotel_name ?? "")}
+            columns={columns}
+            availability={
+              from && to
+                ? availability[String(hotel.id)] ?? { status: "loading" }
+                : { status: "idle" }
+            }
+            bookingHref={bookingHref}
+            renderSaveControl={() => (
+              <SaveToTripControl
+                onSave={(tripId) => handleSaveHotel(tripId, record)}
+                newTripDefaults={tripDefaults}
+                label="SAVE"
+                compact
+                align="right"
+                /* Condensed and block, matching the button rendered
+                   inside the card so the pair is one size; stacked
+                   with it only when there is one. */
+                className={`oltra-btn oltra-btn--condensed oltra-btn--block${
+                  bookingHref ? " oltra-btn--stack-bottom" : ""
+                }`}
+              />
+            )}
+          />
+        );
+      })}
+    </>
   );
+}
+
+/** The header over one stay (or one city's restaurants): the same place-and-
+ * date line the flight legs use, so the three panes read as one itinerary. */
+function StayHeading({ place, dates }: { place: string; dates: string }) {
+  return (
+    <div className={`${styles.aiFlightLegHead} ${styles.aiStayHead}`}>
+      <span className={styles.aiFlightLegRoute}>{place}</span>
+      {dates ? <span className={styles.aiFlightLegDate}>{dates}</span> : null}
+    </div>
+  );
+}
+
+function stayDates(from: string, to: string): string {
+  return from && to ? `${legDateLabel(from)} – ${legDateLabel(to)}` : "";
+}
+
+/* No props: it reads the shared store directly, so it can sit as its own frame
+ * below the search panel — the same relationship LandingSummary has to it. */
+export default function AiResultFrames() {
+  const { results, query } = useAiSearch();
+  const { hotels, restaurants, loading } = useAiResultRecords();
+
+  /* THE WHOLE TRIP, STAY BY STAY (Ulrik, 2026-09-15). An answer about several
+     places carries the first in hotelIds/restaurantIds and the query's stay,
+     and every later place in `laterStops`. The landing page is the one page
+     that lists them all; Hotels, Flights and Restaurants show the first. */
+  const laterStops = useMemo(() => results.laterStops ?? [], [results.laterStops]);
+  const multiStop = laterStops.length > 0;
+  const later = useAiResultRecords({
+    hotelIds: laterStops.flatMap((stop) => stop.hotelIds),
+    restaurantIds: laterStops.flatMap((stop) => stop.restaurantIds),
+  });
 
   const destinationLabel =
     query.destination.city ||
     query.destination.area ||
     query.destination.adminRegion ||
     query.destination.country;
+
+  const stays = useMemo(() => {
+    const pick = <T extends { id: number | string }>(ids: number[], records: T[]) =>
+      ids
+        .map((id) => records.find((record) => String(record.id) === String(id)))
+        .filter((record): record is T => Boolean(record));
+    return [
+      {
+        key: "first",
+        place: destinationLabel,
+        from: query.from,
+        to: query.to,
+        hotels,
+        restaurants,
+      },
+      ...laterStops.map((stop, index) => ({
+        key: `stop-${index}-${stop.place}`,
+        place: stop.place,
+        from: stop.checkIn,
+        to: stop.checkOut,
+        hotels: pick(stop.hotelIds, later.hotels),
+        restaurants: pick(stop.restaurantIds, later.restaurants),
+      })),
+    ];
+  }, [destinationLabel, query.from, query.to, hotels, restaurants, laterStops, later.hotels, later.restaurants]);
+
+  const lastStay = stays[stays.length - 1];
+  const tripDefaults = useMemo(
+    () => ({
+      destination: destinationLabel || null,
+      // The whole trip's span, so a new trip made from any card covers every stay.
+      periodLabel:
+        query.from && (lastStay.to || query.to)
+          ? `${query.from} – ${lastStay.to || query.to}`
+          : null,
+    }),
+    [destinationLabel, query.from, query.to, lastStay.to]
+  );
+
+  const handleSaveRestaurant = useCallback(
+    async (tripId: string, restaurant: RestaurantRecord): Promise<SaveToTripResult> => {
+      const result = await addRestaurantToTripBrowser({
+        tripId,
+        restaurantDirectusId: String(restaurant.id),
+        name: restaurant.restaurant_name,
+        location: [restaurant.local_area, restaurant.city].filter(Boolean).join(" · "),
+        reservationLabel: null,
+        thumbnail: "/images/hero-lp.jpg",
+      });
+      return {
+        message: result.duplicate ? "Already in that trip." : "Saved to trip.",
+      };
+    },
+    []
+  );
 
   /* The flight legs to draw: the answer's own, plus one to every airport the
      hotels the panel names are reached through — the same completion the panel
@@ -327,9 +477,23 @@ export default function AiResultFrames() {
     MAX_NAMED
   );
 
-  const showHotels = results.hotelIds.length > 0;
+  const restaurantCityGroups = (() => {
+    const groups = new Map<string, RestaurantRecord[]>();
+    for (const stay of stays) {
+      for (const restaurant of stay.restaurants) {
+        const city = restaurant.city?.trim() || stay.place || "";
+        groups.set(city, [...(groups.get(city) ?? []), restaurant]);
+      }
+    }
+    return [...groups.entries()].map(([city, list]) => ({ city, restaurants: list }));
+  })();
+
+  const totalHotels = stays.reduce((sum, stay) => sum + stay.hotels.length, 0);
+  const totalRestaurants = stays.reduce((sum, stay) => sum + stay.restaurants.length, 0);
+  const showHotels = results.hotelIds.length > 0 || laterStops.some((stop) => stop.hotelIds.length);
   const showFlights = flightLegs.length > 0;
-  const showRestaurants = results.restaurantIds.length > 0;
+  const showRestaurants =
+    results.restaurantIds.length > 0 || laterStops.some((stop) => stop.restaurantIds.length);
 
   // Nothing to frame yet — the concierge panel carries the conversation.
   if (!showHotels && !showFlights && !showRestaurants) return null;
@@ -339,17 +503,6 @@ export default function AiResultFrames() {
   const frameCount = ((showHotels ? 1 : 0) +
     (showFlights ? 1 : 0) +
     (showRestaurants ? 1 : 0)) as SmallCardColumns;
-
-  const hotelCardParams = (name: string) => {
-    const p = new URLSearchParams();
-    p.set("q", name);
-    if (query.from) p.set("from", query.from);
-    if (query.to) p.set("to", query.to);
-    if (query.adults > 0) p.set("adults", String(query.adults));
-    if (query.kids > 0) p.set("kids", String(query.kids));
-    p.set("submitted", "1");
-    return `/hotels?${p.toString()}`;
-  };
 
   return (
     <section className={styles.aiResults}>
@@ -365,8 +518,8 @@ export default function AiResultFrames() {
           >
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
-                {hotels.length} {hotels.length === 1 ? "hotel" : "hotels"}
-                {destinationLabel ? ` in ${destinationLabel}` : ""}
+                {totalHotels} {totalHotels === 1 ? "hotel" : "hotels"}
+                {multiStop ? " for your trip" : destinationLabel ? ` in ${destinationLabel}` : ""}
               </div>
               <Link
                 href={hotelsHref(query, results)}
@@ -378,47 +531,23 @@ export default function AiResultFrames() {
             </div>
 
             <div className={styles.smallCardsList}>
-              {hotels.map((hotel) => {
-                const record = hotel as unknown as HotelRecord;
-                const bookingHref = bookingHrefFor(record, {
-                  from: query.from,
-                  to: query.to,
-                  adults: query.adults,
-                  kids: query.kids,
-                });
-                return (
-                  <HotelSmallCard
-                    key={String(hotel.id)}
-                    hotel={record}
-                    href={hotelCardParams(hotel.hotel_name ?? "")}
+              {stays
+                .filter((stay) => stay.hotels.length)
+                .map((stay) => (
+                  <HotelStayGroup
+                    key={stay.key}
+                    heading={multiStop ? { place: stay.place, dates: stayDates(stay.from, stay.to) } : null}
+                    hotels={stay.hotels}
+                    from={stay.from}
+                    to={stay.to}
+                    query={query}
                     columns={frameCount}
-                    availability={
-                      query.from && query.to
-                        ? availability[String(hotel.id)] ?? { status: "loading" }
-                        : { status: "idle" }
-                    }
-                    bookingHref={bookingHref}
-                    renderSaveControl={() => (
-                      <SaveToTripControl
-                        onSave={(tripId) => handleSaveHotel(tripId, record)}
-                        newTripDefaults={tripDefaults}
-                        label="SAVE"
-                        compact
-                        align="right"
-                        /* Condensed and block, matching the button rendered
-                           inside the card so the pair is one size; stacked
-                           with it only when there is one. */
-                        className={`oltra-btn oltra-btn--condensed oltra-btn--block${
-                          bookingHref ? " oltra-btn--stack-bottom" : ""
-                        }`}
-                      />
-                    )}
+                    tripDefaults={tripDefaults}
                   />
-                );
-              })}
+                ))}
             </div>
 
-            {destinationLabel ? (
+            {destinationLabel && !multiStop ? (
               <Link
                 href={allHotelsHref(query)}
                 className={`oltra-btn ${styles.aiEscape}`}
@@ -472,9 +601,9 @@ export default function AiResultFrames() {
           >
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
-                {restaurants.length}{" "}
-                {restaurants.length === 1 ? "restaurant" : "restaurants"}
-                {query.destination.city ? ` in ${query.destination.city}` : ""}
+                {totalRestaurants}{" "}
+                {totalRestaurants === 1 ? "restaurant" : "restaurants"}
+                {multiStop ? " for your trip" : query.destination.city ? ` in ${query.destination.city}` : ""}
               </div>
               {query.destination.city ? (
                 <Link
@@ -488,14 +617,32 @@ export default function AiResultFrames() {
             </div>
 
             <div className={styles.smallCardsList}>
-              {restaurants.map((restaurant) => (
-                <RestaurantSmallCard
-                  key={String(restaurant.id)}
-                  restaurant={restaurant}
-                  href={restaurantsHref(query)}
-                  columns={frameCount}
-                />
-              ))}
+              {/* Under each restaurant's own city (Ulrik, 2026-09-15), not
+                  under the stop: a stop named "Côte d'Azur" held Nice and
+                  Cannes under one header. Trip order, then first appearance. */}
+              {restaurantCityGroups.map((group) => (
+                  <Fragment key={group.city}>
+                    {multiStop ? <StayHeading place={group.city} dates="" /> : null}
+                    {group.restaurants.map((restaurant) => (
+                      <RestaurantSmallCard
+                        key={String(restaurant.id)}
+                        restaurant={restaurant}
+                        href={`/restaurants?city=${encodeURIComponent(restaurant.city ?? "")}`}
+                        columns={frameCount}
+                        renderSaveControl={() => (
+                          <SaveToTripControl
+                            onSave={(tripId) => handleSaveRestaurant(tripId, restaurant)}
+                            newTripDefaults={tripDefaults}
+                            label="SAVE"
+                            compact
+                            align="right"
+                            className="oltra-btn oltra-btn--condensed"
+                          />
+                        )}
+                      />
+                    ))}
+                  </Fragment>
+                ))}
             </div>
           </div>
         ) : null}

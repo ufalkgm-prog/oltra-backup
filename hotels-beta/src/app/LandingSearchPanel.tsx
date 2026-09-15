@@ -121,12 +121,27 @@ export default function LandingSearchPanel({
      superseded the answer, so returning here never undoes a party the visitor
      changed by hand. */
   const aiChildrenAgesKey = aiQuery.childrenAges.join(",");
+  /* A trip in several places has no one date range (Ulrik, 2026-09-15): the
+     results below list each stay under its own dates, so the form's dates are
+     cleared rather than showing the first stay's as though they were the
+     trip's. */
+  const aiMultiStop = (aiResults.laterStops ?? []).length > 0;
   useEffect(() => {
     if (!presentedAt || presentedAt === appliedStayRef.current) return;
     if (presentedAt < searchedAt) return;
     appliedStayRef.current = presentedAt;
-    if (aiQuery.from) setFromValue(aiQuery.from);
-    if (aiQuery.to) setToValue(aiQuery.to);
+    if (aiMultiStop) {
+      setFromValue("");
+      setToValue("");
+    } else {
+      if (aiQuery.from) setFromValue(aiQuery.from);
+      if (aiQuery.to) setToValue(aiQuery.to);
+    }
+    // And the rooms: "two rooms with 2 adults in each" is 4 guests in 2
+    // bedrooms, and the form read 1 bedroom beside it (2026-09-15).
+    if (aiQuery.bedrooms > 0) {
+      setEffectiveSearchParams((prev) => ({ ...prev, bedrooms: String(aiQuery.bedrooms) }));
+    }
     if (aiQuery.adults > 0) {
       const kids = clampKidsCount(aiQuery.kids);
       setGuestSelection({
@@ -139,7 +154,7 @@ export default function LandingSearchPanel({
     }
     // Keyed on the ages' content, not the array's identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presentedAt, searchedAt, aiQuery.from, aiQuery.to, aiQuery.adults, aiQuery.kids, aiChildrenAgesKey]);
+  }, [presentedAt, searchedAt, aiQuery.from, aiQuery.to, aiQuery.adults, aiQuery.kids, aiQuery.bedrooms, aiChildrenAgesKey, aiMultiStop]);
 
   const [includeHotels, setIncludeHotels] = useState(
     normalizeParam(initialSearchParams.include_hotels) !== "0"

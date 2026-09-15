@@ -135,10 +135,10 @@ export type AiResultSet = {
    * Empty when the answer is not about flights. */
   flights: AiFlightLeg[];
   /** The places after the first, for a trip that moves on — Marrakech, then
-   * the Atlas. Named in the concierge panel only: `hotelIds`,
-   * `restaurantIds` and the query's stay are the FIRST place, and they alone
-   * reach the pages and cards, priced on that place's own dates (Ulrik,
-   * 2026-09-15: one destination at a time, never split pricing on a page). */
+   * the Atlas. `hotelIds`, `restaurantIds` and the query's stay are the FIRST
+   * place, which is all Hotels, Flights and Restaurants show; the landing page
+   * lists every place's properties under its own place and dates, each priced
+   * for its own stay (Ulrik, 2026-09-15). */
   laterStops: AiLaterStop[];
 };
 

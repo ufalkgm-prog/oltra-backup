@@ -845,3 +845,22 @@
   font-size: 0.75rem;
   color: var(--oltra-text-muted);
 }
+
+/* The header over one stay of a multi-stop trip in the concierge's hotel and
+   restaurant panes — the flight legs' own place-and-date line, so the three
+   panes read as one itinerary. Space above every group but the first. */
+.aiStayHead {
+  margin: 0.55rem 0 0;
+}
+
+.aiStayHead:first-child {
+  margin-top: 0;
+}
+
+/* A flight card carrying the Flights page's "info" pill (FlightsView.module.css
+   .infoButton, absolutely placed top-right): the card becomes its positioning
+   context and keeps a lane on the right so the pill never sits on the times. */
+.flightCardWithInfo {
+  position: relative;
+  padding-right: 2.9rem;
+}
