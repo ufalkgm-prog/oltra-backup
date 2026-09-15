@@ -8,5 +8,5 @@
 - [Verify manual steps yourself](feedback_verify_manual_steps.md) — a "done, I ran it" report is a starting point for verification, not proof
 - [Bash heredocs eat backslashes](feedback_bash_heredoc_eats_backslashes.md) — quoted heredocs still strip one level; write patch scripts with Write and run by path
 - [Subagents write CRLF](feedback_subagents_write_crlf.md) — parallel agents flipped whole files to CRLF on 2026-09-14; check and normalize to LF before review
-- [Concierge testing rounds](project_concierge_testing_rounds.md) — one query at a time in the dev browser, Ulrik reviews; 18 done by 2026-09-15
+- [Concierge testing rounds](project_concierge_testing_rounds.md) — one query at a time in the dev browser, Ulrik reviews; 24 done by 2026-09-15, resume at 25
 - [Restaurant coverage to-do](project_restaurant_coverage_todo.md) — find restaurants for Reykjavik; Ulrik adding relaxed restaurants for large cities
