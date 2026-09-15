@@ -29,7 +29,8 @@ const MONTHS: InspireMonth[] = [
   "december",
 ];
 
-/** Most specific first — the first rule that matches wins. */
+/** The five purposes and the tags that imply each. An answer must imply exactly
+ * one of them to set the selector (see purposeFromQuery). */
 const PURPOSE_RULES: { purpose: InspirePurpose; activities: string[]; settings: string[] }[] = [
   { purpose: "ski", activities: ["Skiing"], settings: [] },
   {
@@ -90,19 +91,29 @@ export function purposeFromQuery(query: AiQueryState): InspirePurpose | "" {
     if (defined) return defined;
   }
 
+  /* One purpose or none. An answer whose tags point two ways — City and
+     Oceanfront, for two Marrakech riads and a Madeira cliff hotel (2026-09-15)
+     — used to take whichever rule came first, Beach, and led the page with
+     beaches for an answer mostly about a medina. When the tags disagree the
+     selector is left as it was. */
+  const single = (matches: InspirePurpose[]): InspirePurpose | "" =>
+    new Set(matches).size === 1 ? matches[0] : "";
+
   const settings = new Set(query.settings);
   if (settings.size) {
-    for (const rule of PURPOSE_RULES) {
-      if (rule.settings.some((s) => settings.has(s))) return rule.purpose;
-    }
-    return "";
+    return single(
+      PURPOSE_RULES.filter((rule) => rule.settings.some((s) => settings.has(s))).map(
+        (rule) => rule.purpose
+      )
+    );
   }
 
   const activities = new Set(query.activities);
-  for (const rule of PURPOSE_RULES) {
-    if (rule.activities.some((a) => activities.has(a))) return rule.purpose;
-  }
-  return "";
+  return single(
+    PURPOSE_RULES.filter((rule) => rule.activities.some((a) => activities.has(a))).map(
+      (rule) => rule.purpose
+    )
+  );
 }
 
 /** The month the concierge settled on, read from the check-in it resolved.
