@@ -18,11 +18,15 @@ type Props = {
   defaultOpen?: boolean;
 };
 
+/* One age slot per child, whatever the array held. The ages array is resized a
+ * render after the count changes, so the same selection could key two ways in
+ * between — {2 kids, no ages} and {2 kids, two blank ages} — and a key that
+ * depends on that timing cannot tell a real change from a resize. */
 function selectionKey(selection: GuestSelection): string {
   return JSON.stringify({
     adults: selection.adults,
     kids: selection.kids,
-    kidAges: selection.kidAges,
+    kidAges: Array.from({ length: selection.kids }, (_, i) => selection.kidAges[i] ?? ""),
   });
 }
 
@@ -65,6 +69,9 @@ export default function GuestSelector({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const lastInitialKeyRef = useRef(selectionKey(initialValue));
   const lastEmittedKeyRef = useRef(selectionKey(initialValue));
+  /* The value the parent just handed down, until this component's own state has
+     caught up with it. See the emit effect below. */
+  const pendingSyncKeyRef = useRef<string | null>(null);
   const onChangeRef = useRef(onChange);
 
   useEffect(() => {
@@ -81,6 +88,7 @@ export default function GuestSelector({
 
     lastInitialKeyRef.current = initialValueKey;
     lastEmittedKeyRef.current = initialValueKey;
+    pendingSyncKeyRef.current = initialValueKey;
 
     setAdults(initialValue.adults);
     setKids(initialValue.kids);
@@ -117,6 +125,19 @@ export default function GuestSelector({
 
   useEffect(() => {
     const nextKey = selectionKey(currentSelection);
+
+    /* NEVER REPORT THE STATE A SYNC IS REPLACING (2026-09-15). The sync above
+       and this effect run in the same commit, before the synced state renders,
+       so this one saw the OLD selection, found it different from the key the
+       sync had just recorded, and sent it back up to the parent. The parent
+       then handed that down, the next sync emitted the value before it, and
+       the two alternated for ever — the landing page froze the moment a
+       concierge answer's party differed from the one its saved search
+       restored. Wait for the synced value to render, then carry on. */
+    if (pendingSyncKeyRef.current !== null) {
+      if (nextKey !== pendingSyncKeyRef.current) return;
+      pendingSyncKeyRef.current = null;
+    }
 
     if (lastEmittedKeyRef.current === nextKey) return;
 
