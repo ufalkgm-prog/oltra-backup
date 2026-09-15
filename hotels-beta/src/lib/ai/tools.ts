@@ -814,7 +814,12 @@ const searchHotels = tool({
          card showing no availability, the follow-up offering flights for the
          same dates. Said here, where the model reads it, not only in the
          prompt. */
-      ...(availableCount === 0
+      /* Only among hotels we can sell: a hotel "not-sold-here" is not sold
+         out, and counting it made the note tell the model that Aman Kyoto
+         had no rooms, when it can never be priced here (2026-09-15). */
+      ...(rankedHotels &&
+      availableCount === 0 &&
+      rankedHotels.some((h) => !("reason" in h) || h.reason !== "not-sold-here")
         ? {
             noneAvailable:
               "None of these has rooms for those dates. If you chose the dates yourself (the visitor gave only a month or a season), check other windows in that period with checkAvailability before presenting, and present the dates that work. If the visitor gave these exact dates, say plainly that nothing we hold is free then and offer other dates. Never present hotels for dates none of them can be booked, and never offer flights for those dates.",
