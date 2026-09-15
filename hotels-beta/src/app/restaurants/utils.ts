@@ -10,6 +10,17 @@ const AWARD_LABELS: Record<string, string> = {
   laliste100: "La Liste Top 100",
 };
 
+/** A restaurant's Michelin standing in words, "Not Michelin" included — every
+ * restaurant the concierge names carries one (Ulrik, 2026-09-15). */
+export function michelinStatus(r: Pick<RestaurantRecord, "awards">): string {
+  const awards = new Set(r.awards ?? []);
+  if (awards.has("michelin_3")) return "Michelin 3 stars";
+  if (awards.has("michelin_2")) return "Michelin 2 stars";
+  if (awards.has("michelin_1")) return "Michelin 1 star";
+  if (awards.has("bib_gourmand")) return "Michelin Bib Gourmand";
+  return "Not Michelin";
+}
+
 export function hasValidCoords(r: RestaurantRecord) {
   if (r.lat === null || r.lng === null) return false;
   if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) return false;

@@ -37,6 +37,7 @@ import {
 } from "./macroRegions";
 import { REGION_VALUES } from "./macroRegionTerms";
 import { distanceFromPlace, findNearPlace, nearSummary, sortByDistance } from "./nearPlace";
+import { michelinStatus } from "@/app/restaurants/utils";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -311,7 +312,7 @@ function narrowingAxes(
 
   type Axis = { covers: number; of: number; values: { value: string; count: number }[] };
 
-  const shape = (counts: Map<string, number>, exclude: string[] = []): Axis | null => {
+  const shape = (counts: Map<string, number>, exclude: string[] = [], max = 8): Axis | null => {
     const skip = new Set(exclude);
     const kept = [...counts.entries()].filter(([value]) => !skip.has(value));
     // One value covering the whole set is not a choice.
@@ -326,7 +327,7 @@ function narrowingAxes(
       of: hotels.length,
       values: kept
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-        .slice(0, 8)
+        .slice(0, max)
         .map(([value, count]) => ({ value, count })),
     };
   };
@@ -346,6 +347,13 @@ function narrowingAxes(
   // prefer when `area` covers only part of it.
   add("adminRegion", shape(field("admin_region")));
   add("area", shape(field("state_province_county_island")));
+  /* Cities, which is how a visitor chooses between trips — and without them the
+     model translated admin regions into city names itself ("Greater London" →
+     London, "Lazio" → Rome), which is a guess the moment a region holds two
+     towns (2026-09-15). */
+  // Up to 20, not 8: a set spread thinly over many cities lost its one-hotel
+  // places to the cap, and the summary then could not name them.
+  add("city", shape(tally(hotels.map((h) => h.city)), [], 20));
   add("style", shape(flat((h) => h.style), requested.styles));
   add("activities", shape(flat((h) => h.activities), requested.activities));
 
@@ -757,7 +765,18 @@ const searchHotels = tool({
           `${facing} properties is a directory, not a recommendation. Do NOT ` +
           `call presentResults. Tell the visitor the counts above, say what ` +
           `they have in common, and ask for ONE thing that would cut it down ` +
-          `— use narrowBy for concrete options with real counts. Each axis ` +
+          `— use narrowBy for concrete options with real counts. ` +
+          `WHEN YOU SAY WHERE THEY ARE, LEAVE NO PLACE OUT: name every value ` +
+          `of the axis you use, or group the smaller ones ` +
+          `("and one each in Vienna, Prague and Belgrade") — never skip a ` +
+          `place while naming one with fewer properties. ` +
+          `IF THE VISITOR ASKED WHERE TO GO ("where would you send us", ` +
+          `"where should we go", "suggest somewhere"), answer that before you ` +
+          `ask: suggest two or three of the cities in narrowBy.city, each with ` +
+          `one reason tied to what they told you (the occasion, the season, ` +
+          `what they love) — a destination recommendation, not a hotel one, so ` +
+          `name no property — then ask which appeals, or what else would help. ` +
+          `Each axis ` +
           `reports "covers" out of "of": where those differ the axis explains ` +
           `only part of the set, so do not present its values as the full ` +
           `picture. Call this tool again with their answer, or with ` +
@@ -1469,6 +1488,9 @@ const searchRestaurants = tool({
         setting: row.restaurant_setting ?? "",
         style: row.restaurant_style ?? "",
         awards: row.awards ?? [],
+        // In words, "Not Michelin" included, so a prose answer can say it
+        // without translating codes.
+        michelin: michelinStatus(row),
         ...(nearPlace ? distanceFromPlace(nearPlace, row.lat, row.lng) : {}),
       })),
     });

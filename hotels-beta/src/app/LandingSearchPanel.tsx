@@ -12,8 +12,10 @@ import { useHomeAirport } from "@/lib/members/useHomeAirport";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
-import { clearHotelFlightDestination, mergeHotelFlightSearch } from "@/lib/searchSession";
+import { clearHotelFlightDestination, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
 import {
+  clampAdultsCount,
+  clampKidsCount,
   normalizeParam,
   readGuestSelection,
   type GuestSelection,
@@ -112,12 +114,32 @@ export default function LandingSearchPanel({
    * Setting state here cannot trigger the auto-submit: that fires from the
    * field handlers, not from the values changing. */
   const appliedStayRef = useRef(0);
+  /* The party too (2026-09-15). Only the dates were carried, so a family answer
+     — two adults and a fifteen-year-old — left the form on "2" guests, and the
+     session save below wrote zero children back over the answer's, which every
+     page reading that session then priced. Skipped once a classic search has
+     superseded the answer, so returning here never undoes a party the visitor
+     changed by hand. */
+  const aiChildrenAgesKey = aiQuery.childrenAges.join(",");
   useEffect(() => {
     if (!presentedAt || presentedAt === appliedStayRef.current) return;
+    if (presentedAt < searchedAt) return;
     appliedStayRef.current = presentedAt;
     if (aiQuery.from) setFromValue(aiQuery.from);
     if (aiQuery.to) setToValue(aiQuery.to);
-  }, [presentedAt, aiQuery.from, aiQuery.to]);
+    if (aiQuery.adults > 0) {
+      const kids = clampKidsCount(aiQuery.kids);
+      setGuestSelection({
+        adults: clampAdultsCount(aiQuery.adults),
+        kids,
+        kidAges: Array.from({ length: kids }, (_, i) =>
+          aiQuery.childrenAges[i] != null ? String(aiQuery.childrenAges[i]) : ""
+        ),
+      });
+    }
+    // Keyed on the ages' content, not the array's identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presentedAt, searchedAt, aiQuery.from, aiQuery.to, aiQuery.adults, aiQuery.kids, aiChildrenAgesKey]);
 
   const [includeHotels, setIncludeHotels] = useState(
     normalizeParam(initialSearchParams.include_hotels) !== "0"
@@ -287,6 +309,7 @@ export default function LandingSearchPanel({
       to: toValue,
       adults: String(guestSelection.adults),
       kids: String(guestSelection.kids),
+      ...kidAgeFields(guestSelection.kidAges),
       origin: homeAirport,
     });
   }, [effectiveSearchParams, fromValue, toValue, guestSelection, homeAirport]);

@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import type { UIMessage } from "ai";
-import { clearHotelFlightDestination, mergeHotelFlightSearch } from "@/lib/searchSession";
+import { clearHotelFlightDestination, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
 import {
   EMPTY_QUERY_STATE,
   EMPTY_RESULT_SET,
@@ -258,7 +258,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     if (!mirrorPending.current) return;
     mirrorPending.current = false;
 
-    const { destination, from, to, adults, kids, bedrooms, origin } = state.query;
+    const { destination, from, to, adults, kids, childrenAges, bedrooms, origin } = state.query;
     /* The answer's destination REPLACES the session's, it is not merged into
        it. The merge drops empty values, so an answer naming only a city left
        the previous answer's area in place: after a Caribbean answer and then a
@@ -276,6 +276,9 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       to,
       adults: String(adults),
       kids: String(kids),
+      // The ages, which the session never received: Hotels and Flights on a
+      // bare visit priced "1 child" of no age (2026-09-15).
+      ...kidAgeFields(childrenAges),
       bedrooms: String(bedrooms),
       origin,
     });

@@ -43,10 +43,27 @@ export function mergeHotelFlightSearch(values: SharedTravelSearch) {
   if (typeof window === "undefined") return;
 
   const current = readHotelFlightSearch() ?? {};
+  // A new child count replaces the ages wholesale: the merge drops empty
+  // values, so an age from an earlier party would otherwise outlive it.
+  if (values.kids !== undefined) {
+    for (const key of KID_AGE_KEYS) delete current[key];
+  }
   saveHotelFlightSearch({
     ...current,
     ...clean(values),
   });
+}
+
+const KID_AGE_KEYS = ["kid_age_1", "kid_age_2", "kid_age_3", "kid_age_4", "kid_age_5", "kid_age_6"] as const;
+
+/** Children's ages as the session's kid_age_N fields. */
+export function kidAgeFields(ages: (string | number)[]): SharedTravelSearch {
+  const fields: SharedTravelSearch = {};
+  ages.slice(0, KID_AGE_KEYS.length).forEach((age, index) => {
+    const value = String(age ?? "").trim();
+    if (value) fields[KID_AGE_KEYS[index]] = value;
+  });
+  return fields;
 }
 
 /** Drops the destination from the shared search, keeping the stay (dates,

@@ -67,6 +67,19 @@ One conversation site-wide, in `sessionStorage` under `oltra_ai_concierge_v1`; c
 
 Exiting leaves Inspire showing what was asked. `presentResults` gained **`searchTags`** — the locked setting and activity tags actually searched on, since geography and dates alone cannot express *what kind of trip* it is — and `lib/ai/inspireMirror.ts` maps them to Inspire's five purposes, keyed on `presentedAt` so it applies once per answer and never fights a hand-picked filter. `queryStateToParams` now also emits `settings` and `activities`, so the Hotels handoff arrives with those facets pre-selected.
 
+**The landing form dropped the answer's children (2026-09-15).** Asked on
+Restaurants about Rome with a fifteen-year-old, the store held kids 1, age 15 —
+but `LandingSearchPanel` copied only the answer's DATES into its form (the
+2026-09-14 fix), so the guest selector kept "2" and its session-save effect wrote
+`kids: 0` over the store's mirror; the auto-submit then put `kids=0` in the URL.
+Neither writer ever copied ages. Now the per-answer effect sets the party too
+(skipped once `searchedAt` has passed `presentedAt`, so a party changed by hand
+is not undone), both writers send `kid_age_N` via `kidAgeFields`, and
+`mergeHotelFlightSearch` clears old ages whenever `kids` is written — its merge
+drops empty values, so a previous party's ages would otherwise survive.
+Verified: a Paris answer for two children aged 9 and 12 left the form, the
+session and a bare reload of `/` all at `kids=2&kid_age_1=9&kid_age_2=12`.
+
 **Walking distance from a named place (2026-09-15).** `near` on searchHotels and
 searchRestaurants; see concierge.md for the mechanics. Verified on the Rome
 question: `near: "Pantheon, Rome"` resolved to Piazza della Rotonda, the ten Rome

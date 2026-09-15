@@ -15,6 +15,7 @@ import { decodeStrayEscapes, stripLeadingName } from "@/lib/ai/rationale";
 import { isMacroRegionTerm } from "@/lib/ai/macroRegionTerms";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
+import { michelinStatus } from "@/app/restaurants/utils";
 import { EMPTY_RESULT_SET, type AiQueryState, type AiResultSet } from "@/lib/ai/types";
 import styles from "./AiConcierge.module.css";
 
@@ -602,6 +603,10 @@ function ResultSummary({ past }: { past?: Presentation }) {
   const notSoldHere = (hotel: { ratehawk_status: string | null; ratehawk_hid: number | null }) =>
     hotel.ratehawk_status === "passive" || !hotel.ratehawk_hid;
   const loneHotel = !listHotels && hotels.length === 1 ? hotels[0] : null;
+  /* EVERY RESTAURANT CARRIES ITS MICHELIN STANDING (Ulrik, 2026-09-15): the
+     stars when it has them, "Not Michelin" when it does not. Drawn from the
+     record, like the not-sold-here note, so it is never a remembered star. */
+  const loneRestaurant = !listRestaurants && restaurants.length === 1 ? restaurants[0] : null;
 
   /* An earlier single-hotel answer that we CAN price draws nothing at all here
      — no list, no note, and no footnote under a past answer — and an empty
@@ -619,6 +624,9 @@ function ResultSummary({ past }: { past?: Presentation }) {
     <div className={styles.summary}>
       {loneHotel && notSoldHere(loneHotel) ? (
         <p className={styles.notSoldHereSolo}>{NOT_SOLD_HERE}</p>
+      ) : null}
+      {loneRestaurant && !past ? (
+        <p className={styles.notSoldHereSolo}>{michelinStatus(loneRestaurant)}.</p>
       ) : null}
 
       {listHotels && hotelPicks.length ? (
@@ -670,7 +678,13 @@ function ResultSummary({ past }: { past?: Presentation }) {
               return (
                 <li key={`r-${restaurant.id}`} className={styles.summaryItem}>
                   <span className={styles.summaryName}>{restaurant.restaurant_name}</span>
-                  {why ? <span className={styles.summaryReason}> — {why}</span> : null}
+                  {why ? (
+                    <span className={styles.summaryReason}>
+                      {" "}
+                      — {/[.!?]$/.test(why.trim()) ? why : `${why.trim()}.`}
+                    </span>
+                  ) : null}
+                  <span className={styles.summaryAirport}> {michelinStatus(restaurant)}.</span>
                 </li>
               );
             })}
