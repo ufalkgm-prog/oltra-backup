@@ -15,6 +15,8 @@ import OltraSelect from "@/components/site/OltraSelect";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import AiModeButton from "@/components/ai/AiModeButton";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
+import { aiResultsAreCurrent, useAiSearch } from "@/lib/ai/aiSearchStore";
+import { restaurantsHref } from "@/lib/ai/handoff";
 import type { RestaurantRecord } from "../types";
 import { buildAwardsLabel, buildLocationLabel, buildAddressLabel } from "../utils";
 import {
@@ -67,7 +69,11 @@ const RESTAURANT_TYPES = [
   "Beach club",
 ] as const;
 
-type RestaurantType = (typeof RESTAURANT_TYPES)[number];
+/* The concierge's picks, offered as one more choice in the type selector — the
+   same words the Hotels and landing destination boxes use for an AI answer. */
+const AI_CURATED = "AI curated results";
+
+type RestaurantType = (typeof RESTAURANT_TYPES)[number] | typeof AI_CURATED;
 
 const DEFAULT_FALLBACK_CENTER: [number, number] = [103.8198, 1.3521];
 
@@ -103,10 +109,37 @@ export default function RestaurantsMapView({
   const [showCityOptions, setShowCityOptions] = useState(false);
   const [selectedType, setSelectedType] = useState<RestaurantType>("All");
 
+  /* THE CONCIERGE'S RESTAURANTS, ON THE RESTAURANTS PAGE (2026-09-15). Asked
+     here for somewhere to eat in Rome, the concierge named three and the page
+     behind went on listing all 35 with the first alphabetically selected — the
+     answer was nowhere on the page it was asked from. The picks that are in
+     this city now lead as "AI curated results", in the answer's order, while
+     the answer is current (aiResultsAreCurrent: nothing has superseded it).
+     Choosing another type is how the visitor leaves them; the answer itself is
+     untouched, as the type filter has always been page-local. */
+  const {
+    ready: aiReady,
+    results: aiResults,
+    query: aiQuery,
+    presentedAt,
+    searchedAt,
+  } = useAiSearch();
+  const curatedRestaurants = useMemo(() => {
+    if (!aiResultsAreCurrent(aiResults, presentedAt, searchedAt)) return [];
+    const byId = new Map(restaurants.map((r) => [r.id, r]));
+    return aiResults.restaurantIds
+      .map((id) => byId.get(id))
+      .filter((r): r is RestaurantRecord => Boolean(r));
+  }, [aiResults, presentedAt, searchedAt, restaurants]);
+  const curatedKey = curatedRestaurants.map((r) => r.id).join(",");
+
   const filteredRestaurants = useMemo(() => {
+    if (selectedType === AI_CURATED) {
+      return curatedRestaurants.length ? curatedRestaurants : restaurants;
+    }
     if (selectedType === "All") return restaurants;
     return restaurants.filter((r) => r.restaurant_type === selectedType);
-  }, [restaurants, selectedType]);
+  }, [restaurants, selectedType, curatedRestaurants]);
 
   const availableTypes = useMemo(() => {
     const set = new Set(restaurants.map((r) => r.restaurant_type).filter(Boolean));
@@ -146,6 +179,35 @@ export default function RestaurantsMapView({
     setShowCityOptions(false);
     setSelectedType("All");
   }, [city]);
+
+  /* Declared after the city reset so it wins it: a new city that holds the
+     answer's picks opens on them, as does a new answer for this city. When the
+     answer stops being current, its option goes and the list returns to All. */
+  useEffect(() => {
+    if (curatedKey) setSelectedType(AI_CURATED);
+    else setSelectedType((prev) => (prev === AI_CURATED ? "All" : prev));
+  }, [curatedKey]);
+
+  /* A new answer about restaurants in another city, given while this page is
+     open, moves the page to that city — the Restaurants half of what
+     AiResultsSync does for Hotels and Flights. Only a NEW answer: arriving with
+     an older one leaves the city the visitor chose alone (the shared session
+     already carries the concierge's destination to a bare /restaurants). */
+  const seenPresentedAt = useRef<number | null>(null);
+  useEffect(() => {
+    if (!aiReady) return;
+    if (seenPresentedAt.current === null) {
+      seenPresentedAt.current = presentedAt;
+      return;
+    }
+    if (presentedAt <= seenPresentedAt.current) return;
+    seenPresentedAt.current = presentedAt;
+
+    const target = aiQuery.destination.city.trim().toLowerCase();
+    if (aiResults.restaurantIds.length && target && target !== city.toLowerCase()) {
+      router.replace(restaurantsHref(aiQuery), { scroll: false });
+    }
+  }, [aiReady, presentedAt, aiQuery, aiResults, city, router]);
 
   // Marks the member's favourites in the list and the detail card. Keyed on the
   // Directus id, not the favourite row's own uuid.
@@ -903,9 +965,12 @@ export default function RestaurantsMapView({
               value={selectedType}
               placeholder="All"
               align="left"
-              options={RESTAURANT_TYPES.filter(
-                (type) => type === "All" || availableTypes.has(type)
-              ).map((type) => ({ value: type, label: type }))}
+              options={[
+                ...(curatedRestaurants.length ? [AI_CURATED] : []),
+                ...RESTAURANT_TYPES.filter(
+                  (type) => type === "All" || availableTypes.has(type)
+                ),
+              ].map((type) => ({ value: type, label: type }))}
               onValueChange={(v) => setSelectedType(v as RestaurantType)}
             />
           </div>

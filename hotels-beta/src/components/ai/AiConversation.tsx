@@ -510,7 +510,8 @@ function ResultSummary({ past }: { past?: Presentation }) {
      as the answer had a flight — so a hotels-and-flights answer there said the
      hotels were "listed first in the window behind this panel" when the Flights
      page shows only the flight. The landing page renders every type; Hotels
-     and Flights render their own type only; nothing renders behind elsewhere. */
+     and Flights render their own type only, as Restaurants does since 2026-09-15 through its
+     "AI curated results" type; nothing renders behind elsewhere. */
   type Part = "hotels" | "flights" | "restaurants";
   const answerParts: Part[] = [
     ...(results.hotelIds.length ? (["hotels"] as const) : []),
@@ -518,7 +519,10 @@ function ResultSummary({ past }: { past?: Presentation }) {
     ...(results.restaurantIds.length ? (["restaurants"] as const) : []),
   ];
   const shownBehind = (part: Part) =>
-    page === "landing" || (page === "hotels" && part === "hotels") || (page === "flights" && part === "flights");
+    page === "landing" ||
+    (page === "hotels" && part === "hotels") ||
+    (page === "flights" && part === "flights") ||
+    (page === "restaurants" && part === "restaurants");
   const partsBehind = answerParts.filter(shownBehind);
   const partsElsewhere = answerParts.filter((part) => !shownBehind(part));
   const rendersBehind = partsElsewhere.length === 0;
@@ -532,16 +536,9 @@ function ResultSummary({ past }: { past?: Presentation }) {
   const verb = (parts: Part[]) =>
     parts.length === 1 && partName(parts[0]) === "flight" ? "is" : "are";
 
-  /* Where the link under the panel goes, in a guest's words. It mirrors the
-     modal's handoff: a restaurants-only answer asked on the Restaurants page
-     links to that page; anything else links to the main page. */
-  const linkedPage =
-    page === "restaurants" &&
-    results.restaurantIds.length > 0 &&
-    !results.hotelIds.length &&
-    !results.flights.length
-      ? "the Restaurants page"
-      : "the main page";
+  /* Where the link under the panel goes, in a guest's words. What is not behind
+     the panel is on the main page, the one page that renders every part. */
+  const linkedPage = "the main page";
 
   const reason = (id: number | string, name: string | null) => {
     const raw = results.rationales[String(id)] ?? "";
@@ -713,12 +710,11 @@ function ResultSummary({ past }: { past?: Presentation }) {
         </div>
       ) : null}
 
-      {/* Only three places actually render this result set behind the modal:
+      {/* Only four places actually render this result set behind the modal:
           the landing page, which draws a frame per vertical, and the Hotels
           and Flights pages, where AiResultsSync writes the answer into the
-          URL. Asked from Inspire — or from Restaurants, whose standalone page
-          keeps its own city list rather than the concierge's picks — there is
-          nothing behind this panel, and saying otherwise sends the visitor
+          URL — and the Restaurants page, which lists the picks as "AI curated
+          results". Asked from Inspire there is nothing behind this panel, and saying otherwise sends the visitor
           looking for cards that are not there. */}
       {/* When the panel has named only some of them, say where the rest are and
           that these lead the list — the order is guaranteed by highlightsFirst,

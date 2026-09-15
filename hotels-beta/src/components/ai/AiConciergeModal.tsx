@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
-import { restaurantsHref } from "@/lib/ai/handoff";
 import AiConversation from "./AiConversation";
 import styles from "./AiConcierge.module.css";
 
@@ -27,17 +26,10 @@ import styles from "./AiConcierge.module.css";
 
 type Vertical = "hotels" | "flights" | "restaurants";
 
-const VERTICAL_LABEL: Record<Vertical, string> = {
-  hotels: "hotels",
-  flights: "flights",
-  restaurants: "restaurants",
-};
-
 export default function AiConciergeModal() {
   const {
     conciergeOpen,
     setConciergeOpen,
-    query,
     results,
     pageContext,
     hasConversation,
@@ -134,8 +126,8 @@ export default function AiConciergeModal() {
   /* One offer, chosen by how the answer sits against the page it was asked
    * from.
    *
-   *  - The answer is exactly this page's own subject → send them to that page,
-   *    "See relevant hotels".
+   *  - The answer is exactly this page's own subject → no link; it is already
+   *    behind the panel.
    *  - The answer is wider than this page, or about something else entirely →
    *    the only place that can show all of it at once is the main page, which
    *    renders a frame per vertical.
@@ -159,14 +151,13 @@ export default function AiConciergeModal() {
 
     // Specific to the page it was asked from.
     if (pageVertical && covered.length === 1 && covered[0] === pageVertical) {
-      /* Hotels and Flights already show the answer behind the panel
-         (AiResultsSync writes it into their URL), so a link to the same page
-         is a way to go where you are standing — the landing page's reason for
-         having none, found 2026-09-14 on a hotels answer asked on Hotels. The
-         Restaurants page keeps its own city list, so its link still leads
-         somewhere new. */
-      if (pageVertical !== "restaurants") return null;
-      return { href: restaurantsHref(query), label: `See relevant ${VERTICAL_LABEL[pageVertical]}` };
+      /* Every vertical page already shows its own part of the answer behind
+         the panel — Hotels and Flights through AiResultsSync, Restaurants
+         through its "AI curated results" type (2026-09-15) — so a link to the
+         same page is a way to go where you are standing: the landing page's
+         reason for having none, found 2026-09-14 on a hotels answer asked on
+         Hotels. */
+      return null;
     }
 
     if (page === "landing") return null;
@@ -176,7 +167,7 @@ export default function AiConciergeModal() {
     // the URL, and leaving the URL clean keeps any earlier classic search out
     // of the way.
     return { href: "/", label: "Go to combined results on main page" };
-  }, [query, results, pageContext]);
+  }, [results, pageContext]);
 
   if (!conciergeOpen || typeof document === "undefined") return null;
 

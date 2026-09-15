@@ -67,6 +67,15 @@ One conversation site-wide, in `sessionStorage` under `oltra_ai_concierge_v1`; c
 
 Exiting leaves Inspire showing what was asked. `presentResults` gained **`searchTags`** — the locked setting and activity tags actually searched on, since geography and dates alone cannot express *what kind of trip* it is — and `lib/ai/inspireMirror.ts` maps them to Inspire's five purposes, keyed on `presentedAt` so it applies once per answer and never fights a hand-picked filter. `queryStateToParams` now also emits `settings` and `activities`, so the Hotels handoff arrives with those facets pre-selected.
 
+**The Restaurants page lists an answer's picks (2026-09-15).** It was the one
+vertical page with nothing behind the panel: `RestaurantsMapView` now reads the
+store and offers "AI curated results" in the type selector, selected whenever the
+current answer's restaurants for this city change (an effect declared after the
+city reset, so it wins it). No AiResultsSync there — the page moves city itself,
+on a new answer only, and the shared session still carries the destination to a
+bare `/restaurants`. `shownBehind` in AiConversation and the modal's handoff both
+count restaurants as behind on that page.
+
 **The setting picks the purpose before the activities do (2026-09-15).** "Walking,
 good food and a quiet countryside hotel" in Europe searched Hiking + Gastronomy +
 Countryside; the old first-match-wins order took Hiking to "mountains" and led
