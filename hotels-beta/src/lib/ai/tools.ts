@@ -1622,7 +1622,10 @@ const presentResults = tool({
           "it in business too?'. Never a bare demand such as 'When are you " +
           "going?'. Omit it if nothing useful " +
           "remains to ask. Never put the answer here — that is the framing. " +
-          "Never offer flights to an airport already in \"flights\".",
+          "Never offer flights to an airport already in \"flights\". Offer " +
+          "only what you can do in this conversation — another search, a " +
+          "check, a comparison — never to show something on a page or take " +
+          "the visitor somewhere.",
       },
       hotelIds: {
         type: "array",

@@ -872,6 +872,7 @@ export default function HotelsView(props: {
     results: aiResults,
     presentedAt: aiPresentedAt,
     searchedAt: aiSearchedAt,
+    clearSignal: aiClearSignal,
   } = useAiSearch();
   const aiHotelsPending =
     aiResults.hotelIds.length > 0 && aiResultsAreCurrent(aiResults, aiPresentedAt, aiSearchedAt);
@@ -880,26 +881,45 @@ export default function HotelsView(props: {
      page is pinned to the concierge's set (`?ids=`). Removing it drops the set
      and the concierge's destination with it; the dates and guests stay. */
   const curatedIds = selected.ids.join(",");
+  const dropCuratedSet = () => {
+    clearHotelFlightDestination();
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (value === undefined || CURATED_DROPS.has(key)) continue;
+      for (const v of Array.isArray(value) ? value : [value]) params.append(key, v);
+    }
+    startTransition(() => {
+      router.replace(params.toString() ? `/hotels?${params.toString()}` : "/hotels", {
+        scroll: false,
+      });
+    });
+  };
   const curatedDestination = curatedIds
     ? {
         key: curatedIds,
         ids: curatedIds,
         onRemove: () => {
           markClassicSearch();
-          clearHotelFlightDestination();
-          const params = new URLSearchParams();
-          for (const [key, value] of Object.entries(searchParams)) {
-            if (value === undefined || CURATED_DROPS.has(key)) continue;
-            for (const v of Array.isArray(value) ? value : [value]) params.append(key, v);
-          }
-          startTransition(() => {
-            router.replace(params.toString() ? `/hotels?${params.toString()}` : "/hotels", {
-              scroll: false,
-            });
-          });
+          dropCuratedSet();
         },
       }
     : undefined;
+
+  /* CLEARING THE CONVERSATION CLEARS ITS SET HERE TOO (2026-09-15). The page
+     is pinned to an answer through the URL, which Clear never touched: after a
+     cleared Morocco conversation and a new question about Paris restaurants,
+     this page still showed Kasbah Tamadot under "AI curated results" — a hotel
+     from a conversation that no longer existed, labelled as the new answer's.
+     Keyed on the Clear signal rather than on the store being empty, so a
+     shared link carrying `?ids=` still opens with no conversation behind it. */
+  const seenClearSignal = useRef(aiClearSignal);
+  useEffect(() => {
+    if (aiClearSignal === seenClearSignal.current) return;
+    seenClearSignal.current = aiClearSignal;
+    if (curatedIds) dropCuratedSet();
+    // Only the signal decides; the params it reads are this render's.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiClearSignal]);
 
   useEffect(() => {
     if (hasHotelSearchContext(searchParams)) return;
