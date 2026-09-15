@@ -1026,8 +1026,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Montalcino": [
     { iata: "FLR", label: "Florence, Peretola", distKm: 82, size: "large", runwayM: 1560 },
-    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 89, size: "large", runwayM: 2199 },
-    { iata: "EBA", label: "Marina di Campo", distKm: 103, size: "medium", runwayM: 949 }
+    { iata: "PEG", label: "Perugia San Francesco d'Assisi - Umbria", distKm: 89, size: "large", runwayM: 2199 }
   ],
   "Monte Carlo": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 19, size: "large", runwayM: 5591 }
@@ -1265,8 +1264,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "PMI", label: "Palma de Mallorca", distKm: 20, size: "large", runwayM: 6270 }
   ],
   "Puligny-Montrachet": [
-    { iata: "DIJ", label: "Dijon Longvic", distKm: 44, size: "medium", runwayM: 3600 },
-    { iata: "DLE", label: "Dole Tavaux", distKm: 52, size: "medium", runwayM: 2231 }
+    { iata: "LYS", label: "Lyon Saint-Exupéry", distKm: 138, size: "large", runwayM: 6670 },
+    { iata: "GVA", label: "Geneva", distKm: 130, size: "large", runwayM: 3900 }
   ],
   "Punta Mita": [
     { iata: "PVR", label: "Puerto Vallarta", distKm: 31, size: "large", runwayM: 3100 }
@@ -1704,8 +1703,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
  * NOT a blanket "first entry wins". For everything else the list is
  * nearest-first, where the first entry is the closest strip and not the
  * gateway - New York's nearest to the hotel centroid is LaGuardia and the
- * answer has to be JFK. So the size rule stays for the other 428
- * destinations and only these 55 read position one as the answer. */
+ * answer has to be JFK. So the size rule stays for the other 426
+ * destinations and only these 57 read position one as the answer. */
 const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "andermatt",
   "arenal",
@@ -1741,10 +1740,12 @@ const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "masai mara",
   "menlo park",
   "moltrasio",
+  "montalcino",
   "natales",
   "nikko",
   "palmetto bluff",
   "pamalican island",
+  "puligny-montrachet",
   "ramatuelle",
   "rancho santa fe",
   "ruhengeri",

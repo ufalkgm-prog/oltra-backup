@@ -360,6 +360,16 @@ const GATEWAY_OVERRIDE = {
    * Lugano itself. Malpensa first, its own airport second. */
   Lugano: ["MXP", "LUG"],
 
+  /* Wine country, found in concierge testing 2026-09-15. Puligny-Montrachet
+   * (COMO Le Montrachet) listed only Dijon and Dole, neither with meaningful
+   * scheduled service; guests arrive through Lyon or Geneva. Montalcino
+   * (Castiglion del Bosco) already listed Florence first, but for an uncurated
+   * list the primary is picked by size then runway, and Perugia's 2,199m beat
+   * Peretola's 1,560m — so the concierge flew Copenhagen to Perugia, two hours
+   * out and thinly served. Hand-ordering makes Florence the primary. */
+  "Puligny-Montrachet": ["LYS", "GVA"],
+  Montalcino: ["FLR", "PEG"],
+
   // Elsewhere.
   "Perez Zeledón": ["SJO"],                 // three strips listed, none sellable                   // three strips listed, none sellable
   "Hua Hin": ["BKK", "HHQ"],                  // Hua Hin service is intermittent

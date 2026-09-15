@@ -33,8 +33,14 @@ export const MAX_MESSAGE_CHARS = 2000;
  * this is better restarted than compacted. */
 export const MAX_TURNS = 24;
 
-/** Ceiling on one response. */
-export const MAX_OUTPUT_TOKENS = 4096;
+/** Ceiling on one model step's output, thinking included.
+ *
+ * Was 4096, which the model's own thinking counts against: a family ski answer
+ * thought, then ran out of room part-way through writing presentResults, and
+ * the turn ended with nothing on screen (2026-09-15, finishReason "length" at
+ * exactly 4096). A cost ceiling, not a length target — answers stay short
+ * because the prompt says so. */
+export const MAX_OUTPUT_TOKENS = 16000;
 
 /** Tool-call rounds per request, so a confused model cannot loop indefinitely
  * at our expense. */

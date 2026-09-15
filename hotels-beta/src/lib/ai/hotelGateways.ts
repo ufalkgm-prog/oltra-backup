@@ -65,7 +65,12 @@ export function gatewayForHotel(
 export function completeLegsForHotels(
   legs: AiFlightLeg[],
   hotels: Pick<AiHotelCard, "airports">[],
-  maxLegs: number
+  maxLegs: number,
+  /* Every hotel the answer presented, given only when the flights came in the
+     same answer as those hotels. A presented leg to an airport none of them
+     uses is then dropped: the family ski answer searched Zurich for Suvretta
+     House, left Suvretta out, and still listed Heathrow-Zurich (2026-09-15). */
+  presentedHotels?: Pick<AiHotelCard, "airports">[]
 ): AiFlightLeg[] {
   if (!legs.length || !hotels.length) return legs;
 
@@ -100,8 +105,15 @@ export function completeLegsForHotels(
 
   // Legs the model presented that no named hotel accounts for keep their place
   // at the end rather than being dropped: it had a reason to show them.
+  const presentedAirports =
+    presentedHotels?.length && presentedHotels.every((hotel) => hotel.airports?.length)
+      ? new Set(presentedHotels.flatMap((hotel) => (hotel.airports ?? []).map((a) => a.iata)))
+      : null;
   for (const leg of legs) {
-    if (!placed.has(leg.destination.trim().toUpperCase())) ordered.push(leg);
+    const destination = leg.destination.trim().toUpperCase();
+    if (placed.has(destination)) continue;
+    if (presentedAirports && !presentedAirports.has(destination)) continue;
+    ordered.push(leg);
   }
 
   return ordered.slice(0, Math.max(maxLegs, legs.length));

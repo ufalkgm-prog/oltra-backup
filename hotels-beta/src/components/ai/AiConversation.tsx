@@ -11,7 +11,7 @@ import {
   gatewayForHotel,
   namedHotels,
 } from "@/lib/ai/hotelGateways";
-import { decodeStrayEscapes, stripLeadingName } from "@/lib/ai/rationale";
+import { decodeStrayEscapes, panelText, stripLeadingName } from "@/lib/ai/rationale";
 import { isMacroRegionTerm } from "@/lib/ai/macroRegionTerms";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
@@ -162,7 +162,7 @@ function readPresentation(message: UIMessage): Presentation | null {
       const rationales: Record<string, string> = {};
       for (const entry of input.rationales ?? []) {
         if (entry?.id != null && entry.reason) {
-          rationales[String(entry.id)] = decodeStrayEscapes(entry.reason);
+          rationales[String(entry.id)] = panelText(entry.reason);
         }
       }
 
@@ -275,6 +275,7 @@ function readPresentation(message: UIMessage): Presentation | null {
         // Collapsed here rather than at the frame, so the summary, the cards,
         // the handoff URL and the Flights page's trip type all read the same
         // one round trip.
+        results.flightsForHotels = Boolean(input.hotelIds?.length);
         results.flights = collapseReturnLegs(
           input.flights
             .filter((leg) => leg?.origin && leg?.destination && leg?.departureDate)
@@ -286,7 +287,7 @@ function readPresentation(message: UIMessage): Presentation | null {
               cabin: leg.cabin ?? "economy",
               ...(leg.details &&
               searched.has(flightKey(leg.origin, leg.destination, leg.departureDate, leg.returnDate))
-                ? { details: decodeStrayEscapes(leg.details) }
+                ? { details: panelText(leg.details) }
                 : {}),
             }))
         );
@@ -310,8 +311,8 @@ function readPresentation(message: UIMessage): Presentation | null {
 
       return {
         toolCallId: part.toolCallId,
-        framing: decodeStrayEscapes(input.framing),
-        followUp: decodeStrayEscapes(input.followUp ?? ""),
+        framing: panelText(input.framing),
+        followUp: panelText(input.followUp ?? ""),
         query,
         results,
       };
@@ -473,7 +474,7 @@ function AgentText({
 }
 
 function messageText(message: UIMessage): string {
-  return decodeStrayEscapes(
+  return panelText(
     message.parts
       .filter((part): part is { type: "text"; text: string } => part.type === "text")
       .map((part) => part.text)
@@ -641,7 +642,12 @@ function ResultSummary({ past }: { past?: Presentation }) {
      the hotels' order, and each hotel line names its airport — but only in an
      answer that has flights at all. An answer about hotels alone gets no
      airport lines. See lib/ai/hotelGateways.ts. */
-  const flights = completeLegsForHotels(results.flights, hotelPicks, MAX_NAMED);
+  const flights = completeLegsForHotels(
+    results.flights,
+    hotelPicks,
+    MAX_NAMED,
+    results.flightsForHotels && !laterStops.length ? hotels : undefined
+  );
   const showAirports = flights.length > 0;
   const airportLine = (hotel: (typeof hotels)[number]) => {
     if (!showAirports) return null;
@@ -946,7 +952,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
               alsoBehind > 0 && !partsBehind.includes("hotels") && !partsBehind.includes("restaurants")
                 ? ` — the ones named here first, with the other ${alsoBehind} after them`
                 : ""
-            }. Open it using the link below. ${RESUME_CHAT}`
+            }. Open it with the button below. ${RESUME_CHAT}`
           : page === "landing"
           ? /* The landing page no longer shows its results under the open
                panel (2026-09-15) — they appear when it closes — so "behind this
@@ -957,14 +963,14 @@ function ResultSummary({ past }: { past?: Presentation }) {
           : alsoBehind > 0
           ? rendersBehind
             ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REVIEW_BEHIND}`
-            : `These are listed first on ${linkedPage}, with the other ${alsoBehind} after them${priced ? " — all with prices and availability" : ""}. Open it using the link below. ${RESUME_CHAT}`
+            : `These are listed first on ${linkedPage}, with the other ${alsoBehind} after them${priced ? " — all with prices and availability" : ""}. Open it with the button below. ${RESUME_CHAT}`
           : priced
             ? rendersBehind
               ? `The results of your query, with prices and availability, are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : `Prices and availability are on ${linkedPage} — open it using the link below. ${RESUME_CHAT}`
+              : `Prices and availability are on ${linkedPage} — open it with the button below. ${RESUME_CHAT}`
             : rendersBehind
               ? `The results of your query are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : `The results are on ${linkedPage} — open it using the link below. ${RESUME_CHAT}`}
+              : `The results are on ${linkedPage} — open it with the button below. ${RESUME_CHAT}`}
       </p>}
     </div>
   );

@@ -451,6 +451,8 @@ The 24: five US rows standing next to a bigger airport (**Menlo Park** on a 799m
 
 Lugano now maps `MXP` then `LUG`.
 
+**Two wine-country fixes, found in concierge testing 2026-09-15.** `Puligny-Montrachet` listed only Dijon and Dole — both "medium", both with next to no scheduled service, so no screen flagged them — and now reads **`LYS, GVA`** (1h45 and 2h28 by road). **`Montalcino` shows a blind spot of the size rule**: Florence was already listed first, but an uncurated list takes its primary by size then runway, and Perugia's 2,199m beat Peretola's 1,560m, so the concierge flew Copenhagen to Perugia. Hand-ordered **`FLR, PEG`**. Any uncurated key whose nearest large airport has a short runway can hide the same inversion — worth a sweep. 57 hand-ordered destinations; audit clean; invariant ok.
+
 ### Due on the clock, not from this workflow
 
 **Ratehawk hotel status re-probe, due 2026-11-16** (§42, §43). It is the one

@@ -140,6 +140,10 @@ export type AiResultSet = {
    * lists every place's properties under its own place and dates, each priced
    * for its own stay (Ulrik, 2026-09-15). */
   laterStops: AiLaterStop[];
+  /** True when the answer that set `flights` presented hotels in the same
+   * call, so every flight is there to reach one of those hotels (see
+   * completeLegsForHotels). */
+  flightsForHotels?: boolean;
 };
 
 /** One later place in a multi-stop trip. See AiResultSet.laterStops. */

@@ -238,11 +238,17 @@ export async function POST(req: Request) {
     // 26.6s answer for 30 tokens. That sentence is now the tool's own
     // `followUp` field, so the answer and the question arrive together.
     stopWhen: [stepCountIs(MAX_TOOL_STEPS), hasToolCall("presentResults")],
+    /* THE LAST STEP IS FOR ANSWERING (2026-09-15). A family ski question spent
+       all eight steps searching and checking other weeks, and the turn ended
+       with nothing on screen — once with presentResults cut off mid-stream,
+       once without it. On the final step only presentResults is offered, so
+       the model either presents what it has or says so in prose. */
+    prepareStep: ({ stepNumber }) =>
+      stepNumber >= MAX_TOOL_STEPS - 1 ? { activeTools: ["presentResults"] } : undefined,
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     onError({ error }) {
       console.error("[ai chat]", error);
-    },
-  });
+    },  });
 
   return result.toUIMessageStreamResponse();
 }

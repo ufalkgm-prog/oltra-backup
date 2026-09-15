@@ -24,6 +24,32 @@ export function decodeStrayEscapes(text: string): string {
   );
 }
 
+/* "Held for 15–18 October" (2026-09-15, live), weeks after "held for" went on
+ * the prompt's never-list: nothing is held, and it reads as a reservation. A
+ * prompt rule of this shape gets skipped, so the display rewrites the few
+ * phrases that keep coming back. Narrow on purpose — "reserved for adults" is a
+ * real fact about a pool, so "reserved" is not touched. */
+const HOUSE_WORDING: Array<[RegExp, string]> = [
+  [/\b(held|set aside) for\b/gi, "for"],
+  [/\btagged for\b/gi, "good for"],
+];
+
+function keepCase(original: string, replacement: string): string {
+  return /^[A-Z]/.test(original)
+    ? replacement.charAt(0).toUpperCase() + replacement.slice(1)
+    : replacement;
+}
+
+/** Every model-authored string the panel shows: stray escapes decoded, and the
+ * phrases that sound like a booking or read like our data rewritten. */
+export function panelText(text: string): string {
+  let out = decodeStrayEscapes(text);
+  for (const [pattern, replacement] of HOUSE_WORDING) {
+    out = out.replace(pattern, (match) => keepCase(match, replacement));
+  }
+  return out;
+}
+
 export function tokens(value: string): string[] {
   return value.toLowerCase().split(WORDS).filter(Boolean);
 }

@@ -122,10 +122,17 @@ function foldText(value: string): string {
   return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
+/* Latin script only: a live search slipped a stray "直" in among its English
+ * phrasings (2026-09-15). The descriptions are written in English. */
+const LATIN_PHRASE = /^[\p{Script=Latin}\p{N}\p{P}\p{Zs}\p{S}]+$/u;
+
 function parseFeatures(values: string[] | undefined): Feature[] {
   return (values ?? [])
     .map((value) => {
-      const words = value.split("|").map((word) => foldText(word).trim()).filter(Boolean);
+      const words = value
+        .split("|")
+        .map((word) => foldText(word).trim())
+        .filter((word) => word && LATIN_PHRASE.test(word));
       return { label: value.split("|")[0].trim(), words };
     })
     .filter((feature) => feature.words.length > 0)
@@ -133,6 +140,14 @@ function parseFeatures(values: string[] | undefined): Feature[] {
 }
 
 const MAX_FEATURES = 4;
+
+/* WHAT ONE ANSWER HAS ALREADY SEARCHED FOR (2026-09-15). The family ski answer
+ * searched "ski-in ski-out" and "ski school", then searched again with ski-in
+ * alone, and presented seven hotels "with ski school" — four of which were never
+ * checked for it. Tools are built per request, so a feature searched earlier in
+ * the same answer is still checked, and reported in `mentions`, on every later
+ * search; only the features passed THIS time filter. */
+type TurnMemory = { features: Map<string, Feature> };
 
 /* THE DRIVE FROM A HOTEL'S OWN AIRPORT (2026-09-15). Asked for Lake Como via
  * Milan, the concierge quoted compareGateways' 52 minutes — Malpensa to Milan
@@ -421,7 +436,7 @@ function narrowingAxes(
 
 /* ------------------------------------------------------------------------- */
 
-const searchHotels = tool({
+const createSearchHotels = (turn: TurnMemory) => tool({
   description:
     "Search the myOLTRA hotel collection by geography and character. Returns " +
     "candidate properties with their editorial detail so you can rank them " +
@@ -598,7 +613,12 @@ const searchHotels = tool({
               "Ceiling for the whole stay, if the visitor named one. Used " +
               "only to set withinBudget — the figure is never echoed back.",
           },
-          currency: { type: "string" },
+          currency: {
+            type: "string",
+            description:
+              "The currency of a budget the visitor named (\"under €2,000\" is EUR). " +
+              "Leave it out otherwise — never infer it from where they fly from.",
+          },
         },
         required: ["checkIn", "checkOut"],
         additionalProperties: false,
@@ -687,7 +707,7 @@ const searchHotels = tool({
       // features to look for in them.
       fields: [
         ...(CANDIDATE_FIELDS as unknown as string[]),
-        ...(input.features?.length ? ["description"] : []),
+        ...(input.features?.length || turn.features.size ? ["description"] : []),
       ],
       filter: and.length === 1 ? and[0] : { _and: and },
       // Editorial rank first, name second. ext_points is deliberately NOT here:
@@ -716,30 +736,46 @@ const searchHotels = tool({
     const tagFit = relevanceSort(filterHotelsByTags(inRegion, requested), requested);
 
     const features = parseFeatures(input.features);
+    const earlierFeatures = [...turn.features.values()].filter(
+      (f) => !features.some((g) => g.label === f.label)
+    );
+    for (const f of features) turn.features.set(f.label, f);
+    const checkedFeatures = [...features, ...earlierFeatures];
     const mentionsByHotel = new Map<HotelRecord, string[]>();
-    for (const hotel of features.length ? tagFit : []) {
+    for (const hotel of checkedFeatures.length ? tagFit : []) {
       const text = foldText(`${hotel.highlights ?? ""} ${hotel.description ?? ""}`);
       mentionsByHotel.set(
         hotel,
-        features.filter((f) => f.words.some((word) => text.includes(word))).map((f) => f.label)
+        checkedFeatures.filter((f) => f.words.some((word) => text.includes(word))).map((f) => f.label)
       );
     }
     const mentionsOf = (hotel: HotelRecord) => mentionsByHotel.get(hotel) ?? [];
-    const mentionAll = tagFit.filter((hotel) => mentionsOf(hotel).length === features.length);
+    const currentMentioned = (hotel: HotelRecord) =>
+      features.filter((f) => mentionsOf(hotel).includes(f.label)).length;
+    const mentionAll = tagFit.filter((hotel) => currentMentioned(hotel) === features.length);
     // When none mentions every feature, nothing is left out: they are ordered
     // by how many they mention, and the model says what each one confirms.
     const featureFit = !features.length
       ? tagFit
       : mentionAll.length
         ? mentionAll
-        : tagFit.slice().sort((a, b) => mentionsOf(b).length - mentionsOf(a).length);
-    const featureInfo = features.length
+        : tagFit.slice().sort((a, b) => currentMentioned(b) - currentMentioned(a));
+    const featureInfo = checkedFeatures.length
       ? {
           featureCounts: Object.fromEntries(
-            features.map((f) => [f.label, tagFit.filter((h) => mentionsOf(h).includes(f.label)).length])
+            checkedFeatures.map((f) => [f.label, tagFit.filter((h) => mentionsOf(h).includes(f.label)).length])
           ),
           leftOutByFeatures: tagFit.length - featureFit.length,
-          featureNote: mentionAll.length
+          ...(earlierFeatures.length
+            ? {
+                earlierFeatures: earlierFeatures.map((f) => f.label),
+                earlierFeaturesNote:
+                  "Searched for earlier in this answer and not used to filter this time. Each hotel's \"mentions\" still shows whether it has them: never say a hotel has one its mentions do not include, and never describe the set by one that not all of them mention.",
+              }
+            : {}),
+          featureNote: !features.length
+            ? "No feature filtered this search."
+            : mentionAll.length
             ? "Kept: the hotels whose highlights or description mention every feature. A description can leave out something a hotel has, so the others are not proof of absence — mention that more may have it only if the visitor asks."
             : "No hotel here mentions all of those, so none was left out; they are ordered by how many they mention. Say per hotel what its \"mentions\" confirm, and never claim a feature for a hotel that does not mention it.",
         }
@@ -854,7 +890,7 @@ const searchHotels = tool({
     const shaped = capped.map((hotel) => ({
       ...candidateShape(hotel),
       ...(nearPlace ? distanceFromPlace(nearPlace, hotel.lat, hotel.lng) : {}),
-      ...(features.length ? { mentions: mentionsOf(hotel) } : {}),
+      ...(checkedFeatures.length ? { mentions: mentionsOf(hotel) } : {}),
     }));
     const nearInfo = near
       ? {
@@ -1178,7 +1214,12 @@ const checkAvailability = tool({
           "Ceiling for the whole stay, if the visitor named one. Used only to " +
           "set withinBudget — the figure is never echoed back to you.",
       },
-      currency: { type: "string" },
+      currency: {
+        type: "string",
+        description:
+          "The currency of a budget the visitor named. Leave it out otherwise — " +
+          "never infer it from where they fly from.",
+      },
     },
     required: ["ids", "checkIn", "checkOut"],
     additionalProperties: false,
@@ -1593,6 +1634,17 @@ function createSearchFlights(preferred: PreferredAirline[]) {
       });
     }
 
+    /* "Each reached by a direct flight" (2026-09-15) was said of Copenhagen to
+       Dijon, a route that does not exist: the test environment invents a
+       nonstop on every route. The model is told so wherever that is true. */
+    const { flightDataIsSynthetic } = await import("@/lib/flights/duffelClient");
+    const scheduleNote = flightDataIsSynthetic()
+      ? {
+          scheduleNote:
+            "These schedules come from a test environment that invents a nonstop flight on every route. Describe them only in each leg's details; never say in the framing or a hotel line that a place is reached by a direct flight, and never choose or praise an airport for its flights.",
+        }
+      : {};
+
     const routes = origins
       .flatMap((from) => codes.map((to) => ({ from, to })))
       .filter((route) => route.from !== route.to)
@@ -1614,11 +1666,12 @@ function createSearchFlights(preferred: PreferredAirline[]) {
 
     if (searches.length === 1 && !cityAirports.length) {
       const [only] = searches;
-      return asUntrustedData("flights", { ...datesNote, searchedRoutes, ...only });
+      return asUntrustedData("flights", { ...datesNote, ...scheduleNote, searchedRoutes, ...only });
     }
 
     return asUntrustedData("flights", {
       ...datesNote,
+      ...scheduleNote,
       searchedRoutes,
       ...(cityAirports.length
         ? {
@@ -2047,7 +2100,7 @@ const presentResults = tool({
  * signed-in member's profile, read by the chat route. */
 export function buildConciergeTools({ preferredAirlines }: { preferredAirlines: string[] }) {
   return {
-    searchHotels,
+    searchHotels: createSearchHotels({ features: new Map() }),
     getHotelDetails,
     checkAvailability,
     nearestAirport,

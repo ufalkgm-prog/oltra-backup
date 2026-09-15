@@ -474,7 +474,8 @@ export default function AiResultFrames() {
   const flightLegs = completeLegsForHotels(
     results.flights,
     namedHotels(hotels, results.highlightIds),
-    MAX_NAMED
+    MAX_NAMED,
+    results.flightsForHotels && !(results.laterStops ?? []).length ? hotels : undefined
   );
 
   const restaurantCityGroups = (() => {
