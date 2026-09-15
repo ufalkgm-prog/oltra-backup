@@ -37,9 +37,12 @@
 /* The background page is blurred, not merely dimmed. That is what makes the
    in-chat summary necessary rather than decorative: the cards are still there
    and still authoritative, they are simply unreadable while this is open. */
+/* The whole screen, header row included: on every page but the landing page
+   the blur reaches the top, and the site header is raised above this layer
+   (.oltra-site-header.is-concierge-open), so its logo and links stay sharp on
+   the blurred page (Ulrik, 2026-09-15). */
 .scrim {
   position: fixed;
-  /* `top` comes from the site header's measured bottom, inline. */
   inset: 0;
   z-index: 1000;
   display: flex;
@@ -54,6 +57,13 @@
   overscroll-behavior: contain;
   backdrop-filter: blur(var(--oltra-modal-blur));
   -webkit-backdrop-filter: blur(var(--oltra-modal-blur));
+}
+
+/* No drop shadow: over the landing page's clear scrim it read as an odd dark
+   halo round the panel (2026-09-15). Two classes, to beat .oltra-modal-panel's
+   shadow whatever order the stylesheets load in. */
+.scrim .panel {
+  box-shadow: none;
 }
 
 .panel {

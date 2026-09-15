@@ -5,14 +5,17 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 630d0a83-c8d7-41b7-b9a0-32e95b4da724
-  modified: 2026-09-15T12:07:34.207Z
+  modified: 2026-09-15T14:31:06.199Z
 ---
 
 Since 2026-09-14 Ulrik tests the AI concierge by having Claude open the dev server in Chrome, ask ONE query on a varied page (landing, Hotels, Flights, Restaurants, Inspire), relay the panel text plus which tools ran, and flag what might warrant a code or prompt change. He reviews each answer and decides; fixes are verified in the same browser session, then committed and pushed on his word.
 
 Done on 2026-09-14 (all fixes pushed, last commit fb6a3b9): Inspire diving in February; Restaurants anniversary in Paris; Flights business class to Tokyo plus hotels; Hotels family ski at Easter with a budget; landing Lisbon long weekend with hotel, dinner and flights. Resume with question six on 2026-09-15.
 
-On 2026-09-15 questions 6–10 ran (Inspire walking/countryside, Restaurants Rome family, landing 50th-birthday art trip), plus a UI change moving "Ask AI" into the site header; all pushed, last commit c2930d8. Resume with question eleven.
+On 2026-09-15 questions 6–14 ran, plus a multi-stop test (London → Nice/Cannes → Porto Cervo → London) that led to the whole-trip landing layout; all pushed, last commit ec387d0. Resume with question fifteen.
+
+- Typing into the concierge via the Chrome extension can be swallowed by the Next dev error overlay; setting the textarea value with the native setter plus an input event, then clicking Ask, is reliable.
+- `npm run dev` stopped with TaskStop leaves an orphan node on :3000 — kill it by PID after checking it is node.
 
 **Why:** the concierge's failures are silent (CLAUDE-AI.md), so answers are reviewed by a person rather than by tsc or lint.
 

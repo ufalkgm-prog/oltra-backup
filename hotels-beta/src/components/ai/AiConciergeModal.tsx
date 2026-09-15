@@ -26,6 +26,39 @@ import styles from "./AiConcierge.module.css";
 
 type Vertical = "hotels" | "flights" | "restaurants";
 
+/* The landing search panel's box, for pages that do not have one.
+ *
+ * Mirrors page.module.css's .heroPanel — width min(1120px, 100vw - 3rem), or
+ * 2.5rem at 1280px and below, centred — and sits at --oltra-page-top-padding,
+ * where that panel starts. The height is the panel's own, remembered from the
+ * last time the landing page measured it; before that the panel is as tall as
+ * its content. */
+const LANDING_HEIGHT_KEY = "oltra_ai_landing_panel_height";
+
+function rememberLandingPanelHeight(height: number) {
+  try {
+    window.sessionStorage.setItem(LANDING_HEIGHT_KEY, String(Math.round(height)));
+  } catch {
+    /* sessionStorage may be unavailable; the box is still right, just shorter */
+  }
+}
+
+function landingPanelBox() {
+  const root = document.documentElement;
+  const style = window.getComputedStyle(root);
+  const rem = parseFloat(style.fontSize) || 16;
+  const gutter = (window.innerWidth <= 1280 ? 2.5 : 3) * rem;
+  const width = Math.min(1120, window.innerWidth - gutter);
+  const top = parseFloat(style.getPropertyValue("--oltra-page-top-padding")) || 110;
+  let height = 0;
+  try {
+    height = Number(window.sessionStorage.getItem(LANDING_HEIGHT_KEY)) || 0;
+  } catch {
+    height = 0;
+  }
+  return { top, left: Math.max(0, (root.clientWidth - width) / 2), width, height };
+}
+
 export default function AiConciergeModal() {
   const {
     conciergeOpen,
@@ -46,10 +79,13 @@ export default function AiConciergeModal() {
 
   const close = useCallback(() => setConciergeOpen(false), [setConciergeOpen]);
 
-  /* Where the panel opens. A page can mark one frame with
-   * data-ai-concierge-anchor — the landing page marks its search panel — and
-   * the concierge then opens exactly over it: same left edge, same width, same
-   * top. Anywhere else it stays centred.
+  /* Where the panel opens: exactly over the landing page's search panel, on
+   * every page (Ulrik, 2026-09-15). The landing page marks that frame with
+   * data-ai-concierge-anchor and the panel takes its left edge, width, top and
+   * height — at least that tall, so it covers the frame completely. Other pages
+   * have no such frame, so the same box is rebuilt from the rules that lay it
+   * out (the landing hero's width and the page's top padding) and from the
+   * frame's height as last measured on the landing page.
    *
    * A layout effect, so the first measurement lands before the first paint (no
    * jump from centred to anchored). It is taken again on the next frame,
@@ -58,30 +94,30 @@ export default function AiConciergeModal() {
    * replaces it does not cancel that out — measured live, the panel sat 5px
    * right of the frame on a first-paint reading alone. The top is kept on
    * screen in case the page was scrolled past the frame. */
-  const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(
-    null
-  );
-  /* Where the site header ends. The scrim starts there, so the header row is
-     never blurred (2026-09-15): it stays sharp above the panel, carrying the
-     Ask AI button and "AI Concierge" under the logo. */
-  const [headerBottom, setHeaderBottom] = useState(0);
+  const [anchor, setAnchor] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   useLayoutEffect(() => {
     if (!conciergeOpen) return;
 
     const measure = () => {
-      const header = document.querySelector<HTMLElement>(".oltra-site-header");
-      const top = header ? Math.max(0, Math.round(header.getBoundingClientRect().bottom)) : 0;
-      setHeaderBottom(top);
-
       const frame = document.querySelector<HTMLElement>("[data-ai-concierge-anchor]");
-      if (!frame) {
-        setAnchor(null);
+      if (frame) {
+        const rect = frame.getBoundingClientRect();
+        rememberLandingPanelHeight(rect.height);
+        setAnchor({
+          top: Math.max(rect.top, 16),
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        });
         return;
       }
-      const rect = frame.getBoundingClientRect();
-      // Relative to the scrim, which now begins below the header.
-      setAnchor({ top: Math.max(rect.top - top, 16), left: rect.left, width: rect.width });
+      setAnchor(landingPanelBox());
     };
 
     measure();
@@ -198,7 +234,6 @@ export default function AiConciergeModal() {
       className={`${onLanding ? styles.scrimClear : "oltra-modal-scrim"} ${styles.scrim} ${
         anchor ? styles.scrimAnchored : ""
       }`}
-      style={{ top: headerBottom }}
       onClick={close}
       role="presentation"
     >
@@ -207,7 +242,12 @@ export default function AiConciergeModal() {
         className={`oltra-modal-panel ${styles.panel}`}
         style={
           anchor
-            ? { marginTop: anchor.top, marginLeft: anchor.left, width: anchor.width }
+            ? {
+                marginTop: anchor.top,
+                marginLeft: anchor.left,
+                width: anchor.width,
+                minHeight: anchor.height || undefined,
+              }
             : undefined
         }
         onClick={(event) => event.stopPropagation()}

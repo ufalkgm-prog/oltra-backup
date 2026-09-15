@@ -1176,9 +1176,9 @@ button.oltra-select {
    behind it. The fill is dark enough that the nav clears AA over anything
    underneath, including the bright hero images on the landing page, and the
    blur is what keeps it legible rather than the opacity alone. */
-/* Above the concierge's scrim (z-index 1000), which starts at the header's
-   bottom edge — so the header stays sharp and usable, and its own dropdowns
-   (currency) still open over the panel. */
+/* Above the concierge's scrim (z-index 1000), which covers the whole screen —
+   so the page behind the header is blurred while the logo, links and their
+   dropdowns (currency) stay sharp and usable on top of it. */
 .oltra-site-header.is-concierge-open {
   z-index: 1001;
 }
@@ -1340,19 +1340,19 @@ button.oltra-select {
   opacity: 0.7;
 }
 
+/* No visible edge on hover or on the current page (Ulrik, 2026-09-15). The 2px
+   border stays, transparent, so each link keeps exactly the size and click
+   area it had. */
 .oltra-site-header__nav-link:hover,
 .oltra-site-header__action-link:hover {
   text-decoration: none;
-  border-color: var(--oltra-choice-rim-hover);
+  border-color: transparent;
   background: transparent;
 }
 
-/* The current page stays sage while another item is hovered: grey and sage
-   are different enough to show both, so the old rule that hid the active edge
-   during a hover went. */
 .oltra-site-header__nav-link.is-active,
 .oltra-site-header__action-link.is-active {
-  border-color: var(--oltra-choice-rim-selected);
+  border-color: transparent;
 }
 
 .oltra-site-header__nav-link--disabled {
