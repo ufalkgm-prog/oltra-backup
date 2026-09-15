@@ -1777,6 +1777,39 @@ export default function HotelsView(props: {
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
   }, [ratehawkRooms.rooms, roomSelection]);
 
+  /* The selected hotel's description, fetched on selection rather than carried
+     in the page's hotel list — which it made too large to cache (see the note
+     on hotelFields in hotels/page.tsx). Cached per hotel for the session. */
+  const descriptionCacheRef = useRef(new Map<string, string>());
+  const [selectedDescription, setSelectedDescription] = useState<{
+    id: string;
+    text: string;
+  }>({ id: "", text: "" });
+
+  useEffect(() => {
+    const id = selectedHotel?.id != null ? String(selectedHotel.id) : "";
+    if (!id) return;
+    const cached = descriptionCacheRef.current.get(id);
+    if (cached !== undefined) {
+      setSelectedDescription({ id, text: cached });
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/hotels/${id}/description`)
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; description?: string }) => {
+        const text = data?.ok ? (data.description ?? "") : "";
+        descriptionCacheRef.current.set(id, text);
+        if (!cancelled) setSelectedDescription({ id, text });
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedDescription({ id, text: "" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedHotel?.id]);
+
   useEffect(() => {
     if (!selectedHotel?.ratehawk_image_1) return;
     let cancelled = false;
@@ -3093,8 +3126,9 @@ async function handleCreateTripAndAddHotel() {
                   <div>
                     <div className="oltra-subheader">Description</div>
                     <div className="mt-1.5 text-sm leading-relaxed text-[color:var(--oltra-text-primary)]">
-                      {selectedHotel.description?.trim() ? (() => {
-                        const full = selectedHotel.description.trim();
+                      {selectedDescription.id === String(selectedHotel.id) &&
+                      selectedDescription.text.trim() ? (() => {
+                        const full = selectedDescription.text.trim();
                         const needsExpand = full.length > 520;
                         const displayText = descExpanded || !needsExpand
                           ? full

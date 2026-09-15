@@ -89,26 +89,16 @@ const selected = {
   landing_handoff,
 };
 
-const hasMeaningfulFilters = Boolean(
-  q ||
-    selected.country.length ||
-    selected.city.length ||
-    selected.state.length ||
-    selected.admin_region.length ||
-    selected.ids.length ||
-    selected.region.length ||
-    selected.local_area.length ||
-    selected.affiliation.length ||
-    selected.activities.length ||
-    selected.awards.length ||
-    selected.settings.length ||
-    selected.styles.length
-);
-
 // This list is fetched for EVERY published hotel in one request (limit: -1), so
-// a field added here is paid for ~870 times per page load. Never add
+// a field added here is paid for ~800 times per page load. Never add
 // `ratehawk_room_groups` (~19 MB across the roster) or ratehawk_image_2..50 —
 // both are read per-hotel on demand instead. See CLAUDE.md §29 and §32.
+//
+// Nor `description` (2026-09-15): with it the response was 2.8-3.7 MB, over
+// the 2 MB Next.js data cache limit, so it was never cached and every visit
+// re-downloaded the roster from Directus — 11s to navigate here from the
+// header. It is read for the selected hotel only, from
+// /api/hotels/[id]/description. Keep this response under 2 MB.
 const hotelFields = [
   "id",
   "hotel_name",
@@ -124,7 +114,6 @@ const hotelFields = [
   "insta",
   "editor_rank",
   "ext_points",
-  "description",
   "affiliation",
   "agoda_photo1",
   "agoda_photo2",
@@ -180,7 +169,10 @@ const [metaHotels, hotelsRawAll] = await Promise.all([
   }),
   getHotels({
     fields: hotelFields as unknown as string[],
-    filter: hasMeaningfulFilters ? filter : undefined,
+    // Always the built filter, which enforces published = true: without
+    // search filters this used to be no filter at all, fetching the ~100
+    // unpublished rows only to drop them below.
+    filter,
     sort: ["-editor_rank", "-ext_points", "hotel_name"],
     limit: -1,
   }),
