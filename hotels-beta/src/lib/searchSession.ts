@@ -84,6 +84,17 @@ export function clearHotelFlightDestination() {
   saveHotelFlightSearch(stay);
 }
 
+/** Removes the dates, but only if they are still the ones given — so Clear in
+ * the concierge takes back dates it set and never dates picked since. */
+export function clearHotelFlightDatesIf(from: string, to: string) {
+  const current = readHotelFlightSearch();
+  if (!current || (current.from ?? "") !== from || (current.to ?? "") !== to) return;
+  const next: SharedTravelSearch = { ...current };
+  delete next.from;
+  delete next.to;
+  saveHotelFlightSearch(next);
+}
+
 export function readHotelFlightSearch(): SharedTravelSearch | null {
   if (typeof window === "undefined") return null;
 

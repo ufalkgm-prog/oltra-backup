@@ -1751,9 +1751,9 @@ const searchRestaurants = tool({
         setting: row.restaurant_setting ?? "",
         style: row.restaurant_style ?? "",
         awards: row.awards ?? [],
-        // In words, "Not Michelin" included, so a prose answer can say it
-        // without translating codes.
-        michelin: michelinStatus(row),
+        // In words, so a prose answer can say it without translating codes.
+        // Absent for a restaurant with no Michelin standing.
+        ...(michelinStatus(row) ? { michelin: michelinStatus(row) } : {}),
         ...(nearPlace ? distanceFromPlace(nearPlace, row.lat, row.lng) : {}),
       })),
     });

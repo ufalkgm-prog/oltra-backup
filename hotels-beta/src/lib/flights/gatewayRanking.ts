@@ -461,16 +461,27 @@ export function standingGatewayOrder(city: string): CityAirport[] {
 }
 
 /** The standing airports for one HOTEL: its city, or — for the lodges that
- * have none (§3) — its traveller area, which is how cityAirports keys them. */
+ * have none (§3) — its traveller area, which is how cityAirports keys them.
+ *
+ * Concierge-only. A destination whose route names an international airport to
+ * `flyInto` (the Maldives: Male, not the domestic hop) leads with it, so the
+ * panel says "Fly into Velana (MLE)" and completes flights to Male rather than
+ * to Thimarafushi from Copenhagen. */
 export function standingGatewaysForHotel(hotel: {
   city?: string | null;
   state_province_county_island?: string | null;
 }): CityAirport[] {
   const city = (hotel.city ?? "").trim();
-  const fromCity = city ? standingGatewayOrder(city) : [];
-  if (fromCity.length) return fromCity;
   const area = (hotel.state_province_county_island ?? "").trim();
-  return area ? standingGatewayOrder(area) : [];
+  const fromCity = city ? standingGatewayOrder(city) : [];
+  const key = fromCity.length ? city : area;
+  const airports = fromCity.length ? fromCity : area ? standingGatewayOrder(area) : [];
+  const flyInto = key ? getTransferRoute(key)?.flyInto : undefined;
+  if (!flyInto) return airports;
+  return [
+    { iata: flyInto.iata, label: flyInto.label, distKm: 0, size: "large", runwayM: 0 },
+    ...airports.filter((a) => a.iata !== flyInto.iata),
+  ];
 }
 
 /** Facts for one airport from a set of already-normalised itineraries — the

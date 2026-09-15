@@ -74,6 +74,11 @@ export type TransferRoute = {
   /** In order, from `arriveAt` to the hotel door. */
   legs: TransferLeg[];
   note?: string;
+  /** The international airport a flight from abroad should go to, when that
+   * is not `arriveAt`. Only the Maldives today: `arriveAt` is the regional
+   * domestic airport, reached from Male, and a concierge answer that searched
+   * CPH-MLE still listed CPH-TMF and CPH-DRV as flights (2026-09-15). */
+  flyInto?: { iata: string; label: string };
 };
 
 /* Populated only where the route is not in reasonable doubt. The candidate
@@ -107,6 +112,7 @@ function maldives(iata: string, label: string): TransferRoute {
     arriveAtLabel: label,
     legs: [{ mode: "boat", to: "the resort", arrangedByHotel: true }],
     note: MALDIVES_NOTE,
+    flyInto: { iata: "MLE", label: "Velana" },
   };
 }
 

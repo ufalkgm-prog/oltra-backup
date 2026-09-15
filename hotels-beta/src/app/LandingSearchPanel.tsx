@@ -130,6 +130,8 @@ export default function LandingSearchPanel({
     if (!presentedAt || presentedAt === appliedStayRef.current) return;
     if (presentedAt < searchedAt) return;
     appliedStayRef.current = presentedAt;
+    // A restaurants-only answer says nothing about the stay (see the store).
+    if (aiQuery.vertical === "restaurants") return;
     if (aiMultiStop) {
       setFromValue("");
       setToValue("");
@@ -154,7 +156,7 @@ export default function LandingSearchPanel({
     }
     // Keyed on the ages' content, not the array's identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presentedAt, searchedAt, aiQuery.from, aiQuery.to, aiQuery.adults, aiQuery.kids, aiQuery.bedrooms, aiChildrenAgesKey, aiMultiStop]);
+  }, [presentedAt, searchedAt, aiQuery.vertical, aiQuery.from, aiQuery.to, aiQuery.adults, aiQuery.kids, aiQuery.bedrooms, aiChildrenAgesKey, aiMultiStop]);
 
   const [includeHotels, setIncludeHotels] = useState(
     normalizeParam(initialSearchParams.include_hotels) !== "0"

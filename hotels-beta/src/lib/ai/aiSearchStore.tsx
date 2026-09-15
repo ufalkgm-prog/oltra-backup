@@ -10,7 +10,12 @@ import {
   useState,
 } from "react";
 import type { UIMessage } from "ai";
-import { clearHotelFlightDestination, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
+import {
+  clearHotelFlightDatesIf,
+  clearHotelFlightDestination,
+  kidAgeFields,
+  mergeHotelFlightSearch,
+} from "@/lib/searchSession";
 import {
   EMPTY_QUERY_STATE,
   EMPTY_RESULT_SET,
@@ -166,6 +171,9 @@ function read(): Persisted {
   }
 }
 
+/** The query fields that describe the stay rather than the place. */
+const STAY_FIELDS = ["from", "to", "datesLabel", "adults", "kids", "childrenAges", "bedrooms"] as const;
+
 export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   // Starts empty on both server and first client render, then hydrates from
   // sessionStorage in an effect. Reading storage during render would produce a
@@ -175,7 +183,8 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   const [conciergeOpen, setConciergeOpen] = useState(false);
   const [pageContext, setPageContext] = useState<AiPageContext | null>(null);
   const hydrated = useRef(false);
-  const mirrorPending = useRef(false);
+  /* "place" mirrors the destination only: see STAY_FIELDS. */
+  const mirrorPending = useRef<false | "all" | "place">(false);
 
   useEffect(() => {
     setState(read());
@@ -218,7 +227,20 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       // setState mid-render ("Cannot update a component while rendering a
       // different component"). Updaters have to stay pure; React may also run
       // them twice.
-      mirrorPending.current = true;
+      /* A DINNER PARTY IS NOT THE TRAVEL PARTY (2026-09-15). "Six of us for
+         dinner" came back as stay {adults: 6}, and the mirror wrote six adults
+         in one bedroom into the Hotels and Flights search. An answer with no
+         hotels, flights or later stops keeps the travel party and dates it
+         had, and mirrors only where. */
+      const aboutStay = Boolean(
+        results.hotelIds?.length || results.flights?.length || results.laterStops?.length
+      );
+      if (!aboutStay) {
+        query = Object.fromEntries(
+          Object.entries(query).filter(([key]) => !(STAY_FIELDS as readonly string[]).includes(key))
+        ) as Partial<AiQueryState>;
+      }
+      mirrorPending.current = aboutStay ? "all" : "place";
       setState((prev) => ({
         ...prev,
         framing,
@@ -257,6 +279,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   // back to this store when the URL carries no params.
   useEffect(() => {
     if (!mirrorPending.current) return;
+    const placeOnly = mirrorPending.current === "place";
     mirrorPending.current = false;
 
     const { destination, from, to, adults, kids, childrenAges, bedrooms, origin } = state.query;
@@ -268,6 +291,15 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
        the store's own destination already carries forward whatever an answer
        did not change, so the session simply copies it. */
     clearHotelFlightDestination();
+    if (placeOnly) {
+      mergeHotelFlightSearch({
+        city: destination.city,
+        state: destination.area,
+        admin_region: destination.adminRegion,
+        country: destination.country,
+      });
+      return;
+    }
     mergeHotelFlightSearch({
       city: destination.city,
       state: destination.area,
@@ -298,7 +330,17 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   const [clearSignal, setClearSignal] = useState(0);
   const requestClear = useCallback(() => setClearSignal((n) => n + 1), []);
 
+  /* The dates this conversation put into the shared search, so Clear can take
+     them back: after a cleared Maldives answer, the next question about dinner
+     in Paris still had 20-30 November in the Hotels and Flights forms. */
+  const latestQuery = useRef(state.query);
+  useEffect(() => {
+    latestQuery.current = state.query;
+  }, [state.query]);
+
   const clear = useCallback(() => {
+    const { from, to } = latestQuery.current;
+    if (from || to) clearHotelFlightDatesIf(from, to);
     setState(EMPTY);
     try {
       window.sessionStorage.removeItem(STORAGE_KEY);

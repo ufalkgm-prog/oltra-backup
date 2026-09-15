@@ -593,7 +593,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
   const rendersBehind = partsElsewhere.length === 0;
   // "flight" when the answer has one journey; the others are always plural.
   const partName = (part: Part) =>
-    part === "flights" && results.flights.length === 1 ? "flight" : part;
+    part === "flights" && flights.length === 1 ? "flight" : part;
   const listParts = (parts: Part[]) => {
     const names = parts.map(partName);
     return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0] ?? "";
@@ -692,8 +692,8 @@ function ResultSummary({ past }: { past?: Presentation }) {
   const notSoldHere = (hotel: { ratehawk_status: string | null; ratehawk_hid: number | null }) =>
     hotel.ratehawk_status === "passive" || !hotel.ratehawk_hid;
   const loneHotel = !listHotels && hotels.length === 1 ? hotels[0] : null;
-  /* EVERY RESTAURANT CARRIES ITS MICHELIN STANDING (Ulrik, 2026-09-15): the
-     stars when it has them, "Not Michelin" when it does not. Drawn from the
+  /* A STARRED RESTAURANT CARRIES ITS STARS (Ulrik, 2026-09-15): said
+     whenever it has them, and nothing when it has none. Drawn from the
      record, like the not-sold-here note, so it is never a remembered star. */
   const loneRestaurant = !listRestaurants && restaurants.length === 1 ? restaurants[0] : null;
 
@@ -747,11 +747,14 @@ function ResultSummary({ past }: { past?: Presentation }) {
           </span>
         ) : null}
         {/* With no reason the status follows the name directly, and read as
-            part of it — "La Palme d'Or Michelin 1 star." (2026-09-15). */}
-        <span className={styles.summaryAirport}>
-          {why ? " " : " — "}
-          {michelinStatus(restaurant)}.
-        </span>
+            part of it — "La Palme d'Or Michelin 1 star." (2026-09-15). Nothing
+            for a restaurant without stars: "Not Michelin" is implied. */}
+        {michelinStatus(restaurant) ? (
+          <span className={styles.summaryAirport}>
+            {why ? " " : " — "}
+            {michelinStatus(restaurant)}.
+          </span>
+        ) : null}
       </li>
     );
   };
@@ -828,7 +831,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
       {loneHotel && notSoldHere(loneHotel) ? (
         <p className={styles.notSoldHereSolo}>{NOT_SOLD_HERE}</p>
       ) : null}
-      {loneRestaurant && !past ? (
+      {loneRestaurant && !past && michelinStatus(loneRestaurant) ? (
         <p className={styles.notSoldHereSolo}>{michelinStatus(loneRestaurant)}.</p>
       ) : null}
 
