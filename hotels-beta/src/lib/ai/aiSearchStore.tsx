@@ -240,6 +240,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
           // it across turns would keep reading out last turn's shortlist.
           highlightIds: results.highlightIds ?? prev.results.highlightIds,
           flights: results.flights ?? prev.results.flights,
+          laterStops: results.laterStops ?? prev.results.laterStops,
         },
         query: {
           ...prev.query,

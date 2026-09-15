@@ -72,6 +72,13 @@ type PresentInput = {
     country?: string;
   };
   searchTags?: { settings?: string[]; activities?: string[] };
+  laterStops?: {
+    place?: string;
+    checkIn?: string;
+    checkOut?: string;
+    hotelIds?: number[];
+    restaurantIds?: number[];
+  }[];
 };
 
 /** Pulls the newest presentResults call out of the message list. The model
@@ -81,6 +88,27 @@ type PresentInput = {
 function flightKey(origin?: string, destination?: string, depart?: string, ret?: string): string {
   const code = (value?: string) => (value ?? "").trim().toUpperCase();
   return `${code(origin)}-${code(destination)}-${depart ?? ""}-${ret ?? ""}`;
+}
+
+/** The "searchedRoutes" a searchFlights result reports ("LHR-RAK"). Tool output
+ * reaches the client wrapped in untrusted-data markers, so the JSON is cut out
+ * of the string rather than parsed whole. */
+function searchedRoutesOf(output: unknown): string[] {
+  let data: unknown = output;
+  if (typeof output === "string") {
+    const start = output.indexOf("{");
+    const end = output.lastIndexOf("}");
+    if (start < 0 || end <= start) return [];
+    try {
+      data = JSON.parse(output.slice(start, end + 1));
+    } catch {
+      return [];
+    }
+  }
+  const routes = (data as { searchedRoutes?: unknown } | null)?.searchedRoutes;
+  return Array.isArray(routes)
+    ? routes.filter((route): route is string => typeof route === "string" && /^[A-Z]{3}-[A-Z]{3}$/.test(route))
+    : [];
 }
 
 type Presentation = {
@@ -214,13 +242,16 @@ function readPresentation(message: UIMessage): Presentation | null {
            Malpensa line described a different airport. The tool description
            already said "these exact airports"; this makes the panel incapable
            of showing a mismatch rather than trusting that it was read. */
-        // One searchFlights call may cover several airports ("destinations"),
-        // so each of them counts as searched.
+        // One searchFlights call may cover several airports at either end
+        // ("destinations", or every airport of an "originCity"), so each route
+        // it searched counts. The tool reports those routes in its output;
+        // the input alone cannot say which airports a city expanded to.
         const searched = new Set(
           message.parts
             .filter((p) => isToolUIPart(p) && getToolName(p) === "searchFlights")
             .flatMap((p) => {
-              const s = (isToolUIPart(p) ? p.input : undefined) as
+              if (!isToolUIPart(p)) return [];
+              const s = p.input as
                 | {
                     origin?: string;
                     destination?: string;
@@ -229,11 +260,16 @@ function readPresentation(message: UIMessage): Presentation | null {
                     returnDate?: string;
                   }
                 | undefined;
-              return [s?.destination, ...(s?.destinations ?? [])]
+              const fromInput = [s?.destination, ...(s?.destinations ?? [])]
                 .filter(Boolean)
                 .map((destination) =>
                   flightKey(s?.origin, destination, s?.departureDate, s?.returnDate)
                 );
+              const fromOutput = searchedRoutesOf(p.output).map((route) => {
+                const [from, to] = route.split("-");
+                return flightKey(from, to, s?.departureDate, s?.returnDate);
+              });
+              return [...fromInput, ...fromOutput];
             })
         );
         // Collapsed here rather than at the frame, so the summary, the cards,
@@ -254,6 +290,22 @@ function readPresentation(message: UIMessage): Presentation | null {
                 : {}),
             }))
         );
+      }
+
+      /* The places after the first (see AiResultSet.laterStops). Written with
+         every answer that speaks to hotels or restaurants, so an answer about a
+         single place clears the stops a previous one left behind. */
+      if (input.hotelIds || input.restaurantIds || input.laterStops) {
+        const ids = (list?: number[]) => (list ?? []).filter((id) => Number.isFinite(id));
+        results.laterStops = (input.laterStops ?? [])
+          .filter((stop) => stop?.place?.trim())
+          .map((stop) => ({
+            place: decodeStrayEscapes(stop.place ?? "").trim(),
+            checkIn: stop.checkIn ?? "",
+            checkOut: stop.checkOut ?? "",
+            hotelIds: ids(stop.hotelIds),
+            restaurantIds: ids(stop.restaurantIds),
+          }));
       }
 
       return {
@@ -492,6 +544,14 @@ function ResultSummary({ past }: { past?: Presentation }) {
   const { hotels, restaurants, loading } = useAiResultRecords(
     past ? { hotelIds: results.hotelIds, restaurantIds: results.restaurantIds } : undefined
   );
+  /* The later places of a trip that moves on, fetched separately: they are
+     named here but are not the cards, so they must not count towards the set
+     the footnote and "For example" describe. */
+  const laterStops = results.laterStops ?? [];
+  const later = useAiResultRecords({
+    hotelIds: laterStops.flatMap((stop) => stop.hotelIds),
+    restaurantIds: laterStops.flatMap((stop) => stop.restaurantIds),
+  });
 
   /* The cards price themselves from the stay, so with no dates there is
      nothing on them to see. Saying "with prices and availability" regardless
@@ -592,8 +652,26 @@ function ResultSummary({ past }: { past?: Presentation }) {
      in the framing instead (the prompt requires it), so its group is not
      drawn. Structural rather than a prompt line: the model cannot be talked
      into drawing a heading it is never given. */
-  const listHotels = hotels.length > 1;
-  const listRestaurants = restaurants.length > 1;
+  /* A trip in several places always lists, even one hotel per place: the
+     framing introduces the trip, so it cannot also be the answer about one
+     property in it. */
+  const multiStop = laterStops.length > 0;
+  const listHotels = hotels.length > 1 || (multiStop && hotels.length > 0);
+  const listRestaurants = restaurants.length > 1 || (multiStop && restaurants.length > 0);
+
+  /* The first place's name and dates, for the group headings of a multi-stop
+     answer. Taken from the answer's own destination; a colloquial region was
+     already dropped from it on the way in. */
+  const firstPlace =
+    query.destination?.city ||
+    query.destination?.area ||
+    query.destination?.adminRegion ||
+    query.destination?.country ||
+    "";
+  const stayLabel = (from?: string, to?: string) =>
+    from && to ? ` · ${shortDate(from)} – ${shortDate(to)}` : "";
+  const stopHeading = (kind: string, place: string, from?: string, to?: string) =>
+    `${kind}${place ? ` in ${place}` : ""}${stayLabel(from, to)}`;
 
   /* THE STANDARD LINE FOR A HOTEL WE CANNOT PRICE (Ulrik, 2026-09-13):
      "Not available at myOLTRA yet.", italic, the last sentence under that
@@ -621,8 +699,97 @@ function ResultSummary({ past }: { past?: Presentation }) {
     Boolean(loneHotel && notSoldHere(loneHotel)) ||
     (listHotels && hotelPicks.length > 0) ||
     (listRestaurants && restaurantPicks.length > 0) ||
+    multiStop ||
     flights.length > 0;
   if (!drawsAnything) return null;
+
+  const hotelItem = (hotel: (typeof hotels)[number]) => {
+    const why = reason(hotel.id, hotel.hotel_name);
+    const airport = airportLine(hotel);
+    return (
+      <li key={`h-${hotel.id}`} className={styles.summaryItem}>
+        <span className={styles.summaryName}>{hotel.hotel_name}</span>
+        {why ? (
+          <span className={styles.summaryReason}>
+            {" "}
+            — {/* The model often ends a line without a full stop,
+                and a note after it then ran on as part of it: "…from
+                Malpensa Not available at myOLTRA yet." */}
+            {(notSoldHere(hotel) || airport) && !/[.!?]$/.test(why.trim())
+              ? `${why.trim()}.`
+              : why}
+          </span>
+        ) : null}
+        {airport ? <span className={styles.summaryAirport}> {airport}</span> : null}
+        {notSoldHere(hotel) ? (
+          <span className={styles.notSoldHere}> {NOT_SOLD_HERE}</span>
+        ) : null}
+      </li>
+    );
+  };
+
+  const restaurantItem = (restaurant: (typeof restaurants)[number]) => {
+    const why = reason(restaurant.id, restaurant.restaurant_name);
+    return (
+      <li key={`r-${restaurant.id}`} className={styles.summaryItem}>
+        <span className={styles.summaryName}>{restaurant.restaurant_name}</span>
+        {why ? (
+          <span className={styles.summaryReason}>
+            {" "}
+            — {/[.!?]$/.test(why.trim()) ? why : `${why.trim()}.`}
+          </span>
+        ) : null}
+        <span className={styles.summaryAirport}> {michelinStatus(restaurant)}.</span>
+      </li>
+    );
+  };
+
+  /* Each later place's properties, in the order the model gave them. */
+  const stopRecords = laterStops.map((stop) => {
+    const pick = <T extends { id: number | string }>(ids: number[], records: T[]) =>
+      ids
+        .map((id) => records.find((record) => String(record.id) === String(id)))
+        .filter((record): record is T => Boolean(record));
+    return {
+      stop,
+      hotels: namedHotels(pick(stop.hotelIds, later.hotels), results.highlightIds),
+      restaurants: shortlist(pick(stop.restaurantIds, later.restaurants)),
+    };
+  });
+
+  /* ONE DESTINATION AT A TIME — Ulrik's wording, 2026-09-15. The pages show
+     the first place only, priced on its own dates; this says so and tells the
+     visitor how to reach the next. Where the first place's properties are
+     depends on the page, the same per-part rule as the ordinary footnote. */
+  const multiStopFootnote = (() => {
+    if (!multiStop) return "";
+    const next = laterStops[0];
+    const stopParts = answerParts.filter((part) => part !== "flights");
+    const behind = stopParts.filter(shownBehind);
+    const elsewhere = stopParts.filter((part) => !shownBehind(part));
+    const inFirst = firstPlace ? ` in ${firstPlace}` : "";
+    const where =
+      page === "landing"
+        ? `the ${listParts(stopParts)}${inFirst} on this page. Close this window to have a look, then`
+        : !elsewhere.length
+          ? `the ${listParts(stopParts)}${inFirst} behind this window. Have a look and then`
+          : !behind.length
+            ? `the ${listParts(stopParts)}${inFirst} on the main page. Have a look using the link below, then`
+            : `the ${listParts(behind)}${inFirst} behind this window and the ${listParts(elsewhere)} on the main page. Have a look and then`;
+    const nextParts: Part[] = [
+      ...(next.hotelIds.length ? (["hotels"] as const) : []),
+      ...(next.restaurantIds.length ? (["restaurants"] as const) : []),
+    ];
+    const flightNote =
+      results.flights.length && page === "flights"
+        ? `The ${partName("flights")} ${verb(["flights"])} in the window behind this panel. `
+        : "";
+    return (
+      `${flightNote}I can only show you details for one destination at a time. ` +
+      `So, first I have listed ${where} return to the AI Concierge window and ask me ` +
+      `to list the ${listParts(nextParts.length ? nextParts : ["hotels"])} in ${next.place}.`
+    );
+  })();
 
   return (
     <div className={styles.summary}>
@@ -636,65 +803,49 @@ function ResultSummary({ past }: { past?: Presentation }) {
       {listHotels && hotelPicks.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {hotelPicks.length < hotels.length
+            {multiStop
+              ? stopHeading("Hotels", firstPlace, query.from, query.to)
+              : hotelPicks.length < hotels.length
                 ? "For example"
                 : "Hotels"}
           </div>
-          <ul className={styles.summaryList}>
-            {hotelPicks.map((hotel) => {
-              const why = reason(hotel.id, hotel.hotel_name);
-              const airport = airportLine(hotel);
-              return (
-                <li key={`h-${hotel.id}`} className={styles.summaryItem}>
-                  <span className={styles.summaryName}>{hotel.hotel_name}</span>
-                  {why ? (
-                    <span className={styles.summaryReason}>
-                      {" "}
-                      — {/* The model often ends a line without a full stop,
-                          and a note after it then ran on as part of it: "…from
-                          Malpensa Not available at myOLTRA yet." */}
-                      {(notSoldHere(hotel) || airport) && !/[.!?]$/.test(why.trim())
-                        ? `${why.trim()}.`
-                        : why}
-                    </span>
-                  ) : null}
-                  {airport ? <span className={styles.summaryAirport}> {airport}</span> : null}
-                  {notSoldHere(hotel) ? (
-                    <span className={styles.notSoldHere}> {NOT_SOLD_HERE}</span>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+          <ul className={styles.summaryList}>{hotelPicks.map(hotelItem)}</ul>
         </div>
       ) : null}
 
       {listRestaurants && restaurantPicks.length ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
-            {restaurantPicks.length < restaurants.length
+            {multiStop
+              ? stopHeading("Restaurants", firstPlace)
+              : restaurantPicks.length < restaurants.length
                 ? "For example"
                 : "Restaurants"}
           </div>
-          <ul className={styles.summaryList}>
-            {restaurantPicks.map((restaurant) => {
-              const why = reason(restaurant.id, restaurant.restaurant_name);
-              return (
-                <li key={`r-${restaurant.id}`} className={styles.summaryItem}>
-                  <span className={styles.summaryName}>{restaurant.restaurant_name}</span>
-                  {why ? (
-                    <span className={styles.summaryReason}>
-                      {" "}
-                      — {/[.!?]$/.test(why.trim()) ? why : `${why.trim()}.`}
-                    </span>
-                  ) : null}
-                  <span className={styles.summaryAirport}> {michelinStatus(restaurant)}.</span>
-                </li>
-              );
-            })}
-          </ul>
+          <ul className={styles.summaryList}>{restaurantPicks.map(restaurantItem)}</ul>
         </div>
       ) : null}
+
+      {stopRecords.map(({ stop, hotels: stopHotels, restaurants: stopRestaurants }) => (
+        <Fragment key={`stop-${stop.place}-${stop.checkIn}`}>
+          {stopHotels.length ? (
+            <div className={styles.summaryGroup}>
+              <div className={styles.summaryHeading}>
+                {stopHeading("Hotels", stop.place, stop.checkIn, stop.checkOut)}
+              </div>
+              <ul className={styles.summaryList}>{stopHotels.map(hotelItem)}</ul>
+            </div>
+          ) : null}
+          {stopRestaurants.length ? (
+            <div className={styles.summaryGroup}>
+              <div className={styles.summaryHeading}>
+                {stopHeading("Restaurants", stop.place)}
+              </div>
+              <ul className={styles.summaryList}>{stopRestaurants.map(restaurantItem)}</ul>
+            </div>
+          ) : null}
+        </Fragment>
+      ))}
 
       {flights.length ? (
         <div className={styles.summaryGroup}>
@@ -745,7 +896,9 @@ function ResultSummary({ past }: { past?: Presentation }) {
           so pointing there from further up would send the visitor to results
           for a different question. */}
       {past ? null : <p className={styles.summaryFootnote}>
-        {partsBehind.length > 0 && partsElsewhere.length > 0
+        {multiStopFootnote
+          ? multiStopFootnote
+          : partsBehind.length > 0 && partsElsewhere.length > 0
           ? /* Split: part of the answer is behind the panel, the rest is one
                link away — say which is where. */
             `The ${listParts(partsBehind)} ${verb(partsBehind)} in the window behind this panel. The ${listParts(partsElsewhere)}${

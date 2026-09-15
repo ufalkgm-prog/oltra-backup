@@ -9,7 +9,7 @@ import {
   type UIMessage,
 } from "ai";
 import { createClient } from "@/lib/supabase/server";
-import { conciergeTools } from "@/lib/ai/tools";
+import { buildConciergeTools } from "@/lib/ai/tools";
 import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
 import { consumeRateLimit } from "@/lib/ai/rateLimit";
 import { triageMessage } from "@/lib/ai/triage";
@@ -59,6 +59,21 @@ function previousReplyText(history: UIMessage[]): string {
 }
 export const maxDuration = 60;
 
+/** The member's preferred airlines, as stored by Personal Information: one
+ * array element holding a comma-separated list. Scrubbed like page context —
+ * it ends up in a system block — and capped. */
+function readPreferredAirlines(stored: unknown): string[] {
+  const raw = Array.isArray(stored) ? stored : [];
+  return [
+    ...new Set(
+      raw
+        .flatMap((value) => (typeof value === "string" ? value.split(",") : []))
+        .map((name) => name.replace(/[^\p{L}\p{N} .&'-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40))
+        .filter(Boolean)
+    ),
+  ].slice(0, 10);
+}
+
 function reject(status: number, error: string) {
   return Response.json({ error }, { status });
 }
@@ -78,11 +93,22 @@ export async function POST(req: Request) {
   //    after the flag: an unauthenticated caller should learn nothing about our
   //    configuration, so the missing-key case is answered below it.
   let userId: string;
+  let preferredAirlines: string[] = [];
   try {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) return reject(401, "Please sign in to use the concierge.");
     userId = data.user.id;
+
+    /* Their preferred airlines lead every flight answer where the connection
+       is sensible (Ulrik, 2026-09-15). Read here, from their own profile row,
+       rather than sent by the browser. A failure costs only the ordering. */
+    const { data: profile } = await supabase
+      .from("member_profiles")
+      .select("preferred_airlines")
+      .eq("user_id", userId)
+      .maybeSingle();
+    preferredAirlines = readPreferredAirlines(profile?.preferred_airlines);
   } catch {
     return reject(401, "Please sign in to use the concierge.");
   }
@@ -177,6 +203,17 @@ export async function POST(req: Request) {
       ...(pageContextNote
         ? [{ role: "system" as const, content: pageContextNote }]
         : []),
+      ...(preferredAirlines.length
+        ? [
+            {
+              role: "system" as const,
+              content:
+                `The visitor's preferred airlines, from their member profile: ${preferredAirlines.join(", ")}. ` +
+                "searchFlights puts sensible options on them first; in every flight answer, " +
+                "name those first when there are any.",
+            },
+          ]
+        : []),
     ],
     /* Repaired, not trusted, in two passes — a history carrying a tool call
        with no result is rejected outright, and so is one carrying the web
@@ -187,7 +224,7 @@ export async function POST(req: Request) {
       await convertToModelMessages(dropProviderExecutedTools(trimmed))
     ),
     tools: {
-      ...conciergeTools,
+      ...buildConciergeTools({ preferredAirlines }),
       // Anthropic's own server-side search. maxUses is enforced upstream, so
       // the model cannot exceed the cap even if it tries, and the allow-list
       // keeps this a travel-reference tool rather than a general web search.

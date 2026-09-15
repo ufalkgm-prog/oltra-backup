@@ -134,6 +134,22 @@ export type AiResultSet = {
    * one-way legs. A plain round trip is one leg carrying a `returnDate`.
    * Empty when the answer is not about flights. */
   flights: AiFlightLeg[];
+  /** The places after the first, for a trip that moves on — Marrakech, then
+   * the Atlas. Named in the concierge panel only: `hotelIds`,
+   * `restaurantIds` and the query's stay are the FIRST place, and they alone
+   * reach the pages and cards, priced on that place's own dates (Ulrik,
+   * 2026-09-15: one destination at a time, never split pricing on a page). */
+  laterStops: AiLaterStop[];
+};
+
+/** One later place in a multi-stop trip. See AiResultSet.laterStops. */
+export type AiLaterStop = {
+  /** As a guest would say it after "in": "Marrakech", "the Atlas Mountains". */
+  place: string;
+  checkIn: string;
+  checkOut: string;
+  hotelIds: number[];
+  restaurantIds: number[];
 };
 
 /** One journey in the answer. `returnDate` is set only when this leg is itself
@@ -156,6 +172,7 @@ export const EMPTY_RESULT_SET: AiResultSet = {
   rationales: {},
   highlightIds: [],
   flights: [],
+  laterStops: [],
 };
 
 /** The editorial framing line above the cards, plus the result set it frames.

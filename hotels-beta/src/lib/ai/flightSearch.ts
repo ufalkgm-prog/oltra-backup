@@ -3,6 +3,7 @@ import type { CabinClass, CreateOfferRequestPassenger } from "@duffel/api/types"
 import { getDuffel } from "@/lib/flights/duffelClient";
 import { normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { factsFromDurations, type GatewayFlightFacts } from "@/lib/flights/gatewayRanking";
+import type { PreferredAirline } from "./preferredAirlines";
 
 /* Route check for the concierge.
  *
@@ -109,7 +110,16 @@ async function fetchItineraries(input: FlightSearchInput) {
   }
 }
 
-export async function searchFlightOffers(input: FlightSearchInput) {
+/** "Sensible" for a preferred airline to lead: no more than one stop beyond the
+ * best option, no more than half as long again, and at civilised hours when any
+ * option manages that. Past these, loyalty would be costing the guest a day. */
+const PREFERRED_EXTRA_STOPS = 1;
+const PREFERRED_MAX_DURATION_RATIO = 1.5;
+
+export async function searchFlightOffers(
+  input: FlightSearchInput,
+  preferredAirlines: PreferredAirline[] = []
+) {
   const found = await fetchItineraries(input);
   if (!found.ok) return found;
   const { route, itineraries } = found;
@@ -150,9 +160,37 @@ export async function searchFlightOffers(input: FlightSearchInput) {
   const civilised = (it: (typeof priced)[number]) =>
     civilisedHours(it.outbound) && (!it.inbound || civilisedHours(it.inbound));
 
+  type Itinerary = (typeof priced)[number];
+  const minStops = Math.min(...schedules.map(totalStops));
+  const minMinutes = Math.min(...schedules.map(totalMinutes));
+  const anyCivilised = schedules.some(civilised);
+  /** The member's airline this itinerary flies, if any. */
+  const preferredOn = (it: Itinerary): string | null => {
+    if (!preferredAirlines.length) return null;
+    const carriers = [...it.outbound.airlines, ...(it.inbound?.airlines ?? [])];
+    for (const preferred of preferredAirlines) {
+      const hit = carriers.some(
+        (carrier) =>
+          (preferred.code && carrier.iataCode === preferred.code) ||
+          carrier.name.toLowerCase().includes(preferred.name.toLowerCase())
+      );
+      if (hit) return preferred.name;
+    }
+    return null;
+  };
+  const sensiblePreferred = (it: Itinerary): string | null => {
+    const airline = preferredOn(it);
+    if (!airline) return null;
+    if (totalStops(it) > minStops + PREFERRED_EXTRA_STOPS) return null;
+    if (totalMinutes(it) > minMinutes * PREFERRED_MAX_DURATION_RATIO) return null;
+    if (anyCivilised && !civilised(it)) return null;
+    return airline;
+  };
+
   const chosen = [...schedules]
     .sort(
       (a, b) =>
+        Number(Boolean(sensiblePreferred(b))) - Number(Boolean(sensiblePreferred(a))) ||
         Number(civilised(b)) - Number(civilised(a)) ||
         totalStops(a) - totalStops(b) ||
         totalMinutes(a) - totalMinutes(b) ||
@@ -179,10 +217,22 @@ export async function searchFlightOffers(input: FlightSearchInput) {
     flies: true,
     directAvailable: schedules.some((it) => totalStops(it) === 0),
     note:
+      (preferredAirlines.length
+        ? "Options on the visitor's preferred airlines come first where the " +
+          "connection is sensible (preferredAirline is set on those) - name them " +
+          "first. "
+        : "") +
       "Most relevant first: civilised hours, then fewest stops, then shortest. " +
       "Times are local. priceRank is 1 for the cheapest schedule; no fares are " +
       "provided - the flight cards display live prices.",
+    ...(preferredAirlines.length
+      ? {
+          preferredAirlines: preferredAirlines.map((airline) => airline.name),
+          preferredOptionsOnThisRoute: schedules.filter((it) => sensiblePreferred(it)).length,
+        }
+      : {}),
     options: chosen.map((itinerary) => ({
+      ...(sensiblePreferred(itinerary) ? { preferredAirline: sensiblePreferred(itinerary) } : {}),
       priceRank: priceRank.get(itinerary) ?? 0,
       outbound: describe(itinerary.outbound),
       inbound: describe(itinerary.inbound),

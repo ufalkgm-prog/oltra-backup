@@ -38,6 +38,7 @@ import {
 import { REGION_VALUES } from "./macroRegionTerms";
 import { distanceFromPlace, findNearPlace, nearSummary, sortByDistance } from "./nearPlace";
 import { michelinStatus } from "@/app/restaurants/utils";
+import { toPreferredAirlines, type PreferredAirline } from "./preferredAirlines";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -1303,16 +1304,30 @@ const compareGateways = tool({
  * and they rarely span more than four airports; past six this is a sweep, not
  * an answer. */
 const MAX_FLIGHT_DESTINATIONS = 6;
+/** Departure airports times destination airports, each a live search. London's
+ * six airports to one destination fit; six to six does not need to. */
+const MAX_FLIGHT_ROUTES = 8;
 
-const searchFlights = tool({
+/* A factory, not a constant, since 2026-09-15: the member's preferred airlines
+ * come from their profile on the server (the chat route reads them), and they
+ * decide the order of the options. Passed in rather than trusted from the
+ * model or the browser. */
+function createSearchFlights(preferred: PreferredAirline[]) {
+  return tool({
   description:
     "Check whether a route flies on given dates and how the options compare. " +
     "Returns routing, timings and a price rank — never an amount. The flight " +
     "cards show live fares. Give one airport in \"destination\", or several " +
     "in \"destinations\" to search them all at once — use that when the " +
-    "hotels you are presenting fly into different airports.",
+    "hotels you are presenting fly into different airports.\n\n" +
+    "WHEN THE VISITOR NAMES A DEPARTURE CITY (\"from London\"), pass it as " +
+    "\"originCity\" instead of choosing one airport: every relevant airport " +
+    "for that city is searched, and your answer names each of them with what " +
+    "it offers — including any with nothing suitable. Use \"origin\" only for " +
+    "an airport they named, or their home airport when they named nothing.",
   inputSchema: jsonSchema<{
-    origin: string;
+    origin?: string;
+    originCity?: string;
     destination?: string;
     destinations?: string[];
     departureDate: string;
@@ -1323,7 +1338,13 @@ const searchFlights = tool({
   }>({
     type: "object",
     properties: {
-      origin: { type: "string", description: "IATA code." },
+      origin: { type: "string", description: "IATA code, for one departure airport." },
+      originCity: {
+        type: "string",
+        description:
+          "A departure city the visitor named, e.g. London, New York, Milan. " +
+          "Searches all of its relevant airports.",
+      },
       destination: { type: "string", description: "IATA code, for one airport." },
       destinations: {
         type: "array",
@@ -1342,12 +1363,13 @@ const searchFlights = tool({
         enum: ["economy", "premium_economy", "business", "first"],
       },
     },
-    required: ["origin", "departureDate"],
+    required: ["departureDate"],
     additionalProperties: false,
   }),
   async execute(input) {
     const { searchFlightOffers } = await import("./flightSearch");
-    const { destination, destinations, ...rest } = input;
+    const { departureAirportsForCity } = await import("./departureAirports");
+    const { origin, originCity, destination, destinations, ...rest } = input;
     const codes = [
       ...new Set(
         [destination, ...(destinations ?? [])]
@@ -1356,28 +1378,65 @@ const searchFlights = tool({
       ),
     ].slice(0, MAX_FLIGHT_DESTINATIONS);
 
-    if (!codes.length) {
+    const cityAirports = originCity ? departureAirportsForCity(originCity) : [];
+    const origins = cityAirports.length
+      ? cityAirports.map((airport) => airport.iata)
+      : [(origin ?? "").trim().toUpperCase()].filter(Boolean);
+
+    if (!codes.length || !origins.length) {
       return asUntrustedData("flights", {
         ok: false,
-        note: "Give an airport in destination or destinations.",
+        note: !codes.length
+          ? "Give an airport in destination or destinations."
+          : originCity
+            ? `No airports found for ${originCity}. Pass an airport in origin instead.`
+            : "Give an airport in origin, or a city in originCity.",
       });
     }
 
-    if (codes.length === 1) {
-      return asUntrustedData("flights", await searchFlightOffers({ ...rest, destination: codes[0] }));
-    }
+    const routes = origins
+      .flatMap((from) => codes.map((to) => ({ from, to })))
+      .filter((route) => route.from !== route.to)
+      .slice(0, MAX_FLIGHT_ROUTES);
 
     // In parallel: these are independent Duffel searches, and in series four
     // airports would be four round trips of waiting.
     const searches = await Promise.all(
-      codes.map(async (code) => ({
-        destination: code,
-        ...(await searchFlightOffers({ ...rest, destination: code })),
+      routes.map(async ({ from, to }) => ({
+        origin: from,
+        destination: to,
+        ...(await searchFlightOffers({ ...rest, origin: from, destination: to }, preferred)),
       }))
     );
-    return asUntrustedData("flights", { byDestination: searches });
+
+    // Every route searched, so the panel can tell a journey it may describe
+    // from one it may not (see readPresentation in AiConversation).
+    const searchedRoutes = routes.map((route) => `${route.from}-${route.to}`);
+
+    if (searches.length === 1 && !cityAirports.length) {
+      const [only] = searches;
+      return asUntrustedData("flights", { searchedRoutes, ...only });
+    }
+
+    return asUntrustedData("flights", {
+      searchedRoutes,
+      ...(cityAirports.length
+        ? {
+            departureAirports: cityAirports.map((airport) => ({
+              ...airport,
+              flies: searches.some((search) => search.origin === airport.iata && "flies" in search && search.flies),
+            })),
+            departureNote:
+              `Name every one of ${originCity}'s airports above in your answer, with what ` +
+              "each offers on this trip — including those with nothing suitable. " +
+              "Present the flight from the one that suits best.",
+          }
+        : {}),
+      byRoute: searches,
+    });
   },
-});
+  });
+}
 
 /** Not a data tool. This is how the model hands the UI a structured result set
  * to render, instead of the UI parsing hotel names out of prose. Calling it is
@@ -1531,6 +1590,13 @@ const presentResults = tool({
       country?: string;
     };
     searchTags?: { settings?: string[]; activities?: string[] };
+    laterStops?: {
+      place: string;
+      checkIn?: string;
+      checkOut?: string;
+      hotelIds?: number[];
+      restaurantIds?: number[];
+    }[];
   }>({
     type: "object",
     properties: {
@@ -1565,7 +1631,9 @@ const presentResults = tool({
           "EVERY hotel that genuinely fits, best first — not just the ones " +
           "you name. These become the cards the visitor browses, so a fitting " +
           "property left out here is one they never see. Give rationales for " +
-          "the few you want to highlight; the rest still get a card.",
+          "the few you want to highlight; the rest still get a card. On a trip " +
+          "that moves between places, the FIRST place only — the rest go in " +
+          "laterStops.",
       },
       // Restaurant ids get their own frame beside the hotels and flights.
       // Only ids that came back from searchRestaurants — a restaurant we do
@@ -1713,6 +1781,39 @@ const presentResults = tool({
         },
         additionalProperties: false,
       },
+      /* ONE DESTINATION AT A TIME (Ulrik, 2026-09-15). The pages price one stay,
+         so a split trip put its mountain hotel on the city's dates. The first
+         place is the ordinary fields above; every later place is listed here
+         and named in the panel only. Flights are unaffected: a multi-leg
+         journey is already one `flights` entry per leg. */
+      laterStops: {
+        type: "array",
+        description:
+          "ONLY for a trip that moves from one place to the next (Marrakech, " +
+          "then the Atlas) — never for alternatives spread across places. " +
+          "hotelIds, restaurantIds, stay and destination describe the FIRST " +
+          "place; each later place goes here, in travel order, with its own " +
+          "dates and the ids you checked for it there. The panel lists them " +
+          "by name and tells the visitor to ask for the next place when ready. " +
+          "Give rationales for their ids as usual.",
+        items: {
+          type: "object",
+          properties: {
+            place: {
+              type: "string",
+              description:
+                "The place as you would say it after \"in\": \"Marrakech\", " +
+                "\"the Atlas Mountains\".",
+            },
+            checkIn: { type: "string", description: "yyyy-mm-dd" },
+            checkOut: { type: "string", description: "yyyy-mm-dd" },
+            hotelIds: { type: "array", items: { type: "number" } },
+            restaurantIds: { type: "array", items: { type: "number" } },
+          },
+          required: ["place"],
+          additionalProperties: false,
+        },
+      },
     },
     required: ["framing"],
     additionalProperties: false,
@@ -1728,13 +1829,17 @@ const presentResults = tool({
   },
 });
 
-export const conciergeTools = {
-  searchHotels,
-  getHotelDetails,
-  checkAvailability,
-  nearestAirport,
-  compareGateways,
-  searchFlights,
-  searchRestaurants,
-  presentResults,
-};
+/** The concierge's tools for one request. `preferredAirlines` comes from the
+ * signed-in member's profile, read by the chat route. */
+export function buildConciergeTools({ preferredAirlines }: { preferredAirlines: string[] }) {
+  return {
+    searchHotels,
+    getHotelDetails,
+    checkAvailability,
+    nearestAirport,
+    compareGateways,
+    searchFlights: createSearchFlights(toPreferredAirlines(preferredAirlines)),
+    searchRestaurants,
+    presentResults,
+  };
+}
