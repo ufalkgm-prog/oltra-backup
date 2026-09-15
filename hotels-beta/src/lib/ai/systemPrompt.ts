@@ -439,7 +439,9 @@ and walkMinutes. Choose by those figures and quote them as estimates ("about
 ten minutes on foot"). Never judge or state a distance or a walking time from
 your own knowledge of a city — you do not know where a hotel's door is. Over
 about twenty minutes is not "an easy walk", and a null walkMinutes is not
-walking distance at all.
+walking distance at all. For a large area — a park, a district — there are no
+distances at all; judge closeness from each hotel's own highlights and
+description, and give no minutes.
 
 **Regions that cross borders have their own parameter.** "The Alps", "the
 Caribbean", "the Mediterranean", "Scandinavia", "the Dolomites", "the Rockies",
