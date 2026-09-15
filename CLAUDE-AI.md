@@ -608,6 +608,32 @@ on the landing page itself, and typing a new destination over it. The Flights
 page has no tag box — its fields are airports, which the concierge fills as a
 real route — so it is unchanged.
 
+### Two wasted searches on a Serengeti-and-Zanzibar question (2026-09-15)
+
+"How do we get to a safari lodge in the Serengeti from Copenhagen, and could we
+add a few beach days in Zanzibar afterwards?" took seven tool calls, two of them
+avoidable:
+
+* **`area: "Serengeti"` matched nothing.** The lodge is city "Serengeti", area
+  "Serengeti National Park", and the area/adminRegion slot matched only those two
+  columns — so the model went round through didYouMean. The slot now matches the
+  city column as well: a place a traveller names as a region is often the city
+  value of a wilderness or resort destination.
+* **Zanzibar was searched twice** — once with the sea settings (one hotel), then
+  again without them to see whether anything else existed (the same hotel).
+  `searchHotels` now reports `leftOutByTags` and a `tagNote` whenever tags were
+  applied, so the first result already says whether dropping them would add
+  anything.
+
+And a related fault found while reading the code: when the tags excluded every
+property in a real geography, the tool answered with the no-such-place branch
+and `didYouMean` — sending the model to retry a name that was right. It now says
+the place is right and how many properties are there.
+
+Re-run in a fresh conversation: five tool calls, `area: "Serengeti"` found the
+lodge first time, Zanzibar searched once with "Every property in this geography
+carries those tags".
+
 ### The landing date box kept an old answer's dates (2026-09-14)
 
 Found on "a long weekend in Lisbon next month": the answer was priced for 15-18

@@ -440,8 +440,9 @@ const searchHotels = tool({
         type: "string",
         description:
           "Administrative unit, e.g. Lombardy, Valais, Kyoto Prefecture. " +
-          "Interchangeable with `area` — either one matches both fields, so " +
-          "you do not have to guess which holds the name.",
+          "Interchangeable with `area` — either one matches the admin region, " +
+          "the traveller area AND the city, so you do not have to guess which " +
+          "holds the name.",
       },
       area: {
         type: "string",
@@ -578,13 +579,21 @@ const searchHotels = tool({
      * plus Il Pellicano and Forte dei Marmi, which sit under their own
      * sub-areas. The model has no way to know which of two near-identical
      * fields holds the value it wants, and picking wrong should widen the
-     * search, not gut it. */
+     * search, not gut it.
+     *
+     * And the CITY column too (2026-09-14). Asked about a lodge "in the
+     * Serengeti", the model searched `area: "Serengeti"` and got zero: the
+     * Four Seasons there is city "Serengeti", area "Serengeti National Park".
+     * A place a traveller names as a region is often the city value of a
+     * wilderness or resort destination, and a miss cost a round trip through
+     * didYouMean. */
     for (const value of [adminRegion, area]) {
       if (!value) continue;
       and.push({
         _or: [
           { admin_region: { _eq: value } },
           { state_province_county_island: { _eq: value } },
+          { city: { _eq: value } },
         ],
       });
     }
@@ -622,6 +631,36 @@ const searchHotels = tool({
     // from "that is not a name this database knows", so it either retries blind
     // or tells the visitor we have nothing. Hand back the real values closest
     // to what was asked instead, and let it correct in the same breath.
+    /* How many the setting/style/activity tags left out of this geography.
+     *
+     * Asked for beach days in Zanzibar, the model searched Zanzibar with the
+     * sea settings, got one hotel, then searched Zanzibar again without them to
+     * see whether there was anything else - the same one hotel, a whole extra
+     * round trip (2026-09-14). Saying up front what the tags excluded answers
+     * that question in the first result. */
+    const tagged =
+      requested.activities.length + requested.settings.length + requested.styles.length > 0;
+    const leftOutByTags = tagged ? inRegion.length - narrowed.length : 0;
+    const tagNote = tagged
+      ? leftOutByTags > 0
+        ? `${leftOutByTags} more ${leftOutByTags === 1 ? "property is" : "properties are"} in this geography without those tags; search again without them only if they would suit.`
+        : "Every property in this geography carries those tags - searching again without them adds nothing."
+      : undefined;
+
+    // The geography is real but the tags excluded all of it. That is not a
+    // spelling problem, and sending the model to didYouMean would have it retry
+    // a name that was right.
+    if (!narrowed.length && inRegion.length) {
+      return asUntrustedData("myoltra-hotels", {
+        matched: 0,
+        inThisGeography: inRegion.length,
+        guidance:
+          `The place is right: ${inRegion.length} ${inRegion.length === 1 ? "property is" : "properties are"} here, but none ` +
+          "carries those tags. Search again without the tags (or with fewer) " +
+          "and judge the fit yourself from what comes back.",
+      });
+    }
+
     if (!narrowed.length) {
       const asked = [input.macroRegion, country, adminRegion, area, city].filter(
         (v): v is string => Boolean(v)
@@ -681,6 +720,7 @@ const searchHotels = tool({
       return asUntrustedData("myoltra-hotels", {
         tooBroadToShow: true,
         matched: narrowed.length,
+        ...(tagNote ? { leftOutByTags, tagNote } : {}),
         availableForTheseDates: availableCount,
         narrowBy: narrowingAxes(narrowed, requested),
         guidance:
@@ -697,6 +737,7 @@ const searchHotels = tool({
 
     return asUntrustedData("myoltra-hotels", {
       matched: narrowed.length,
+      ...(tagNote ? { leftOutByTags, tagNote } : {}),
       returned: shaped.length,
       truncated: narrowed.length > shaped.length,
       hotels: shaped,
