@@ -864,20 +864,39 @@ type StayInput = {
  * Returns ranks and a within-budget flag. The amount is used to sort and to
  * test the ceiling and is then dropped: the model is never handed a figure, so
  * it cannot leak one (§50). */
-async function rankAvailability(input: StayInput) {
-  // The supplier rejects a past check-in outright, and the whole batch fails
-  // with it. Catching it here turns a dead end into something the model can
-  // act on — it gets told the year is wrong rather than that availability is
-  // down, which is what the visitor was previously shown.
+/* A date the model resolved to a year already past — "from 2 April", asked in
+ * September, sent as this year's 2 April (2026-09-15) — moved forward a year at
+ * a time until it is not, with its partner dates moved by the same number of
+ * years so the length of the stay or trip holds. It used to be rejected, which
+ * cost a whole extra round trip every time; now the search runs on the next
+ * occurrence and the result says which dates it used. Returns null when
+ * nothing needed moving. */
+function rollPastDates<T extends Record<string, string | undefined>>(dates: T, anchor: keyof T) {
   const today = new Date().toISOString().slice(0, 10);
-  if (input.checkIn < today) {
-    return {
-      error: "check-in is in the past",
-      today,
-      received: input.checkIn,
-      fix: "Re-run with the next occurrence of that month, not one already past.",
-    };
+  const first = dates[anchor];
+  if (!first || !/^\d{4}-\d{2}-\d{2}$/.test(first) || first >= today) return null;
+  const shift = (iso: string, years: number) => `${Number(iso.slice(0, 4)) + years}${iso.slice(4)}`;
+  let years = 1;
+  while (shift(first, years) < today) years += 1;
+  const moved = { ...dates };
+  for (const key of Object.keys(dates) as (keyof T)[]) {
+    const value = dates[key];
+    if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) moved[key] = shift(value, years) as T[keyof T];
   }
+  return moved;
+}
+
+const DATES_MOVED_NOTE =
+  "Those dates had already passed, so this ran on their next occurrence. Use these dates in presentResults and when you mention them.";
+
+async function rankAvailability(input: StayInput) {
+  const moved = rollPastDates({ checkIn: input.checkIn, checkOut: input.checkOut }, "checkIn");
+  if (!moved) return rankAvailabilityFor(input);
+  const result = await rankAvailabilityFor({ ...input, checkIn: moved.checkIn, checkOut: moved.checkOut });
+  return { datesMovedTo: { ...moved, note: DATES_MOVED_NOTE }, ...result };
+}
+
+async function rankAvailabilityFor(input: StayInput) {
   if (input.checkOut <= input.checkIn) {
     return {
       error: "check-out must be after check-in",
@@ -1210,7 +1229,12 @@ const compareGateways = tool({
     additionalProperties: false,
   }),
   async execute(input) {
-    const { city, origin, ...rest } = input;
+    const { city, origin, ...given } = input;
+    const movedDates = rollPastDates(
+      { departureDate: given.departureDate, returnDate: given.returnDate },
+      "departureDate"
+    );
+    const rest = movedDates ? { ...given, ...movedDates } : given;
     const key = await resolveDestinationKey(city);
     const airports = getAirportsForCity(key.city);
 
@@ -1384,7 +1408,13 @@ function createSearchFlights(preferred: PreferredAirline[]) {
   async execute(input) {
     const { searchFlightOffers } = await import("./flightSearch");
     const { departureAirportsForCity } = await import("./departureAirports");
-    const { origin, originCity, destination, destinations, ...rest } = input;
+    const { origin, originCity, destination, destinations, ...given } = input;
+    const movedDates = rollPastDates(
+      { departureDate: given.departureDate, returnDate: given.returnDate },
+      "departureDate"
+    );
+    const rest = movedDates ? { ...given, ...movedDates } : given;
+    const datesNote = movedDates ? { datesMovedTo: { ...movedDates, note: DATES_MOVED_NOTE } } : {};
     const codes = [
       ...new Set(
         [destination, ...(destinations ?? [])]
@@ -1430,10 +1460,11 @@ function createSearchFlights(preferred: PreferredAirline[]) {
 
     if (searches.length === 1 && !cityAirports.length) {
       const [only] = searches;
-      return asUntrustedData("flights", { searchedRoutes, ...only });
+      return asUntrustedData("flights", { ...datesNote, searchedRoutes, ...only });
     }
 
     return asUntrustedData("flights", {
+      ...datesNote,
       searchedRoutes,
       ...(cityAirports.length
         ? {

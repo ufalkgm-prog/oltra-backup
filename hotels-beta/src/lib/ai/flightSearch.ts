@@ -161,7 +161,11 @@ export async function searchFlightOffers(
     civilisedHours(it.outbound) && (!it.inbound || civilisedHours(it.inbound));
 
   type Itinerary = (typeof priced)[number];
-  const minStops = Math.min(...schedules.map(totalStops));
+  /* Per direction, not per trip (2026-09-15): one stop out and one back is 2
+     against a direct return's 0, so ANA's one-stop return to Tokyo failed "at
+     most one stop more" although each way was exactly that. */
+  const stopsEachWay = (it: Itinerary) => Math.max(it.outbound.stops, it.inbound?.stops ?? 0);
+  const minStopsEachWay = Math.min(...schedules.map(stopsEachWay));
   const minMinutes = Math.min(...schedules.map(totalMinutes));
   const anyCivilised = schedules.some(civilised);
   /** The member's airline this itinerary flies, if any. */
@@ -181,7 +185,7 @@ export async function searchFlightOffers(
   const sensiblePreferred = (it: Itinerary): string | null => {
     const airline = preferredOn(it);
     if (!airline) return null;
-    if (totalStops(it) > minStops + PREFERRED_EXTRA_STOPS) return null;
+    if (stopsEachWay(it) > minStopsEachWay + PREFERRED_EXTRA_STOPS) return null;
     if (totalMinutes(it) > minMinutes * PREFERRED_MAX_DURATION_RATIO) return null;
     if (anyCivilised && !civilised(it)) return null;
     return airline;
