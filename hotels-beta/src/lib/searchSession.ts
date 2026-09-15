@@ -43,9 +43,12 @@ export function mergeHotelFlightSearch(values: SharedTravelSearch) {
   if (typeof window === "undefined") return;
 
   const current = readHotelFlightSearch() ?? {};
-  // A new child count replaces the ages wholesale: the merge drops empty
-  // values, so an age from an earlier party would otherwise outlive it.
-  if (values.kids !== undefined) {
+  // A different child count, or a new set of ages, replaces the ages
+  // wholesale: the merge drops empty values, so an age from an earlier party
+  // would otherwise outlive it. Only then — the Flights page saves the count
+  // without ages on every change, and must not wipe ages it never held.
+  const writesAges = KID_AGE_KEYS.some((key) => values[key] !== undefined);
+  if (writesAges || (values.kids !== undefined && values.kids !== current.kids)) {
     for (const key of KID_AGE_KEYS) delete current[key];
   }
   saveHotelFlightSearch({

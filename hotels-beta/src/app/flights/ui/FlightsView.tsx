@@ -3,7 +3,11 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
-import { mergeHotelFlightSearch, readHotelFlightSearch } from "@/lib/searchSession";
+import {
+  mergeHotelFlightSearch,
+  readHotelFlightSearch,
+  type SharedTravelSearch,
+} from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members/db";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
@@ -181,12 +185,15 @@ function readLegParams(searchParams: PageSearchParams): MultiCityLeg[] {
   return legs;
 }
 
-function buildInitialSearch(searchParams: PageSearchParams): SearchState {
-  const saved =
-    typeof window !== "undefined" && !hasFlightSearchParams(searchParams)
-      ? readHotelFlightSearch()
-      : null;
-
+/* `saved` is the shared cross-page search, passed in only AFTER the first
+ * render. Reading sessionStorage in here made the server render an empty date
+ * box and the browser a filled one — a hydration mismatch, so React threw the
+ * page away and rebuilt it, taking with it anything typed into the concierge
+ * in that moment (2026-09-15). */
+function buildInitialSearch(
+  searchParams: PageSearchParams,
+  saved: SharedTravelSearch | null = null
+): SearchState {
   const source = saved ?? searchParams;
 
   // Falls back to session storage (source.origin) same as the destination
@@ -349,6 +356,23 @@ function getPinnedItineraries(itineraries: Itinerary[], tripType: TripType) {
 
 export default function FlightsView({ searchParams }: Props) {
   const [search, setSearch] = useState<SearchState>(() => buildInitialSearch(searchParams));
+
+  /* The shared search restored after hydration rather than during it (see
+     buildInitialSearch). Declared before every other effect that touches
+     `search`, so their functional updates apply on top of the restored state,
+     and `sessionRestored` holds back the save-to-session effect below until it
+     has happened — on the first commit that effect would otherwise write this
+     page's defaults over the very search about to be restored. */
+  const [sessionRestored, setSessionRestored] = useState(false);
+  useEffect(() => {
+    if (!hasFlightSearchParams(searchParams)) {
+      const saved = readHotelFlightSearch();
+      if (saved) setSearch(buildInitialSearch(searchParams, saved));
+    }
+    setSessionRestored(true);
+    // Once, on arrival: later URL changes are handled by the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   // IATA -> municipality for airports the user picked here, so the route
   // header can still name a place for airports outside the hotel-city mapping
@@ -495,6 +519,7 @@ export default function FlightsView({ searchParams }: Props) {
   }, []);
 
   useEffect(() => {
+    if (!sessionRestored) return;
     mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
       // Destination typed directly into this page's own AirportAutocomplete
@@ -517,7 +542,7 @@ export default function FlightsView({ searchParams }: Props) {
       kids: String(search.children),
       origin: search.from,
     });
-  }, [search, searchParams, isReturnTrip]);
+  }, [search, searchParams, isReturnTrip, sessionRestored]);
 
   const allAirlines = useMemo(
     () => [...new Set(itineraries.flatMap(item => item.slices.map(l => l.airline)))].sort(),
