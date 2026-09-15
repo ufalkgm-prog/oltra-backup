@@ -1527,7 +1527,11 @@ const searchRestaurants = tool({
       restaurantType: {
         type: "string",
         enum: [...RESTAURANT_TYPE_VALUES],
-        description: "Optional. Use only these exact values.",
+        description:
+          "Optional. Use only these exact values. The relaxed half of a " +
+          "dinner suggestion is usually \"High-end casual\" or \"Informal local " +
+          "favorite\" — search with those when the unfiltered list is all " +
+          "starred rooms.",
       },
       limit: { type: "number" },
       near: {
