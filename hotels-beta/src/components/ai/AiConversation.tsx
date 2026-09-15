@@ -627,8 +627,15 @@ function ResultSummary({ past }: { past?: Presentation }) {
     return (picked.length ? picked : items).slice(0, MAX_NAMED);
   };
 
-  const hotelPicks = namedHotels(hotels, results.highlightIds);
-  const restaurantPicks = shortlist(restaurants);
+  /* A TRIP IN SEVERAL PLACES NAMES EVERY PICK OF A SMALL PLACE (2026-09-15).
+     The model read the eight-line limit as one for the whole trip, so Lake Como
+     took three and Florence's sixth hotel had a card and no line. Up to
+     MAX_NAMED per place, every one is listed, with or without a reason. */
+  const tripHasStops = laterStops.length > 0;
+  const placePicks = <T extends { id: number | string }>(list: T[], pick: (items: T[]) => T[]) =>
+    tripHasStops && list.length <= MAX_NAMED ? list : pick(list);
+  const hotelPicks = placePicks(hotels, (list) => namedHotels(list, results.highlightIds));
+  const restaurantPicks = placePicks(restaurants, shortlist);
 
   /* Flights to every airport the named hotels are reached through, following
      the hotels' order, and each hotel line names its airport — but only in an
@@ -769,8 +776,10 @@ function ResultSummary({ past }: { past?: Presentation }) {
         .filter((record): record is T => Boolean(record));
     return {
       stop,
-      hotels: namedHotels(pick(stop.hotelIds, later.hotels), results.highlightIds),
-      restaurants: shortlist(pick(stop.restaurantIds, later.restaurants)),
+      hotels: placePicks(pick(stop.hotelIds, later.hotels), (list) =>
+        namedHotels(list, results.highlightIds)
+      ),
+      restaurants: placePicks(pick(stop.restaurantIds, later.restaurants), shortlist),
     };
   });
 
@@ -800,12 +809,17 @@ function ResultSummary({ past }: { past?: Presentation }) {
     const where =
       page === "landing"
         ? `When you close this window, the whole trip is listed on this page: ${layout}.`
-        : `I can only show the full trip on the main page — open it using the link below. There you will find ${layout}.`;
+        : `I can only show the full trip on the main page — open it with the button below. There you will find ${layout}.`;
+    // "…in each city, on your flights —" had lost its "and" (2026-09-15).
+    const saveOn = [
+      "on your choice in each city",
+      ...(hasFlights ? ["on your flights"] : []),
+      ...(hasRestaurants ? ["on the restaurants"] : []),
+    ];
     const keep =
-      "Pick your favourites there and use SAVE on your choice in each city" +
-      (hasFlights ? ", on your flights" : "") +
-      (hasRestaurants ? " and on the restaurants" : "") +
-      " — your full itinerary then appears under Members, in Saved trips.";
+      `Pick your favourites there and use SAVE ${
+        saveOn.length > 1 ? `${saveOn.slice(0, -1).join(", ")} and ${saveOn.at(-1)}` : saveOn[0]
+      } — your full itinerary then appears under Members, in Saved trips.`;
     return `${where} ${keep} ${page === "landing" ? REOPEN_CHAT : RESUME_CHAT}`;
   })();
 

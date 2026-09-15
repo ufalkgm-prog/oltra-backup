@@ -110,6 +110,24 @@ function awardsFor(hotel: HotelRecord): string[] {
   );
 }
 
+/* THE DRIVE FROM A HOTEL'S OWN AIRPORT (2026-09-15). Asked for Lake Como via
+ * Milan, the concierge quoted compareGateways' 52 minutes — Malpensa to Milan
+ * itself — as the drive to the lake, where the hotels are 58 (Blevio) to 77
+ * (Tremezzina) minutes out. The measured drive per town was already in
+ * transferTimes.ts; each candidate now carries its own, keyed the way
+ * standingGatewaysForHotel picks the airport (the city, else the traveller
+ * area). Null when we have no road time for it. */
+function hotelGateway(hotel: HotelRecord): { airport: string; transferMinutes: number | null } {
+  const gateway = standingGatewaysForHotel(hotel)[0];
+  if (!gateway) return { airport: "", transferMinutes: null };
+  const city = (hotel.city ?? "").trim();
+  const key =
+    city && standingGatewayOrder(city).length
+      ? city
+      : (hotel.state_province_county_island ?? "").trim();
+  return { airport: gateway.iata, transferMinutes: resolveTransfer(key, gateway.iata).minutes };
+}
+
 function candidateShape(hotel: HotelRecord) {
   return {
     id: Number(hotel.id),
@@ -133,7 +151,8 @@ function candidateShape(hotel: HotelRecord) {
     // its destination's standing order. The panel prints the same airport
     // under the hotel's name, so a set spanning several airports can be flown
     // to every one of them without a nearestAirport call per city.
-    airport: standingGatewaysForHotel(hotel)[0]?.iata ?? "",
+    // `transferMinutes` is the measured drive from that airport to this hotel.
+    ...hotelGateway(hotel),
   };
 }
 
