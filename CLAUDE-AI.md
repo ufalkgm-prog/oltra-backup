@@ -67,6 +67,17 @@ One conversation site-wide, in `sessionStorage` under `oltra_ai_concierge_v1`; c
 
 Exiting leaves Inspire showing what was asked. `presentResults` gained **`searchTags`** — the locked setting and activity tags actually searched on, since geography and dates alone cannot express *what kind of trip* it is — and `lib/ai/inspireMirror.ts` maps them to Inspire's five purposes, keyed on `presentedAt` so it applies once per answer and never fights a hand-picked filter. `queryStateToParams` now also emits `settings` and `activities`, so the Hotels handoff arrives with those facets pre-selected.
 
+**Walking distance from a named place (2026-09-15).** `near` on searchHotels and
+searchRestaurants; see concierge.md for the mechanics. Verified on the Rome
+question: `near: "Pantheon, Rome"` resolved to Piazza della Rotonda, the ten Rome
+hotels came back nearest first — Six Senses 0.4 km / 6 min (no rooms that week),
+Bulgari 0.9 / 14, de la Ville and Hassler 1.0 / 16, Eden 1.2 / 19, de Russie
+1.3 / 20 — and the answer presented the five nearest with rooms, each line
+quoting its walk. The estimate runs a little long (Google's routed walk to the
+Bulgari is about 12 minutes), which is the safe side to be wrong on.
+`src/lib/geoDistance.ts` is the shared haversine; the Inspire map and
+`estimateFlightHours` still hold their own copies.
+
 **The Restaurants page lists an answer's picks (2026-09-15).** It was the one
 vertical page with nothing behind the panel: `RestaurantsMapView` now reads the
 store and offers "AI curated results" in the type selector, selected whenever the

@@ -1,4 +1,5 @@
 import { directusFetchJson } from "@/lib/directus";
+import { haversineKm } from "@/lib/geoDistance";
 import type { RestaurantRecord } from "@/app/restaurants/types";
 
 type DirectusRestaurantRow = {
@@ -172,6 +173,9 @@ export async function searchRestaurants(input: {
   cuisine?: string;
   restaurantType?: string;
   limit?: number;
+  /** Order nearest-first to this point before the limit is applied, so a
+   * "near the Pantheon" question is cut to the closest rather than the first. */
+  nearest?: { lat: number; lng: number };
 }): Promise<RestaurantRecord[]> {
   const rows = await getRestaurantsByCity(input.city);
 
@@ -187,6 +191,15 @@ export async function searchRestaurants(input: {
     }
     return true;
   });
+
+  const origin = input.nearest;
+  if (origin) {
+    const km = (row: RestaurantRecord) =>
+      row.lat == null || row.lng == null
+        ? Number.POSITIVE_INFINITY
+        : haversineKm(origin.lat, origin.lng, Number(row.lat), Number(row.lng));
+    narrowed.sort((a, b) => km(a) - km(b));
+  }
 
   const limit = Math.max(1, Math.min(input.limit ?? 30, 60));
   return narrowed.slice(0, limit);

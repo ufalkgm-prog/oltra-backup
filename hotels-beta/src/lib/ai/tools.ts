@@ -36,6 +36,7 @@ import {
   resolveMacroRegion,
 } from "./macroRegions";
 import { REGION_VALUES } from "./macroRegionTerms";
+import { distanceFromPlace, findNearPlace, nearSummary, sortByDistance } from "./nearPlace";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -71,6 +72,8 @@ const CANDIDATE_FIELDS = [
   "telegraph",
   "tl100",
   "aaa5d",
+  "lat",
+  "lng",
 ] as const;
 
 const AWARD_LABELS: Record<string, string> = {
@@ -377,7 +380,10 @@ const searchHotels = tool({
     "else. Geography is the wrong instrument for that question and will tell " +
     "you we do not have a hotel we do: searching the city misses any sibling " +
     "filed under a neighbouring one. Never say a named property is outside " +
-    "the collection without having searched its name.",
+    "the collection without having searched its name.\n\n" +
+    "WHEN THE VISITOR WANTS TO BE NEAR A PLACE — a landmark, street, museum, " +
+    "office, venue — pass `near` with the place and its city. Results then " +
+    "come back nearest first, each with distanceKm and walkMinutes.",
   inputSchema: jsonSchema<{
     macroRegion?: string;
     region?: string;
@@ -391,6 +397,7 @@ const searchHotels = tool({
     activities?: string[];
     limit?: number;
     showAll?: boolean;
+    near?: string;
     stay?: {
       checkIn: string;
       checkOut: string;
@@ -474,6 +481,14 @@ const searchHotels = tool({
         description: "Purpose tags. Use only these exact values.",
       },
       limit: { type: "number" },
+      near: {
+        type: "string",
+        description:
+          "A place the visitor wants to stay close to, with its city: " +
+          "\"Pantheon, Rome\", \"Harrods, London\", \"Via Condotti, Rome\". " +
+          "Found on a map; results are ordered by distance from it, each with " +
+          "distanceKm and walkMinutes. Pass the city or area as well, as usual.",
+      },
       showAll: {
         type: "boolean",
         description:
@@ -584,6 +599,7 @@ const searchHotels = tool({
       });
     }
 
+    const nearLookup = input.near ? findNearPlace(input.near) : null;
     const rows = await getHotels({
       fields: CANDIDATE_FIELDS as unknown as string[],
       filter: and.length === 1 ? and[0] : { _and: and },
@@ -610,7 +626,18 @@ const searchHotels = tool({
     // so folding "Mountains" in beside a visitor's own setting would widen the
     // search instead of narrowing it.
     const inRegion = macro ? rows.filter((h) => matchesMacroSetting(h, macro)) : rows;
-    const narrowed = relevanceSort(filterHotelsByTags(inRegion, requested), requested);
+    const tagFit = relevanceSort(filterHotelsByTags(inRegion, requested), requested);
+
+    /* Near a named place: distance becomes the order, and the nearest
+       BROAD_RESULT_LIMIT are the answer — so the directory gate below does not
+       apply. "Near the Pantheon" is already as narrow as a question gets, and
+       asking the visitor to narrow Rome's hotels would be asking the question
+       they just answered. See lib/ai/nearPlace.ts. */
+    const near = nearLookup ? await nearLookup : null;
+    const nearPlace = near?.status === "found" ? near.place : null;
+    const narrowed = nearPlace
+      ? sortByDistance(tagFit, nearPlace, (h) => ({ lat: h.lat, lng: h.lng }))
+      : tagFit;
 
     // Nothing matched, and geography was part of the ask. A bare zero is the
     // least useful thing we can say: the model cannot tell "we have none there"
@@ -675,10 +702,24 @@ const searchHotels = tool({
 
     const capped = narrowed.slice(
       0,
-      Math.min(input.limit ?? MAX_HOTEL_CANDIDATES, MAX_HOTEL_CANDIDATES)
+      Math.min(
+        input.limit ?? MAX_HOTEL_CANDIDATES,
+        nearPlace ? BROAD_RESULT_LIMIT : MAX_HOTEL_CANDIDATES
+      )
     );
 
-    const shaped = capped.map(candidateShape);
+    const shaped = capped.map((hotel) => ({
+      ...candidateShape(hotel),
+      ...(nearPlace ? distanceFromPlace(nearPlace, hotel.lat, hotel.lng) : {}),
+    }));
+    const nearInfo = near
+      ? {
+          near: nearSummary(
+            near,
+            nearPlace ? (distanceFromPlace(nearPlace, capped[0]?.lat, capped[0]?.lng)?.distanceKm ?? null) : null
+          ),
+        }
+      : {};
 
     // Availability in the same round trip when the dates are known. The model
     // asked for these two things back to back every single time, and the
@@ -702,10 +743,13 @@ const searchHotels = tool({
     // down, and no properties at all. The model has nothing to present, so it
     // asks — which is the behaviour we want and could not get from the prompt
     // alone. `showAll` is the way back out for a visitor who wants the lot.
-    if (facing > BROAD_RESULT_LIMIT && !input.showAll) {
+    if (facing > BROAD_RESULT_LIMIT && !input.showAll && !nearPlace) {
       return asUntrustedData("myoltra-hotels", {
         tooBroadToShow: true,
         matched: narrowed.length,
+        // Only reached when the place was NOT found: say so, or the model
+        // fills the gap with a distance of its own.
+        ...(near ? { near: nearSummary(near, null) } : {}),
         ...(tagNote ? { leftOutByTags, tagNote } : {}),
         availableForTheseDates: availableCount,
         narrowBy: narrowingAxes(narrowed, requested),
@@ -726,6 +770,7 @@ const searchHotels = tool({
       ...(tagNote ? { leftOutByTags, tagNote } : {}),
       returned: shaped.length,
       truncated: narrowed.length > shaped.length,
+      ...nearInfo,
       hotels: shaped,
       ...(ranked ? { availability: ranked } : {}),
     });
@@ -1330,12 +1375,15 @@ const searchRestaurants = tool({
     "Search the myOLTRA restaurant collection for one city. Returns candidate " +
     "restaurants with their editorial detail so you can rank them yourself. " +
     "Coverage is by city, not by country or region — if the city is not " +
-    "covered, the tool says so and lists nothing. Never returns a price.",
+    "covered, the tool says so and lists nothing. Never returns a price. " +
+    "When the visitor wants to eat near a place, pass `near`: results come " +
+    "back nearest first, each with distanceKm and walkMinutes.",
   inputSchema: jsonSchema<{
     city: string;
     cuisine?: string;
     restaurantType?: string;
     limit?: number;
+    near?: string;
   }>({
     type: "object",
     properties: {
@@ -1358,16 +1406,28 @@ const searchRestaurants = tool({
         description: "Optional. Use only these exact values.",
       },
       limit: { type: "number" },
+      near: {
+        type: "string",
+        description:
+          "Optional. A place to eat close to, with its city: \"Pantheon, " +
+          "Rome\", \"our hotel, Hotel de Russie, Rome\". Orders results by " +
+          "distance from it.",
+      },
     },
     required: ["city"],
     additionalProperties: false,
   }),
   async execute(input) {
+    // The same place lookup searchHotels uses (lib/ai/nearPlace.ts).
+    const near = input.near ? await findNearPlace(input.near) : null;
+    const nearPlace = near?.status === "found" ? near.place : null;
+
     const rows = await findRestaurants({
       city: input.city,
       cuisine: input.cuisine,
       restaurantType: input.restaurantType,
       limit: Math.min(input.limit ?? MAX_RESTAURANT_CANDIDATES, MAX_RESTAURANT_CANDIDATES),
+      ...(nearPlace ? { nearest: { lat: nearPlace.lat, lng: nearPlace.lng } } : {}),
     });
 
     // An empty result is ambiguous on its own — "no Japanese in Oslo" and "we
@@ -1389,6 +1449,14 @@ const searchRestaurants = tool({
 
     return asUntrustedData("myoltra-restaurants", {
       returned: rows.length,
+      ...(near
+        ? {
+            near: nearSummary(
+              near,
+              nearPlace ? (distanceFromPlace(nearPlace, rows[0]?.lat, rows[0]?.lng)?.distanceKm ?? null) : null
+            ),
+          }
+        : {}),
       restaurants: rows.map((row) => ({
         id: Number(row.id),
         name: row.restaurant_name,
@@ -1401,6 +1469,7 @@ const searchRestaurants = tool({
         setting: row.restaurant_setting ?? "",
         style: row.restaurant_style ?? "",
         awards: row.awards ?? [],
+        ...(nearPlace ? distanceFromPlace(nearPlace, row.lat, row.lng) : {}),
       })),
     });
   },
