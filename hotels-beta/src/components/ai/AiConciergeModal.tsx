@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import AiConversation from "./AiConversation";
 import styles from "./AiConcierge.module.css";
@@ -36,6 +36,12 @@ export default function AiConciergeModal() {
     requestClear,
   } = useAiSearch();
   const router = useRouter();
+  const pathname = usePathname();
+  /* The landing page shows the concierge in place of its results rather than
+     over them (2026-09-15): LandingResults hides while this is open, so there
+     is nothing behind to blur or dim, and the page's photograph stays as it
+     is. Every other page keeps the blur. */
+  const onLanding = pathname === "/";
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   const close = useCallback(() => setConciergeOpen(false), [setConciergeOpen]);
@@ -55,18 +61,27 @@ export default function AiConciergeModal() {
   const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(
     null
   );
+  /* Where the site header ends. The scrim starts there, so the header row is
+     never blurred (2026-09-15): it stays sharp above the panel, carrying the
+     Ask AI button and "AI Concierge" under the logo. */
+  const [headerBottom, setHeaderBottom] = useState(0);
 
   useLayoutEffect(() => {
     if (!conciergeOpen) return;
 
     const measure = () => {
+      const header = document.querySelector<HTMLElement>(".oltra-site-header");
+      const top = header ? Math.max(0, Math.round(header.getBoundingClientRect().bottom)) : 0;
+      setHeaderBottom(top);
+
       const frame = document.querySelector<HTMLElement>("[data-ai-concierge-anchor]");
       if (!frame) {
         setAnchor(null);
         return;
       }
       const rect = frame.getBoundingClientRect();
-      setAnchor({ top: Math.max(rect.top, 16), left: rect.left, width: rect.width });
+      // Relative to the scrim, which now begins below the header.
+      setAnchor({ top: Math.max(rect.top - top, 16), left: rect.left, width: rect.width });
     };
 
     measure();
@@ -173,7 +188,10 @@ export default function AiConciergeModal() {
 
   return createPortal(
     <div
-      className={`oltra-modal-scrim ${styles.scrim} ${anchor ? styles.scrimAnchored : ""}`}
+      className={`${onLanding ? styles.scrimClear : "oltra-modal-scrim"} ${styles.scrim} ${
+        anchor ? styles.scrimAnchored : ""
+      }`}
+      style={{ top: headerBottom }}
       onClick={close}
       role="presentation"
     >
@@ -191,12 +209,9 @@ export default function AiConciergeModal() {
         aria-label="myOLTRA AI Concierge"
       >
         <div className={styles.header}>
-          <div className={styles.brand}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- the same
-                SVG wordmark the site header renders with a plain <img>. */}
-            <img src="/images/myOLTRA.svg" alt="myOLTRA" className={styles.brandLogo} />
-            <span className={`oltra-route-label ${styles.brandTitle}`}>AI Concierge</span>
-          </div>
+          {/* The name only: the myOLTRA wordmark is in the site header right
+              above, which stays sharp while this is open (2026-09-15). */}
+          <h2 className={`oltra-label ${styles.brandTitle}`}>AI Concierge</h2>
           {/* Clear sits beside Exit rather than down in the input row: both
               are things you do to the whole conversation, not to the message
               you are writing, and next to Ask it read as a third way to send.
@@ -205,13 +220,13 @@ export default function AiConciergeModal() {
             {hasConversation ? (
               <button
                 type="button"
-                className="oltra-btn oltra-btn--destructive"
+                className={`oltra-btn oltra-btn--destructive ${styles.action}`}
                 onClick={requestClear}
               >
                 Clear
               </button>
             ) : null}
-            <button type="button" className="oltra-btn" onClick={close}>
+            <button type="button" className={`oltra-btn ${styles.action}`} onClick={close}>
               Exit
             </button>
           </div>

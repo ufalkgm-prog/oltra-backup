@@ -8,7 +8,6 @@ import styles from "./InspireView.module.css";
 import { filterInspireCities } from "@/lib/inspire/filterCities";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
-import AiModeButton from "@/components/ai/AiModeButton";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { monthFromQuery, purposeFromQuery } from "@/lib/ai/inspireMirror";
@@ -336,9 +335,6 @@ export default function InspireView({ cities }: Props) {
     <div className={styles.page}>
       <section className={styles.content}>
         <aside className={`oltra-glass oltra-panel ${styles.sidebar}`}>
-          {/* Its own row at the top of the sidebar, above the intro line. */}
-          <AiModeButton placement="corner" />
-
           <div className={styles.filters}>
             <div className={styles.filtersHeader}>
               <p className={styles.intro}>

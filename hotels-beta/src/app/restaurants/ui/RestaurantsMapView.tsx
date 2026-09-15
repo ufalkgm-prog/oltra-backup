@@ -13,7 +13,6 @@ import { readHotelFlightSearch } from "@/lib/searchSession";
 
 import OltraSelect from "@/components/site/OltraSelect";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
-import AiModeButton from "@/components/ai/AiModeButton";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import { aiResultsAreCurrent, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { restaurantsHref } from "@/lib/ai/handoff";
@@ -882,10 +881,6 @@ export default function RestaurantsMapView({
   return (
     <div className="restaurants-layout">
       <aside className="oltra-glass oltra-panel restaurants-sidebar">
-        {/* Its own row at the top of the sidebar, right-aligned — above the
-            City / Restaurant type pair rather than over it. */}
-        <AiModeButton placement="corner" />
-
         <div className="restaurants-sidebar__intro">
           {/* City and Restaurant type share one row at equal width. */}
           <div className="restaurants-sidebar__filters">

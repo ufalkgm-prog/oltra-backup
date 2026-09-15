@@ -17,7 +17,6 @@ import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
-import AiModeButton from "@/components/ai/AiModeButton";
 import AiResultsSync from "@/lib/ai/AiResultsSync";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import styles from "./FlightsView.module.css";
@@ -1044,11 +1043,6 @@ export default function FlightsView({ searchParams }: Props) {
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
           <div className={`${styles.searchPanel} oltra-glass oltra-panel`}>
-            {/* Top-right of the search frame. This page has no single input
-                box to sit inside, so the button takes its own row above the
-                trip-type tabs rather than floating over them. */}
-            <AiModeButton placement="corner" />
-
             <div className={styles.sectionStack}>
               <div className={styles.tripTypeTabs}>
                 {([["one-way", "One-way"], ["return", "Return"], ["multiple", "Multiple"]] as const).map(

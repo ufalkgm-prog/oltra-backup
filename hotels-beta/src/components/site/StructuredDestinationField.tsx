@@ -442,9 +442,7 @@ export default function StructuredDestinationField({
 
   const minimumCharsReached = typedValue.trim().length >= 2;
 
-  const suggestions = useMemo(() => {
-    const q = typedValue.trim().toLowerCase();
-
+  const selectableItems = useMemo(() => {
     const selectedTypes = new Set(tokens.map((token) => token.type));
     const selectedKeys = new Set(
       tokens.map(
@@ -567,20 +565,48 @@ export default function StructuredDestinationField({
       );
     }
 
-    return items
-      .filter((item) => {
-        const itemKey = `${item.type}:${String(item.id ?? item.value).toLowerCase()}`;
-        return !selectedKeys.has(itemKey);
-      })
-      .filter((item) => (q ? item.label.toLowerCase().includes(q) : true));
+    return items.filter((item) => {
+      const itemKey = `${item.type}:${String(item.id ?? item.value).toLowerCase()}`;
+      return !selectedKeys.has(itemKey);
+    });
   }, [
     activeHotels,
     dataset.purposes,
     dataset.settings,
     tokens,
-    typedValue,
     visibleTypes,
   ]);
+
+  const suggestions = useMemo(() => {
+    const q = typedValue.trim().toLowerCase();
+    return q
+      ? selectableItems.filter((item) => item.label.toLowerCase().includes(q))
+      : selectableItems;
+  }, [selectableItems, typedValue]);
+
+  /* ENTER TURNS WHAT WAS TYPED INTO A TAG, OR CLEARS IT (Ulrik, 2026-09-15).
+     Typing "london" and pressing Enter used to submit the raw text: the page
+     did search London, but the box kept a loose word that looked like a filter
+     and was not one. Now Enter picks the tag the text names — an exact label,
+     accent- and case-blind, in the dropdown's own group order, so "london" is
+     the city before anything else called London; failing that, the one
+     suggestion left when only one matches — and adds it like a click would.
+     Text that names no tag is removed rather than searched. */
+  function resolveTypedValue(): SuggestionItem | null {
+    const simplify = (value: string) =>
+      value.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+    const typed = simplify(typedValue);
+    if (!typed) return null;
+
+    const rank = (item: SuggestionItem) => GROUP_ORDER.indexOf(item.type);
+    const exact = selectableItems
+      .filter((item) => simplify(item.label) === typed)
+      .sort((a, b) => rank(a) - rank(b));
+    if (exact.length) return exact[0];
+
+    const partial = selectableItems.filter((item) => simplify(item.label).includes(typed));
+    return partial.length === 1 ? partial[0] : null;
+  }
 
   const groupedSuggestions = useMemo(() => {
     return GROUP_ORDER
@@ -777,7 +803,19 @@ export default function StructuredDestinationField({
                   setOpen(true);
                 }
               }}
-              onKeyDown={() => {
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  // Never submit the loose text; see resolveTypedValue.
+                  event.preventDefault();
+                  const match = resolveTypedValue();
+                  if (match) {
+                    addToken(match);
+                  } else {
+                    setTypedValue("");
+                    setOpen(false);
+                  }
+                  return;
+                }
                 if (!open && minimumCharsReached && groupedSuggestions.length > 0) {
                   setOpen(true);
                 }

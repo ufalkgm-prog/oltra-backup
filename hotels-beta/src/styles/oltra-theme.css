@@ -1176,6 +1176,13 @@ button.oltra-select {
    behind it. The fill is dark enough that the nav clears AA over anything
    underneath, including the bright hero images on the landing page, and the
    blur is what keeps it legible rather than the opacity alone. */
+/* Above the concierge's scrim (z-index 1000), which starts at the header's
+   bottom edge — so the header stays sharp and usable, and its own dropdowns
+   (currency) still open over the panel. */
+.oltra-site-header.is-concierge-open {
+  z-index: 1001;
+}
+
 .oltra-site-header.is-scrolled {
   background: var(--oltra-header-scrolled-bg);
   backdrop-filter: blur(14px) saturate(120%);

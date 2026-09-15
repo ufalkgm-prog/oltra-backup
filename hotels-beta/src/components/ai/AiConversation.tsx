@@ -450,6 +450,10 @@ const REVIEW_BEHIND = "Close this window to review — you can reopen this conci
  * were changed. */
 const RESUME_CHAT = "You can resume this chat anytime.";
 
+/* The second half of REVIEW_BEHIND, for the landing page, where closing the
+ * window is what shows the results. */
+const REOPEN_CHAT = "You can reopen this concierge chat anytime.";
+
 /* Ulrik's standard wording for a hotel we cannot price or book. */
 const NOT_SOLD_HERE = "Not available at myOLTRA yet.";
 
@@ -751,6 +755,13 @@ function ResultSummary({ past }: { past?: Presentation }) {
                 ? ` — the ones named here first, with the other ${alsoBehind} after them`
                 : ""
             }. Open it using the link below. ${RESUME_CHAT}`
+          : page === "landing"
+          ? /* The landing page no longer shows its results under the open
+               panel (2026-09-15) — they appear when it closes — so "behind this
+               panel" would send the visitor looking for something hidden. */
+            alsoBehind > 0
+            ? `These are listed first on this page when you close this window, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REOPEN_CHAT}`
+            : `The results of your query${priced ? ", with prices and availability," : ""} appear on this page when you close this window. ${REOPEN_CHAT}`
           : alsoBehind > 0
           ? rendersBehind
             ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REVIEW_BEHIND}`
@@ -1045,7 +1056,7 @@ export default function AiConversation() {
           disabled={busy}
         />
         {busy ? (
-          <button type="button" className="oltra-btn" onClick={() => stop()}>
+          <button type="button" className={`oltra-btn ${styles.action}`} onClick={() => stop()}>
             Stop
           </button>
         ) : (
@@ -1054,7 +1065,7 @@ export default function AiConversation() {
              also ignores an empty draft, which covers Enter). */
           <button
             type="submit"
-            className="oltra-btn"
+            className={`oltra-btn ${styles.action}`}
             aria-disabled={!draft.trim()}
             data-reason={draft.trim() ? undefined : "Type a question to continue"}
             onClick={(event) => {

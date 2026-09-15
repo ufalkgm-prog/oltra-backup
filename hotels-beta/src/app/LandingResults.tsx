@@ -20,7 +20,13 @@ import AiResultFrames from "./AiResultFrames";
  * The URL is deliberately left untouched either way, so a classic search run
  * afterwards restores its own results exactly. */
 export default function LandingResults({ summary }: { summary: React.ReactNode }) {
-  const { results, presentedAt, searchedAt } = useAiSearch();
+  const { results, presentedAt, searchedAt, conciergeOpen } = useAiSearch();
+
+  /* Nothing while the concierge is open (Ulrik, 2026-09-15). The panel opens
+     over the search frame with no blur, and results sitting half-visible
+     below it read as part of the conversation. They appear when the panel
+     closes and go again when it reopens. */
+  if (conciergeOpen) return null;
 
   // Whichever happened last wins. Without the comparison, running a classic
   // search after an AI answer left the AI frames on screen and the new search

@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { readHotelFlightSearch } from "@/lib/searchSession";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
+import { useAiSearch } from "@/lib/ai/aiSearchStore";
+import AiModeButton from "@/components/ai/AiModeButton";
 
 type SiteHeaderProps = {
   current?: string;
@@ -54,6 +56,10 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const [restaurantsHref, setRestaurantsHref] = useState("/restaurants");
 
   const supabase = createClient();
+
+  /* The concierge opens from here on every page (2026-09-15), and while it is
+     open the header stays above it, sharp, naming it under the logo. */
+  const { conciergeOpen, setConciergeOpen } = useAiSearch();
 
   const oauthName =
     (user?.user_metadata?.full_name as string | undefined) ??
@@ -243,7 +249,11 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   }
 
   return (
-    <header className={`oltra-site-header ${isScrolled ? "is-scrolled" : ""}`}>
+    <header
+      className={`oltra-site-header ${isScrolled ? "is-scrolled" : ""} ${
+        conciergeOpen ? "is-concierge-open" : ""
+      }`}
+    >
       <div className="oltra-site-header__inner">
         <div className="oltra-site-header__brand">
           <Link href="/" className="oltra-site-header__logo" aria-label="Go to OLTRA home">
@@ -266,10 +276,16 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
               This site is at beta launch stage and does not yet include full hotel list or flights search functionality. Additional content and functionality will be added pending partner discussions.
             </span>
           </span>
-          {current ? <div className="oltra-site-header__route oltra-route-label">{current}</div> : null}
+          {conciergeOpen ? (
+            <div className="oltra-site-header__route oltra-route-label">AI Concierge</div>
+          ) : current ? (
+            <div className="oltra-site-header__route oltra-route-label">{current}</div>
+          ) : null}
         </div>
 
         <nav className="oltra-site-header__nav" aria-label="Primary">
+          <AiModeButton placement="header" />
+
           {navItems.map((item) => {
             const isActive = pathname === item.match || pathname.startsWith(`${item.match}/`);
 
@@ -295,6 +311,9 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
                 href={item.href}
                 className={`oltra-site-header__nav-link ${isActive ? "is-active" : ""}`}
                 aria-current={isActive ? "page" : undefined}
+                // Leaving for another page closes the concierge rather than
+                // carrying an open panel over the next page.
+                onClick={() => setConciergeOpen(false)}
               >
                 <span>{item.label}</span>
                 {"badge" in item && item.badge ? (

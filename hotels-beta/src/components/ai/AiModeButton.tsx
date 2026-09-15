@@ -12,21 +12,22 @@ import styles from "./AiModeButton.module.css";
  * is nothing to switch back to.
  *
  * Two placements, one component:
- *  - `inline` sits at the right-hand end of the destination field, on the
- *    landing and Hotels pages, where that field is the main input.
- *  - `corner` sits top-right inside the search frame on Flights, Restaurants
- *    and Inspire, which have no single input box to sit inside.
+ *  - `header` sits first in the site header's navigation, on every page — the
+ *    way in everywhere since 2026-09-15, when it left the pages' own search
+ *    frames.
+ *  - `inline` sits at the right-hand end of the landing page's destination
+ *    field, the one search box that kept it.
  *
  * It renders nothing when the flag is off, so a disabled feature leaves no
  * trace on any page. */
 
 type Props = {
-  placement: "inline" | "corner";
+  placement: "inline" | "header";
   /** Overrides the label where a page needs a shorter one. */
   label?: string;
 };
 
-export default function AiModeButton({ placement, label = "AI mode" }: Props) {
+export default function AiModeButton({ placement, label = "Ask AI" }: Props) {
   const { conciergeOpen, setConciergeOpen } = useAiSearch();
 
   if (!AI_CHAT_ENABLED) return null;
@@ -37,7 +38,7 @@ export default function AiModeButton({ placement, label = "AI mode" }: Props) {
       // Inside a <form> on the landing and Hotels pages, so the type matters:
       // a default-type button there submits the search on click.
       className={`oltra-btn oltra-btn--ai ${
-        placement === "corner" ? styles.corner : styles.inline
+        placement === "header" ? styles.header : styles.inline
       }`}
       aria-haspopup="dialog"
       aria-expanded={conciergeOpen}
@@ -53,10 +54,6 @@ export default function AiModeButton({ placement, label = "AI mode" }: Props) {
       {label}
     </button>
   );
-
-  if (placement === "corner") {
-    return <div className={styles.cornerRow}>{button}</div>;
-  }
 
   return button;
 }

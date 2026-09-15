@@ -15,20 +15,8 @@
   margin-left: auto;
 }
 
-/* Top-right of a search frame that has no single input to sit in.
- *
- * A real row in normal flow, NOT an absolutely-positioned corner. Every frame
- * this lands in starts with a full-width control — the trip-type tabs on
- * Flights, the City/Type filter pair on Restaurants, the month row on
- * Inspire — so an absolute button would sit on top of one of them at some
- * width. A row costs 34px and cannot overlap anything. */
-.cornerRow {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-  min-width: 0;
-}
-
-.corner {
+/* First in the site header's navigation, before Hotels. The nav is a flex row
+   of 36px links, so this only needs to stay its own size in it. */
+.header {
   flex: 0 0 auto;
 }

@@ -16,7 +16,6 @@ import {
   type BookingSearchParams,
 } from "@/lib/hotels/buildBookingLink";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
-import AiModeButton from "@/components/ai/AiModeButton";
 import AiResultsSync from "@/lib/ai/AiResultsSync";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import {
@@ -2347,7 +2346,6 @@ async function handleCreateTripAndAddHotel() {
                 dataset={props.suggestions}
                 wrapperClassName="md:col-span-12 pt-[2px]"
                 busy={isPending}
-                trailingControl={<AiModeButton placement="inline" />}
                 curated={curatedDestination}
               />
 
@@ -2594,13 +2592,19 @@ async function handleCreateTripAndAddHotel() {
           </div>
 
           {shouldShowResults ? (
-            <div className="oltra-glass oltra-panel flex flex-none flex-col">
+            /* Fills what the search panel leaves of the column, rather than a
+               fixed 50vh (2026-09-15). The page is bounded to the viewport and
+               never scrolls itself; with 50vh the list ran ~45px past the
+               bottom of the screen, so its last cards sat below the edge while
+               the wheel only moved the list inside it. The floor keeps it
+               usable when the filters are open, and the column scrolls then. */
+            <div className="oltra-glass oltra-panel flex min-h-[280px] flex-1 flex-col">
               <div className="flex flex-none items-baseline justify-between">
                 <div className="oltra-label">Results</div>
                 <div className="text-xs text-[color:var(--oltra-text-muted)]">{resultsCount} matching hotels found</div>
               </div>
 
-              <div className="oltra-scrollbar mt-3.5 max-h-[50vh] space-y-3 overflow-y-auto pr-2">
+              <div className="oltra-scrollbar mt-3.5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
                 {orderedVisibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
@@ -2853,7 +2857,6 @@ async function handleCreateTripAndAddHotel() {
                     searchParams={searchParams}
                     dataset={props.suggestions}
                     busy={isPending}
-                    trailingControl={<AiModeButton placement="inline" />}
                     curated={curatedDestination}
                   />
 
