@@ -32,6 +32,24 @@ export const MACRO_REGION_TERMS: MacroRegionTerm[] = [
   { name: "The Benelux", aliases: ["benelux", "the benelux", "low countries", "the low countries"] },
 ];
 
+/** The `region` column's fixed vocabulary — continents, plus the two basins
+ * that are how people actually name those places (CLAUDE.md §3). Here rather
+ * than in tools.ts because the browser needs it too: a continent is a search
+ * parameter, never a destination the site's search box can hold, and the
+ * concierge has passed one as "country" ({country: "Europe"}, 2026-09-15). */
+export const REGION_VALUES = [
+  "Africa",
+  "Asia",
+  "Caribbean",
+  "Central America",
+  "Europe",
+  "Middle East",
+  "North America",
+  "Oceania",
+  "South America",
+  "South Pacific",
+] as const;
+
 /** Accent- and case-blind, and tolerant of a leading "the". Directus values
  * keep their accents (Graubünden, Côte d'Azur); what a visitor types often
  * does not. */
@@ -47,11 +65,13 @@ export function normaliseRegionTerm(term: string): string {
 }
 
 const TERMS = new Set(
-  MACRO_REGION_TERMS.flatMap((t) => [t.name, ...t.aliases]).map(normaliseRegionTerm)
+  [...MACRO_REGION_TERMS.flatMap((t) => [t.name, ...t.aliases]), ...REGION_VALUES].map(
+    normaliseRegionTerm
+  )
 );
 
-/** True when a value is one of our colloquial regions rather than a place a
- * hotel row can hold. */
+/** True when a value is one of our colloquial regions or a continent rather
+ * than a place a hotel row can hold as city, area or country. */
 export function isMacroRegionTerm(term: string | undefined | null): boolean {
   return Boolean(term && TERMS.has(normaliseRegionTerm(term)));
 }

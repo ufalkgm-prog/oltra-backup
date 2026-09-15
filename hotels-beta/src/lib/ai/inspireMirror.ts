@@ -52,7 +52,10 @@ const PURPOSE_RULES: { purpose: InspirePurpose; activities: string[]; settings: 
   {
     purpose: "mountains",
     activities: ["Hiking", "Paragliding"],
-    settings: ["Mountains", "Hillside"],
+    /* Not Hillside: Tuscany and Ubud are hillside, and neither is a mountain
+       trip. With the setting now deciding first, Hillside would have turned
+       every countryside-and-hillside answer back into "mountains". */
+    settings: ["Mountains"],
   },
   {
     purpose: "city_break",
@@ -61,16 +64,43 @@ const PURPOSE_RULES: { purpose: InspirePurpose; activities: string[]; settings: 
   },
 ];
 
+/** Activities that name the trip whatever the hotel's setting. */
+const DEFINING_ACTIVITIES: Record<string, InspirePurpose> = {
+  Skiing: "ski",
+  Safari: "safari",
+  "Wilderness safari": "safari",
+  "Gorilla Hiking": "safari",
+};
+
 /** The Inspire purpose a concierge answer implies, or "" when none of its five
  * fits — in which case the page's own selector is left alone rather than
- * guessed at. */
+ * guessed at.
+ *
+ * The setting decides before the activities do. Activities are what a guest
+ * does from a hotel, and most of them happen in several kinds of place: walking
+ * and good food in the European countryside (2026-09-15) matched Hiking to
+ * "mountains" and led the page with Courchevel at 8°C. So when the answer names
+ * a setting, only a setting can pick the purpose, and a setting Inspire has no
+ * purpose for (Countryside, Lakeside, Desert) picks none. Activities decide only
+ * when no setting was given, or when one names the trip outright (skiing,
+ * safari). */
 export function purposeFromQuery(query: AiQueryState): InspirePurpose | "" {
-  const activities = new Set(query.activities);
-  const settings = new Set(query.settings);
+  for (const activity of query.activities) {
+    const defined = DEFINING_ACTIVITIES[activity];
+    if (defined) return defined;
+  }
 
+  const settings = new Set(query.settings);
+  if (settings.size) {
+    for (const rule of PURPOSE_RULES) {
+      if (rule.settings.some((s) => settings.has(s))) return rule.purpose;
+    }
+    return "";
+  }
+
+  const activities = new Set(query.activities);
   for (const rule of PURPOSE_RULES) {
     if (rule.activities.some((a) => activities.has(a))) return rule.purpose;
-    if (rule.settings.some((s) => settings.has(s))) return rule.purpose;
   }
   return "";
 }

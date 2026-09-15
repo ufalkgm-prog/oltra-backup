@@ -35,21 +35,7 @@ import {
   matchesMacroSetting,
   resolveMacroRegion,
 } from "./macroRegions";
-
-/** The `region` column's fixed vocabulary — continents, plus the two basins
- * that are how people actually name those places (CLAUDE.md §3). */
-const REGION_VALUES = [
-  "Africa",
-  "Asia",
-  "Caribbean",
-  "Central America",
-  "Europe",
-  "Middle East",
-  "North America",
-  "Oceania",
-  "South America",
-  "South Pacific",
-] as const;
+import { REGION_VALUES } from "./macroRegionTerms";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).

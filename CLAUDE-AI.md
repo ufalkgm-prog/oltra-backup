@@ -67,6 +67,15 @@ One conversation site-wide, in `sessionStorage` under `oltra_ai_concierge_v1`; c
 
 Exiting leaves Inspire showing what was asked. `presentResults` gained **`searchTags`** — the locked setting and activity tags actually searched on, since geography and dates alone cannot express *what kind of trip* it is — and `lib/ai/inspireMirror.ts` maps them to Inspire's five purposes, keyed on `presentedAt` so it applies once per answer and never fights a hand-picked filter. `queryStateToParams` now also emits `settings` and `activities`, so the Hotels handoff arrives with those facets pre-selected.
 
+**The setting picks the purpose before the activities do (2026-09-15).** "Walking,
+good food and a quiet countryside hotel" in Europe searched Hiking + Gastronomy +
+Countryside; the old first-match-wins order took Hiking to "mountains" and led
+Inspire with Courchevel at 8°C. Now: Skiing and the safari activities name the
+trip outright; otherwise, if the answer has settings, only a setting can choose,
+and a setting Inspire has no purpose for (Countryside, Lakeside) chooses none, so
+the selector stays as it was; activities decide only when no setting was given.
+`Hillside` no longer maps to mountains — Tuscany and Ubud are hillside.
+
 **Superseded for the Hotels handoff (2026-09-14):** `hotelsHref` no longer
 carries geography, settings or activities — only `ids` and the stay. See
 *"AI curated results"* below. `allHotelsHref` still sends the geography.
@@ -689,6 +698,11 @@ ski-in ski-out, under 1,500 euros a night", asked on the Hotels page.
   `macroRegionTerms.ts` (browser-safe names and aliases, split out of the
   server-only `macroRegions.ts`, which asserts at load that the two agree) lets
   readPresentation drop such a value.
+  **Continents too (2026-09-15):** a European countryside question arrived as
+  `destination: {country: "Europe"}`. `REGION_VALUES` (the `region` column's
+  vocabulary) moved from tools.ts into macroRegionTerms.ts and
+  `isMacroRegionTerm` now matches it, so a continent in any destination slot is
+  dropped the same way.
 * **"See relevant hotels" on the Hotels page** linked to where the visitor
   already was, the results behind the panel. Hotels and Flights now get no link
   for an answer about their own vertical — the landing page's rule. Restaurants
