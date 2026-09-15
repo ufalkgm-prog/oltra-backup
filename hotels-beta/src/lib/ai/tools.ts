@@ -110,6 +110,30 @@ function awardsFor(hotel: HotelRecord): string[] {
   );
 }
 
+/* FEATURES NO TAG COVERS (2026-09-15). Asked for "an overwater villa with a
+ * private pool" in the Maldives, the concierge had no way to apply either: no
+ * Maldives hotel carries the Overwater tag and there is no pool tag, while the
+ * descriptions say it for most of them. So it asked about diving and dining
+ * instead. `features` are matched as words in each hotel's highlights and
+ * description: one entry per thing, its phrasings separated by "|". */
+type Feature = { label: string; words: string[] };
+
+function foldText(value: string): string {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+function parseFeatures(values: string[] | undefined): Feature[] {
+  return (values ?? [])
+    .map((value) => {
+      const words = value.split("|").map((word) => foldText(word).trim()).filter(Boolean);
+      return { label: value.split("|")[0].trim(), words };
+    })
+    .filter((feature) => feature.words.length > 0)
+    .slice(0, MAX_FEATURES);
+}
+
+const MAX_FEATURES = 4;
+
 /* THE DRIVE FROM A HOTEL'S OWN AIRPORT (2026-09-15). Asked for Lake Como via
  * Milan, the concierge quoted compareGateways' 52 minutes — Malpensa to Milan
  * itself — as the drive to the lake, where the hotels are 58 (Blevio) to 77
@@ -438,6 +462,7 @@ const searchHotels = tool({
     settings?: string[];
     styles?: string[];
     activities?: string[];
+    features?: string[];
     limit?: number;
     showAll?: boolean;
     near?: string;
@@ -522,6 +547,20 @@ const searchHotels = tool({
         type: "array",
         items: { type: "string", enum: [...ACTIVITY_VALUES] },
         description: "Purpose tags. Use only these exact values.",
+      },
+      features: {
+        type: "array",
+        items: { type: "string" },
+        maxItems: MAX_FEATURES,
+        description:
+          "Things the visitor asked for that no tag covers — a private pool, " +
+          "an overwater villa, a butler, a kids' club. One entry per thing, " +
+          "with the ways a hotel description would say it separated by |: " +
+          "\"private pool|plunge pool|own pool\", \"overwater|over-water|water villa\". " +
+          "Matched in each hotel's highlights and description: hotels that " +
+          "mention every one are kept, and each result lists what it mentions. " +
+          "Pass them in the first search, whenever the visitor named such a " +
+          "thing, rather than asking about something else.",
       },
       limit: { type: "number" },
       near: {
@@ -644,7 +683,12 @@ const searchHotels = tool({
 
     const nearLookup = input.near ? findNearPlace(input.near) : null;
     const rows = await getHotels({
-      fields: CANDIDATE_FIELDS as unknown as string[],
+      // Descriptions are long, so they are fetched only when there are
+      // features to look for in them.
+      fields: [
+        ...(CANDIDATE_FIELDS as unknown as string[]),
+        ...(input.features?.length ? ["description"] : []),
+      ],
       filter: and.length === 1 ? and[0] : { _and: and },
       // Editorial rank first, name second. ext_points is deliberately NOT here:
       // it is a count of external accreditations, and sorting by it made the
@@ -671,6 +715,36 @@ const searchHotels = tool({
     const inRegion = macro ? rows.filter((h) => matchesMacroSetting(h, macro)) : rows;
     const tagFit = relevanceSort(filterHotelsByTags(inRegion, requested), requested);
 
+    const features = parseFeatures(input.features);
+    const mentionsByHotel = new Map<HotelRecord, string[]>();
+    for (const hotel of features.length ? tagFit : []) {
+      const text = foldText(`${hotel.highlights ?? ""} ${hotel.description ?? ""}`);
+      mentionsByHotel.set(
+        hotel,
+        features.filter((f) => f.words.some((word) => text.includes(word))).map((f) => f.label)
+      );
+    }
+    const mentionsOf = (hotel: HotelRecord) => mentionsByHotel.get(hotel) ?? [];
+    const mentionAll = tagFit.filter((hotel) => mentionsOf(hotel).length === features.length);
+    // When none mentions every feature, nothing is left out: they are ordered
+    // by how many they mention, and the model says what each one confirms.
+    const featureFit = !features.length
+      ? tagFit
+      : mentionAll.length
+        ? mentionAll
+        : tagFit.slice().sort((a, b) => mentionsOf(b).length - mentionsOf(a).length);
+    const featureInfo = features.length
+      ? {
+          featureCounts: Object.fromEntries(
+            features.map((f) => [f.label, tagFit.filter((h) => mentionsOf(h).includes(f.label)).length])
+          ),
+          leftOutByFeatures: tagFit.length - featureFit.length,
+          featureNote: mentionAll.length
+            ? "Kept: the hotels whose highlights or description mention every feature. A description can leave out something a hotel has, so the others are not proof of absence — mention that more may have it only if the visitor asks."
+            : "No hotel here mentions all of those, so none was left out; they are ordered by how many they mention. Say per hotel what its \"mentions\" confirm, and never claim a feature for a hotel that does not mention it.",
+        }
+      : {};
+
     /* Near a named place: distance becomes the order, and the nearest
        BROAD_RESULT_LIMIT are the answer — so the directory gate below does not
        apply. "Near the Pantheon" is already as narrow as a question gets, and
@@ -679,8 +753,8 @@ const searchHotels = tool({
     const near = nearLookup ? await nearLookup : null;
     const nearPlace = near?.status === "found" ? near.place : null;
     const narrowed = nearPlace
-      ? sortByDistance(tagFit, nearPlace, (h) => ({ lat: h.lat, lng: h.lng }))
-      : tagFit;
+      ? sortByDistance(featureFit, nearPlace, (h) => ({ lat: h.lat, lng: h.lng }))
+      : featureFit;
 
     // Nothing matched, and geography was part of the ask. A bare zero is the
     // least useful thing we can say: the model cannot tell "we have none there"
@@ -696,11 +770,37 @@ const searchHotels = tool({
      * that question in the first result. */
     const tagged =
       requested.activities.length + requested.settings.length + requested.styles.length > 0;
-    const leftOutByTags = tagged ? inRegion.length - narrowed.length : 0;
+    const leftOutByTags = tagged ? inRegion.length - tagFit.length : 0;
+    /* ANY ONE TAG IS A MATCH, SO SAY HOW MANY CARRY EACH (2026-09-15). The
+     * Maldives search passed Overwater, Island, Private Island and Beachfront;
+     * all 26 matched on Island, none carries Overwater, and the answer said
+     * "26 with overwater villas". The note used to say every property "carries
+     * those tags", which invited exactly that. */
+    const tagCounts = tagged
+      ? Object.fromEntries(
+          (
+            [
+              ["setting", requested.settings],
+              ["style", requested.styles],
+              ["activities", requested.activities],
+            ] as const
+          ).flatMap(([field, values]) =>
+            values.map((value) => [
+              value,
+              narrowed.filter((hotel) => ((hotel[field] as string[] | null) ?? []).includes(value)).length,
+            ])
+          )
+        )
+      : undefined;
+    const tagCount =
+      requested.activities.length + requested.settings.length + requested.styles.length;
     const tagNote = tagged
-      ? leftOutByTags > 0
-        ? `${leftOutByTags} more ${leftOutByTags === 1 ? "property is" : "properties are"} in this geography without those tags; search again without them only if they would suit.`
-        : "Every property in this geography carries those tags - searching again without them adds nothing."
+      ? (leftOutByTags > 0
+          ? `${leftOutByTags} more ${leftOutByTags === 1 ? "property is" : "properties are"} in this geography without those tags; search again without them only if they would suit.`
+          : `Every property in this geography carries ${tagCount > 1 ? "at least one of those tags" : "that tag"} - searching again without them adds nothing.`) +
+        (tagCount > 1
+          ? " A property matches on ANY ONE of the tags passed, and tagCounts says how many of these carry each. Never describe the set by a tag fewer than all of them carry."
+          : "")
       : undefined;
 
     // The geography is real but the tags excluded all of it. That is not a
@@ -754,6 +854,7 @@ const searchHotels = tool({
     const shaped = capped.map((hotel) => ({
       ...candidateShape(hotel),
       ...(nearPlace ? distanceFromPlace(nearPlace, hotel.lat, hotel.lng) : {}),
+      ...(features.length ? { mentions: mentionsOf(hotel) } : {}),
     }));
     const nearInfo = near
       ? {
@@ -780,7 +881,15 @@ const searchHotels = tool({
     const availableCount = rankedHotels
       ? rankedHotels.filter((h) => "available" in h && h.available).length
       : null;
-    const facing = availableCount ?? narrowed.length;
+    /* A BUDGET IS PART OF WHAT THEY WOULD LOOK AT (2026-09-15). The Maldives
+       honeymoon named under 2,000 a night; the gate counted the 21 with rooms,
+       said nothing of the budget, and asked about diving. Counted here, the
+       set they would actually consider is what decides whether to show it. */
+    const withinBudgetCount =
+      rankedHotels && input.stay?.maxPricePerStay != null
+        ? rankedHotels.filter((h) => "withinBudget" in h && h.withinBudget === true).length
+        : null;
+    const facing = withinBudgetCount ?? availableCount ?? narrowed.length;
 
     // Too many to recommend: hand back counts and the axes that would cut it
     // down, and no properties at all. The model has nothing to present, so it
@@ -793,8 +902,10 @@ const searchHotels = tool({
         // Only reached when the place was NOT found: say so, or the model
         // fills the gap with a distance of its own.
         ...(near ? { near: nearSummary(near, null) } : {}),
-        ...(tagNote ? { leftOutByTags, tagNote } : {}),
+        ...(tagNote ? { leftOutByTags, tagCounts, tagNote } : {}),
+        ...featureInfo,
         availableForTheseDates: availableCount,
+        ...(withinBudgetCount != null ? { withinBudgetForTheseDates: withinBudgetCount } : {}),
         narrowBy: narrowingAxes(narrowed, requested),
         guidance:
           `${facing} properties is a directory, not a recommendation. Do NOT ` +
@@ -815,13 +926,20 @@ const searchHotels = tool({
           `reports "covers" out of "of": where those differ the axis explains ` +
           `only part of the set, so do not present its values as the full ` +
           `picture. Call this tool again with their answer, or with ` +
-          `showAll: true if they ask to see everything regardless.`,
+          `showAll: true if they ask to see everything regardless. ` +
+          `NEVER ASK ABOUT WHAT THEY DID NOT RAISE WHILE WHAT THEY DID RAISE ` +
+          `IS UNAPPLIED: if they named something no tag covers (a private ` +
+          `pool, an overwater villa) and it is not in \`features\` yet, search ` +
+          `again with it there instead of asking. Ask only about what is ` +
+          `still open.`,
       });
     }
 
     return asUntrustedData("myoltra-hotels", {
       matched: narrowed.length,
-      ...(tagNote ? { leftOutByTags, tagNote } : {}),
+      ...(tagNote ? { leftOutByTags, tagCounts, tagNote } : {}),
+      ...featureInfo,
+      ...(withinBudgetCount != null ? { withinBudgetForTheseDates: withinBudgetCount } : {}),
       returned: shaped.length,
       truncated: narrowed.length > shaped.length,
       ...nearInfo,
