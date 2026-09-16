@@ -40,6 +40,7 @@ import {
   TRIP_LIMIT_MESSAGE,
   getCreateTripBlockedReason,
   isTripLimitError,
+  MAX_TRIP_NAME_CHARS,
 } from "@/lib/members/tripLimits";
 import type { HotelRecord } from "@/lib/directus";
 import type { AwardCode } from "@/lib/hotels/awardCodes";
@@ -4023,6 +4024,7 @@ async function handleCreateTripAndAddHotel() {
                                 <input
                                   type="text"
                                   value={newTripName}
+                                  maxLength={MAX_TRIP_NAME_CHARS}
                                   onChange={(e) => {
                                     setNewTripName(e.target.value);
                                     setMemberActionError("");

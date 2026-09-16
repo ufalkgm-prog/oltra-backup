@@ -20,7 +20,12 @@ export function isTripLimitError(error: unknown): boolean {
   return error instanceof TripLimitError || (error as Error)?.name === "TripLimitError";
 }
 
+/** Trip names are capped (Ulrik, 2026-09-16): every picker gives the input
+ *  this maxLength, and createTripBrowser() cuts to it as the real guard. */
+export const MAX_TRIP_NAME_CHARS = 20;
+
 export const TRIP_NAME_REQUIRED_MESSAGE = "Input a name in the name field.";
+export const TRIP_NAME_TOO_LONG_MESSAGE = `Trip names can be at most ${MAX_TRIP_NAME_CHARS} characters.`;
 export const TRIP_NAME_DUPLICATE_MESSAGE = "That trip name already exists.";
 
 /* Why a "create new trip" click cannot go through, or null when it can.
@@ -40,6 +45,7 @@ export function getCreateTripBlockedReason(input: {
 
   const trimmed = input.name.trim();
   if (!trimmed) return TRIP_NAME_REQUIRED_MESSAGE;
+  if (trimmed.length > MAX_TRIP_NAME_CHARS) return TRIP_NAME_TOO_LONG_MESSAGE;
 
   const taken = input.existingNames.some(
     (existing) => existing.trim().toLowerCase() === trimmed.toLowerCase()

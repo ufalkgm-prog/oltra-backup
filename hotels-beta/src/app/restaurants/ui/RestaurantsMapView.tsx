@@ -30,6 +30,7 @@ import {
   TRIP_LIMIT_MESSAGE,
   getCreateTripBlockedReason,
   isTripLimitError,
+  MAX_TRIP_NAME_CHARS,
 } from "@/lib/members/tripLimits";
 
 /* Green star on a restaurant the member has already favourited - shown on both
@@ -1141,6 +1142,7 @@ export default function RestaurantsMapView({
                           <input
                             type="text"
                             value={newTripName}
+                            maxLength={MAX_TRIP_NAME_CHARS}
                             onChange={(e) => setNewTripName(e.target.value)}
                             placeholder="Trip name"
                             className="oltra-input"

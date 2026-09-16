@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import FlightDetailsPopup from "./flights/ui/FlightDetailsPopup";
 import flightsStyles from "./flights/ui/FlightsView.module.css";
+import { SMALL_CARD_ACTION_WIDTH } from "@/components/hotels/HotelSmallCard";
 import SaveToTripControl, {
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
@@ -256,21 +257,27 @@ export default function FlightResultRow({
             them means they wrap together or not at all, and line up with each
             other and across rows either way. */}
         <div className={styles.flightRowActions}>
-          <button
-            type="button"
-            className="oltra-btn oltra-btn--condensed"
-            onClick={() => handleBook(flight.offerId)}
-          >
-            BOOK
-          </button>
-          <SaveToTripControl
-            onSave={(tripId) => handleSave(tripId, flight)}
-            newTripDefaults={tripDefaults}
-            label="SAVE"
-            compact
-            align="right"
-            className="oltra-btn oltra-btn--condensed"
-          />
+          {/* Each in the hotel card's action width, so every BOOK and SAVE on
+              the page is one width (Ulrik, 2026-09-16). */}
+          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
+            <button
+              type="button"
+              className="oltra-btn oltra-btn--condensed oltra-btn--block"
+              onClick={() => handleBook(flight.offerId)}
+            >
+              BOOK
+            </button>
+          </div>
+          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
+            <SaveToTripControl
+              onSave={(tripId) => handleSave(tripId, flight)}
+              newTripDefaults={tripDefaults}
+              label="SAVE"
+              compact
+              align="right"
+              className="oltra-btn oltra-btn--condensed oltra-btn--block"
+            />
+          </div>
         </div>
       </div>
       <div

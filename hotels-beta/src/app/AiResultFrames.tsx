@@ -660,7 +660,7 @@ export default function AiResultFrames() {
                             label="SAVE"
                             compact
                             align="right"
-                            className="oltra-btn oltra-btn--condensed"
+                            className="oltra-btn oltra-btn--condensed oltra-btn--block"
                           />
                         )}
                       />

@@ -1,6 +1,9 @@
 import type { RestaurantRecord } from "@/app/restaurants/types";
 import { buildAwardsLabel } from "@/app/restaurants/utils";
-import type { SmallCardColumns } from "@/components/hotels/HotelSmallCard";
+import {
+  SMALL_CARD_ACTION_WIDTH,
+  type SmallCardColumns,
+} from "@/components/hotels/HotelSmallCard";
 
 /* A restaurant in a result frame, shaped like HotelSmallCard so the landing
  * page's three frames read as one set of results rather than three designs.
@@ -95,7 +98,9 @@ export default function RestaurantSmallCard({
           must not follow it — the same guard HotelSmallCard's actions carry. */}
       {renderSaveControl ? (
         <div className="mt-2 flex justify-end" onClick={(e) => e.preventDefault()}>
-          {renderSaveControl()}
+          {/* The hotel card's action width, so SAVE matches BOOK and SAVE
+              there; the caller's control fills it (oltra-btn--block). */}
+          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>{renderSaveControl()}</div>
         </div>
       ) : null}
     </div>

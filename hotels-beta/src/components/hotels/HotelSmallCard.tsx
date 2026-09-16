@@ -33,6 +33,16 @@ export type SmallCardAvailability =
  * Defaults to 1, so every existing call site is unaffected. */
 export type SmallCardColumns = 1 | 2 | 3;
 
+/* The width of a card's BOOK / SAVE column, per density. Exported so the
+ * flight rows and restaurant cards beside these cards give their buttons the
+ * same width (Ulrik, 2026-09-16) — every BOOK and SAVE on the landing page
+ * lines up with every other. Literal class names, so Tailwind sees them. */
+export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
+  1: "w-[84px]",
+  2: "w-[80px]",
+  3: "w-[74px]",
+};
+
 const LAYOUT: Record<
   SmallCardColumns,
   { grid: string; image: number; imageBox: string; body: string; clamp: string; right: string }
@@ -43,7 +53,7 @@ const LAYOUT: Record<
     imageBox: "h-20 w-full",
     body: "min-h-[80px]",
     clamp: "line-clamp-3",
-    right: "w-[84px]",
+    right: SMALL_CARD_ACTION_WIDTH[1],
   },
   2: {
     grid: "grid-cols-[104px_1fr_auto] gap-3",
@@ -51,7 +61,7 @@ const LAYOUT: Record<
     imageBox: "h-[66px] w-full",
     body: "min-h-[66px]",
     clamp: "line-clamp-2",
-    right: "w-[80px]",
+    right: SMALL_CARD_ACTION_WIDTH[2],
   },
   3: {
     grid: "grid-cols-[88px_1fr_auto] gap-2.5",
@@ -59,7 +69,7 @@ const LAYOUT: Record<
     imageBox: "h-[58px] w-full",
     body: "min-h-[58px]",
     clamp: "line-clamp-2",
-    right: "w-[74px]",
+    right: SMALL_CARD_ACTION_WIDTH[3],
   },
 };
 

@@ -8,7 +8,7 @@ import type {
   RoomSelectionEntry,
   SavedTrip,
 } from "./types";
-import { MAX_TRIPS_PER_MEMBER, TripLimitError } from "./tripLimits";
+import { MAX_TRIP_NAME_CHARS, MAX_TRIPS_PER_MEMBER, TripLimitError } from "./tripLimits";
 
 type ProfileUpsert = Database["public"]["Tables"]["member_profiles"]["Insert"];
 type FamilyInsert =
@@ -954,7 +954,7 @@ export async function createTripBrowser(input?: {
 
   const payload: TripInsert = {
     user_id: user.id,
-    name: input?.name?.trim() || "New trip",
+    name: input?.name?.trim().slice(0, MAX_TRIP_NAME_CHARS) || "New trip",
     destination: input?.destination?.trim() || null,
     period_label: input?.periodLabel?.trim() || null,
     travelers_label: input?.travelersLabel?.trim() || null,

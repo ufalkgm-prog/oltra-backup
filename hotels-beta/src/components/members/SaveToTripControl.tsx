@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createTripBrowser, fetchTripChoicesBrowser } from "@/lib/members/db";
 import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import {
+  MAX_TRIP_NAME_CHARS,
   MAX_TRIPS_PER_MEMBER,
   TRIP_LIMIT_MESSAGE,
   getCreateTripBlockedReason,
@@ -48,6 +50,17 @@ type Props = {
 
 const SAVED_FLASH_MS = 2500;
 
+/* Room kept between the panel and the window edge, and between it and the
+   trigger. The panel's height never exceeds this cap, as .oltra-popup-panel--
+   bounded had it. */
+const PANEL_EDGE_PX = 8;
+const PANEL_GAP_PX = 8;
+const PANEL_MAX_HEIGHT_PX = 360;
+const PANEL_MIN_HEIGHT_PX = 140;
+const COMPACT_PANEL_WIDTH_PX = 260;
+
+type PanelPlacement = { top: number; left: number; width: number; maxHeight: number };
+
 export default function SaveToTripControl({
   onSave,
   newTripDefaults,
@@ -68,12 +81,81 @@ export default function SaveToTripControl({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [placement, setPlacement] = useState<PanelPlacement | null>(null);
 
+  // The panel is portalled, so it is not inside containerRef: both count as
+  // "inside" for click-outside and hover-close.
   const dismissProps = useDropdownDismiss({
     open,
     onClose: () => setOpen(false),
-    refs: containerRef,
+    refs: [containerRef, panelRef],
   });
+
+  /* ABOVE EVERYTHING, AND INSIDE THE WINDOW (Ulrik, 2026-09-16).
+   *
+   * The panel used to be absolutely positioned inside the control, so every
+   * ancestor that clips cut it off: the landing hotel and restaurant lists are
+   * scroll panes, and a flight row sits in a card — most pickers showed only
+   * their top half. No z-index can escape an overflow clip, so the panel now
+   * renders into <body> with fixed coordinates taken from the trigger. It
+   * opens below, or above when below is short (above first for `dropUp`), and
+   * is capped to the room on that side and slid inside the window's width, so
+   * it never runs past an edge. Re-placed on scroll and resize while open. */
+  const placePanel = useCallback(() => {
+    const trigger = triggerRef.current;
+    const panel = panelRef.current;
+    if (!trigger || !panel) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const width = compact
+      ? Math.min(COMPACT_PANEL_WIDTH_PX, viewportWidth - PANEL_EDGE_PX * 2)
+      : containerRef.current?.getBoundingClientRect().width ?? rect.width;
+    const preferredLeft = align === "right" ? rect.right - width : rect.left;
+    const left = Math.max(
+      PANEL_EDGE_PX,
+      Math.min(preferredLeft, viewportWidth - width - PANEL_EDGE_PX)
+    );
+
+    const natural = Math.min(panel.scrollHeight, PANEL_MAX_HEIGHT_PX);
+    const roomBelow = viewportHeight - rect.bottom - PANEL_GAP_PX - PANEL_EDGE_PX;
+    const roomAbove = rect.top - PANEL_GAP_PX - PANEL_EDGE_PX;
+    const fitsBelow = natural <= roomBelow;
+    const fitsAbove = natural <= roomAbove;
+    const openUp = dropUp
+      ? fitsAbove || (!fitsBelow && roomAbove > roomBelow)
+      : !fitsBelow && (fitsAbove || roomAbove > roomBelow);
+
+    const maxHeight = Math.max(
+      PANEL_MIN_HEIGHT_PX,
+      Math.min(PANEL_MAX_HEIGHT_PX, openUp ? roomAbove : roomBelow)
+    );
+    const height = Math.min(natural, maxHeight);
+    const top = openUp
+      ? Math.max(PANEL_EDGE_PX, rect.top - PANEL_GAP_PX - height)
+      : Math.min(rect.bottom + PANEL_GAP_PX, viewportHeight - PANEL_EDGE_PX - height);
+
+    setPlacement({ top, left, width, maxHeight });
+  }, [align, compact, dropUp]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPlacement(null);
+      return;
+    }
+    placePanel();
+    window.addEventListener("resize", placePanel);
+    // Capture, so a scroll inside any pane (the landing lists) moves it too.
+    window.addEventListener("scroll", placePanel, true);
+    return () => {
+      window.removeEventListener("resize", placePanel);
+      window.removeEventListener("scroll", placePanel, true);
+    };
+  }, [open, placePanel, trips.length, busy]);
 
   const limitReached = trips.length >= MAX_TRIPS_PER_MEMBER;
 
@@ -198,15 +280,21 @@ export default function SaveToTripControl({
       data-oltra-control="true"
       {...dismissProps}
     >
-      {open ? (
+      {open && typeof document !== "undefined" ? createPortal(
         <div
-          className={[
-            "oltra-popup-panel oltra-popup-panel--bounded absolute z-50",
-            dropUp ? "bottom-full mb-2" : "top-full mt-2",
-            align === "right" ? "right-0" : "left-0",
-            compact ? "w-[260px]" : "left-0 right-0",
-          ].join(" ")}
+          ref={panelRef}
+          className="oltra-popup-panel overflow-y-auto"
+          style={{
+            position: "fixed",
+            top: placement?.top ?? 0,
+            left: placement?.left ?? 0,
+            width: placement?.width ?? (compact ? COMPACT_PANEL_WIDTH_PX : undefined),
+            maxHeight: placement?.maxHeight ?? PANEL_MAX_HEIGHT_PX,
+            // Measured before it is shown, so it never flashes at 0,0.
+            visibility: placement ? "visible" : "hidden",
+          }}
           onClick={(e) => e.stopPropagation()}
+          {...dismissProps}
         >
           <div className="oltra-subheader">Select trip</div>
 
@@ -244,6 +332,7 @@ export default function SaveToTripControl({
                     setError("");
                   }}
                   placeholder="Trip name"
+                  maxLength={MAX_TRIP_NAME_CHARS}
                   className="oltra-input"
                   disabled={limitReached || busy}
                 />
@@ -276,10 +365,12 @@ export default function SaveToTripControl({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
 
       <button
+        ref={triggerRef}
         type="button"
         onClick={(e) => {
           e.preventDefault();
