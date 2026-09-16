@@ -36,6 +36,16 @@
   font-weight: 400;
 }
 
+/* Rim and label in the pale white of the landing search panel's field labels
+   (--oltra-text-secondary, as .oltra-label), not the standard passive grey,
+   which read as broken over the photo (Ulrik, 2026-09-16). Qualified past the
+   standard's own aria-disabled rule so it wins whichever stylesheet loads
+   last. */
+:global(.oltra-btn.oltra-btn--ai)[aria-disabled="true"].passive {
+  border-color: var(--oltra-text-secondary);
+  color: var(--oltra-text-secondary);
+}
+
 /* The "members only" popup opens above the button as standard, which in the
    header would be off the top of the screen — so there it opens below. The
    selector repeats the standard's own so it outranks it. */
