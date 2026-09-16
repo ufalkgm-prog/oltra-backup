@@ -13,6 +13,7 @@ import { isStayTooLong } from "@/lib/stay";
 import LandingSearchPanel from "./LandingSearchPanel";
 import LandingResults from "./LandingResults";
 import LandingSummary from "./LandingSummary";
+import LandingIntro from "./LandingIntro";
 import styles from "./page.module.css";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -302,6 +303,8 @@ export default async function HomePage({
               ) : null
             }
           />
+
+          <LandingIntro summaryShown={submitted && hasDestination} />
         </section>
       </main>
     </PageShell>

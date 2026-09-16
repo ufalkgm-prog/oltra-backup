@@ -658,6 +658,103 @@
   --oltra-field-bg-strong: rgba(255, 255, 255, 0.17);
 }
 
+/* ─── Introduction panel (LandingIntro.tsx) ───────────────────────────────
+   The search panel's own surface (.oltra-glass + .landingGlass), so it reads
+   as a second card in the same system. 32px from the search panel: the hero
+   grid's 1rem gap plus the 1rem margin here, which leaves the gap the results
+   boxes use alone. */
+.introPanel {
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem;
+  color: var(--oltra-text-primary);
+}
+
+/* Stops short of the close control so the two never overlap. */
+.introTagline {
+  margin: 0 2.5rem 0.9rem 0;
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--oltra-text-primary);
+}
+
+.introBody {
+  column-count: 2;
+  column-gap: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--oltra-text-muted);
+}
+
+.introBody p {
+  margin: 0 0 0.75rem;
+  break-inside: avoid;
+}
+
+.introClosing {
+  margin: 1.1rem 0 0;
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--oltra-text-primary);
+}
+
+.introActions {
+  margin-top: 1rem;
+  display: flex;
+}
+
+/* A close icon is a control, not an action (§35A), so no pill — the same
+   round outline as the flight-details popup's close. */
+.introClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--oltra-border-medium);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--oltra-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.introClose:hover {
+  background: var(--oltra-surface-lift);
+  color: var(--oltra-text-primary);
+}
+
+.introClose:focus-visible {
+  outline: 2px solid var(--oltra-text-primary);
+  outline-offset: 2px;
+}
+
+/* Above 860px .heroPanel is capped at the viewport with overflow hidden, so
+   on a short screen the panel scrolls inside itself rather than being cut
+   off. 200px approximates the search panel above it. */
+@media (min-width: 861px) {
+  .introPanel {
+    max-height: calc(
+      100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding) -
+        200px - 2rem
+    );
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 860px) {
+  .introBody {
+    column-count: 1;
+  }
+}
+
 @media (max-width: 1280px) {
   .heroPanel {
     width: min(1120px, calc(100vw - 2.5rem));

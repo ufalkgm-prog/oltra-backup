@@ -23,7 +23,11 @@ export default function LoginView() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/members";
 
-  const [view, setView] = useState<View>("login");
+  // ?view=signup opens straight on the sign-up form (the landing intro's
+  // "Become a member" links here).
+  const [view, setView] = useState<View>(
+    searchParams.get("view") === "signup" ? "signup" : "login"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
