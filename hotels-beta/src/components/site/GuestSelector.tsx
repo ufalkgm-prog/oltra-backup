@@ -27,6 +27,9 @@ type Props = {
      passport country. Flights passes neither and is unchanged. */
   rooms?: number;
   residency?: { value: string; onChange: (code: string) => void };
+  /* Which edge of the field the panel lines up with. "right" opens it leftwards,
+     for a field near the right edge of its frame (the Hotels page). */
+  align?: "left" | "right";
 };
 
 /* One age slot per child, whatever the array held. The ages array is resized a
@@ -68,6 +71,7 @@ export default function GuestSelector({
   defaultOpen = false,
   rooms,
   residency,
+  align = "left",
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const [adults, setAdults] = useState(initialValue.adults);
@@ -216,7 +220,9 @@ export default function GuestSelector({
       </button>
 
       {open ? (
-        <div className={`oltra-dropdown-panel ${styles.panel}`}>
+        <div
+          className={`oltra-dropdown-panel ${styles.panel} ${align === "right" ? styles.panelAlignRight : ""}`}
+        >
           <div className={styles.section}>
             <div className={`oltra-dropdown-list ${styles.counterList}`}>
               <div className={`oltra-dropdown-item ${styles.counterRow}`}>

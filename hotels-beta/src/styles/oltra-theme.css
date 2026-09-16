@@ -655,6 +655,25 @@ button.oltra-select {
   padding: var(--oltra-dropdown-padding);
 }
 
+/* POPUPS AND DROPDOWNS ARE ALWAYS ON TOP (Ulrik, 2026-09-16).
+   A panel's own z-index only counts inside its control's stacking context, and
+   most controls give their root one (GuestSelector and DateRangePicker 40,
+   OltraSelect 20, the destination field 60). So an open panel could never rise
+   above a neighbouring control that came later in the page or carried a higher
+   number — which is how the guest panel and the passive SEARCH popup ended up
+   underneath other fields, and why it moved with the window width. While a
+   control holds an open panel, the control itself is lifted to popup level.
+   Unlayered, so it beats the Tailwind z utilities on those roots (§45).
+   --inline marks a panel drawn in the page's flow rather than floating (the
+   Hotels filter lists): it overlaps nothing, and lifting its section would put
+   it over a real dropdown opening down from the fields above. */
+[data-oltra-control="true"]:has(
+    .oltra-dropdown-panel,
+    .oltra-popup-panel:not(.oltra-popup-panel--inline)
+  ) {
+  z-index: var(--oltra-z-popup);
+}
+
 .oltra-dropdown-panel--bounded,
 .oltra-popup-panel--bounded {
   max-height: var(--oltra-dropdown-panel-max-height);
@@ -981,7 +1000,7 @@ button.oltra-select {
   position: absolute;
   right: 0;
   bottom: calc(100% + 8px);
-  z-index: 30;
+  z-index: var(--oltra-z-popup);
   width: max-content;
   max-width: 260px;
   padding: 7px 10px;

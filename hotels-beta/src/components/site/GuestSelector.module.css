@@ -137,6 +137,11 @@
   color: var(--oltra-text-muted);
 }
 
+.panelAlignRight {
+  left: auto;
+  right: 0;
+}
+
 .issue {
   margin-top: 4px;
   font-size: 12px;

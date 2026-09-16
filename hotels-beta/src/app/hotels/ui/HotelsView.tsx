@@ -136,6 +136,10 @@ const PREBOOK_ENABLED = process.env.NEXT_PUBLIC_RATEHAWK_PREBOOK === "1";
 
 // Same wait as the results batch's debounce — see the room-list effect.
 const HOTELPAGE_DEBOUNCE_MS = 450;
+/* How long result prices already fetched for a stay are reused when the hotel
+   list changes under it (a filter applied or removed). Well inside the ~1 hour
+   ETG allow rates to be kept for display (§32). */
+const RESULT_AVAILABILITY_REUSE_MS = 30 * 60 * 1000;
 
 const PREBOOK_FAILURE_MESSAGE: Record<PrebookFailureReason, string> = {
   expired: "This rate has expired. The rooms have been refreshed — please choose again.",
@@ -405,7 +409,7 @@ function RelDropdown(props: {
 
       {props.open ? (
         <div className="mt-2">
-          <div className="oltra-popup-panel oltra-scrollbar !relative !left-auto !right-auto !top-auto z-0 !p-2">
+          <div className="oltra-popup-panel oltra-popup-panel--inline oltra-scrollbar !relative !left-auto !right-auto !top-auto z-0 !p-2">
             <div className="oltra-dropdown-list max-h-[220px]">
               {options.map((opt) => {
                 const next = opt.active
@@ -820,6 +824,15 @@ export default function HotelsView(props: {
 
   const [ratehawkResultAvailabilityStatus, setRatehawkResultAvailabilityStatus] =
     useState<"idle" | "loading" | "loaded" | "error">("idle");
+
+  /* Result prices already fetched, by hid, for one stay (dates, currency,
+     residency, party, rooms). A headline of null means asked and not
+     available. See the batch effect. */
+  const resultAvailabilityCacheRef = useRef<{
+    stayKey: string;
+    fetchedAt: number;
+    headlines: Map<number, RatehawkHeadline | null>;
+  } | null>(null);
 
   const ratehawkResultAvailabilityLoading =
     ratehawkResultAvailabilityStatus === "loading";
@@ -2266,6 +2279,57 @@ export default function HotelsView(props: {
     let cancelled = false;
     const rooms = Math.max(1, Number(bedroomsValue) || 1);
 
+    /* REUSE WHAT THIS STAY ALREADY PRICED. Applying or removing a filter
+       re-runs the server page, which hands down a new hotel list and new
+       searchParams — and this effect used to re-search the whole list, with
+       SEARCHING… on the button, for prices it already held. Now only hids not
+       yet asked about for this exact stay are sent: narrowing costs no request
+       at all, widening asks only for the hotels it added. A different stay, or
+       prices older than RESULT_AVAILABILITY_REUSE_MS, start afresh. A failed
+       batch stores nothing, so RETRY still asks again. */
+    const stayKey = JSON.stringify([
+      fromValue,
+      toValue,
+      activeCurrency,
+      residencyValue,
+      guestSelection.adults,
+      guestSelection.kids,
+      childrenAges,
+      rooms,
+    ]);
+    let cache = resultAvailabilityCacheRef.current;
+    if (
+      !cache ||
+      cache.stayKey !== stayKey ||
+      Date.now() - cache.fetchedAt > RESULT_AVAILABILITY_REUSE_MS
+    ) {
+      cache = { stayKey, fetchedAt: Date.now(), headlines: new Map() };
+      resultAvailabilityCacheRef.current = cache;
+    }
+    const stayCache = cache;
+
+    const availabilityFromCache = () => {
+      const byDirectusId: Record<string, RatehawkResultAvailability> = {};
+      for (const item of hotelsWithRatehawkHids) {
+        const headline = stayCache.headlines.get(item.hid);
+        byDirectusId[item.directusId] = headline
+          ? { status: "available", headline }
+          : { status: "unavailable" };
+      }
+      return byDirectusId;
+    };
+
+    const missingHids = hotelsWithRatehawkHids
+      .map((item) => item.hid)
+      .filter((hid) => !stayCache.headlines.has(hid));
+
+    if (!missingHids.length) {
+      setRatehawkResultAvailability(availabilityFromCache());
+      setRatehawkResultAvailabilityStatus("loaded");
+      setAvailabilitySearchDirty(false);
+      return;
+    }
+
     // Debounced: rapid guest/bedroom stepper clicks or date changes shouldn't
     // each fire their own request - only the settled value should.
     setRatehawkResultAvailabilityStatus("loading");
@@ -2283,7 +2347,7 @@ export default function HotelsView(props: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            hids: hotelsWithRatehawkHids.map((item) => item.hid),
+            hids: missingHids,
             checkInDate: fromValue,
             checkOutDate: toValue,
             currency: activeCurrency,
@@ -2308,27 +2372,17 @@ export default function HotelsView(props: {
           return;
         }
 
-        const availabilityByDirectusId: Record<string, RatehawkResultAvailability> = {};
-
-        const hidToDirectus = new Map(
-          hotelsWithRatehawkHids.map((item) => [item.hid, item.directusId])
-        );
-
-        for (const item of hotelsWithRatehawkHids) {
-          availabilityByDirectusId[item.directusId] = { status: "unavailable" };
+        // Every hid asked is recorded, so one with no rate is not asked again.
+        for (const hid of missingHids) {
+          if (!stayCache.headlines.has(hid)) stayCache.headlines.set(hid, null);
         }
-
         for (const result of json.results ?? []) {
-          const directusId = hidToDirectus.get(Number(result.hid));
-          if (!directusId || !result.headline) continue;
-
-          availabilityByDirectusId[directusId] = {
-            status: "available",
-            headline: result.headline,
-          };
+          const hid = Number(result.hid);
+          if (!missingHids.includes(hid) || !result.headline) continue;
+          stayCache.headlines.set(hid, result.headline);
         }
 
-        setRatehawkResultAvailability(availabilityByDirectusId);
+        setRatehawkResultAvailability(availabilityFromCache());
         setRatehawkResultAvailabilityStatus("loaded");
         setAvailabilitySearchDirty(false);
       } catch {
@@ -2399,8 +2453,13 @@ export default function HotelsView(props: {
 
     params.set("filters_open", nextOpen ? "1" : "0");
 
+    /* Opening or closing the filters is not a search. router.replace re-ran the
+       server page — every hotel fetched again, a new searchParams, and so a new
+       availability batch — for what is only a panel. The native history call
+       records the state in the URL (so a reload or a shared link keeps it)
+       without a server round trip. */
     const href = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.replace(href, { scroll: false });
+    window.history.replaceState(null, "", href);
   }
 
   async function handleAddHotelToTrip(tripId?: string) {
@@ -2735,6 +2794,9 @@ async function handleCreateTripAndAddHotel() {
                       <div className="oltra-label">Guests</div>
                       <GuestSelector
                         initialValue={guestSelection}
+                        // Opens leftwards: the field sits third of four, and a
+                        // 280px panel from its left edge ran past the frame.
+                        align="right"
                         rooms={Math.max(1, Number(bedroomsValue) || 1)}
                         // Passport country is guest information, asked here
                         // rather than on the search bar. Changing it re-prices
@@ -2859,7 +2921,7 @@ async function handleCreateTripAndAddHotel() {
 
                     {priceOpen ? (
                       <div className="mt-2">
-                        <div className="oltra-popup-panel !relative !left-auto !right-auto !top-auto z-0 !p-2">
+                        <div className="oltra-popup-panel oltra-popup-panel--inline !relative !left-auto !right-auto !top-auto z-0 !p-2">
                           <div className="grid grid-cols-2 gap-2.5">
                             <input
                               name="min_price"
