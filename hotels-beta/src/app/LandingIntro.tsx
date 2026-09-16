@@ -59,9 +59,9 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
         ))}
       </div>
 
-      <p className={styles.introClosing}>{LANDING_INTRO.closing}</p>
+      <div className={styles.introFooter}>
+        <p className={styles.introClosing}>{LANDING_INTRO.closing}</p>
 
-      <div className={styles.introActions}>
         <Link href={LANDING_INTRO.ctaHref} className="oltra-btn oltra-btn--ai">
           {LANDING_INTRO.ctaLabel}
         </Link>
