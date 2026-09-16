@@ -668,6 +668,11 @@
   z-index: 1;
   margin-top: 1rem;
   color: var(--oltra-text-primary);
+  /* The landing glass's own tint, far less see-through (0.72 → 0.92): this
+     panel carries paragraphs of reading text over the photo, where the search
+     panel only carries short labels (Ulrik, 2026-09-16). Declared after
+     .landingGlass in this file, so it wins on source order. */
+  background: rgba(18, 28, 40, 0.92);
 }
 
 /* Stops short of the close control so the two never overlap. */

@@ -22,12 +22,15 @@ import styles from "./AiModeButton.module.css";
  * MEMBERS ONLY (Ulrik, 2026-09-16). The concierge needs a signed-in session
  * (the chat route answers 401 without one), so only a member sees the AI
  * button. Anyone else sees it grey — passive rim and label, upright rather than
- * the AI italic — with "Members only" beneath in the same grey, and it opens
- * nothing. Until the session has been read it keeps its place but stays
+ * the AI italic — and it opens nothing. Why is the standard passive popup on
+ * hover (data-reason), which replaced a "Members only" note printed beneath
+ * the button (Ulrik, 2026-09-16). Until the session has been read it keeps its place but stays
  * invisible, so a member's page does not flash "Members only" on every load.
  *
  * It renders nothing when the flag is off, so a disabled feature leaves no
  * trace on any page. */
+
+const MEMBERS_ONLY_REASON = "The AI Concierge is only available for members";
 
 type Props = {
   placement: "inline" | "header";
@@ -46,28 +49,22 @@ export default function AiModeButton({ placement, label }: Props) {
 
   if (isMember !== true) {
     return (
-      <span
-        className={`${styles.membersOnly} ${placementClass}`}
+      <button
+        type="button"
+        className={`oltra-btn oltra-btn--ai ${styles.passive} ${placementClass}`}
         style={isMember === null ? { visibility: "hidden" } : undefined}
+        aria-disabled="true"
+        data-reason={MEMBERS_ONLY_REASON}
+        aria-label={`${text}. ${MEMBERS_ONLY_REASON}`}
+        onClick={(event) => {
+          // Opens nothing, and — inside the destination field's
+          // click-to-focus box — must not open the suggestions either.
+          event.preventDefault();
+          event.stopPropagation();
+        }}
       >
-        <button
-          type="button"
-          className={`oltra-btn oltra-btn--ai ${styles.passive}`}
-          aria-disabled="true"
-          aria-describedby={`ai-members-only-${placement}`}
-          onClick={(event) => {
-            // Opens nothing, and — inside the destination field's
-            // click-to-focus box — must not open the suggestions either.
-            event.preventDefault();
-            event.stopPropagation();
-          }}
-        >
-          {text}
-        </button>
-        <span id={`ai-members-only-${placement}`} className={styles.membersOnlyNote}>
-          Members only
-        </span>
-      </span>
+        {text}
+      </button>
     );
   }
 
