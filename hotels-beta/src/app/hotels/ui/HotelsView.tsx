@@ -19,12 +19,13 @@ import StructuredDestinationField from "@/components/site/StructuredDestinationF
 import AiResultsSync from "@/lib/ai/AiResultsSync";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import {
+  guestSelectionIssue,
   normalizeParam,
   readGuestSelection,
   type GuestSelection,
 } from "@/lib/guests";
 import { guessResidencyFromLocale } from "@/lib/countries";
-import ResidencyPicker from "@/components/site/ResidencyPicker";
+import { isStayTooLong, MAX_STAY_NIGHTS, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import type { HotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import {
   addFavoriteHotelBrowser,
@@ -59,6 +60,9 @@ import {
 } from "@/lib/searchSession";
 import { aiResultsAreCurrent, useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import type { RatehawkGroupedRoom, RatehawkHeadline } from "@/lib/ratehawk/types";
+import type { PrebookFailureReason, PrebookHash } from "@/lib/ratehawk/prebook";
+import { compareRates, type RateChange } from "@/lib/ratehawk/rateChanges";
+import type { HotelPolicies } from "@/lib/ratehawk/metapolicy";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -103,6 +107,43 @@ type RatehawkDetailState = {
   status: "idle" | "loading" | "loaded" | "error";
   rooms: RatehawkGroupedRoom[];
   headline: RatehawkHeadline;
+};
+
+// Prebook in the panel: the h- hash of the chosen rate goes in, a p- hash
+// comes out. "changed" holds a confirmed rate the guest has not yet accepted.
+type PrebookState =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "failed"; reason: PrebookFailureReason }
+  | {
+      status: "changed";
+      original: RatehawkGroupedRoom;
+      changes: RateChange[];
+      prebookHash: PrebookHash;
+      rate: RatehawkGroupedRoom;
+      prebookedAt: number;
+    }
+  | { status: "confirmed"; prebookHash: PrebookHash; rate: RatehawkGroupedRoom; prebookedAt: number };
+
+type PrebookResponseBody =
+  | { ok: true; prebookHash: PrebookHash; rate: RatehawkGroupedRoom; priceChanged: boolean }
+  | { ok: false; reason?: PrebookFailureReason };
+
+// Set on in Vercel Production (§32): certification reviews the live site.
+// NEXT_PUBLIC_ is inlined at build, so turning it off needs a redeploy — the
+// no-deploy kill switch is ETG_PREBOOK_ENABLED on the proxy (§47).
+const PREBOOK_ENABLED = process.env.NEXT_PUBLIC_RATEHAWK_PREBOOK === "1";
+
+// Same wait as the results batch's debounce — see the room-list effect.
+const HOTELPAGE_DEBOUNCE_MS = 450;
+
+const PREBOOK_FAILURE_MESSAGE: Record<PrebookFailureReason, string> = {
+  expired: "This rate has expired. The rooms have been refreshed — please choose again.",
+  unavailable:
+    "This rate is no longer available at a comparable price. The rooms have been refreshed — please choose again.",
+  busy: "Rate checks are busy right now. Please try again in a minute.",
+  disabled: "Rate confirmation is temporarily unavailable.",
+  failed: "We could not confirm this rate. Please try again.",
 };
 
 const CURRENCY_STORAGE_KEY = "oltra_currency";
@@ -253,6 +294,7 @@ const CURATED_DROPS = new Set([
   "admin_region",
   "country",
   "region",
+  "macro_region",
   "local_area",
   "activities",
   "settings",
@@ -271,6 +313,7 @@ function hasHotelSearchContext(params: PageSearchParams): boolean {
       normalizeParam(params.admin_region) ||
       normalizeParam(params.country) ||
       normalizeParam(params.region) ||
+      normalizeParam(params.macro_region) ||
       normalizeParam(params.from) ||
       normalizeParam(params.to) ||
       normalizeParam(params.adults) ||
@@ -452,6 +495,12 @@ function formatRoomLayout(room: RatehawkGroupedRoom): string {
   return parts.join(" · ") || "—";
 }
 
+// A rate's price is the whole stay for every room searched (§32), so the label
+// says so rather than leaving it to read as one room's price.
+function formatRoomTotalLabel(rooms: number): string {
+  return rooms === 1 ? "total stay" : `total stay, ${rooms} rooms`;
+}
+
 // ETG's cancellation timestamps have no timezone offset (e.g.
 // "2026-09-22T11:00:00") and are documented as UTC+0 — see CLAUDE.md §32.
 // `new Date()` on a bare no-offset ISO string parses as LOCAL time per the
@@ -487,6 +536,89 @@ function includedTaxNames(room: RatehawkGroupedRoom): string {
     .filter((tax) => tax.includedBySupplier)
     .map((tax) => tax.name.replace(/_/g, " "))
     .join(", ");
+}
+
+// Never presented as better than what ETG sent (§32).
+function formatMeal(room: Pick<RatehawkGroupedRoom, "hasBreakfast" | "mealValue">): string {
+  return room.hasBreakfast
+    ? "Breakfast included"
+    : room.mealValue === "nomeal"
+      ? "Room only"
+      : room.mealValue;
+}
+
+function formatFreeCancellation(freeCancellationBefore: string | null): string {
+  return freeCancellationBefore
+    ? `Free cancellation until ${formatRatehawkUtcDateTime(freeCancellationBefore)}`
+    : "No free cancellation";
+}
+
+/* A rate's cancellation schedule and taxes, exactly as ETG sent them (§32).
+ * Two col-span-2 blocks for a two-column grid — shared by the room detail
+ * popup and the Prebook change sheet, so a changed rate is shown by the same
+ * code as the one it replaced. */
+function RateTerms({ room }: { room: RatehawkGroupedRoom }) {
+  return (
+    <>
+      <div className="col-span-2">
+        <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+          Cancellation
+        </div>
+        <div className="mt-0.5">{formatFreeCancellation(room.freeCancellationBefore)}</div>
+        {room.cancellationPolicies.map((policy, i) => {
+          const charge =
+            policy.amountShow === 0
+              ? "no charge"
+              : policy.amountShow != null
+                ? `${room.currency} ${Math.round(policy.amountShow).toLocaleString()} charge`
+                : "charge amount unavailable";
+          const window =
+            policy.startAt && policy.endAt
+              ? `${formatRatehawkUtcDateTime(policy.startAt)} – ${formatRatehawkUtcDateTime(policy.endAt)}`
+              : policy.endAt
+                ? `Until ${formatRatehawkUtcDateTime(policy.endAt)}`
+                : policy.startAt
+                  ? `From ${formatRatehawkUtcDateTime(policy.startAt)}`
+                  : "Full stay";
+          return (
+            <div key={i} className="mt-0.5 text-[12px] text-[color:var(--oltra-text-muted)]">
+              {window}: {charge}
+            </div>
+          );
+        })}
+      </div>
+      {nonIncludedTaxes(room).length > 0 || includedTaxNames(room) ? (
+        <div className="col-span-2">
+          <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+            Taxes &amp; fees
+          </div>
+          {includedTaxNames(room) ? (
+            <div className="mt-0.5">Included in price: {includedTaxNames(room)}</div>
+          ) : null}
+          {nonIncludedTaxes(room).map((tax, i) => (
+            <div key={i} className="mt-0.5">
+              + {tax.currency} {tax.amount.toLocaleString()} {tax.name.replace(/_/g, " ")} — pay at hotel
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function describeRateChange(change: RateChange): string {
+  switch (change.kind) {
+    case "price":
+      return `Price: ${change.currency} ${Math.round(change.from).toLocaleString()} → ${change.currency} ${Math.round(change.to).toLocaleString()}`;
+    case "currency":
+      return `Currency: ${change.from} → ${change.to}`;
+    case "meal":
+      return `Meal: ${formatMeal({ mealValue: change.from, hasBreakfast: false })} → ${formatMeal({ mealValue: change.to, hasBreakfast: false })}`;
+    case "cancellation":
+      return `Cancellation: ${formatFreeCancellation(change.from)} → ${formatFreeCancellation(change.to)}`;
+    case "conditions":
+      return "The rate's conditions have changed. Please review the terms below.";
+  }
 }
 
 function getFeaturedAwardsForHotel(hotel: HotelRecord) {
@@ -579,6 +711,8 @@ export default function HotelsView(props: {
      * exactly the properties it recommended. Empty for every normal search. */
     ids: string[];
     region: string[];
+    /** A colloquial region ("The Alps") from the destination field. */
+    macro_region: string[];
     local_area: string[];
     affiliation: string[];
     activities: string[];
@@ -602,6 +736,7 @@ export default function HotelsView(props: {
         selected.admin_region.length ||
         selected.ids.length ||
         selected.region.length ||
+        selected.macro_region.length ||
         selected.local_area.length ||
         selected.affiliation.length ||
         selected.activities.length ||
@@ -720,7 +855,9 @@ export default function HotelsView(props: {
     headline: null,
   });
 
-  const [roomSelection, setRoomSelection] = useState<Record<string, number>>({});
+  // One rate covers every room searched (§32), so the guest picks a room type,
+  // not a quantity per type.
+  const [selectedRoomKey, setSelectedRoomKey] = useState<string | null>(null);
   const [openRoomDetailKey, setOpenRoomDetailKey] = useState<string | null>(null);
 
   const [availabilitySearchDirty, setAvailabilitySearchDirty] = useState(false);
@@ -770,14 +907,23 @@ export default function HotelsView(props: {
   const stayLengthMs =
     fromDate && toDate ? toDate.getTime() - fromDate.getTime() : 0;
 
-  const maxStayLengthMs = 42 * 24 * 60 * 60 * 1000;
+  // ETG's 30-night maximum (§32). The form used to allow 42.
+  const stayTooLong = isStayTooLong(fromValue, toValue);
 
   const hasGuestDetails = guestSelection.adults > 0;
+
+  // A child without an age, or more guests than ETG allow per room (§32).
+  // Neither is defaulted: nothing is priced until the guest fixes it.
+  const guestIssue = guestSelectionIssue(
+    guestSelection,
+    Math.max(1, Number(bedroomsValue) || 1)
+  );
 
   const hasRequiredStayDetails =
     Boolean(fromValue) &&
     Boolean(toValue) &&
     hasGuestDetails &&
+    !guestIssue &&
     Boolean(bedroomsValue) &&
     Boolean(residencyValue);
 
@@ -785,7 +931,7 @@ export default function HotelsView(props: {
     Boolean(fromDate) &&
     Boolean(toDate) &&
     stayLengthMs > 0 &&
-    stayLengthMs <= maxStayLengthMs;
+    !stayTooLong;
 
   const resultCountTooLarge =
     hasMeaningfulFilters &&
@@ -811,17 +957,17 @@ export default function HotelsView(props: {
   // dates and guests go missing.
   const searchBusy = ratehawkResultAvailabilityStatus === "loading";
   const searchNeedsDates = !datesAreValid;
-  const searchNeedsGuests = !hasGuestDetails;
+  const searchNeedsGuests = !hasGuestDetails || Boolean(guestIssue);
   const searchPassiveReason = resultCountTooLarge
     ? "Narrow your search to 50 hotels or fewer to check availability"
     : searchNeedsDates && searchNeedsGuests
       ? "Add dates and guests to continue"
       : searchNeedsDates
         ? fromValue && toValue
-          ? "Choose a stay of 42 nights or fewer"
+          ? STAY_TOO_LONG_MESSAGE
           : "Add dates to continue"
         : searchNeedsGuests
-          ? "Add guests to continue"
+          ? guestIssue ?? "Add guests to continue"
           : !searchIsActive
             ? "Add stay details to continue"
             : topAvailabilityChecked
@@ -943,6 +1089,7 @@ export default function HotelsView(props: {
     if (saved.admin_region) params.set("admin_region", saved.admin_region);
     if (saved.country) params.set("country", saved.country);
     if (saved.region) params.set("region", saved.region);
+    if (saved.macro_region) params.set("macro_region", saved.macro_region);
     if (saved.from) params.set("from", saved.from);
     if (saved.to) params.set("to", saved.to);
     if (saved.adults) params.set("adults", saved.adults);
@@ -977,6 +1124,7 @@ export default function HotelsView(props: {
       admin_region: normalizeParam(searchParams.admin_region),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
+      macro_region: normalizeParam(searchParams.macro_region),
       from: fromValue,
       to: toValue,
       adults: String(guestSelection.adults),
@@ -1194,8 +1342,9 @@ export default function HotelsView(props: {
 
   useEffect(() => {
     setRatehawkRooms({ status: "idle", rooms: [], headline: null });
-    setRoomSelection({});
+    setSelectedRoomKey(null);
     setOpenRoomDetailKey(null);
+    setPrebook({ status: "idle" });
   }, [
     selectedHotelId,
     fromValue,
@@ -1747,35 +1896,114 @@ export default function HotelsView(props: {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
-  const roomSelectionTotal = useMemo(() => {
-    return ratehawkRooms.rooms.reduce((sum, room) => {
-      const qty = roomSelection[room.roomKey] ?? 0;
-      return sum + qty * room.pricePerStay;
-    }, 0);
-  }, [ratehawkRooms.rooms, roomSelection]);
+  const selectedRoom = useMemo(
+    () => ratehawkRooms.rooms.find((room) => room.roomKey === selectedRoomKey) ?? null,
+    [ratehawkRooms.rooms, selectedRoomKey]
+  );
 
-  const roomSelectionCurrency = ratehawkRooms.rooms[0]?.currency ?? activeCurrency;
+  // The number of rooms the loaded rates were priced for.
+  const searchedRoomCount = Math.max(1, Number(bedroomsValue) || 1);
 
-  // Falls back to the headline combo (N copies of the cheapest qualifying
-  // room) when the member saves without touching the quantity steppers.
-  const selectedHotelHeadlineTotal = ratehawkRooms.headline
-    ? ratehawkRooms.headline.pricePerStay * ratehawkRooms.headline.rooms
-    : null;
+  // A rate's price is already the total for every room searched — never
+  // multiplied by the room count (§32).
+  const roomSelectionTotal = selectedRoom?.pricePerStay ?? 0;
 
+  const roomSelectionCurrency = selectedRoom?.currency ?? ratehawkRooms.rooms[0]?.currency ?? activeCurrency;
+
+  const selectedHotelHeadlineTotal = ratehawkRooms.headline?.pricePerStay ?? null;
+
+  // Saved trips keep their existing {roomName, quantity, pricePerStay} shape,
+  // and SavedTripsView sums pricePerStay × quantity. So the whole-party total
+  // is stored split evenly across the rooms, which multiplies back to exactly
+  // the total ETG quoted. Trips saved before 2026-09-16 hold totals inflated
+  // by the room count (§32).
   const selectedRoomSelectionEntries = useMemo(() => {
-    return ratehawkRooms.rooms
-      .map((room) => {
-        const quantity = roomSelection[room.roomKey] ?? 0;
-        if (quantity <= 0) return null;
-        return {
-          roomName: room.roomName,
-          quantity,
-          pricePerStay: room.pricePerStay,
-          currency: room.currency,
-        };
-      })
-      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
-  }, [ratehawkRooms.rooms, roomSelection]);
+    if (!selectedRoom) return [];
+    return [
+      {
+        roomName: selectedRoom.roomName,
+        quantity: searchedRoomCount,
+        pricePerStay: selectedRoom.pricePerStay / searchedRoomCount,
+        currency: selectedRoom.currency,
+      },
+    ];
+  }, [selectedRoom, searchedRoomCount]);
+
+  /* PREBOOK — part of the search step, never a booking (lib/ratehawk/prebook.ts).
+   *
+   * Fires only from the Continue click below: never on load, never on a
+   * selection change. Our key allows 5 prebooks a minute site-wide. */
+  const [prebook, setPrebook] = useState<PrebookState>({ status: "idle" });
+  // Bumped to re-run the room fetch after a rate turns out to be gone.
+  const [roomsRefreshKey, setRoomsRefreshKey] = useState(0);
+
+  // A confirmation belongs to one rate: choosing another, or the rooms
+  // reloading, drops it. A failure message stays until the next Continue or a
+  // change of hotel, dates or guests — it has to survive the refresh it
+  // triggers, since it tells the guest why the rooms changed.
+  useEffect(() => {
+    setPrebook((prev) => (prev.status === "failed" ? prev : { status: "idle" }));
+  }, [selectedRoomKey, ratehawkRooms.rooms]);
+
+  async function handleContinueToCheckout() {
+    if (!selectedRoom || prebook.status === "checking") return;
+    const original = selectedRoom;
+    setPrebook({ status: "checking" });
+
+    let data: PrebookResponseBody;
+    try {
+      const res = await fetch("/api/ratehawk/prebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        // The h- hash from Retrieve hotelpage. Prebook returns the p- hash.
+        body: JSON.stringify({ hash: original.bookHash }),
+      });
+      data = (await res.json()) as PrebookResponseBody;
+    } catch {
+      setPrebook({ status: "failed", reason: "failed" });
+      return;
+    }
+
+    if (!data.ok) {
+      const reason = data.reason ?? "failed";
+      setPrebook({ status: "failed", reason });
+      // The chosen rate is gone: show the guest what can be had now.
+      if (reason === "expired" || reason === "unavailable") {
+        setRoomsRefreshKey((n) => n + 1);
+      }
+      return;
+    }
+
+    const confirmed = {
+      prebookHash: data.prebookHash,
+      rate: data.rate,
+      prebookedAt: Date.now(),
+    };
+    const changes = compareRates(original, data.rate, data.priceChanged);
+    setPrebook(
+      changes.length
+        ? { status: "changed", original, changes, ...confirmed }
+        : { status: "confirmed", ...confirmed }
+    );
+  }
+
+  function acceptChangedRate() {
+    if (prebook.status !== "changed") return;
+    const { prebookHash, rate, prebookedAt } = prebook;
+    setPrebook({ status: "confirmed", prebookHash, rate, prebookedAt });
+  }
+
+  // ── WHITE LABEL REDIRECT SEAM ─────────────────────────────────────────────
+  // A confirmed prebook ends here. `prebook.prebookHash` (p-…, valid 6 hours
+  // from `prebook.prebookedAt`) is what the White Label checkout will receive.
+  //
+  // ETG have NOT specified the redirect: not the URL, not which parameters
+  // accompany the hash, not whether anything is posted rather than linked. Do
+  // not guess the format. When ETG confirm it, the handoff goes in a function
+  // called from the confirmed-rate callout below, which today explains that
+  // checkout is not live yet.
+  // ──────────────────────────────────────────────────────────────────────────
 
   /* The selected hotel's description, fetched on selection rather than carried
      in the page's hotel list — which it made too large to cache (see the note
@@ -1810,6 +2038,39 @@ export default function HotelsView(props: {
     };
   }, [selectedHotel?.id]);
 
+  /* The selected hotel's ETG policies (metapolicy_struct and
+     metapolicy_extra_info, §32), fetched and cached per session the same way
+     as the description — never part of the bulk hotels fetch. */
+  const policiesCacheRef = useRef(new Map<string, HotelPolicies | null>());
+  const [selectedPolicies, setSelectedPolicies] = useState<{
+    id: string;
+    policies: HotelPolicies | null;
+  }>({ id: "", policies: null });
+
+  useEffect(() => {
+    const id = selectedHotel?.id != null ? String(selectedHotel.id) : "";
+    if (!id || !selectedHotel?.ratehawk_hid) return;
+    const cached = policiesCacheRef.current.get(id);
+    if (cached !== undefined) {
+      setSelectedPolicies({ id, policies: cached });
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/hotels/${id}/ratehawk-policy`)
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; policies?: HotelPolicies }) => {
+        const policies = data?.ok ? (data.policies ?? null) : null;
+        policiesCacheRef.current.set(id, policies);
+        if (!cancelled) setSelectedPolicies({ id, policies });
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedPolicies({ id, policies: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedHotel?.id, selectedHotel?.ratehawk_hid]);
+
   useEffect(() => {
     if (!selectedHotel?.ratehawk_image_1) return;
     let cancelled = false;
@@ -1828,16 +2089,17 @@ export default function HotelsView(props: {
     };
   }, [selectedHotel?.id, selectedHotel?.ratehawk_image_1]);
 
-  // Children's ages from the URL, as one value the effects below can depend
-  // on. Memoised on the joined raw params rather than on searchParams itself,
-  // which is a new object on every navigation: the room and availability
-  // fetches should re-run when an age changes, not whenever the URL does.
-  const childrenAgesKey = [1, 2, 3, 4, 5, 6]
-    .map((i) => normalizeParam(searchParams[`kid_age_${i}`]))
-    .join("|");
+  // Children's ages from the live guest selection — the same source as the
+  // adults and children counts the fetches below send — as one value those
+  // effects can depend on. They used to come from the URL while the counts
+  // were live, so a child added before SEARCH went out with no age and ETG was
+  // sent a default of 10. Nothing is sent now until every age is set
+  // (guestIssue).
+  const childrenAgesKey = guestSelection.kidAges.slice(0, guestSelection.kids).join("|");
   const childrenAges = useMemo(() => {
     const ages: number[] = [];
     for (const raw of childrenAgesKey.split("|")) {
+      if (raw.trim() === "") continue;
       const parsed = Number(raw);
       if (Number.isFinite(parsed)) ages.push(Math.max(0, Math.floor(parsed)));
     }
@@ -1845,56 +2107,65 @@ export default function HotelsView(props: {
   }, [childrenAgesKey]);
 
   // Auto-fetches the selected hotel's room list (no button — rooms should
-  // just be displayed). Pre-selects the headline combo (N copies of the
-  // cheapest qualifying room) once loaded.
+  // just be displayed). Pre-selects the headline room (the cheapest one that
+  // fits the party) once loaded.
+  //
+  // Debounced like the results batch (450ms). Our key allows /search/hp/ only
+  // 5 times a minute site-wide (§32), and without this every form edit while a
+  // hotel is open cost a request — a date range, which sets check-in and
+  // check-out separately, cost two. "Loading" shows at once; only the request
+  // waits, and any change inside the window restarts it.
   useEffect(() => {
-    if (!selectedRatehawkHid || !fromValue || !toValue || !datesAreValid || !residencyValue) return;
+    if (!selectedRatehawkHid || !fromValue || !toValue || !datesAreValid || !residencyValue || guestIssue) return;
 
     let cancelled = false;
     setRatehawkRooms({ status: "loading", rooms: [], headline: null });
 
     const rooms = Math.max(1, Number(bedroomsValue) || 1);
 
-    fetch("/api/ratehawk/availability", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        hid: selectedRatehawkHid,
-        checkInDate: fromValue,
-        checkOutDate: toValue,
-        currency: activeCurrency,
-        residency: residencyValue,
-        adults: guestSelection.adults,
-        kids: guestSelection.kids,
-        childrenAges,
-        rooms,
-      }),
-    })
-      .then((res) => res.json())
-      .then(
-        (data: {
-          ok?: boolean;
-          rooms?: RatehawkGroupedRoom[];
-          headline?: RatehawkHeadline;
-        }) => {
-          if (cancelled) return;
-          if (data?.ok) {
-            const loadedRooms = data.rooms ?? [];
-            setRatehawkRooms({ status: "loaded", rooms: loadedRooms, headline: data.headline ?? null });
-            if (data.headline) {
-              setRoomSelection({ [data.headline.roomKey]: data.headline.rooms });
+    const debounceTimer = window.setTimeout(() => {
+      fetch("/api/ratehawk/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hid: selectedRatehawkHid,
+          checkInDate: fromValue,
+          checkOutDate: toValue,
+          currency: activeCurrency,
+          residency: residencyValue,
+          adults: guestSelection.adults,
+          kids: guestSelection.kids,
+          childrenAges,
+          rooms,
+        }),
+      })
+        .then((res) => res.json())
+        .then(
+          (data: {
+            ok?: boolean;
+            rooms?: RatehawkGroupedRoom[];
+            headline?: RatehawkHeadline;
+          }) => {
+            if (cancelled) return;
+            if (data?.ok) {
+              const loadedRooms = data.rooms ?? [];
+              setRatehawkRooms({ status: "loaded", rooms: loadedRooms, headline: data.headline ?? null });
+              if (data.headline) {
+                setSelectedRoomKey(data.headline.roomKey);
+              }
+            } else {
+              setRatehawkRooms({ status: "error", rooms: [], headline: null });
             }
-          } else {
-            setRatehawkRooms({ status: "error", rooms: [], headline: null });
           }
-        }
-      )
-      .catch(() => {
-        if (!cancelled) setRatehawkRooms({ status: "error", rooms: [], headline: null });
-      });
+        )
+        .catch(() => {
+          if (!cancelled) setRatehawkRooms({ status: "error", rooms: [], headline: null });
+        });
+    }, HOTELPAGE_DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(debounceTimer);
     };
   }, [
     selectedRatehawkHid,
@@ -1903,6 +2174,8 @@ export default function HotelsView(props: {
     datesAreValid,
     activeCurrency,
     residencyValue,
+    guestIssue,
+    roomsRefreshKey,
     guestSelection.adults,
     guestSelection.kids,
     childrenAges,
@@ -1967,7 +2240,7 @@ export default function HotelsView(props: {
       return;
     }
 
-    if (!fromValue || !toValue || !datesAreValid || !residencyValue) {
+    if (!fromValue || !toValue || !datesAreValid || !residencyValue || guestIssue) {
       setRatehawkResultAvailability({});
       setRatehawkResultAvailabilityStatus("idle");
       return;
@@ -2078,6 +2351,7 @@ export default function HotelsView(props: {
     datesAreValid,
     activeCurrency,
     residencyValue,
+    guestIssue,
     guestSelection.adults,
     guestSelection.kids,
     childrenAges,
@@ -2093,6 +2367,7 @@ export default function HotelsView(props: {
       admin_region: normalizeParam(searchParams.admin_region),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
+      macro_region: normalizeParam(searchParams.macro_region),
       from: fromValue,
       to: toValue,
       adults: String(guestSelection.adults),
@@ -2361,6 +2636,7 @@ async function handleCreateTripAndAddHotel() {
                   "ids",
                   "country",
                   "region",
+                  "macro_region",
                   "activities",
                   "settings",
                   "from",
@@ -2448,12 +2724,29 @@ async function handleCreateTripAndAddHotel() {
                           setAvailabilitySearchDirty(true);
                         }}
                       />
+                      {stayTooLong ? (
+                        <div className="mt-1 text-[12px] leading-snug text-[color:var(--oltra-error-text)]" role="status">
+                          {STAY_TOO_LONG_MESSAGE}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div ref={guestsFieldRef} className="relative min-w-0" data-oltra-control="true">
                       <div className="oltra-label">Guests</div>
                       <GuestSelector
                         initialValue={guestSelection}
+                        rooms={Math.max(1, Number(bedroomsValue) || 1)}
+                        // Passport country is guest information, asked here
+                        // rather than on the search bar. Changing it re-prices
+                        // immediately: both availability effects list
+                        // residencyValue in their dependencies.
+                        residency={{
+                          value: residencyValue,
+                          onChange: (code) => {
+                            setResidencyValue(code);
+                            setAvailabilitySearchDirty(true);
+                          },
+                        }}
                         onChange={(selection) => {
                           setGuestSelection(selection);
                           setAvailabilitySearchDirty(true);
@@ -2480,28 +2773,6 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   </div>
 
-                  {/* Deliberately not a labelled form field beside Guests and
-                      Bedrooms - residency-based rate differences from
-                      ETG/Ratehawk are marginal (spot-checked live: 0-3%
-                      depending on the specific hotel, most hotels show no
-                      difference at all), so it reads as a correctable
-                      assumption rather than a search prerequisite. Still
-                      auto-detected from browser locale (see the
-                      guessResidencyFromLocale effect above) and still sent on
-                      every Ratehawk request; changing it here re-prices
-                      immediately, because both availability effects list
-                      residencyValue in their dependencies. */}
-                  {residencyValue ? (
-                    <div
-                      className="md:col-span-12 -mt-1 text-[11px] text-[color:var(--oltra-text-muted)]"
-                      data-oltra-control="true"
-                    >
-                      <ResidencyPicker
-                        value={residencyValue}
-                        onChange={setResidencyValue}
-                      />
-                    </div>
-                  ) : null}
                 </>
               ) : null}
 
@@ -2767,7 +3038,9 @@ async function handleCreateTripAndAddHotel() {
                               <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
                                 {ratehawkResultAvailabilityStatus === "error"
                                   ? "Couldn't check availability"
-                                  : "Select dates"}
+                                  : stayTooLong
+                                    ? `Up to ${MAX_STAY_NIGHTS} nights`
+                                    : "Select dates"}
                               </div>
                             ) : (
                               <div className="rounded-[var(--oltra-radius-sm)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-2 py-1.5 text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
@@ -2875,6 +3148,7 @@ async function handleCreateTripAndAddHotel() {
                       "ids",
                       "country",
                       "region",
+                      "macro_region",
                       "activities",
                       "settings",
                       "from",
@@ -3170,20 +3444,52 @@ async function handleCreateTripAndAddHotel() {
                         <div className="mt-2 text-sm text-[color:var(--oltra-text-muted)]">
                           {fromValue && toValue && datesAreValid
                             ? "No rooms available for these dates."
-                            : "Select dates to see room options."}
+                            : stayTooLong
+                              ? STAY_TOO_LONG_MESSAGE
+                              : "Select dates to see room options."}
                         </div>
                       ) : (
-                        <div className="mt-2 flex flex-col gap-2">
+                        <>
+                        {searchedRoomCount > 1 ? (
+                          // One rate covers every room searched, so all of
+                          // them are the same type (§32).
+                          <div className="mt-1 text-[12px] text-[color:var(--oltra-text-muted)]">
+                            Prices are for all {searchedRoomCount} rooms, all of one room type. To book
+                            different room types, search for one room and book each separately.
+                          </div>
+                        ) : null}
+                        <div
+                          role="radiogroup"
+                          aria-label="Room type"
+                          className="mt-2 flex flex-col gap-2"
+                        >
                           {ratehawkRooms.rooms.map((room) => {
-                            const qty = roomSelection[room.roomKey] ?? 0;
+                            const isSelected = room.roomKey === selectedRoomKey;
                             const thumb = room.images[0]
                               ? resolveRatehawkUrl(room.images[0].url, RATEHAWK_THUMB_SIZE)
                               : null;
 
+                            // A selectable row is a control, not an action
+                            // (§35A), so it keeps the card shape and marks the
+                            // choice with the shared choice rim.
                             return (
                               <div
                                 key={room.roomKey}
-                                className="flex items-center gap-3 rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-2.5"
+                                role="radio"
+                                aria-checked={isSelected}
+                                tabIndex={isSelected || (!selectedRoomKey && room === ratehawkRooms.rooms[0]) ? 0 : -1}
+                                onClick={() => setSelectedRoomKey(room.roomKey)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    setSelectedRoomKey(room.roomKey);
+                                  }
+                                }}
+                                className={`flex cursor-pointer items-center gap-3 rounded-[var(--oltra-radius-md)] border bg-[var(--oltra-field-bg)] p-2.5 ${
+                                  isSelected
+                                    ? "border-[var(--oltra-choice-rim-selected)]"
+                                    : "border-[var(--oltra-field-border)] hover:border-[var(--oltra-choice-rim-hover)]"
+                                }`}
                               >
                                 <div className="h-16 w-20 shrink-0 overflow-hidden rounded-[var(--oltra-radius-sm)]">
                                   {thumb ? (
@@ -3215,56 +3521,33 @@ async function handleCreateTripAndAddHotel() {
                                   </div>
                                   <button
                                     type="button"
-                                    onClick={() => setOpenRoomDetailKey(room.roomKey)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenRoomDetailKey(room.roomKey);
+                                    }}
+                                    onKeyDown={(e) => e.stopPropagation()}
                                     className="mt-1 text-[11px] text-[color:var(--oltra-text-muted)] underline underline-offset-2 hover:text-[color:var(--oltra-text-primary)]"
                                   >
                                     More details
                                   </button>
                                 </div>
 
-                                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                                  <div className="text-right">
-                                    <div className="text-sm font-light text-[color:var(--oltra-text-primary)]">
-                                      {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
-                                    </div>
-                                    {nonIncludedTaxes(room).length > 0 ? (
-                                      <div className="text-[10px] text-[color:var(--oltra-text-muted)]">+ taxes at hotel</div>
-                                    ) : null}
+                                <div className="shrink-0 text-right">
+                                  <div className="text-sm font-light text-[color:var(--oltra-text-primary)]">
+                                    {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setRoomSelection((prev) => ({
-                                          ...prev,
-                                          [room.roomKey]: Math.max(0, (prev[room.roomKey] ?? 0) - 1),
-                                        }))
-                                      }
-                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:text-[color:var(--oltra-text-primary)]"
-                                      aria-label={`Fewer ${room.roomName}`}
-                                    >
-                                      −
-                                    </button>
-                                    <span className="w-4 text-center text-sm text-[color:var(--oltra-text-primary)]">{qty}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setRoomSelection((prev) => ({
-                                          ...prev,
-                                          [room.roomKey]: (prev[room.roomKey] ?? 0) + 1,
-                                        }))
-                                      }
-                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--oltra-field-bg-strong)] text-[color:var(--oltra-text-muted)] hover:text-[color:var(--oltra-text-primary)]"
-                                      aria-label={`More ${room.roomName}`}
-                                    >
-                                      +
-                                    </button>
+                                  <div className="text-[10px] text-[color:var(--oltra-text-muted)]">
+                                    {formatRoomTotalLabel(searchedRoomCount)}
                                   </div>
+                                  {nonIncludedTaxes(room).length > 0 ? (
+                                    <div className="text-[10px] text-[color:var(--oltra-text-muted)]">+ taxes at hotel</div>
+                                  ) : null}
                                 </div>
                               </div>
                             );
                           })}
                         </div>
+                        </>
                       )}
 
                       {openRoomDetailKey && typeof document !== "undefined"
@@ -3338,63 +3621,9 @@ async function handleCreateTripAndAddHotel() {
                                         <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                           Meal
                                         </div>
-                                        <div className="mt-0.5">
-                                          {room.hasBreakfast
-                                            ? "Breakfast included"
-                                            : room.mealValue === "nomeal"
-                                              ? "Room only"
-                                              : room.mealValue}
-                                        </div>
+                                        <div className="mt-0.5">{formatMeal(room)}</div>
                                       </div>
-                                      <div className="col-span-2">
-                                        <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
-                                          Cancellation
-                                        </div>
-                                        <div className="mt-0.5">
-                                          {room.freeCancellationBefore
-                                            ? `Free cancellation until ${formatRatehawkUtcDateTime(room.freeCancellationBefore)}`
-                                            : "No free cancellation"}
-                                        </div>
-                                        {room.cancellationPolicies.map((policy, i) => {
-                                          const charge =
-                                            policy.amountShow === 0
-                                              ? "no charge"
-                                              : policy.amountShow != null
-                                                ? `${room.currency} ${Math.round(policy.amountShow).toLocaleString()} charge`
-                                                : "charge amount unavailable";
-                                          const window =
-                                            policy.startAt && policy.endAt
-                                              ? `${formatRatehawkUtcDateTime(policy.startAt)} – ${formatRatehawkUtcDateTime(policy.endAt)}`
-                                              : policy.endAt
-                                                ? `Until ${formatRatehawkUtcDateTime(policy.endAt)}`
-                                                : policy.startAt
-                                                  ? `From ${formatRatehawkUtcDateTime(policy.startAt)}`
-                                                  : "Full stay";
-                                          return (
-                                            <div key={i} className="mt-0.5 text-[12px] text-[color:var(--oltra-text-muted)]">
-                                              {window}: {charge}
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                      {nonIncludedTaxes(room).length > 0 || includedTaxNames(room) ? (
-                                        <div className="col-span-2">
-                                          <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
-                                            Taxes &amp; fees
-                                          </div>
-                                          {includedTaxNames(room) ? (
-                                            <div className="mt-0.5">
-                                              Included in price: {includedTaxNames(room)}
-                                            </div>
-                                          ) : null}
-                                          {nonIncludedTaxes(room).map((tax, i) => (
-                                            <div key={i} className="mt-0.5">
-                                              + {tax.currency} {tax.amount.toLocaleString()}{" "}
-                                              {tax.name.replace(/_/g, " ")} — pay at hotel
-                                            </div>
-                                          ))}
-                                        </div>
-                                      ) : null}
+                                      <RateTerms room={room} />
                                       {room.amenities.length ? (
                                         <div className="col-span-2">
                                           <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
@@ -3407,6 +3636,9 @@ async function handleCreateTripAndAddHotel() {
 
                                     <div className="mt-4 text-right text-base font-light text-[color:var(--oltra-text-primary)]">
                                       {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
+                                      <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
+                                        {formatRoomTotalLabel(searchedRoomCount)}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -3418,11 +3650,66 @@ async function handleCreateTripAndAddHotel() {
                     </div>
                   ) : null}
 
+                  {/* ETG hotel policies: metapolicy_struct and metapolicy_extra_info,
+                      both displayed (§32), plus check-in/out times. Hidden when
+                      the hotel has none of them. */}
+                  {selectedPolicies.id === String(selectedHotel.id) &&
+                  selectedPolicies.policies &&
+                  (selectedPolicies.policies.checkIn ||
+                    selectedPolicies.policies.checkOut ||
+                    selectedPolicies.policies.sections.length > 0 ||
+                    selectedPolicies.policies.extraInfo.length > 0) ? (
+                    <div>
+                      <div className="oltra-subheader">Hotel policies</div>
+                      <div className="mt-2 grid grid-cols-1 gap-3 text-[12px] leading-relaxed text-[color:var(--oltra-text-primary)] sm:grid-cols-2">
+                        {selectedPolicies.policies.checkIn || selectedPolicies.policies.checkOut ? (
+                          <div>
+                            <div className="uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+                              Check-in and check-out
+                            </div>
+                            {selectedPolicies.policies.checkIn ? (
+                              <div className="mt-0.5">Check-in from {selectedPolicies.policies.checkIn}</div>
+                            ) : null}
+                            {selectedPolicies.policies.checkOut ? (
+                              <div className="mt-0.5">Check-out until {selectedPolicies.policies.checkOut}</div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        {selectedPolicies.policies.sections.map((section) => (
+                          <div key={section.label}>
+                            <div className="uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+                              {section.label}
+                            </div>
+                            {section.lines.map((line, i) => (
+                              <div key={i} className="mt-0.5">
+                                {line}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                        {selectedPolicies.policies.extraInfo.length > 0 ? (
+                          <div className="sm:col-span-2">
+                            <div className="uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+                              From the hotel
+                            </div>
+                            {selectedPolicies.policies.extraInfo.map((para, i) => (
+                              <p key={i} className="mt-0.5">
+                                {para}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
                   {/* Bottom action row inside left pane: room-selection total / booking link */}
                   <div className="mt-auto">
                     {roomSelectionTotal > 0 ? (
                       <div className="flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-sm text-[color:var(--oltra-text-primary)]">
-                        <span className="text-[12px] text-[color:var(--oltra-text-muted)]">Total</span>
+                        <span className="text-[12px] text-[color:var(--oltra-text-muted)]">
+                          {searchedRoomCount === 1 ? "Total" : `Total for ${searchedRoomCount} rooms`}
+                        </span>
                         <span className="font-light text-[color:var(--oltra-text-primary)]">
                           {roomSelectionCurrency} {Math.round(roomSelectionTotal).toLocaleString()}
                         </span>
@@ -3437,6 +3724,151 @@ async function handleCreateTripAndAddHotel() {
                         {selectedHotelBookingLabel}
                       </a>
                     ) : null}
+
+                    {PREBOOK_ENABLED && ratehawkRooms.status === "loaded" && ratehawkRooms.rooms.length > 0 ? (
+                      prebook.status === "confirmed" ? (
+                        /* The redirect seam, made legible: a reviewer seeing this
+                           cold should read a known, pending step, not a broken
+                           flow. No supplier or partner is named. */
+                        <div
+                          className="mt-2 rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-3 text-sm text-[color:var(--oltra-text-primary)]"
+                          role="status"
+                        >
+                          <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+                            Rate confirmed
+                          </div>
+                          <div className="mt-1">{prebook.rate.roomName}</div>
+                          <div className="mt-0.5 text-[12px] text-[color:var(--oltra-text-muted)]">
+                            {formatMeal(prebook.rate)} · {formatFreeCancellation(prebook.rate.freeCancellationBefore)}
+                          </div>
+                          <div className="mt-1 font-light">
+                            {prebook.rate.currency} {Math.round(prebook.rate.pricePerStay).toLocaleString()}{" "}
+                            <span className="text-[12px] text-[color:var(--oltra-text-muted)]">
+                              {formatRoomTotalLabel(searchedRoomCount)}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
+                            Your rate is confirmed. Checkout is being configured and is not live yet.
+                            Nothing has been booked or charged.
+                          </p>
+                          <button
+                            type="button"
+                            className="oltra-btn oltra-btn--block mt-2"
+                            aria-disabled="true"
+                            data-reason="Checkout is not live yet"
+                          >
+                            Continue
+                          </button>
+                          <div className="mt-1 text-[12px] text-[color:var(--oltra-text-muted)]">
+                            Checkout is not live yet
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            className="oltra-btn oltra-btn--block"
+                            onClick={() => {
+                              // aria-disabled does not block the click.
+                              if (!selectedRoom) return;
+                              void handleContinueToCheckout();
+                            }}
+                            disabled={prebook.status === "checking"}
+                            aria-disabled={!selectedRoom ? "true" : undefined}
+                            data-reason={!selectedRoom ? "Choose a room to continue" : undefined}
+                          >
+                            {prebook.status === "checking" ? (
+                              <span
+                                className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-current border-t-transparent"
+                                aria-hidden="true"
+                              />
+                            ) : null}
+                            {prebook.status === "checking" ? "Checking rate…" : "Continue"}
+                          </button>
+                          {!selectedRoom ? (
+                            <div className="mt-1 text-[12px] text-[color:var(--oltra-text-muted)]">
+                              Choose a room to continue.
+                            </div>
+                          ) : null}
+                          {prebook.status === "failed" ? (
+                            <div className="mt-1 text-[12px] text-[color:var(--oltra-error-text)]" role="status">
+                              {PREBOOK_FAILURE_MESSAGE[prebook.reason]}
+                            </div>
+                          ) : null}
+                        </div>
+                      )
+                    ) : null}
+
+                    {prebook.status === "changed" && typeof document !== "undefined"
+                      ? createPortal(
+                          /* Any change is shown before the guest continues —
+                             up or down, price or terms (§32). Closing the sheet
+                             is "Back to rooms": nothing is accepted by default. */
+                          <div
+                            className="oltra-modal-scrim fixed inset-0 z-[1000] flex justify-center overflow-y-auto px-6 py-10"
+                            onClick={() => setPrebook({ status: "idle" })}
+                          >
+                            <div
+                              className="oltra-modal-panel relative h-fit w-full max-w-[620px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6"
+                              onClick={(e) => e.stopPropagation()}
+                              role="dialog"
+                              aria-modal="true"
+                              aria-labelledby="prebook-change-title"
+                            >
+                              <div id="prebook-change-title" className="oltra-subheader">
+                                This rate has changed
+                              </div>
+                              <p className="mt-2 text-sm text-[color:var(--oltra-text-muted)]">
+                                The hotel updated this rate since your search. Please review it before you continue.
+                              </p>
+
+                              <div className="mt-3 text-sm text-[color:var(--oltra-text-primary)]">
+                                {prebook.rate.roomName}
+                              </div>
+                              <ul className="mt-2 flex flex-col gap-1 text-sm text-[color:var(--oltra-text-primary)]">
+                                {prebook.changes.map((change, i) => (
+                                  <li key={i}>{describeRateChange(change)}</li>
+                                ))}
+                              </ul>
+
+                              <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-[color:var(--oltra-text-primary)]">
+                                <div>
+                                  <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+                                    Meal
+                                  </div>
+                                  <div className="mt-0.5">{formatMeal(prebook.rate)}</div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
+                                    New total
+                                  </div>
+                                  <div className="mt-0.5">
+                                    {prebook.rate.currency} {Math.round(prebook.rate.pricePerStay).toLocaleString()}
+                                  </div>
+                                  <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
+                                    {formatRoomTotalLabel(searchedRoomCount)}
+                                  </div>
+                                </div>
+                                <RateTerms room={prebook.rate} />
+                              </div>
+
+                              <div className="oltra-btn-pair mt-5">
+                                <button
+                                  type="button"
+                                  className="oltra-btn"
+                                  onClick={() => setPrebook({ status: "idle" })}
+                                >
+                                  Back to rooms
+                                </button>
+                                <button type="button" className="oltra-btn" onClick={acceptChangedRate}>
+                                  Continue at this price
+                                </button>
+                              </div>
+                            </div>
+                          </div>,
+                          document.body
+                        )
+                      : null}
 
                     {ratehawkRooms.status === "error" ? (
                       <div className="mt-2 text-[12px] text-[color:var(--oltra-text-muted)]">

@@ -1,5 +1,7 @@
 import "server-only";
 import { distinctSorted } from "@/lib/hotelOptions";
+import { hotelInMacroRegion, MACRO_REGIONS } from "@/lib/ai/macroRegions";
+import { AREA_ALIAS_TERMS } from "@/lib/ai/macroRegionTerms";
 
 export type SuggestionType =
   | "hotel"
@@ -7,6 +9,7 @@ export type SuggestionType =
   | "state"
   | "admin_region"
   | "country"
+  | "macro_region"
   | "region"
   | "purpose"
   | "setting";
@@ -29,6 +32,11 @@ export type SuggestionHotelRow = {
   admin_region: string;
   country: string;
   region: string;
+  /** The colloquial regions this hotel belongs to ("The Alps", "The
+   * Mediterranean") — no column holds these; they are the concierge's
+   * MACRO_REGIONS, evaluated per row here so the browser need not carry the
+   * definitions. */
+  macro_regions: string[];
   activities: string[];
   settings: string[];
 };
@@ -37,6 +45,9 @@ export type HotelSuggestionDataset = {
   hotels: SuggestionHotelRow[];
   purposes: SuggestionTaxOption[];
   settings: SuggestionTaxOption[];
+  /** Traveller names for a stored area ("French Riviera" for the Côte d'Azur),
+   * offered only where that area holds a hotel. */
+  areaAliases: { label: string; area: string }[];
 };
 
 function toOptions(values: string[]): SuggestionTaxOption[] {
@@ -48,16 +59,22 @@ function toOptions(values: string[]): SuggestionTaxOption[] {
 // admin_region, country, region, activities, setting.
 export function buildHotelSuggestionDataset(rows: any[]): HotelSuggestionDataset {
   const hotels: SuggestionHotelRow[] = rows
-    .map((row) => ({
-      hotel_name: (row.hotel_name ?? "").trim(),
-      city: (row.city ?? "").trim(),
-      state: (row.state_province_county_island ?? "").trim(),
-      admin_region: (row.admin_region ?? "").trim(),
-      country: (row.country ?? "").trim(),
-      region: (row.region ?? "").trim(),
-      activities: Array.isArray(row.activities) ? row.activities : [],
-      settings: Array.isArray(row.setting) ? row.setting : [],
-    }))
+    .map((row) => {
+      const hotel = {
+        hotel_name: (row.hotel_name ?? "").trim(),
+        city: (row.city ?? "").trim(),
+        state: (row.state_province_county_island ?? "").trim(),
+        admin_region: (row.admin_region ?? "").trim(),
+        country: (row.country ?? "").trim(),
+        region: (row.region ?? "").trim(),
+        activities: Array.isArray(row.activities) ? row.activities : [],
+        settings: Array.isArray(row.setting) ? row.setting : [],
+      };
+      const macro_regions = MACRO_REGIONS.filter((macro) =>
+        hotelInMacroRegion({ ...hotel, setting: hotel.settings }, macro)
+      ).map((macro) => macro.name);
+      return { ...hotel, macro_regions };
+    })
     .filter(
       (row) =>
         row.hotel_name ||
@@ -73,5 +90,10 @@ export function buildHotelSuggestionDataset(rows: any[]): HotelSuggestionDataset
   const purposes = toOptions(distinctSorted(rows.flatMap((r) => r.activities ?? [])));
   const settings = toOptions(distinctSorted(rows.flatMap((r) => r.setting ?? [])));
 
-  return { hotels, purposes, settings };
+  const areas = new Set(hotels.map((hotel) => hotel.state));
+  const areaAliases = AREA_ALIAS_TERMS.filter((term) => areas.has(term.area)).map(
+    ({ label, area }) => ({ label, area })
+  );
+
+  return { hotels, purposes, settings, areaAliases };
 }

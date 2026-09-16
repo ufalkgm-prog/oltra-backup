@@ -18,6 +18,7 @@ import {
   dropUnansweredToolCalls,
 } from "@/lib/ai/sanitiseHistory";
 import { describePageContext, sanitisePageContext } from "@/lib/ai/pageContext";
+import { isValidResidencyCode, residencyFromAcceptLanguage } from "@/lib/countries";
 import {
   CHAT_MODEL,
   MAX_MESSAGE_CHARS,
@@ -130,9 +131,22 @@ export async function POST(req: Request) {
   // 3. Input caps.
   let messages: UIMessage[];
   let pageContextNote = "";
+  let residency = "";
   try {
-    const body = (await req.json()) as { messages?: UIMessage[]; pageContext?: unknown };
+    const body = (await req.json()) as {
+      messages?: UIMessage[];
+      pageContext?: unknown;
+      residency?: unknown;
+    };
     messages = Array.isArray(body.messages) ? body.messages : [];
+    // The passport country for supplier calls (§32), validated against the
+    // country list. Never reaches the model. Without a valid one the request's
+    // own Accept-Language region stands in, the same signal the browser-side
+    // guess reads — not a fixed country.
+    residency =
+      typeof body.residency === "string" && isValidResidencyCode(body.residency)
+        ? body.residency.toLowerCase()
+        : residencyFromAcceptLanguage(req.headers.get("accept-language"));
     // Whitelisted and scrubbed before it goes anywhere near a system block —
     // the browser sends it, so it is forgeable. See lib/ai/pageContext.ts for
     // why the sanitiser is as blunt as it is.
@@ -224,7 +238,7 @@ export async function POST(req: Request) {
       await convertToModelMessages(dropProviderExecutedTools(trimmed))
     ),
     tools: {
-      ...buildConciergeTools({ preferredAirlines }),
+      ...buildConciergeTools({ preferredAirlines, residency }),
       // Anthropic's own server-side search. maxUses is enforced upstream, so
       // the model cannot exceed the cap even if it tries, and the allow-list
       // keeps this a travel-reference tool rather than a general web search.

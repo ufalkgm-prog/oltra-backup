@@ -105,6 +105,9 @@ async function serpBatch(hids, checkin, checkout) {
       guests: GUESTS,
       hids,
       currency: CURRENCY,
+      // ETG's recommended rate-search budget, sent explicitly as in the app
+      // (§32).
+      timeout: 30,
     }),
   });
 

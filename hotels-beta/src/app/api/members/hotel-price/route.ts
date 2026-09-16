@@ -7,6 +7,8 @@ import {
   groupRoomOptions,
 } from "@/lib/ratehawk/availability";
 import { isValidResidencyCode } from "@/lib/countries";
+import { guestSelectionIssue } from "@/lib/guests";
+import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 
 /* Re-prices one saved trip hotel on demand ("Update price and availability").
  *
@@ -87,6 +89,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // ETG's documented maximum stay (§32); the search forms stop it first.
+    if (isStayTooLong(checkInDate, checkOutDate)) {
+      return NextResponse.json(
+        { ok: false, error: STAY_TOO_LONG_MESSAGE },
+        { status: 400 }
+      );
+    }
+
     const rows = await getItems<HotelPricingRow>("hotels", {
       fields: ["id", "ratehawk_hid", "ratehawk_status", "www"],
       filter: { id: { _eq: hotelDirectusId } },
@@ -125,6 +135,16 @@ export async function POST(request: Request) {
           .map((age) => Math.max(0, Math.floor(age)))
           .slice(0, kids)
       : [];
+
+    // A trip saved without a child's age cannot be re-priced honestly — it is
+    // refused with a reason the member can act on, never priced at a default.
+    const occupancyIssue = guestSelectionIssue(
+      { adults, kids, kidAges: childrenAges.map(String) },
+      rooms
+    );
+    if (occupancyIssue) {
+      return NextResponse.json({ ok: false, error: occupancyIssue }, { status: 400 });
+    }
 
     const hotels = await fetchRatehawkSerpBatch({
       hids: [hotel.ratehawk_hid],

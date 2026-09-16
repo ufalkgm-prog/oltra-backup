@@ -17,17 +17,24 @@ It forwards the request body byte-for-byte and returns the upstream status and
 body unmodified. It holds the ETG credentials and injects the `Authorization`
 header itself, so Vercel never holds the ETG key. No parsing, no business logic.
 
-**Only three paths are proxied.** Everything else returns 404:
+**Only these paths are proxied.** Everything else returns 404:
 
 - `POST /api/b2b/v3/search/serp/hotels/`
 - `POST /api/b2b/v3/search/hp/`
 - `POST /api/b2b/v3/hotel/info/`
+- `POST /api/content/v1/hotel_content_by_ids/` (the offline static sync, §48)
+- `POST /api/b2b/v3/hotel/prebook/`, **only while `ETG_PREBOOK_ENABLED=1`**
+  (§47). Prebook checks one rate and returns a hash; it creates no order.
 
 That allowlist is load-bearing, not tidiness. Anyone holding the shared secret
 would otherwise be able to reach *any* ETG endpoint through this service,
-including the booking endpoints §32 marks BLOCKED — and per §26 our key hits
-ETG's live production host, where test bookings are real orders that must be
-manually cancelled.
+including the booking endpoints §32 marks out of scope — and those endpoints
+are active on our key (`/overview/`, 2026-09-16). Every
+`/api/b2b/v3/hotel/order/` path is also refused by name, before the allowlist
+is consulted, so no edit to the list can admit one by accident.
+
+Timeouts to ETG are per path: 40s for the two search endpoints (they send ETG's
+own `timeout: 30`), 60s for prebook (ETG's recommendation), 30s otherwise.
 
 `GET /healthz` is unauthenticated and cannot reach ETG.
 
@@ -57,6 +64,7 @@ be per-replica if the service is ever scaled past one.
 | `RATEHAWK_KEY_ID` | ETG key id (HTTP Basic username) |
 | `PROXY_SHARED_SECRET` | Must match `RATEHAWK_PROXY_SECRET` on Vercel |
 | `RATEHAWK_API_URL` | Optional. Defaults to `https://api.ratehawk.com` |
+| `ETG_PREBOOK_ENABLED` | `1` admits `/hotel/prebook/`. Unset = prebook 404s. The no-deploy kill switch: changing it restarts this service, and Vercel needs no deploy |
 | `PORT` | Set by Railway |
 
 All three of the first are required — the service exits at boot if any is
@@ -130,9 +138,21 @@ curl -s -X POST localhost:8080/api/b2b/v3/hotel/info/ \
 # no secret → 401
 curl -s -o /dev/null -w '%{http_code}\n' -X POST localhost:8080/api/b2b/v3/hotel/info/ -d '{}'
 
-# booking endpoint → 404, never forwarded
+# booking endpoints → 404 with a valid secret, never forwarded, whatever
+# ETG_PREBOOK_ENABLED says
+for p in booking/form booking/finish booking/finish/status cancel; do
+  curl -s -o /dev/null -w "$p %{http_code}\n" -X POST \
+    localhost:8080/api/b2b/v3/hotel/order/$p/ -H 'x-oltra-proxy-secret: test' -d '{}'
+done
+
+# prebook → 404 unless started with ETG_PREBOOK_ENABLED=1
 curl -s -X POST localhost:8080/api/b2b/v3/hotel/prebook/ \
   -H 'x-oltra-proxy-secret: test' -d '{}'
 ```
+
+To check forwarding without reaching ETG at all, start it with
+`RATEHAWK_API_URL=http://127.0.0.1:9`: a forwarded path then answers
+`502 Could not reach ETG.` and an unadmitted one `404`. Verified this way on
+2026-09-16, with prebook both unset and enabled.
 
 `hid` 8473727 is ETG's "Test Hotel (Do Not Book)" fixture (§26) — safe to call.

@@ -141,6 +141,14 @@ function buildInitialTokens(
     out.push({ type: "country", label: country, value: country });
   }
 
+  const macroRegion = normalizeParam(searchParams.macro_region);
+  if (
+    macroRegion &&
+    dataset.hotels.some((hotel) => hotel.macro_regions.includes(macroRegion))
+  ) {
+    out.push({ type: "macro_region", label: macroRegion, value: macroRegion });
+  }
+
   const region = normalizeParam(searchParams.region);
   if (region && dataset.hotels.some((hotel) => hotel.region === region)) {
     out.push({ type: "region", label: region, value: region });
@@ -187,6 +195,7 @@ function helperPrompt(tokens: Token[]): string {
   if (last.type === "state") return "Add city or purpose";
   if (last.type === "admin_region") return "Add city or purpose";
   if (last.type === "country") return "Add city or purpose";
+  if (last.type === "macro_region") return "Add country or setting";
   if (last.type === "region") return "Add city or setting";
   if (last.type === "purpose") return "Add city or country";
   if (last.type === "setting") return "Add city or purpose";
@@ -212,8 +221,14 @@ function typeLabel(type: SuggestionType): string {
       return "State / Province";
     case "country":
       return "Country";
-    case "region":
+    case "macro_region":
+      // A colloquial region spanning several columns ("The Alps", "The
+      // Mediterranean") — lib/ai/macroRegions.ts.
       return "Region";
+    case "region":
+      // The `region` column holds continents; "Region" now names the
+      // colloquial regions above.
+      return "Continent";
     case "purpose":
       return "Purpose";
     case "setting":
@@ -233,26 +248,78 @@ const ALL_TYPES: SuggestionType[] = [
   "state",
   "admin_region",
   "country",
+  "macro_region",
   "region",
   "purpose",
   "setting",
 ];
 
-/* Cities first, then countries, then hotels, then the rest. Typing two letters
- * usually means "where", not "which property" - a city match is the more
- * likely intent, and hotel names are the longest list so they used to bury
- * everything else. Drives both the group order in the panel and, through it,
- * the Landing and Hotels destination fields alike. */
-const GROUP_ORDER: SuggestionType[] = [
+/* FOUR GROUPS, IN THIS ORDER (Ulrik, 2026-09-16): Geography, Hotel, Setting,
+ * Purpose. Geography gathers every place level a hotel row holds except
+ * local_area (neighbourhoods, §3) plus the colloquial regions the concierge
+ * understands — so "Me" lists Mexico, New Mexico and the Mediterranean
+ * together, each marked with what it is. Typing two letters usually means
+ * "where", so it leads.
+ *
+ * Geography is listed broad and traveller-facing first — regions, countries,
+ * areas — then cities, then administrative units and continents. Only four
+ * rows show before scrolling (§10), and measured on the collection "Me" found
+ * eight small cities (Medhufaru Island, Megali Ammos…) ahead of Mexico, which
+ * came twelfth. */
+const GEOGRAPHY_TYPES: SuggestionType[] = [
+  "macro_region",
+  "country",
+  "state",
+  "city",
+  "admin_region",
+  "region",
+];
+
+const SUGGESTION_GROUPS: { key: string; label: string; types: SuggestionType[] }[] = [
+  { key: "geography", label: "Geography", types: GEOGRAPHY_TYPES },
+  { key: "hotel", label: "Hotel", types: ["hotel"] },
+  { key: "setting", label: "Setting", types: ["setting"] },
+  { key: "purpose", label: "Purpose", types: ["purpose"] },
+];
+
+const TYPE_RANK = SUGGESTION_GROUPS.flatMap((group) => group.types);
+
+/* Narrowest place first. Decides which row survives when one name is several
+ * levels at once ("Mexico City" is a city and an admin region; "Alif Dhaal
+ * Atoll" an area and an admin region) — the dropdown shows it once — and what
+ * Enter picks for an exact name, so "london" is still the city. */
+const NARROWEST_FIRST: SuggestionType[] = [
   "city",
   "state",
   "admin_region",
   "country",
-  "hotel",
+  "macro_region",
   "region",
-  "purpose",
+  "hotel",
   "setting",
+  "purpose",
 ];
+
+function simplifyForMatch(value: string): string {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+}
+
+/* True when the typed text starts a WORD of the label — "me" finds Mexico,
+ * New Mexico and The Mediterranean, but not Palermo or Jumeirah. A word starts
+ * the label or follows anything that is not a letter or digit (space, hyphen,
+ * apostrophe: "az" finds Côte d'Azur). Accent- and case-blind. */
+function matchesWordStart(label: string, typed: string): boolean {
+  const text = simplifyForMatch(label);
+  const q = simplifyForMatch(typed);
+  if (!q) return true;
+  let from = 0;
+  for (;;) {
+    const at = text.indexOf(q, from);
+    if (at < 0) return false;
+    if (at === 0 || !/[\p{L}\p{N}]/u.test(text[at - 1])) return true;
+    from = at + 1;
+  }
+}
 
 function getExternalSyncKey(
   searchParams: SearchParams,
@@ -264,6 +331,7 @@ function getExternalSyncKey(
     state: normalizeParam(searchParams.state),
     admin_region: normalizeParam(searchParams.admin_region),
     country: normalizeParam(searchParams.country),
+    macro_region: normalizeParam(searchParams.macro_region),
     region: normalizeParam(searchParams.region),
     activities: listFromParam(searchParams.activities),
     settings: listFromParam(searchParams.settings),
@@ -283,10 +351,12 @@ function getVisibleTypes(tokens: Token[], allowedTypes: SuggestionType[]) {
   // since they can only be redundant. Note `state` and `admin_region` often
   // hold the same value (Tuscany, Bali) — that is intended, and the narrower
   // of the two wins.
+  // A colloquial region crosses countries (the Alps), so a country or admin
+  // region still narrows it — only a city, area or hotel makes it redundant.
   const BROADER: Record<string, SuggestionType[]> = {
-    hotel: ["city", "state", "admin_region", "country", "region"],
-    city: ["state", "admin_region", "country", "region"],
-    state: ["admin_region", "country", "region"],
+    hotel: ["city", "state", "admin_region", "country", "macro_region", "region"],
+    city: ["state", "admin_region", "country", "macro_region", "region"],
+    state: ["admin_region", "country", "macro_region", "region"],
     admin_region: ["country", "region"],
     country: ["region"],
   };
@@ -353,6 +423,7 @@ export default function StructuredDestinationField({
       normalizeParam(searchParams.state) ||
       normalizeParam(searchParams.admin_region) ||
       normalizeParam(searchParams.country) ||
+      normalizeParam(searchParams.macro_region) ||
       normalizeParam(searchParams.region) ||
       listFromParam(searchParams.activities).length > 0 ||
       listFromParam(searchParams.settings).length > 0;
@@ -383,6 +454,8 @@ export default function StructuredDestinationField({
             return hotel.admin_region === token.value;
           case "country":
             return hotel.country === token.value;
+          case "macro_region":
+            return hotel.macro_regions.includes(token.value);
           case "region":
             return hotel.region === token.value;
           case "purpose":
@@ -519,6 +592,36 @@ export default function StructuredDestinationField({
     }
 
     if (
+      visibleTypes.includes("macro_region") &&
+      !selectedTypes.has("macro_region")
+    ) {
+      items.push(
+        ...uniq(activeHotels.flatMap((hotel) => hotel.macro_regions)).map((value) => ({
+          type: "macro_region" as const,
+          label: value,
+          value,
+        }))
+      );
+    }
+
+    // Traveller names for a stored area — "French Riviera" is the Côte d'Azur.
+    // Chosen, it is that area (the same URL a click on Côte d'Azur makes); the
+    // id only keeps the two rows distinct in the list.
+    if (visibleTypes.includes("state") && !selectedTypes.has("state")) {
+      const areas = new Set(activeHotels.map((hotel) => hotel.state));
+      items.push(
+        ...dataset.areaAliases
+          .filter((alias) => areas.has(alias.area))
+          .map((alias) => ({
+            type: "state" as const,
+            label: alias.label,
+            value: alias.area,
+            id: `alias:${alias.label}`,
+          }))
+      );
+    }
+
+    if (
       visibleTypes.includes("region") &&
       !selectedTypes.has("region")
     ) {
@@ -571,6 +674,7 @@ export default function StructuredDestinationField({
     });
   }, [
     activeHotels,
+    dataset.areaAliases,
     dataset.purposes,
     dataset.settings,
     tokens,
@@ -578,9 +682,9 @@ export default function StructuredDestinationField({
   ]);
 
   const suggestions = useMemo(() => {
-    const q = typedValue.trim().toLowerCase();
+    const q = typedValue.trim();
     return q
-      ? selectableItems.filter((item) => item.label.toLowerCase().includes(q))
+      ? selectableItems.filter((item) => matchesWordStart(item.label, q))
       : selectableItems;
   }, [selectableItems, typedValue]);
 
@@ -593,35 +697,56 @@ export default function StructuredDestinationField({
      suggestion left when only one matches — and adds it like a click would.
      Text that names no tag is removed rather than searched. */
   function resolveTypedValue(): SuggestionItem | null {
-    const simplify = (value: string) =>
-      value.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
-    const typed = simplify(typedValue);
+    const typed = simplifyForMatch(typedValue);
     if (!typed) return null;
 
-    const rank = (item: SuggestionItem) => GROUP_ORDER.indexOf(item.type);
+    const rank = (item: SuggestionItem) => NARROWEST_FIRST.indexOf(item.type);
     const exact = selectableItems
-      .filter((item) => simplify(item.label) === typed)
+      .filter((item) => simplifyForMatch(item.label) === typed)
       .sort((a, b) => rank(a) - rank(b));
     if (exact.length) return exact[0];
 
-    const partial = selectableItems.filter((item) => simplify(item.label).includes(typed));
+    const partial = selectableItems.filter((item) => matchesWordStart(item.label, typed));
     return partial.length === 1 ? partial[0] : null;
   }
 
+  /* Within a group: by level (TYPE_RANK), then names the text STARTS — a
+     leading "The" ignored, so The Mediterranean starts with "me" — before names
+     it starts a later word of (Mexico before New Mexico), then alphabetically.
+     A name held at several levels is listed once, at its narrowest. */
   const groupedSuggestions = useMemo(() => {
-    return GROUP_ORDER
-      .filter((type) => visibleTypes.includes(type))
-      .map((type) => ({
-        type,
-        items: suggestions.filter((item) => item.type === type),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [suggestions, visibleTypes]);
+    const typed = simplifyForMatch(typedValue);
+    const startsName = (item: SuggestionItem) =>
+      typed && simplifyForMatch(item.label).replace(/^the /, "").startsWith(typed) ? 0 : 1;
+    return SUGGESTION_GROUPS.map((group) => {
+      const inGroup = suggestions.filter(
+        (item) => group.types.includes(item.type) && visibleTypes.includes(item.type)
+      );
+      const narrowest = new Map<string, SuggestionItem>();
+      for (const item of inGroup) {
+        const key = simplifyForMatch(item.label);
+        const kept = narrowest.get(key);
+        if (!kept || NARROWEST_FIRST.indexOf(item.type) < NARROWEST_FIRST.indexOf(kept.type)) {
+          narrowest.set(key, item);
+        }
+      }
+      return {
+        ...group,
+        items: [...narrowest.values()].sort(
+          (a, b) =>
+            TYPE_RANK.indexOf(a.type) - TYPE_RANK.indexOf(b.type) ||
+            startsName(a) - startsName(b) ||
+            a.label.localeCompare(b.label)
+        ),
+      };
+    }).filter((group) => group.items.length > 0);
+  }, [suggestions, typedValue, visibleTypes]);
 
   const cityToken = tokens.find((token) => token.type === "city");
   const stateToken = tokens.find((token) => token.type === "state");
   const adminRegionToken = tokens.find((token) => token.type === "admin_region");
   const countryToken = tokens.find((token) => token.type === "country");
+  const macroRegionToken = tokens.find((token) => token.type === "macro_region");
   const regionToken = tokens.find((token) => token.type === "region");
   const hotelToken = tokens.find((token) => token.type === "hotel");
   const purposeTokens = tokens.filter((token) => token.type === "purpose");
@@ -865,17 +990,18 @@ export default function StructuredDestinationField({
           >
             {groupedSuggestions.map((group) => (
               <div
-                key={group.type}
+                key={group.key}
                 className={`${styles.suggestionGroup} oltra-dropdown-group`}
               >
                 <div
                   className={`${styles.suggestionGroupLabel} oltra-dropdown-group-label`}
                 >
-                  {typeLabel(group.type)}
+                  {group.label}
                 </div>
 
+                {/* Four rows visible per group (§10), then scroll. */}
                 <div
-                  className="oltra-scrollbar flex max-h-[112px] flex-col gap-1 overflow-y-auto pr-1"
+                  className={`oltra-scrollbar ${styles.suggestionList}`}
                   style={{ scrollbarWidth: "thin" }}
                 >
                   {group.items.map((item) => (
@@ -884,9 +1010,16 @@ export default function StructuredDestinationField({
                       type="button"
                       onClick={() => addToken(item)}
                       className={`${styles.suggestionItem} oltra-dropdown-item w-full text-left`}
-                      title={item.label}
+                      title={
+                        group.key === "geography"
+                          ? `${typeLabel(item.type)}: ${item.label}`
+                          : item.label
+                      }
                     >
-                      {item.label}
+                      <span className={styles.suggestionItemLabel}>{item.label}</span>
+                      {group.key === "geography" ? (
+                        <span className={styles.suggestionItemType}>{typeLabel(item.type)}</span>
+                      ) : null}
                     </button>
                   ))}
                 </div>                
@@ -909,6 +1042,7 @@ export default function StructuredDestinationField({
         value={adminRegionToken?.value ?? ""}
       />
       <input type="hidden" name="country" value={countryToken?.value ?? ""} />
+      <input type="hidden" name="macro_region" value={macroRegionToken?.value ?? ""} />
       <input type="hidden" name="region" value={regionToken?.value ?? ""} />
       <input
         type="hidden"

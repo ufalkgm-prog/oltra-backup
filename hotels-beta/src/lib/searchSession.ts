@@ -8,6 +8,9 @@ export type SharedTravelSearch = {
   admin_region?: string;
   country?: string;
   region?: string;
+  /** A colloquial region from the destination field ("The Alps") — same
+   * Hotels-only treatment as `state`. */
+  macro_region?: string;
   from?: string;
   to?: string;
   adults?: string;
@@ -78,7 +81,7 @@ export function clearHotelFlightDestination() {
   const current = readHotelFlightSearch();
   if (!current) return;
   const stay: SharedTravelSearch = { ...current };
-  for (const key of ["q", "city", "state", "admin_region", "country", "region", "hotelId"] as const) {
+  for (const key of ["q", "city", "state", "admin_region", "country", "region", "macro_region", "hotelId"] as const) {
     delete stay[key];
   }
   saveHotelFlightSearch(stay);

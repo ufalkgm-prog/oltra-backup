@@ -32,6 +32,16 @@ export const MACRO_REGION_TERMS: MacroRegionTerm[] = [
   { name: "The Benelux", aliases: ["benelux", "the benelux", "low countries", "the low countries"] },
 ];
 
+/** Traveller names for an area stored under another name. Unlike a macro-region
+ * these are ONE `state_province_county_island` value, so choosing one is simply
+ * that area. Shared by the concierge (searchHotels resolves them) and the
+ * destination dropdown (which offers "French Riviera" as the Côte d'Azur), so
+ * the two recognise the same names. `aliases` are matched after
+ * normaliseRegionTerm. */
+export const AREA_ALIAS_TERMS: { label: string; area: string; aliases: string[] }[] = [
+  { label: "French Riviera", area: "Côte d'Azur", aliases: ["french riviera", "cote d azur", "riviera francaise"] },
+];
+
 /** The `region` column's fixed vocabulary — continents, plus the two basins
  * that are how people actually name those places (CLAUDE.md §3). Here rather
  * than in tools.ts because the browser needs it too: a continent is a search

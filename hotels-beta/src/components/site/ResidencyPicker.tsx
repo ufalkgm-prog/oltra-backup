@@ -4,20 +4,40 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RESIDENCY_COUNTRIES } from "@/lib/countries";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 
-/* The "Prices assume booking from X. Change" line on the Hotels search form.
+/* The guests' passport country ("residency" in ETG's API).
  *
  * Deliberately not an OltraSelect: that has no search box, and this list is
  * every country in the world (200 entries), which is unusable as a plain
- * scroll. It is also deliberately understated rather than a labelled form
- * field - residency affects ETG rates by 0-3% at most (measured, see CLAUDE.md
- * §39), so it should read as a correctable assumption, not a prerequisite. */
+ * scroll.
+ *
+ * Two looks. `field` is the labelled control inside the guest selector — ETG's
+ * certification runs a mandatory test case for a specific citizenship, so a
+ * tester must be able to choose one without editing the URL (§32). `inline` is
+ * the older understated "Prices assume booking from X. Change" sentence, kept
+ * for any caller that wants the assumption stated rather than asked. */
 
 type Props = {
   value: string;
   onChange: (code: string) => void;
+  variant?: "inline" | "field";
 };
 
-export default function ResidencyPicker({ value, onChange }: Props) {
+function ChevronDown() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="pointer-events-none h-3 w-3 shrink-0 opacity-90">
+      <path
+        d="M5.5 7.5 10 12l4.5-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export default function ResidencyPicker({ value, onChange, variant = "inline" }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLSpanElement | null>(null);
@@ -60,15 +80,34 @@ export default function ResidencyPicker({ value, onChange }: Props) {
   }
 
   return (
-    <span ref={rootRef} className="relative inline-block" {...dismissProps}>
-      Prices assume booking from {selectedLabel}.{" "}
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="underline underline-offset-2 transition-colors hover:text-[color:var(--oltra-text-primary)]"
-      >
-        Change
-      </button>
+    <span
+      ref={rootRef}
+      className={variant === "field" ? "relative block" : "relative inline-block"}
+      {...dismissProps}
+    >
+      {variant === "field" ? (
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          className="oltra-select flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+        >
+          <span className="truncate">{value ? selectedLabel : "Choose a country"}</span>
+          <ChevronDown />
+        </button>
+      ) : (
+        <>
+          Prices assume booking from {selectedLabel}.{" "}
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            className="underline underline-offset-2 transition-colors hover:text-[color:var(--oltra-text-primary)]"
+          >
+            Change
+          </button>
+        </>
+      )}
 
       {open ? (
         <div className="oltra-popup-panel absolute left-0 top-full z-50 mt-2 w-[260px]">

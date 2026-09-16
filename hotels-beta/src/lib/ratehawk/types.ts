@@ -31,6 +31,9 @@ export type RatehawkGroupedRoom = {
   roomName: string;
   bookHash: string;
   matchHash: string;
+  // The whole stay for EVERY room searched, not one room — ETG price a rate
+  // for the full guests array (§32, measured 2026-09-16). Never multiply it
+  // by the room count.
   pricePerStay: number;
   currency: string;
   dailyPrices: string[];
@@ -53,8 +56,10 @@ export type RatehawkGroupedRoom = {
 };
 
 export type RatehawkHeadline = {
+  // Total for all `rooms`, as priced by ETG — see RatehawkGroupedRoom.
   pricePerStay: number;
   currency: string;
+  // The number of rooms that price covers. Informational, not a multiplier.
   rooms: number;
   roomKey: string;
 } | null;

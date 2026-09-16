@@ -51,6 +51,15 @@ Three things that look like bugs and aren't:
 
 Both are searchable levels in the destination dropdown (`StructuredDestinationField`), narrowing hotel > city > area > admin_region > country > region. `local_area` is **not** searchable — it holds neighbourhoods (Mayfair, Kowloon).
 
+**The destination dropdown (2026-09-16, Landing and Hotels alike):**
+
+* **Four groups, in this order: Geography, Hotel, Setting, Purpose.** Geography holds city, area, admin_region, country, continent (`region`, chip label now "Continent") and the **colloquial regions** — the concierge's 18 `MACRO_REGIONS` ("The Alps", "The Mediterranean"), labelled "Region". Each Geography row shows its level.
+* **Typed text must start a word** of the name: "me" finds Mexico, New Mexico and The Mediterranean, not Palermo. Accent- and case-blind.
+* **Geography is listed broad first** — regions, countries, areas, then cities, then admin units and continents — because only four rows show before scrolling, and cities-first put Mexico twelfth for "Me". A name held at several levels ("Mexico City" city and admin region) is listed once, at its narrowest; Enter on an exact name still picks the narrowest (the city).
+* **A colloquial region is a URL param, `macro_region`**, filtered by the pages as `macroRegionFilter` (Directus) plus `filterHotelsByMacroRegion` (its setting requirement, which Directus cannot filter). The dropdown gets each hotel's regions precomputed server-side (`SuggestionHotelRow.macro_regions`, via `hotelInMacroRegion`). Verified: all 18 regions return exactly the same hotels on the page as the dropdown counts.
+* **"French Riviera"** is offered as the area Côte d'Azur (`AREA_ALIAS_TERMS` in `macroRegionTerms.ts`, shared with the concierge's `AREA_ALIASES`).
+* Some stored `hotel_name` values carry trailing whitespace; the dropdown trims, a raw fetch does not — compare trimmed.
+
 **`local_area` is strictly sub-city** — neighbourhoods and districts only: Mayfair, Meatpacking, the Paris arrondissements. **Not** a travel area. 19 rows were cleared on 2026-09-11 for holding a region-level value, `Lake Como` among them appearing as a "neighbourhood" across five different towns, which is the inverse of a district: one area spanning many towns rather than one town divided. 17 of the 19 were exact duplicates of `state_province_county_island`, so nothing was lost.
 
 Three were kept that the same test flagged, because they are genuinely below city level and only matched for appearing in the area field too: Capella Singapore's **Sentosa Island**, Amanera's **Playa Grande**, and Fasano's **Punta del Este** — the last because `city` there reads "Maldonado", the department, so `local_area` holds the more accurate of the two.

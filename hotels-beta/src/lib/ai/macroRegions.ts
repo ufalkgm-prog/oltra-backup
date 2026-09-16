@@ -293,6 +293,29 @@ export function macroRegionFilter(region: MacroRegion): Record<string, unknown> 
   return any.length === 1 ? any[0] : { _or: any };
 }
 
+/** Whether one hotel row belongs to a macro-region — macroRegionFilter and
+ * matchesMacroSetting together, evaluated on a row already in memory. The
+ * destination dropdown uses it to offer only regions that hold a hotel, and to
+ * narrow its own counts once one is chosen; the pages filter with the Directus
+ * half plus matchesMacroSetting, so both must stay this same rule. */
+export function hotelInMacroRegion(
+  hotel: {
+    region?: string | null;
+    country?: string | null;
+    admin_region?: string | null;
+    state?: string | null;
+    setting?: string[] | null;
+  },
+  region: MacroRegion
+): boolean {
+  const inIdentity =
+    Boolean(hotel.region && region.regions?.includes(hotel.region)) ||
+    Boolean(hotel.country && region.countries?.includes(hotel.country)) ||
+    Boolean(hotel.admin_region && region.adminRegions?.includes(hotel.admin_region)) ||
+    Boolean(hotel.state && region.areas?.includes(hotel.state));
+  return inIdentity && matchesMacroSetting(hotel, region);
+}
+
 /** The JS half of the filter. True when the macro-region asks for no particular
  * setting, or the hotel carries one it asks for. */
 export function matchesMacroSetting(

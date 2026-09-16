@@ -2,9 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
+import ResidencyPicker from "@/components/site/ResidencyPicker";
 import {
   clampAdultsCount,
   clampKidsCount,
+  CHILD_AGE_MISSING_MESSAGE,
+  guestSelectionIssue,
+  maxAdultsFor,
+  maxKidsFor,
+  OCCUPANCY_LIMIT_MESSAGE,
   type GuestSelection,
 } from "@/lib/guests";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
@@ -16,6 +22,11 @@ type Props = {
   placeholder?: string;
   onChange?: (selection: GuestSelection) => void;
   defaultOpen?: boolean;
+  /* Hotel searches only. With `rooms`, the steppers stop at ETG's per-room
+     occupancy limit (§32); with `residency`, the panel asks for the guests'
+     passport country. Flights passes neither and is unchanged. */
+  rooms?: number;
+  residency?: { value: string; onChange: (code: string) => void };
 };
 
 /* One age slot per child, whatever the array held. The ages array is resized a
@@ -55,6 +66,8 @@ export default function GuestSelector({
   placeholder = "Guests",
   onChange,
   defaultOpen = false,
+  rooms,
+  residency,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const [adults, setAdults] = useState(initialValue.adults);
@@ -151,12 +164,20 @@ export default function GuestSelector({
     return String(currentSelection.adults);
   }, [currentSelection, placeholder]);
 
+  const adultsMax = rooms != null ? maxAdultsFor(rooms) : 8;
+  const kidsMax = rooms != null ? maxKidsFor(rooms) : 6;
+  // The room limit, not the general 8/6 cap, is what stopped the stepper.
+  const atRoomLimit =
+    rooms != null && ((adults >= adultsMax && adultsMax < 8) || (kids >= kidsMax && kidsMax < 6));
+
+  const issue = guestSelectionIssue(currentSelection, rooms);
+
   function changeAdults(delta: number) {
-    setAdults((prev) => clampAdultsCount(prev + delta));
+    setAdults((prev) => Math.min(adultsMax, clampAdultsCount(prev + delta)));
   }
 
   function changeKids(delta: number) {
-    setKids((prev) => clampKidsCount(prev + delta));
+    setKids((prev) => Math.min(kidsMax, clampKidsCount(prev + delta)));
   }
 
   return (
@@ -168,6 +189,7 @@ export default function GuestSelector({
     >
       <input type="hidden" name="adults" value={String(adults)} />
       <input type="hidden" name="kids" value={String(kids)} />
+      {residency ? <input type="hidden" name="residency" value={residency.value} /> : null}
 
       {Array.from({ length: 6 }, (_, index) => {
         const key = index + 1;
@@ -220,7 +242,7 @@ export default function GuestSelector({
                     type="button"
                     className={styles.counterButton}
                     onClick={() => changeAdults(1)}
-                    disabled={adults >= 8}
+                    disabled={adults >= adultsMax}
                     aria-label="Increase adults"
                   >
                     +
@@ -251,7 +273,7 @@ export default function GuestSelector({
                     type="button"
                     className={styles.counterButton}
                     onClick={() => changeKids(1)}
-                    disabled={kids >= 6}
+                    disabled={kids >= kidsMax}
                     aria-label="Increase children"
                   >
                     +
@@ -292,9 +314,44 @@ export default function GuestSelector({
                     </div>
                   ))}
                 </div>
+
+                {issue === CHILD_AGE_MISSING_MESSAGE ? (
+                  <div className={styles.helper} role="status">
+                    {CHILD_AGE_MISSING_MESSAGE}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {atRoomLimit || issue === OCCUPANCY_LIMIT_MESSAGE ? (
+              <div
+                className={issue === OCCUPANCY_LIMIT_MESSAGE ? styles.issue : styles.helper}
+                role="status"
+              >
+                {OCCUPANCY_LIMIT_MESSAGE}
+              </div>
+            ) : null}
+
+            {residency ? (
+              <div className={styles.agesBlock}>
+                <div className="oltra-dropdown-group-label">Passport country</div>
+                <ResidencyPicker
+                  variant="field"
+                  value={residency.value}
+                  onChange={residency.onChange}
+                />
+                <div className={styles.helper}>
+                  Prices can vary by the guests&rsquo; passport country.
+                </div>
               </div>
             ) : null}
           </div>
+        </div>
+      ) : issue ? (
+        // Closed, the reason still shows under the field, so a search that
+        // will not run says why without the panel having to be reopened.
+        <div className={styles.issue} role="status">
+          {issue}
         </div>
       ) : null}
     </div>

@@ -40,6 +40,12 @@ type Props = {
   adults: number;
   kids: number;
   bedrooms: number;
+  // Every child's age — the page only sets hasFullStayDetails when all are
+  // present, so this is never padded or defaulted.
+  childrenAges: number[];
+  // The passport country chosen in the guest selector, via the URL. "" when
+  // the URL has none, and the browser locale fills in.
+  residency: string;
   hasFullStayDetails: boolean;
   hotelsHref: string;
   flightsHref: string;
@@ -94,6 +100,8 @@ export default function LandingSummary({
   adults,
   kids,
   bedrooms,
+  childrenAges,
+  residency: residencyParam,
   hasFullStayDetails,
   hotelsHref,
   flightsHref,
@@ -286,13 +294,16 @@ export default function LandingSummary({
     [hotelSummary]
   );
 
-  // Residency is required by the Ratehawk endpoints and is auto-detected from
-  // the browser locale rather than asked for (see CLAUDE.md §39). Set in an
-  // effect, not at init, so the server and first client render agree.
-  const [residency, setResidency] = useState("");
+  // Residency is required by the Ratehawk endpoints. The guest's choice from
+  // the guest selector wins; without one it is detected from the browser
+  // locale, in an effect rather than at init so the server and first client
+  // render agree.
+  const [localeResidency, setLocaleResidency] = useState("");
   useEffect(() => {
-    setResidency((prev) => prev || guessResidencyFromLocale());
+    setLocaleResidency((prev) => prev || guessResidencyFromLocale());
   }, []);
+  const residency = residencyParam || localeResidency;
+  const childrenAgesKey = childrenAges.join(",");
 
   // Prices come from Ratehawk, matching the Hotels page (§30). This used to
   // call Agoda's batch endpoint, which is why the cards showed no prices at
@@ -345,7 +356,8 @@ export default function LandingSummary({
         residency,
         adults,
         kids,
-        childrenAges: [],
+        // This used to send [], which the server silently priced as age 10.
+        childrenAges: childrenAgesKey ? childrenAgesKey.split(",").map(Number) : [],
         rooms: bedrooms,
       }),
     })
@@ -398,6 +410,7 @@ export default function LandingSummary({
     toDate,
     adults,
     kids,
+    childrenAgesKey,
     bedrooms,
   ]);
 

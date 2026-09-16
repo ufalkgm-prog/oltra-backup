@@ -28,11 +28,15 @@ Affiliate API, contract AFF-392026. ZenHotels is the consumer brand, RateHawk th
 
 Agreed architecture: myOLTRA owns discovery (search, hotel pages, rate display). ZenHotels owns checkout at `hotels.myoltra.com` via CNAME and is merchant of record.
 
-### BLOCKED — do not build
+### Certification scope — confirmed by ETG (2026-09-16)
 
-The handoff to the ZenHotels checkout is undocumented and pending written confirmation from ETG (asked 10 Aug 2026). Until it arrives, do not write: Create / Start / Check booking process; credit card tokens, `pay_uuid` / `init_uuid` / `return_path`, 3DS; booking status webhooks or state machines; Retrieve or Cancel booking.
+Under the White Label model we complete **only the General, Static Data and Search step sections** of the certification checklist. **Booking and card tokenisation do not apply.** Seseg confirmed myOLTRA calls Prebook to obtain the hash the White Label redirect carries, so Prebook is ours and everything after it is ZenHotels'.
 
-Unknown until answered: at what point we redirect, what we pass across, and whether any booking endpoint stays on our side.
+### Out of scope — do not build
+
+Create / Start / Check booking process; credit card tokens, `pay_uuid` / `init_uuid` / `return_path`, 3DS; booking status webhooks or state machines; Retrieve or Cancel booking. **These endpoints are active on our key** (`/overview/`, 2026-09-16) — the proxy allowlist is what keeps them unreachable (§47).
+
+**Still unknown: the redirect itself.** ETG have not specified the URL, which parameters accompany the p- hash, or whether anything is posted rather than linked. The code stops at a marked seam (`WHITE LABEL REDIRECT SEAM` in `HotelsView.tsx`) — **do not guess the format.**
 
 **Sandbox and test bookings are treated as real orders.** Do not execute any booking call without explicit confirmation from Ulrik in-session.
 
@@ -83,9 +87,36 @@ Supplied 17 Aug 2026 as the addresses to whitelist **on our side**: `95.213.146.
 
 ### Flow (our scope)
 
-Search by hotel IDs / region / geo → Retrieve hotelpage → Prebook → [handoff to ZenHotels — mechanism TBC]. Hash chain: `h-…` from hotelpage → Prebook → returns `p-…`. **Prebook is part of the search step** and must be excluded from the booking flow.
+Search by hotel IDs → Retrieve hotelpage → Prebook → [White Label redirect — format not yet specified]. Hash chain: `h-…` from hotelpage (valid 24h) → Prebook → returns `p-…` (valid 6h). **Prebook is part of the search step** and must be excluded from the booking flow. We never call `/serp/region/`, `/serp/geo/` or `/serp/prebook/`.
 
-**Implementation gap**: the current code never calls a separate Prebook endpoint — `book_hash` is read off each `search/hp/` rate and stored unused. Adding the real Prebook call is new scope, still pending the BLOCKED question.
+### Prebook (built 2026-09-16)
+
+`lib/ratehawk/prebook.ts` → `POST /api/ratehawk/prebook` → the proxy (only while `ETG_PREBOOK_ENABLED=1`, §47).
+
+* **Fires only on the guest's Continue click** in the Hotels panel — never on load, never on a selection change. Our key allows **5 prebooks / 60s** site-wide.
+* `HotelpageHash` / `PrebookHash` template types keep the chain explicit; the route refuses anything not shaped `h-…`, the library anything not returning `p-…`.
+* **`price_increase_percent: 10`**, and **every** change is shown before the guest continues — up or down, price or terms. Within the tolerance ETG may substitute a rate of the same room and meal type that **swaps refundable for non-refundable**, which `changes.price_changed` does not report; so `rateChanges.ts` compares price, currency, meal, free-cancellation date and `match_hash`. The tolerance never decides what the guest accepts — a lower one would only turn small movements into `no_available_rates` dead ends.
+* The prebooked rate is normalised by `toGroupedRoom()`, the same function as the hotelpage list, so a change shown can never be two parsers disagreeing.
+* Error mapping: `rate_not_found` → expired, `no_available_rates` → unavailable (both refresh the rooms), `endpoint_exceeded_limit` → busy, proxy 404 → disabled.
+* **The seam explains itself**: a confirmed rate shows "Your rate is confirmed. Checkout is being configured and is not live yet. Nothing has been booked or charged." with a passive Continue — no supplier or partner named (Ulrik: how the partner is named at checkout is decided separately).
+* Flag `NEXT_PUBLIC_RATEHAWK_PREBOOK=1` — **on in Vercel Production**, because ETG review the live site. It is build-inlined, so turning it off needs a redeploy; the no-deploy kill switch is the proxy variable.
+* Verified live 2026-09-16 on 8473727: `h-f198…` → `p-4f07…`, price, meal, cancellation and `match_hash` unchanged, `price_changed: false`, ~0.9s, `Cache-Control: no-store`.
+
+### One rate covers every room searched (measured 2026-09-16)
+
+**A rate's `show_amount` is the total for the whole `guests` array, not one room.** The same rate searched for 2 rooms returned exactly 2.000× its 1-room price and `daily_prices` on Bulgari Paris, George V and Fouquet's. §30's "N copies of the cheapest room" formula multiplied by the room count again, so **every multi-room price was overstated by a factor of N** — headlines on results, landing and concierge cards, and the Hotels panel total.
+
+Fixed: `computeHeadlinePrice` no longer multiplies; the quantity steppers are gone — the guest picks **one room type** for all rooms searched, labelled "total stay, N rooms"; a note tells multi-room guests to search one room at a time for different types.
+
+* **Saved trips created before 2026-09-16 hold inflated totals** (×N for multi-room saves, and the headline fallback was ×N²). New saves store the whole-party total split evenly across `quantity` so `SavedTripsView`'s `price × quantity` sums back to ETG's figure. Old rows were not rewritten; "Update price and availability" re-prices one correctly.
+* **Product gap, not a closed question: different occupancy per room** (Room 1: 2A+1C, Room 2: 2A). Search takes a total party plus a room count and spreads it round-robin, so the checklist's multi-room test case is answered "not supported". Two rooms with different occupancy is a normal family booking in our segment — wanted later, not now.
+
+### Guest information (2026-09-16)
+
+* **Passport country is a visible field** in `GuestSelector` (hotel searches only), searchable, defaulting from the browser locale and round-tripping as `?residency=`. ETG's mandatory test case — 1 room, 2 adults + child aged 5, **Uzbekistan citizenship** — must be executable without editing a URL. Verified live on 8473727 with `uz`. (§39 had demoted it to an understated line because the price effect is ≤3%; nothing else argued against the field.)
+* **A child's age is never defaulted.** `buildGuestsArray` used to send 10 for a missing age, and two callers hit it silently: the landing summary sent `childrenAges: []` always, and Hotels read ages from the URL while reading counts live. Now search does not run, with helper text; the routes return 400; `buildGuestsArray` throws; the concierge's availability tool tells the model to ask.
+* **6 adults + 4 children per room** enforced in the selector (steppers stop, helper text) and by the routes (400). The rule is `adults ≤ 6 × rooms`, `kids ≤ 4 × rooms`, since the party is spread round-robin. Shared as `guestSelectionIssue()` in `lib/guests.ts`.
+* **No hardcoded residency left.** `AiResultFrames` and the concierge's own availability call sent `"gb"` for everyone; they now use the guest-selector choice from the URL, else locale (`currentResidency()`), passed to the chat route beside `pageContext` — never to the model.
 
 ### Static content
 
@@ -102,8 +133,8 @@ Built 2026-08-24 — `etg-static-sync/`, §48. Daily job, Content API, 853 hotel
 * Rate name from `room_name`; meal type from `meal_data.value`, never presented as better than what ETG sent.
 * First search step shows one or two lowest rates per hotel; all rates only on the hotel page.
 * ETG is our only supplier. Upsells (early check-in / late check-out) are not applicable to the Affiliate API — skip.
-* **`residency` collected on the first search step** and sent on all `/search/serp/*/` and `/search/hp/` requests. Hardcoding a default counts as not implementing it. Auto-detected from browser locale and sent on every request; the visible selector was removed after measuring the effect at ≤3% (§39).
-* **Parse and display `metapolicy_struct` and `metapolicy_extra_info`** — neither is read anywhere in the current code. Implementation gap.
+* **`residency` collected on the first search step** and sent on all `/search/serp/*/` and `/search/hp/` requests. Hardcoding a default counts as not implementing it. Defaulted from the browser locale, chosen in the guest selector's "Passport country" field (restored 2026-09-16 — §39 had removed it after measuring the effect at ≤3%), and sent on every request.
+* **`metapolicy_struct` and `metapolicy_extra_info` are both displayed** (2026-09-16) — "Hotel policies" in the Hotels panel, via `GET /api/hotels/[id]/ratehawk-policy` (per hotel, never a bulk field list) and `lib/ratehawk/metapolicy.ts`. Every key was profiled across all 853 hotels first. Amounts shown as sent in their own currency; `unspecified` omitted; a zero price with no currency reads "charge not specified", never "free"; extra_info (118 of 761 carry HTML) is reduced to plain paragraphs and never rendered as HTML. Check-in/out times shown, `00:00:00` treated as unspecified.
 
 ### Caching
 
@@ -111,26 +142,40 @@ Never cache Retrieve hotelpage or Prebook responses — prohibited. Hotelpage ra
 
 ### Limits and timeouts
 
-* Max 300 hotels per Search by hotel IDs request.
+* Max 300 hotels per Search by hotel IDs request — **enforced**: `fetchRatehawkSerpBatch` splits into chunks of 300, sent **sequentially** (`SERP_CHUNK_CONCURRENCY = 1`). ETG document per-window counts, not a concurrency cap, but do not rule one out; raise only if they confirm. It already mattered — a country search or the concierge can exceed 300. Verified: 301 hids → 2 requests, 248 priced, a hid from the second chunk present, 19.7s.
 * Max 9 rooms per rate, same room type only.
-* Max 6 adults + 4 children per room; children are 17 and under, ages passed as an array (`"children": [7]`). `buildGuestsArray()` already sends ages as an array but enforces none of these limits.
-* Stays up to 30 nights; check-in no more than 730 days out. Not enforced in the search form.
-* Search timeout 30s recommended, sent as an explicit `timeout` parameter — **not currently sent**. Distinct from the HTTP client timeouts in §47.
-* Prebook timeout 60s recommended, 30s minimum; set on ETG's side.
-* `price_increase_percent` 0–100. Any value above 0 requires showing the price change before proceeding. Default TBC.
+* Max 6 adults + 4 children per room; children are 17 and under, ages passed as an array (`"children": [7]`) — **enforced** (Guest information above).
+* Stays up to 30 nights — **enforced** (2026-09-16; the forms allowed 42): helper text under the dates on Hotels and landing, SEARCH passive with the same reason, no pricing on landing or concierge cards, 400 from the availability and saved-trip routes, and a tool error telling the concierge to shorten or split the stay. Shared as `lib/stay.ts` (nights counted in UTC, so a daylight-saving change cannot miscount). Check-in no more than 730 days out is **not** enforced.
+* Search `timeout: 30` — **sent** on `/search/serp/hotels/` and `/search/hp/` (`ETG_SEARCH_TIMEOUT_S`). HTTP timeouts sit above it: proxy 40s, Vercel 45s (§47).
+* Prebook takes no timeout parameter; ETG recommend 60s, 30s minimum. Proxy 60s, Vercel 65s, route `maxDuration = 75`.
+* `price_increase_percent` **10**, every change shown (Prebook above).
+
+#### Our key's request limits (from `/api/b2b/v3/overview/`, 2026-09-16)
+
+| Endpoint | Limit |
+|---|---|
+| `/search/hp/`, `/hotel/prebook/` | **5 / 60s** |
+| `/search/serp/hotels/`, `/serp/region/`, `/serp/geo/` | 15 / 60s |
+| `/hotel/info/`, Content API | 30 / 60s |
+
+Site-wide, not per user. **At 5/min the sixth hotel opened in a minute gets no rooms.** `hp` is now debounced 450ms like the results batch (2026-09-16) — before that every form edit while a hotel was open cost a request, and a date range cost two. A probe run hit `429 endpoint_exceeded_limit` itself. Possibly test-key limits that rise at certification — raise with ETG either way. Headers are `x-ratelimit-limit/-per/-remaining/-reset`; the proxy does not forward them, but the body's `debug.api_endpoint` carries the same.
 
 ### Certification deliverables (non-code)
 
-Test hotel `hid` 8473727 / `test_hotel_do_not_book` must be mapped — confirmed present. Plus a diagram comparing ETG endpoints against the myOLTRA flow, a workflow table (step, triggering user action, endpoints), and RPM estimates for `/serp/hotels`, `/serp/region`, `/serp/geo`, `/search/hp`, `/hotel/prebook`, `/serp/prebook`. Scope of certification under the white-label model is itself unconfirmed.
+Test hotel `hid` 8473727 / `test_hotel_do_not_book` must be mapped — confirmed present, and still returns rates on our key (2026-09-16). ETG's generic certification page lists `10004834` and `8819557`: those are **sandbox** fixtures; 8473727 came from Valeriy for our test key. Not a conflict.
 
-### TODO before certification (deferred)
+Certification is conducted **in writing over 14–30 days**; for a website ETG want live site access or a video of the flow, plus the mandatory Pre-certification Checklist and test-case results.
 
-* Parse and display `metapolicy_struct` / `metapolicy_extra_info`.
-* Enforce the limits above — none are enforced in the search form today.
-* **No chunking at the 300-hotel limit** in `api/ratehawk/availability/batch/route.ts` — it forwards whatever it's given. Doesn't bite today (results mode caps at 50, landing at 40); would bite if either cap rises or a region-wide search is added.
-* **No explicit ETG `timeout` parameter** on search requests.
+**Drafts for Ulrik's review** (uncommitted until he says): `etg-certification/` at the repo root — `endpoint-diagram.md`, `workflow-table.md`, `rpm-estimates.md`.
 
-Resolved and no longer open: IP whitelisting (mandatory — §47), where the sync runs (Railway — §48), Content API provisioning, live static fetching (§48), residency, taxes, cancellation, `rg_ext`.
+### Open
+
+* Check-in over 730 days out is not enforced in the search form.
+* Different occupancy per room — product gap (above).
+* `hp` at 5/min site-wide — ask ETG for post-certification limits.
+* The White Label redirect format (ETG).
+
+Resolved and no longer open: IP whitelisting (mandatory — §47), where the sync runs (Railway — §48), Content API provisioning, live static fetching (§48), residency (now a visible field), taxes, cancellation, `rg_ext`, metapolicy display, 300-hid chunking, the search `timeout` parameter, Prebook, child ages and per-room occupancy limits, the 30-night stay limit, `hp` debounce.
 
 ### Contacts
 
@@ -201,11 +246,15 @@ Top-level directory, sibling to `hotels-beta/`. Railway's root directory is `etg
 
 It forwards the body byte-for-byte and returns the upstream status and body unmodified — except that it **strips any inbound `Authorization` and injects its own**, so Vercel never holds the ETG key.
 
-**Only four paths are proxied**: `/api/b2b/v3/search/serp/hotels/`, `/api/b2b/v3/search/hp/`, `/api/b2b/v3/hotel/info/`, `/api/content/v1/hotel_content_by_ids/`. Everything else is 404.
+**Only five paths are proxied**: `/api/b2b/v3/search/serp/hotels/`, `/api/b2b/v3/search/hp/`, `/api/b2b/v3/hotel/info/`, `/api/content/v1/hotel_content_by_ids/`, and `/api/b2b/v3/hotel/prebook/` **only while `ETG_PREBOOK_ENABLED=1`**. Everything else is 404, and every `/api/b2b/v3/hotel/order/` path is refused by name before the allowlist is even consulted.
 
-**This allowlist is load-bearing, not tidiness.** An open forwarder holding our credentials would let anyone with the shared secret reach any ETG endpoint, including the booking endpoints §32 marks BLOCKED — and our key hits ETG's **live production** host, where test bookings are real orders needing manual cancellation.
+**This allowlist is load-bearing, not tidiness.** An open forwarder holding our credentials would let anyone with the shared secret reach any ETG endpoint, including the booking endpoints §32 puts out of scope — **which are active on our key** (`/overview/` lists `order/booking/form`, `finish`, `finish/status`, `cancel` at 30/60s) — and our key hits ETG's **live production** host, where test bookings are real orders needing manual cancellation.
 
-**The test a new path must pass**: is it read-only, and does admitting it leave every BLOCKED endpoint just as unreachable? `hotel_content_by_ids` passes — it returns static content and creates nothing, and its purpose is the opposite of widening: it lets the §48 sync egress from the already-whitelisted IPs instead of standing up a second service with a second set of addresses. `hotel_ids_by_filter` was deliberately **not** added — the sync does a full refresh and never calls it. Verified after: `/hotel/prebook/`, `/order/booking/form/` and `hotel_ids_by_filter` all still 404 with a valid secret.
+**The test a new path must pass**: is it read-only, and does admitting it leave every booking endpoint just as unreachable? `hotel_content_by_ids` passes — it returns static content and creates nothing, and its purpose is the opposite of widening: it lets the §48 sync egress from the already-whitelisted IPs instead of standing up a second service with a second set of addresses. `hotel_ids_by_filter` was deliberately **not** added — the sync does a full refresh and never calls it.
+
+**`/hotel/prebook/` passes the same test** (added 2026-09-16, deliberately, after ETG confirmed the White Label certification scope and that myOLTRA calls Prebook for the redirect hash). **Prebook validates a rate and returns a hash; it does not create an order**, takes no guest or card data, and ETG's workflow places it in the search step. Admitting it leaves `/order/booking/form/`, `/order/booking/finish/` and `/order/booking/finish/status/` exactly as unreachable. It sits behind `ETG_PREBOOK_ENABLED` so it can be switched off **without a Vercel deploy** — changing a Railway variable restarts the proxy in seconds; unset means 404, so admitting it is an explicit act on Railway too.
+
+Verified locally 2026-09-16 with the upstream pointed at a dead port (so nothing could reach ETG): with the variable unset, prebook and all four booking paths → 404; with it set, prebook → 502 "Could not reach ETG." (forwarded) and all four booking paths still → 404; no secret → 401.
 
 `GET /healthz` is unauthenticated and cannot reach ETG. The service exits at boot if any required env var is missing, so a misconfiguration fails the healthcheck loudly rather than serving errors under load.
 
@@ -229,6 +278,8 @@ Vercel sends `x-oltra-proxy-secret`. The proxy compares it in constant time agai
 | `PROXY_SHARED_SECRET` | ✅ | — | — |
 | `RATEHAWK_PROXY_SECRET` | — | ✅ | ❌ |
 | `RATEHAWK_API_URL` | — | Railway URL | `https://api.ratehawk.com` |
+| `ETG_PREBOOK_ENABLED` | `1` to admit prebook | — | — |
+| `NEXT_PUBLIC_RATEHAWK_PREBOOK` | — | `1` (Production + Preview) | `1` to see Continue |
 
 **Set `RATEHAWK_PROXY_SECRET` and the `RATEHAWK_API_URL` override on Vercel's Production and Preview only, never Development** — `vercel env pull` writes Development values into `.env.local` and would silently flip local dev into proxy mode.
 
@@ -244,7 +295,7 @@ ETG credentials are **removed from Vercel entirely** — not blanked, not left o
 
 No automatic retry, by decision: serp already takes ~3s so a retry doubles the worst case with the user waiting, ETG rate-limits, and the UI already has an explicit user-driven retry. **Verified**: with the proxy down the batch route returns 500 in ~38ms and the existing error states render — and **none of them claims the hotel is unavailable**, preserving the §42 distinction.
 
-`ratehawkPost()` previously passed **no timeout at all**. Now 35s Vercel→proxy against 30s proxy→ETG, so the proxy always fails first and returns a real status rather than leaving Vercel on a dangling socket.
+`ratehawkPost()` previously passed **no timeout at all**. The proxy always fails first and returns a real status rather than leaving Vercel on a dangling socket. **Per path since 2026-09-16**: search 40s proxy→ETG / 45s Vercel→proxy (above ETG's own `timeout: 30` budget, so ETG answers first); prebook 60s / 65s (ETG's recommendation); everything else 30s. A 301-hid batch took 19.7s end to end, so the search margin is real.
 
 ### Deployment
 

@@ -122,19 +122,46 @@
   padding-left: 0.42rem;
 }
 
+/* Tighter rows (Ulrik, 2026-09-16): 20px rows with no gap, where the shared
+   dropdown item is 24px plus a 4px gap. Four rows stay visible per group
+   (§10), so the list is capped at 4 × 20px and scrolls beyond that. */
 .suggestionList {
-  display: grid;
-  gap: 0.08rem;
-  padding-right: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 80px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 
-.suggestionItem {
-  display: block;
+/* Nested so it outranks the global .oltra-dropdown-item padding and height,
+   whatever order the two stylesheets load in. Background and border are left
+   to the global rule, so its hover highlight still applies. */
+.suggestionList .suggestionItem {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
   width: 100%;
+  min-height: 20px;
+  padding-top: 0.08rem;
+  padding-bottom: 0.08rem;
   text-align: left;
   white-space: nowrap;
+}
+
+.suggestionItemLabel {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: transparent;
-  border: 0;
+}
+
+/* What a Geography row is — City, Country, Region… — so "Mexico" the country
+   and "New Mexico" the state read apart at a glance. */
+.suggestionItemType {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--oltra-text-muted);
 }

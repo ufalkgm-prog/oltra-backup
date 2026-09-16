@@ -1,9 +1,15 @@
 import PageShell from "@/components/site/PageShell";
 import LandingBackground from "@/components/site/LandingBackground";
 import { getHotels } from "@/lib/directus";
-import { buildHotelsDirectusFilter, filterHotelsByTags } from "@/lib/hotelFilters";
+import {
+  buildHotelsDirectusFilter,
+  filterHotelsByMacroRegion,
+  filterHotelsByTags,
+} from "@/lib/hotelFilters";
 import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
-import { readGuestSelection } from "@/lib/guests";
+import { guestSelectionIssue, readGuestSelection } from "@/lib/guests";
+import { isValidResidencyCode } from "@/lib/countries";
+import { isStayTooLong } from "@/lib/stay";
 import LandingSearchPanel from "./LandingSearchPanel";
 import LandingResults from "./LandingResults";
 import LandingSummary from "./LandingSummary";
@@ -53,7 +59,8 @@ function buildHotelsHeaderLabel(count: number, sp: SearchParams): string {
   const adminRegion = cleanLabel(normalizeParam(sp.admin_region));
   const country = cleanLabel(normalizeParam(sp.country));
   const region = cleanLabel(normalizeParam(sp.region));
-  const location = city || state || adminRegion || country || region;
+  const macroRegion = cleanLabel(normalizeParam(sp.macro_region));
+  const location = city || state || adminRegion || country || macroRegion || region;
 
   const settingValues = normalizeParam(sp.settings)
     .split(",")
@@ -127,6 +134,7 @@ export default async function HomePage({
     "admin_region",
     "country",
     "region",
+    "macro_region",
     "local_area",
     "affiliation",
     "activities",
@@ -139,8 +147,17 @@ export default async function HomePage({
 
   const guests = readGuestSelection(resolvedSearchParams);
 
+  // A child without an age, more guests than ETG allow per room, or a stay over
+  // ETG's 30 nights is not a priceable stay — nothing is defaulted (§32).
   const hasFullStayDetails =
-    Boolean(fromDate) && Boolean(toDate) && guests.adults > 0 && Boolean(bedrooms);
+    Boolean(fromDate) &&
+    Boolean(toDate) &&
+    !isStayTooLong(fromDate, toDate) &&
+    guests.adults > 0 &&
+    Boolean(bedrooms) &&
+    !guestSelectionIssue(guests, Math.max(1, Number(bedrooms) || 1));
+  const childrenAges = guests.kidAges.slice(0, guests.kids).map((age) => Number(age));
+  const residencyParam = normalizeParam(resolvedSearchParams.residency).trim().toLowerCase();
 
   const metaHotels = await getHotels({
     fields: [
@@ -209,11 +226,11 @@ export default async function HomePage({
       limit: -1,
     });
 
-    const hotels = filterHotelsByTags(hotelsAll, {
+    const hotels = filterHotelsByMacroRegion(filterHotelsByTags(hotelsAll, {
       activities: normalizeParam(resolvedSearchParams.activities).split(",").map((s) => s.trim()).filter(Boolean),
       settings: normalizeParam(resolvedSearchParams.settings).split(",").map((s) => s.trim()).filter(Boolean),
       styles: normalizeParam(resolvedSearchParams.styles).split(",").map((s) => s.trim()).filter(Boolean),
-    });
+    }), resolvedSearchParams);
 
     const names = hotels.map((h: any) => h.hotel_name ?? "").filter(Boolean);
 
@@ -275,6 +292,8 @@ export default async function HomePage({
                   adults={guests.adults}
                   kids={guests.kids}
                   bedrooms={Math.max(1, Number(bedrooms) || 1)}
+                  childrenAges={childrenAges}
+                  residency={isValidResidencyCode(residencyParam) ? residencyParam : ""}
                   hasFullStayDetails={hasFullStayDetails}
                   hotelsHref={hotelsHref}
                   flightsHref={flightsHref}

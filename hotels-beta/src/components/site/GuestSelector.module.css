@@ -131,6 +131,19 @@
   z-index: 20;
 }
 
+.helper {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--oltra-text-muted);
+}
+
+.issue {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--oltra-error-text);
+}
+
 @media (max-width: 700px) {
   .panel {
     width: 280px;

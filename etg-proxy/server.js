@@ -22,6 +22,12 @@ const ETG_KEY = process.env.RATEHAWK_KEY?.trim();
 const ETG_KEY_ID = process.env.RATEHAWK_KEY_ID?.trim();
 const SHARED_SECRET = process.env.PROXY_SHARED_SECRET?.trim();
 
+// The no-deploy kill switch for Prebook (§47). Unset or anything but "1" means
+// the prebook path is NOT admitted and answers 404 like any unlisted path.
+// Changing a Railway variable restarts this service in seconds, with no Vercel
+// deploy. Only Prebook is switchable — no booking path is ever admitted.
+const PREBOOK_ENABLED = process.env.ETG_PREBOOK_ENABLED?.trim() === "1";
+
 // Exactly the endpoints we call. Everything else is 404.
 //
 // This allowlist is the most important control in this file. An open forwarder
@@ -38,20 +44,44 @@ const SHARED_SECRET = process.env.PROXY_SHARED_SECRET?.trim();
 // widening: it lets the offline static sync (§32) egress from the three Railway
 // IPs ETG has already whitelisted, instead of standing up a second service with
 // a second set of addresses to get approved.
+//
+// `/hotel/prebook/` passes the same test (added 2026-09-16, after ETG confirmed
+// that certification under the White Label model covers General, Static Data
+// and Search only, and that myOLTRA calls Prebook to obtain the hash the White
+// Label redirect carries). Prebook validates one rate and returns a hash. It
+// creates no order, takes no guest or card data, and ETG's own workflow places
+// it in the search step, before any booking. Admitting it leaves every booking
+// endpoint exactly as unreachable as before: /hotel/order/booking/form/,
+// /hotel/order/booking/finish/, /hotel/order/booking/finish/status/,
+// /hotel/order/cancel/ and every other /order/ path stay absent from this set
+// and still 404 — and those endpoints ARE active on our key (measured
+// 2026-09-16 via /overview/), which is why this list matters.
 const ALLOWED_PATHS = new Set([
   "/api/b2b/v3/search/serp/hotels/",
   "/api/b2b/v3/search/hp/",
   "/api/b2b/v3/hotel/info/",
   "/api/content/v1/hotel_content_by_ids/",
+  ...(PREBOOK_ENABLED ? ["/api/b2b/v3/hotel/prebook/"] : []),
 ]);
+
+// Booking paths are refused by name as well as by absence, so a future edit to
+// the set above cannot admit one by accident: this check runs first.
+const NEVER_ALLOWED_PREFIX = "/api/b2b/v3/hotel/order/";
 
 const SECRET_HEADER = "x-oltra-proxy-secret";
 const MAX_BODY_BYTES = 1024 * 1024;
 
-// 30s per ETG's recommended search timeout (§32). The caller on Vercel allows
-// 35s, so this always fires first and returns a real status code rather than
+// Per path. Search requests now carry ETG's own `timeout: 30` budget (§32), so
+// the HTTP timeout sits above it and ETG answers first. Prebook takes no timeout
+// parameter; ETG recommend 60s. Vercel allows 45s (search) and 65s (prebook),
+// so this always fires first and returns a real status code rather than
 // leaving Vercel holding a dangling socket.
-const ETG_TIMEOUT_MS = 30_000;
+const ETG_TIMEOUT_MS = {
+  "/api/b2b/v3/search/serp/hotels/": 40_000,
+  "/api/b2b/v3/search/hp/": 40_000,
+  "/api/b2b/v3/hotel/prebook/": 60_000,
+};
+const ETG_DEFAULT_TIMEOUT_MS = 30_000;
 
 // GET /whoami reports the outbound IP this service actually presents, so the
 // addresses sent to ETG can be confirmed empirically rather than taken from
@@ -212,7 +242,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  if (!ALLOWED_PATHS.has(path)) {
+  if (path.startsWith(NEVER_ALLOWED_PREFIX) || !ALLOWED_PATHS.has(path)) {
     console.warn(`404 ${req.method} ${path} — not a proxied ETG endpoint`);
     sendJson(res, 404, { ok: false, error: "Not a proxied ETG endpoint." });
     return;
@@ -247,7 +277,7 @@ const server = createServer(async (req, res) => {
         "Content-Type": "application/json",
       },
       body,
-      signal: AbortSignal.timeout(ETG_TIMEOUT_MS),
+      signal: AbortSignal.timeout(ETG_TIMEOUT_MS[path] ?? ETG_DEFAULT_TIMEOUT_MS),
     });
 
     const text = await upstream.text();
@@ -276,7 +306,9 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`ETG proxy listening on ${PORT}, forwarding to ${ETG_BASE}`);
+  console.log(
+    `ETG proxy listening on ${PORT}, forwarding to ${ETG_BASE} (prebook ${PREBOOK_ENABLED ? "enabled" : "disabled"})`
+  );
 });
 
 for (const signal of ["SIGTERM", "SIGINT"]) {

@@ -32,11 +32,27 @@ const RATEHAWK_API_URL = (
 // flip local dev into proxy mode.
 const USE_PROXY = Boolean(RATEHAWK_PROXY_SECRET);
 
-// Must exceed the proxy's own 30s ETG timeout so the proxy always fails first and
-// returns a real status code, rather than leaving this side holding a dangling
-// socket until the platform's function limit. Distinct from the ETG-side `timeout`
-// request parameter, which we do not send yet (§32 TODO).
-const RATEHAWK_TIMEOUT_MS = 35_000;
+// ETG's own time budget for a rate search, sent as the `timeout` request
+// parameter on /search/serp/*/ and /search/hp/ — 30s is ETG's recommendation
+// (§32). When it runs out ETG answers with what it has found so far.
+export const ETG_SEARCH_TIMEOUT_S = 30;
+
+// The HTTP timeouts sit above that budget, so ETG answers first rather than the
+// connection being cut at the same instant. They must also exceed the proxy's
+// own per-path ETG timeouts (etg-proxy/server.js: 40s search, 60s prebook), so
+// the proxy always fails first and returns a real status code rather than
+// leaving this side holding a dangling socket (§47).
+const RATEHAWK_TIMEOUT_MS = 45_000;
+export const RATEHAWK_PREBOOK_TIMEOUT_MS = 65_000;
+
+// ETG's documented maximum per Search-by-hotel-IDs request (§32).
+const RATEHAWK_SERP_MAX_HIDS = 300;
+// Chunks go one at a time. ETG document per-window request counts, not a
+// concurrency cap — but they do not rule one out, and the RPM figures we give
+// them assume one in-flight search per user action. Chunking only engages
+// above 300 hids, so the latency cost lands on whole-country searches alone.
+// Raise only if ETG confirm concurrency is not limited.
+const SERP_CHUNK_CONCURRENCY = 1;
 
 function assertRatehawkConfig() {
   if (USE_PROXY) return;
@@ -84,16 +100,35 @@ export function buildGuestsArray(
     if (group.adults < 1) group.adults = 1;
   }
 
+  // A missing age is an error, never a default. This used to send 10 for any
+  // child without one — a wrong age is a wrong price and a problem at
+  // check-in. Callers validate first (guestSelectionIssue), so reaching this
+  // throw means a caller skipped that.
   const kidsCount = Math.max(0, Math.floor(kids));
   for (let i = 0; i < kidsCount; i++) {
-    const age = Number.isFinite(kidAges[i]) ? Math.max(0, Math.floor(kidAges[i])) : 10;
-    groups[i % roomCount].children.push(age);
+    if (!Number.isFinite(kidAges[i])) {
+      throw new Error(`Missing age for child ${i + 1} of ${kidsCount}`);
+    }
+    groups[i % roomCount].children.push(Math.max(0, Math.floor(kidAges[i])));
   }
 
   return groups;
 }
 
-async function ratehawkPost<T>(path: string, body: unknown): Promise<T> {
+export class RatehawkHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly body: string
+  ) {
+    super(`Ratehawk request failed (${status})`);
+  }
+}
+
+export async function ratehawkPost<T>(
+  path: string,
+  body: unknown,
+  options: { timeoutMs?: number } = {}
+): Promise<T> {
   assertRatehawkConfig();
 
   const response = await fetch(`${RATEHAWK_API_URL}${path}`, {
@@ -101,7 +136,7 @@ async function ratehawkPost<T>(path: string, body: unknown): Promise<T> {
     headers: requestHeaders(),
     body: JSON.stringify(body),
     cache: "no-store",
-    signal: AbortSignal.timeout(RATEHAWK_TIMEOUT_MS),
+    signal: AbortSignal.timeout(options.timeoutMs ?? RATEHAWK_TIMEOUT_MS),
   });
 
   const text = await response.text();
@@ -109,7 +144,7 @@ async function ratehawkPost<T>(path: string, body: unknown): Promise<T> {
   if (!response.ok) {
     console.error("RATEHAWK RESPONSE STATUS:", response.status);
     console.error("RATEHAWK RESPONSE BODY:", text.slice(0, 2000));
-    throw new Error(`Ratehawk request failed (${response.status})`);
+    throw new RatehawkHttpError(response.status, text);
   }
 
   return text ? (JSON.parse(text) as T) : ({} as T);
@@ -156,7 +191,7 @@ function rgExtEquals(a: RgExt, b: RgExt): boolean {
   return RG_EXT_KEYS.every((key) => (a[key] ?? null) === (b[key] ?? null));
 }
 
-type RawRate = {
+export type RawRate = {
   book_hash: string;
   match_hash: string;
   daily_prices?: string[];
@@ -220,12 +255,13 @@ export async function fetchRatehawkHotelpage(input: {
     guests: input.guests,
     hid: input.hid,
     currency: input.currency,
+    timeout: ETG_SEARCH_TIMEOUT_S,
   });
 
   return json.data?.hotels?.[0]?.rates ?? [];
 }
 
-type RawRoomGroup = {
+export type RawRoomGroup = {
   name: string;
   rg_ext?: RgExt;
   images_ext?: { url: string; category_slug?: string | null }[];
@@ -289,20 +325,36 @@ export async function fetchRatehawkSerpBatch(input: {
   currency: string;
   residency: string;
 }): Promise<RawSerpHotel[]> {
-  const json = await ratehawkPost<{ data?: { hotels?: RawSerpHotel[] } }>(
-    "/api/b2b/v3/search/serp/hotels/",
-    {
-      checkin: input.checkin,
-      checkout: input.checkout,
-      residency: input.residency,
-      language: "en",
-      guests: input.guests,
-      hids: input.hids,
-      currency: input.currency,
-    }
-  );
+  const chunks: number[][] = [];
+  for (let i = 0; i < input.hids.length; i += RATEHAWK_SERP_MAX_HIDS) {
+    chunks.push(input.hids.slice(i, i + RATEHAWK_SERP_MAX_HIDS));
+  }
 
-  return json.data?.hotels ?? [];
+  const fetchChunk = async (hids: number[]) => {
+    const json = await ratehawkPost<{ data?: { hotels?: RawSerpHotel[] } }>(
+      "/api/b2b/v3/search/serp/hotels/",
+      {
+        checkin: input.checkin,
+        checkout: input.checkout,
+        residency: input.residency,
+        language: "en",
+        guests: input.guests,
+        hids,
+        currency: input.currency,
+        timeout: ETG_SEARCH_TIMEOUT_S,
+      }
+    );
+    return json.data?.hotels ?? [];
+  };
+
+  // Results are concatenated, never matched to a chunk by position: ETG do not
+  // return hotels in request order (§48), and every caller joins on `hid`.
+  const hotels: RawSerpHotel[] = [];
+  for (let i = 0; i < chunks.length; i += SERP_CHUNK_CONCURRENCY) {
+    const batch = await Promise.all(chunks.slice(i, i + SERP_CHUNK_CONCURRENCY).map(fetchChunk));
+    for (const chunkHotels of batch) hotels.push(...chunkHotels);
+  }
+  return hotels;
 }
 
 // Matches a /search/hp/ rate to its static /hotel/info/ room_groups[] entry
@@ -332,6 +384,10 @@ function matchRoomGroupByName(roomName: string, roomGroups: RawRoomGroup[]): Raw
 }
 
 export function matchRoomImages(rate: RawRate, roomGroups: RawRoomGroup[]): RatehawkRoomImage[] {
+  // No static room data to match against (the batch route and Prebook pass
+  // none by design) — nothing to look up, and nothing worth warning about.
+  if (!roomGroups.length) return [];
+
   const hasRgExt = Boolean(rate.rg_ext) && roomGroups.some((group) => Boolean(group.rg_ext));
 
   let best: RawRoomGroup | null = null;
@@ -420,38 +476,54 @@ export function groupRoomOptions(
   }
 
   return Array.from(byName.values())
-    .map((rate) => {
-      const price = ratePrice(rate)!;
-      return {
-        roomKey: rate.book_hash,
-        roomName: rate.room_name,
-        bookHash: rate.book_hash,
-        matchHash: rate.match_hash,
-        pricePerStay: price.amount,
-        currency: price.currency,
-        dailyPrices: rate.daily_prices ?? [],
-        capacity: rate.rg_ext?.capacity || 1,
-        bedrooms: rate.rg_ext?.bedrooms ?? 0,
-        balcony: Boolean(rate.rg_ext?.balcony),
-        bedding: rate.room_data_trans?.bedding_type ?? null,
-        beds: rate.room_data_trans?.beds ?? [],
-        miscRoomType: rate.room_data_trans?.misc_room_type ?? null,
-        mealValue: rate.meal_data?.value ?? "nomeal",
-        hasBreakfast: Boolean(rate.meal_data?.has_breakfast),
-        freeCancellationBefore:
-          primaryPaymentType(rate)?.cancellation_penalties?.free_cancellation_before ?? null,
-        cancellationPolicies: rateCancellationPolicies(rate),
-        taxes: rateTaxes(rate),
-        amenities: rate.amenities_data ?? [],
-        sizeSquareMeters: null,
-        images: matchRoomImages(rate, roomGroups),
-      };
-    })
+    .map((rate) => toGroupedRoom(rate, roomGroups))
+    .filter((room): room is RatehawkGroupedRoom => room !== null)
     .sort((a, b) => a.pricePerStay - b.pricePerStay);
 }
 
-// "Book N copies of the cheapest room that fits" — a documented
-// simplification, not a true mixed-room-type bin-pack. See CLAUDE.md §30.
+// One ETG rate in the shape the UI reads. Shared by the hotelpage list and the
+// Prebook response, so a prebooked rate's price, taxes, meal and cancellation
+// terms are read by exactly the same code as the rate it replaced — a change
+// the guest is shown can never be an artefact of two parsers disagreeing.
+// Null when the rate carries no usable price.
+export function toGroupedRoom(rate: RawRate, roomGroups: RawRoomGroup[]): RatehawkGroupedRoom | null {
+  const price = ratePrice(rate);
+  if (!price) return null;
+  return {
+    roomKey: rate.book_hash,
+    roomName: rate.room_name,
+    bookHash: rate.book_hash,
+    matchHash: rate.match_hash,
+    pricePerStay: price.amount,
+    currency: price.currency,
+    dailyPrices: rate.daily_prices ?? [],
+    capacity: rate.rg_ext?.capacity || 1,
+    bedrooms: rate.rg_ext?.bedrooms ?? 0,
+    balcony: Boolean(rate.rg_ext?.balcony),
+    bedding: rate.room_data_trans?.bedding_type ?? null,
+    beds: rate.room_data_trans?.beds ?? [],
+    miscRoomType: rate.room_data_trans?.misc_room_type ?? null,
+    mealValue: rate.meal_data?.value ?? "nomeal",
+    hasBreakfast: Boolean(rate.meal_data?.has_breakfast),
+    freeCancellationBefore:
+      primaryPaymentType(rate)?.cancellation_penalties?.free_cancellation_before ?? null,
+    cancellationPolicies: rateCancellationPolicies(rate),
+    taxes: rateTaxes(rate),
+    amenities: rate.amenities_data ?? [],
+    sizeSquareMeters: null,
+    images: matchRoomImages(rate, roomGroups),
+  };
+}
+
+// The cheapest room whose per-room capacity fits the party as it is spread
+// across the rooms searched.
+//
+// A rate's price is ALREADY the total for every room in the request's guests
+// array — measured live 2026-09-16 (§32): the same rate searched for 2 rooms
+// returned exactly 2× its 1-room show_amount and daily_prices, on three real
+// Paris hotels. So the price is never multiplied by the room count here. The
+// earlier "N copies" formula (§30) did multiply, which overstated every
+// multi-room price by a factor of N.
 export function computeHeadlinePrice(
   groupedRooms: RatehawkGroupedRoom[],
   totalGuests: number,
@@ -467,7 +539,7 @@ export function computeHeadlinePrice(
   const cheapest = pool[0];
 
   return {
-    pricePerStay: cheapest.pricePerStay * roomCount,
+    pricePerStay: cheapest.pricePerStay,
     currency: cheapest.currency,
     rooms: roomCount,
     roomKey: cheapest.roomKey,

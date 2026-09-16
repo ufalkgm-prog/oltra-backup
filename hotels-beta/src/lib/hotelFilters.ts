@@ -2,6 +2,11 @@
 import "server-only";
 import type { DirectusFilter } from "@/lib/directus";
 import { AWARD_CODES } from "@/lib/hotels/awardCodes";
+import {
+  macroRegionFilter,
+  matchesMacroSetting,
+  resolveMacroRegion,
+} from "@/lib/ai/macroRegions";
 
 export type HotelsSearchParams = Record<string, string | string[] | undefined>;
 
@@ -78,6 +83,14 @@ export function buildHotelsDirectusFilter(
     }
   }
 
+  // A colloquial region ("The Alps") is a union across geography columns, not
+  // one column (lib/ai/macroRegions.ts). Its setting requirement cannot be
+  // filtered by Directus and runs in filterHotelsByMacroRegion.
+  const macro = resolveMacroRegion(parseList(searchParams.macro_region)[0]);
+  if (macro) {
+    and.push(macroRegionFilter(macro) as DirectusFilter);
+  }
+
   const awardCodes = parseList(searchParams.awards).filter((code): code is string =>
     (AWARD_CODES as readonly string[]).includes(code)
   );
@@ -103,6 +116,18 @@ export function buildHotelsDirectusFilter(
   }
 
   return and.length === 1 ? and[0] : { _and: and };
+}
+
+/** The JS half of a `macro_region` search — the setting requirement (the Alps
+ * are its regions AND the Mountains tag) that Directus cannot filter. Rows must
+ * include `setting`. A no-op without the param. */
+export function filterHotelsByMacroRegion<T extends { setting?: string[] | null }>(
+  hotels: T[],
+  searchParams: HotelsSearchParams
+): T[] {
+  const macro = resolveMacroRegion(parseList(searchParams.macro_region)[0]);
+  if (!macro) return hotels;
+  return hotels.filter((hotel) => matchesMacroSetting(hotel, macro));
 }
 
 export function serializeList(values: string[]): string {

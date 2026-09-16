@@ -1,4 +1,4 @@
-- [RateHawk/ETG integration status](project_ratehawk_integration.md) — matching/images/availability done, certification-prep landed 2026-08-10 (CLAUDE.md §26-32); booking still blocked pending ETG
+- [RateHawk/ETG integration status](project_ratehawk_integration.md) — cert scope confirmed 2026-09-16 (General/Static/Search); Prebook built to an unspecified redirect seam; rate price covers all rooms; details in rules §32/§47
 - [Where project context lives](feedback_claude_md_source_of_truth.md) — CLAUDE.md every session + five path-scoped .claude/rules/ files; CLAUDE-AI.md and CLAUDE-ARCHIVE.md on demand; the 150k cap was never real
 - [Diagnose live before fixing](feedback_diagnose_before_fixing.md) — verify assumed API/data shapes with a throwaway script first, flag doc/code contradictions instead of silently resolving (data only — not UI)
 - [Never act unprompted: UI tests, commits, pushes](project_no_unsolicited_ui_testing.md) — don't drive the browser to check a UI change, and don't commit/push, unless asked; main takes direct pushes, no PR or branch (CLAUDE.md §14)

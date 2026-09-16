@@ -217,6 +217,28 @@ export function isValidResidencyCode(code: string): boolean {
 // currency-loading effect in HotelsView.tsx for the same pattern) since
 // navigator.language can differ from the eventual user choice and we don't
 // want a hydration mismatch between server and client initial render.
+/* The passport country the visitor is searching with, for callers that have no
+ * search form of their own (the concierge). The guest selector writes its
+ * choice to the page's `residency` URL param, so that wins; otherwise the
+ * browser locale. Client-only, read at call time. */
+export function currentResidency(): string {
+  if (typeof window !== "undefined") {
+    const fromUrl = new URLSearchParams(window.location.search).get("residency")?.toLowerCase() ?? "";
+    if (isValidResidencyCode(fromUrl)) return fromUrl;
+  }
+  return guessResidencyFromLocale();
+}
+
+/* guessResidencyFromLocale's rule applied to an Accept-Language header, for a
+ * server route whose client did not send a residency. */
+export function residencyFromAcceptLanguage(header: string | null): string {
+  for (const part of (header ?? "").split(",")) {
+    const region = part.split(";")[0].trim().split("-")[1];
+    if (region && isValidResidencyCode(region)) return region.toLowerCase();
+  }
+  return "us";
+}
+
 export function guessResidencyFromLocale(): string {
   if (typeof navigator === "undefined") return "us";
 

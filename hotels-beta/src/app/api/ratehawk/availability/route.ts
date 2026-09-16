@@ -7,6 +7,8 @@ import {
   groupRoomOptions,
 } from "@/lib/ratehawk/availability";
 import { isValidResidencyCode } from "@/lib/countries";
+import { guestSelectionIssue } from "@/lib/guests";
+import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 
 type AvailabilityPayload = {
   hid?: unknown;
@@ -72,6 +74,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // ETG's documented maximum stay (§32); the search forms stop it first.
+    if (isStayTooLong(checkInDate, checkOutDate)) {
+      return NextResponse.json(
+        { ok: false, error: STAY_TOO_LONG_MESSAGE },
+        { status: 400 }
+      );
+    }
+
     const adults = Math.max(1, asPositiveInt(body.adults, 2));
     const kids = asPositiveInt(body.kids, 0);
     const rooms = Math.max(1, asPositiveInt(body.rooms, 1));
@@ -83,6 +93,16 @@ export async function POST(request: Request) {
           .map((age) => Math.max(0, Math.floor(age)))
           .slice(0, kids)
       : [];
+
+    // Every child needs an age, and a room holds at most 6 adults + 4
+    // children (§32). Refused here rather than defaulted or left to ETG.
+    const occupancyIssue = guestSelectionIssue(
+      { adults, kids, kidAges: childrenAges.map(String) },
+      rooms
+    );
+    if (occupancyIssue) {
+      return NextResponse.json({ ok: false, error: occupancyIssue }, { status: 400 });
+    }
 
     const guests = buildGuestsArray(adults, kids, childrenAges, rooms);
 

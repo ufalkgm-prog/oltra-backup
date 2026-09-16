@@ -15,6 +15,7 @@ import { decodeStrayEscapes, panelText, stripLeadingName } from "@/lib/ai/ration
 import { isMacroRegionTerm } from "@/lib/ai/macroRegionTerms";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
+import { currentResidency } from "@/lib/countries";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { EMPTY_RESULT_SET, type AiQueryState, type AiResultSet } from "@/lib/ai/types";
 import styles from "./AiConcierge.module.css";
@@ -1127,8 +1128,10 @@ export default function AiConversation() {
     void sendMessage(
       { text },
       // Where the visitor is standing, per request. It is re-validated and
-      // scrubbed server-side before it reaches a system block.
-      { body: { pageContext: pageContextRef.current } }
+      // scrubbed server-side before it reaches a system block. Residency
+      // travels beside it, not inside it: it is for the supplier call only
+      // and never reaches the model.
+      { body: { pageContext: pageContextRef.current, residency: currentResidency() } }
     );
   }
 

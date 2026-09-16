@@ -379,7 +379,7 @@ Also: Supabase renamed the anon key to **"Publishable key"** in the dashboard �
 
 Moved to `.claude/rules/etg-ratehawk.md` — it loads by itself when you open a file it covers, and you can read it directly when the work starts before that.
 
-**Before you write a line of booking code: the handoff to the ZenHotels checkout is BLOCKED pending written confirmation from ETG.** No Create/Start/Check booking process, no card tokens, no 3DS, no webhooks, no Retrieve or Cancel. Sandbox and test bookings are treated as REAL orders — never execute a booking call without Ulrik confirming in that session.
+**Certification scope is confirmed (2026-09-16): General, Static Data and Search only — booking and card tokenisation do not apply under the White Label model.** We go as far as Prebook (the p- hash) and stop at a marked redirect seam whose format ETG have not specified — do not guess it. No Create/Start/Check booking process, no card tokens, no 3DS, no webhooks, no Retrieve or Cancel: those endpoints are active on our key and only the proxy allowlist (§47) keeps them unreachable. Sandbox and test bookings are treated as REAL orders — never execute a booking call without Ulrik confirming in that session. **A rate's price covers every room searched — never multiply it by the room count.**
 
 ---
 ## 33. LANDING/HOTELS/FLIGHTS UI FIX SESSION (2026-08-11)

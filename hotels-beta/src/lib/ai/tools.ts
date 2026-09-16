@@ -22,6 +22,8 @@ import {
   ratePrice,
 } from "@/lib/ratehawk/availability";
 import { asUntrustedData } from "./systemPrompt";
+import { CHILD_AGE_MISSING_MESSAGE, guestSelectionIssue } from "@/lib/guests";
+import { isStayTooLong, MAX_STAY_NIGHTS } from "@/lib/stay";
 import {
   BROAD_RESULT_LIMIT,
   MAX_AVAILABILITY_IDS,
@@ -35,17 +37,16 @@ import {
   matchesMacroSetting,
   resolveMacroRegion,
 } from "./macroRegions";
-import { REGION_VALUES, normaliseRegionTerm } from "./macroRegionTerms";
+import { AREA_ALIAS_TERMS, REGION_VALUES, normaliseRegionTerm } from "./macroRegionTerms";
 
 /* What guests call an area that our data names differently. "French Riviera"
  * searched nothing and cost a round trip (2026-09-15): the 17 hotels there
  * are filed under the traveller area "Côte d'Azur". Keys are normalised the
  * way macro-region names are (accent- and case-blind, no leading "the"). */
-const AREA_ALIASES: Record<string, string> = {
-  "french riviera": "Côte d'Azur",
-  "cote d azur": "Côte d'Azur",
-  "riviera francaise": "Côte d'Azur",
-};
+// Shared with the destination dropdown (macroRegionTerms.ts).
+const AREA_ALIASES: Record<string, string> = Object.fromEntries(
+  AREA_ALIAS_TERMS.flatMap((term) => term.aliases.map((alias) => [alias, term.area]))
+);
 
 function resolveAreaAlias(value: string | undefined): string | undefined {
   if (!value) return value;
@@ -147,7 +148,11 @@ const MAX_FEATURES = 4;
  * checked for it. Tools are built per request, so a feature searched earlier in
  * the same answer is still checked, and reported in `mentions`, on every later
  * search; only the features passed THIS time filter. */
-type TurnMemory = { features: Map<string, Feature> };
+/* `residency` is the visitor's passport country for the supplier call — from
+ * their guest selector or browser locale, sent beside the page context and
+ * never shown to the model. It used to be a hardcoded "gb", which ETG grade
+ * as not implementing residency at all (§32). */
+type TurnMemory = { features: Map<string, Feature>; residency: string };
 
 /* THE DRIVE FROM A HOTEL'S OWN AIRPORT (2026-09-15). Asked for Lake Como via
  * Milan, the concierge quoted compareGateways' 52 minutes — Malpensa to Milan
@@ -905,7 +910,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     // asked for these two things back to back every single time, and the
     // second ask cost more than the supplier call it triggered.
     const ranked = input.stay?.checkIn && input.stay?.checkOut
-      ? await rankAvailability({ ...input.stay, ids: shaped.map((h) => h.id) })
+      ? await rankAvailability({ ...input.stay, ids: shaped.map((h) => h.id) }, turn.residency)
       : null;
 
     // What the visitor would actually end up looking at: the properties that
@@ -1079,18 +1084,45 @@ function rollPastDates<T extends Record<string, string | undefined>>(dates: T, a
 const DATES_MOVED_NOTE =
   "Those dates had already passed, so this ran on their next occurrence. Use these dates in presentResults and when you mention them.";
 
-async function rankAvailability(input: StayInput) {
+async function rankAvailability(input: StayInput, residency: string) {
   const moved = rollPastDates({ checkIn: input.checkIn, checkOut: input.checkOut }, "checkIn");
-  if (!moved) return rankAvailabilityFor(input);
-  const result = await rankAvailabilityFor({ ...input, checkIn: moved.checkIn, checkOut: moved.checkOut });
+  if (!moved) return rankAvailabilityFor(input, residency);
+  const result = await rankAvailabilityFor({ ...input, checkIn: moved.checkIn, checkOut: moved.checkOut }, residency);
   return { datesMovedTo: { ...moved, note: DATES_MOVED_NOTE }, ...result };
 }
 
-async function rankAvailabilityFor(input: StayInput) {
+async function rankAvailabilityFor(input: StayInput, residency: string) {
   if (input.checkOut <= input.checkIn) {
     return {
       error: "check-out must be after check-in",
       received: { checkIn: input.checkIn, checkOut: input.checkOut },
+    };
+  }
+
+  // ETG price stays of up to 30 nights only (§32).
+  if (isStayTooLong(input.checkIn, input.checkOut)) {
+    return {
+      error: `Rooms can only be checked for stays of up to ${MAX_STAY_NIGHTS} nights. Ask the visitor to shorten the stay, or check it as consecutive stays of ${MAX_STAY_NIGHTS} nights or fewer.`,
+    };
+  }
+
+  // A child's age is never guessed — it changes the price and matters at
+  // check-in — and a room holds at most 6 adults + 4 children (§32). Returned
+  // as an error the model can act on rather than a silent default.
+  const occupancyIssue = guestSelectionIssue(
+    {
+      adults: Math.max(1, input.adults ?? 2),
+      kids: Math.max(0, input.kids ?? 0),
+      kidAges: (input.childrenAges ?? []).map(String),
+    },
+    Math.max(1, input.rooms ?? 1)
+  );
+  if (occupancyIssue) {
+    return {
+      error:
+        occupancyIssue === CHILD_AGE_MISSING_MESSAGE
+          ? "Every child needs an age before rooms can be checked. Ask the visitor for each child's age, then call again with childrenAges."
+          : "More guests than one room holds (6 adults and 4 children per room). Ask how many rooms they want, then call again with rooms.",
     };
   }
 
@@ -1134,7 +1166,7 @@ async function rankAvailabilityFor(input: StayInput) {
       rooms
     ),
     currency: input.currency || "EUR",
-    residency: "gb",
+    residency,
   });
 
   // Cheapest rate per hotel, used ONLY to rank and to test the ceiling.
@@ -1182,7 +1214,7 @@ async function rankAvailabilityFor(input: StayInput) {
   };
 }
 
-const checkAvailability = tool({
+const createCheckAvailability = (turn: TurnMemory) => tool({
   description:
     "Check which of these hotels can be booked for the given dates, and how " +
     "they rank against each other on price. Returns a rank and a within-budget " +
@@ -1225,7 +1257,7 @@ const checkAvailability = tool({
     additionalProperties: false,
   }),
   async execute(input) {
-    return asUntrustedData("availability", await rankAvailability(input));
+    return asUntrustedData("availability", await rankAvailability(input, turn.residency));
   },
 });
 
@@ -2097,12 +2129,20 @@ const presentResults = tool({
 });
 
 /** The concierge's tools for one request. `preferredAirlines` comes from the
- * signed-in member's profile, read by the chat route. */
-export function buildConciergeTools({ preferredAirlines }: { preferredAirlines: string[] }) {
+ * signed-in member's profile, read by the chat route; `residency` is the
+ * visitor's passport country, validated there. */
+export function buildConciergeTools({
+  preferredAirlines,
+  residency,
+}: {
+  preferredAirlines: string[];
+  residency: string;
+}) {
+  const turn: TurnMemory = { features: new Map(), residency };
   return {
-    searchHotels: createSearchHotels({ features: new Map() }),
+    searchHotels: createSearchHotels(turn),
     getHotelDetails,
-    checkAvailability,
+    checkAvailability: createCheckAvailability(turn),
     nearestAirport,
     compareGateways,
     searchFlights: createSearchFlights(toPreferredAirlines(preferredAirlines)),

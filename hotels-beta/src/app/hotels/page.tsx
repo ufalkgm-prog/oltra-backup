@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import PageShell from "@/components/site/PageShell";
 import { getHotels } from "@/lib/directus";
-import { buildHotelsDirectusFilter, filterHotelsByTags } from "@/lib/hotelFilters";
+import {
+  buildHotelsDirectusFilter,
+  filterHotelsByMacroRegion,
+  filterHotelsByTags,
+} from "@/lib/hotelFilters";
 import { buildHotelFilterOptions } from "@/lib/hotelOptions";
 import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { expandCityAliases } from "@/lib/locationAliases";
@@ -52,6 +56,9 @@ const ids = listFromParam(resolvedSearchParams.ids).filter((id) =>
   /^[0-9]+$/.test(id)
 );
 const region = listFromParam(resolvedSearchParams.region);
+// A colloquial region chosen in the destination field ("The Alps") — see
+// filterHotelsByMacroRegion.
+const macro_region = listFromParam(resolvedSearchParams.macro_region);
 const local_area = listFromParam(resolvedSearchParams.local_area);
 const affiliation = listFromParam(resolvedSearchParams.affiliation);
 const activities = listFromParam(resolvedSearchParams.activities);
@@ -66,7 +73,8 @@ const landing_handoff =
   state.length ||
   admin_region.length ||
   ids.length ||
-  region.length
+  region.length ||
+  macro_region.length
     ? "1"
     : "";
 
@@ -78,6 +86,7 @@ const selected = {
   admin_region,
   ids,
   region,
+  macro_region,
   local_area,
   affiliation,
   activities,
@@ -185,7 +194,10 @@ const tax = {
 };
 const suggestions = buildHotelSuggestionDataset(metaHotels);
 
-const hotelsRaw = filterHotelsByTags(hotelsRawAll, { activities, settings, styles });
+const hotelsRaw = filterHotelsByMacroRegion(
+  filterHotelsByTags(hotelsRawAll, { activities, settings, styles }),
+  resolvedSearchParams
+);
 const hotelsPublished = hotelsRaw.filter((hotel) => hotel.published === true);
 
 const hotels = hotelsPublished;

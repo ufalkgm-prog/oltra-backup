@@ -10,6 +10,8 @@ import AiModeButton from "@/components/ai/AiModeButton";
 import { aiResultsAreCurrent, useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
+import { guessResidencyFromLocale } from "@/lib/countries";
+import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
 import { clearHotelFlightDestination, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
@@ -101,6 +103,17 @@ export default function LandingSearchPanel({
   const [guestSelection, setGuestSelection] = useState<GuestSelection>(
     readGuestSelection(initialSearchParams)
   );
+
+  // Passport country ("residency" in ETG's API). The URL wins; otherwise the
+  // browser locale fills it in, in an effect so the server and first client
+  // render agree. Travels to the results through the guest selector's hidden
+  // `residency` input.
+  const [residencyValue, setResidencyValue] = useState(
+    normalizeParam(initialSearchParams.residency).toLowerCase()
+  );
+  useEffect(() => {
+    setResidencyValue((prev) => prev || guessResidencyFromLocale());
+  }, []);
 
   /* The concierge's stay, back into the classic date field.
    *
@@ -308,19 +321,27 @@ export default function LandingSearchPanel({
   // that shared session at all.
   useEffect(() => {
     const city = normalizeParam(effectiveSearchParams.city);
+    const state = normalizeParam(effectiveSearchParams.state);
+    const admin_region = normalizeParam(effectiveSearchParams.admin_region);
     const country = normalizeParam(effectiveSearchParams.country);
+    const macro_region = normalizeParam(effectiveSearchParams.macro_region);
     const region = normalizeParam(effectiveSearchParams.region);
     const q = normalizeParam(effectiveSearchParams.q);
 
-    const hasAnythingToSave =
-      Boolean(city || country || region || q || fromValue || toValue || homeAirport);
+    const hasAnythingToSave = Boolean(
+      city || state || admin_region || country || macro_region || region || q ||
+        fromValue || toValue || homeAirport
+    );
 
     if (!hasAnythingToSave) return;
 
     mergeHotelFlightSearch({
       q,
       city,
+      state,
+      admin_region,
       country,
+      macro_region,
       region,
       from: fromValue,
       to: toValue,
@@ -372,7 +393,8 @@ export default function LandingSearchPanel({
   const stayLengthMs =
     fromDate && toDate ? toDate.getTime() - fromDate.getTime() : 0;
 
-  const maxStayLengthMs = 42 * 24 * 60 * 60 * 1000;
+  // ETG's 30-night maximum (§32). The form used to allow 42.
+  const stayTooLong = isStayTooLong(fromValue, toValue);
 
   const todayIso = new Date().toISOString().slice(0, 10);
 
@@ -380,7 +402,7 @@ export default function LandingSearchPanel({
     Boolean(fromDate) &&
     Boolean(toDate) &&
     stayLengthMs > 0 &&
-    stayLengthMs <= maxStayLengthMs;
+    !stayTooLong;
 
   const resultCountTooLarge =
     destinationState.hasSelection &&
@@ -435,7 +457,9 @@ export default function LandingSearchPanel({
   }, [flightsCanActivate, airportPopoverOpen]);
 
   const allowedTypes = useMemo<SuggestionType[]>(
-    () => ["hotel", "city", "country", "region", "purpose", "setting"],
+    // Every geography level the Hotels page offers, plus the colloquial regions
+    // ("The Alps") — the dropdown groups them all under Geography.
+    () => ["hotel", "city", "state", "admin_region", "country", "macro_region", "region", "purpose", "setting"],
     []
   );
 
@@ -469,7 +493,7 @@ export default function LandingSearchPanel({
     const qs = url.split("?")[1];
     if (!qs) return false;
     const params = new URLSearchParams(qs);
-    return ["q", "city", "state", "admin_region", "country", "region", "activities", "settings"].some(
+    return ["q", "city", "state", "admin_region", "country", "region", "macro_region", "activities", "settings"].some(
       (key) => (params.get(key) ?? "").trim()
     );
   }
@@ -617,6 +641,11 @@ export default function LandingSearchPanel({
                 scheduleAutoSubmit();
               }}
             />
+            {stayTooLong ? (
+              <div className={styles.fieldIssue} role="status">
+                {STAY_TOO_LONG_MESSAGE}
+              </div>
+            ) : null}
           </div>
 
           <div className={styles.landingField}>
@@ -624,6 +653,14 @@ export default function LandingSearchPanel({
             <GuestSelector
               initialValue={guestSelection}
               className={styles.guestSelectorField}
+              rooms={Math.max(1, Number(bedroomsValue) || 1)}
+              residency={{
+                value: residencyValue,
+                onChange: (code) => {
+                  setResidencyValue(code);
+                  scheduleAutoSubmit();
+                },
+              }}
               onChange={(selection) => {
                 setGuestSelection(selection);
                 scheduleAutoSubmit();

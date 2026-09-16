@@ -16,6 +16,9 @@ import SaveToTripControl, {
 import { addHotelToTripBrowser, addRestaurantToTripBrowser } from "@/lib/members/db";
 import type { RestaurantRecord } from "@/app/restaurants/types";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
+import { currentResidency } from "@/lib/countries";
+import { guestSelectionIssue } from "@/lib/guests";
+import { isStayTooLong } from "@/lib/stay";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { MAX_NAMED, completeLegsForHotels, namedHotels } from "@/lib/ai/hotelGateways";
 import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
@@ -222,11 +225,29 @@ function HotelStayGroup({
 
   // Live prices, via the same batch route the structured landing summary uses.
   // Skipped without dates — a price needs a stay to be a price.
+  // The visitor's passport country — their guest-selector choice via the URL,
+  // else the browser locale — set in an effect so the server and first client
+  // render agree. This used to be a hardcoded "gb" (§32).
+  const [residency, setResidency] = useState("");
+  useEffect(() => {
+    setResidency(currentResidency());
+  }, []);
+
   useEffect(() => {
     const priceable = hotels.filter(
       (h) => h.ratehawk_hid && h.ratehawk_status !== "passive"
     );
-    if (!priceable.length || !from || !to) {
+    // No price without every child's age and a party the rooms can hold —
+    // nothing is defaulted (§32).
+    const occupancyIssue = guestSelectionIssue(
+      {
+        adults: query.adults,
+        kids: query.kids,
+        kidAges: query.childrenAges.map(String),
+      },
+      Math.max(1, query.bedrooms || 1)
+    );
+    if (!priceable.length || !from || !to || isStayTooLong(from, to) || !residency || occupancyIssue) {
       setAvailability({});
       return;
     }
@@ -248,7 +269,7 @@ function HotelStayGroup({
         childrenAges: query.childrenAges,
         rooms: query.bedrooms,
         currency: query.currency,
-        residency: "gb",
+        residency,
       }),
     })
       .then(async (res) => {
@@ -288,7 +309,7 @@ function HotelStayGroup({
     return () => {
       cancelled = true;
     };
-  }, [hotels, from, to, query.adults, query.kids, query.bedrooms, query.currency, query.childrenAges]);
+  }, [hotels, from, to, residency, query.adults, query.kids, query.bedrooms, query.currency, query.childrenAges]);
 
   /* Hotels get the same BOOK and SAVE pair the flight rows have, through the
    * same SaveToTripControl every other surface uses — the card already
