@@ -680,8 +680,6 @@
 }
 
 .introBody {
-  column-count: 2;
-  column-gap: 1.5rem;
   font-size: 0.95rem;
   line-height: 1.55;
   color: var(--oltra-text-muted);
@@ -689,7 +687,6 @@
 
 .introBody p {
   margin: 0 0 0.75rem;
-  break-inside: avoid;
 }
 
 .introClosing {
@@ -746,12 +743,6 @@
         200px - 2rem
     );
     overflow-y: auto;
-  }
-}
-
-@media (max-width: 860px) {
-  .introBody {
-    column-count: 1;
   }
 }
 
