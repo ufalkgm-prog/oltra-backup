@@ -199,6 +199,7 @@ function profilesEqual(a: MemberProfile, b: MemberProfile) {
     a.phone !== b.phone ||
     a.homeAirport !== b.homeAirport ||
     a.preferredAirline !== b.preferredAirline ||
+    a.marketingEmailsOptIn !== b.marketingEmailsOptIn ||
     !birthdaysEqual(a.birthday, b.birthday) ||
     a.familyMembers.length !== b.familyMembers.length
   ) {
@@ -579,10 +580,24 @@ export default function PersonalInformationView() {
             </div>
           </div>
 
+          {/* Preferences. Unticked unless the member has saved a tick —
+              consent is never pre-given. Saved with the rest of the form. */}
+          <label className="members-checkbox">
+            <input
+              type="checkbox"
+              checked={profile.marketingEmailsOptIn}
+              onChange={(event) =>
+                updateField("marketingEmailsOptIn", event.target.checked)
+              }
+            />
+            <span>I would like to receive e-mails about new myOLTRA services</span>
+          </label>
+
           <div className="members-profile-actions-row">
             <div className="members-note" style={{ maxWidth: 360 }}>
-              Only for use in booking context — OLTRA will not send advertising
-              information or pass on contact details to third parties.
+              Contact details are used in booking context and, only if you tick
+              the box above, for e-mails about new myOLTRA services. OLTRA never
+              passes them on to third parties.
             </div>
 
             <div className="members-profile-buttons">

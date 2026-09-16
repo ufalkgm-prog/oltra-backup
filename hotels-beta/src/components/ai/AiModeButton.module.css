@@ -15,8 +15,49 @@
   margin-left: auto;
 }
 
-/* First in the site header's navigation, before Hotels. The nav is a flex row
-   of 36px links, so this only needs to stay its own size in it. */
+/* First in the site header's navigation, before Hotels.
+ *
+ * Spacing is measured from the button's rim, not its text (Ulrik,
+ * 2026-09-16). The nav's 22px gap is the same between every item, but each
+ * nav link carries 12px of padding and a 2px transparent edge around its text,
+ * so text-to-text is 50px while this rim sat only 36px from "Hotels". The
+ * extra margin puts the rim where a link's text edge would be, so the rim to
+ * "Hotels" matches the spacing between the links themselves. */
 .header {
   flex: 0 0 auto;
+  margin-right: calc(12px + var(--oltra-btn-rim-width));
+}
+
+/* Not a member: the button and its note, the note hanging below the line so
+   the header row and the destination field keep their heights. */
+.membersOnly {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Grey and upright: the passive rim and label come from aria-disabled on
+   .oltra-btn; the AI variant's bold italic is what marks it as live, so it is
+   dropped here. */
+:global(.oltra-btn--ai).passive {
+  font-style: normal;
+  font-weight: 400;
+}
+
+.membersOnlyNote {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--oltra-btn-passive-label);
+  pointer-events: none;
+}
+
+/* In the destination field the button sits 5px above the field's bottom edge,
+   so the note starts below that edge rather than across it. */
+.inline .membersOnlyNote {
+  top: calc(100% + 8px);
 }

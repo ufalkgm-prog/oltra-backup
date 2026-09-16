@@ -12,6 +12,12 @@ export type MemberProfile = {
   birthday: MemberBirthday;
   preferredHotelStyle: string;
   preferredAirline: string;
+  /** Ticked "I would like to receive e-mails about new myOLTRA services".
+   * Off unless the member ticks it — consent is never pre-given. */
+  marketingEmailsOptIn: boolean;
+  /** When the tick was given (ISO timestamp), kept as the record of consent;
+   * null while unticked. Set on save, not on click. */
+  marketingEmailsConsentedAt: string | null;
   familyMembers: Array<{
     id: string;
     fullName: string;

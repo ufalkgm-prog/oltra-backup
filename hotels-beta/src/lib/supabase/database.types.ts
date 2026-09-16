@@ -146,6 +146,8 @@ export type Database = {
           created_at: string
           email: string | null
           home_airport: string | null
+          marketing_emails_consented_at: string | null
+          marketing_emails_opt_in: boolean
           member_name: string | null
           phone: string | null
           preferred_airlines: string[]
@@ -159,6 +161,8 @@ export type Database = {
           created_at?: string
           email?: string | null
           home_airport?: string | null
+          marketing_emails_consented_at?: string | null
+          marketing_emails_opt_in?: boolean
           member_name?: string | null
           phone?: string | null
           preferred_airlines?: string[]
@@ -172,6 +176,8 @@ export type Database = {
           created_at?: string
           email?: string | null
           home_airport?: string | null
+          marketing_emails_consented_at?: string | null
+          marketing_emails_opt_in?: boolean
           member_name?: string | null
           phone?: string | null
           preferred_airlines?: string[]

@@ -247,6 +247,61 @@
   overflow: visible;
 }
 
+/* A single consent tick on Personal Information. Same box as the landing
+   page's Hotels / Flights checkboxes (page.module.css .includeChecksItem). */
+.members-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 4px 0 18px;
+  color: var(--oltra-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.3;
+  cursor: pointer;
+  user-select: none;
+}
+
+.members-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 4px;
+  background: var(--oltra-surface-lift);
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.members-checkbox input[type="checkbox"]:hover {
+  background: var(--oltra-surface-lift-strong);
+  border-color: rgba(255, 255, 255, 0.48);
+}
+
+.members-checkbox input[type="checkbox"]:checked {
+  background: var(--oltra-surface-lift-strong);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.members-checkbox input[type="checkbox"]:checked::after {
+  content: "";
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 1.6px 1.6px 0;
+  transform: rotate(45deg) translate(0, -1px);
+}
+
+.members-checkbox input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--oltra-text-primary);
+  outline-offset: 2px;
+}
+
 .members-note {
   color: var(--oltra-text-secondary);
   line-height: 1.55;

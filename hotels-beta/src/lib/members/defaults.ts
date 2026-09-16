@@ -18,6 +18,8 @@ export const DEFAULT_MEMBER_PROFILE: MemberProfile = {
   },
   preferredHotelStyle: "",
   preferredAirline: "SAS",
+  marketingEmailsOptIn: false,
+  marketingEmailsConsentedAt: null,
   familyMembers: [
     {
       id: "fm-1",

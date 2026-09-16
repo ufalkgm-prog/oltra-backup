@@ -154,6 +154,8 @@ export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null>
     birthday: parseBirthday(profile?.birthday ?? null),
     preferredHotelStyle: "",
     preferredAirline: profile?.preferred_airlines?.[0] ?? "",
+    marketingEmailsOptIn: profile?.marketing_emails_opt_in ?? false,
+    marketingEmailsConsentedAt: profile?.marketing_emails_consented_at ?? null,
     familyMembers: (familyRes.data ?? []).map((member) => ({
       id: member.id,
       fullName: member.full_name ?? "",
@@ -189,6 +191,12 @@ export async function saveMemberProfileBrowser(
     preferred_airlines: profile.preferredAirline
       ? [profile.preferredAirline]
       : [],
+    // Consent to service e-mails, with the time it was given. A tick that was
+    // already saved keeps its original time; unticking clears both.
+    marketing_emails_opt_in: profile.marketingEmailsOptIn,
+    marketing_emails_consented_at: profile.marketingEmailsOptIn
+      ? profile.marketingEmailsConsentedAt ?? new Date().toISOString()
+      : null,
   };
 
   const { error: upsertError } = await supabase
