@@ -334,6 +334,36 @@
   align-content: start;
 }
 
+/* A result panel whose "Go to …" button sits at its foot (Ulrik, 2026-09-16).
+   Two rows: everything else, then the footer. The first row takes the spare
+   height, so side-by-side panels of different lengths keep their buttons on
+   one line along the bottom. */
+.summaryColumnWithFooter {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.summaryBody {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  min-height: 0;
+  align-content: start;
+}
+
+.summaryFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding-top: 0.25rem;
+}
+
+/* Right-aligned, where it sat in the header; a secondary link (See all hotels
+   in …) keeps the left. */
+.summaryFooterMain {
+  margin-left: auto;
+}
+
 .summaryHeaderRow {
   display: flex;
   align-items: center;
@@ -669,9 +699,9 @@
   margin-top: 1rem;
   color: var(--oltra-text-primary);
   /* The landing glass's own tint, far less see-through (0.72 → 0.92): this
-     panel carries paragraphs of reading text over the photo, where the search
-     panel only carries short labels (Ulrik, 2026-09-16). Declared after
-     .landingGlass in this file, so it wins on source order. */
+     panel carries paragraphs of reading text over the photo (Ulrik,
+     2026-09-16). Declared after .landingGlass in this file, so it wins on
+     source order. */
   background: rgba(18, 28, 40, 0.92);
 }
 

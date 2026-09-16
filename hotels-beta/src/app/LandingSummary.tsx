@@ -494,16 +494,10 @@ export default function LandingSummary({
   return (
     <div className={styles.summaryGrid}>
       {showHotels ? (
-        <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}>
+        <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}>
+          <div className={styles.summaryBody}>
           <div className={styles.summaryHeaderRow}>
             <div className="oltra-label">{hotelHeaderLabel || "Hotels"}</div>
-            <Link
-              href={hotelsHref}
-              className="oltra-btn"
-              prefetch={false}
-            >
-              Go to hotels
-            </Link>
           </div>
 
           {hotelLine ? (
@@ -557,20 +551,26 @@ export default function LandingSummary({
               })}
             </div>
           ) : null}
+          </div>
+
+          {/* The way on sits under what it leads to (Ulrik, 2026-09-16). */}
+          <div className={styles.summaryFooter}>
+            <Link
+              href={hotelsHref}
+              className={`oltra-btn ${styles.summaryFooterMain}`}
+              prefetch={false}
+            >
+              Go to hotels
+            </Link>
+          </div>
         </div>
       ) : null}
 
       {showFlights ? (
-        <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}>
+        <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}>
+          <div className={styles.summaryBody}>
           <div className={styles.summaryHeaderRow}>
             <div className="oltra-label">Flights</div>
-            <Link
-              href={flightsHref}
-              className="oltra-btn"
-              prefetch={false}
-            >
-              Go to flights
-            </Link>
           </div>
 
           {!canSearchFlights ? (
@@ -659,6 +659,17 @@ export default function LandingSummary({
               ))}
             </div>
           )}
+          </div>
+
+          <div className={styles.summaryFooter}>
+            <Link
+              href={flightsHref}
+              className={`oltra-btn ${styles.summaryFooterMain}`}
+              prefetch={false}
+            >
+              Go to flights
+            </Link>
+          </div>
         </div>
       ) : null}
     </div>

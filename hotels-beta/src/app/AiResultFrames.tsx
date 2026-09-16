@@ -536,20 +536,14 @@ export default function AiResultFrames() {
       >
         {showHotels ? (
           <div
-            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}
+            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}
           >
+            <div className={styles.summaryBody}>
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
                 {totalHotels} {totalHotels === 1 ? "hotel" : "hotels"}
                 {multiStop ? " for your trip" : destinationLabel ? ` in ${destinationLabel}` : ""}
               </div>
-              <Link
-                href={hotelsHref(query, results)}
-                className="oltra-btn"
-                prefetch={false}
-              >
-                Go to hotels
-              </Link>
             </div>
 
             <div className={styles.smallCardsList}>
@@ -568,35 +562,40 @@ export default function AiResultFrames() {
                   />
                 ))}
             </div>
+            </div>
 
-            {destinationLabel && !multiStop ? (
+            {/* The way on sits under what it leads to (Ulrik, 2026-09-16). */}
+            <div className={styles.summaryFooter}>
+              {destinationLabel && !multiStop ? (
+                <Link
+                  href={allHotelsHref(query)}
+                  className={`oltra-btn ${styles.aiEscape}`}
+                  prefetch={false}
+                >
+                  See all hotels in {destinationLabel}
+                </Link>
+              ) : null}
               <Link
-                href={allHotelsHref(query)}
-                className={`oltra-btn ${styles.aiEscape}`}
+                href={hotelsHref(query, results)}
+                className={`oltra-btn ${styles.summaryFooterMain}`}
                 prefetch={false}
               >
-                See all hotels in {destinationLabel}
+                Go to hotels
               </Link>
-            ) : null}
+            </div>
           </div>
         ) : null}
 
         {showFlights ? (
           <div
-            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}
+            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}
           >
+            <div className={styles.summaryBody}>
             <div className={styles.summaryHeaderRow}>
               {/* Just "Flights". Every leg block below states its own route
                   and dates, so naming the route here too printed the same
                   pair of airports twice, one line apart. */}
               <div className="oltra-label">Flights</div>
-              <Link
-                href={flightsHref(query, results)}
-                className="oltra-btn"
-                prefetch={false}
-              >
-                Go to flights
-              </Link>
             </div>
 
             {/* One block per journey, stacked. With a single leg this reads
@@ -614,28 +613,31 @@ export default function AiResultFrames() {
                 />
               ))}
             </div>
+            </div>
+
+            <div className={styles.summaryFooter}>
+              <Link
+                href={flightsHref(query, results)}
+                className={`oltra-btn ${styles.summaryFooterMain}`}
+                prefetch={false}
+              >
+                Go to flights
+              </Link>
+            </div>
           </div>
         ) : null}
 
         {showRestaurants ? (
           <div
-            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.landingGlass}`}
+            className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}
           >
+            <div className={styles.summaryBody}>
             <div className={styles.summaryHeaderRow}>
               <div className="oltra-label">
                 {totalRestaurants}{" "}
                 {totalRestaurants === 1 ? "restaurant" : "restaurants"}
                 {multiStop ? " for your trip" : query.destination.city ? ` in ${query.destination.city}` : ""}
               </div>
-              {query.destination.city ? (
-                <Link
-                  href={restaurantsHref(query)}
-                  className="oltra-btn"
-                  prefetch={false}
-                >
-                  Go to restaurants
-                </Link>
-              ) : null}
             </div>
 
             <div className={styles.smallCardsList}>
@@ -666,6 +668,19 @@ export default function AiResultFrames() {
                   </Fragment>
                 ))}
             </div>
+            </div>
+
+            {query.destination.city ? (
+              <div className={styles.summaryFooter}>
+                <Link
+                  href={restaurantsHref(query)}
+                  className={`oltra-btn ${styles.summaryFooterMain}`}
+                  prefetch={false}
+                >
+                  Go to restaurants
+                </Link>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

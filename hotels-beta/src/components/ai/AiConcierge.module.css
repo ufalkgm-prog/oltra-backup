@@ -267,6 +267,20 @@
   font-style: italic;
 }
 
+/* One line per search while an answer is being worked out; finished ones
+   carry a tick and step back. */
+.progress {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 3px;
+}
+
+.progress li[data-done="true"] {
+  opacity: 0.7;
+}
+
 .error {
   font-size: 13px;
   color: var(--oltra-error-text);

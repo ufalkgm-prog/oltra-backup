@@ -58,7 +58,13 @@ function previousReplyText(history: UIMessage[]): string {
   }
   return pieces.join("\n");
 }
-export const maxDuration = 60;
+/* 180s (Ulrik, 2026-09-16). At 60 a two-city trip with flights — Tokyo and
+   Kyoto from Copenhagen, measured at 110s locally — would be cut off by Vercel
+   mid-answer, leaving the panel on "Thinking…". 300 was judged too long for
+   anyone to wait. The panel gives up a little before this (AiConversation's
+   ANSWER_LIMIT_MS), so the visitor reads a message rather than losing the
+   connection. */
+export const maxDuration = 180;
 
 /** The member's preferred airlines, as stored by Personal Information: one
  * array element holding a comma-separated list. Scrubbed like page context —
@@ -260,6 +266,9 @@ export async function POST(req: Request) {
     prepareStep: ({ stepNumber }) =>
       stepNumber >= MAX_TOOL_STEPS - 1 ? { activeTools: ["presentResults"] } : undefined,
     maxOutputTokens: MAX_OUTPUT_TOKENS,
+    // Stop, or the panel giving up, ends the model call and its tools too —
+    // without this the answer carried on (and cost) after nobody was waiting.
+    abortSignal: req.signal,
     onError({ error }) {
       console.error("[ai chat]", error);
     },  });

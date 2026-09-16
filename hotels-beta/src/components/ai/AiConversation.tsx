@@ -474,6 +474,91 @@ function AgentText({
   return <>{blocks}</>;
 }
 
+/* HOW LONG THE PANEL WAITS (Ulrik, 2026-09-16).
+ *
+ * The route's own limit is 180s (maxDuration). Giving up just before it means
+ * the visitor reads why, instead of the platform dropping the connection under
+ * a "Thinking…" that never ends. The stall limit catches a stream that stops
+ * sending anything at all — every chunk resets it — and sits well above the
+ * slowest single search we make (a 300-hotel availability batch, ~20s; ETG's
+ * own 30s search timeout). */
+const ANSWER_LIMIT_MS = 170_000;
+const STALL_LIMIT_MS = 90_000;
+
+const TIMED_OUT_MESSAGE =
+  "This is taking longer than it should, so I stopped. Your question is back in the box: try again, or ask about one destination at a time.";
+
+function inputField(input: unknown, key: string): string {
+  if (!input || typeof input !== "object") return "";
+  const value = (input as Record<string, unknown>)[key];
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === "string").join(", ");
+  }
+  return "";
+}
+
+/* What the concierge is doing, in the visitor's words, one line per search it
+ * runs — read from the tool calls already streaming into the turn. The panel
+ * used to show only "Thinking…", for as long as two minutes. Inputs may still
+ * be arriving, so every field is optional here. */
+function progressLabel(toolName: string, input: unknown): string {
+  const city = inputField(input, "city");
+  switch (toolName) {
+    case "searchHotels": {
+      const name = inputField(input, "name");
+      if (name) return `Looking up ${name}`;
+      const place =
+        city ||
+        inputField(input, "area") ||
+        inputField(input, "adminRegion") ||
+        inputField(input, "region") ||
+        inputField(input, "country") ||
+        inputField(input, "macroRegion");
+      return place ? `Searching hotels in ${place}` : "Searching hotels";
+    }
+    case "getHotelDetails":
+      return "Reading hotel details";
+    case "checkAvailability":
+      return "Checking availability";
+    case "nearestAirport":
+      return city ? `Finding the nearest airport to ${city}` : "Finding the nearest airport";
+    case "compareGateways":
+      return city ? `Comparing airports for ${city}` : "Comparing airports";
+    case "searchFlights": {
+      const from = inputField(input, "originCity") || inputField(input, "origin");
+      const to = inputField(input, "destinations") || inputField(input, "destination");
+      return from && to ? `Searching flights ${from} → ${to}` : "Searching flights";
+    }
+    case "searchRestaurants":
+      return city ? `Searching restaurants in ${city}` : "Searching restaurants";
+    case "web_search": {
+      const query = inputField(input, "query");
+      return query ? `Checking the web for “${query}”` : "Checking the web";
+    }
+    case "presentResults":
+      return "Putting the answer together";
+    default:
+      return "Working";
+  }
+}
+
+type ProgressStep = { key: string; label: string; done: boolean };
+
+function progressSteps(message: UIMessage | undefined): ProgressStep[] {
+  if (!message || message.role !== "assistant") return [];
+  return message.parts.flatMap((part, index) => {
+    if (!isToolUIPart(part)) return [];
+    return [
+      {
+        key: part.toolCallId || String(index),
+        label: progressLabel(getToolName(part), part.input),
+        done: part.state === "output-available" || part.state === "output-error",
+      },
+    ];
+  });
+}
+
 function messageText(message: UIMessage): string {
   return panelText(
     message.parts
@@ -1034,9 +1119,38 @@ export default function AiConversation() {
     });
   }, [error, setMessages]);
 
+  /* Giving up on an answer that has run too long: stop it, take the turn back
+     out (as a failed turn is, above — replayed, the model would answer it
+     again beside the next question), and put the question back in the box. */
+  const [timedOut, setTimedOut] = useState(false);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
+  const giveUp = useCallback(() => {
+    stop();
+    const current = messagesRef.current;
+    let lastUser = -1;
+    for (let i = current.length - 1; i >= 0; i -= 1) {
+      if (current[i].role === "user") {
+        lastUser = i;
+        break;
+      }
+    }
+    if (lastUser >= 0) {
+      const question = current[lastUser].parts
+        .filter((part): part is { type: "text"; text: string } => part.type === "text")
+        .map((part) => part.text)
+        .join("");
+      setMessages(current.slice(0, lastUser));
+      setDraft((draftNow) => draftNow || question);
+    }
+    setTimedOut(true);
+  }, [stop, setMessages]);
+
   const startOver = useCallback(() => {
     stop();
     clearError();
+    setTimedOut(false);
     setMessages([]);
     setDraft("");
     appliedPresentationRef.current = null;
@@ -1119,12 +1233,30 @@ export default function AiConversation() {
 
   const busy = status === "submitted" || status === "streaming";
 
+  // The whole answer, from sending to the end of the stream.
+  useEffect(() => {
+    if (!busy) return;
+    const timer = window.setTimeout(giveUp, ANSWER_LIMIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [busy, giveUp]);
+
+  // Nothing new arriving at all. `messages` changes with every chunk, which is
+  // what restarts this one.
+  useEffect(() => {
+    if (!busy) return;
+    const timer = window.setTimeout(giveUp, STALL_LIMIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [busy, messages, giveUp]);
+
+  const progress = busy ? progressSteps(messages[messages.length - 1]) : [];
+
   // SyntheticEvent, not FormEvent: Enter in the textarea submits too.
   function submit(event: React.SyntheticEvent) {
     event.preventDefault();
     const text = draft.trim();
     if (!text || busy) return;
     setDraft("");
+    setTimedOut(false);
     void sendMessage(
       { text },
       // Where the visitor is standing, per request. It is re-validated and
@@ -1229,7 +1361,24 @@ export default function AiConversation() {
             at the end rather than vanishing. */}
         {framing && presentationIndex === -1 ? framingBlock : null}
 
-        {busy ? <div className={styles.thinking}>Thinking…</div> : null}
+        {busy ? (
+          <div className={styles.thinking} role="status" aria-live="polite">
+            {progress.length ? (
+              <ul className={styles.progress}>
+                {progress.map((step) => (
+                  <li key={step.key} data-done={step.done ? "true" : undefined}>
+                    {step.done ? `✓ ${step.label}` : `${step.label}…`}
+                  </li>
+                ))}
+                {progress.every((step) => step.done) ? <li>Thinking…</li> : null}
+              </ul>
+            ) : (
+              "Thinking…"
+            )}
+          </div>
+        ) : null}
+
+        {timedOut && !busy ? <div className={styles.error}>{TIMED_OUT_MESSAGE}</div> : null}
 
         {error ? <div className={styles.error}>{errorMessage(error)}</div> : null}
       </div>
