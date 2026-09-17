@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HotelSmallCard, {
+  smallCardHasTopAction,
   type SmallCardAvailability,
   type SmallCardColumns,
 } from "@/components/hotels/HotelSmallCard";
@@ -347,6 +348,13 @@ function HotelStayGroup({
     if (to) p.set("to", to);
     if (query.adults > 0) p.set("adults", String(query.adults));
     if (query.kids > 0) p.set("kids", String(query.kids));
+    // The room count, ages and passport country too: BOOK lands on room
+    // selection, which prices exactly this party.
+    if (query.bedrooms > 1) p.set("bedrooms", String(query.bedrooms));
+    query.childrenAges.slice(0, 6).forEach((age, i) => {
+      p.set(`kid_age_${i + 1}`, String(age));
+    });
+    if (residency) p.set("residency", residency);
     p.set("submitted", "1");
     return `/hotels?${p.toString()}`;
   };
@@ -362,11 +370,12 @@ function HotelStayGroup({
           adults: query.adults,
           kids: query.kids,
         });
+        const hotelHref = hotelCardParams(hotel.hotel_name ?? "");
         return (
           <HotelSmallCard
             key={String(hotel.id)}
             hotel={record}
-            href={hotelCardParams(hotel.hotel_name ?? "")}
+            href={hotelHref}
             columns={columns}
             availability={
               from && to
@@ -385,7 +394,9 @@ function HotelStayGroup({
                    inside the card so the pair is one size; stacked
                    with it only when there is one. */
                 className={`oltra-btn oltra-btn--condensed oltra-btn--block${
-                  bookingHref ? " oltra-btn--stack-bottom" : ""
+                  smallCardHasTopAction(record, hotelHref, bookingHref)
+                    ? " oltra-btn--stack-bottom"
+                    : ""
                 }`}
               />
             )}

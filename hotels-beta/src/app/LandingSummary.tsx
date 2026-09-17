@@ -19,7 +19,10 @@ import {
   type GatewayFlightFacts,
   type RankedGateway,
 } from "@/lib/flights/gatewayRanking";
-import HotelSmallCard, { type SmallCardAvailability } from "@/components/hotels/HotelSmallCard";
+import HotelSmallCard, {
+  smallCardHasTopAction,
+  type SmallCardAvailability,
+} from "@/components/hotels/HotelSmallCard";
 import styles from "./page.module.css";
 
 type HotelSummary = {
@@ -513,6 +516,13 @@ export default function LandingSummary({
                 if (toDate) hotelParams.set("to", toDate);
                 if (adults > 0) hotelParams.set("adults", String(adults));
                 if (kids > 0) hotelParams.set("kids", String(kids));
+                // The room count, ages and passport country too: BOOK lands
+                // on room selection, which prices exactly this party.
+                if (bedrooms > 1) hotelParams.set("bedrooms", String(bedrooms));
+                childrenAges.slice(0, 6).forEach((age, i) => {
+                  hotelParams.set(`kid_age_${i + 1}`, String(age));
+                });
+                if (residency) hotelParams.set("residency", residency);
                 hotelParams.set("submitted", "1");
                 const hotelHref = `/hotels?${hotelParams.toString()}`;
                 const bookingHref = bookingHrefFor(h, {
@@ -542,7 +552,9 @@ export default function LandingSummary({
                       /* Condensed, matching the button the card renders above
                          it; stacked with it only when there is one. */
                       className={`oltra-btn oltra-btn--condensed oltra-btn--block${
-                        bookingHref ? " oltra-btn--stack-bottom" : ""
+                        smallCardHasTopAction(h, hotelHref, bookingHref)
+                          ? " oltra-btn--stack-bottom"
+                          : ""
                       }`}
                     />
                   )}

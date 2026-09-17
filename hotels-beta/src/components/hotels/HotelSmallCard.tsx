@@ -73,11 +73,29 @@ const LAYOUT: Record<
   },
 };
 
+/** Whether we can price and sell this hotel ourselves — the same test as the
+ * concierge's `bookableHere`. */
+export function isBookableHere(hotel: HotelRecord): boolean {
+  return hotel.ratehawk_status !== "passive" && Boolean(hotel.ratehawk_hid);
+}
+
+/** Whether the card draws a button above SAVE, so callers can stack the pair. */
+export function smallCardHasTopAction(
+  hotel: HotelRecord,
+  href: string | undefined,
+  bookingHref: string | null | undefined
+): boolean {
+  return isBookableHere(hotel) ? Boolean(href) : Boolean(bookingHref);
+}
+
 type Props = {
   hotel: HotelRecord;
+  /** The Hotels page with this hotel selected. The card links there, and so
+   * does BOOK for a hotel we sell — room selection happens on that page. */
   href?: string;
   availability?: SmallCardAvailability;
-  /** Absolute booking URL, or null when the hotel has no bookable link. */
+  /** The hotel's own booking link or website — used ONLY for a hotel we
+   * cannot sell, as "Check availability on website". */
   bookingHref?: string | null;
   /** Supplied by the caller so the card doesn't have to know about trips - it
    * is a SaveToTripControl, which owns its own popup picker. */
@@ -169,31 +187,47 @@ export default function HotelSmallCard({
   // hotel from a trip-picker row used to navigate to the hotel - the picker
   // panel stopped propagation but never called preventDefault. Doing it once
   // here covers the picker panel too, since it renders inside this column.
+  // BOOK for a hotel we sell goes to the Hotels page with it selected, where
+  // the guest chooses a room — never to the hotel's own site, which is what it
+  // used to open. Only a hotel we cannot sell sends the guest away, and says so.
+  const bookableHere = isBookableHere(hotel);
+  const topAction = bookableHere
+    ? href
+      ? { label: "BOOK", neutral: false, go: () => window.location.assign(href) }
+      : null
+    : bookingHref
+      ? {
+          label: "Check availability on website",
+          neutral: true,
+          go: () => window.open(bookingHref, "_blank", "noopener,noreferrer"),
+        }
+      : null;
+
   const actions =
-    bookingHref || renderSaveControl ? (
+    topAction || renderSaveControl ? (
       <div
         className="mt-1.5 flex w-full flex-col gap-1.5"
         onClick={(e) => e.preventDefault()}
       >
-        {bookingHref ? (
+        {topAction ? (
           <button
             type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              window.open(bookingHref, "_blank", "noopener,noreferrer");
+              topAction.go();
             }}
             /* Sizing lives in .oltra-btn--condensed, not an inline style: the
                Save control below it is rendered by the caller, and the two have
                to match. A hotel we cannot sell gets the neutral button instead
                of BOOK, carrying its caveat as the label. */
             className={`oltra-btn ${
-              isPassive ? "oltra-btn--neutral " : ""
+              topAction.neutral ? "oltra-btn--neutral " : ""
             }oltra-btn--condensed oltra-btn--block${
               renderSaveControl ? " oltra-btn--stack-top" : ""
             }`}
           >
-            {isPassive ? "Check availability on website" : "BOOK"}
+            {topAction.label}
           </button>
         ) : null}
         {/* Stacked, not side by side: the save control opens a trip picker
