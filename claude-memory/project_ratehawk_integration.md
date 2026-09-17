@@ -4,7 +4,7 @@ description: "RateHawk/ETG status — certification scope confirmed 2026-09-16 (
 metadata:
   node_type: memory
   type: project
-  modified: 2026-09-16T10:37:08.311Z
+  modified: 2026-09-17T12:56:31.127Z
   originSessionId: ec11e773-664e-4b97-8a48-7a4721ad81e9
 ---
 
@@ -16,6 +16,7 @@ RateHawk (Emerging Travel Group) integration is documented in **`.claude/rules/e
 - **A rate's price covers every room searched** (measured 2026-09-16); the old ×N headline was wrong, saved trips from before hold inflated totals.
 - Our key's limits: `hp` and `prebook` **5/min site-wide**, serp 15/min — raise with ETG.
 - Booking endpoints are active on our key; the proxy allowlist (§47) is the control. `ETG_PREBOOK_ENABLED` on Railway is the no-deploy kill switch.
+- **Held question (Ulrik, 2026-09-17):** do NOT ask ETG about per-room search + Prebook joined by multiple `p-` hashes (mixed occupancy per room returns 0 rates) until the White Label redirect spec is in and certification is complete. Don't suggest raising it earlier.
 - Certification deliverable drafts: `etg-certification/` at the repo root.
 
 **How to apply**: before touching ETG code read §32 in the rules file; never execute a booking call without Ulrik's in-session confirmation (test bookings are real orders on the live host).

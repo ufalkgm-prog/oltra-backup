@@ -109,7 +109,11 @@ Search by hotel IDs → Retrieve hotelpage → Prebook → [White Label redirect
 Fixed: `computeHeadlinePrice` no longer multiplies; the quantity steppers are gone — the guest picks **one room type** for all rooms searched, labelled "total stay, N rooms"; a note tells multi-room guests to search one room at a time for different types.
 
 * **Saved trips created before 2026-09-16 hold inflated totals** (×N for multi-room saves, and the headline fallback was ×N²). New saves store the whole-party total split evenly across `quantity` so `SavedTripsView`'s `price × quantity` sums back to ETG's figure. Old rows were not rewritten; "Update price and availability" re-prices one correctly.
-* **Product gap, not a closed question: different occupancy per room** (Room 1: 2A+1C, Room 2: 2A). Search takes a total party plus a room count and spreads it round-robin, so the checklist's multi-room test case is answered "not supported". Two rooms with different occupancy is a normal family booking in our segment — wanted later, not now. **Seen live 2026-09-17** on La Réserve Paris: 3 adults + child 3 in 2 rooms → 0 rates (sent as 2A+child | 1A, and 1A+child | 2A is 0 too), while 1A+child alone → 22 and 4 adults (2 | 2) → 9. Until it is built, the Hotels panel's empty Rooms state says so and suggests searching one room at a time when children are spread over several rooms.
+* **Product gap, not a closed question: different occupancy per room** (Room 1: 2A+1C, Room 2: 2A). Search takes a total party plus a room count and spreads it round-robin, so the checklist's multi-room test case is answered "not supported". Two rooms with different occupancy is a normal family booking in our segment — wanted later, not now.
+  * **Live test, 2026-09-17, La Réserve Paris (hid 8616427, 15–18 Oct):** each room's occupancy returns rates on its own (1A+child 3 → 22; 2A+2A → 9), but a `guests` array whose entries differ returns **0** — `[1A+child 3, 2A]` and `[2A+child 3, 1A]` alike. So ETG requires **one rate to satisfy every entry in the array**; mixed occupancy cannot be priced in a single search.
+  * **Likely future implementation:** search and Prebook each room separately, then join them into one checkout order — **only if the White Label accepts multiple `p-` hashes.**
+  * **Do not raise this with ETG yet.** Ask only after we have the White Label redirect spec and certification is complete (Ulrik, 2026-09-17). A drafted question exists; hold it.
+  * Stopgap until then: the Hotels panel's empty Rooms state says the party is shared across the rooms and suggests searching one room at a time, when children are spread over several rooms.
 
 ### Guest information (2026-09-16)
 
@@ -171,7 +175,7 @@ Certification is conducted **in writing over 14–30 days**; for a website ETG w
 ### Open
 
 * Check-in over 730 days out is not enforced in the search form.
-* Different occupancy per room — product gap (above).
+* Different occupancy per room — product gap (above); the multiple-`p-`-hash question waits for the redirect spec and certification.
 * `hp` at 5/min site-wide — ask ETG for post-certification limits.
 * The White Label redirect format (ETG).
 
