@@ -356,7 +356,14 @@ export default function GuestSelector({
       ) : issue ? (
         // Closed, the reason still shows under the field, so a search that
         // will not run says why without the panel having to be reopened.
-        <div className={styles.issue} role="status">
+        <div
+          className={
+            issue === CHILD_AGE_MISSING_MESSAGE
+              ? `${styles.issue} ${styles.issueOneLine}`
+              : styles.issue
+          }
+          role="status"
+        >
           {issue}
         </div>
       ) : null}

@@ -149,6 +149,13 @@
   color: var(--oltra-error-text);
 }
 
+/* The field is narrow; this short reason runs on under the field beside it
+   (Bedrooms on Hotels and landing) rather than wrapping. The occupancy
+   message is too long for that and keeps wrapping. */
+.issueOneLine {
+  white-space: nowrap;
+}
+
 @media (max-width: 700px) {
   .panel {
     width: 280px;
