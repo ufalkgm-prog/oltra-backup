@@ -3506,7 +3506,13 @@ async function handleCreateTripAndAddHotel() {
                       ) : ratehawkRooms.rooms.length === 0 ? (
                         <div className="mt-2 text-sm text-[color:var(--oltra-text-muted)]">
                           {fromValue && toValue && datesAreValid
-                            ? "No rooms available for these dates."
+                            ? guestSelection.kids > 0 && searchedRoomCount > 1
+                              ? // The party is shared across the rooms and one
+                                // rate must fit every room, so a split such as
+                                // 2 adults + child | 1 adult can find nothing
+                                // where each room alone is priced (§32).
+                                `No rooms available with your guests shared across ${searchedRoomCount} rooms. The hotel may not offer a room for each mix of adults and children — try searching one room at a time.`
+                              : "No rooms available for these dates."
                             : stayTooLong
                               ? STAY_TOO_LONG_MESSAGE
                               : "Select dates to see room options."}
