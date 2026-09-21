@@ -10,6 +10,10 @@ import SaveToTripControl, {
 } from "@/components/members/SaveToTripControl";
 import { addFlightToTripBrowser } from "@/lib/members/db";
 import type { FlightLeg, Itinerary } from "@/lib/flights/duffelNormalizer";
+import type { PassengerCounts } from "@/lib/flights/itinerary";
+import type { TripComPlacement } from "@/lib/flights/partners";
+import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
+import { useCurrency } from "@/lib/currency/useCurrency";
 import styles from "./page.module.css";
 
 /* One flight result row: label, price, BOOK, SAVE, and the leg cards.
@@ -22,7 +26,14 @@ import styles from "./page.module.css";
  *
  * Book and save are owned here rather than passed in: both are entirely
  * self-contained, and duplicating them at each call site is how the two copies
- * would drift. */
+ * would drift.
+ *
+ * BOOK LEAVES THE SITE. myOLTRA does not sell flights: the member is handed to
+ * Trip.com, who are merchant of record, and we take no payment and do no
+ * servicing. The link opens a filtered SEARCH on their site, not the exact
+ * flight this row describes - their post-selection URL carries session state
+ * that expires and cannot be constructed - so the row's own carrier, times and
+ * stops are what the member matches against once they are there. */
 
 export function formatDurationMinutes(total: number): string {
   if (!Number.isFinite(total) || total <= 0) return "—";
@@ -179,6 +190,14 @@ type Props = {
    * the same book and save actions, at three widths. A return trip's two leg
    * cards stop sitting side by side at 3, because 380px cannot hold them. */
   columns?: 1 | 2 | 3;
+  /** What BOOK needs that the itinerary does not carry: who is travelling, in
+   * which cabin, and which button this is for the affiliate report. The
+   * itinerary holds the journey; a search does not know its own passengers. */
+  handoff: {
+    cabin: string;
+    passengers: PassengerCounts;
+    placement: TripComPlacement;
+  };
 };
 
 export default function FlightResultRow({
@@ -187,24 +206,10 @@ export default function FlightResultRow({
   isOneWay,
   tripDefaults,
   columns = 1,
+  handoff,
 }: Props) {
   const [detail, setDetail] = useState<FlightLeg | null>(null);
-
-  const handleBook = useCallback(async (offerId: string) => {
-    try {
-      const res = await fetch("/api/flights/book-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ offerId }),
-      });
-      const data = await res.json();
-      if (data.ok && data.url) {
-        window.open(data.url, "_blank", "noopener");
-      }
-    } catch {
-      /* swallow */
-    }
-  }, []);
+  const { currency } = useCurrency();
 
   const handleSave = useCallback(
     async (tripId: string, itinerary: Itinerary): Promise<SaveToTripResult> => {
@@ -229,6 +234,8 @@ export default function FlightResultRow({
 
   if (!flight) return null;
 
+  const bookHref = tripComHref(flight, { ...handoff, currency });
+
   return (
     <div className={styles.flightDetailRow}>
       {/* Portalled: the row sits inside a glass frame whose backdrop-filter
@@ -248,6 +255,12 @@ export default function FlightResultRow({
         <span className={styles.flightLineLabel}>{label}</span>
         <span className={styles.flightRowPrice}>
           {formatPrice(flight.priceEur, flight.currency)}
+          {/* Our fares and Trip.com's come from different sources and will
+              differ. The member pays Trip.com, so ours is an indication of
+              what this journey costs, never a quoted price — and it has to say
+              so beside the figure rather than in a footnote, because the figure
+              is what gets read. */}
+          <span className={styles.flightRowPriceNote}>indicative</span>
         </span>
         {/* The pair travels as one unit. As siblings of the label and price
             they were free to be split by the flex wrap: at three frames the
@@ -259,15 +272,21 @@ export default function FlightResultRow({
         <div className={styles.flightRowActions}>
           {/* Each in the hotel card's action width, so every BOOK and SAVE on
               the page is one width (Ulrik, 2026-09-16). */}
-          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
-            <button
-              type="button"
-              className="oltra-btn oltra-btn--condensed oltra-btn--block"
-              onClick={() => handleBook(flight.offerId)}
-            >
-              BOOK
-            </button>
-          </div>
+          {bookHref ? (
+            <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
+              {/* A real anchor, not a scripted window.open: the member can see
+                  where BOOK goes before pressing it. See tripComHandoff.ts for
+                  why the rel is noopener and not noopener noreferrer. */}
+              <a
+                href={bookHref}
+                target="_blank"
+                rel={TRIP_COM_LINK_REL}
+                className="oltra-btn oltra-btn--condensed oltra-btn--block"
+              >
+                BOOK
+              </a>
+            </div>
+          ) : null}
           <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
             <SaveToTripControl
               onSave={(tripId) => handleSave(tripId, flight)}

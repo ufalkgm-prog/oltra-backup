@@ -12,6 +12,9 @@ import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members/db";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import { type Itinerary, type FlightLeg, type AirlineRef, normalizeOffers } from "@/lib/flights/duffelNormalizer";
+import type { PassengerCounts } from "@/lib/flights/itinerary";
+import type { TripComPlacement } from "@/lib/flights/partners";
+import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
@@ -28,6 +31,16 @@ import styles from "./FlightsView.module.css";
 type PageSearchParams = Record<string, string | string[] | undefined>;
 type CabinClass = "Economy" | "Premium Economy" | "Business" | "First";
 type TripType = "one-way" | "return" | "multiple";
+
+/* What BOOK needs beyond the itinerary itself: who is travelling, in which
+ * cabin, and which button this is for the affiliate report. It rides down to
+ * PriceCard in place of the old onBook callback - the destination is a URL we
+ * can build at render, so there is nothing left to call. */
+type FlightHandoff = {
+  cabin: string;
+  passengers: PassengerCounts;
+  placement: TripComPlacement;
+};
 
 type SearchState = {
   tripType: TripType;
@@ -873,23 +886,16 @@ export default function FlightsView({ searchParams }: Props) {
     }
   }, [search, searchKey, isReturnTrip, isMultiple]);
 
-  const handleBook = useCallback(async (offerId: string) => {
-    try {
-      const res = await fetch("/api/flights/book-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ offerId }),
-      });
-      const data = await res.json();
-      if (data.ok && data.url) {
-        window.open(data.url, "_blank", "noopener");
-      } else {
-        console.error("[book-link]", data.error);
-      }
-    } catch {
-      console.error("[book-link] network error");
-    }
-  }, []);
+  /* BOOK LEAVES THE SITE. This used to post to /api/flights/book-link, which
+   * opened Duffel's hosted checkout - a page where Duffel took the payment. We
+   * do not sell flights: the member goes to Trip.com, who are merchant of
+   * record, and the route has been removed so that checkout cannot be reached
+   * by any path. Duffel still supplies the search results above. */
+  const handoff: FlightHandoff = {
+    cabin: CABIN_CLASS_MAP[search.cabin],
+    passengers: { adults: search.adults, children: search.children, infants: 0 },
+    placement: "flight-results",
+  };
 
   function toggleAirline(airline: string) {
     // Picking airlines by hand means the selection is no longer "just my
@@ -1386,7 +1392,7 @@ export default function FlightsView({ searchParams }: Props) {
                     recommended={recommended}
                     fastest={fastest}
                     onSelectLeg={(col, legId) => setSelectedMultiLegIds(prev => [...prev.slice(0, col), legId])}
-                    onBook={handleBook}
+                    handoff={handoff}
                     onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
                   />
@@ -1410,7 +1416,7 @@ export default function FlightsView({ searchParams }: Props) {
                         returnHasGutter={returnHasGutter}
                         onSelectOutbound={setSelectedOutboundId}
                         onSelectReturn={setSelectedReturnId}
-                        onBook={handleBook}
+                        handoff={handoff}
                         onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
                       />
@@ -1427,7 +1433,7 @@ export default function FlightsView({ searchParams }: Props) {
                         returnHasGutter={returnHasGutter}
                         onSelectOutbound={setSelectedOutboundId}
                         onSelectReturn={setSelectedReturnId}
-                        onBook={handleBook}
+                        handoff={handoff}
                         onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
                       />
@@ -1440,7 +1446,7 @@ export default function FlightsView({ searchParams }: Props) {
                         oneWay
                         departureHasGutter={departureHasGutter}
                         returnHasGutter={returnHasGutter}
-                        onBook={handleBook}
+                        handoff={handoff}
                         onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
                         onDeselectOutbound={handleDeselectOutbound}
@@ -1509,7 +1515,7 @@ export default function FlightsView({ searchParams }: Props) {
                         returnHasGutter={returnHasGutter}
                         onSelectOutbound={setSelectedOutboundId}
                         onSelectReturn={setSelectedReturnId}
-                        onBook={handleBook}
+                        handoff={handoff}
                         onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
                       />
@@ -1526,7 +1532,7 @@ export default function FlightsView({ searchParams }: Props) {
                         returnHasGutter={returnHasGutter}
                         onSelectOutbound={setSelectedOutboundId}
                         onSelectReturn={setSelectedReturnId}
-                        onBook={handleBook}
+                        handoff={handoff}
                         onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
                       />
@@ -1539,7 +1545,7 @@ export default function FlightsView({ searchParams }: Props) {
                         oneWay={false}
                         departureHasGutter={departureHasGutter}
                         returnHasGutter={returnHasGutter}
-                        onBook={handleBook}
+                        handoff={handoff}
                         onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
                         onDeselectOutbound={handleDeselectOutbound}
@@ -1639,7 +1645,7 @@ export default function FlightsView({ searchParams }: Props) {
                                         <PriceCard
                                           key={it.id}
                                           itinerary={it}
-                                          onBook={handleBook}
+                                          handoff={handoff}
                                           priceOnly
                                         />
                                       ))
@@ -1824,7 +1830,7 @@ function MultipleResults({
   recommended,
   fastest,
   onSelectLeg,
-  onBook,
+  handoff,
   onInfo,
   onSaveToTrip,
 }: {
@@ -1837,7 +1843,7 @@ function MultipleResults({
   recommended: Itinerary | null;
   fastest: Itinerary | null;
   onSelectLeg: (colIndex: number, legId: string) => void;
-  onBook: (offerId: string) => void;
+  handoff: FlightHandoff;
   onInfo: (flight: FlightLeg) => void;
   onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
 }) {
@@ -1882,7 +1888,7 @@ function MultipleResults({
             allLegOptions={allLegOptions}
             selectedLegIds={selectedLegIds}
             onSelectLeg={onSelectLeg}
-            onBook={onBook}
+            handoff={handoff}
             onInfo={onInfo}
             onSaveToTrip={onSaveToTrip}
           />
@@ -1896,7 +1902,7 @@ function MultipleResults({
             allLegOptions={allLegOptions}
             selectedLegIds={selectedLegIds}
             onSelectLeg={onSelectLeg}
-            onBook={onBook}
+            handoff={handoff}
             onInfo={onInfo}
             onSaveToTrip={onSaveToTrip}
           />
@@ -1949,7 +1955,7 @@ function MultipleResults({
         <div className={styles.resultsScroll} ref={priceScrollRef}>
           <div className={styles.cardStack}>
             {allSelected && selectedItinerary ? (
-              <PriceCard itinerary={selectedItinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active compact={compact} />
+              <PriceCard itinerary={selectedItinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
             ) : null}
           </div>
         </div>
@@ -1966,7 +1972,7 @@ function MultiPinnedRow({
   allLegOptions,
   selectedLegIds,
   onSelectLeg,
-  onBook,
+  handoff,
   onInfo,
   onSaveToTrip,
 }: {
@@ -1977,7 +1983,7 @@ function MultiPinnedRow({
   allLegOptions: FlightLeg[][];
   selectedLegIds: string[];
   onSelectLeg: (colIndex: number, legId: string) => void;
-  onBook: (id: string) => void;
+  handoff: FlightHandoff;
   onInfo: (flight: FlightLeg) => void;
   onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
 }) {
@@ -2014,7 +2020,7 @@ function MultiPinnedRow({
             </div>
           );
         })}
-        <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active compact={compact} />
+        <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
       </div>
     </div>
   );
@@ -2047,7 +2053,7 @@ function PinnedRow({
   returnHasGutter,
   onSelectOutbound,
   onSelectReturn,
-  onBook,
+  handoff,
   onInfo,
   onSaveToTrip,
 }: {
@@ -2061,7 +2067,7 @@ function PinnedRow({
   returnHasGutter: boolean;
   onSelectOutbound: (id: string) => void;
   onSelectReturn: (id: string) => void;
-  onBook: (id: string) => void;
+  handoff: FlightHandoff;
   onInfo: (flight: FlightLeg) => void;
   onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
 }) {
@@ -2089,7 +2095,7 @@ function PinnedRow({
         <span className={styles.pinnedLegend}>{label}</span>
         <div className={styles.pinnedGridOneWay}>
           {outboundCard}
-          <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active />
+          <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active />
         </div>
       </div>
     );
@@ -2118,7 +2124,7 @@ function PinnedRow({
               <div className={styles.staticCard}><FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} /></div>
             )
           ) : <div />}
-          <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active />
+          <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active />
         </div>
       </div>
     </div>
@@ -2126,21 +2132,21 @@ function PinnedRow({
 }
 
 
-function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter, returnHasGutter, onBook, onInfo, onSaveToTrip, onDeselectOutbound, onDeselectReturn }: {
+function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter, returnHasGutter, handoff, onInfo, onSaveToTrip, onDeselectOutbound, onDeselectReturn }: {
   outbound: FlightLeg;
   inbound: FlightLeg | null;
   itinerary: Itinerary | null;
   oneWay: boolean;
   departureHasGutter: boolean;
   returnHasGutter: boolean;
-  onBook: (id: string) => void;
+  handoff: FlightHandoff;
   onInfo: (flight: FlightLeg) => void;
   onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
   onDeselectOutbound: () => void;
   onDeselectReturn: () => void;
 }) {
   const priceCell = itinerary ? (
-    <PriceCard itinerary={itinerary} onBook={onBook} onSaveToTrip={onSaveToTrip} active />
+    <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active />
   ) : (
     <div className={styles.priceCard}>
       <span style={{ fontSize: "0.8rem", color: "var(--oltra-text-secondary)", textAlign: "center" }}>—</span>
@@ -2204,37 +2210,49 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
 
 function PriceCard({
   itinerary,
-  onBook,
+  handoff,
   onSaveToTrip,
   active = false,
   compact,
   priceOnly = false,
 }: {
   itinerary: Itinerary;
-  onBook: (id: string) => void;
+  handoff: FlightHandoff;
   onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
   active?: boolean;
   compact?: boolean;
   priceOnly?: boolean;
 }) {
   const { currency, format } = useCurrency();
+  const bookHref = tripComHref(itinerary, { ...handoff, currency });
   return (
     <div className={`${styles.priceCard} ${active ? styles.priceCardActive : ""} ${compact ? styles.selectCardCompact : ""}`}>
       <span className={styles.priceCardAmount}>
         {currency} {format(itinerary.priceEur, itinerary.currency)}
       </span>
+      {/* Our fares and Trip.com's come from different sources and will differ.
+          The member pays Trip.com, so ours indicates what the journey costs
+          rather than quoting what they will be charged - said beside the
+          figure, because the figure is what gets read. */}
+      <span className={styles.priceCardNote}>indicative</span>
       {/* Every caller that shows the buttons passes `active` and onSaveToTrip
           (the return pane's cards are priceOnly), so there is no inactive
           BOOK/SAVE state to draw. */}
       {!priceOnly && (
         <div className={styles.priceCardButtonRow}>
-          <button
-            type="button"
-            className="oltra-btn oltra-btn--condensed"
-            onClick={() => onBook(itinerary.offerId)}
-          >
-            BOOK
-          </button>
+          {/* A real anchor rather than a scripted window.open, so the member
+              can see where BOOK goes before pressing it. tripComHandoff.ts
+              explains why the rel is noopener and not noopener noreferrer. */}
+          {bookHref ? (
+            <a
+              href={bookHref}
+              target="_blank"
+              rel={TRIP_COM_LINK_REL}
+              className="oltra-btn oltra-btn--condensed"
+            >
+              BOOK
+            </a>
+          ) : null}
           {/* Same picker as Hotels/Restaurants - saving used to go straight to
               whatever default trip the db helper picked, with no way to tell
               where it landed. */}

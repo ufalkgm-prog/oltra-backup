@@ -130,7 +130,7 @@ Moved to `.claude/rules/hotel-data.md` — it loads by itself when you open a fi
 
 **Restaurants** — `/src/app/restaurants/page.tsx`, `/src/app/restaurants/ui/RestaurantsMapView.tsx`, `/src/lib/restaurants`.
 
-**Flights** — `/src/app/flights/page.tsx`, `ui/FlightsView.tsx`, `ui/FlightDetailsPopup.tsx`, `ui/AirportAutocomplete.tsx`. Data: `/src/lib/flights/duffelNormalizer.ts`, `/src/lib/flights/airlineAlliances.ts`, `/src/lib/airportOptions.ts`. Routes: `/src/app/api/flights/{search,book-link,offer/[id]}`.
+**Flights** — `/src/app/flights/page.tsx`, `ui/FlightsView.tsx`, `ui/FlightDetailsPopup.tsx`, `ui/AirportAutocomplete.tsx`. Data: `/src/lib/flights/duffelNormalizer.ts`, `/src/lib/flights/airlineAlliances.ts`, `/src/lib/airportOptions.ts`. Routes: `/src/app/api/flights/{search,inquiry,offer/[id]}`. Handoff: `/src/lib/flights/{itinerary,partners,tripCom,tripComHandoff}.ts` — BOOK goes to Trip.com, who are merchant of record; `book-link` (Duffel checkout) was deleted 2026-09-21.
 
 **Ratehawk** — `/src/lib/ratehawk/availability.ts`, `/src/app/api/ratehawk/availability{,/batch}`.
 

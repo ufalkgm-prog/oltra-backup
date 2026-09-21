@@ -460,7 +460,8 @@ export default function LandingSummary({
     key: string,
     label: string,
     flight: Itinerary | null,
-    isOneWay: boolean
+    isOneWay: boolean,
+    cabin: CabinKey
   ) {
     if (!flight) return null;
     return (
@@ -470,6 +471,13 @@ export default function LandingSummary({
         flight={flight}
         isOneWay={isOneWay}
         tripDefaults={tripDefaults}
+        /* The cabin this row was searched in — each airport is searched in
+           both, so the cabin belongs to the row and not to the page. */
+        handoff={{
+          cabin,
+          passengers: { adults: Math.max(1, adults), children: kids, infants: 0 },
+          placement: "flight-results",
+        }}
       />
     );
   }
@@ -654,13 +662,15 @@ export default function LandingSummary({
                                   : "Best price"
                               }`,
                               state.bestPrice,
-                              state.isOneWay
+                              state.isOneWay,
+                              cabin.key
                             )}
                             {renderFlightRow(
                               `${airport.iata}-${cabin.key}-fastest`,
                               `${cabin.label} · Fastest`,
                               state.fastest,
-                              state.isOneWay
+                              state.isOneWay,
+                              cabin.key
                             )}
                           </>
                         )}

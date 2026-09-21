@@ -104,6 +104,15 @@ function FlightLegPanel({
 
   const isOneWay = !leg.returnDate;
 
+  /* The party and the cabin the concierge actually searched, so BOOK hands
+     Trip.com the same search the cards below were priced on. `concierge-chat`
+     is what the affiliate report will call a click that started here. */
+  const handoff = {
+    cabin: leg.cabin || "economy",
+    passengers: { adults: Math.max(1, adults), children: Math.max(0, kids), infants: 0 },
+    placement: "concierge-chat" as const,
+  };
+
   useEffect(() => {
     let cancelled = false;
     setState({ status: "loading" });
@@ -185,6 +194,7 @@ function FlightLegPanel({
             isOneWay={state.isOneWay}
             tripDefaults={tripDefaults}
             columns={columns}
+            handoff={handoff}
           />
           <FlightResultRow
             label="Fastest"
@@ -192,6 +202,7 @@ function FlightLegPanel({
             isOneWay={state.isOneWay}
             tripDefaults={tripDefaults}
             columns={columns}
+            handoff={handoff}
           />
         </div>
       ) : null}

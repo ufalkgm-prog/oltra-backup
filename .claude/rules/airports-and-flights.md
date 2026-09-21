@@ -49,7 +49,13 @@ Only `.resultsScroll` scrolls; headers and pinned rows sit outside it. A `Resize
 
 ### Booking
 
-`BookingBar` was removed. The only book action is the BOOK button inside each `PriceCard`, active only for the Top pick / Fastest rows and the user-selected itinerary. Opens the partner URL via `/api/flights/book-link`.
+`BookingBar` was removed. The only book action is the BOOK button inside each `PriceCard`, active only for the Top pick / Fastest rows and the user-selected itinerary.
+
+**BOOK hands the member to Trip.com, and myOLTRA never takes the payment (2026-09-21).** It is an `<a target="_blank" rel="noopener">` built by `buildTripComUrl` (`lib/flights/tripCom.ts`), with the affiliate identifiers in `lib/flights/partners.ts` and nowhere else. **`/api/flights/book-link` was deleted in the same change** — it opened Duffel's hosted checkout, where Duffel took the card, and removing the route rather than only the buttons is what makes that unreachable. Duffel still supplies the search results.
+
+The link lands on a filtered Trip.com *search*, never on the chosen flight: their post-selection URL carries session state that expires and cannot be constructed (`docs/trip-com-handoff-spec.md` §4). There is no airline filter parameter, confirmed by testing — so the copy beside the link must name the carrier and flight numbers, and must not say "book this flight". Prices we show come from a different source than Trip.com's and are labelled **indicative** beside the figure.
+
+`npm test` covers the builder (24 cases: all three trip types, four cabins, infants, `rdate` omitted on one-way, the tracking parameters, the currency fallback). What it cannot cover is whether a click registers in the Trip.com affiliate dashboard — that is the silent failure, since broken tracking still opens a working page, and only a human clicking a generated link can check it.
 
 ### Cards and popup
 
