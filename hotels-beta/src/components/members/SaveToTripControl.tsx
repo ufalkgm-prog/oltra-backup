@@ -276,7 +276,14 @@ export default function SaveToTripControl({
   return (
     <div
       ref={containerRef}
-      className={`relative ${compact ? "" : "w-full"}`}
+      /* flex-col, not a plain block: the trigger below is an inline-level
+         button, so in a block box it sits on a text baseline and the box
+         reserves descender space under it — measured as a 25px SAVE beside a
+         22px BOOK, which left the pair looking unevenly spaced wherever they
+         stack (Ulrik, 2026-09-21). As a flex item there is no baseline and no
+         extra room. Every caller passes oltra-btn--block, so the default
+         stretch gives the same full width it had. */
+      className={`relative flex flex-col ${compact ? "" : "w-full"}`}
       data-oltra-control="true"
       {...dismissProps}
     >

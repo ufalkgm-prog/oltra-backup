@@ -872,6 +872,13 @@ button.oltra-select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Every button is inline-level, so in a block parent it sits on a text
+     baseline and the parent reserves descender space beneath it — which is how
+     a 22px BOOK and a 22px SAVE ended up as a 22px and a 25px box, and the
+     labels stopped lining up (Ulrik, 2026-09-21). middle takes the box off the
+     baseline. Wrappers that stack buttons are flex too, which is the other
+     half of the fix. */
+  vertical-align: middle;
   gap: 8px;
   box-sizing: border-box;
   margin: 0;
