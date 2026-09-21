@@ -750,13 +750,24 @@
 .introPanel {
   position: relative;
   z-index: 1;
-  margin-top: 1rem;
+  /* 56px clear of the search panel: the hero grid's 1rem gap plus 2.5rem here.
+     It used to be 1rem, giving the same 32px the results boxes use, and the
+     note read as part of the search frame rather than as a separate welcome
+     (Ulrik, 2026-09-21). */
+  margin-top: 2.5rem;
+  /* Narrower than the search panel, and centred under it. The panel inherited
+     the hero's width, so five paragraphs of reading text ran to 1120px — far
+     past the ~75 characters a line can be read comfortably at. */
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
   color: var(--oltra-text-primary);
-  /* The landing glass's own tint, far less see-through (0.72 → 0.92): this
-     panel carries paragraphs of reading text over the photo (Ulrik,
-     2026-09-16). Declared after .landingGlass in this file, so it wins on
-     source order. */
-  background: rgba(18, 28, 40, 0.92);
+  /* Solid, and the same dark grey every non-landing page uses (Ulrik,
+     2026-09-21). It was rgba(18, 28, 40, 0.92) — the landing glass's blue-black
+     tint at near-opacity, so it read as a slightly different colour from the
+     rest of the site while still letting the photo through. Declared after
+     .landingGlass in this file, so it wins on source order. */
+  background: var(--oltra-bg-color);
 }
 
 /* Stops short of the close control so the two never overlap. */
