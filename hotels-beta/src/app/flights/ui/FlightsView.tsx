@@ -15,6 +15,7 @@ import type { Itinerary, FlightLeg, AirlineRef } from "@/lib/flights/itinerary";
 import type { PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
 import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
+import TripComMatchNote from "@/components/flights/TripComMatchNote";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
@@ -1955,7 +1956,10 @@ function MultipleResults({
         <div className={styles.resultsScroll} ref={priceScrollRef}>
           <div className={styles.cardStack}>
             {allSelected && selectedItinerary ? (
-              <PriceCard itinerary={selectedItinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
+              <>
+                <PriceCard itinerary={selectedItinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
+                <RowMatchNote itinerary={selectedItinerary} />
+              </>
             ) : null}
           </div>
         </div>
@@ -2022,6 +2026,7 @@ function MultiPinnedRow({
         })}
         <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
       </div>
+      <RowMatchNote itinerary={itinerary} />
     </div>
   );
 }
@@ -2033,6 +2038,21 @@ function MultiPinnedRow({
 //
 // The figure is always a whole-itinerary price, never a per-leg one: Duffel
 // prices a return/multi-city offer as a single ticket (CLAUDE.md §7B).
+/* The "find this flight on Trip.com" block, with the price formatted exactly
+   as PriceCard formats it - converted into the member's selected currency. The
+   shared component takes a preformatted string precisely so this page and the
+   landing cards can each show the figure they already show. */
+function RowMatchNote({ itinerary }: { itinerary: Itinerary | null }) {
+  const { currency, format } = useCurrency();
+  if (!itinerary) return null;
+  return (
+    <TripComMatchNote
+      itinerary={itinerary}
+      price={`${currency} ${format(itinerary.priceEur, itinerary.currency)}`}
+    />
+  );
+}
+
 function InlinePrice({ priceEur, currency }: { priceEur: number; currency: string }) {
   const { currency: displayCurrency, format } = useCurrency();
   return (
@@ -2097,6 +2117,7 @@ function PinnedRow({
           {outboundCard}
           <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active />
         </div>
+        <RowMatchNote itinerary={itinerary} />
       </div>
     );
   }
@@ -2127,6 +2148,7 @@ function PinnedRow({
           <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active />
         </div>
       </div>
+      <RowMatchNote itinerary={itinerary} />
     </div>
   );
 }
@@ -2168,6 +2190,7 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
           </div>
           {priceCell}
         </div>
+        <RowMatchNote itinerary={itinerary} />
       </div>
     );
   }
@@ -2204,6 +2227,7 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
           {priceCell}
         </div>
       </div>
+      <RowMatchNote itinerary={itinerary} />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { SMALL_CARD_ACTION_WIDTH } from "@/components/hotels/HotelSmallCard";
 import SaveToTripControl, {
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
+import TripComMatchNote from "@/components/flights/TripComMatchNote";
 import { addFlightToTripBrowser } from "@/lib/members/db";
 import type { FlightLeg, Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
@@ -308,6 +309,12 @@ export default function FlightResultRow({
           <FlightDetailCard flight={flight.inbound} onInfo={setDetail} />
         ) : null}
       </div>
+      {/* The same price string the row's own header shows, so the two figures
+          in one card can never disagree. */}
+      <TripComMatchNote
+        itinerary={flight}
+        price={formatPrice(flight.priceEur, flight.currency)}
+      />
     </div>
   );
 }
