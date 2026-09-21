@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { HotelRecord } from "@/lib/directus";
+import { useCurrency } from "@/lib/currency/useCurrency";
 import {
   getHotelImageSet,
   HOTEL_CARD_PLACEHOLDERS,
@@ -137,6 +140,9 @@ export default function HotelSmallCard({
   renderSaveControl,
   columns = 1,
 }: Props) {
+  /* The card prices in whatever the member picked in the header, converting
+     from the currency the supplier quoted. */
+  const { currency: displayCurrency, format: formatMoney } = useCurrency();
   const layout = LAYOUT[columns];
   const img = getHotelImageSet(hotel)[0] ?? HOTEL_CARD_PLACEHOLDERS[0];
   const hasPhoto = hasHotelPhotos(hotel);
@@ -163,9 +169,13 @@ export default function HotelSmallCard({
       return (
         <div className="flex flex-col items-center justify-center">
           <div className="w-full text-center">
+            {/* The member's currency, not the supplier's (Ulrik, 2026-09-21).
+                This printed `availability.currency` — whatever Ratehawk quoted
+                — so with USD selected the same hotel read "EUR 5,940" on the
+                landing page and "USD 6,813" on the Hotels page, which converts.
+                Two prices for one hotel. */}
             <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
-              {availability.currency}{" "}
-              {Math.round(availability.pricePerStay).toLocaleString()}
+              {displayCurrency} {formatMoney(availability.pricePerStay, availability.currency)}
             </div>
             <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
               total stay

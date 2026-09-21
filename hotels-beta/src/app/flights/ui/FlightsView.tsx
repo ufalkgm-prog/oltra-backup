@@ -13,10 +13,9 @@ import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import type { Itinerary, FlightLeg, AirlineRef } from "@/lib/flights/itinerary";
 import TripComBookButton, { type FlightHandoff } from "@/components/flights/TripComBookButton";
-import { APPROX_PREFIX, roundFlightPrice } from "@/lib/flights/priceDisplay";
+import { useApproxPrice } from "@/lib/flights/useApproxPrice";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
-import { useCurrency } from "@/lib/currency/useCurrency";
 import type { AirportOption } from "@/lib/airportOptions";
 import { getCityForAirportIata, pickPrimaryAirportForCity } from "@/lib/cityAirports";
 import AirportAutocomplete from "./AirportAutocomplete";
@@ -2044,21 +2043,6 @@ function MultiPinnedRow({
 //
 // The figure is always a whole-itinerary price, never a per-leg one: Duffel
 // prices a return/multi-city offer as a single ticket (CLAUDE.md §7B).
-/* "~EUR 1,240", rounded in the currency on screen.
- *
- * convert() first and format() second, with the display currency passed as the
- * source so format's own conversion is a no-op: rounding the EUR figure and
- * converting afterwards would put 1,237 on screen, which is the one thing the
- * rounding exists to prevent. */
-function useApproxPrice() {
-  const { currency, convert, format } = useCurrency();
-  return {
-    currency,
-    approx: (priceEur: number, from: string) =>
-      `${APPROX_PREFIX}${format(roundFlightPrice(convert(priceEur, from)), currency)}`,
-  };
-}
-
 function InlinePrice({ priceEur, currency }: { priceEur: number; currency: string }) {
   const { currency: displayCurrency, approx } = useApproxPrice();
   return (

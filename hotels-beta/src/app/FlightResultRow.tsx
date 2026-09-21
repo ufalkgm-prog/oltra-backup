@@ -12,8 +12,7 @@ import TripComBookButton from "@/components/flights/TripComBookButton";
 import { addFlightToTripBrowser } from "@/lib/members/db";
 import type { FlightLeg, Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
-import { APPROX_PREFIX, roundFlightPrice } from "@/lib/flights/priceDisplay";
-import { useCurrency } from "@/lib/currency/useCurrency";
+import { useApproxPrice } from "@/lib/flights/useApproxPrice";
 import styles from "./page.module.css";
 
 /* One flight result row: label, price, BOOK, SAVE, and the leg cards.
@@ -40,21 +39,6 @@ export function formatDurationMinutes(total: number): string {
   const h = Math.floor(total / 60);
   const m = Math.round(total % 60);
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
-}
-
-/* "~€1,240". The tilde leads the whole price rather than sitting between the
- * symbol and the digits, which reads as "approximately €1,240" instead of
- * producing "€~1,240". See lib/flights/priceDisplay.ts for why a fare is not
- * written exactly.
- *
- * These rows print the fare as quoted, in its own currency — unlike the
- * Flights page, which converts into the member's selected currency first.
- * Rounding after conversion is the important half; here there is none. */
-export function formatPrice(value: number, currency: string): string {
-  if (!Number.isFinite(value) || value <= 0) return "—";
-  const symbol =
-    currency === "EUR" ? "€" : currency === "USD" ? "$" : currency === "GBP" ? "£" : `${currency} `;
-  return `${APPROX_PREFIX}${symbol}${roundFlightPrice(value).toLocaleString()}`;
 }
 
 function totalMinutes(itinerary: Itinerary): number {
@@ -217,7 +201,12 @@ export default function FlightResultRow({
   handoff,
 }: Props) {
   const [detail, setDetail] = useState<FlightLeg | null>(null);
-  const { currency } = useCurrency();
+  /* THE FARE IS SHOWN IN THE MEMBER'S CURRENCY, like everywhere else.
+   *
+   * These rows used to print whatever the supplier quoted, so with USD
+   * selected the same journey read "USD ~1,140" on the Flights page and
+   * "~€1,030" here (Ulrik, 2026-09-21). One hook now formats both. */
+  const { currency, approx } = useApproxPrice();
 
   const handleSave = useCallback(
     async (tripId: string, itinerary: Itinerary): Promise<SaveToTripResult> => {
@@ -260,7 +249,7 @@ export default function FlightResultRow({
       >
         <span className={styles.flightLineLabel}>{label}</span>
         <span className={styles.flightRowPrice}>
-          {formatPrice(flight.priceEur, flight.currency)}
+          {currency} {approx(flight.priceEur, flight.currency)}
         </span>
         {/* The pair travels as one unit. As siblings of the label and price
             they were free to be split by the flex wrap: at three frames the
@@ -277,7 +266,7 @@ export default function FlightResultRow({
                 is what leaves the site. */}
             <TripComBookButton
               itinerary={flight}
-              price={formatPrice(flight.priceEur, flight.currency)}
+              price={`${currency} ${approx(flight.priceEur, flight.currency)}`}
               handoff={handoff}
               currency={currency}
               className="oltra-btn oltra-btn--condensed oltra-btn--block"
