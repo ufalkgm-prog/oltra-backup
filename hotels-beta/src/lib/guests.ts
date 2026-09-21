@@ -24,6 +24,18 @@ export function clampKidsCount(value: number): number {
 // ETG's documented occupancy limit per room (§32). The party is spread across
 // the rooms round-robin (buildGuestsArray), so the busiest room holds
 // ceil(n / rooms) — which fits exactly when n <= limit × rooms.
+/** The bedrooms selector offers 1-4, and a value outside that used to reach
+ * it unclamped: `?bedrooms=99` left OltraSelect with nothing to match, so it
+ * fell back to its placeholder and the field read "#" (Ulrik, 2026-09-21).
+ * Adults and children were already clamped on the way in; this is the same. */
+export const MAX_BEDROOMS = 4;
+
+export function clampBedrooms(value: string | number | null | undefined): number {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(1, Math.min(MAX_BEDROOMS, Math.floor(n)));
+}
+
 export const MAX_ADULTS_PER_ROOM = 6;
 export const MAX_CHILDREN_PER_ROOM = 4;
 

@@ -18,7 +18,7 @@ import {
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
 import AiResultsSync from "@/lib/ai/AiResultsSync";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
-import {
+import { clampBedrooms,
   guestSelectionIssue,
   normalizeParam,
   readGuestSelection,
@@ -910,8 +910,10 @@ export default function HotelsView(props: {
 
   const todayIso = new Date().toISOString().slice(0, 10);
 
-  const [bedroomsValue, setBedroomsValue] = useState(
-    normalizeParam(searchParams.bedrooms) || "1"
+  /* Clamped on the way in: the selector offers 1-4, and `?bedrooms=99`
+     matched no option, so the field rendered its "#" placeholder. */
+  const [bedroomsValue, setBedroomsValue] = useState(() =>
+    String(clampBedrooms(normalizeParam(searchParams.bedrooms) || "1"))
   );
 
   // Passport country ("residency" in ETG's API), not country of residence —
@@ -949,10 +951,22 @@ export default function HotelsView(props: {
     Boolean(bedroomsValue) &&
     Boolean(residencyValue);
 
+  /* Two entries that used to pass silently (Ulrik, 2026-09-21).
+     *
+     * A check-out on or before the check-in was already caught by
+     * `stayLengthMs > 0`, but the reason chain below then offered the
+     * stay-too-long message, which is the opposite complaint. A check-in in
+     * the past was not caught at all: "01 Jan 2020 – 01 Dec 2019" rendered as
+     * typed and the button just went passive. */
+  const checkOutBeforeCheckIn =
+    Boolean(fromValue) && Boolean(toValue) && stayLengthMs <= 0;
+  const checkInInPast = Boolean(fromValue) && fromValue < todayIso;
+
   const datesAreValid =
     Boolean(fromDate) &&
     Boolean(toDate) &&
     stayLengthMs > 0 &&
+    !checkInInPast &&
     !stayTooLong;
 
   const resultCountTooLarge =
@@ -980,14 +994,23 @@ export default function HotelsView(props: {
   const searchBusy = ratehawkResultAvailabilityStatus === "loading";
   const searchNeedsDates = !datesAreValid;
   const searchNeedsGuests = !hasGuestDetails || Boolean(guestIssue);
+  /* The specific complaint, in the order a visitor would hit it. Null when
+     the dates are fine or simply missing, which "Add dates to continue"
+     covers. */
+  const dateProblem = checkOutBeforeCheckIn
+    ? "Check-out must be after check-in."
+    : checkInInPast
+      ? "Check-in cannot be in the past."
+      : stayTooLong
+        ? STAY_TOO_LONG_MESSAGE
+        : null;
+
   const searchPassiveReason = resultCountTooLarge
     ? "Narrow your search to 50 hotels or fewer to check availability"
     : searchNeedsDates && searchNeedsGuests
       ? "Add dates and guests to continue"
       : searchNeedsDates
-        ? fromValue && toValue
-          ? STAY_TOO_LONG_MESSAGE
-          : "Add dates to continue"
+        ? dateProblem ?? "Add dates to continue"
         : searchNeedsGuests
           ? guestIssue ?? "Add guests to continue"
           : !searchIsActive
@@ -1027,7 +1050,7 @@ export default function HotelsView(props: {
     setFromValue(normalizeParam(searchParams.from));
     setToValue(normalizeParam(searchParams.to));
     setGuestSelection(readGuestSelection(searchParams));
-    setBedroomsValue(normalizeParam(searchParams.bedrooms) || "1");
+    setBedroomsValue(String(clampBedrooms(normalizeParam(searchParams.bedrooms) || "1")));
   }, [searchParams]);
 
   /* The concierge, as far as this page is concerned: whether its hotel answer
@@ -2673,9 +2696,9 @@ export default function HotelsView(props: {
                           setAvailabilitySearchDirty(true);
                         }}
                       />
-                      {stayTooLong ? (
+                      {dateProblem ? (
                         <div className="mt-1 text-[12px] leading-snug text-[color:var(--oltra-error-text)]" role="status">
-                          {STAY_TOO_LONG_MESSAGE}
+                          {dateProblem}
                         </div>
                       ) : null}
                     </div>
@@ -3644,6 +3667,16 @@ export default function HotelsView(props: {
                     selectedPolicies.policies.extraInfo.length > 0) ? (
                     <div>
                       <div className="oltra-subheader">Hotel policies</div>
+                      {/* These are the hotel's own charges, quoted by the
+                          hotel in its own currency and paid there - so they
+                          are NOT converted into the member's currency the way
+                          the stay total above is. Without saying so, a
+                          "Deposit: EUR 500" sat beside a "USD 6,825" total
+                          with nothing to explain the difference (Ulrik,
+                          2026-09-21). */}
+                      <div className="mt-1 text-[11px] leading-snug text-[color:var(--oltra-text-muted)]">
+                        Charged by the hotel, in the hotel&apos;s own currency.
+                      </div>
                       <div className="mt-2 grid grid-cols-1 gap-3 text-[12px] leading-relaxed text-[color:var(--oltra-text-primary)] sm:grid-cols-2">
                         {selectedPolicies.policies.checkIn || selectedPolicies.policies.checkOut ? (
                           <div>

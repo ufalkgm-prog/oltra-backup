@@ -82,6 +82,12 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
       <input
         ref={inputRef}
         className="oltra-input"
+        /* The sidebar field is about 154px and the label runs to 247px
+           ("CPH · Copenhagen Kastrup, DK"), so it is cut at 1440 as much as
+           anywhere. It is an input the visitor types into, so the value stays
+           whole and the full text is available on hover instead (Ulrik,
+           2026-09-21). */
+        title={text}
         value={text}
         placeholder="Type 2+ letters…"
         onChange={e => { setText(e.target.value); setOpen(e.target.value.trim().length >= 2) }}
