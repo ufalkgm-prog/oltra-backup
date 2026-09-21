@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { FlightLeg, Segment, Baggage, SliceConditionFlag } from "@/lib/flights/duffelNormalizer";
+import type { FlightLeg, Segment, Baggage, SliceConditionFlag } from "@/lib/flights/itinerary";
 import styles from "./FlightsView.module.css";
 
 type Props = {

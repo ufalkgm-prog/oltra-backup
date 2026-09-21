@@ -9,8 +9,7 @@ import SaveToTripControl, {
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
 import { addFlightToTripBrowser } from "@/lib/members/db";
-import type { FlightLeg, Itinerary } from "@/lib/flights/duffelNormalizer";
-import type { PassengerCounts } from "@/lib/flights/itinerary";
+import type { FlightLeg, Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
 import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
 import { useCurrency } from "@/lib/currency/useCurrency";

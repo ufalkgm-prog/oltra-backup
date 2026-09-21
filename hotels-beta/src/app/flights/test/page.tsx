@@ -113,24 +113,24 @@ export default function FlightsTestPage() {
       {result && (
         <div style={{ marginTop: 28 }}>
           <p style={{ color: '#86efac', marginBottom: 12 }}>
-            {result.cached ? '(cached) ' : ''}{result.offers?.length ?? 0} offers returned
+            {result.cached ? '(cached) ' : ''}{result.itineraries?.length ?? 0} itineraries returned
           </p>
-          {result.offers?.slice(0, 3).map((offer: AnyJson) => (
-            <div key={offer.id} style={{ background: '#111', border: '1px solid #222', borderRadius: 8, padding: 16, marginBottom: 12 }}>
+          {result.itineraries?.slice(0, 3).map((itinerary: AnyJson) => (
+            <div key={itinerary.id} style={{ background: '#111', border: '1px solid #222', borderRadius: 8, padding: 16, marginBottom: 12 }}>
               <div style={{ fontSize: 13, color: '#aaa', marginBottom: 4 }}>
-                {offer.id}
+                {itinerary.offerId}
               </div>
               <div style={{ fontSize: 15 }}>
-                {offer.total_amount} {offer.total_currency}
+                {itinerary.priceEur} {itinerary.currency}
                 {' · '}
-                {offer.owner?.name ?? 'Unknown airline'}
+                {itinerary.outbound?.airline ?? 'Unknown airline'}
               </div>
             </div>
           ))}
           <details style={{ marginTop: 16 }}>
-            <summary style={{ cursor: 'pointer', color: '#888', fontSize: 13 }}>Raw JSON (first offer)</summary>
+            <summary style={{ cursor: 'pointer', color: '#888', fontSize: 13 }}>Raw JSON (first itinerary)</summary>
             <pre style={{ fontSize: 11, color: '#ccc', overflow: 'auto', marginTop: 8 }}>
-              {JSON.stringify(result.offers?.[0] ?? result, null, 2)}
+              {JSON.stringify(result.itineraries?.[0] ?? result, null, 2)}
             </pre>
           </details>
         </div>

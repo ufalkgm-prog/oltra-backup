@@ -271,8 +271,14 @@ function computeScores(items: Omit<Itinerary, 'score'>[]): Itinerary[] {
   })
 }
 
-export function normalizeOffers(offers: OfferWithoutServices[], tripType: TripType): Itinerary[] {
-  void tripType
+/* The trip type used to be a second argument here and was never read - the
+ * body opened with `void tripType`. Every caller was computing and passing a
+ * value that changed nothing, which reads as though slices are interpreted
+ * differently for a return than for a multi-city. They are not: slices[0] is
+ * the outbound and slices[1] the inbound if there is one, whatever the journey
+ * is called. Removed rather than left as documentation of a decision nobody
+ * made. */
+export function normalizeOffers(offers: OfferWithoutServices[]): Itinerary[] {
   const raw: Omit<Itinerary, 'score'>[] = offers
     .filter(o => o.slices.length > 0)
     .map(offer => {

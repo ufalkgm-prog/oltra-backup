@@ -2,7 +2,7 @@ import 'server-only'
 import type { CabinClass, CreateOfferRequestPassenger } from '@duffel/api/types'
 import { getDuffel } from '../duffelClient'
 import { normalizeOffers } from '../duffelNormalizer'
-import { tripShapeOf, type FlightConnector, type Itinerary, type ItineraryQuery } from '../itinerary'
+import type { FlightConnector, Itinerary, ItineraryQuery } from '../itinerary'
 
 /* DUFFEL AS ONE SUPPLIER AMONG SEVERAL.
  *
@@ -55,12 +55,6 @@ export const duffelConnector: FlightConnector = {
       return_offers: true,
     })
 
-    const shape = tripShapeOf(
-      query.legs.map(leg => ({ origin: leg.origin, destination: leg.destination, date: leg.date }))
-    )
-    return normalizeOffers(
-      response.data.offers ?? [],
-      shape === 'multi-city' ? 'multiple' : shape
-    )
+    return normalizeOffers(response.data.offers ?? [])
   },
 }

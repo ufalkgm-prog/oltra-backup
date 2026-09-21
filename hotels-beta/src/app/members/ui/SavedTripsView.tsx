@@ -14,7 +14,7 @@ import {
 import type { SavedTrip } from "@/lib/members/types";
 import { buildTripWarnings } from "@/lib/members/tripWarnings";
 import { guessResidencyFromLocale } from "@/lib/countries";
-import { normalizeOffers } from "@/lib/flights/duffelNormalizer";
+import type { Itinerary } from "@/lib/flights/itinerary";
 import type { CabinClass } from "@duffel/api/types";
 import TripItineraryDocument from "./TripItineraryDocument";
 
@@ -438,13 +438,10 @@ export default function SavedTripsView() {
           cabinClass: target.cabinClass,
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; offers?: unknown[] };
+      const data = (await res.json()) as { ok?: boolean; itineraries?: Itinerary[] };
       if (!data?.ok) return fail("Could not check fares.");
 
-      const itineraries = normalizeOffers(
-        (data.offers ?? []) as Parameters<typeof normalizeOffers>[0],
-        "one-way"
-      );
+      const itineraries = data.itineraries ?? [];
       const cheapest = itineraries.reduce<(typeof itineraries)[number] | null>(
         (best, candidate) =>
           !best || candidate.priceEur < best.priceEur ? candidate : best,

@@ -23,7 +23,7 @@ import { isStayTooLong } from "@/lib/stay";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { MAX_NAMED, completeLegsForHotels, namedHotels } from "@/lib/ai/hotelGateways";
 import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
-import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
+import type { Itinerary } from "@/lib/flights/itinerary";
 import FlightResultRow, { pickHeadlineItineraries, type TripDefaults } from "./FlightResultRow";
 import type { AiFlightLeg, AiHotelCard, AiQueryState } from "@/lib/ai/types";
 import styles from "./page.module.css";
@@ -131,16 +131,13 @@ function FlightLegPanel({
       }),
     })
       .then((res) => res.json())
-      .then((json: { ok?: boolean; offers?: unknown[] }) => {
+      .then((json: { ok?: boolean; itineraries?: Itinerary[] }) => {
         if (cancelled) return;
         if (!json.ok) {
           setState({ status: "error" });
           return;
         }
-        const itineraries = normalizeOffers(
-          (json.offers ?? []) as never,
-          isOneWay ? "one-way" : "return"
-        );
+        const itineraries = json.itineraries ?? [];
         if (!itineraries.length) {
           setState({ status: "empty" });
           return;

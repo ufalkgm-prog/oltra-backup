@@ -11,7 +11,7 @@ import { addHotelToTripBrowser } from "@/lib/members/db";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
-import { normalizeOffers, type Itinerary } from "@/lib/flights/duffelNormalizer";
+import type { Itinerary } from "@/lib/flights/itinerary";
 import {
   factsFromDurations,
   formatJourneyMinutes,
@@ -205,10 +205,7 @@ export default function LandingSummary({
               }));
               return;
             }
-            const itineraries = normalizeOffers(
-              json.offers ?? [],
-              isOneWay ? "one-way" : "return"
-            );
+            const itineraries: Itinerary[] = json.itineraries ?? [];
             if (itineraries.length === 0) {
               setFlightResults((prev) => ({ ...prev, [key]: { status: "empty" } }));
               return;

@@ -11,7 +11,7 @@ import {
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members/db";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
-import { type Itinerary, type FlightLeg, type AirlineRef, normalizeOffers } from "@/lib/flights/duffelNormalizer";
+import type { Itinerary, FlightLeg, AirlineRef } from "@/lib/flights/itinerary";
 import type { PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
 import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
@@ -875,7 +875,7 @@ export default function FlightsView({ searchParams }: Props) {
       if (!res.ok || !data.ok) {
         setSearchError(data.error ?? "Search failed");
       } else {
-        const normalized = normalizeOffers(data.offers ?? [], search.tripType);
+        const normalized: Itinerary[] = data.itineraries ?? [];
         setItineraries(normalized);
         if (!normalized.length) setSearchError("No flights found for this route and date.");
       }
