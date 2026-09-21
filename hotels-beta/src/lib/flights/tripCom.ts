@@ -1,3 +1,8 @@
+/* The `.ts` on these two imports is deliberate and load-bearing: it is what
+ * lets `npm test` run this file directly on Node, which needs the real
+ * extension to resolve a TypeScript module. Everything else in the codebase
+ * imports extensionless through the bundler, and should keep doing so - this
+ * file and `itinerary.ts` are the pair under test. */
 import {
   TRIP_COM_CABIN_CODE,
   TRIP_COM_CURRENCIES,
@@ -7,8 +12,8 @@ import {
   TRIP_COM_SEARCH_URL,
   TRIP_COM_TRACKING,
   type TripComPlacement,
-} from './partners'
-import { isNonstop, tripShapeOf, type SelectedItinerary } from './itinerary'
+} from './partners.ts'
+import { isNonstop, tripShapeOf, type SelectedItinerary } from './itinerary.ts'
 
 /* BUILD THE TRIP.COM LINK. From parameters, never from a stored example.
  *

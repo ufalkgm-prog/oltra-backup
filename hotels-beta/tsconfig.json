@@ -10,6 +10,10 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    // Lets a .test.ts import the module it tests as "./thing.ts". Node needs the
+    // explicit extension to run TypeScript directly; safe here because nothing
+    // is emitted.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
