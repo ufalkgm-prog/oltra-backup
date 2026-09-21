@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HotelSmallCard, {
+  sellableFirst,
   smallCardHasTopAction,
   type SmallCardAvailability,
   type SmallCardColumns,
@@ -370,7 +371,14 @@ function HotelStayGroup({
   return (
     <>
       {heading ? <StayHeading place={heading.place} dates={heading.dates} /> : null}
-      {hotels.map((hotel) => {
+      {/* The concierge's own ranking, with the hotels we cannot sell moved to
+          the bottom (Ulrik, 2026-09-21). The sort is stable, so everything
+          else keeps the order the model chose — including highlightsFirst,
+          which puts the named properties ahead of the rest. A named hotel we
+          cannot sell is the one case where the panel's reading order and the
+          card order part company; the panel already marks it "Not available at
+          myOLTRA yet", so it is findable. */}
+      {sellableFirst(hotels).map((hotel) => {
         const record = hotel as unknown as HotelRecord;
         const bookingHref = bookingHrefFor(record, {
           from,

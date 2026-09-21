@@ -24,6 +24,7 @@ import {
   readGuestSelection,
   type GuestSelection,
 } from "@/lib/guests";
+import { isBookableHere } from "@/components/hotels/HotelSmallCard";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import { isStayTooLong, MAX_STAY_NIGHTS, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import type { HotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
@@ -838,17 +839,23 @@ export default function HotelsView(props: {
   const ratehawkResultAvailabilityLoading =
     ratehawkResultAvailabilityStatus === "loading";
 
-  // Result-card ordering: bookable hotels first, everything we couldn't price
+  // Result-card ordering: priced hotels first, everything we couldn't price
   // (no dates yet, no Ratehawk match, check failed) in the middle, explicitly
-  // unavailable hotels last. The pinned hotel still wins outright so clicking a
-  // card never makes it jump away under the cursor.
+  // unavailable hotels below those, and anything we cannot sell at all last of
+  // all. The pinned hotel still wins outright so clicking a card never makes it
+  // jump away under the cursor.
   const orderedVisibleHotels = useMemo(() => {
     const rank = (h: HotelRecord) => {
       const availability = ratehawkResultAvailability[String(h.id)];
+      // A "Book on website" card comes last, always (Ulrik, 2026-09-21).
+      // It used to sit ABOVE sold-out, on the reasoning that it is not a dead
+      // end because the guest can still book on the hotel's own site — but it
+      // is a dead end for everything the list is for: no price, no rooms,
+      // nothing to save to a trip. This is also the same test the card uses to
+      // decide it draws that button, where the old check read `ratehawk_status
+      // === "passive"` and missed a hotel with no supplier id at all.
+      if (!isBookableHere(h)) return 4;
       if (availability?.status === "available" && availability.headline) return 0;
-      // Passive sits above sold-out: it isn't a dead end, the guest can still
-      // book on the hotel's own site.
-      if (h.ratehawk_status === "passive") return 2;
       if (availability?.status === "unavailable") return 3;
       return 1;
     };
@@ -3074,7 +3081,7 @@ async function handleCreateTripAndAddHotel() {
                                   onKeyDown={(e) => e.stopPropagation()}
                                   className="oltra-btn oltra-btn--neutral oltra-btn--condensed oltra-btn--block"
                                 >
-                                  Check availability on website
+                                  Book on website
                                 </a>
                               ) : (
                                 <div className="hotel-availability-note">

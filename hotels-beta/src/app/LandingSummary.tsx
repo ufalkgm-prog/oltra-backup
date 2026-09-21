@@ -20,6 +20,7 @@ import {
   type RankedGateway,
 } from "@/lib/flights/gatewayRanking";
 import HotelSmallCard, {
+  sellableFirst,
   smallCardHasTopAction,
   type SmallCardAvailability,
 } from "@/components/hotels/HotelSmallCard";
@@ -286,10 +287,13 @@ export default function LandingSummary({
 
   const [availabilityById, setAvailabilityById] = useState<Record<string, SmallCardAvailability>>({});
 
+  /* sellableFirst keeps the editorial order and moves the hotels we cannot
+     sell to the bottom of the list (Ulrik, 2026-09-21). Applied after the
+     slice, so which hotels appear is unchanged - only where they sit. */
   const visibleHotels = useMemo(
     () =>
       hotelSummary && hotelSummary.count <= CARD_LIMIT
-        ? hotelSummary.hotels.slice(0, CARD_LIMIT)
+        ? sellableFirst(hotelSummary.hotels.slice(0, CARD_LIMIT))
         : [],
     [hotelSummary]
   );
@@ -321,7 +325,7 @@ export default function LandingSummary({
     }
 
     // Passive hotels are left out of the request - Ratehawk cannot price them
-    // for any date, so the card shows "Check availability on website" instead
+    // for any date, so the card shows "Book on website" instead
     // and asking would be pure latency.
     const withIds = visibleHotels
       .filter((h) => h.ratehawk_status !== "passive")

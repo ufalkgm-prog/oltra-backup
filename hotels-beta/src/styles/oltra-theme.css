@@ -111,7 +111,7 @@
   --oltra-btn-passive-label: #7e8783;
 
   /* Neutral: an ACTIVE grey, for actions that leave OLTRA without booking
-     here (a hotel we cannot sell: "Check availability on website"). Rim
+     here (a hotel we cannot sell: "Book on website"). Rim
      4.81 / 4.02, muted label 7.97 / 6.66. Sits apart from passive by rim
      brightness and by having hover/pressed states. */
   --oltra-btn-neutral-rim: #9aa39e;
@@ -1818,7 +1818,7 @@ details > summary::-webkit-details-marker {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* "Check availability on website" — a hotel Ratehawk never sells, as opposed
+/* "Book on website" — a hotel Ratehawk never sells, as opposed
    to one that is sold out. Deliberately neutral rather than using the error
    colouring of .hotel-availability-pill: nothing has gone wrong, the guest just
    books elsewhere. */

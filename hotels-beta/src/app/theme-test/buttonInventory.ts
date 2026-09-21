@@ -53,7 +53,7 @@ export const INVENTORY: InventoryGroup[] = [
       { where: "HotelsView.tsx:331 ×3, :2488", label: "ACTIVITIES / SETTINGS / ACCOLADES / PRICE + chevron", today: "Uppercase text + chevron", type: "Doesn't fit", note: "Accordion headers." },
       { where: "HotelsView.tsx:2338", label: "{award} ×", today: "Recessed chip", type: "Doesn't fit", note: "Removable filter chip — badge shape, stays crisp." },
       { where: "HotelsView.tsx:2588", label: "Hotel result card", today: "<button> row", type: "Doesn't fit", note: "Selectable row. The result cards on /hotels carry no BOOK or SAVE." },
-      { where: "HotelsView.tsx:2632", label: "Check availability on website", today: "10px recessed note, 132px", type: "Primary", format: "Condensed", note: "An <a> nested inside the card's <button> — invalid HTML today, and a pill makes it look more clickable still.", flag: true },
+      { where: "HotelsView.tsx:2632", label: "Book on website", today: "10px recessed note, 132px", type: "Primary", format: "Condensed", note: "An <a> nested inside the card's <button> — invalid HTML today, and a pill makes it look more clickable still.", flag: true },
       { where: "HotelsView.tsx:2860 / :2868", label: "‹ › featured hotel", today: "38px glass circle over photo", type: "Doesn't fit", note: "Carousel arrow, icon-only." },
       { where: "HotelsView.tsx:2886", label: "SWITCH TO HOTEL VIEW", today: "Near-opaque dark fill, over the map", type: "Doesn't fit", note: "View toggle over map tiles — a transparent pill will not read on a busy map without the scrim.", flag: true },
       { where: "HotelsView.tsx:2916", label: "SWITCH TO MAP VIEW", today: "Function style", type: "Primary", format: "Full", note: "Paired with the one above; treat both the same way." },

@@ -73,10 +73,35 @@ const LAYOUT: Record<
   },
 };
 
+/* The two fields the test below reads, and nothing more.
+ *
+ * Structural rather than `HotelRecord` so the concierge's own card shape
+ * (`AiHotelCard`, a narrower projection of the same row) can be passed without
+ * a cast — AiResultFrames was casting through `unknown` to call this. */
+type SellableFields = {
+  ratehawk_status?: string | null;
+  ratehawk_hid?: number | string | null;
+};
+
 /** Whether we can price and sell this hotel ourselves — the same test as the
  * concierge's `bookableHere`. */
-export function isBookableHere(hotel: HotelRecord): boolean {
+export function isBookableHere(hotel: SellableFields): boolean {
   return hotel.ratehawk_status !== "passive" && Boolean(hotel.ratehawk_hid);
+}
+
+/** Hotels we can sell first; the ones that only send the guest to the hotel's
+ * own site last (Ulrik, 2026-09-21).
+ *
+ * A "Book on website" card is a dead end for us and a worse offer for the
+ * guest — no price, no rooms, no saving it to a trip with a figure attached —
+ * so it belongs at the bottom of any list it appears in rather than sitting
+ * between two properties we can actually price.
+ *
+ * Array.prototype.sort is stable, so this moves those cards to the end and
+ * changes nothing else: whatever order the list arrived in — editorial rank,
+ * availability, the concierge's own ranking — survives inside both groups. */
+export function sellableFirst<T extends SellableFields>(hotels: T[]): T[] {
+  return [...hotels].sort((a, b) => Number(isBookableHere(b)) - Number(isBookableHere(a)));
 }
 
 /** Whether the card draws a button above SAVE, so callers can stack the pair. */
@@ -95,7 +120,7 @@ type Props = {
   href?: string;
   availability?: SmallCardAvailability;
   /** The hotel's own booking link or website — used ONLY for a hotel we
-   * cannot sell, as "Check availability on website". */
+   * cannot sell, as "Book on website". */
   bookingHref?: string | null;
   /** Supplied by the caller so the card doesn't have to know about trips - it
    * is a SaveToTripControl, which owns its own popup picker. */
@@ -197,7 +222,7 @@ export default function HotelSmallCard({
       : null
     : bookingHref
       ? {
-          label: "Check availability on website",
+          label: "Book on website",
           neutral: true,
           go: () => window.open(bookingHref, "_blank", "noopener,noreferrer"),
         }
