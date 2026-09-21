@@ -10,6 +10,8 @@ import HotelSmallCard from "@/components/hotels/HotelSmallCard";
 import ButtonStandard from "./ButtonStandard";
 import { ratio } from "./contrast";
 import styles from "./ThemeTestView.module.css";
+import { applyEnglishLabels } from "@/lib/maps/englishLabels";
+import { mapStyleUrl } from "@/lib/maps/style";
 
 let _ml: typeof maplibregl | null = null;
 async function loadMaplibre(): Promise<typeof maplibregl> {
@@ -424,13 +426,14 @@ function LiveMap() {
       if (cancelled || !mapRef.current) return;
       const map = new ml.Map({
         container: mapRef.current,
-        style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+        style: mapStyleUrl(key),
         center: [2.3488, 48.8534],
         zoom: 10,
         attributionControl: false,
       });
       mapInstanceRef.current = map;
       map.on("load", () => {
+        applyEnglishLabels(map);
         map.resize();
         window.setTimeout(() => map.resize(), 200);
       });
@@ -447,7 +450,7 @@ function LiveMap() {
     <div>
       <div className={styles.mapWrap} ref={mapRef} />
       <div className={styles.sectionNote}>
-        Standard MapTiler streets-v4, unchanged — confirmed fine as-is, no dark style needed. Map
+        Standard MapTiler streets-v4, with labels rewritten to English (§12) — confirmed fine as-is, no dark style needed. Map
         popups/markers keep their existing translucency (glass-over-imagery exception) — not part of
         this pass.
       </div>

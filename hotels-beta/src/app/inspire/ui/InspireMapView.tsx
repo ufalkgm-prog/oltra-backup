@@ -7,6 +7,8 @@ import type {
   InspireMonth,
 } from "@/lib/inspire/types";
 import { INSPIRE_CITY_METADATA } from "@/lib/inspire/cityMetadata";
+import { applyEnglishLabels } from "@/lib/maps/englishLabels";
+import { mapStyleUrl } from "@/lib/maps/style";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 type TempUnit = "C" | "F";
@@ -231,7 +233,7 @@ export default function InspireMapView({
 
       map = new ml.Map({
         container: mapRef.current,
-        style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+        style: mapStyleUrl(key),
         center: [origin.lng, origin.lat],
         zoom: DEFAULT_WORLD_ZOOM,
         minZoom: 1.3,
@@ -243,6 +245,9 @@ export default function InspireMapView({
       const mapLocal = map;
 
       mapLocal.on("load", () => {
+        /* English labels, on every map (Ulrik, 2026-09-21). streets-v4 is
+           only partly English on its own — see lib/maps/englishLabels.ts. */
+        applyEnglishLabels(mapLocal);
         mapLocal.addSource(TEMP_BAND_SOURCE_ID, {
           type: "geojson",
           data: buildTempBandsGeoJSON(monthRef.current),

@@ -199,6 +199,8 @@ Vertical sliders, sub-sections per taxonomy, max 4 visible items per section, sc
 
 MapLibre GL. Markers from hotel coordinates, hover = popup, click = select, auto-fit bounds. Basemap is `streets-v4` everywhere — no dark variant (§34).
 
+**Labels are English on every map (Ulrik, 2026-09-21).** `streets-v4` is only partly English on its own: of its 54 label layers, 22 carry the local-only `{name}`, 3 a `coalesce(name, "")`, and the state and airport labels have it backwards with English as the *fallback*. `?language=en` on the style URL changes nothing — MapTiler returns a byte-identical style, checked both ways. `applyEnglishLabels` (`lib/maps/englishLabels.ts`) rewrites every `["get","name"]` to `coalesce(name:en, name)` after load, recursing so airport labels keep their IATA code at low zoom; all four maps call it, and `mapStyleUrl` is the one definition of the style URL. Covered by `npm test`.
+
 ---
 
 ## 13. MEMBER FEATURES

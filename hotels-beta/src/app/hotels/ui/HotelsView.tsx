@@ -25,6 +25,8 @@ import {
   type GuestSelection,
 } from "@/lib/guests";
 import { isBookableHere } from "@/components/hotels/HotelSmallCard";
+import { applyEnglishLabels } from "@/lib/maps/englishLabels";
+import { mapStyleUrl } from "@/lib/maps/style";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import { isStayTooLong, MAX_STAY_NIGHTS, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import type { HotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
@@ -1465,7 +1467,7 @@ export default function HotelsView(props: {
 
       map = new ml.Map({
         container: mapRef.current,
-        style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+        style: mapStyleUrl(key),
         center: MAP_FALLBACK_CENTER,
         zoom: 11,
       });
@@ -1473,6 +1475,9 @@ export default function HotelsView(props: {
       map.addControl(new ml.NavigationControl(), "top-right");
 
       map.on("load", () => {
+        /* English labels, on every map (Ulrik, 2026-09-21). streets-v4 is
+           only partly English on its own — see lib/maps/englishLabels.ts. */
+        applyEnglishLabels(map!);
         map!.resize();
         window.setTimeout(() => map!.resize(), 100);
         window.setTimeout(() => map!.resize(), 350);

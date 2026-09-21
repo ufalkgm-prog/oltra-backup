@@ -32,6 +32,8 @@ import {
   isTripLimitError,
   MAX_TRIP_NAME_CHARS,
 } from "@/lib/members/tripLimits";
+import { applyEnglishLabels } from "@/lib/maps/englishLabels";
+import { mapStyleUrl } from "@/lib/maps/style";
 
 /* Green star on a restaurant the member has already favourited - shown on both
  * the list row and the selected-restaurant card. */
@@ -591,7 +593,7 @@ export default function RestaurantsMapView({
 
       map = new ml.Map({
         container: mapRef.current,
-        style: `https://api.maptiler.com/maps/streets-v4/style.json?key=${key}`,
+        style: mapStyleUrl(key),
         center: DEFAULT_FALLBACK_CENTER,
         zoom: 12,
       });
@@ -599,6 +601,9 @@ export default function RestaurantsMapView({
       map.addControl(new ml.NavigationControl(), "top-right");
 
       map.on("load", () => {
+        /* English labels, on every map (Ulrik, 2026-09-21). streets-v4 is
+           only partly English on its own — see lib/maps/englishLabels.ts. */
+        applyEnglishLabels(map!);
         map!.resize();
         window.setTimeout(() => map!.resize(), 100);
         window.setTimeout(() => map!.resize(), 350);
