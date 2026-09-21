@@ -81,14 +81,23 @@ function buildLayovers(slice: OfferSlice): Layover[] {
   })
 }
 
+/* "3h10", not "3h 10m". This sits on the flight card's one-line stops row,
+   which has to hold the airline as well (Ulrik, 2026-09-21). */
 function formatStopDuration(mins: number): string {
-  return `${Math.floor(mins / 60)}h ${mins % 60}m`
+  return `${Math.floor(mins / 60)}h${String(mins % 60).padStart(2, '0')}`
 }
 
+/* THE AIRPORT'S CODE, NOT ITS CITY NAME.
+ *
+ * "1 stop · Singapore 3h 10m" is 25 characters and did not fit a multi-city
+ * leg column at any width; "1 stop · SIN 3h10" is 17 and does. The code is
+ * what a traveller reads off a ticket anyway, and FlightResultRow's own
+ * describeStops already names stops by code. Falls back to the name for a
+ * layover we hold no code for. */
 function buildStopSummary(layovers: Layover[]): string {
   if (!layovers.length) return 'Direct'
   const stopWord = layovers.length === 1 ? 'stop' : 'stops'
-  const parts = layovers.map(l => `${l.name} ${formatStopDuration(l.durationMinutes)}`)
+  const parts = layovers.map(l => `${l.code || l.name} ${formatStopDuration(l.durationMinutes)}`)
   return `${layovers.length} ${stopWord} · ${parts.join(', ')}`
 }
 

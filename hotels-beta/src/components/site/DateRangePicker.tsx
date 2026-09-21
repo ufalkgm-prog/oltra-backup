@@ -42,6 +42,34 @@ function formatDisplayDate(value: string): string {
   }).format(date);
 }
 
+/* "12–19 Nov 2026", not "12 Nov 2026 – 19 Nov 2026".
+ *
+ * The long form is wider than the field at every width tested, 1440 included,
+ * so it was clipped by about 14px wherever it appeared (Ulrik, 2026-09-21).
+ * Widening the track only moves the problem; saying the month and the year
+ * once removes it. A range that crosses a month keeps both months
+ * ("28 Nov – 3 Dec 2026"), and one that crosses a year keeps both years. */
+export function formatDisplayRange(from: string, to: string): string {
+  if (!from) return "";
+  if (!to) return formatDisplayDate(from);
+
+  const start = parseIsoDateLocal(from);
+  const end = parseIsoDateLocal(to);
+  if (!start || !end) return `${formatDisplayDate(from)} – ${formatDisplayDate(to)}`;
+
+  const day = (d: Date) => new Intl.DateTimeFormat("en-GB", { day: "2-digit" }).format(d);
+  const dayMonth = (d: Date) =>
+    new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short" }).format(d);
+
+  if (start.getFullYear() !== end.getFullYear()) {
+    return `${formatDisplayDate(from)} – ${formatDisplayDate(to)}`;
+  }
+  if (start.getMonth() !== end.getMonth()) {
+    return `${dayMonth(start)} – ${formatDisplayDate(to)}`;
+  }
+  return `${day(start)}–${formatDisplayDate(to)}`;
+}
+
 function formatAriaDate(iso: string): string {
   const date = parseIsoDateLocal(iso);
   if (!date) return iso;
@@ -197,10 +225,7 @@ export default function DateRangePicker({
 
   const secondMonth = addMonths(visibleMonth, 1);
 
-  const displayText =
-    fromValue && toValue
-      ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}`
-      : formatDisplayDate(fromValue);
+  const displayText = formatDisplayRange(fromValue, toValue);
 
   function renderMonth(monthDate: Date) {
     const grid = buildMonthGrid(monthDate);

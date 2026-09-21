@@ -547,16 +547,27 @@ body {
 
 /* Hotels page: left pane (filters + results) stays fixed to the viewport;
    right pane (selected-hotel detail) scrolls independently. Mirrors the
-   fixed-sidebar/scrolling-detail pattern in restaurants.css. */
-.oltra-hotels-layout {
-  height: calc(100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding));
-  overflow: hidden;
-}
+   fixed-sidebar/scrolling-detail pattern in restaurants.css.
 
-.oltra-hotels-right-pane {
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
+   ONLY FROM lg UP (Ulrik, 2026-09-21). The grid itself is
+   `lg:grid-cols-[...]`, so below 1024px it collapses to ONE column - but this
+   height and overflow used to apply at every width, so on a tablet the two
+   stacked panes had to share a single viewport height between them and the
+   results list was left with 210px: one and a half cards out of nineteen, with
+   the page itself unable to scroll. Below lg the layout is now ordinary
+   document flow and the page scrolls, which is what restaurants.css already
+   does at its own breakpoint. */
+@media (min-width: 1024px) {
+  .oltra-hotels-layout {
+    height: calc(100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding));
+    overflow: hidden;
+  }
+
+  .oltra-hotels-right-pane {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+  }
 }
 
 /* Shared outer floating glass box */

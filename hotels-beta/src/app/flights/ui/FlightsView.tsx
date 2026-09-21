@@ -1947,7 +1947,7 @@ function MultipleResults({
                         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectLeg(k, legOpt.id); }}
                         className={`${styles.selectCard} ${price ? styles.selectCardRow : ""} ${compact ? styles.selectCardCompact : ""} ${colSelected === legOpt.id ? styles.selectCardActive : ""}`}
                       >
-                        <FlightCardContent flight={legOpt} onInfo={onInfo} compact={compact} />
+                        <FlightCardContent flight={legOpt} onInfo={onInfo} compact={compact} showAirlineMarks={false} />
                         {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} /> : null}
                       </div>
                     );
@@ -2013,7 +2013,7 @@ function MultiPinnedRow({
           if (!reachable) {
             return (
               <div key={i} className={`${styles.staticCard} ${compact ? styles.staticCardCompact : ""}`}>
-                <FlightCardContent flight={leg} matchTier={tier} onInfo={onInfo} compact={compact} />
+                <FlightCardContent flight={leg} matchTier={tier} onInfo={onInfo} compact={compact} showAirlineMarks={false} />
               </div>
             );
           }
@@ -2026,7 +2026,7 @@ function MultiPinnedRow({
               onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectLeg(i, leg.id); }}
               className={`${styles.selectCard} ${compact ? styles.selectCardCompact : ""} ${selectedLegIds[i] === leg.id ? styles.selectCardActive : ""}`}
             >
-              <FlightCardContent flight={leg} matchTier={tier} onInfo={onInfo} compact={compact} />
+              <FlightCardContent flight={leg} matchTier={tier} onInfo={onInfo} compact={compact} showAirlineMarks={false} />
             </div>
           );
         })}
@@ -2303,6 +2303,7 @@ function FlightCardContent({
   matchTier,
   onInfo,
   compact,
+  showAirlineMarks = true,
   onDeselect,
   deselectLabel,
 }: {
@@ -2310,13 +2311,17 @@ function FlightCardContent({
   matchTier?: ReturnMatchTier;
   onInfo?: (flight: FlightLeg) => void;
   compact?: boolean;
+  /** The airline logos. Off in a multi-city grid, where a leg column is about
+   * 240px and the logo takes 30 of them from the row that carries the airline
+   * NAME - which says the same thing, and was the text being ellipsised
+   * (Ulrik, 2026-09-21). */
+  showAirlineMarks?: boolean;
   onDeselect?: () => void;
   deselectLabel?: string;
 }) {
   const airlineLabel = flight.airlines.length
     ? flight.airlines.map(a => a.name).join(" + ")
     : flight.airline;
-  const cabinClass = flight.segments[0]?.cabinClassMarketingName || "";
   const label = matchTierLabel(matchTier ?? null);
   const timeStyle = compact ? { fontSize: "0.82rem" } : undefined;
   return (
@@ -2343,7 +2348,7 @@ function FlightCardContent({
         </button>
       ) : null}
       <div className={styles.flightCardInner}>
-        <AirlineMarks airlines={flight.airlines} />
+        {showAirlineMarks ? <AirlineMarks airlines={flight.airlines} /> : null}
         <div className={styles.flightCardText}>
           <div className={styles.flightTimesRow}>
             <span className={styles.flightDepart} style={timeStyle}>{flight.departTime}</span>
@@ -2365,18 +2370,14 @@ function FlightCardContent({
                 <span className={styles.flightMetaText}>{flight.stopSummary}</span>
               </>
             ) : null}
-            {cabinClass ? (
-              <>
-                <span className={styles.flightMetaDot}>·</span>
-                <span className={styles.flightMetaText}>{cabinClass}</span>
-              </>
-            ) : null}
-            {flight.fareBrand ? (
-              <>
-                <span className={styles.flightMetaDot}>·</span>
-                <span className={styles.flightMetaText}>{flight.fareBrand}</span>
-              </>
-            ) : null}
+            {/* Cabin and fare brand used to sit here too. The row is
+                flex-wrap: nowrap with every child ellipsised, so four facts in
+                a 251px multi-city column meant all four clipped - at 1440 as
+                badly as at 1024, because the column barely widens. Both are
+                available elsewhere: the cabin is a search field the member just
+                set, and the fare brand is in the info popup. Dropping them lets
+                the airline and the stops fit (Ulrik, 2026-09-21). */}
+
           </div>
         </div>
       </div>

@@ -720,9 +720,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  /* Reserve room so the times/duration row (and its match badge) never
-     renders underneath the absolutely-positioned Info pill. */
-  padding-right: 38px;
 }
 
 .flightCardText {
@@ -1017,6 +1014,12 @@
   flex-wrap: nowrap;
   overflow: hidden;
   min-width: 0;
+  /* Room for the absolutely-positioned Info pill, which sits at top: 8px and
+     so only ever overlaps THIS row. The reservation used to sit on
+     .flightCardInner, where it took 38px from the stops row underneath as well
+     - a third of the text width in a multi-city leg column, which is most of
+     why the airline and the stops did not fit (Ulrik, 2026-09-21). */
+  padding-right: 38px;
 }
 
 .flightDepart,

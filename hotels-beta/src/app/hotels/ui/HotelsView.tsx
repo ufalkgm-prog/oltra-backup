@@ -2549,7 +2549,13 @@ export default function HotelsView(props: {
         ].join(" ")}
       >
         {!shouldShowFeatured ? (
-          <section className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
+          /* overflow-y only from lg, for the same reason the layout's height
+             is: below it the page scrolls instead of this column.
+             overflow-x-hidden suppresses a 3px horizontal scrollbar that
+             appeared at 1024 - measured 376px client against 379px scroll with
+             no child past the edge, so subpixel rounding at fractional device
+             ratios rather than content (Ulrik, 2026-09-21). */
+          <section className="flex min-h-0 min-w-0 flex-col gap-4 overflow-x-hidden lg:overflow-y-auto">
           <div className="relative z-30 oltra-glass oltra-panel !p-4 flex-none">
             <form
               action="/hotels"
@@ -2999,7 +3005,13 @@ export default function HotelsView(props: {
                         <div className="hotel-result-card__fade flex min-h-[80px] min-w-0 flex-col">
                           <div className="flex items-start gap-1.5">
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+                              {/* Two lines, not one clipped one: the house
+                                  rule is wrap, never clip, with the hotel name
+                                  capped at two (CLAUDE-AI.md). HotelSmallCard
+                                  already did this; these cards never got it, so
+                                  "Hôtel Plaza Athénée Paris" lost 112px at
+                                  1024 (Ulrik, 2026-09-21). */}
+                              <div className="line-clamp-2 text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
                                 {h.hotel_name ?? "Untitled hotel"}
                               </div>
                               <div className="mt-0.5 text-xs text-[color:var(--oltra-text-muted)]">
@@ -3030,7 +3042,7 @@ export default function HotelsView(props: {
 
                           <div className="mt-auto pt-2">
                             {featuredAwards.length ? (
-                              <div className="truncate text-[11px] text-[color:var(--oltra-text-muted)]">
+                              <div className="line-clamp-2 text-[11px] text-[color:var(--oltra-text-muted)]">
                                 {featuredAwards.map((award) => award.label).join(" · ")}
                               </div>
                             ) : null}
@@ -3238,7 +3250,7 @@ export default function HotelsView(props: {
                 <div className="col-span-12 min-w-0 lg:col-span-8">
                   <div className="oltra-subheader">Selected hotel</div>
 
-                  <h2 className="mt-2 truncate text-2xl font-light tracking-wide text-[color:var(--oltra-text-primary)] md:text-3xl">
+                  <h2 className="mt-2 line-clamp-2 text-2xl font-light tracking-wide text-[color:var(--oltra-text-primary)] md:text-3xl">
                     {selectedHotel.hotel_name ?? "Untitled hotel"}
                   </h2>
 
