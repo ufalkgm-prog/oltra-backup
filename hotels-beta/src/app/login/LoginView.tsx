@@ -65,11 +65,18 @@ export default function LoginView() {
         ? "Enter a valid email"
         : "Enter your password";
 
+  /* The account exists and the confirmation mail is sent. The form comes
+     down at that point (Ulrik, 2026-09-21): it used to stay on screen with
+     the confirmation crowded under Confirm password, which read as though
+     there were still something to fill in. */
+  const [signedUp, setSignedUp] = useState(false);
+
   function goTo(v: View) {
     setError("");
     setMessage("");
     setPassword("");
     setConfirmPassword("");
+    setSignedUp(false);
     setView(v);
   }
 
@@ -106,13 +113,42 @@ export default function LoginView() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    /* Where the link in the confirmation mail lands. Without it Supabase uses
+       the project's Site URL, which drops the visitor on the landing page with
+       a session and nothing to show for it. /auth/callback exchanges the code
+       for a session and then sends them to Members — so confirming the address
+       logs them in and puts them where their membership is (Ulrik,
+       2026-09-21). The same route the Google sign-in uses.
+
+       THE URL MUST BE IN Supabase → Authentication → URL Configuration →
+       Redirect URLs, for localhost and for the Vercel domain, or the link
+       falls back to the Site URL silently. */
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/members`,
+      },
+    });
     setLoading(false);
     if (error) {
       setError(error.message);
       return;
     }
-    setMessage("Account created. Please check your email to confirm before logging in.");
+
+    /* NOT CHECKED HERE: whether this address was already registered.
+     *
+     * With email confirmation on, Supabase deliberately answers a signup for
+     * an existing confirmed address with a decoy user and no error, so that
+     * this form cannot be used to discover who has an account — the same
+     * reason the forgot-password wording is neutral. A second account is NOT
+     * created; the uniqueness is enforced in auth.users.
+     *
+     * The cost is that someone who already has an account is told to check
+     * their email and no mail arrives, so the confirmation screen names the
+     * way out for everyone rather than only for them, which would leak the
+     * same thing by omission. */
+    setSignedUp(true);
   }
 
   async function handleForgotPassword(e: React.FormEvent) {
@@ -274,6 +310,33 @@ export default function LoginView() {
                 </div>
               </form>
             </>
+          ) : view === "signup" && signedUp ? (
+            <>
+              <div className="oltra-label members-login-panel__title">CHECK YOUR EMAIL</div>
+              <div className="members-form-stack members-login-panel__form">
+                <div className="members-note members-note--success">
+                  Account created. Follow the link we have sent you to confirm
+                  your membership — it will sign you in.
+                </div>
+                {/* Said to everyone, not only to the visitor whose address was
+                    already registered: telling only them would give away who
+                    has an account, which is the thing the neutral signup
+                    response above exists to protect. */}
+                <div className="members-login-panel__hint">
+                  If you already have an account, no new mail is sent — log in,
+                  or reset your password.
+                </div>
+                <div className="members-login-panel__top-actions">
+                  <button
+                    type="button"
+                    className="oltra-btn oltra-btn--block"
+                    onClick={() => window.location.assign("/")}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </>
           ) : view === "signup" ? (
             <>
               <div className="oltra-label members-login-panel__title">CREATE ACCOUNT</div>
@@ -315,7 +378,6 @@ export default function LoginView() {
                 </div>
 
                 {error ? <div className="members-note members-note--error">{error}</div> : null}
-                {message ? <div className="members-note members-note--success">{message}</div> : null}
 
                 <div className="members-login-panel__top-actions">
                   <button
