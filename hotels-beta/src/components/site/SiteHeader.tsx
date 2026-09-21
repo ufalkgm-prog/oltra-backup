@@ -51,6 +51,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const [selectedCurrency, setSelectedCurrency] = useState(currentCurrency);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const currencyRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
   const [hotelsHref, setHotelsHref] = useState("/hotels");
   const [flightsHref, setFlightsHref] = useState("/flights");
   const [restaurantsHref, setRestaurantsHref] = useState("/restaurants");
@@ -161,6 +162,35 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
     };
   }, [supabase]);
 
+  /* THE PAGE RESERVES WHATEVER THE HEADER ACTUALLY MEASURES.
+   *
+   * The header is `position: fixed`, and `--oltra-page-top-padding` was a flat
+   * 110px - correct only while the header was 80px tall. It is not: below
+   * 1000px the brand stacks above the nav (130px), and below about 520px the
+   * nav itself wraps to a second row (180px). At 502 that put "Inspire ·
+   * Hello Ulrik · GBP" directly on top of the Hotels search panel, covering
+   * the DESTINATION label and the city token (Ulrik, 2026-09-21).
+   *
+   * Measured rather than pinned to breakpoints, because the wrap point moves
+   * with content a media query cannot see: the greeting is longer for a
+   * signed-in member than for a visitor, and the currency label changes width.
+   * Until this runs the variable is unset and the 80px fallback reproduces the
+   * old 110px exactly, so nothing shifts at desktop widths. */
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const publish = () => {
+      document.documentElement.style.setProperty(
+        "--oltra-header-height",
+        `${Math.round(el.getBoundingClientRect().height)}px`
+      );
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const stored = window.localStorage.getItem(CURRENCY_STORAGE_KEY);
     if (stored && currencies.includes(stored)) setSelectedCurrency(stored);
@@ -250,6 +280,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
 
   return (
     <header
+      ref={headerRef}
       className={`oltra-site-header ${isScrolled ? "is-scrolled" : ""} ${
         conciergeOpen ? "is-concierge-open" : ""
       }`}

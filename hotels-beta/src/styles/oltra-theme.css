@@ -130,12 +130,31 @@
      badge's own text orange, #fbb06f at 6.78:1. This is the one variant where
      label and rim differ; every other button in the standard matches them, and
      the AI variant used to as well. */
+/* TWO-TONE, and it has to be (Ulrik, 2026-09-21): the rim and the fill are
+     different oranges because they answer to different backgrounds. The rim
+     is the control's edge against the PAGE and needs 3:1; the fill is what
+     the white label sits on and needs 4.5:1. One orange cannot do both -
+     #d27b3f alone left the label at 2.83:1, and darkening it to fix that
+     took the edge to 2.45:1.
+
+     RIM - the BETA badge orange, measured against the page #2c3634. These
+     move the standard's way (hover lighter, press darker) because a rim
+     gains contrast against a dark page by lightening: 3.95 / 4.90 / 3.52. */
   --oltra-btn-ai: #d27b3f;
   --oltra-btn-ai-hover: #da9260;
   --oltra-btn-ai-press: #cc7030;
-  --oltra-btn-ai-label: #fbb06f;
-  --oltra-btn-ai-label-hover: #ffc089;
-  --oltra-btn-ai-label-press: #faa55b;
+  /* FILL - measured against the white label, and moving the OPPOSITE way for
+     the same reason: darkening a fill lifts its label. 4.55 / 5.51 / 6.43. */
+  --oltra-btn-ai-fill: #b0541e;
+  --oltra-btn-ai-fill-hover: #9c4a1a;
+  --oltra-btn-ai-fill-press: #8d4216;
+  /* White on the orange fill since 2026-09-21 (Ulrik). It no longer has to
+     be a lighter orange to clear the page, because it no longer sits on the
+     page - it sits on --oltra-btn-ai-fill, which was chosen for it. Same
+     label values every other variant uses. */
+  --oltra-btn-ai-label: #f5f2ec;
+  --oltra-btn-ai-label-hover: #f5f2ec;
+  --oltra-btn-ai-label-press: #eae4d8;
 
   /* Focus: a ring outside the rim, never a rim colour change. 11.16 / 9.32. */
   --oltra-btn-focus-ring: #f5f2ec;
@@ -282,8 +301,15 @@
   --oltra-dropdown-panel-max-height: min(360px, calc(100vh - 160px));
   --oltra-dropdown-viewport-gap: 24px;
 
-  /* Fixed page frame */
-  --oltra-page-top-padding: 110px;
+  /* Fixed page frame.
+     The top padding clears the fixed header, which is NOT a constant height -
+     it grows when the brand stacks above the nav and again when the nav wraps.
+     SiteHeader measures itself into --oltra-header-height. The max() is what
+     keeps desktop untouched: the header measures 80-86px there and 110px
+     already clears it, so this resolves to exactly the 110px it always was,
+     and only grows once the header is tall enough that 110 no longer clears
+     it. 24px is the clearance the widest fitting header (86px) already had. */
+  --oltra-page-top-padding: max(110px, calc(var(--oltra-header-height, 80px) + 24px));
   --oltra-page-bottom-padding: 32px;
 
   /* Z-index */
@@ -995,10 +1021,14 @@ button.oltra-select {
   --btn-label-press: var(--oltra-btn-neutral-label);
 }
 
-/* Orange rim, orange label, and the label a step lighter than the rim so it
-   clears 4.5:1 as text — see the token block for why they cannot be the one
-   value they used to be. */
+/* A SOLID ORANGE PILL WITH A WHITE LABEL (Ulrik, 2026-09-21).
+   Supersedes the transparent orange-rim/orange-label version. Rim and fill
+   are two different oranges on purpose - see the token block - and they move
+   in OPPOSITE directions on hover and press, each towards its own contrast.
+   The edge reads as a lighter highlight around the pill (1.61:1 against the
+   fill), not as a second colour. */
 .oltra-btn--ai {
+  background: var(--oltra-btn-ai-fill);
   --btn-rim: var(--oltra-btn-ai);
   --btn-rim-hover: var(--oltra-btn-ai-hover);
   --btn-rim-press: var(--oltra-btn-ai-press);
@@ -1015,10 +1045,12 @@ button.oltra-select {
 }
 
 .oltra-btn--ai:hover {
+  background: var(--oltra-btn-ai-fill-hover);
   color: var(--oltra-btn-ai-label-hover);
 }
 
 .oltra-btn--ai:active {
+  background: var(--oltra-btn-ai-fill-press);
   color: var(--btn-label-press);
 }
 
@@ -1159,7 +1191,24 @@ button.oltra-select {
   box-shadow: none;
 }
 
-.oltra-over-image .oltra-btn--ai,
+/* The AI button used to be listed here to stay TRANSPARENT inside the
+   destination field. It is a filled orange pill now, so it needs its own
+   entry rather than none: this selector is more specific than .oltra-btn--ai,
+   so dropping it left the AI button wearing the site-background fill meant
+   for buttons sitting directly on the photo. A button inside a popup still
+   resets to transparent. */
+.oltra-over-image .oltra-btn--ai {
+  background: var(--oltra-btn-ai-fill);
+}
+
+.oltra-over-image .oltra-btn--ai:hover {
+  background: var(--oltra-btn-ai-fill-hover);
+}
+
+.oltra-over-image .oltra-btn--ai:active {
+  background: var(--oltra-btn-ai-fill-press);
+}
+
 .oltra-over-image .oltra-popup-panel .oltra-btn {
   background: transparent;
 }
@@ -1474,7 +1523,13 @@ button.oltra-select {
   transform: translate(-50%, 0);
 }
 
+/* Every nav link carries 0 12px of its own padding, so the visible gap
+   between two of them is the nav's 22px plus 24px of padding. The currency
+   had none, which put it 12px closer to the greeting than any other pair
+   (Ulrik, 2026-09-21). Left only: the right edge stays flush with the header,
+   where it already lined up. */
 .oltra-site-header__currency {
+  padding-left: 12px;
   position: relative;
 }
 

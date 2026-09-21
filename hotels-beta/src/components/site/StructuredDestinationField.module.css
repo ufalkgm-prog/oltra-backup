@@ -76,11 +76,19 @@
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  /* The same white as the label it encloses (Ulrik, 2026-09-21). It was
-     --oltra-field-border, a near-black line that read as a dark smudge around
-     white text rather than as the chip's own edge. */
-  border: 1px solid var(--oltra-text-primary);
-  background: var(--oltra-field-bg-strong);
+  /* NO BORDER, deliberately (Ulrik, 2026-09-21). The chip carried a 1px
+     white edge and it never looked crisp. The cause was not the colour: a
+     1px line on a 1.25x or 1.5x display - every Windows box at 125%/150%
+     scaling - covers a fractional number of device pixels, so the browser
+     paints one solid pixel and one part-covered one. Against a near-white
+     line that half-lit pixel is plainly visible, and around the 999px arc
+     the coverage changes continuously, so the curved ends read softer and
+     patchier than the straight top and bottom. Softening the line to 50%
+     helped and did not settle it.
+     No line means nothing to alias, at any display scaling, so the fill
+     alone defines the chip and it is clean at every zoom. Keep it that way:
+     re-adding a hairline here brings the same artefact back. */
+  background: rgba(245, 242, 236, 0.16);
   padding: 2px 8px;
   color: var(--oltra-text-primary);
   font-size: 0.95rem;

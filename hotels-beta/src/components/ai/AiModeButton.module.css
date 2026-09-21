@@ -42,6 +42,10 @@
    standard's own aria-disabled rule so it wins whichever stylesheet loads
    last. */
 :global(.oltra-btn.oltra-btn--ai)[aria-disabled="true"].passive {
+  /* No fill: the live button is a solid orange pill since 2026-09-21, and an
+     orange pill that does nothing would read as the live one. Passive stays
+     an outline. */
+  background: transparent;
   border-color: var(--oltra-text-secondary);
   color: var(--oltra-text-secondary);
 }

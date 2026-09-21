@@ -554,6 +554,31 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* THE SAME STACK, TRIGGERED BY THE ROW'S OWN WIDTH RATHER THAN THE FRAME COUNT.
+ *
+ * .flightLegsStacked above is set from JS when three frames share a row. It
+ * is not the only way the row gets narrow: at a 502px viewport a single
+ * flights frame leaves this grid 406px, each leg card 199px, and after the
+ * info pill's 2.9rem lane and the card padding the times row has 141px for
+ * content that measures 177. It is `nowrap` by design, so the arrival time
+ * was simply cut — "CPH-ORY 19:10 -> 2" (Ulrik, 2026-09-21).
+ *
+ * A container query rather than a media query because what decides this is
+ * how wide THIS row is, and the viewport is only one of the two things that
+ * move it - a media query would have to guess the frame count as well. The
+ * first one in the codebase; .flightDetailRow is the container it measures.
+ * Specificity ties with the :has() rule above, so source order decides and
+ * this sits after it, exactly as .flightLegsStacked does. */
+.flightDetailRow {
+  container-type: inline-size;
+}
+
+@container (max-width: 500px) {
+  .flightLegsGrid:has(> :nth-child(2)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* At that width the legend cannot keep label, price, BOOK and SAVE on one
    line. Wrapping is the honest answer; the Condensed buttons size to their
    labels and are never shrunk below that. */
