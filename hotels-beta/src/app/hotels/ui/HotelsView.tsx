@@ -3946,11 +3946,15 @@ export default function HotelsView(props: {
                               : undefined
                       }
                     >
-                      {memberActionLoading === "favorite"
-                        ? "ADDING..."
-                        : isFavorited
-                          ? "ALREADY IN FAVOURITES"
-                          : "ADD TO FAVOURITES"}
+                      {/* The label never becomes "ALREADY IN FAVOURITES"
+                          (Ulrik, 2026-09-21). At 21 characters it outgrew the
+                          button as soon as the column narrowed. Being already
+                          favourited is a passive state, and §35A says a passive
+                          button explains itself through `data-reason` on hover
+                          — which this one already sets. So the label stays put
+                          and the state is carried by the rim, the label colour
+                          and the popup. */}
+                      {memberActionLoading === "favorite" ? "ADDING..." : "ADD TO FAVOURITES"}
                     </button>
 
                     {(memberActionError || memberActionMessage) ? (
