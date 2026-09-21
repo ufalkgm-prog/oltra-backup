@@ -61,7 +61,17 @@ The link lands on a filtered Trip.com *search*, never on the chosen flight: thei
 
 ### Cards and popup
 
-Cards are fixed `height: 96px`, three rows: `dep → arr` + duration + (i); airline names + match badge; stop summary. The (i) opens `FlightDetailsPopup` with per-segment detail, layovers, total travel time, and time-zone change computed from the ISO offsets.
+Cards are fixed `height: 96px`, two text rows: `dep → arr` + duration + (i); then airline + stop summary + match badge. The (i) opens `FlightDetailsPopup` with per-segment detail, layovers, total travel time, and time-zone change computed from the ISO offsets.
+
+**The match badge is on the SECOND row, and that is load-bearing (Ulrik, 2026-09-21).** It used to sit on the times row, which is the only row the absolutely-positioned Info pill overlaps and which therefore gives up 38px to clear it. A real return leg — `19:00 → 08:10 +1 · 13h 10m · ALLIANCE PARTNER` — was cut by 12px **at 1440**, so no breakpoint could have reached it; shorter itineraries hid it, which is why a full sweep missed it until a long-haul flight was selected. The second row kept its full width when that reservation moved off it and has 180–260px spare against the badge's 104. Do not move it back up.
+
+### The sidebar goes above the results when the columns cannot fit
+
+**One-way and return: below 1400** (was 1180). The 360px sidebar and two flight columns do not both fit under it — at 1182 the times row had 132px for 178px of content, rendering `7h 40n` and `10h 3C`. Nothing narrower could be traded: the price lane, the Info-pill lane and the sidebar together cannot return 46px, and dropping the times from 1.1rem to the 0.8rem it would take is not the design. Above the results, departure stays beside return — which is the point of the page, and why the sidebar moved rather than the two columns collapsing into one.
+
+**Multi-city: at EVERY width** (`.layoutStacked`, set from `search.tripType === "multiple"`). Three leg columns plus the 140px price lane never fit beside the sidebar on any real screen — at 1440 the times row got 143px for 216px of content. Stacking buys about 126px per column and makes it clean from ~1230 up.
+
+**Still open below ~1230 in multi-city, and it is structural.** N leg columns side by side cannot fit a narrow viewport however the sidebar is placed, and it gets worse with 4 or 5 legs. The column template is an inline style built from `N` in three places in `FlightsView.tsx` (`gridCols`, and the pinned grid), so a media query cannot touch it — fixing it means either computing the template from a measured container width or letting the leg grid scroll horizontally. Not decided.
 
 ### Autocomplete
 

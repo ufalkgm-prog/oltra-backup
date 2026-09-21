@@ -1191,7 +1191,9 @@
 }
 
 .matchBadgeWeak {
-  margin-left: 6px;
+  /* 2px on top of .flightStopsRow's own 4px gap, so it reads as set apart
+     from the stops text without the 6px it needed as a times-row child. */
+  margin-left: 2px;
   font-size: 0.5rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1204,7 +1206,25 @@
   color: var(--oltra-text-secondary);
 }
 
-@media (max-width: 1180px) {
+/* 1180 -> 1400 (Ulrik, 2026-09-21). The 360px sidebar and two flight columns
+   do not both fit below about 1400: the departure card's times row runs out of
+   room and cuts what is on it, worst at 1182 where "7h 40m" rendered "7h 40n",
+   "10h 30m" rendered "10h 3C" and the ALLIANCE PARTNER badge lost half itself
+   behind the info pill.
+
+   Nothing narrower could be traded for it. The row needs about 178px of
+   content in the 132 it had; the sidebar, the 68px price lane and the 38px
+   info-pill lane together cannot give that back, and dropping the times from
+   1.1rem to the 0.8rem it would take is not the design. Above the results the
+   flight columns get the whole width, and departure stays beside return -
+   which is what the page is for, and why the sidebar moved rather than the
+   two columns collapsing into one.
+
+   The measurement behind 1400: the times row gains 0.5px of room per px of
+   viewport, and a pinned row carrying an alliance badge needs 324.7px, which
+   it has by ~1380. See the note in section 7B for the case this still does
+   not cover. */
+@media (max-width: 1400px) {
   .layout {
     grid-template-columns: 1fr;
   }
@@ -1214,6 +1234,26 @@
     max-height: none;
     overflow: visible;
   }
+}
+
+/* A multi-city itinerary puts THREE leg columns plus the price lane in the
+   results, and they do not fit beside the 360px sidebar at any width a laptop
+   or a desktop has: at 1440 the times row needs 216px in the 143 it gets, and
+   the departure time is cut. The width rule above already stacks the sidebar
+   below 1400, where multi-city then has ~33px to spare - this makes the same
+   thing happen at every width, because multi-city never fits the other way
+   (Ulrik, 2026-09-21).
+
+   After the media query on purpose: same specificity, so source order is what
+   makes it win above 1400. */
+.layoutStacked {
+  grid-template-columns: 1fr;
+}
+
+.layoutStacked .sidebar {
+  position: static;
+  max-height: none;
+  overflow: visible;
 }
 
 @media (max-width: 1000px) {

@@ -1081,7 +1081,13 @@ export default function FlightsView({ searchParams }: Props) {
           the URL once when the visitor arrives here on a bare one. */}
       <AiResultsSync page="flights" />
 
-      <div className={styles.layout}>
+      {/* Multi-city always puts the filters above the results, at every
+          width - see .layoutStacked. One-way and return do it below 1400. */}
+      <div
+        className={`${styles.layout} ${
+          search.tripType === "multiple" ? styles.layoutStacked : ""
+        }`}
+      >
         <aside className={styles.sidebar}>
           <div className={`${styles.searchPanel} oltra-glass oltra-panel`}>
             <div className={styles.sectionStack}>
@@ -2356,11 +2362,6 @@ function FlightCardContent({
             <span className={styles.flightArrive} style={timeStyle}>{flight.arriveTime}</span>
             <span className={styles.flightMetaDot}>·</span>
             <span className={styles.flightDuration} style={timeStyle}>{formatDuration(flight.durationMinutes)}</span>
-            {label ? (
-              <span className={styles.matchBadgeWeak}>
-                {label}
-              </span>
-            ) : null}
           </div>
           <div className={styles.flightStopsRow}>
             <span className={`${styles.flightMetaText} ${styles.flightAirlineText}`}>{airlineLabel}</span>
@@ -2369,6 +2370,21 @@ function FlightCardContent({
                 <span className={styles.flightMetaDot}>·</span>
                 <span className={styles.flightMetaText}>{flight.stopSummary}</span>
               </>
+            ) : null}
+            {/* The match badge sits HERE, not on the times row above, which is
+                where it used to be and where it did not fit: that row is the
+                only one the Info pill overlaps, so it gives up 38px to clear
+                it, and "19:00 -> 08:10 +1 · 13h 10m · Alliance partner" was
+                cut by 12px even at 1440 - above any breakpoint, so moving the
+                sidebar could not reach it (Ulrik, 2026-09-21). This row kept
+                its full width when that reservation moved off it, and has
+                180-260px spare against the badge's 104. It is also where
+                section 7B always said the badge belonged, beside the airline
+                it qualifies. */}
+            {label ? (
+              <span className={styles.matchBadgeWeak}>
+                {label}
+              </span>
             ) : null}
             {/* Cabin and fare brand used to sit here too. The row is
                 flex-wrap: nowrap with every child ellipsised, so four facts in
