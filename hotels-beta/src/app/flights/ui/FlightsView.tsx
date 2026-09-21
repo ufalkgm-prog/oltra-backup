@@ -525,14 +525,6 @@ export default function FlightsView({ searchParams }: Props) {
   }, []);
 
   useEffect(() => {
-    if (autoSearchedRef.current) return;
-    if (normalizeParam(searchParams.include_flights) !== "1") return;
-    autoSearchedRef.current = true;
-    handleSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (!sessionRestored) return;
     mergeHotelFlightSearch({
       q: normalizeParam(searchParams.q),
@@ -886,6 +878,35 @@ export default function FlightsView({ searchParams }: Props) {
       setIsLoading(false);
     }
   }, [search, searchKey, isReturnTrip, isMultiple]);
+
+  /* RESULTS COME BACK BY THEMSELVES, once per arrival.
+   *
+   * The itineraries live in this component's state, so navigating away and
+   * back left the form restored and the results gone — the visitor saw their
+   * own route and dates above an empty page, with nothing to say a search was
+   * needed (Ulrik, 2026-09-21). This used to fire only for `include_flights=1`,
+   * the landing handoff; it now fires for any form complete enough to search,
+   * which covers a restored session, a URL with a route in it, and the landing
+   * handoff alike.
+   *
+   * `searchBlocker === null` is the same completeness test the Search button
+   * uses, so the page never runs a search the button would have refused.
+   *
+   * ONCE, guarded by a ref that survives re-renders but not a remount. Typing
+   * a new route still goes through Search: this fills an empty page, it does
+   * not search on every keystroke. The route caches for 15 minutes, so coming
+   * straight back is usually a cache hit rather than a supplier call. */
+  useEffect(() => {
+    if (autoSearchedRef.current) return;
+    // The landing handoff carries its own route in the URL and need not wait;
+    // everything else waits for the form to be restored from session storage,
+    // or it would search the defaults and then sit on the wrong results.
+    const fromLandingHandoff = normalizeParam(searchParams.include_flights) === "1";
+    if (!fromLandingHandoff && !sessionRestored) return;
+    if (searchBlocker) return;
+    autoSearchedRef.current = true;
+    void handleSearch();
+  }, [sessionRestored, searchBlocker, searchParams, handleSearch]);
 
   /* BOOK LEAVES THE SITE. This used to post to /api/flights/book-link, which
    * opened Duffel's hosted checkout - a page where Duffel took the payment. We
