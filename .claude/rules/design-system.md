@@ -46,6 +46,17 @@ Changing what a token *resolves to* does nothing for components holding literal 
 
 `--oltra-border-field` and `--oltra-border-panel` were **removed** — sandbox duplicates gone stale (`-panel` still held `#738783` after the pane border softened to `#545F5D`, so `/theme-test` drew borders the live site no longer used).
 
+### A panel that must escape the glass is portalled, not z-indexed (2026-09-21)
+
+Two things in this layout trap an absolutely-positioned panel, and **no z-index can climb out of either**:
+
+* **`.oltra-glass` carries `backdrop-filter`**, which creates a new stacking context. A dropdown inside it cannot clear anything painted outside it, however high its `z-index`.
+* **`main.oltra-page` is `overflow-x: hidden`**, which makes it a clipping ancestor on both axes (one axis hidden forces the other to `auto`). A panel taller or wider than its column is cut by it.
+
+So the fix for a panel that renders behind something, or gets clipped, is **`createPortal` to `document.body` plus measured placement** — not another z-index token. `SaveToTripControl` is the worked example: it portals, measures the trigger, and flips the panel up when there is no room below. The Hotels detail pane had its own hand-rolled picker that did none of that and opened 120px below the fold; replacing it with the shared control fixed it and deleted 215 lines.
+
+**Not a licence to portal everything.** Audited across 1440/1280/1024/834/502 on 2026-09-21: every dropdown rendered on screen and on top, so there is no present defect to chase. Converting the remaining panels would mean writing measured positioning six more times for no observed gain. The rule is what to do **when one does** misbehave.
+
 ### Deliberately NOT tokenised — check here before "finishing" any of them
 
 * **Map and photo-overlay chrome**: `.oltra-temp-controls__*` and `PageShell`'s `.intro` (it carries a `text-shadow` and sits over a hero image — overlay chrome, and that question is settled).
