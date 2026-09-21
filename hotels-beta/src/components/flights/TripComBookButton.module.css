@@ -1,0 +1,54 @@
+/* The itinerary, inside the "continue to Trip.com" dialog.
+   The dialog's frame, heading and close control come from FlightsView's own
+   modal classes, so this popup and the flight-details popup are one thing at
+   two sizes. Only the list below is particular to it. */
+.legs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+/* Route, when, and the flight numbers. Wraps rather than truncates — a member
+   comparing against a Trip.com results list needs the whole flight number, and
+   an ellipsis in the middle of "TG951" is worse than a second line. */
+.leg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--oltra-text-primary);
+}
+
+.route {
+  min-width: 5.5rem;
+  color: var(--oltra-text-secondary);
+  white-space: nowrap;
+}
+
+.when {
+  color: var(--oltra-text-secondary);
+  white-space: nowrap;
+}
+
+/* The part the member actually matches against, so it keeps primary text
+   while everything around it is muted. */
+.flights {
+  color: var(--oltra-text-primary);
+}
+
+.foot {
+  margin: 14px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--oltra-text-secondary);
+}
+
+/* Cancel and Proceed, equal width per §35A's rule for a paired choice. */
+.actions {
+  margin-top: 18px;
+  width: 100%;
+}

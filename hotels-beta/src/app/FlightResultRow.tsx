@@ -8,11 +8,11 @@ import { SMALL_CARD_ACTION_WIDTH } from "@/components/hotels/HotelSmallCard";
 import SaveToTripControl, {
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
-import TripComMatchNote from "@/components/flights/TripComMatchNote";
+import TripComBookButton from "@/components/flights/TripComBookButton";
 import { addFlightToTripBrowser } from "@/lib/members/db";
 import type { FlightLeg, Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
-import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
+import { APPROX_PREFIX, roundFlightPrice } from "@/lib/flights/priceDisplay";
 import { useCurrency } from "@/lib/currency/useCurrency";
 import styles from "./page.module.css";
 
@@ -42,11 +42,19 @@ export function formatDurationMinutes(total: number): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
+/* "~€1,240". The tilde leads the whole price rather than sitting between the
+ * symbol and the digits, which reads as "approximately €1,240" instead of
+ * producing "€~1,240". See lib/flights/priceDisplay.ts for why a fare is not
+ * written exactly.
+ *
+ * These rows print the fare as quoted, in its own currency — unlike the
+ * Flights page, which converts into the member's selected currency first.
+ * Rounding after conversion is the important half; here there is none. */
 export function formatPrice(value: number, currency: string): string {
   if (!Number.isFinite(value) || value <= 0) return "—";
   const symbol =
     currency === "EUR" ? "€" : currency === "USD" ? "$" : currency === "GBP" ? "£" : `${currency} `;
-  return `${symbol}${Math.round(value).toLocaleString()}`;
+  return `${APPROX_PREFIX}${symbol}${roundFlightPrice(value).toLocaleString()}`;
 }
 
 function totalMinutes(itinerary: Itinerary): number {
@@ -234,8 +242,6 @@ export default function FlightResultRow({
 
   if (!flight) return null;
 
-  const bookHref = tripComHref(flight, { ...handoff, currency });
-
   return (
     <div className={styles.flightDetailRow}>
       {/* Portalled: the row sits inside a glass frame whose backdrop-filter
@@ -255,12 +261,6 @@ export default function FlightResultRow({
         <span className={styles.flightLineLabel}>{label}</span>
         <span className={styles.flightRowPrice}>
           {formatPrice(flight.priceEur, flight.currency)}
-          {/* Our fares and Trip.com's come from different sources and will
-              differ. The member pays Trip.com, so ours is an indication of
-              what this journey costs, never a quoted price — and it has to say
-              so beside the figure rather than in a footnote, because the figure
-              is what gets read. */}
-          <span className={styles.flightRowPriceNote}>indicative</span>
         </span>
         {/* The pair travels as one unit. As siblings of the label and price
             they were free to be split by the flex wrap: at three frames the
@@ -272,21 +272,17 @@ export default function FlightResultRow({
         <div className={styles.flightRowActions}>
           {/* Each in the hotel card's action width, so every BOOK and SAVE on
               the page is one width (Ulrik, 2026-09-16). */}
-          {bookHref ? (
-            <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
-              {/* A real anchor, not a scripted window.open: the member can see
-                  where BOOK goes before pressing it. See tripComHandoff.ts for
-                  why the rel is noopener and not noopener noreferrer. */}
-              <a
-                href={bookHref}
-                target="_blank"
-                rel={TRIP_COM_LINK_REL}
-                className="oltra-btn oltra-btn--condensed oltra-btn--block"
-              >
-                BOOK
-              </a>
-            </div>
-          ) : null}
+          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
+            {/* Opens the "find this flight on Trip.com" dialog; PROCEED there
+                is what leaves the site. */}
+            <TripComBookButton
+              itinerary={flight}
+              price={formatPrice(flight.priceEur, flight.currency)}
+              handoff={handoff}
+              currency={currency}
+              className="oltra-btn oltra-btn--condensed oltra-btn--block"
+            />
+          </div>
           <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
             <SaveToTripControl
               onSave={(tripId) => handleSave(tripId, flight)}
@@ -309,12 +305,6 @@ export default function FlightResultRow({
           <FlightDetailCard flight={flight.inbound} onInfo={setDetail} />
         ) : null}
       </div>
-      {/* The same price string the row's own header shows, so the two figures
-          in one card can never disagree. */}
-      <TripComMatchNote
-        itinerary={flight}
-        price={formatPrice(flight.priceEur, flight.currency)}
-      />
     </div>
   );
 }

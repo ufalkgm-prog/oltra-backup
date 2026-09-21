@@ -12,10 +12,8 @@ import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members/db";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import type { Itinerary, FlightLeg, AirlineRef } from "@/lib/flights/itinerary";
-import type { PassengerCounts } from "@/lib/flights/itinerary";
-import type { TripComPlacement } from "@/lib/flights/partners";
-import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
-import TripComMatchNote from "@/components/flights/TripComMatchNote";
+import TripComBookButton, { type FlightHandoff } from "@/components/flights/TripComBookButton";
+import { APPROX_PREFIX, roundFlightPrice } from "@/lib/flights/priceDisplay";
 import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import { useCurrency } from "@/lib/currency/useCurrency";
@@ -33,15 +31,6 @@ type PageSearchParams = Record<string, string | string[] | undefined>;
 type CabinClass = "Economy" | "Premium Economy" | "Business" | "First";
 type TripType = "one-way" | "return" | "multiple";
 
-/* What BOOK needs beyond the itinerary itself: who is travelling, in which
- * cabin, and which button this is for the affiliate report. It rides down to
- * PriceCard in place of the old onBook callback - the destination is a URL we
- * can build at render, so there is nothing left to call. */
-type FlightHandoff = {
-  cabin: string;
-  passengers: PassengerCounts;
-  placement: TripComPlacement;
-};
 
 type SearchState = {
   tripType: TripType;
@@ -1977,10 +1966,7 @@ function MultipleResults({
         <div className={styles.resultsScroll} ref={priceScrollRef}>
           <div className={styles.cardStack}>
             {allSelected && selectedItinerary ? (
-              <>
-                <PriceCard itinerary={selectedItinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
-                <RowMatchNote itinerary={selectedItinerary} />
-              </>
+              <PriceCard itinerary={selectedItinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
             ) : null}
           </div>
         </div>
@@ -2047,7 +2033,6 @@ function MultiPinnedRow({
         })}
         <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
       </div>
-      <RowMatchNote itinerary={itinerary} />
     </div>
   );
 }
@@ -2059,26 +2044,26 @@ function MultiPinnedRow({
 //
 // The figure is always a whole-itinerary price, never a per-leg one: Duffel
 // prices a return/multi-city offer as a single ticket (CLAUDE.md §7B).
-/* The "find this flight on Trip.com" block, with the price formatted exactly
-   as PriceCard formats it - converted into the member's selected currency. The
-   shared component takes a preformatted string precisely so this page and the
-   landing cards can each show the figure they already show. */
-function RowMatchNote({ itinerary }: { itinerary: Itinerary | null }) {
-  const { currency, format } = useCurrency();
-  if (!itinerary) return null;
-  return (
-    <TripComMatchNote
-      itinerary={itinerary}
-      price={`${currency} ${format(itinerary.priceEur, itinerary.currency)}`}
-    />
-  );
+/* "~EUR 1,240", rounded in the currency on screen.
+ *
+ * convert() first and format() second, with the display currency passed as the
+ * source so format's own conversion is a no-op: rounding the EUR figure and
+ * converting afterwards would put 1,237 on screen, which is the one thing the
+ * rounding exists to prevent. */
+function useApproxPrice() {
+  const { currency, convert, format } = useCurrency();
+  return {
+    currency,
+    approx: (priceEur: number, from: string) =>
+      `${APPROX_PREFIX}${format(roundFlightPrice(convert(priceEur, from)), currency)}`,
+  };
 }
 
 function InlinePrice({ priceEur, currency }: { priceEur: number; currency: string }) {
-  const { currency: displayCurrency, format } = useCurrency();
+  const { currency: displayCurrency, approx } = useApproxPrice();
   return (
     <span className={styles.inlinePrice}>
-      <span className={styles.inlinePriceAmount}>{displayCurrency} {format(priceEur, currency)}</span>
+      <span className={styles.inlinePriceAmount}>{displayCurrency} {approx(priceEur, currency)}</span>
     </span>
   );
 }
@@ -2138,7 +2123,6 @@ function PinnedRow({
           {outboundCard}
           <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active />
         </div>
-        <RowMatchNote itinerary={itinerary} />
       </div>
     );
   }
@@ -2169,7 +2153,6 @@ function PinnedRow({
           <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active />
         </div>
       </div>
-      <RowMatchNote itinerary={itinerary} />
     </div>
   );
 }
@@ -2211,7 +2194,6 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
           </div>
           {priceCell}
         </div>
-        <RowMatchNote itinerary={itinerary} />
       </div>
     );
   }
@@ -2248,7 +2230,6 @@ function SelectedRow({ outbound, inbound, itinerary, oneWay, departureHasGutter,
           {priceCell}
         </div>
       </div>
-      <RowMatchNote itinerary={itinerary} />
     </div>
   );
 }
@@ -2268,36 +2249,26 @@ function PriceCard({
   compact?: boolean;
   priceOnly?: boolean;
 }) {
-  const { currency, format } = useCurrency();
-  const bookHref = tripComHref(itinerary, { ...handoff, currency });
+  const { currency, approx } = useApproxPrice();
   return (
     <div className={`${styles.priceCard} ${active ? styles.priceCardActive : ""} ${compact ? styles.selectCardCompact : ""}`}>
       <span className={styles.priceCardAmount}>
-        {currency} {format(itinerary.priceEur, itinerary.currency)}
+        {currency} {approx(itinerary.priceEur, itinerary.currency)}
       </span>
-      {/* Our fares and Trip.com's come from different sources and will differ.
-          The member pays Trip.com, so ours indicates what the journey costs
-          rather than quoting what they will be charged - said beside the
-          figure, because the figure is what gets read. */}
-      <span className={styles.priceCardNote}>indicative</span>
       {/* Every caller that shows the buttons passes `active` and onSaveToTrip
           (the return pane's cards are priceOnly), so there is no inactive
           BOOK/SAVE state to draw. */}
       {!priceOnly && (
         <div className={styles.priceCardButtonRow}>
-          {/* A real anchor rather than a scripted window.open, so the member
-              can see where BOOK goes before pressing it. tripComHandoff.ts
-              explains why the rel is noopener and not noopener noreferrer. */}
-          {bookHref ? (
-            <a
-              href={bookHref}
-              target="_blank"
-              rel={TRIP_COM_LINK_REL}
-              className="oltra-btn oltra-btn--condensed"
-            >
-              BOOK
-            </a>
-          ) : null}
+          {/* Opens the "find this flight on Trip.com" dialog; PROCEED there
+              is what leaves the site. */}
+          <TripComBookButton
+            itinerary={itinerary}
+            price={`${currency} ${approx(itinerary.priceEur, itinerary.currency)}`}
+            handoff={handoff}
+            currency={currency}
+            className="oltra-btn oltra-btn--condensed"
+          />
           {/* Same picker as Hotels/Restaurants - saving used to go straight to
               whatever default trip the db helper picked, with no way to tell
               where it landed. */}

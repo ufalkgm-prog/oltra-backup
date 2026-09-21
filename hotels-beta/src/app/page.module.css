@@ -503,19 +503,6 @@
   margin-left: auto;
 }
 
-/* "indicative", beside the fare and never instead of it.
-   Our prices and Trip.com's come from different sources, and the member pays
-   Trip.com — so ours indicates what a journey costs rather than quoting what
-   they will be charged. It sits against the figure because that is what gets
-   read; a footnote would be true and unread.
-   Muted and lower-case, like .airportBlockBest: it qualifies the number rather
-   than competing with it, and it is a word rather than a label. */
-.flightRowPriceNote {
-  margin-left: 0.35rem;
-  font-size: 0.65rem;
-  letter-spacing: 0.04em;
-  color: var(--oltra-text-secondary);
-}
 
 /* BOOK and SAVE as one unit, so the flex wrap can never put one on a line
    without the other. align-items: center rather than the row's default

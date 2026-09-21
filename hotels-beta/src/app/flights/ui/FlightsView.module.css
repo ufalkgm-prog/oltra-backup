@@ -1135,18 +1135,6 @@
   text-align: center;
 }
 
-/* "indicative", under the fare.
-   Trip.com is merchant of record and their price is the one the member pays;
-   ours comes from a different source and will differ. The word sits against
-   the figure rather than in a footnote, because the figure is what gets read.
-   Muted metadata, 12px per §35. */
-.priceCardNote {
-  font-size: 0.65rem;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  text-align: center;
-  color: var(--oltra-text-secondary);
-}
 
 .multiSelectedLegsStack {
   display: grid;
