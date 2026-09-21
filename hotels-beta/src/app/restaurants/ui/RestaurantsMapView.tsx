@@ -1186,9 +1186,11 @@ export default function RestaurantsMapView({
                   </div>
                 )}
 
-                {/* Condensed and stacked, the card-action pattern: each hit
-                    area reaches only to the middle of the 6px gap. */}
-                <div className="flex flex-col gap-1.5">
+                {/* Side by side and equal width (Ulrik, 2026-09-21), through
+                    §35A's own pair primitive rather than a local grid. Stacked
+                    they cost the fixed-height pane a whole row, and the labels
+                    fit the half-width comfortably at the condensed size. */}
+                <div className="oltra-btn-pair w-full">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -1204,7 +1206,7 @@ export default function RestaurantsMapView({
 
                       setShowTripPicker((prev) => !prev);
                     }}
-                    className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-top"
+                    className="oltra-btn oltra-btn--condensed"
                     aria-disabled={!isMemberLoggedIn}
                     data-reason={isMemberLoggedIn ? undefined : "Log in to save to a trip"}
                   >
@@ -1224,7 +1226,7 @@ export default function RestaurantsMapView({
 
                       void handleAddRestaurantToFavorites();
                     }}
-                    className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-bottom"
+                    className="oltra-btn oltra-btn--condensed"
                     aria-disabled={!isMemberLoggedIn}
                     data-reason={isMemberLoggedIn ? undefined : "Log in to add favourites"}
                   >

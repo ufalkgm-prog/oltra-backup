@@ -7,11 +7,17 @@
   grid-template-columns: minmax(360px, 0.95fr) minmax(0, 1.45fr);
   gap: 20px;
   width: 100%;
-  height: calc(100vh - 140px);
-  min-height: 720px;
   align-items: stretch;
   overflow: hidden;
 }
+
+/* NO HEIGHT HERE ANY MORE, and that is the point (Ulrik, 2026-09-21).
+   It was calc(100vh - 140px) with a 720px floor, so both columns were sized by
+   the window: on a tall screen the map grew to fill space the text pane had no
+   use for, and the description scrolled inside its own little box regardless.
+   The row is now sized by the sidebar, whose detail pane is fixed at a height
+   that holds every description we hold (see .restaurants-sidebar__detail), and
+   the map stretches to exactly that. */
 
 .restaurants-sidebar {
   position: relative;
@@ -20,7 +26,9 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  max-height: 100%;
+  /* max-height: 100% is gone with the layout's own height: this column's
+     content is what the row measures, so capping it at the row would be
+     circular. */
   overflow: hidden;
 }
 
@@ -73,8 +81,21 @@
   padding-top: 0;
 }
 
+/* FIXED, AND SIZED FROM THE DATA.
+   Measured across all 2,189 restaurants on 2026-09-21: the highlights and
+   description together render to 286px at their tallest (Tragaluz, Lima),
+   238px at the 99th percentile and 190px at the median — they are written to
+   a house length, so the spread is narrow. Around that sits ~244px of fixed
+   chrome: title, address, links, cuisine line, awards line, the margins
+   between them, the SELECTED label and the button row.
+   530px therefore holds every description we have without scrolling, and
+   stays the same height whichever restaurant is chosen — which is what stops
+   the map resizing as the visitor clicks down the list.
+   overflow-y on the card below is kept as a safety net for a future
+   description longer than anything we hold today. */
 .restaurants-sidebar__detail {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  height: 530px;
   min-height: 0;
   overflow: hidden;
   padding-top: 22px;
@@ -210,10 +231,14 @@
   text-decoration: none;
 }
 
+/* height: 100% of a grid row the SIDEBAR now sizes, so the map ends exactly
+   where the text pane does. The floor is for the one case that leaves the
+   sidebar short: a city and type combination with no restaurants at all, where
+   the detail pane is not rendered. */
 .restaurants-map-pane {
   position: relative;
   min-width: 0;
-  min-height: 0;
+  min-height: 520px;
   height: 100%;
   border-radius: 28px;
   overflow: hidden;
@@ -322,14 +347,11 @@
 @media (max-width: 1100px) {
   .restaurants-layout {
     grid-template-columns: 1fr;
-    height: auto;
-    min-height: 0;
   }
 
-  .restaurants-sidebar {
-    max-height: none;
-  }
-
+  /* One column, so the map no longer answers to the sidebar's height and takes
+     a share of the window again. The height and min-height overrides that used
+     to sit here went with the layout's own height rule. */
   .restaurants-map-pane {
     height: 62vh;
     min-height: 420px;
