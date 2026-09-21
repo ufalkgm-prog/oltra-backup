@@ -971,6 +971,43 @@
 
    The cards inside are told the same number, so density and track count come
    from one source and cannot drift apart. */
+/* ONE ROW SHARED BY BOTH SOURCES (Ulrik, 2026-09-21).
+
+   The structured summary and the concierge frames each render their own grid.
+   When they share a row those grids go display: contents, so their panes
+   become direct children of this one and sit side by side instead of stacking
+   two grids. The class stays on each wrapper, so the :has() rules keyed on
+   .summaryGrid and .aiFrameGrid still match.
+
+   --panes is the whole row count, set by LandingResults. */
+.landingPaneGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--panes, 1), minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* Three panes need more room than a phone or a small laptop has - one per row
+   beats three too narrow for the density their cards were measured at. Matches
+   .aiFrameGrid own fallback. */
+@media (max-width: 1100px) {
+  .landingPaneGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.paneGroupContents {
+  display: contents;
+}
+
+/* "Gathering those..." is a note about the row, not a pane in it. */
+.paneGroupFullRow {
+  grid-column: 1 / -1;
+}
+
 .aiFrameGrid {
   display: grid;
   grid-template-columns: repeat(var(--ai-frames, 1), minmax(0, 1fr));

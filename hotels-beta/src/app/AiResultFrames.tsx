@@ -24,6 +24,8 @@ import { isStayTooLong } from "@/lib/stay";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { MAX_NAMED, completeLegsForHotels, namedHotels } from "@/lib/ai/hotelGateways";
 import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
+import { aiPanes } from "@/lib/ai/resultPanes";
+import { useLandingPanes } from "./landingPanes";
 import type { Itinerary } from "@/lib/flights/itinerary";
 import FlightResultRow, { pickHeadlineItineraries, type TripDefaults } from "./FlightResultRow";
 import type { AiFlightLeg, AiHotelCard, AiQueryState } from "@/lib/ai/types";
@@ -539,26 +541,38 @@ export default function AiResultFrames() {
 
   const totalHotels = stays.reduce((sum, stay) => sum + stay.hotels.length, 0);
   const totalRestaurants = stays.reduce((sum, stay) => sum + stay.restaurants.length, 0);
-  const showHotels = results.hotelIds.length > 0 || laterStops.some((stop) => stop.hotelIds.length);
-  const showFlights = flightLegs.length > 0;
-  const showRestaurants =
-    results.restaurantIds.length > 0 || laterStops.some((stop) => stop.restaurantIds.length);
+  /* The same helper LandingResults counted the row with, so the two cannot
+     disagree about which panes this answer fills. */
+  const { hotels: showHotels, flights: showFlights, restaurants: showRestaurants } =
+    aiPanes(results);
+
+  /* Above the early return: a hook cannot sit behind one. Null unless this
+     answer is sharing a row with the structured summary, in which case the
+     frame count is the WHOLE row's — a restaurants pane beside two summary
+     panes is a third of the width, not all of it. */
+  const panes = useLandingPanes();
 
   // Nothing to frame yet — the concierge panel carries the conversation.
   if (!showHotels && !showFlights && !showRestaurants) return null;
 
-  // 1, 2 or 3. Drives both the CSS grid's track count and each card's density,
-  // from one number, so the two can never disagree.
-  const frameCount = ((showHotels ? 1 : 0) +
-    (showFlights ? 1 : 0) +
-    (showRestaurants ? 1 : 0)) as SmallCardColumns;
+  const frameCount =
+    panes?.columns ??
+    (((showHotels ? 1 : 0) +
+      (showFlights ? 1 : 0) +
+      (showRestaurants ? 1 : 0)) as SmallCardColumns);
+
+  const contents = panes ? ` ${styles.paneGroupContents}` : "";
 
   return (
-    <section className={styles.aiResults}>
-      {loading ? <p className={styles.aiResultsNote}>Gathering those…</p> : null}
+    <section className={`${styles.aiResults}${contents}`}>
+      {loading ? (
+        <p className={`${styles.aiResultsNote}${panes ? ` ${styles.paneGroupFullRow}` : ""}`}>
+          Gathering those…
+        </p>
+      ) : null}
 
       <div
-        className={styles.aiFrameGrid}
+        className={`${styles.aiFrameGrid}${contents}`}
         style={{ "--ai-frames": frameCount } as React.CSSProperties}
       >
         {showHotels ? (

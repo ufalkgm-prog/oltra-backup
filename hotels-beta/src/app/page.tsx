@@ -280,6 +280,10 @@ export default async function HomePage({
               did not survive leaving the landing page. */}
           <LandingResults
             classicCity={submitted && hasDestination ? destinationCity : ""}
+            classicPanes={{
+              hotels: submitted && hasDestination && includeHotels,
+              flights: submitted && hasDestination && includeFlights,
+            }}
             summary={
               submitted && hasDestination ? (
                 <LandingSummary

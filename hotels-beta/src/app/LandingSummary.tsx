@@ -24,6 +24,7 @@ import HotelSmallCard, {
   smallCardHasTopAction,
   type SmallCardAvailability,
 } from "@/components/hotels/HotelSmallCard";
+import { useLandingPanes } from "./landingPanes";
 import styles from "./page.module.css";
 
 type HotelSummary = {
@@ -111,8 +112,17 @@ export default function LandingSummary({
   flightsHref,
   narrowSuggestion,
 }: Props) {
-  const showHotels = includeHotels;
-  const showFlights = includeFlights;
+  /* Null unless this summary is sharing a row with the concierge's panes.
+     When it is, the concierge's answer wins the verticals it covers: two hotel
+     panes side by side, one from each source, is two answers to one question
+     (Ulrik, 2026-09-21). */
+  const panes = useLandingPanes();
+  const showHotels = includeHotels && !panes?.aiCovers.hotels;
+  const showFlights = includeFlights && !panes?.aiCovers.flights;
+  /* Density only. Left alone at the classic two-pane width, so a summary on
+     its own renders exactly as it always has; it tightens only when a
+     concierge pane joins the row and makes it three. */
+  const cardColumns = panes && panes.columns >= 3 ? panes.columns : undefined;
 
   // A destination city can resolve to more than one relevant airport (a
   // multi-airport city like London, or an area served by several comparably
@@ -472,6 +482,7 @@ export default function LandingSummary({
         flight={flight}
         isOneWay={isOneWay}
         tripDefaults={tripDefaults}
+        columns={cardColumns}
         /* The cabin this row was searched in — each airport is searched in
            both, so the cabin belongs to the row and not to the page. */
         handoff={{
@@ -504,7 +515,13 @@ export default function LandingSummary({
   }
 
   return (
-    <div className={styles.summaryGrid}>
+    /* display: contents while composed, so these panes become children of
+       the shared grid in LandingResults rather than a second grid stacked
+       under the concierge's. The class stays on the element either way, so the
+       :has() rules that key on it still match. */
+    <div
+      className={`${styles.summaryGrid}${panes ? ` ${styles.paneGroupContents}` : ""}`}
+    >
       {showHotels ? (
         <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}>
           <div className={styles.summaryBody}>
@@ -544,6 +561,7 @@ export default function LandingSummary({
                 <HotelSmallCard
                   key={String(h.id)}
                   hotel={h}
+                  columns={cardColumns}
                   href={hotelHref}
                   availability={
                     hasFullStayDetails
