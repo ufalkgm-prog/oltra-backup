@@ -3484,7 +3484,14 @@ export default function HotelsView(props: {
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-                                  <div className="truncate text-sm font-light text-[color:var(--oltra-text-primary)]">
+                                  {/* Two lines, like the hotel names above it:
+                                      "Standard Double room (full double bed)"
+                                      lost 97px to a single clipped line at
+                                      1024 (Ulrik, 2026-09-21). A room's name
+                                      is how the guest tells one rate from
+                                      another, so it is the last thing that
+                                      should be cut. */}
+                                  <div className="line-clamp-2 text-sm font-light text-[color:var(--oltra-text-primary)]">
                                     {room.roomName}
                                   </div>
                                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[color:var(--oltra-text-muted)]">
