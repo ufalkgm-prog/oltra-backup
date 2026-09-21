@@ -76,7 +76,10 @@
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  border: 1px solid var(--oltra-field-border);
+  /* The same white as the label it encloses (Ulrik, 2026-09-21). It was
+     --oltra-field-border, a near-black line that read as a dark smudge around
+     white text rather than as the chip's own edge. */
+  border: 1px solid var(--oltra-text-primary);
   background: var(--oltra-field-bg-strong);
   padding: 2px 8px;
   color: var(--oltra-text-primary);
@@ -114,22 +117,25 @@
 }
 
 .suggestionGroup + .suggestionGroup {
-  margin-top: 0.45rem;
+  margin-top: 0.65rem;
 }
 
 .suggestionGroupLabel {
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.32rem;
   padding-left: 0.42rem;
 }
 
-/* Tighter rows (Ulrik, 2026-09-16): 20px rows with no gap, where the shared
-   dropdown item is 24px plus a 4px gap. Four rows stay visible per group
-   (§10), so the list is capped at 4 × 20px and scrolls beyond that. */
+/* Rows were tightened to 20px with no gap on 2026-09-16 and have been opened
+   back up (Ulrik, 2026-09-21): larger type and a little more air, because this
+   is the field a visitor reads most carefully and it had become the smallest
+   text on the page.
+   Four rows stay visible per group (§10), so the cap is the row height plus
+   the gap, four times over: 4 × 26 + 3 × 3 = 113px, and it scrolls beyond. */
 .suggestionList {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  max-height: 80px;
+  gap: 3px;
+  max-height: 113px;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
@@ -143,9 +149,13 @@
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
-  min-height: 20px;
-  padding-top: 0.08rem;
-  padding-bottom: 0.08rem;
+  min-height: 26px;
+  padding-top: 0.22rem;
+  padding-bottom: 0.22rem;
+  /* Scoped here rather than on --oltra-dropdown-item-font-size, which is the
+     size of every dropdown on the site: the guests, cabin, trip pickers and
+     filter lists were not part of this change. */
+  font-size: 0.84rem;
   text-align: left;
   white-space: nowrap;
 }
@@ -160,7 +170,7 @@
    and "New Mexico" the state read apart at a glance. */
 .suggestionItemType {
   flex-shrink: 0;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--oltra-text-muted);
