@@ -83,8 +83,30 @@ type TaxMaps = {
 
 type ViewMode = "details" | "map" | "featured";
 
-/** Images shown side by side in the featured strip. */
-const FEATURED_IMAGE_COUNT = 3;
+/** Images shown side by side in the featured strip.
+ *
+ * Two since 2026-09-21 (Ulrik), scaled up to fill the same total width: at
+ * three they were small enough that a hotel read as a contact sheet rather
+ * than as a place. FEATURED_STRIP_HEIGHT below carries the matching height. */
+const FEATURED_IMAGE_COUNT = 2;
+
+/* The strip's height, scaled so two images occupy exactly the width three did.
+ *
+ * Same container width W and the same 12px gap: three images were (W - 24) / 3
+ * wide, two are (W - 12) / 2. That is a factor of 3(W - 12) / 2(W - 24), which
+ * is 1.516 at the page's 1120px and stays between 1.51 and 1.52 across every
+ * width the page is used at — so one number is proportional everywhere, and
+ * 300 × 1.516 is 455. */
+const FEATURED_STRIP_HEIGHT = 455;
+
+/* Both boxes above the strip, fixed so nothing moves as hotels cycle.
+ *
+ * The row used to be as tall as whatever the current hotel's text needed, so
+ * the search box under it grew and shrank every five seconds (Ulrik,
+ * 2026-09-21). Sized for the most a card can now hold: the label, a name and
+ * location that may wrap to two lines, and four lines of awards — everything
+ * past that is clamped, so the height is a ceiling rather than a hope. */
+const FEATURED_HEADER_HEIGHT = 176;
 
 /** Pulls an image into the browser cache ahead of time. Resolves on error too
  * - a warm cache is an optimisation, never a reason to hold up the revolver. */
@@ -1842,7 +1864,7 @@ export default function HotelsView(props: {
   }, [featuredHotelId, featuredHotels, loadFeaturedImages]);
 
   // Agoda hotels already carry up to 5 images in the bulk fetch, so they need
-  // no extra request. Whatever is available is shown - 1, 2 or 3 - rather than
+  // no extra request. Whatever is available is shown - 1 or 2 - rather than
   // padding the row with repeats.
   const featuredStripImages = useMemo(() => {
     const key = String(featuredHotelId ?? "");
@@ -3182,14 +3204,20 @@ async function handleCreateTripAndAddHotel() {
                (This replaced a full-bleed hero with both boxes floated on top
                of it.) */
             <div className="flex flex-col gap-4">
-              {/* Same 3-column track and gap as the image strip below, so the
-                  search box lines up with image 1 and the detail box with
-                  image 3; the middle column is deliberately left empty.
-                  No min-height: the row is only as tall as the detail box's
-                  three lines need, and the search box stretches to match it
-                  rather than both being padded out to the images' 300px. */}
-              <div className="grid items-stretch gap-3 sm:grid-cols-3">
-              <div className="flex flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-4">
+              {/* Same track and gap as the image strip below, so the search
+                  box lines up with image 1 and the detail box with image 2.
+                  It followed the strip at three columns with the middle one
+                  left empty; at two there is no middle to leave.
+
+                  Both boxes are a FIXED height (Ulrik, 2026-09-21). The row
+                  used to be as tall as the current hotel's text needed, which
+                  meant the whole header — the search box included — resized
+                  every five seconds as the featured hotel cycled. */}
+              <div className="grid items-stretch gap-3 sm:grid-cols-2">
+              <div
+                className="flex flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-4"
+                style={{ height: FEATURED_HEADER_HEIGHT }}
+              >
                 <form
                   action="/hotels"
                   method="GET"
@@ -3265,15 +3293,20 @@ async function handleCreateTripAndAddHotel() {
                 </form>
               </div>
 
-              {/* Third column, matching image 3's width and height. */}
+              {/* Second column, matching image 2's width. */}
               <a
                 href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
-                className="flex cursor-pointer flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)] sm:col-start-3"
+                className="flex cursor-pointer flex-col justify-center overflow-hidden rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)] sm:col-start-2"
+                style={{ height: FEATURED_HEADER_HEIGHT }}
               >
                 <div className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--oltra-text-muted)]">
                   Featured hotel
                 </div>
-                <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                {/* Clamped, both of them: the box is a fixed height now, so a
+                    long name or a hotel with every award going has to be cut
+                    rather than allowed to push the layout around. Two lines for
+                    the name and location, four for the awards. */}
+                <div className="mt-1 line-clamp-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
                     {featuredHotel.hotel_name ?? "Featured hotel"}
                   </span>
@@ -3281,7 +3314,7 @@ async function handleCreateTripAndAddHotel() {
                     {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "Curated selection"}
                   </span>
                 </div>
-                <div className="mt-1 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
+                <div className="mt-1 line-clamp-4 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
                   {getFeaturedAwardsForHotel(featuredHotel as HotelRecord)
                     .map((award) => award.label)
                     .join(" · ") || "Curated featured selection"}
@@ -3290,7 +3323,7 @@ async function handleCreateTripAndAddHotel() {
               </div>
 
               <div className="relative">
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   {featuredStripImages.map((image, index) => (
                     // Plain <img> for supplier photos throughout this file: the
                     // Ratehawk/Agoda CDNs already serve the requested size, and
@@ -3300,7 +3333,8 @@ async function handleCreateTripAndAddHotel() {
                       key={`${featuredHotelId}-${index}`}
                       src={image}
                       alt={featuredHotel.hotel_name ?? "Featured hotel"}
-                      className="h-[300px] w-full rounded-[var(--oltra-radius-lg)] object-cover"
+                      className="w-full rounded-[var(--oltra-radius-lg)] object-cover"
+                      style={{ height: FEATURED_STRIP_HEIGHT }}
                     />
                   ))}
                 </div>
