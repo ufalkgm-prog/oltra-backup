@@ -277,7 +277,13 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
             </span>
           </span>
           {conciergeOpen ? (
-            <div className="oltra-site-header__route oltra-route-label">AI Concierge</div>
+            /* Orange, like the button that opened it and like the logo's BETA
+               line (Ulrik, 2026-09-21). The modifier is on this one route
+               label only — every other page's route name keeps the muted
+               grey. */
+            <div className="oltra-site-header__route oltra-route-label oltra-route-label--ai">
+              AI Concierge
+            </div>
           ) : current ? (
             <div className="oltra-site-header__route oltra-route-label">{current}</div>
           ) : null}

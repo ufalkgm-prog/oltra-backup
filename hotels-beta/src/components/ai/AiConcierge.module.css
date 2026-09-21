@@ -92,7 +92,10 @@
   margin: 0;
   font-size: 0.78rem;
   font-weight: 400;
-  color: var(--oltra-text-primary);
+  /* The same orange as the AI buttons that open this panel, which is the same
+     orange as the line around BETA in the logo (Ulrik, 2026-09-21). The label
+     token rather than the rim one: this is text. */
+  color: var(--oltra-btn-ai-label);
 }
 
 /* Clear, Exit, Ask and Stop share one width (Ulrik, 2026-09-15), so the

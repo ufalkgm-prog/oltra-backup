@@ -119,11 +119,23 @@
   --oltra-btn-neutral-rim-press: #8f9994;
   --oltra-btn-neutral-label: #cbd0cb;
 
-  /* AI — the one declared exception: label matches rim, bold italic, and the
-     only italic anywhere in the interface. 6.58 / 5.50 as text. */
-  --oltra-btn-ai: #a8c4a2;
-  --oltra-btn-ai-hover: #bfd4bb;
-  --oltra-btn-ai-press: #9cbc96;
+  /* AI — bold italic, the only italic anywhere in the interface, and now
+     ORANGE: the same orange as the line around BETA in the myOLTRA logo
+     (Ulrik, 2026-09-21). It was sage #a8c4a2.
+
+     The badge uses two oranges, and so does this, for the same reason it has
+     to: rgba(255,140,64,0.78) over the page resolves to #d27b3f, which is
+     3.94:1 — fine for a rim (1.4.11 asks 3:1) and under the 4.5:1 a 12px label
+     needs. So the rim takes the badge's LINE colour and the label takes the
+     badge's own text orange, #fbb06f at 6.78:1. This is the one variant where
+     label and rim differ; every other button in the standard matches them, and
+     the AI variant used to as well. */
+  --oltra-btn-ai: #d27b3f;
+  --oltra-btn-ai-hover: #da9260;
+  --oltra-btn-ai-press: #cc7030;
+  --oltra-btn-ai-label: #fbb06f;
+  --oltra-btn-ai-label-hover: #ffc089;
+  --oltra-btn-ai-label-press: #faa55b;
 
   /* Focus: a ring outside the rim, never a rim colour change. 11.16 / 9.32. */
   --oltra-btn-focus-ring: #f5f2ec;
@@ -964,13 +976,15 @@ button.oltra-select {
   --btn-label-press: var(--oltra-btn-neutral-label);
 }
 
-/* The label matches the rim and moves with it. */
+/* Orange rim, orange label, and the label a step lighter than the rim so it
+   clears 4.5:1 as text — see the token block for why they cannot be the one
+   value they used to be. */
 .oltra-btn--ai {
   --btn-rim: var(--oltra-btn-ai);
   --btn-rim-hover: var(--oltra-btn-ai-hover);
   --btn-rim-press: var(--oltra-btn-ai-press);
-  --btn-label: var(--oltra-btn-ai);
-  --btn-label-press: var(--oltra-btn-ai-press);
+  --btn-label: var(--oltra-btn-ai-label);
+  --btn-label-press: var(--oltra-btn-ai-label-press);
 
   padding: var(--oltra-btn-ai-padding-y) var(--oltra-btn-ai-padding-x);
   font-size: var(--oltra-btn-ai-font-size);
@@ -982,7 +996,7 @@ button.oltra-select {
 }
 
 .oltra-btn--ai:hover {
-  color: var(--btn-rim-hover);
+  color: var(--oltra-btn-ai-label-hover);
 }
 
 .oltra-btn--ai:active {
@@ -1179,6 +1193,13 @@ button.oltra-select {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--oltra-text-secondary);
+}
+
+/* The route label while the concierge is open. Orange like the button that
+   opened it and like the logo's BETA line; every other page's route name keeps
+   the muted grey (Ulrik, 2026-09-21). */
+.oltra-route-label--ai {
+  color: var(--oltra-btn-ai-label);
 }
 
 /* Shared header system */
