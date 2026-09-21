@@ -150,9 +150,14 @@
      a Full button lines up with the fields beside it. Condensed: carried over
      unchanged from the old .oltra-button--xs (22px, 0 6px, 0.58rem, 0.14em),
      the size the landing/concierge Save and Book already shared. */
-  --oltra-btn-full-padding-y: 8px;
+  /* 6px, not 8: the Full button is now 30px against a 34px input, four
+     shorter, and sits centred beside one rather than flush with it (Ulrik,
+     2026-09-21). 6 + 6 padding + a 14px line + 2 + 2 rim = 30. */
+  --oltra-btn-full-padding-y: 6px;
   --oltra-btn-full-padding-x: 20px;
-  --oltra-btn-full-font-size: 13px;
+  /* 12px: smaller than it was, and deliberately still well clear of the
+     condensed 0.58rem the card buttons use, which Ulrik is happy with. */
+  --oltra-btn-full-font-size: 12px;
   --oltra-btn-full-line-height: 14px;
   --oltra-btn-full-tracking: 0.16em;
   --oltra-btn-condensed-height: 22px;
@@ -240,7 +245,10 @@
 
   /* Shared heights */
   --oltra-control-height: 34px;
-  --oltra-button-height: 34px;
+  /* Follows the Full button, and is NOT the control height: inputs stay at 34.
+     Used by the two places that stand in for a button (the landing include
+     row, the Hotels read-only field), so they keep matching it. */
+  --oltra-button-height: 30px;
   --oltra-checkbox-size: 18px;
   /* Marks something as the member's own (favourites). Same sage as the active
      buttons, so "yours" reads as one colour across the site. */
@@ -1078,6 +1086,20 @@ button.oltra-select {
 }
 
 /* ---- layout helpers ---- */
+
+/* A BUTTON BESIDE A FIELD IS CENTRED ON IT (Ulrik, 2026-09-21).
+   The Full button is 30px and an input 34px, so they no longer share top and
+   bottom edges; a row holding both centres them instead. Put this on the row,
+   never on the button - align-self on a .oltra-btn would also apply in a
+   flex COLUMN, where the cross axis is horizontal, and would shrink every
+   stacked --block button to its label width.
+   Today almost every Full button sits on its own line under a field grid, so
+   this has few users; it is the rule for when one does share a row. */
+.oltra-field-row {
+  display: flex;
+  align-items: center;
+  gap: var(--oltra-gap-md, 12px);
+}
 
 /* Yes / No, Cancel / Proceed: always the same width, whatever the labels. */
 .oltra-btn-pair {
