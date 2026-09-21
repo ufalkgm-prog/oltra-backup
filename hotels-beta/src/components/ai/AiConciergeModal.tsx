@@ -151,6 +151,24 @@ export default function AiConciergeModal() {
     };
     window.addEventListener("keydown", onKey);
 
+    /* BACK AND FORWARD CLOSE THE PANEL (Ulrik, 2026-09-21).
+     *
+     * Two things closed it before and neither covered history. AiConciergeRoot
+     * closes it when the new path is not on the allow-list, so Back between two
+     * allowed pages leaves `allowed` true and the effect never fires; the
+     * header's links close it in an onClick, which Back does not run. So the
+     * panel stayed open over a page the visitor had navigated to, and - because
+     * the modal never unmounted - the cleanup below never ran and <html> and
+     * <body> kept overflow: hidden. The page could not be scrolled. Exactly the
+     * freeze this file's own note warns about, which assumed unmount always
+     * happens.
+     *
+     * popstate and NOT a pathname/searchParams watcher: AiResultsSync writes an
+     * answer's own dates and ids into the URL, so closing on every URL change
+     * would shut the panel the moment it answered. popstate fires only for
+     * user-driven Back/Forward, never for the app's own router calls. */
+    window.addEventListener("popstate", close);
+
     const root = document.documentElement;
     const body = document.body;
     const previous = {
@@ -168,6 +186,7 @@ export default function AiConciergeModal() {
 
     return () => {
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("popstate", close);
       root.style.overflow = previous.rootOverflow;
       body.style.overflow = previous.bodyOverflow;
       body.style.paddingRight = previous.bodyPadding;

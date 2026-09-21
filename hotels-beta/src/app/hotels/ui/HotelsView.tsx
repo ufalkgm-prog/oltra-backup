@@ -25,6 +25,9 @@ import {
   type GuestSelection,
 } from "@/lib/guests";
 import { isBookableHere } from "@/components/hotels/HotelSmallCard";
+import SaveToTripControl, {
+  type SaveToTripResult,
+} from "@/components/members/SaveToTripControl";
 import { applyEnglishLabels } from "@/lib/maps/englishLabels";
 import { mapStyleUrl } from "@/lib/maps/style";
 import { guessResidencyFromLocale } from "@/lib/countries";
@@ -33,18 +36,9 @@ import type { HotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import {
   addFavoriteHotelBrowser,
   addHotelToTripBrowser,
-  createTripBrowser,
   fetchFavoriteHotelsBrowser,
-  fetchTripChoicesBrowser,
   getMemberActionAccessBrowser,
 } from "@/lib/members/db";
-import {
-  MAX_TRIPS_PER_MEMBER,
-  TRIP_LIMIT_MESSAGE,
-  getCreateTripBlockedReason,
-  isTripLimitError,
-  MAX_TRIP_NAME_CHARS,
-} from "@/lib/members/tripLimits";
 import type { HotelRecord } from "@/lib/directus";
 import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
@@ -807,7 +801,6 @@ export default function HotelsView(props: {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const pathname = usePathname();
-  const tripPickerRef = useRef<HTMLDivElement | null>(null);
   // Wrappers around the date and guest controls, so a click on the passive
   // SEARCH button can focus the first incomplete one.
   const datesFieldRef = useRef<HTMLDivElement | null>(null);
@@ -907,23 +900,7 @@ export default function HotelsView(props: {
 
   const [availabilitySearchDirty, setAvailabilitySearchDirty] = useState(false);
 
-  const [tripChoices, setTripChoices] = useState<
-    Array<{ id: string; name: string; label: string }>
-  >([]);
-  const [selectedTripIdForAdd, setSelectedTripIdForAdd] = useState("");
-  const [showTripPicker, setShowTripPicker] = useState(false);
   const [favoriteHotelIds, setFavoriteHotelIds] = useState<Set<string>>(new Set());
-  const [newTripName, setNewTripName] = useState("");
-  const tripLimitReached = tripChoices.length >= MAX_TRIPS_PER_MEMBER;
-
-  const [tripPickerNotice, setTripPickerNotice] = useState("");
-
-  const createTripBlockedReason = getCreateTripBlockedReason({
-    name: newTripName,
-    existingNames: tripChoices.map((trip) => trip.name),
-    tripCount: tripChoices.length,
-  });
-  const [creatingTrip, setCreatingTrip] = useState(false);
 
   const [fromValue, setFromValue] = useState(normalizeParam(searchParams.from));
   const [toValue, setToValue] = useState(normalizeParam(searchParams.to));
@@ -1221,43 +1198,6 @@ export default function HotelsView(props: {
   }, []);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!tripPickerRef.current) {
-        setShowTripPicker(false);
-        return;
-      }
-
-      if (!tripPickerRef.current.contains(event.target as Node)) {
-        setShowTripPicker(false);
-      }
-    }
-
-    if (showTripPicker) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showTripPicker]);
-
-  useEffect(() => {
-    if (!showTripPicker) return;
-
-    function handleMouseOver(e: MouseEvent) {
-      const target = e.target as Element | null;
-      if (!target) return;
-      if (tripPickerRef.current?.contains(target)) return;
-      if (target.closest("button, a, input, [data-oltra-control]")) {
-        setShowTripPicker(false);
-      }
-    }
-
-    document.addEventListener("mouseover", handleMouseOver);
-    return () => document.removeEventListener("mouseover", handleMouseOver);
-  }, [showTripPicker]);
-
-  useEffect(() => {
     if (!isMemberLoggedIn) {
       setFavoriteHotelIds(new Set());
       return;
@@ -1310,29 +1250,23 @@ export default function HotelsView(props: {
     };
   }, []);
 
+  /* Escape closes the photo lightbox (Ulrik, 2026-09-21).
+   *
+   * It had the backdrop click and the × and nothing else, so the one key
+   * everybody reaches for did nothing. FlightDetailsPopup already does this;
+   * this is the same listener.
+   *
+   * Deliberately NO scroll lock to go with it: the lightbox has never had one,
+   * the page behind does not scroll at document level anyway, and adding one
+   * would introduce the very failure just fixed in the concierge modal. */
   useEffect(() => {
-    let active = true;
-
-    async function loadTripChoices() {
-      try {
-        const trips = await fetchTripChoicesBrowser();
-        if (!active) return;
-
-        setTripChoices(trips);
-        setSelectedTripIdForAdd((prev) => prev || trips[0]?.id || "");
-      } catch {
-        if (!active) return;
-        setTripChoices([]);
-        setSelectedTripIdForAdd("");
-      }
-    }
-
-    void loadTripChoices();
-
-    return () => {
-      active = false;
+    if (!lightboxOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLightboxOpen(false);
     };
-  }, []);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen]);
 
   useEffect(() => {
     if (!shouldShowResults || visibleHotels.length === 0) {
@@ -2497,14 +2431,12 @@ export default function HotelsView(props: {
     window.history.replaceState(null, "", href);
   }
 
-  async function handleAddHotelToTrip(tripId?: string) {
+  /* Returns the line to show instead of setting this page's own message
+   * state: SaveToTripControl renders it beside the control that was pressed.
+   * The logged-out branch is gone with the hand-rolled picker - the shared
+   * control checks access itself, with the same wording. */
+  async function handleAddHotelToTrip(tripId: string): Promise<SaveToTripResult> {
     if (!selectedHotel) return;
-
-    if (!isMemberLoggedIn) {
-      setShowTripPicker(false);
-      setMemberActionError(getMemberActionLoginMessage("trip"));
-      return;
-    }
 
     try {
       setMemberActionLoading("trip");
@@ -2512,7 +2444,7 @@ export default function HotelsView(props: {
       setMemberActionError("");
 
       const result = await addHotelToTripBrowser({
-        tripId: tripId || selectedTripIdForAdd || null,
+        tripId,
         hotelDirectusId: String(selectedHotel.id),
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
@@ -2535,13 +2467,9 @@ export default function HotelsView(props: {
         priceCurrency: roomSelectionCurrency,
       });
 
-      if (result.status === "already_exists") {
-        setMemberActionMessage("Already in this trip.");
-      } else if (result.overlapWarning) {
-        setMemberActionMessage("Added with overlap warning.");
-      } else {
-        setMemberActionMessage("Added.");
-      }
+      if (result.status === "already_exists") return { message: "Already in this trip." };
+      if (result.overlapWarning) return { message: "Added with overlap warning." };
+      return { message: "Added." };
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
 
@@ -2552,93 +2480,14 @@ export default function HotelsView(props: {
         message.includes("unauthorized") ||
         message.includes("not authenticated")
       ) {
-        setMemberActionError("Log in to add to trip.");
-      } else {
-        setMemberActionError("Could not add hotel to trip.");
+        return { message: "Log in to add to trip." };
       }
+      return { message: "Could not add hotel to trip." };
     } finally {
       setMemberActionLoading(null);
     }
   }
 
-async function handleCreateTripAndAddHotel() {
-  if (!selectedHotel) return;
-
-  if (!isMemberLoggedIn) {
-    setShowTripPicker(false);
-    setMemberActionError(getMemberActionLoginMessage("trip"));
-    return;
-  }
-
-  const cleanTripName = newTripName.trim();
-
-  if (!cleanTripName) {
-    setMemberActionError("Please name your trip before creating it.");
-    return;
-  }
-
-  try {
-    setCreatingTrip(true);
-    setMemberActionMessage("");
-    setMemberActionError("");
-
-    const createdTrip = await createTripBrowser({
-      name: cleanTripName,
-      destination:
-        [selectedHotel.city, selectedHotel.country].filter(Boolean).join(" · ") ||
-        null,
-      periodLabel: fromValue && toValue ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}` : null,
-    });
-
-    setTripChoices((prev) => [...prev, createdTrip]);
-    setSelectedTripIdForAdd(createdTrip.id);
-
-    const result = await addHotelToTripBrowser({
-      tripId: createdTrip.id,
-      hotelDirectusId: String(selectedHotel.id),
-      name: selectedHotel.hotel_name ?? "Untitled hotel",
-      location: locationLine(selectedHotel),
-      stayLabel: fromValue && toValue ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}` : null,
-      thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
-      checkIn: fromValue || null,
-      checkOut: toValue || null,
-      roomSelection: selectedRoomSelectionEntries,
-      rooms: bedroomsValue ? Number(bedroomsValue) : null,
-      adults: hasGuestDetails ? guestSelection.adults : null,
-      kids: hasGuestDetails ? guestSelection.kids : null,
-      childrenAges,
-      priceAmount: roomSelectionTotal > 0 ? roomSelectionTotal : selectedHotelHeadlineTotal,
-      priceCurrency: roomSelectionCurrency,
-    });
-
-    setNewTripName("");
-    setShowTripPicker(false);
-
-    if (result.overlapWarning) {
-      setMemberActionMessage("Created and added with overlap warning.");
-    } else {
-      setMemberActionMessage("Added.");
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message.toLowerCase() : "";
-
-    if (isTripLimitError(error)) {
-      setMemberActionError(TRIP_LIMIT_MESSAGE);
-    } else if (
-      message.includes("auth") ||
-      message.includes("login") ||
-      message.includes("sign in") ||
-      message.includes("unauthorized") ||
-      message.includes("not authenticated")
-    ) {
-      setMemberActionError("Log in to add to trip.");
-    } else {
-      setMemberActionError("Could not create trip.");
-    }
-  } finally {
-    setCreatingTrip(false);
-  }
-}
 
   async function handleAddHotelToFavorites() {
     if (!selectedHotel) return;
@@ -4039,113 +3888,30 @@ async function handleCreateTripAndAddHotel() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <div ref={tripPickerRef} className="relative">
-                      {showTripPicker && (
-                        <div
-                          className="oltra-popup-panel oltra-popup-panel--bounded absolute left-0 right-0 z-50 mt-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="oltra-subheader">Select trip</div>
-
-                          <div className="mt-2 flex flex-col gap-2">
-                            {tripChoices.length ? (
-                              tripChoices.map((trip) => (
-                                <button
-                                  key={trip.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedTripIdForAdd(trip.id);
-                                    setShowTripPicker(false);
-                                    void handleAddHotelToTrip(trip.id);
-                                  }}
-                                  className="oltra-dropdown-item"
-                                >
-                                  {trip.label}
-                                </button>
-                              ))
-                            ) : (
-                              <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                                No trips available.
-                              </div>
-                            )}
-
-                            <div className="mt-3 border-t border-[var(--oltra-field-border)] pt-3">
-                              <div className="oltra-subheader">Create new trip</div>
-
-                              <div className="mt-2 flex flex-col gap-2">
-                                <input
-                                  type="text"
-                                  value={newTripName}
-                                  maxLength={MAX_TRIP_NAME_CHARS}
-                                  onChange={(e) => {
-                                    setNewTripName(e.target.value);
-                                    setMemberActionError("");
-                                  }}
-                                  placeholder="Trip name"
-                                  className="oltra-input"
-                                  disabled={tripLimitReached}
-                                />
-
-                                {/* Stays clickable when blocked so it can say
-                                    why - see getCreateTripBlockedReason. */}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (createTripBlockedReason) {
-                                      setTripPickerNotice(createTripBlockedReason);
-                                      return;
-                                    }
-                                    setTripPickerNotice("");
-                                    handleCreateTripAndAddHotel();
-                                  }}
-                                  disabled={creatingTrip}
-                                  aria-disabled={Boolean(createTripBlockedReason)}
-                                  data-reason={createTripBlockedReason ?? undefined}
-                                  className="oltra-btn oltra-btn--condensed oltra-btn--block"
-                                >
-                                  {creatingTrip ? "Creating..." : "Create new trip"}
-                                </button>
-
-                                {tripPickerNotice ? (
-                                  <div className="text-[12px] leading-snug text-[color:var(--oltra-error-text)]">
-                                    {tripPickerNotice}
-                                  </div>
-                                ) : null}
-
-                                {tripLimitReached ? (
-                                  <div className="text-[12px] leading-snug text-[color:var(--oltra-text-muted)]">
-                                    {TRIP_LIMIT_MESSAGE}
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMemberActionMessage("");
-                          setMemberActionError("");
-
-                          if (!isMemberLoggedIn) {
-                            setShowTripPicker(false);
-                            setMemberActionError(
-                              getMemberActionLoginMessage("trip")
-                            );
-                            return;
-                          }
-
-                          setShowTripPicker((prev) => !prev);
-                        }}
-                        className="oltra-btn oltra-btn--block"
-                        aria-disabled={!isMemberLoggedIn}
-                        data-reason={isMemberLoggedIn ? undefined : "Log in to save to a trip"}
-                      >
-                        SAVE TO TRIP
-                      </button>
-                    </div>
+                    {/* The shared control, not a picker of this page own
+                        (Ulrik, 2026-09-21). The hand-rolled panel here was
+                        `absolute ... mt-2` with no notion of where the viewport
+                        ends, so opening it low in this scrolling pane rendered
+                        it 120px below the fold; Restaurants had the same panel
+                        hardcoded the other way with `--up`. SaveToTripControl
+                        measures the trigger and places the panel to fit, and
+                        owns the trip list, the create flow, the cap, the
+                        logged-out message and dismissal - this was the third
+                        copy of all of it. */}
+                    <SaveToTripControl
+                      onSave={handleAddHotelToTrip}
+                      newTripDefaults={{
+                        destination:
+                          [selectedHotel.city, selectedHotel.country]
+                            .filter(Boolean)
+                            .join(" · ") || null,
+                        periodLabel:
+                          fromValue && toValue
+                            ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}`
+                            : null,
+                      }}
+                      className="oltra-btn oltra-btn--block"
+                    />
 
                     <button
                       type="button"
