@@ -279,6 +279,7 @@ export default async function HomePage({
               it used to wrap just this section, which is why a conversation
               did not survive leaving the landing page. */}
           <LandingResults
+            classicCity={submitted && hasDestination ? destinationCity : ""}
             summary={
               submitted && hasDestination ? (
                 <LandingSummary

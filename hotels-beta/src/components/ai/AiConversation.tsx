@@ -1249,6 +1249,23 @@ export default function AiConversation() {
   }, [busy, messages, giveUp]);
 
   const progress = busy ? progressSteps(messages[messages.length - 1]) : [];
+  /* ONE LINE, REPLACED AS IT GOES (Ulrik, 2026-09-21).
+   *
+   * Every search used to keep its own line, finished ones ticked and dimmed,
+   * so a trip covering several cities grew a list as long as the answer while
+   * the visitor waited for it. What they want to know is what is happening
+   * now, which is one line's worth.
+   *
+   * The LAST pending step, not the first: steps finish in order, so the most
+   * recently started one is what is actually running. All of them done means
+   * the model is writing rather than searching, which is "Thinking…" again. */
+  const progressLine = (() => {
+    if (!progress.length) return "Thinking…";
+    for (let i = progress.length - 1; i >= 0; i -= 1) {
+      if (!progress[i].done) return `${progress[i].label}…`;
+    }
+    return "Thinking…";
+  })();
 
   // SyntheticEvent, not FormEvent: Enter in the textarea submits too.
   function submit(event: React.SyntheticEvent) {
@@ -1363,18 +1380,7 @@ export default function AiConversation() {
 
         {busy ? (
           <div className={styles.thinking} role="status" aria-live="polite">
-            {progress.length ? (
-              <ul className={styles.progress}>
-                {progress.map((step) => (
-                  <li key={step.key} data-done={step.done ? "true" : undefined}>
-                    {step.done ? `✓ ${step.label}` : `${step.label}…`}
-                  </li>
-                ))}
-                {progress.every((step) => step.done) ? <li>Thinking…</li> : null}
-              </ul>
-            ) : (
-              "Thinking…"
-            )}
+            {progressLine}
           </div>
         ) : null}
 
