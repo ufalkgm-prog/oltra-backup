@@ -1,8 +1,7 @@
 import "server-only";
-import type { CabinClass, CreateOfferRequestPassenger } from "@duffel/api/types";
-import { getDuffel } from "@/lib/flights/duffelClient";
-import { normalizeOffers } from "@/lib/flights/duffelNormalizer";
 import { factsFromDurations, type GatewayFlightFacts } from "@/lib/flights/gatewayRanking";
+import { toCabin } from "@/lib/flights/itinerary";
+import { duffelConnector } from "@/lib/flights/providers/duffel";
 import type { PreferredAirline } from "./preferredAirlines";
 
 /* Route check for the concierge.
@@ -12,14 +11,14 @@ import type { PreferredAirline } from "./preferredAirlines";
  * Duffel offers, which are large and full of fare amounts. Here we normalise
  * once and strip every figure before the model sees anything — same rule as
  * checkAvailability. The model gets routing, timing and an ordinal; the flight
- * cards fetch and display the real fares themselves. */
-
-const CABIN_MAP: Record<string, CabinClass> = {
-  economy: "economy",
-  premium_economy: "premium_economy",
-  business: "business",
-  first: "first",
-};
+ * cards fetch and display the real fares themselves.
+ *
+ * WHICH SUPPLIER THIS ASKS IS NOT THIS FILE'S BUSINESS. It used to be: the
+ * cabin map, the passenger array and the slice objects below were Duffel's
+ * request format, written into the concierge's own layer. They now live in
+ * `lib/flights/providers/duffel.ts` behind `FlightConnector`, so the one line
+ * to change when the supplier changes is the import. Everything from
+ * `itineraries` down reads our shape and would not notice. */
 
 export type FlightSearchInput = {
   origin: string;
@@ -58,51 +57,19 @@ async function fetchItineraries(input: FlightSearchInput) {
   const adults = Math.min(9, Math.max(1, input.adults ?? 1));
   const children = Math.min(8, Math.max(0, input.children ?? 0));
 
-  const passengers: CreateOfferRequestPassenger[] = [
-    ...Array.from({ length: adults }, () => ({ type: "adult" as const })),
-    ...Array.from({ length: children }, () => ({ age: 10 })),
-  ];
-
-  const slices = [
-    {
-      origin,
-      destination,
-      departure_date: input.departureDate,
-      arrival_time: null,
-      departure_time: null,
-    },
+  const legs = [
+    { origin, destination, date: input.departureDate },
     ...(input.returnDate
-      ? [
-          {
-            origin: destination,
-            destination: origin,
-            departure_date: input.returnDate,
-            arrival_time: null,
-            departure_time: null,
-          },
-        ]
+      ? [{ origin: destination, destination: origin, date: input.returnDate }]
       : []),
   ];
 
   try {
-    const duffel = getDuffel();
-    const response = await duffel.offerRequests.create({
-      slices,
-      passengers,
-      cabin_class: CABIN_MAP[input.cabinClass ?? "economy"] ?? "economy",
-      return_offers: true,
+    const itineraries = await duffelConnector.search({
+      legs,
+      cabin: toCabin(input.cabinClass),
+      passengers: { adults, children, infants: 0 },
     });
-
-    const offers = response.data.offers ?? [];
-    if (!offers.length) {
-      return { ok: true as const, route: `${origin}-${destination}`, itineraries: [] };
-    }
-
-    // Normalise through the same helper the Flights page uses.
-    const itineraries = normalizeOffers(
-      offers,
-      input.returnDate ? "return" : "one-way"
-    );
     return { ok: true as const, route: `${origin}-${destination}`, itineraries };
   } catch (err) {
     console.error("[ai flightSearch]", err);

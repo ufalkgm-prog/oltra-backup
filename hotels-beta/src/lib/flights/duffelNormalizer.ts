@@ -1,99 +1,43 @@
 import type { OfferRequest, OfferSlice } from '@duffel/api/types'
+import type {
+  AirlineRef,
+  Baggage,
+  CabinAmenities,
+  FlightLeg,
+  Itinerary,
+  Layover,
+  Segment,
+  SliceConditionFlag,
+  SliceConditions,
+  TripType,
+} from './itinerary'
+
+/* THE DUFFEL CONNECTOR: Duffel's offers in, our own shape out.
+ *
+ * Everything this file knows about Duffel stops at its own edge. The shapes it
+ * produces are declared in `itinerary.ts`, which imports nothing, and a second
+ * supplier would be a second file of this kind rather than a change anywhere
+ * downstream. See the header of `itinerary.ts` for why the boundary is drawn
+ * here.
+ *
+ * The type declarations used to live in this file. They are re-exported below
+ * so every existing `from '@/lib/flights/duffelNormalizer'` import still
+ * resolves - but new code should import them from `./itinerary`, because a
+ * journey is not a Duffel concept. */
+export type {
+  AirlineRef,
+  Baggage,
+  CabinAmenities,
+  FlightLeg,
+  Itinerary,
+  Layover,
+  Segment,
+  SliceConditionFlag,
+  SliceConditions,
+  TripType,
+}
 
 type OfferWithoutServices = OfferRequest['offers'][number]
-type TripType = 'one-way' | 'return' | 'multiple'
-
-export type AirlineRef = {
-  name: string
-  iataCode: string
-  logoUrl: string | null
-}
-
-export type Layover = {
-  code: string
-  name: string
-  durationMinutes: number
-}
-
-export type Baggage = {
-  type: 'carry_on' | 'checked'
-  quantity: number
-}
-
-export type CabinAmenities = {
-  wifiAvailable: boolean | null
-  wifiCost: string | null
-  seatType: string | null
-  seatPitch: string | null
-  powerAvailable: boolean | null
-}
-
-export type Segment = {
-  airline: AirlineRef
-  flightNumber: string
-  originCode: string
-  originName: string
-  destinationCode: string
-  destinationName: string
-  departIso: string
-  arriveIso: string
-  departTime: string
-  arriveTime: string
-  durationMinutes: number
-  aircraft: string
-  originTimezone: string
-  destinationTimezone: string
-  originTerminal: string | null
-  destinationTerminal: string | null
-  cabinClassMarketingName: string
-  baggages: Baggage[]
-  amenities: CabinAmenities | null
-}
-
-// Duffel's condition fields are a genuine tri-state: `true`/`false` (allowed
-// or not) or `null` when the airline hasn't told Duffel either way - collapse
-// that into a boolean loses real "unspecified" information, so this stays a
-// tri-state rather than defaulting null to false.
-export type SliceConditionFlag = boolean | null
-
-export type SliceConditions = {
-  refundable: SliceConditionFlag
-  changeable: SliceConditionFlag
-  advanceSeatSelection: SliceConditionFlag
-  priorityBoarding: SliceConditionFlag
-  priorityCheckIn: SliceConditionFlag
-}
-
-export type FlightLeg = {
-  id: string
-  airline: string
-  airlines: AirlineRef[]
-  longHaulAirline: AirlineRef | null
-  flightNumber: string
-  originCode: string
-  destinationCode: string
-  departTime: string
-  arriveTime: string
-  durationMinutes: number
-  stops: number
-  stopSummary: string
-  layovers: Layover[]
-  segments: Segment[]
-  fareBrand: string
-  conditions: SliceConditions
-}
-
-export type Itinerary = {
-  id: string
-  offerId: string
-  slices: FlightLeg[]
-  outbound: FlightLeg
-  inbound?: FlightLeg
-  priceEur: number
-  currency: string
-  tags?: string[]
-  score: number
-}
 
 function parseDuration(iso: string | null | undefined): number {
   if (!iso) return 0
