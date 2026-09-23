@@ -15,6 +15,7 @@ import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
 import { clearHotelFlightDestination, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
+import { isConciergeStay } from "@/lib/ai/conciergeStays";
 import {
   clampAdultsCount,
   clampKidsCount,
@@ -82,7 +83,13 @@ export default function LandingSearchPanel({
   /* Safe to read here despite the transcript streaming a token at a time: this
      context is memoised on its individual fields, so appending a token leaves
      query and presentedAt identical and the value keeps its identity. */
-  const { query: aiQuery, presentedAt, searchedAt, results: aiResults } = useAiSearch();
+  const {
+    query: aiQuery,
+    presentedAt,
+    searchedAt,
+    results: aiResults,
+    clearSignal: aiClearSignal,
+  } = useAiSearch();
 
   /* While the frames below are the concierge's, the destination box says so
      with one "AI curated results" token rather than tags approximating the
@@ -541,6 +548,23 @@ export default function LandingSearchPanel({
     if (!searchIsActive) return;
     navigateWithParams(true);
   }
+
+  /* CLEAR TAKES THE CONCIERGE'S DATES OUT OF THIS FORM TOO (2026-09-23), as it
+     does on the Hotels page. The store and the shared session lost them, but
+     the form and the URL kept 5-12 June after the conversation that chose
+     them was gone. Only dates a concierge answer presented (isConciergeStay);
+     dates picked by hand stay. The auto-submit then rewrites the URL. */
+  const seenClearSignal = useRef(aiClearSignal);
+  useEffect(() => {
+    if (aiClearSignal === seenClearSignal.current) return;
+    seenClearSignal.current = aiClearSignal;
+    if (!isConciergeStay(fromValue, toValue)) return;
+    setFromValue("");
+    setToValue("");
+    scheduleAutoSubmit();
+    // Only the signal decides; the dates it reads are this render's.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiClearSignal]);
 
   function scheduleAutoSubmit() {
     if (!formRef.current) return;

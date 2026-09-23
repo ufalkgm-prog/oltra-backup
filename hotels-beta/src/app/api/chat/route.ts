@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildConciergeTools } from "@/lib/ai/tools";
 import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
 import { consumeRateLimit } from "@/lib/ai/rateLimit";
-import { triageMessage } from "@/lib/ai/triage";
+import { triageMessage, type RemovedKind } from "@/lib/ai/triage";
 import {
   dropProviderExecutedTools,
   dropUnansweredToolCalls,
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
 
   // 3. Input caps.
   let messages: UIMessage[];
-  let pageContextNote = "";
+  let pageContext: ReturnType<typeof sanitisePageContext> = null;
   let residency = "";
   try {
     const body = (await req.json()) as {
@@ -156,7 +156,7 @@ export async function POST(req: Request) {
     // Whitelisted and scrubbed before it goes anywhere near a system block —
     // the browser sends it, so it is forgeable. See lib/ai/pageContext.ts for
     // why the sanitiser is as blunt as it is.
-    pageContextNote = describePageContext(sanitisePageContext(body.pageContext));
+    pageContext = sanitisePageContext(body.pageContext);
   } catch {
     return reject(400, "Invalid request.");
   }
@@ -201,6 +201,25 @@ export async function POST(req: Request) {
     });
   }
 
+  // A mixed message goes on as its travel request alone (triage.ts), and so do
+  // earlier ones: each answer to one carries the rewrite in its metadata, and
+  // the question before it is replaced on every later turn, so the removed part
+  // never reaches the model on the way back either.
+  const travelOnly = verdict.travelOnly;
+  const modelHistory = withTravelOnlyQuestions(trimmed, travelOnly?.text);
+
+  /* When the removed part asked about another guest, the hotel or restaurant
+     open on the page is left out of what the model is told (2026-09-23).
+     "Which hotel did my colleague pick?" came back opening on "Cheval Blanc -
+     the one you were looking at": the visitor's own selection, but read right
+     after "I can't see other guests' bookings" it looked like the colleague's.
+     Structural rather than a prompt line, so no property can be tied to them. */
+  const pageContextNote = describePageContext(
+    pageContext && travelOnly?.removed === "PRIVACY"
+      ? { ...pageContext, hotelName: undefined, restaurantName: undefined }
+      : pageContext
+  );
+
   // 5. The conversation.
   const result = streamText({
     model: anthropic(CHAT_MODEL),
@@ -223,6 +242,9 @@ export async function POST(req: Request) {
       ...(pageContextNote
         ? [{ role: "system" as const, content: pageContextNote }]
         : []),
+      ...(travelOnly
+        ? [{ role: "system" as const, content: removedPartNote(travelOnly.removed) }]
+        : []),
       ...(preferredAirlines.length
         ? [
             {
@@ -241,7 +263,7 @@ export async function POST(req: Request) {
        reliably avoid persisting. The search parts go BEFORE conversion, where
        `providerExecuted` is still visible on them. */
     messages: dropUnansweredToolCalls(
-      await convertToModelMessages(dropProviderExecutedTools(trimmed))
+      await convertToModelMessages(dropProviderExecutedTools(modelHistory))
     ),
     tools: {
       ...buildConciergeTools({ preferredAirlines, residency }),
@@ -273,5 +295,52 @@ export async function POST(req: Request) {
       console.error("[ai chat]", error);
     },  });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse(
+    travelOnly
+      ? { messageMetadata: ({ part }) => (part.type === "start" ? { travelOnly: travelOnly.text } : undefined) }
+      : undefined
+  );
+}
+
+/** The history the model sees: every question a mixed-message rewrite answered
+ * replaced by that rewrite, the latest by this request's own. */
+function withTravelOnlyQuestions(history: UIMessage[], latestRewrite?: string): UIMessage[] {
+  const asked = (message: UIMessage, text: string): UIMessage => ({
+    ...message,
+    parts: [{ type: "text", text }],
+  });
+  return history.map((message, index) => {
+    if (message.role !== "user") return message;
+    if (index === history.length - 1) return latestRewrite ? asked(message, latestRewrite) : message;
+    const answer = history[index + 1];
+    const rewrite = (answer?.metadata as { travelOnly?: unknown } | undefined)?.travelOnly;
+    return answer?.role === "assistant" && typeof rewrite === "string" && rewrite.trim()
+      ? asked(message, rewrite.trim())
+      : message;
+  });
+}
+
+/** Told to the model when part of the visitor's message was taken out. */
+function removedPartNote(removed: RemovedKind): string {
+  const base =
+    "Part of the visitor's latest message was removed before it reached you, because it was " +
+    "not a travel request; the message you see is the travel part alone. Answer it as usual. " +
+    "Never guess at, quote or discuss what was removed.";
+  if (removed === "ACCOUNT") {
+    return (
+      `${base} It concerned their account: add one sentence that you cannot make changes to their ` +
+      "account, and that their profile and saved trips are under Members."
+    );
+  }
+  // Saying it reveals nothing: having no access to anyone else is the point.
+  if (removed === "PRIVACY") {
+    return (
+      `${base} It asked about another person's booking or trip: say in one short clause that you ` +
+      "cannot see other guests' bookings, then answer the travel request."
+    );
+  }
+  return (
+    `${base} If anything needs acknowledging, one short clause is enough: that you can only help ` +
+    "with the trip itself."
+  );
 }

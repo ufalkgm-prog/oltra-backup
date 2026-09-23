@@ -13,6 +13,7 @@ import type { UIMessage } from "ai";
 import {
   clearHotelFlightDatesIf,
   clearHotelFlightDestination,
+  clearHotelFlightDestinationIf,
   kidAgeFields,
   mergeHotelFlightSearch,
 } from "@/lib/searchSession";
@@ -367,8 +368,11 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   }, [state.query]);
 
   const clear = useCallback(() => {
-    const { from, to } = latestQuery.current;
+    const { from, to, destination } = latestQuery.current;
     if (from || to) clearHotelFlightDatesIf(from, to);
+    // And the city the conversation made the site's destination (the mirror
+    // wrote exactly these four fields), unless something else has replaced it.
+    clearHotelFlightDestinationIf(destination);
     setState(EMPTY);
     try {
       window.sessionStorage.removeItem(STORAGE_KEY);

@@ -87,6 +87,29 @@ export function clearHotelFlightDestination() {
   saveHotelFlightSearch(stay);
 }
 
+/** Drops the destination, but only if it is still the one given — so Clear in
+ * the concierge takes back the city its conversation set (2026-09-23) and
+ * never one picked by hand since. */
+export function clearHotelFlightDestinationIf(destination: {
+  city: string;
+  area: string;
+  adminRegion: string;
+  country: string;
+}) {
+  const current = readHotelFlightSearch();
+  if (!current) return;
+  const same = (a: string | undefined, b: string) => (a ?? "").trim() === b.trim();
+  if (!Object.values(destination).some((v) => v.trim())) return;
+  if (
+    same(current.city, destination.city) &&
+    same(current.state, destination.area) &&
+    same(current.admin_region, destination.adminRegion) &&
+    same(current.country, destination.country)
+  ) {
+    clearHotelFlightDestination();
+  }
+}
+
 /** Removes the dates, but only if they are still the ones given — so Clear in
  * the concierge takes back dates it set and never dates picked since. */
 export function clearHotelFlightDatesIf(from: string, to: string) {
