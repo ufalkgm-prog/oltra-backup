@@ -22,6 +22,7 @@ import {
 import { isMacroRegionTerm } from "@/lib/ai/macroRegionTerms";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
+import { expandCityAliases } from "@/lib/locationAliases";
 import { currentResidency } from "@/lib/countries";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { EMPTY_RESULT_SET, type AiQueryState, type AiResultSet } from "@/lib/ai/types";
@@ -138,16 +139,112 @@ function placeOnly(value: string | undefined): string {
 
 function readLatestPresentation(messages: UIMessage[]): Presentation | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const found = readPresentation(messages[i]);
+    const found = readPresentation(messages[i], messages.slice(0, i + 1));
     if (found) return found;
   }
   return null;
 }
 
+type Place = { city: string; country: string };
+
+/** Every hotel and restaurant the conversation's tools returned, by id, with
+ * its own city and country - read from the tool outputs (JSON inside the
+ * untrusted-data wrapper), so it is our records speaking, not the model. */
+function placesById(messages: UIMessage[]): Map<number, Place> {
+  const places = new Map<number, Place>();
+  const visit = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+    const record = value as Record<string, unknown>;
+    if (typeof record.id === "number" && typeof record.city === "string" && record.city.trim()) {
+      places.set(record.id, {
+        city: record.city.trim(),
+        country: typeof record.country === "string" ? record.country.trim() : "",
+      });
+    }
+    Object.values(record).forEach(visit);
+  };
+  for (const message of messages) {
+    if (message.role !== "assistant") continue;
+    for (const part of message.parts) {
+      if (!isToolUIPart(part) || part.state !== "output-available") continue;
+      const output = part.output;
+      if (typeof output !== "string") {
+        visit(output);
+        continue;
+      }
+      const start = output.indexOf("{");
+      const end = output.lastIndexOf("}");
+      if (start < 0 || end <= start) continue;
+      try {
+        visit(JSON.parse(output.slice(start, end + 1)));
+      } catch {
+        /* not JSON; nothing to learn from it */
+      }
+    }
+  }
+  return places;
+}
+
+function foldCity(value: string): string {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+}
+
+/** The visitor's question this answer replies to: the last user message. */
+function questionText(history: UIMessage[]): string {
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const message = history[i];
+    if (message.role !== "user") continue;
+    return message.parts.map((part) => (part.type === "text" ? part.text : "")).join(" ");
+  }
+  return "";
+}
+
+/* THE CITY OF WHAT WAS PRESENTED, WHEN THE MODEL LEAVES IT OUT (2026-09-23).
+ * "Let's go with Taormina" came back with two Taormina hotels and no
+ * `destination`, though the prompt asks for it every time - so the city the
+ * visitor had just named reached no page. Read from the presented properties'
+ * own records instead: one shared city is the destination. Several cities is
+ * an answer spread over places - unless the question named exactly one of
+ * them (Ulrik: "if a question mentions a specific city, that city should be
+ * set"), which matters because a town's records are not always one city:
+ * Villa Sant'Andrea is filed under Mazzarò, Taormina's beach. Only the
+ * presented cities are looked for in the question, never every place name,
+ * so "a nice split" cannot set Nice or Split. Unknown ids say nothing. */
+function presentedPlace(
+  ids: number[],
+  history: UIMessage[]
+): { kind: "city"; place: Place } | { kind: "several" } | { kind: "unknown" } {
+  if (!ids.length) return { kind: "unknown" };
+  const places = placesById(history);
+  const known = ids.map((id) => places.get(id)).filter((p): p is Place => Boolean(p));
+  if (known.length < ids.length) return { kind: "unknown" };
+  const cities = new Set(
+    known.map((p) => expandCityAliases([p.city]).map((c) => c.toLowerCase()).sort().join("|"))
+  );
+  if (cities.size === 1) return { kind: "city", place: known[0] };
+  const named = cityNamedIn(questionText(history), known);
+  return named ? { kind: "city", place: named } : { kind: "several" };
+}
+
+/** The one place among `places` whose city the text names as a whole word,
+ * or null when it names none or several. */
+function cityNamedIn(text: string, places: Place[]): Place | null {
+  const words = (value: string) => ` ${foldCity(value).replace(/[^\p{L}\p{N}]+/gu, " ")} `;
+  const haystack = words(text);
+  const named = [...new Map(places.map((p) => [foldCity(p.city), p])).values()].filter((p) =>
+    haystack.includes(words(p.city))
+  );
+  return named.length === 1 ? named[0] : null;
+}
+
 /** The completed presentResults call in ONE message, if it has one. Split out
  * of readLatestPresentation so an earlier answer can be redrawn from its own
  * call rather than vanishing when a newer one arrives. */
-function readPresentation(message: UIMessage): Presentation | null {
+function readPresentation(message: UIMessage, history: UIMessage[] = [message]): Presentation | null {
   {
     if (message.role !== "assistant") return null;
 
@@ -192,7 +289,40 @@ function readPresentation(message: UIMessage): Presentation | null {
       const stay = input.stay ?? {};
       const dest = input.destination ?? {};
       const tags = input.searchTags ?? {};
+      /* The flying-time limit and departure airports this answer searched
+         with, read from its own searchHotels calls rather than asked of the
+         model again: the Inspire page mirrors them (2026-09-23). */
+      const flightSearch = message.parts
+        .filter((p) => isToolUIPart(p) && getToolName(p) === "searchHotels" && p.state !== "input-streaming")
+        .map((p) => (isToolUIPart(p) ? (p.input as { flyingFrom?: string[]; maxFlightHours?: number } | undefined) : undefined))
+        .filter((s) => s?.flyingFrom?.length)
+        .at(-1);
+      const flightLimit =
+        typeof flightSearch?.maxFlightHours === "number" && flightSearch.maxFlightHours > 0
+          ? flightSearch.maxFlightHours
+          : 0;
+      /* An answer spread over several places has no destination. It still moves
+         the conversation away from the last one, so it clears the city rather
+         than leaving the previous answer's on every page (2026-09-23). When
+         the model simply left the destination out, the presented properties'
+         own records say which it was (presentedPlace). */
+      const hasDest = Boolean(dest.city || dest.area || dest.adminRegion || dest.country);
+      // Also when a destination came without a city: "Sicily" is true of
+      // Mazzarò and Taormina alike, and the visitor had said Taormina.
+      const fromRecords = placeOnly(dest.city)
+        ? ({ kind: "unknown" } as const)
+        : presentedPlace([...(input.hotelIds ?? []), ...(input.restaurantIds ?? [])], history);
+      const spansPlaces = !hasDest && fromRecords.kind === "several";
+      const recordCity = fromRecords.kind === "city" ? fromRecords.place : null;
       const query: Partial<AiQueryState> = {
+        // Only when this answer searched with one: a limit stated once holds
+        // for the rest of the trip, and a later "fly out a day earlier" that
+        // does not repeat it must not put Inspire back on its 4-hour default.
+        ...(flightLimit > 0 ? { maxFlightHours: flightLimit } : {}),
+        ...(flightSearch?.flyingFrom?.[0] && !input.flights?.length
+          ? { origin: flightSearch.flyingFrom[0].trim().toUpperCase() }
+          : {}),
+        ...(spansPlaces ? { destination: { city: "", area: "", adminRegion: "", country: "" } } : {}),
         ...(tags.settings ? { settings: tags.settings.filter(Boolean) } : {}),
         ...(tags.activities ? { activities: tags.activities.filter(Boolean) } : {}),
         ...(stay.checkIn ? { from: stay.checkIn } : {}),
@@ -225,6 +355,18 @@ function readPresentation(message: UIMessage): Presentation | null {
                 area: placeOnly(dest.area),
                 adminRegion: placeOnly(dest.adminRegion),
                 country: placeOnly(dest.country),
+              },
+            }
+          : {}),
+        // After the model's own destination, so the city it left out is
+        // filled in beside whatever area or country it did give.
+        ...(recordCity
+          ? {
+              destination: {
+                city: recordCity.city,
+                area: placeOnly(dest.area),
+                adminRegion: placeOnly(dest.adminRegion),
+                country: placeOnly(dest.country) || recordCity.country,
               },
             }
           : {}),
@@ -1157,8 +1299,16 @@ function ResultSummary({ past }: { past?: Presentation }) {
 }
 
 export default function AiConversation() {
-  const { framing, followUp, pageContext, setPresentation, clear, ready, clearSignal } =
-    useAiSearch();
+  const {
+    framing,
+    followUp,
+    pageContext,
+    setPresentation,
+    clear,
+    ready,
+    clearSignal,
+    query: storeQuery,
+  } = useAiSearch();
   // Its own context: the transcript changes on every streamed token, and
   // everything else reading the store would re-render with it.
   const { messages: stored, setMessages: persistMessages } = useAiConversation();
@@ -1167,6 +1317,8 @@ export default function AiConversation() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const seededRef = useRef(false);
+  /** The last assistant turn checked for a city named in its question. */
+  const namedPlaceAppliedRef = useRef<string | null>(null);
   const appliedPresentationRef = useRef<string | null>(null);
 
   /* The context is read at send time, not at render time, so a stale closure
@@ -1285,6 +1437,7 @@ export default function AiConversation() {
          into the landing form and let AiResultsSync treat it as a new answer
          that overrides a search made since (found 2026-09-14). */
       appliedPresentationRef.current = readLatestPresentation(stored)?.toolCallId ?? null;
+      namedPlaceAppliedRef.current = stored[stored.length - 1]?.id ?? null;
     }
   }, [ready, stored, setMessages]);
 
@@ -1327,6 +1480,28 @@ export default function AiConversation() {
       nextQuery
     );
   }, [messages, persistMessages, setPresentation]);
+
+  /* A CITY NAMED IN A QUESTION ANSWERED IN PROSE (Ulrik, 2026-09-23). "Let's
+     go with Taormina - which of the two is quieter?" can be answered without
+     presentResults, and then nothing reached the pages: the store only moves
+     on a presentation. Once such a turn has finished, a city the question
+     names is the destination everywhere - if it is the city of something our
+     tools returned in this conversation, which is what keeps an ordinary word
+     from being read as a place. Applied as a place-only presentation, so the
+     pages and the shared session follow it the way they follow any answer. */
+  useEffect(() => {
+    if (!seededRef.current || status !== "ready") return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant" || last.id === namedPlaceAppliedRef.current) return;
+    namedPlaceAppliedRef.current = last.id;
+    if (readPresentation(last)) return;
+    const place = cityNamedIn(questionText(messages), [...placesById(messages).values()]);
+    if (!place) return;
+    if (foldCity(storeQuery.destination.city) === foldCity(place.city)) return;
+    setPresentation(framing, followUp, {}, {
+      destination: { city: place.city, area: "", adminRegion: "", country: place.country },
+    });
+  }, [messages, status, framing, followUp, storeQuery.destination.city, setPresentation]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

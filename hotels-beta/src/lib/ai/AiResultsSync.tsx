@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAiSearch } from "./aiSearchStore";
-import { flightsHref, hotelsHref } from "./handoff";
+import { cityFlightsHref, cityHotelsHref, flightsHref, hotelsHref } from "./handoff";
 
 /* Puts the concierge's answer onto the page it belongs to.
  *
@@ -90,14 +90,15 @@ export default function AiResultsSync({ page }: { page: Page }) {
     if (presentedAt <= appliedAt.current) return;
 
     let href: string | null = null;
-    if (page === "hotels" && results.hotelIds.length) {
-      href = hotelsHref(query, results);
-    } else if (page === "flights" && results.flights.length) {
-      href = flightsHref(query, results);
+    if (page === "hotels") {
+      href = results.hotelIds.length ? hotelsHref(query, results) : cityHotelsHref(query);
+    } else if (page === "flights") {
+      href = results.flights.length ? flightsHref(query, results) : cityFlightsHref(query);
     }
 
-    // Nothing for this page in that answer — a hotels-only reply says nothing
-    // about flights. Mark it seen so it is not reconsidered on every render.
+    // Nothing for this page in that answer - no results for it and no city.
+    // Mark it seen so it is not reconsidered on every render. With a city and
+    // nothing else, the page still moves there (cityHotelsHref).
     appliedAt.current = presentedAt;
     if (!href) return;
 

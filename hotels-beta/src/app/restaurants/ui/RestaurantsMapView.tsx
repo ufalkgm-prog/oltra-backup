@@ -9,12 +9,16 @@ import {
 } from "@/lib/members/db";
 import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
-import { readHotelFlightSearch } from "@/lib/searchSession";
+import {
+  clearHotelFlightDestination,
+  mergeHotelFlightSearch,
+  readHotelFlightSearch,
+} from "@/lib/searchSession";
 
 import OltraSelect from "@/components/site/OltraSelect";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
-import { aiResultsAreCurrent, useAiSearch } from "@/lib/ai/aiSearchStore";
+import { aiResultsAreCurrent, useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { restaurantsHref } from "@/lib/ai/handoff";
 import type { RestaurantRecord } from "../types";
 import { buildAwardsLabel, buildLocationLabel, buildAddressLabel } from "../utils";
@@ -77,7 +81,8 @@ const AI_CURATED = "AI curated results";
 
 type RestaurantType = (typeof RESTAURANT_TYPES)[number] | typeof AI_CURATED;
 
-const DEFAULT_FALLBACK_CENTER: [number, number] = [103.8198, 1.3521];
+/* With no city there is nothing to fit, so the map opens on the world. */
+const EMPTY_MAP_VIEW = { center: [15, 30] as [number, number], zoom: 1.5 };
 
 let _ml: typeof maplibregl | null = null;
 async function loadMaplibre(): Promise<typeof maplibregl> {
@@ -126,6 +131,7 @@ export default function RestaurantsMapView({
     presentedAt,
     searchedAt,
   } = useAiSearch();
+  const { markClassicSearch } = useAiActions();
   const curatedRestaurants = useMemo(() => {
     if (!aiResultsAreCurrent(aiResults, presentedAt, searchedAt)) return [];
     const byId = new Map(restaurants.map((r) => [r.id, r]));
@@ -190,11 +196,13 @@ export default function RestaurantsMapView({
     else setSelectedType((prev) => (prev === AI_CURATED ? "All" : prev));
   }, [curatedKey]);
 
-  /* A new answer about restaurants in another city, given while this page is
-     open, moves the page to that city — the Restaurants half of what
-     AiResultsSync does for Hotels and Flights. Only a NEW answer: arriving with
-     an older one leaves the city the visitor chose alone (the shared session
-     already carries the concierge's destination to a bare /restaurants). */
+  /* A new answer about another city, given while this page is open, moves the
+     page to that city — the Restaurants half of what AiResultsSync does for
+     Hotels and Flights. Any answer naming a city we cover, not only one with
+     restaurants in it (Ulrik, 2026-09-23: a city in the chat is the
+     destination on every page). Only a NEW answer: arriving with an older one
+     leaves the city the visitor chose alone (the shared session already
+     carries the concierge's destination to a bare /restaurants). */
   const seenPresentedAt = useRef<number | null>(null);
   useEffect(() => {
     if (!aiReady) return;
@@ -206,10 +214,11 @@ export default function RestaurantsMapView({
     seenPresentedAt.current = presentedAt;
 
     const target = aiQuery.destination.city.trim().toLowerCase();
-    if (aiResults.restaurantIds.length && target && target !== city.toLowerCase()) {
+    const covered = cityOptions.some((option) => option.toLowerCase() === target);
+    if (covered && target !== city.toLowerCase()) {
       router.replace(restaurantsHref(aiQuery), { scroll: false });
     }
-  }, [aiReady, presentedAt, aiQuery, aiResults, city, router]);
+  }, [aiReady, presentedAt, aiQuery, city, cityOptions, router]);
 
   // Marks the member's favourites in the list and the detail card. Keyed on the
   // Directus id, not the favourite row's own uuid.
@@ -237,7 +246,7 @@ export default function RestaurantsMapView({
   }, [isMemberLoggedIn]);
 
   // If the user landed on /restaurants without an explicit ?city= param,
-  // try saved hotel/flight search → member home airport → leave default (Paris).
+  // try saved hotel/flight search → member home airport → leave it blank.
   useEffect(() => {
     if (searchParams.get("city")) return;
 
@@ -571,6 +580,13 @@ export default function RestaurantsMapView({
       const params = new URLSearchParams(searchParams.toString());
       params.set("city", nextCity);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      /* A city chosen here is the site's destination now, as one searched on
+         Hotels or Flights is: written to the shared search the other pages
+         read, and superseding the concierge's answer so no page brings the
+         conversation's city back over it (2026-09-23). */
+      clearHotelFlightDestination();
+      mergeHotelFlightSearch({ city: nextCity });
+      markClassicSearch();
     }
 
     cityInputRef.current?.blur();
@@ -594,8 +610,8 @@ export default function RestaurantsMapView({
       map = new ml.Map({
         container: mapRef.current,
         style: mapStyleUrl(key),
-        center: DEFAULT_FALLBACK_CENTER,
-        zoom: 12,
+        center: EMPTY_MAP_VIEW.center,
+        zoom: EMPTY_MAP_VIEW.zoom,
       });
 
       map.addControl(new ml.NavigationControl(), "top-right");
@@ -838,10 +854,7 @@ export default function RestaurantsMapView({
         duration: 0,
       });
     } else if (restaurants.length === 0) {
-      map.jumpTo({
-        center: DEFAULT_FALLBACK_CENTER,
-        zoom: 11,
-      });
+      map.jumpTo(EMPTY_MAP_VIEW);
     }
     // filtered to empty — leave map where it is
 

@@ -121,6 +121,41 @@ export function flightsHref(query: AiQueryState, results: AiResultSet): string {
   return `/flights?${params.toString()}`;
 }
 
+/* A CITY THE CONVERSATION IS ABOUT, ON A PAGE ITS ANSWER HAD NOTHING FOR
+ * (Ulrik, 2026-09-23). "If a question mentions a specific city, that city
+ * should be set as the destination on all underlying pages." An answer about
+ * dinner in Paris left the Hotels and Flights pages behind the panel where
+ * they were. These carry the city and the stay only: no ids (the answer chose
+ * no hotels), no tags (§ "AI curated results"), no invented airport - the
+ * Flights page resolves a city to its main airport itself. Empty when the
+ * answer has no city. */
+export function cityHotelsHref(query: AiQueryState): string {
+  const city = query.destination.city.trim();
+  if (!city) return "";
+  const params = queryStateToParams(query);
+  for (const key of ["state", "admin_region", "country", "settings", "activities", "origin"]) {
+    params.delete(key);
+  }
+  params.set("search_submitted", "1");
+  return `/hotels?${params.toString()}`;
+}
+
+export function cityFlightsHref(query: AiQueryState): string {
+  const city = query.destination.city.trim();
+  if (!city) return "";
+  const params = new URLSearchParams();
+  params.set("city", city);
+  if (query.origin.trim()) params.set("origin", query.origin.trim());
+  if (query.from) params.set("from", query.from);
+  if (query.to) params.set("to", query.to);
+  if (query.adults > 0) params.set("adults", String(query.adults));
+  if (query.kids > 0) params.set("kids", String(query.kids));
+  query.childrenAges.forEach((age, index) => {
+    if (index < 6) params.set(`kid_age_${index + 1}`, String(age));
+  });
+  return `/flights?${params.toString()}`;
+}
+
 /* City only, deliberately.
  *
  * The Restaurants page is city-driven and keeps its own data and design — a

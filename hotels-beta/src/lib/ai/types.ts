@@ -84,6 +84,11 @@ export type AiQueryState = {
   currency: string;
   /** Origin IATA for the flights side. */
   origin: string;
+  /** The longest flight the visitor said they would take, in hours, as an
+   * answer searched with it; 0 when they have set none. Kept until an answer
+   * searches with another, like the month and purpose Inspire mirrors with it
+   * (re-applied on each new answer, never while the visitor is choosing). */
+  maxFlightHours: number;
 };
 
 export const EMPTY_QUERY_STATE: AiQueryState = {
@@ -102,6 +107,7 @@ export const EMPTY_QUERY_STATE: AiQueryState = {
   maxPricePerStay: null,
   currency: "EUR",
   origin: "",
+  maxFlightHours: 0,
 };
 
 /** What the model returns alongside its prose so the UI can render cards.

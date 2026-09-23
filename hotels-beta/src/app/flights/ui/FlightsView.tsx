@@ -23,6 +23,7 @@ import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import AiResultsSync from "@/lib/ai/AiResultsSync";
+import { useAiActions } from "@/lib/ai/aiSearchStore";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import styles from "./FlightsView.module.css";
 
@@ -358,6 +359,7 @@ function getPinnedItineraries(itineraries: Itinerary[], tripType: TripType) {
 
 export default function FlightsView({ searchParams }: Props) {
   const [search, setSearch] = useState<SearchState>(() => buildInitialSearch(searchParams));
+  const { markClassicSearch } = useAiActions();
 
   /* The shared search restored after hydration rather than during it (see
      buildInitialSearch). Declared before every other effect that touches
@@ -424,6 +426,8 @@ export default function FlightsView({ searchParams }: Props) {
   const todayIso = new Date().toISOString().slice(0, 10);
 
   function markDirty() {
+    // A hand edit is the visitor's own; it waits for Search (see below).
+    urlRerunFromKeyRef.current = null;
     setIsDirty(true);
     setItineraries([]);
     setSelectedOutboundId("");
@@ -473,10 +477,19 @@ export default function FlightsView({ searchParams }: Props) {
   useEffect(() => {
     const originParam = normalizeParam(searchParams.origin);
     const cityHandover = normalizeParam(searchParams.city) || normalizeParam(searchParams.q);
+    // The concierge's exact airport wins, as it does on arrival
+    // (buildInitialSearch). Read only there, a new answer written into the URL
+    // while this page was open left the old destination in the form.
+    const destinationParam = normalizeParam(searchParams.destination);
+    const handedTo = destinationParam
+      ? resolveAirportCode(destinationParam)
+      : cityHandover
+        ? resolveAirportCode(cityHandover)
+        : "";
     setSearch(current => ({
       ...current,
       from: originParam || current.from,
-      to: cityHandover ? resolveAirportCode(cityHandover) : current.to,
+      to: handedTo || current.to,
       departDate: normalizeParam(searchParams.from) || current.departDate,
       returnDate: normalizeParam(searchParams.to) || current.returnDate,
       adults: Number(normalizeParam(searchParams.adults)) || current.adults,
@@ -896,6 +909,30 @@ export default function FlightsView({ searchParams }: Props) {
     void handleSearch();
   }, [sessionRestored, searchBlocker, searchParams, handleSearch]);
 
+  /* AND AGAIN WHEN THE URL HANDS OVER A NEW ROUTE (Ulrik, 2026-09-23). The
+     concierge rewrites this page's URL when it answers while the page is open
+     ("fly out a day earlier"); the handoff effect put the new dates in the form
+     and the results below stayed the old day's, behind a Search button. Only
+     the URL can do this - the page's own edits never touch it - so a URL change
+     after arrival records the route the form held, and the search runs once the
+     form holds a different one. A hand edit in between cancels it (markDirty),
+     so typing still waits for Search. */
+  const lastSearchParamsRef = useRef(searchParams);
+  const urlRerunFromKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastSearchParamsRef.current === searchParams) return;
+    lastSearchParamsRef.current = searchParams;
+    if (autoSearchedRef.current) urlRerunFromKeyRef.current = searchKey;
+    // searchKey is read as it stood BEFORE the handoff effect's update lands.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+  useEffect(() => {
+    const fromKey = urlRerunFromKeyRef.current;
+    if (fromKey === null || searchKey === fromKey || searchBlocker || isLoading) return;
+    urlRerunFromKeyRef.current = null;
+    void handleSearch();
+  }, [searchKey, searchBlocker, isLoading, handleSearch]);
+
   /* BOOK LEAVES THE SITE. This used to post to /api/flights/book-link, which
    * opened Duffel's hosted checkout - a page where Duffel took the payment. We
    * do not sell flights: the member goes to Trip.com, who are merchant of
@@ -1164,7 +1201,15 @@ export default function FlightsView({ searchParams }: Props) {
                   <AirportAutocomplete
                     label="To"
                     value={search.to}
-                    onChange={(v, opt) => { rememberAirportCity(v, opt); setSearch(c => ({ ...c, to: v })); markDirty(); }}
+                    onChange={(v, opt) => {
+                      rememberAirportCity(v, opt);
+                      setSearch(c => ({ ...c, to: v }));
+                      markDirty();
+                      // A destination picked by hand supersedes the concierge's
+                      // (see the Restaurants city picker), so the other pages
+                      // follow this one rather than bringing the answer back.
+                      if (v && v !== search.to) markClassicSearch();
+                    }}
                   />
                   {isReturnTrip ? (
                     <div className={styles.fieldGridSpan2}>

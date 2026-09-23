@@ -11,6 +11,8 @@ import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { monthFromQuery, purposeFromQuery } from "@/lib/ai/inspireMirror";
+import { getCityForAirportIata } from "@/lib/cityAirports";
+import { readHotelFlightSearch } from "@/lib/searchSession";
 import type {
   InspireCity,
   InspireCityMatch,
@@ -217,12 +219,15 @@ export default function InspireView({ cities }: Props) {
     null | "month" | "purpose" | "flight" | "origin"
   >(null);
   const [activeCityId, setActiveCityId] = useState<string | null>(null);
+  /* Set once the concierge has chosen the starting point, so the member's home
+     airport - fetched asynchronously - cannot arrive late and undo it. */
+  const originFromAiRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     fetchMemberProfileBrowser()
       .then((profile) => {
-        if (cancelled) return;
+        if (cancelled || originFromAiRef.current) return;
         const raw = profile?.homeAirport ?? "";
         // homeAirport looks like "Copenhagen (CPH)" — take the part before "("
         const cityName = raw.split("(")[0]?.trim() ?? "";
@@ -254,16 +259,47 @@ export default function InspireView({ cities }: Props) {
       .sort((a, b) => a.city.city.localeCompare(b.city.city));
   }, [cities, month, purpose, maxFlightHours, origin]);
 
+  /* THE SITE'S CURRENT DESTINATION IS THE CITY SELECTED HERE (2026-09-23).
+     A city named in the concierge, or chosen by hand on Hotels, Flights or
+     Restaurants, lands in the shared search; this page has no destination
+     field, so it selects that city in its list instead. Applied once per
+     change, and only once the city is among the results, so a filter that
+     brings it in later still finds it, and a city clicked here is not undone. */
+  const [sharedCity, setSharedCity] = useState("");
+  useEffect(() => {
+    const read = () => setSharedCity(readHotelFlightSearch()?.city?.trim() ?? "");
+    read();
+    window.addEventListener("oltra:hotel-flight-search-change", read);
+    return () => window.removeEventListener("oltra:hotel-flight-search-change", read);
+  }, []);
+  const appliedSharedCityRef = useRef("");
+
   useEffect(() => {
     if (!matches.length) {
       setActiveCityId(null);
       return;
     }
 
+    if (sharedCity && sharedCity !== appliedSharedCityRef.current) {
+      const target = sharedCity.toLowerCase();
+      const shared = matches.find((match) => match.city.city.toLowerCase() === target);
+      if (shared) {
+        appliedSharedCityRef.current = sharedCity;
+        setActiveCityId(shared.city.id);
+        // The list is alphabetical, so the city is often below the fold.
+        requestAnimationFrame(() => {
+          document
+            .querySelector(`[data-inspire-city="${CSS.escape(shared.city.id)}"]`)
+            ?.scrollIntoView({ block: "nearest" });
+        });
+        return;
+      }
+    }
+
     if (!activeCityId || !matches.some((match) => match.city.id === activeCityId)) {
       setActiveCityId(matches[0].city.id);
     }
-  }, [matches, activeCityId]);
+  }, [matches, activeCityId, sharedCity]);
 
   const selectedPurposeLabel =
     PURPOSES.find((item) => item.value === purpose)?.label ?? "All";
@@ -302,6 +338,24 @@ export default function InspireView({ cities }: Props) {
     // reset to All.
     const nextPurpose = purposeFromQuery(aiQuery);
     if (nextPurpose) setPurpose(nextPurpose);
+
+    /* The flying-time limit the answer searched with, and where it was
+       measured from (2026-09-23). "No more than 3 hours from Copenhagen" left
+       this page on its 4-hour default, listing places the answer had ruled
+       out. Only when the answer set a limit: one without leaves the selector
+       as the visitor left it. */
+    const limit = aiQuery.maxFlightHours ?? 0;
+    if (limit > 0) {
+      setMaxFlightHours(Math.min(FLIGHT_HOURS.length, Math.max(1, Math.round(limit))));
+    }
+    const originCity = aiQuery.origin ? getCityForAirportIata(aiQuery.origin) : "";
+    const nextOrigin = originCity
+      ? ORIGIN_CITIES.find((item) => item.label.toLowerCase() === originCity.toLowerCase())
+      : undefined;
+    if (nextOrigin) {
+      originFromAiRef.current = true;
+      setOrigin(nextOrigin);
+    }
   }, [aiReady, presentedAt, aiQuery]);
 
   const goToHotels = useCallback(
@@ -487,6 +541,7 @@ export default function InspireView({ cities }: Props) {
                     <button
                       key={match.city.id}
                       type="button"
+                      data-inspire-city={match.city.id}
                       className={`oltra-output ${styles.destinationCard} ${
                         isActive ? styles.destinationCardActive : ""
                       }`}

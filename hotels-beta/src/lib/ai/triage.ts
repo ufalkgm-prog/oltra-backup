@@ -35,6 +35,11 @@ their profile, home airport, preferred airlines, login, password, email address,
 sign-in or sign-out, favourites, saved trips, or deleting the account. A request
 to book, reserve or pay for a hotel, flight or restaurant is TRAVEL, not
 ACCOUNT — even when it mentions a card, payment details or "my account".
+Changing the trip being planned in the conversation — other dates, an earlier
+flight, an extra night, another hotel, more rooms or guests — is TRAVEL, not
+ACCOUNT: "can we fly out a day earlier", "add a night at the hotel", "move it to
+July" are all TRAVEL. ACCOUNT is only about what is stored in their myOLTRA
+account itself ("change my home airport", "delete my saved trip to Rome").
 
 OTHER — anything else: coding help, general knowledge, homework, medical or
 legal questions, abuse.

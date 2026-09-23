@@ -53,6 +53,7 @@ function resolveAreaAlias(value: string | undefined): string | undefined {
   return AREA_ALIASES[normaliseRegionTerm(value)] ?? value;
 }
 import { distanceFromPlace, findNearPlace, nearSummary, sortByDistance } from "./nearPlace";
+import { FLIGHT_TIME_BASIS, flightHoursBetween, knownAirports, shortestFlightHours } from "./flightTime";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { toPreferredAirlines, type PreferredAirline } from "./preferredAirlines";
 
@@ -470,7 +471,11 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     "the collection without having searched its name.\n\n" +
     "WHEN THE VISITOR WANTS TO BE NEAR A PLACE — a landmark, street, museum, " +
     "office, venue — pass `near` with the place and its city. Results then " +
-    "come back nearest first, each with distanceKm and walkMinutes.",
+    "come back nearest first, each with distanceKm and walkMinutes.\n\n" +
+    "WHEN THE VISITOR LIMITS THE FLIGHT (\"no more than 3 hours\", \"a short " +
+    "flight\"), pass `flyingFrom` and `maxFlightHours`: hotels further than that " +
+    "are left out here, and each result carries its estimated flightHours. Pass " +
+    "`flyingFrom` alone whenever you will say how long the flight is.",
   inputSchema: jsonSchema<{
     macroRegion?: string;
     region?: string;
@@ -486,6 +491,8 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     limit?: number;
     showAll?: boolean;
     near?: string;
+    flyingFrom?: string[];
+    maxFlightHours?: number;
     stay?: {
       checkIn: string;
       checkOut: string;
@@ -596,6 +603,23 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         description:
           "Only when the visitor has been told the set is large and has asked " +
           "to see it anyway. Returns the properties instead of counts.",
+      },
+      flyingFrom: {
+        type: "array",
+        items: { type: "string" },
+        maxItems: 6,
+        description:
+          "IATA codes of the airports the visitor leaves from — the one they " +
+          "named, every airport of a city they named, or their home airport. " +
+          "Each result then carries flightHours, the estimated nonstop time " +
+          "from the nearest of them to the hotel's own airport.",
+      },
+      maxFlightHours: {
+        type: "number",
+        description:
+          "The longest flight the visitor will take, in hours, when they gave " +
+          "one (\"under three hours\" is 3; \"a short flight\" is 3). Needs " +
+          "flyingFrom. Hotels over it are left out and counted.",
       },
       stay: {
         type: "object",
@@ -791,11 +815,73 @@ const createSearchHotels = (turn: TurnMemory) => tool({
        apply. "Near the Pantheon" is already as narrow as a question gets, and
        asking the visitor to narrow Rome's hotels would be asking the question
        they just answered. See lib/ai/nearPlace.ts. */
+    /* A flying-time limit is applied here rather than left to the model, which
+       has no flying times of its own and guessed Crete inside three hours from
+       Copenhagen (2026-09-23). See lib/ai/flightTime.ts. */
+    const departures = knownAirports(input.flyingFrom);
+    const flightHoursOf = new Map<HotelRecord, number | null>();
+    if (departures.length) {
+      for (const hotel of featureFit) {
+        flightHoursOf.set(
+          hotel,
+          shortestFlightHours(departures, hotelGateway(hotel).airport, {
+            lat: hotel.lat == null ? null : Number(hotel.lat),
+            lng: hotel.lng == null ? null : Number(hotel.lng),
+          })
+        );
+      }
+    }
+    const maxHours =
+      departures.length && typeof input.maxFlightHours === "number" && input.maxFlightHours > 0
+        ? input.maxFlightHours
+        : null;
+    const withinFlight =
+      maxHours === null
+        ? featureFit
+        : featureFit.filter((hotel) => {
+            const hours = flightHoursOf.get(hotel);
+            return hours != null && hours <= maxHours;
+          });
+    const overFlight = maxHours === null ? [] : featureFit.filter((hotel) => !withinFlight.includes(hotel));
+    const flightInfo = departures.length
+      ? {
+          flightTime: {
+            flyingFrom: departures,
+            ...(maxHours !== null
+              ? { maxFlightHours: maxHours, leftOutByFlightTime: overFlight.length }
+              : {}),
+            basis: FLIGHT_TIME_BASIS,
+          },
+        }
+      : input.flyingFrom?.length
+        ? { flightTime: { unknownAirports: input.flyingFrom, basis: "No flying times: those airports are not known. Do not estimate one." } }
+        : {};
+
+    // Everything was further than the visitor will fly. Say how far the
+    // nearest are, so the answer can offer them as just over, not ignore the limit.
+    if (maxHours !== null && !withinFlight.length && featureFit.length) {
+      const nearest = overFlight
+        .map((hotel) => ({ hotel, hours: flightHoursOf.get(hotel) }))
+        .filter((entry): entry is { hotel: HotelRecord; hours: number } => entry.hours != null)
+        .sort((a, b) => a.hours - b.hours)
+        .slice(0, 5)
+        .map(({ hotel, hours }) => ({ id: Number(hotel.id), name: hotel.hotel_name ?? "", city: hotel.city ?? "", flightHours: hours }));
+      return asUntrustedData("myoltra-hotels", {
+        matched: 0,
+        ...flightInfo,
+        nearestOverTheLimit: nearest,
+        guidance:
+          `Nothing here is within about ${maxHours} hours' flying. Say so plainly, ` +
+          "then offer the nearest over the limit with their times, or a wider " +
+          "search - never present them as within it.",
+      });
+    }
+
     const near = nearLookup ? await nearLookup : null;
     const nearPlace = near?.status === "found" ? near.place : null;
     const narrowed = nearPlace
-      ? sortByDistance(featureFit, nearPlace, (h) => ({ lat: h.lat, lng: h.lng }))
-      : featureFit;
+      ? sortByDistance(withinFlight, nearPlace, (h) => ({ lat: h.lat, lng: h.lng }))
+      : withinFlight;
 
     // Nothing matched, and geography was part of the ask. A bare zero is the
     // least useful thing we can say: the model cannot tell "we have none there"
@@ -896,6 +982,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       ...candidateShape(hotel),
       ...(nearPlace ? distanceFromPlace(nearPlace, hotel.lat, hotel.lng) : {}),
       ...(checkedFeatures.length ? { mentions: mentionsOf(hotel) } : {}),
+      ...(flightHoursOf.has(hotel) ? { flightHours: flightHoursOf.get(hotel) } : {}),
     }));
     const nearInfo = near
       ? {
@@ -945,6 +1032,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         ...(near ? { near: nearSummary(near, null) } : {}),
         ...(tagNote ? { leftOutByTags, tagCounts, tagNote } : {}),
         ...featureInfo,
+        ...flightInfo,
         availableForTheseDates: availableCount,
         ...(withinBudgetCount != null ? { withinBudgetForTheseDates: withinBudgetCount } : {}),
         narrowBy: narrowingAxes(narrowed, requested),
@@ -980,6 +1068,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       matched: narrowed.length,
       ...(tagNote ? { leftOutByTags, tagCounts, tagNote } : {}),
       ...featureInfo,
+      ...flightInfo,
       ...(withinBudgetCount != null ? { withinBudgetForTheseDates: withinBudgetCount } : {}),
       returned: shaped.length,
       truncated: narrowed.length > shaped.length,
@@ -1688,6 +1777,9 @@ function createSearchFlights(preferred: PreferredAirline[]) {
       routes.map(async ({ from, to }) => ({
         origin: from,
         destination: to,
+        // The only flying time the model may quote - the schedules below can
+        // be invented (scheduleNote), and it has no other source.
+        estimatedNonstopHours: flightHoursBetween(from, to),
         ...(await searchFlightOffers({ ...rest, origin: from, destination: to }, preferred)),
       }))
     );
@@ -1698,12 +1790,13 @@ function createSearchFlights(preferred: PreferredAirline[]) {
 
     if (searches.length === 1 && !cityAirports.length) {
       const [only] = searches;
-      return asUntrustedData("flights", { ...datesNote, ...scheduleNote, searchedRoutes, ...only });
+      return asUntrustedData("flights", { ...datesNote, ...scheduleNote, flightTimeBasis: FLIGHT_TIME_BASIS, searchedRoutes, ...only });
     }
 
     return asUntrustedData("flights", {
       ...datesNote,
       ...scheduleNote,
+      flightTimeBasis: FLIGHT_TIME_BASIS,
       searchedRoutes,
       ...(cityAirports.length
         ? {

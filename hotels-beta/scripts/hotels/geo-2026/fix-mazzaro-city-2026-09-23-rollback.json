@@ -1,0 +1,18 @@
+[
+  {
+    "at": "2026-09-23T17:59:15.696Z",
+    "changes": [
+      {
+        "id": "2010",
+        "before": {
+          "city": "Mazzarò",
+          "local_area": "Taormina Mare"
+        },
+        "after": {
+          "city": "Taormina",
+          "local_area": "Mazzarò"
+        }
+      }
+    ]
+  }
+]

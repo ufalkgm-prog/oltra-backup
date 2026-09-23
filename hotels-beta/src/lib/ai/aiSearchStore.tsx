@@ -16,6 +16,7 @@ import {
   kidAgeFields,
   mergeHotelFlightSearch,
 } from "@/lib/searchSession";
+import { expandCityAliases } from "@/lib/locationAliases";
 import {
   EMPTY_QUERY_STATE,
   EMPTY_RESULT_SET,
@@ -241,38 +242,62 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
         ) as Partial<AiQueryState>;
       }
       mirrorPending.current = aboutStay ? "all" : "place";
-      setState((prev) => ({
-        ...prev,
-        framing,
-        followUp,
-        presentedAt: Date.now(),
-        // Merged, not replaced. A turn that answers only the flights half of a
-        // trip says nothing about hotels, and replacing wholesale wiped the
-        // hotel cards off the page the moment the visitor answered a follow-up
-        // question. A facet the model did not speak to keeps its previous
-        // value; an explicitly empty one (`hotelIds: []`) still clears it.
-        results: {
-          hotelIds: results.hotelIds ?? prev.results.hotelIds,
-          restaurantIds: results.restaurantIds ?? prev.results.restaurantIds,
-          rationales: results.rationales
-            ? { ...prev.results.rationales, ...results.rationales }
-            : prev.results.rationales,
-          // Replaced, not merged, unlike the rationales it is derived from:
-          // this is "who did the model name in this answer", and accumulating
-          // it across turns would keep reading out last turn's shortlist.
-          highlightIds: results.highlightIds ?? prev.results.highlightIds,
-          flights: results.flights ?? prev.results.flights,
-          flightsForHotels: results.flights
-            ? results.flightsForHotels
-            : prev.results.flightsForHotels,
-          laterStops: results.laterStops ?? prev.results.laterStops,
-        },
-        query: {
-          ...prev.query,
-          ...query,
-          destination: { ...prev.query.destination, ...(query.destination ?? {}) },
-        },
-      }));
+      setState((prev) => {
+        /* A NEW CITY TAKES THE OLD ONE'S RESULTS WITH IT (2026-09-23). Facets
+           an answer does not speak to are kept, which is right for a follow-up
+           about the same place and wrong after a move: Rome's hotels stayed
+           the curated set on the Hotels page under a conversation now about
+           dinner in Paris. */
+        const prevCity = prev.query.destination.city.trim();
+        const nextCity = (query.destination?.city ?? "").trim();
+        /* Settling on one city after an answer spread over several (no
+           destination at all) is a move too: Taormina chosen from a Sicily,
+           Sardinia and Amalfi shortlist kept the Olbia and Naples flights. */
+        const prevWasSpread =
+          prev.presentedAt > 0 && !Object.values(prev.query.destination).some((v) => v.trim());
+        const moved =
+          Boolean(nextCity) &&
+          (prevWasSpread ||
+            (Boolean(prevCity) &&
+              !expandCityAliases([prevCity])
+                .map((c) => c.toLowerCase())
+                .includes(nextCity.toLowerCase())));
+        const base = moved
+          ? { ...prev.results, hotelIds: [], restaurantIds: [], flights: [], flightsForHotels: false, laterStops: [] }
+          : prev.results;
+        return {
+          ...prev,
+          framing,
+          followUp,
+          presentedAt: Date.now(),
+          // Merged, not replaced. A turn that answers only the flights half of a
+          // trip says nothing about hotels, and replacing wholesale wiped the
+          // hotel cards off the page the moment the visitor answered a follow-up
+          // question. A facet the model did not speak to keeps its previous
+          // value; an explicitly empty one (`hotelIds: []`) still clears it.
+          results: {
+            hotelIds: results.hotelIds ?? base.hotelIds,
+            restaurantIds: results.restaurantIds ?? base.restaurantIds,
+            rationales: results.rationales
+              ? { ...base.rationales, ...results.rationales }
+              : base.rationales,
+            // Replaced, not merged, unlike the rationales it is derived from:
+            // this is "who did the model name in this answer", and accumulating
+            // it across turns would keep reading out last turn's shortlist.
+            highlightIds: results.highlightIds ?? base.highlightIds,
+            flights: results.flights ?? base.flights,
+            flightsForHotels: results.flights
+              ? results.flightsForHotels
+              : base.flightsForHotels,
+            laterStops: results.laterStops ?? base.laterStops,
+          },
+          query: {
+            ...prev.query,
+            ...query,
+            destination: { ...prev.query.destination, ...(query.destination ?? {}) },
+          },
+        };
+      });
     },
     []
   );

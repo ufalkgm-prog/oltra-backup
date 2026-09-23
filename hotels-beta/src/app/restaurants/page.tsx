@@ -27,9 +27,13 @@ export default async function RestaurantsPage({
   const requestedCity = normalizeParam(params.city).trim();
 
   const cityOptions = await getRestaurantCities();
-  const parisMatch =
-    cityOptions.find((option) => option.toLowerCase() === "paris") ?? "";
-  const fallbackCity = parisMatch || cityOptions[0] || "";
+  /* NO CITY MEANS NO CITY (Ulrik, 2026-09-23). An unknown or missing city used
+     to open Paris, so /restaurants?city=Taormina - a city we hold no
+     restaurants in, handed on by the concierge - showed 35 Paris restaurants
+     as if they were the answer. Now it opens blank: the map, no markers, no
+     cards. A bare visit still tries the shared search and the member's home
+     city first (RestaurantsMapView). */
+  const fallbackCity = "";
 
   const requestedCityMatch =
     cityOptions.find(

@@ -7,7 +7,8 @@ import { usePathname } from "next/navigation";
 import { readHotelFlightSearch } from "@/lib/searchSession";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
-import { useAiSearch } from "@/lib/ai/aiSearchStore";
+import { aiResultsAreCurrent, useAiSearch } from "@/lib/ai/aiSearchStore";
+import { flightsHref as aiFlightsHref, hotelsHref as aiHotelsHref } from "@/lib/ai/handoff";
 import AiModeButton from "@/components/ai/AiModeButton";
 
 type SiteHeaderProps = {
@@ -60,7 +61,27 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
 
   /* The concierge opens from here on every page (2026-09-15), and while it is
      open the header stays above it, sharp, naming it under the logo. */
-  const { conciergeOpen, setConciergeOpen } = useAiSearch();
+  const {
+    conciergeOpen,
+    setConciergeOpen,
+    query: aiQuery,
+    results: aiResults,
+    presentedAt,
+    searchedAt,
+  } = useAiSearch();
+
+  /* WHILE THE CONCIERGE'S ANSWER IS CURRENT, THE HEADER HANDS IT OVER
+     (2026-09-23). The links below are built from the shared session, and any
+     param at all - the answer's dates and search_submitted - counts as a
+     search on arrival, so AiResultsSync stood down and Hotels opened on its
+     featured page (or a plain city search) instead of the six hotels the
+     conversation had just chosen. The same URLs the concierge's own buttons
+     use, so the two ways in cannot disagree. */
+  const aiCurrent = aiResultsAreCurrent(aiResults, presentedAt, searchedAt);
+  const navHotelsHref =
+    aiCurrent && aiResults.hotelIds.length ? aiHotelsHref(aiQuery, aiResults) : hotelsHref;
+  const navFlightsHref =
+    aiCurrent && aiResults.flights.length ? aiFlightsHref(aiQuery, aiResults) : flightsHref;
 
   const oauthName =
     (user?.user_metadata?.full_name as string | undefined) ??
@@ -107,8 +128,8 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       : "Members";
 
   const navItems: { label: string; href: string; match: string; badge?: string; disabledMessage?: string }[] = [
-    { label: "Hotels", href: hotelsHref, match: "/hotels" },
-    { label: "Flights", href: flightsHref, match: "/flights" /* , badge: "WIP" */ },
+    { label: "Hotels", href: navHotelsHref, match: "/hotels" },
+    { label: "Flights", href: navFlightsHref, match: "/flights" /* , badge: "WIP" */ },
     { label: "Restaurants", href: restaurantsHref, match: "/restaurants" },
     { label: "Inspire", href: "/inspire", match: "/inspire" },
     { label: membersLabel, href: user ? "/members" : "/login", match: user ? "/members" : "/login" },
