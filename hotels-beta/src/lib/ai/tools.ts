@@ -442,6 +442,33 @@ function narrowingAxes(
 
 /* ------------------------------------------------------------------------- */
 
+/* DESCRIPTIONS COME WITH A SHORT LIST (2026-09-23). Measured on a New Year's
+ * question: after its searches the model spent a whole step reading five
+ * hotels' descriptions - 14.6s, of which the lookups took 0.3s; the rest was
+ * one more model round trip. A search returning this many or fewer now carries
+ * each hotel's description and room count, fetched beside the availability
+ * pass, so that step is not needed. ~400 tokens a hotel (descriptions run
+ * 1,700 characters, measured across the 811 published). A little above
+ * MAX_NAMED (5), so the model still has a few to choose between. */
+const INLINE_DESCRIPTIONS_MAX = 8;
+
+async function descriptionsFor(ids: number[]): Promise<Map<number, { description: string; rooms: unknown }>> {
+  const rows = await getHotels({
+    fields: ["id", "description", "total_rooms_suites_villas"],
+    filter: { id: { _in: ids } },
+    limit: ids.length,
+  });
+  return new Map(
+    rows.map((row) => [
+      Number(row.id),
+      {
+        description: row.description ?? "",
+        rooms: (row as unknown as Record<string, unknown>).total_rooms_suites_villas ?? null,
+      },
+    ])
+  );
+}
+
 const createSearchHotels = (turn: TurnMemory) => tool({
   description:
     "Search the myOLTRA hotel collection by geography and character. Returns " +
@@ -996,9 +1023,13 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     // Availability in the same round trip when the dates are known. The model
     // asked for these two things back to back every single time, and the
     // second ask cost more than the supplier call it triggered.
-    const ranked = input.stay?.checkIn && input.stay?.checkOut
-      ? await rankAvailability({ ...input.stay, ids: shaped.map((h) => h.id) }, turn.residency)
-      : null;
+    const ids = shaped.map((h) => h.id);
+    const [ranked, details] = await Promise.all([
+      input.stay?.checkIn && input.stay?.checkOut
+        ? rankAvailability({ ...input.stay, ids }, turn.residency)
+        : null,
+      ids.length && ids.length <= INLINE_DESCRIPTIONS_MAX ? descriptionsFor(ids) : null,
+    ]);
 
     // What the visitor would actually end up looking at: the properties that
     // can be booked for their dates, or every match when no dates are known.
@@ -1009,6 +1040,27 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     const availableCount = rankedHotels
       ? rankedHotels.filter((h) => "available" in h && h.available).length
       : null;
+    /* FULL HOTELS AS A NAME, NOT A RECORD (2026-09-23). With dates, the
+       directory gate counts the hotels with rooms, but every candidate went to
+       the model in full - Q45's continent-wide first search sent a long list
+       of full records, most of them full, and every later step re-read them
+       (the 101k-token step in the measurements). A hotel with no rates for
+       these dates is now its id, name and city, so it can still be named as
+       full. "not-sold-here" is not full - it can never be priced, and is still
+       recommended - so it keeps its record. */
+    const fullForDates = new Set(
+      (rankedHotels ?? [])
+        .filter((h) => "reason" in h && h.reason === "no-rates-for-these-dates")
+        .map((h) => h.id)
+    );
+    const hotelsOut = shaped.map((hotel) =>
+      fullForDates.has(hotel.id)
+        ? { id: hotel.id, name: hotel.name, city: hotel.city, noRoomsForTheseDates: true }
+        : details
+          ? { ...hotel, ...(details.get(hotel.id) ?? {}) }
+          : hotel
+    );
+
     /* A BUDGET IS PART OF WHAT THEY WOULD LOOK AT (2026-09-15). The Maldives
        honeymoon named under 2,000 a night; the gate counted the 21 with rooms,
        said nothing of the budget, and asked about diving. Counted here, the
@@ -1073,7 +1125,16 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       returned: shaped.length,
       truncated: narrowed.length > shaped.length,
       ...nearInfo,
-      hotels: shaped,
+      hotels: hotelsOut,
+      ...(details
+        ? { descriptionsIncluded: "Each hotel's full description and room count are included: do not call getHotelDetails for these." }
+        : {}),
+      ...(fullForDates.size
+        ? {
+            fullHotelsNote:
+              "Hotels marked noRoomsForTheseDates have no rooms on these dates, so only their name is given. Do not present them for these dates; name one as full when it plainly fits, and offer other dates if the visitor chose none.",
+          }
+        : {}),
       ...(ranked ? { availability: ranked } : {}),
       /* NOTHING FREE ON THOSE DATES (2026-09-15). Asked about Iceland "next
          September", the concierge chose 10-17 September, found no rates at the
@@ -1099,7 +1160,9 @@ const createSearchHotels = (turn: TurnMemory) => tool({
 const getHotelDetails = tool({
   description:
     "Full editorial description for one hotel, when you need more than the " +
-    "highlights line to judge fit. Contains no prices.",
+    "highlights line to judge fit. Contains no prices. Not needed for a hotel " +
+    "that came back from searchHotels with its description - a search " +
+    "returning eight or fewer includes them.",
   inputSchema: jsonSchema<{ id: number }>({
     type: "object",
     properties: { id: { type: "number" } },
@@ -1655,7 +1718,7 @@ const compareGateways = tool({
   },
 });
 
-/* Most searchFlights will run in one call. The panel names at most eight hotels,
+/* Most searchFlights will run in one call. The panel names at most five hotels,
  * and they rarely span more than four airports; past six this is a sweep, not
  * an answer. */
 const MAX_FLIGHT_DESTINATIONS = 6;
@@ -1826,6 +1889,22 @@ const RESTAURANT_TYPE_VALUES = [
   "Beach club",
 ] as const;
 
+/* A MICHELIN STAR IS NEVER RELAXED (Ulrik, 2026-09-23) - not even one, and
+ * whatever the record's own type says: one starred restaurant is filed as an
+ * "Informal local favorite". Every result carries its kind, worked out here
+ * from the awards rather than left to the model, and a search for a relaxed
+ * type leaves starred rooms out. A Bib Gourmand is not a star. */
+const RELAXED_TYPES = new Set(["High-end casual", "Informal local favorite", "Beach club"]);
+
+function isStarred(awards: string[] | null | undefined): boolean {
+  return (awards ?? []).some((award) => /^michelin_[123]$/.test(award));
+}
+
+function restaurantKind(row: { awards?: string[] | null; restaurant_type?: string | null }): string {
+  if (isStarred(row.awards)) return "starred";
+  return RELAXED_TYPES.has(row.restaurant_type ?? "") ? "relaxed" : "fine dining";
+}
+
 const searchRestaurants = tool({
   description:
     "Search the myOLTRA restaurant collection for one city. Returns candidate " +
@@ -1882,13 +1961,16 @@ const searchRestaurants = tool({
     const near = input.near ? await findNearPlace(input.near) : null;
     const nearPlace = near?.status === "found" ? near.place : null;
 
-    const rows = await findRestaurants({
+    const found = await findRestaurants({
       city: input.city,
       cuisine: input.cuisine,
       restaurantType: input.restaurantType,
       limit: Math.min(input.limit ?? MAX_RESTAURANT_CANDIDATES, MAX_RESTAURANT_CANDIDATES),
       ...(nearPlace ? { nearest: { lat: nearPlace.lat, lng: nearPlace.lng } } : {}),
     });
+    const rows = RELAXED_TYPES.has(input.restaurantType ?? "")
+      ? found.filter((row) => !isStarred(row.awards))
+      : found;
 
     // An empty result is ambiguous on its own — "no Japanese in Oslo" and "we
     // do not cover Oslo at all" call for different answers, and only the
@@ -1909,6 +1991,8 @@ const searchRestaurants = tool({
 
     return asUntrustedData("myoltra-restaurants", {
       returned: rows.length,
+      kindNote:
+        "Each restaurant's kind is fixed: \"starred\" (one to three Michelin stars) is never relaxed, informal or casual; only \"relaxed\" is. \"fine dining\" is neither.",
       ...(near
         ? {
             near: nearSummary(
@@ -1920,6 +2004,7 @@ const searchRestaurants = tool({
       restaurants: rows.map((row) => ({
         id: Number(row.id),
         name: row.restaurant_name,
+        kind: restaurantKind(row),
         type: row.restaurant_type ?? "",
         cuisine: row.cuisine ?? "",
         city: row.city ?? "",

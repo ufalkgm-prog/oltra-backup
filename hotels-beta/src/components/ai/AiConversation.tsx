@@ -147,6 +147,19 @@ function readLatestPresentation(messages: UIMessage[]): Presentation | null {
 
 type Place = { city: string; country: string };
 
+/** A tool's result as data: our tools wrap JSON in an untrusted-data fence. */
+function toolJson(output: unknown): unknown {
+  if (typeof output !== "string") return output;
+  const start = output.indexOf("{");
+  const end = output.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  try {
+    return JSON.parse(output.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
 /** Every hotel and restaurant the conversation's tools returned, by id, with
  * its own city and country - read from the tool outputs (JSON inside the
  * untrusted-data wrapper), so it is our records speaking, not the model. */
@@ -171,19 +184,7 @@ function placesById(messages: UIMessage[]): Map<number, Place> {
     if (message.role !== "assistant") continue;
     for (const part of message.parts) {
       if (!isToolUIPart(part) || part.state !== "output-available") continue;
-      const output = part.output;
-      if (typeof output !== "string") {
-        visit(output);
-        continue;
-      }
-      const start = output.indexOf("{");
-      const end = output.lastIndexOf("}");
-      if (start < 0 || end <= start) continue;
-      try {
-        visit(JSON.parse(output.slice(start, end + 1)));
-      } catch {
-        /* not JSON; nothing to learn from it */
-      }
+      visit(toolJson(part.output));
     }
   }
   return places;
@@ -646,6 +647,9 @@ function AgentText({
  * slowest single search we make (a 300-hotel availability batch, ~20s; ETG's
  * own 30s search timeout). */
 const ANSWER_LIMIT_MS = 170_000;
+/* Past a typical answer: one search then writing runs 30-45s, and telling
+   that visitor "a couple of minutes" would be wrong. */
+const SLOW_NOTICE_MS = 45_000;
 const STALL_LIMIT_MS = 90_000;
 
 const TIMED_OUT_MESSAGE =
@@ -720,6 +724,91 @@ function progressSteps(message: UIMessage | undefined): ProgressStep[] {
       },
     ];
   });
+}
+
+/* WHAT HAS BEEN FOUND SO FAR, WHILE THE ANSWER IS STILL COMING (Ulrik,
+ * 2026-09-23). A New Year's question took 149s, 83% of it the model choosing
+ * what to search next and writing. The panel can say what the searches have
+ * already turned up - counted from the tool results as they finish, so it
+ * costs no time and cannot disagree with our data. Counts and places only:
+ * no hotel is named before the model has chosen, so nothing here is later
+ * contradicted by the answer. */
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function shortDay(iso: string): string {
+  const [, m, d] = iso.split("-").map(Number);
+  return m && d ? `${d} ${SHORT_MONTHS[m - 1]}` : "";
+}
+
+function listPlaces(places: string[]): string {
+  if (places.length <= 3) {
+    return places.length > 1 ? `${places.slice(0, -1).join(", ")} and ${places.at(-1)}` : places[0] ?? "";
+  }
+  const more = places.length - 3;
+  return `${places.slice(0, 3).join(", ")} and ${more} more ${more === 1 ? "place" : "places"}`;
+}
+
+function progressFacts(message: UIMessage | undefined): string {
+  if (!message || message.role !== "assistant") return "";
+  const hotels = new Map<number, string>();
+  const available = new Set<number>();
+  const restaurants = new Set<number>();
+  let flightRoutes = 0;
+  let stay: { checkIn?: string; checkOut?: string } | null = null;
+
+  for (const part of message.parts) {
+    if (!isToolUIPart(part) || part.state !== "output-available") continue;
+    const name = getToolName(part);
+    const data = toolJson(part.output) as Record<string, unknown> | null;
+    if (!data) continue;
+    const input = (part.input ?? {}) as { stay?: { checkIn?: string; checkOut?: string }; checkIn?: string; checkOut?: string };
+    const rows = (value: unknown) => (Array.isArray(value) ? (value as Record<string, unknown>[]) : []);
+    const countAvailable = (value: unknown) => {
+      for (const row of rows((value as { hotels?: unknown } | null)?.hotels)) {
+        if (row.available === true && typeof row.id === "number") available.add(row.id);
+      }
+    };
+    if (name === "searchHotels") {
+      for (const row of rows(data.hotels)) {
+        if (typeof row.id === "number") hotels.set(row.id, typeof row.city === "string" ? row.city : "");
+      }
+      countAvailable(data.availability);
+      if (input.stay?.checkIn && data.availability) stay = input.stay;
+    } else if (name === "checkAvailability") {
+      countAvailable(data);
+      if (input.checkIn) stay = { checkIn: input.checkIn, checkOut: input.checkOut };
+    } else if (name === "searchRestaurants") {
+      for (const row of rows(data.restaurants)) if (typeof row.id === "number") restaurants.add(row.id);
+    } else if (name === "searchFlights") {
+      const routes = rows(data.byRoute);
+      flightRoutes += routes.length
+        ? routes.filter((route) => route.flies === true).length
+        : data.flies === true
+          ? 1
+          : 0;
+    }
+  }
+
+  const facts: string[] = [];
+  if (hotels.size) {
+    /* The places holding the most candidates first. In the order the records
+       came back, a New Year's search named "Versailles, Perugia, Paris and 28
+       more" - true, and meaningless. And "to consider", not "matching": these
+       are what the searches returned, before the concierge has chosen. */
+    const perPlace = new Map<string, number>();
+    for (const city of hotels.values()) if (city) perPlace.set(city, (perPlace.get(city) ?? 0) + 1);
+    const places = [...perPlace.entries()].sort((a, b) => b[1] - a[1]).map(([city]) => city);
+    facts.push(
+      `${hotels.size} ${hotels.size === 1 ? "hotel" : "hotels"} to consider` +
+        (places.length ? ` in ${listPlaces(places)}` : "")
+    );
+    if (stay?.checkIn && stay.checkOut) {
+      facts.push(`${available.size} with rooms for ${shortDay(stay.checkIn)} – ${shortDay(stay.checkOut)}`);
+    }
+  }
+  if (restaurants.size) facts.push(`${restaurants.size} ${restaurants.size === 1 ? "restaurant" : "restaurants"}`);
+  if (flightRoutes) facts.push(`flights on ${flightRoutes} ${flightRoutes === 1 ? "route" : "routes"}`);
+  return facts.length ? `Found so far: ${facts.join(", ")}.` : "";
 }
 
 /* Every stay a presentResults call in this transcript has presented — the
@@ -1525,6 +1614,31 @@ export default function AiConversation() {
   }, [busy, messages, giveUp]);
 
   const progress = busy ? progressSteps(messages[messages.length - 1]) : [];
+  const facts = busy ? progressFacts(messages[messages.length - 1]) : "";
+
+  /* "THIS MAY TAKE A COUPLE OF MINUTES" (Ulrik, 2026-09-23), shown on what is
+     happening rather than a guess: once a second model step runs searches of
+     its own - the writing step, which calls only presentResults, does not
+     count - or 45 seconds in. A one-search answer is back before either. */
+  const [slowAnswer, setSlowAnswer] = useState(false);
+  useEffect(() => {
+    setSlowAnswer(false);
+    if (!busy) return;
+    const timer = window.setTimeout(() => setSlowAnswer(true), SLOW_NOTICE_MS);
+    return () => window.clearTimeout(timer);
+  }, [busy]);
+  const latestTurn = busy ? messages[messages.length - 1] : undefined;
+  const searchRounds = (() => {
+    if (latestTurn?.role !== "assistant") return 0;
+    const rounds = new Set<number>();
+    let step = -1;
+    for (const part of latestTurn.parts) {
+      if (part.type === "step-start") step += 1;
+      else if (isToolUIPart(part) && getToolName(part) !== "presentResults") rounds.add(step);
+    }
+    return rounds.size;
+  })();
+  const showSlowNotice = busy && (slowAnswer || searchRounds >= 2);
   /* ONE LINE, REPLACED AS IT GOES (Ulrik, 2026-09-21).
    *
    * Every search used to keep its own line, finished ones ticked and dimmed,
@@ -1669,7 +1783,11 @@ export default function AiConversation() {
 
         {busy ? (
           <div className={styles.thinking} role="status" aria-live="polite">
-            {progressLine}
+            {showSlowNotice ? (
+              <div className={styles.thinkingNote}>This may take a couple of minutes.</div>
+            ) : null}
+            {facts ? <div className={styles.thinkingFacts}>{facts}</div> : null}
+            <div>{progressLine}</div>
           </div>
         ) : null}
 

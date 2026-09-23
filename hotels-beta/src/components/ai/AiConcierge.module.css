@@ -268,6 +268,16 @@
   font-size: 13px;
   color: var(--oltra-text-muted);
   font-style: italic;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Upright: these state facts, where the italic line below says what is
+   running. */
+.thinkingNote,
+.thinkingFacts {
+  font-style: normal;
 }
 
 .error {

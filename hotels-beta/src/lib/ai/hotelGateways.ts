@@ -1,11 +1,13 @@
 import type { AiFlightLeg, AiHotelCard } from "./types";
 
 /** Most properties the concierge panel will ever read out, however many the
- * model wrote lines for. Past eight names it stops being something anyone
- * takes in, and the page behind is where a set is browsed. Exported because the
+ * model wrote lines for - hotels and restaurants each. Five since 2026-09-23
+ * (Ulrik; it was eight): past that the panel stops being something anyone
+ * takes in, and the page behind is where a set is browsed - it still carries
+ * every card. Exported because the
  * landing frames complete their flight legs from the same named set, and two
  * copies of this number would agree only until one changed. */
-export const MAX_NAMED = 8;
+export const MAX_NAMED = 5;
 
 /** The hotels the panel names: the ones the model wrote a line for, in its
  * order, or the first few when it wrote none. */
