@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 630d0a83-c8d7-41b7-b9a0-32e95b4da724
-  modified: 2026-09-15T20:55:33.190Z
+  modified: 2026-09-23T15:27:12.734Z
 ---
 
 Since 2026-09-14 Ulrik tests the AI concierge by having Claude open the dev server in Chrome, ask ONE query on a varied page (landing, Hotels, Flights, Restaurants, Inspire), relay the panel text plus which tools ran, and flag what might warrant a code or prompt change. He reviews each answer and decides; fixes are verified in the same browser session, then committed and pushed on his word.
@@ -14,7 +14,11 @@ Done on 2026-09-14 (all fixes pushed, last commit fb6a3b9): Inspire diving in Fe
 
 On 2026-09-15 questions 6–14 ran, plus a multi-stop test (London → Nice/Cannes → Porto Cervo → London) that led to the whole-trip landing layout; all pushed, last commit ec387d0. Resume with question fifteen.
 
-Later on 2026-09-15 questions 15–24 ran, all pushed, last commit f2c66e1. Resume with question twenty-five.
+Later on 2026-09-15 questions 15–24 ran, all pushed, last commit f2c66e1.
+
+On 2026-09-23 questions 25–34 ran on Ulrik's themed list (inventory-only, restaurants page, reading page state, member section, login, booking, buttons/external sites), all pushed as 27b4c11. Resume with Q35: the Inspire page (flight ranges and purposes), then the security/architecture-probe theme, then random questions. Open item he has not decided: a curated marker (sage "A") in the Restaurants page's city and type boxes.
+
+- A fresh Chrome profile needs Ulrik to type the beta password and log in himself — Claude never types passwords.
 
 - Wait for an answer with a Bash until-loop on the dev log (`POST /api/chat` count rising), not a long in-page JS wait — the Chrome tool's JS call times out at 45s.
 - An answer that shows nothing: log `finishReason` per step (`onStepFinish`) before guessing; "length" meant the output cap, which counts the model's thinking.
