@@ -122,7 +122,20 @@ export async function getItems<T>(
   collection: string,
   query?: DirectusQuery
 ): Promise<T[]> {
-  return directusRequest<T[]>(`/items/${collection}`, { query });
+  const rows = await directusRequest<T[]>(`/items/${collection}`, { query });
+
+  // Supplier images are attached here rather than in getHotels, so that every
+  // caller asking for hotels gets them — see attachHotelImages. Rows without an
+  // id (a query that selected other fields only) are returned untouched, and
+  // the second request is skipped entirely.
+  if (collection === "hotels" && rows.length > 0) {
+    const hotels = rows as unknown as HotelRecord[];
+    if (hotels.some((hotel) => hotel?.id != null)) {
+      return (await attachHotelImages(hotels)) as unknown as T[];
+    }
+  }
+
+  return rows;
 }
 
 export async function getItemById<T>(
@@ -227,12 +240,17 @@ export type HotelRecord = {
 };
 
 export async function getHotels(query: DirectusQuery): Promise<HotelRecord[]> {
-  const hotels = await getItems<HotelRecord>("hotels", query);
-  return attachHotelImages(hotels);
+  return getItems<HotelRecord>("hotels", query);
 }
 
 /**
  * Attaches the Directus-held supplier images to each hotel.
+ *
+ * Applied by getItems to every hotels query, not by getHotels alone. It lived
+ * on getHotels first, and the concierge card route — which calls getItems
+ * directly — served placeholders for the four lodges whose Ratehawk refs had
+ * been cleared, because their images were simply never attached. Any caller
+ * that asks for hotels should get their images.
  *
  * Kept as a second request rather than a nested field: hotel_images is its own
  * collection with no alias field on hotels, and one filtered request for the
