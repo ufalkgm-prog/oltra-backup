@@ -74,6 +74,28 @@ export function getHotelThumbnail(hotel: HotelRecord): string | null {
   return getRawHotelImages(hotel)[0]?.url ?? null;
 }
 
+/**
+ * A hotel's first image, asked for at roughly the size it will be drawn.
+ *
+ * Both sources resize at their own end — Directus from the width parameter,
+ * Ratehawk from the {size} token — so a caller rendering a plain <img> gets
+ * bytes that match the box instead of a full-size photo scaled down in the
+ * browser. Returns null when the hotel has no real photo.
+ */
+export function getHotelImageAtWidth(hotel: HotelRecord, width: number): string | null {
+  const directusImage = (hotel.directus_images ?? [])[0];
+  if (directusImage) return `${directusImage.url}?width=${width}&fit=cover`;
+
+  if (hotel.ratehawk_image_1) {
+    return resolveRatehawkUrl(
+      hotel.ratehawk_image_1,
+      width <= 320 ? RATEHAWK_THUMB_SIZE : RATEHAWK_FULL_SIZE
+    );
+  }
+
+  return null;
+}
+
 export function getHotelImageSet(hotel: HotelRecord): string[] {
   const images = getRawHotelImages(hotel).map((image) => image.url);
   if (images.length > 0) return images;

@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import type { HotelRecord } from "@/lib/directus";
 import { useCurrency } from "@/lib/currency/useCurrency";
 import {
-  getHotelImageSet,
+  getHotelImageAtWidth,
   HOTEL_CARD_PLACEHOLDERS,
   hasHotelPhotos,
   clampHotelText,
@@ -144,7 +143,8 @@ export default function HotelSmallCard({
      from the currency the supplier quoted. */
   const { currency: displayCurrency, format: formatMoney } = useCurrency();
   const layout = LAYOUT[columns];
-  const img = getHotelImageSet(hotel)[0] ?? HOTEL_CARD_PLACEHOLDERS[0];
+  /* Asked for at twice the drawn width, for a sharp image on dense screens. */
+  const img = getHotelImageAtWidth(hotel, layout.image * 2) ?? HOTEL_CARD_PLACEHOLDERS[0];
   const hasPhoto = hasHotelPhotos(hotel);
   const nameAndLocation = [hotel.city, hotel.country].filter(Boolean).join(" · ");
 
@@ -276,13 +276,17 @@ export default function HotelSmallCard({
       <div>
         <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
           {hasPhoto ? (
-            <Image
+            /* Plain <img>, as everywhere else supplier photos are drawn: both
+               sources already serve the requested size, and next/image would
+               re-optimise (and bill) each one again. It also cannot reach the
+               Directus proxy — the optimiser fetches server-side with no beta
+               cookie, so the middleware redirects it to the login page and the
+               image never loads. */
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={img}
               alt=""
-              width={layout.image}
-              height={80}
               className={`${layout.imageBox} object-cover`}
-              sizes={`${layout.image}px`}
             />
           ) : (
             <div className={`oltra-photo-placeholder ${layout.imageBox}`}>
