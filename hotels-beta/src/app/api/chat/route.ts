@@ -270,7 +270,11 @@ export async function POST(req: Request) {
       // Anthropic's own server-side search. maxUses is enforced upstream, so
       // the model cannot exceed the cap even if it tries, and the allow-list
       // keeps this a travel-reference tool rather than a general web search.
-      web_search: anthropic.tools.webSearch_20260209({
+      // The 2025 version, deliberately (Ulrik, 2026-09-23): the 2026 one lets
+      // the model filter results by running Python, which it also used to
+      // call our own searchHotels - an extra round trip each time, for
+      // nothing measurable.
+      web_search: anthropic.tools.webSearch_20250305({
         maxUses: MAX_WEB_SEARCHES,
         allowedDomains: WEB_SEARCH_ALLOWED_DOMAINS,
       }),

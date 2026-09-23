@@ -154,7 +154,15 @@ const MAX_FEATURES = 4;
  * their guest selector or browser locale, sent beside the page context and
  * never shown to the model. It used to be a hardcoded "gb", which ETG grade
  * as not implementing residency at all (§32). */
-type TurnMemory = { features: Map<string, Feature>; residency: string };
+/* `shownIds` and `wholeGeographies` (2026-09-23): the hotels this turn has
+ * already sent in full, and the geographies it has seen every hotel of - so a
+ * repeat search returns names, not the same records again (see searchHotels). */
+type TurnMemory = {
+  features: Map<string, Feature>;
+  residency: string;
+  shownIds: Set<number>;
+  wholeGeographies: Set<string>;
+};
 
 /* THE DRIVE FROM A HOTEL'S OWN AIRPORT (2026-09-15). Asked for Lake Como via
  * Milan, the concierge quoted compareGateways' 52 minutes — Malpensa to Milan
@@ -1067,13 +1075,32 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         .filter((h) => "reason" in h && h.reason === "no-rates-for-these-dates")
         .map((h) => h.id)
     );
-    const hotelsOut = shaped.map((hotel) =>
-      fullForDates.has(hotel.id)
-        ? { id: hotel.id, name: hotel.name, city: hotel.city, noRoomsForTheseDates: true }
-        : details
-          ? { ...hotel, ...(details.get(hotel.id) ?? {}) }
-          : hotel
-    );
+    /* A REPEAT SEARCH SENDS NAMES, NOT THE SAME RECORDS (2026-09-23). Told
+       "these are all 19 hotels we hold in Japan, do not search again", the
+       model searched Japan again anyway - a note does not stop a call. What
+       code can do is make the repeat cheap: a hotel this turn already sent in
+       full comes back as its id, name and city plus whatever this search
+       learned about it (feature mentions, flight time), since every result is
+       re-read on every later step. */
+    const hotelsOut = shaped.map((hotel) => {
+      if (fullForDates.has(hotel.id)) {
+        return { id: hotel.id, name: hotel.name, city: hotel.city, noRoomsForTheseDates: true };
+      }
+      if (turn.shownIds.has(hotel.id)) {
+        const extra = hotel as { mentions?: string[]; flightHours?: number | null; distanceKm?: number; walkMinutes?: number | null };
+        return {
+          id: hotel.id,
+          name: hotel.name,
+          city: hotel.city,
+          shownEarlier: true,
+          ...(extra.mentions ? { mentions: extra.mentions } : {}),
+          ...(extra.flightHours !== undefined ? { flightHours: extra.flightHours } : {}),
+          ...(extra.distanceKm !== undefined ? { distanceKm: extra.distanceKm, walkMinutes: extra.walkMinutes } : {}),
+        };
+      }
+      return details ? { ...hotel, ...(details.get(hotel.id) ?? {}) } : hotel;
+    });
+    const repeatedIds = hotelsOut.filter((h) => "shownEarlier" in h).length;
 
     /* A BUDGET IS PART OF WHAT THEY WOULD LOOK AT (2026-09-15). The Maldives
        honeymoon named under 2,000 a night; the gate counted the 21 with rooms,
@@ -1130,10 +1157,63 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       });
     }
 
+    /* WHO LACKS WHAT WAS ASKED FOR (2026-09-23). Asked for a private onsen, the
+       answer offered two hotels as if both had one; only one description said
+       so. Each feature checked now names the returned hotels that do not
+       mention it, so the difference is in front of the model, not inferred. */
+    const withoutFeature = checkedFeatures.length
+      ? Object.fromEntries(
+          checkedFeatures.map((f) => [
+            f.label,
+            capped.filter((h) => !mentionsOf(h).includes(f.label)).map((h) => h.hotel_name ?? ""),
+          ])
+        )
+      : null;
+
+    /* A SMALL GEOGRAPHY IS SEARCHED ONCE (2026-09-23). "Traditional, private
+       onsen, Japan" ran four searches of Japan - three variations on the
+       filters, then everything - where Japan holds 19. Told the size, the model
+       can take the whole place in one call and judge from it. */
+    const geography = [input.macroRegion, country, adminRegion, area, city].filter(Boolean).join(", ");
+    const geographyKey = geography.toLowerCase();
+    const seenWhole = Boolean(geographyKey) && turn.wholeGeographies.has(geographyKey);
+    const filtered =
+      tagged || features.length > 0 || maxHours !== null || Boolean(input.name) || Boolean(nearPlace);
+    const geographyInfo =
+      geography && inRegion.length <= BROAD_RESULT_LIMIT
+        ? {
+            geographyNote: seenWhole
+              ? `Every hotel we hold in ${geography} already came back in this answer; this search can only return some of them again. Choose from what you have.`
+              : filtered
+              ? `We hold only ${inRegion.length} hotels in ${geography} in all. Rather than more variations on the filters, search ${geography} once with none and choose from all of them.`
+              : `These are all ${inRegion.length} hotels we hold in ${geography}. Do not search ${geography} again with other filters - it can only return some of these; choose from here.`,
+          }
+        : {};
+
+    for (const hotel of hotelsOut) {
+      if (!("shownEarlier" in hotel) && !("noRoomsForTheseDates" in hotel)) turn.shownIds.add(hotel.id);
+    }
+    if (geographyKey && !filtered && inRegion.length <= BROAD_RESULT_LIMIT) {
+      turn.wholeGeographies.add(geographyKey);
+    }
+
     return asUntrustedData("myoltra-hotels", {
       matched: narrowed.length,
       ...(tagNote ? { leftOutByTags, tagCounts, tagNote } : {}),
       ...featureInfo,
+      ...(withoutFeature
+        ? {
+            withoutFeature,
+            withoutFeatureNote:
+              "Hotels listed under a feature do not mention it. When the visitor asked for that feature, say for each hotel you present whether its description mentions it, and never let the framing suggest they all have it.",
+          }
+        : {}),
+      ...geographyInfo,
+      ...(repeatedIds
+        ? {
+            shownEarlierNote: `${repeatedIds} of these came back in full earlier in this answer, so only their names are repeated here; their details are in that earlier result.`,
+          }
+        : {}),
       ...flightInfo,
       ...(withinBudgetCount != null ? { withinBudgetForTheseDates: withinBudgetCount } : {}),
       returned: shaped.length,
@@ -2335,7 +2415,7 @@ export function buildConciergeTools({
   preferredAirlines: string[];
   residency: string;
 }) {
-  const turn: TurnMemory = { features: new Map(), residency };
+  const turn: TurnMemory = { features: new Map(), residency, shownIds: new Set(), wholeGeographies: new Set() };
   return {
     searchHotels: createSearchHotels(turn),
     getHotelDetails,
