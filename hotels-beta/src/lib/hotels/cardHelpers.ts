@@ -20,32 +20,17 @@ export function resolveRatehawkUrl(url: string, size: string): string {
   return url.includes("{size}") ? url.replace("{size}", size) : url;
 }
 
-export function normalizeAgodaImage(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    u.search = "";
-    u.protocol = "https:";
-    return u.toString();
-  } catch {
-    return url;
-  }
-}
-
-export function hasAgodaPhotos(hotel: HotelRecord): boolean {
-  return [
-    hotel.agoda_photo1,
-    hotel.agoda_photo2,
-    hotel.agoda_photo3,
-    hotel.agoda_photo4,
-    hotel.agoda_photo5,
-  ].some((value) => Boolean(value));
-}
-
-// Ratehawk-or-Agoda, no placeholder fallback — the "real photo(s) or nothing"
-// list. Ratehawk takes priority when present; Agoda is only a fallback for
-// hotels with no Ratehawk images (see CLAUDE.md §29).
+// Real photo(s) or nothing, no placeholder fallback.
+//
+// Supplier images uploaded to Directus take priority. The fetch layer attaches
+// them as `directus_images`; a hotel carrying them ignores the ETG fields, so
+// the two sources never interleave. Everything else falls back to ETG.
 function getRawHotelImages(hotel: HotelRecord): { url: string; category: string | null }[] {
+  const directusImages = hotel.directus_images ?? [];
+  if (directusImages.length > 0) {
+    return directusImages.map((image) => ({ url: image.url, category: null }));
+  }
+
   if (hotel.ratehawk_image_1) {
     return [
       {
@@ -55,22 +40,30 @@ function getRawHotelImages(hotel: HotelRecord): { url: string; category: string 
     ];
   }
 
-  const agodaImages = [
-    hotel.agoda_photo1,
-    hotel.agoda_photo2,
-    hotel.agoda_photo3,
-    hotel.agoda_photo4,
-    hotel.agoda_photo5,
-  ]
-    .map((value) => normalizeAgodaImage(value))
-    .filter((value): value is string => Boolean(value))
-    .filter((value, index, array) => array.indexOf(value) === index);
+  return [];
+}
 
-  return agodaImages.map((url) => ({ url, category: null }));
+/**
+ * The attribution a hotel's images require, or null when none is needed.
+ * Supplier permissions are conditional on this being displayed.
+ */
+export function hotelImageCredit(hotel: HotelRecord): string | null {
+  const credits = [
+    ...new Set(
+      (hotel.directus_images ?? [])
+        .map((image) => image.credit)
+        .filter((credit): credit is string => Boolean(credit))
+    ),
+  ];
+  return credits.length > 0 ? credits.join(", ") : null;
 }
 
 export function hasRatehawkPhotos(hotel: HotelRecord): boolean {
   return Boolean(hotel.ratehawk_image_1);
+}
+
+export function hasDirectusPhotos(hotel: HotelRecord): boolean {
+  return (hotel.directus_images ?? []).length > 0;
 }
 
 export function hasHotelPhotos(hotel: HotelRecord): boolean {

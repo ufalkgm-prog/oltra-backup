@@ -17,7 +17,6 @@ const sampleHotelFields = [
   "country",
   "city",
   "highlights",
-  "agoda_photo1",
   "ratehawk_image_1",
   "ratehawk_image_1_category",
 ] as const;

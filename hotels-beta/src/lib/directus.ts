@@ -193,11 +193,11 @@ export type HotelRecord = {
   www?: string | null;
   insta?: string | null;
 
-  agoda_photo1?: string | null;
-  agoda_photo2?: string | null;
-  agoda_photo3?: string | null;
-  agoda_photo4?: string | null;
-  agoda_photo5?: string | null;
+  /** Supplier images held in Directus, attached by attachHotelImages() rather
+   * than stored on the hotels row. Present only where a hotel has rows in the
+   * hotel_images collection, and takes priority over the Ratehawk fields.
+   * Every image carries the credit its licence requires. */
+  directus_images?: { url: string; credit: string | null }[];
 
   // Hero-only fields from the Ratehawk backfill (CLAUDE.md §28) — the full
   // ratehawk_image_1..50 set is fetched on demand, see
@@ -218,7 +218,6 @@ export type HotelRecord = {
   booking_enabled?: boolean | null;
   booking_label?: string | null;
   booking_notes?: string | null;
-  agoda_hotel_id?: string | number | null;
   ratehawk_hid?: number | null;
   /** Whether the hotel is sellable through Ratehawk at all — set offline by
    * scripts/ratehawk/probe-ratehawk-status.mjs, not by a live check. "passive"
@@ -228,5 +227,37 @@ export type HotelRecord = {
 };
 
 export async function getHotels(query: DirectusQuery): Promise<HotelRecord[]> {
-  return getItems<HotelRecord>("hotels", query);
+  const hotels = await getItems<HotelRecord>("hotels", query);
+  return attachHotelImages(hotels);
+}
+
+/**
+ * Attaches the Directus-held supplier images to each hotel.
+ *
+ * Kept as a second request rather than a nested field: hotel_images is its own
+ * collection with no alias field on hotels, and one filtered request for the
+ * whole page costs less than deep-expanding every row. A failure here must not
+ * take the page down — the hotels fall back to their Ratehawk images.
+ */
+async function attachHotelImages(hotels: HotelRecord[]): Promise<HotelRecord[]> {
+  const ids = hotels.map((hotel) => hotel.id).filter(Boolean);
+  if (ids.length === 0) return hotels;
+
+  try {
+    const { getHotelImagesByHotelIds } = await import("@/lib/hotels/hotelImages");
+    const byHotel = await getHotelImagesByHotelIds(ids);
+    if (byHotel.size === 0) return hotels;
+
+    return hotels.map((hotel) => {
+      const images = byHotel.get(String(hotel.id));
+      if (!images?.length) return hotel;
+      return {
+        ...hotel,
+        directus_images: images.map((image) => ({ url: image.url, credit: image.credit })),
+      };
+    });
+  } catch (error) {
+    console.error("HOTEL IMAGES FETCH FAILED:", error);
+    return hotels;
+  }
 }

@@ -200,11 +200,6 @@ export default async function HomePage({
         "highlights",
         "ext_points",
         "editor_rank",
-        "agoda_photo1",
-        "agoda_photo2",
-        "agoda_photo3",
-        "agoda_photo4",
-        "agoda_photo5",
         "ratehawk_image_1",
         "ratehawk_image_1_category",
         // Required for the summary cards' price lookup — without it every card
