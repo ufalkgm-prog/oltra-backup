@@ -15,6 +15,7 @@ import {
   type BookingSearchParams,
 } from "@/lib/hotels/buildBookingLink";
 import StructuredDestinationField from "@/components/site/StructuredDestinationField";
+import OltraSpinner from "@/components/site/OltraSpinner";
 import AiResultsSync from "@/lib/ai/AiResultsSync";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import { clampBedrooms,
@@ -2799,10 +2800,7 @@ export default function HotelsView(props: {
                     className="oltra-btn w-full md:w-[calc((100%_-_42px)*1.45/4.6)]"
                   >
                     {searchBusy || isSubmittingSearch ? (
-                      <span
-                        className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-current border-t-transparent"
-                        aria-hidden="true"
-                      />
+                      <OltraSpinner size={14} decorative />
                     ) : null}
                     {searchBusy
                       ? "SEARCHING…"
@@ -3805,10 +3803,7 @@ export default function HotelsView(props: {
                             data-reason={!selectedRoom ? "Choose a room to continue" : undefined}
                           >
                             {prebook.status === "checking" ? (
-                              <span
-                                className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-current border-t-transparent"
-                                aria-hidden="true"
-                              />
+                              <OltraSpinner size={14} decorative />
                             ) : null}
                             {prebook.status === "checking" ? "Checking rate…" : "Continue"}
                           </button>

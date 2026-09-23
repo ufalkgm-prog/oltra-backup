@@ -3,7 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 const BETA_COOKIE = "beta_auth";
 const BETA_TOKEN = "oltra_beta_granted";
 
-const PUBLIC_PATHS = ["/beta-login", "/api/beta-login", "/favicon.ico"];
+const PUBLIC_PATHS = [
+  "/beta-login",
+  "/api/beta-login",
+  "/favicon.ico",
+  "/icon.svg",
+  "/apple-icon.png",
+];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
