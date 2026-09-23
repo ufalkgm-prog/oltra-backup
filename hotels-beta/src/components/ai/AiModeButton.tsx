@@ -19,6 +19,9 @@ import styles from "./AiModeButton.module.css";
  *  - `inline` sits at the right-hand end of the landing page's destination
  *    field, the one search box that kept it. Labelled "Ask AI".
  *
+ * Since 2026-09-23 the two look different: the header one is transparent with a
+ * white rim and label, the inline one a transparent sage-rim button.
+ *
  * MEMBERS ONLY (Ulrik, 2026-09-16). The concierge needs a signed-in session
  * (the chat route answers 401 without one), so only a member sees the AI
  * button. Anyone else sees it grey — passive rim and label, upright rather than
@@ -45,7 +48,12 @@ export default function AiModeButton({ placement, label }: Props) {
   if (!AI_CHAT_ENABLED) return null;
 
   const text = label ?? (placement === "header" ? "AI Concierge" : "Ask AI");
-  const placementClass = placement === "header" ? styles.header : styles.inline;
+  // Header: transparent, white rim and label. Inline: a sage-rim active button, small
+  // and bold italic (Ulrik, 2026-09-23).
+  const placementClass =
+    placement === "header"
+      ? `oltra-btn--ai-concierge ${styles.header}`
+      : `oltra-btn--ai-ask ${styles.inline}`;
 
   if (isMember !== true) {
     return (

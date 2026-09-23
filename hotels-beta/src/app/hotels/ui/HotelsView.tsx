@@ -3108,12 +3108,15 @@ export default function HotelsView(props: {
                   Both boxes are a FIXED height (Ulrik, 2026-09-21). The row
                   used to be as tall as the current hotel's text needed, which
                   meant the whole header — the search box included — resized
-                  every five seconds as the featured hotel cycled. */}
+                  every five seconds as the featured hotel cycled.
+
+                  The search has NO box of its own and sits at the top of the
+                  panel (Ulrik, 2026-09-23): that is exactly how the Results
+                  left panel holds it, so its input starts at the same place
+                  when a search turns into Featured or back. The columns stay
+                  equal; the input simply runs wider here. */}
               <div className="grid items-stretch gap-3 sm:grid-cols-2">
-              <div
-                className="flex flex-col justify-center rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] p-4"
-                style={{ height: FEATURED_HEADER_HEIGHT }}
-              >
+              <div>
                 <form
                   action="/hotels"
                   method="GET"
@@ -3177,6 +3180,7 @@ export default function HotelsView(props: {
                     placeholder="Type first 2 letters of hotel, city, country, or purpose"
                     searchParams={searchParams}
                     dataset={props.suggestions}
+                    wrapperClassName="pt-[2px]"
                     busy={isPending}
                     curated={curatedDestination}
                   />

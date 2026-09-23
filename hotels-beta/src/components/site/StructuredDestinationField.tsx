@@ -371,6 +371,16 @@ function getVisibleTypes(tokens: Token[], allowedTypes: SuggestionType[]) {
   return allowedTypes.filter((type) => !hidden.has(type));
 }
 
+/* When a chip is added or removed the field focuses its input and submits.
+   On the Hotels page that submit can flip Results <-> Featured, and each mode
+   renders its own copy of this field — so the copy that had the cursor is
+   unmounted and the new one would start unfocused (Ulrik, 2026-09-23). The
+   timestamp lets whichever copy mounts next take the cursor back. A copy that
+   stays mounted clears it when the new URL arrives, and it expires anyway, so
+   a field mounted later for an unrelated reason never steals focus. */
+const REFOCUS_WINDOW_MS = 15000;
+let refocusRequestedAt = 0;
+
 export default function StructuredDestinationField({
   label,
   placeholder,
@@ -406,10 +416,20 @@ export default function StructuredDestinationField({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (Date.now() - refocusRequestedAt > REFOCUS_WINDOW_MS) return;
+    refocusRequestedAt = 0;
+    if (!inputRef.current) return;
+    suppressNextFocusOpenRef.current = true;
+    inputRef.current.focus();
+  }, []);
+
+  useEffect(() => {
     const nextExternalKey = getExternalSyncKey(searchParams, allowedTypes);
 
     if (externalSyncKeyRef.current === nextExternalKey) return;
     externalSyncKeyRef.current = nextExternalKey;
+    // Runs after the refocus effect above, so a fresh copy has already used it.
+    refocusRequestedAt = 0;
 
     const nextTokens = buildInitialTokens(searchParams, dataset).filter((t) =>
       allowedTypes.includes(t.type)
@@ -774,6 +794,8 @@ export default function StructuredDestinationField({
     setTokens([]);
     setTypedValue("");
     setOpen(false);
+    refocusRequestedAt = Date.now();
+    inputRef.current?.focus();
     // The page decides what dropping the curated set means (and navigates),
     // so this does not submit the form as removing an ordinary token does.
     curated.onRemove();
@@ -828,6 +850,7 @@ export default function StructuredDestinationField({
 
     requestAnimationFrame(() => {
       inputRef.current?.focus();
+      refocusRequestedAt = Date.now();
       submitParentForm();
     });
   }
@@ -850,6 +873,7 @@ export default function StructuredDestinationField({
 
     requestAnimationFrame(() => {
       inputRef.current?.focus();
+      refocusRequestedAt = Date.now();
       submitParentForm();
     });
   }

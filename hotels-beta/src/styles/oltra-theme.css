@@ -110,14 +110,17 @@
   --oltra-btn-passive-rim: #67716e;
   --oltra-btn-passive-label: #7e8783;
 
-  /* Neutral: an ACTIVE grey, for actions that leave OLTRA without booking
-     here (a hotel we cannot sell: "Book on website"). Rim
-     4.81 / 4.02, muted label 7.97 / 6.66. Sits apart from passive by rim
-     brightness and by having hover/pressed states. */
-  --oltra-btn-neutral-rim: #9aa39e;
-  --oltra-btn-neutral-rim-hover: #afb6b3;
-  --oltra-btn-neutral-rim-press: #8f9994;
-  --oltra-btn-neutral-label: #cbd0cb;
+  /* Neutral: for actions that leave OLTRA without booking here (a hotel we
+     cannot sell: "Book on website"). PALE ORANGE since 2026-09-23 (Ulrik) -
+     it was an active grey, which read as the passive button. Measured page /
+     panel: rim 6.02 / 5.03, label 7.66 / 6.40, pressed rim 5.50 / 4.59. */
+  --oltra-btn-neutral-rim: #e3a877;
+  --oltra-btn-neutral-rim-hover: #ecbb94;
+  --oltra-btn-neutral-rim-press: #d9a07a;
+  --oltra-btn-neutral-label: #f0c29c;
+  /* The old active grey, still the hover edge of the selection controls. */
+  --oltra-choice-grey: #9aa39e;
+  --oltra-choice-grey-label: #cbd0cb;
 
   /* AI — bold italic, the only italic anywhere in the interface, and now
      ORANGE: the same orange as the line around BETA in the myOLTRA logo
@@ -197,8 +200,8 @@
      or no edge at all (header); hover lifts the edge to the neutral grey. */
   --oltra-choice-rim: var(--oltra-btn-passive-rim);
   --oltra-choice-label: var(--oltra-btn-passive-label);
-  --oltra-choice-rim-hover: var(--oltra-btn-neutral-rim);
-  --oltra-choice-label-hover: var(--oltra-btn-neutral-label);
+  --oltra-choice-rim-hover: var(--oltra-choice-grey);
+  --oltra-choice-label-hover: var(--oltra-choice-grey-label);
   --oltra-choice-rim-selected: var(--oltra-btn-primary-rim);
   --oltra-choice-label-selected: var(--oltra-btn-label);
 
@@ -1211,6 +1214,40 @@ button.oltra-select {
 
 .oltra-over-image .oltra-popup-panel .oltra-btn {
   background: transparent;
+}
+
+/* The two concierge entry points part ways (Ulrik, 2026-09-23). Both keep the
+   AI variant's bold italic; "Become a member" keeps the plain orange pill.
+   Qualified with .oltra-btn--ai and placed after the over-image rules so they
+   win there too at equal specificity.
+
+   Header "AI Concierge": no fill, a WHITE rim and label. */
+.oltra-btn--ai.oltra-btn--ai-concierge,
+.oltra-btn--ai.oltra-btn--ai-concierge:hover,
+.oltra-btn--ai.oltra-btn--ai-concierge:active {
+  background: transparent;
+}
+
+.oltra-btn--ai.oltra-btn--ai-concierge {
+  --btn-rim: var(--oltra-btn-label);
+  --btn-rim-hover: #ffffff;
+  --btn-rim-press: var(--oltra-btn-ai-label-press);
+}
+
+/* Landing field "Ask AI": a normal active button - transparent, sage rim,
+   standard label - kept smaller than Full and in bold italic. */
+.oltra-btn--ai.oltra-btn--ai-ask,
+.oltra-btn--ai.oltra-btn--ai-ask:hover,
+.oltra-btn--ai.oltra-btn--ai-ask:active {
+  background: transparent;
+}
+
+.oltra-btn--ai.oltra-btn--ai-ask {
+  --btn-rim: var(--oltra-btn-primary-rim);
+  --btn-rim-hover: var(--oltra-btn-primary-rim-hover);
+  --btn-rim-press: var(--oltra-btn-primary-rim-press);
+  --btn-label: var(--oltra-btn-label);
+  --btn-label-press: var(--oltra-btn-label-press);
 }
 
 .oltra-chip {
