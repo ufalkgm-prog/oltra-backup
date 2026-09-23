@@ -145,7 +145,7 @@ function readLatestPresentation(messages: UIMessage[]): Presentation | null {
   return null;
 }
 
-type Place = { city: string; country: string };
+type Place = { city: string; country: string; airport?: string };
 
 /** A tool's result as data: our tools wrap JSON in an untrusted-data fence. */
 function toolJson(output: unknown): unknown {
@@ -176,6 +176,7 @@ function placesById(messages: UIMessage[]): Map<number, Place> {
       places.set(record.id, {
         city: record.city.trim(),
         country: typeof record.country === "string" ? record.country.trim() : "",
+        ...(typeof record.airport === "string" && record.airport ? { airport: record.airport.toUpperCase() } : {}),
       });
     }
     Object.values(record).forEach(visit);
@@ -227,8 +228,62 @@ function presentedPlace(
     known.map((p) => expandCityAliases([p.city]).map((c) => c.toLowerCase()).sort().join("|"))
   );
   if (cities.size === 1) return { kind: "city", place: known[0] };
-  const named = cityNamedIn(questionText(history), known);
+  const named = cityNamedIn(questionText(history), known.filter(departureFilter(history[history.length - 1])));
   return named ? { kind: "city", place: named } : { kind: "several" };
+}
+
+/** Whether a place is where the turn flies FROM, so a departure city named in
+ * the question ("three hours from Paris") is never taken as the destination.
+ * Matched on the place's own airport (searchHotels gives every hotel one)
+ * against the turn's flyingFrom and flight origins, and on a named originCity -
+ * no airport-to-city table, which would add 80KB to every page. */
+function departureFilter(message: UIMessage | undefined): (place: Place) => boolean {
+  const codes = new Set<string>();
+  const cities = new Set<string>();
+  for (const part of message?.parts ?? []) {
+    if (!isToolUIPart(part)) continue;
+    const input = (part.input ?? {}) as { flyingFrom?: string[]; origin?: string; originCity?: string };
+    const name = getToolName(part);
+    if (name === "searchHotels") (input.flyingFrom ?? []).forEach((c) => codes.add(c.trim().toUpperCase()));
+    if (name === "searchFlights") {
+      if (input.origin) codes.add(input.origin.trim().toUpperCase());
+      if (input.originCity) cities.add(foldCity(input.originCity));
+    }
+  }
+  return (place) =>
+    !(place.airport && codes.has(place.airport)) && !cities.has(foldCity(place.city));
+}
+
+/** What the turn's last hotel search asked for, for the pages that mirror it
+ * (Inspire): its settings and activities, flight limit, departure airport and
+ * the month it searched. Read even when nothing was presented - a broad
+ * search that ended in a question still says what kind of trip it is. */
+function searchSettings(message: UIMessage): Partial<AiQueryState> | null {
+  const search = message.parts
+    .filter((p) => isToolUIPart(p) && getToolName(p) === "searchHotels" && p.state !== "input-streaming")
+    .map((p) =>
+      isToolUIPart(p)
+        ? (p.input as {
+            settings?: string[];
+            activities?: string[];
+            flyingFrom?: string[];
+            maxFlightHours?: number;
+            stay?: { checkIn?: string };
+          } | undefined)
+        : undefined
+    )
+    .filter(Boolean)
+    .at(-1);
+  if (!search) return null;
+  return {
+    ...(search.settings?.length ? { settings: search.settings } : {}),
+    ...(search.activities?.length ? { activities: search.activities } : {}),
+    ...(typeof search.maxFlightHours === "number" && search.maxFlightHours > 0
+      ? { maxFlightHours: search.maxFlightHours }
+      : {}),
+    ...(search.flyingFrom?.[0] ? { origin: search.flyingFrom[0].trim().toUpperCase() } : {}),
+    searchedFrom: search.stay?.checkIn ?? "",
+  };
 }
 
 /** The one place among `places` whose city the text names as a whole word,
@@ -316,6 +371,7 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
       const spansPlaces = !hasDest && fromRecords.kind === "several";
       const recordCity = fromRecords.kind === "city" ? fromRecords.place : null;
       const query: Partial<AiQueryState> = {
+        searchedFrom: stay.checkIn ?? searchSettings(message)?.searchedFrom ?? "",
         // Only when this answer searched with one: a limit stated once holds
         // for the rest of the trip, and a later "fly out a day earlier" that
         // does not repeat it must not put Inspire back on its 4-hour default.
@@ -1584,11 +1640,20 @@ export default function AiConversation() {
     if (!last || last.role !== "assistant" || last.id === namedPlaceAppliedRef.current) return;
     namedPlaceAppliedRef.current = last.id;
     if (readPresentation(last)) return;
-    const place = cityNamedIn(questionText(messages), [...placesById(messages).values()]);
-    if (!place) return;
-    if (foldCity(storeQuery.destination.city) === foldCity(place.city)) return;
+    const found = cityNamedIn(
+      questionText(messages),
+      [...placesById(messages).values()].filter(departureFilter(last))
+    );
+    const place = found && foldCity(storeQuery.destination.city) !== foldCity(found.city) ? found : null;
+    /* And what it searched for, so Inspire follows a question answered with a
+       question: "museums and food, three hours from Paris, mid-April" searched
+       City, Gastronomy, 3h from CDG in April and presented nothing, and the page
+       kept the previous conversation's March, Beach, 4 hours, London. */
+    const settings = searchSettings(last);
+    if (!place && !settings) return;
     setPresentation(framing, followUp, {}, {
-      destination: { city: place.city, area: "", adminRegion: "", country: place.country },
+      ...(settings ?? {}),
+      ...(place ? { destination: { city: place.city, area: "", adminRegion: "", country: place.country } } : {}),
     });
   }, [messages, status, framing, followUp, storeQuery.destination.city, setPresentation]);
 

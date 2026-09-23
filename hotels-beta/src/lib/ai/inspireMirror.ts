@@ -120,7 +120,7 @@ export function purposeFromQuery(query: AiQueryState): InspirePurpose | "" {
  * Parsed off the ISO string rather than through Date, so a timezone west of
  * UTC cannot roll "1 February" back into January. */
 export function monthFromQuery(query: AiQueryState): InspireMonth | "" {
-  const match = /^\d{4}-(\d{2})-\d{2}$/.exec(query.from);
+  const match = /^\d{4}-(\d{2})-\d{2}$/.exec(query.searchedFrom || query.from);
   if (!match) return "";
   const index = Number(match[1]) - 1;
   return MONTHS[index] ?? "";

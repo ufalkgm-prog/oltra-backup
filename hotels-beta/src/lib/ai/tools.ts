@@ -53,6 +53,7 @@ function resolveAreaAlias(value: string | undefined): string | undefined {
   return AREA_ALIASES[normaliseRegionTerm(value)] ?? value;
 }
 import { distanceFromPlace, findNearPlace, nearSummary, sortByDistance } from "./nearPlace";
+import { mustAskRooms, ROOMS_QUESTION } from "./rooms";
 import { FLIGHT_TIME_BASIS, flightHoursBetween, knownAirports, shortestFlightHours } from "./flightTime";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { toPreferredAirlines, type PreferredAirline } from "./preferredAirlines";
@@ -442,6 +443,16 @@ function narrowingAxes(
 
 /* ------------------------------------------------------------------------- */
 
+const ROOMS_DESCRIPTION =
+  "Only the number of rooms the visitor gave, or 1 for one or two guests, one " +
+  "adult with one or two children, or two adults with one child. For any other " +
+  "party of three or more that has not said, leave it out: nothing is priced, " +
+  `and you ask "${ROOMS_QUESTION}"`;
+
+const ROOMS_NOTE =
+  `Not priced: for this party the visitor must say how many rooms. Ask "${ROOMS_QUESTION}" ` +
+  "in followUp, and present the hotels without a stay meanwhile if they fit.";
+
 /* DESCRIPTIONS COME WITH A SHORT LIST (2026-09-23). Measured on a New Year's
  * question: after its searches the model spent a whole step reading five
  * hotels' descriptions - 14.6s, of which the lookups took 0.3s; the rest was
@@ -662,7 +673,10 @@ const createSearchHotels = (turn: TurnMemory) => tool({
           adults: { type: "number" },
           kids: { type: "number" },
           childrenAges: { type: "array", items: { type: "number" } },
-          rooms: { type: "number" },
+          rooms: {
+            type: "number",
+            description: ROOMS_DESCRIPTION,
+          },
           maxPricePerStay: {
             type: "number",
             description:
@@ -1025,7 +1039,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     // second ask cost more than the supplier call it triggered.
     const ids = shaped.map((h) => h.id);
     const [ranked, details] = await Promise.all([
-      input.stay?.checkIn && input.stay?.checkOut
+      input.stay?.checkIn && input.stay?.checkOut && !mustAskRooms(input.stay)
         ? rankAvailability({ ...input.stay, ids }, turn.residency)
         : null,
       ids.length && ids.length <= INLINE_DESCRIPTIONS_MAX ? descriptionsFor(ids) : null,
@@ -1129,6 +1143,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       ...(details
         ? { descriptionsIncluded: "Each hotel's full description and room count are included: do not call getHotelDetails for these." }
         : {}),
+      ...(mustAskRooms(input.stay) ? { roomsQuestion: ROOMS_NOTE } : {}),
       ...(fullForDates.size
         ? {
             fullHotelsNote:
@@ -1391,7 +1406,10 @@ const createCheckAvailability = (turn: TurnMemory) => tool({
       adults: { type: "number" },
       kids: { type: "number" },
       childrenAges: { type: "array", items: { type: "number" } },
-      rooms: { type: "number" },
+      rooms: {
+        type: "number",
+        description: ROOMS_DESCRIPTION,
+      },
       maxPricePerStay: {
         type: "number",
         description:
@@ -1409,6 +1427,7 @@ const createCheckAvailability = (turn: TurnMemory) => tool({
     additionalProperties: false,
   }),
   async execute(input) {
+    if (mustAskRooms(input)) return asUntrustedData("availability", { roomsQuestion: ROOMS_NOTE });
     return asUntrustedData("availability", await rankAvailability(input, turn.residency));
   },
 });

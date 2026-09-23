@@ -89,6 +89,10 @@ export type AiQueryState = {
    * searches with another, like the month and purpose Inspire mirrors with it
    * (re-applied on each new answer, never while the visitor is choosing). */
   maxFlightHours: number;
+  /** yyyy-mm-dd the answer searched from, set on every answer (empty when it
+   * searched no dates). Not a stay field, so it survives an answer that
+   * presents nothing - the Inspire page reads its month from it. */
+  searchedFrom: string;
 };
 
 export const EMPTY_QUERY_STATE: AiQueryState = {
@@ -108,6 +112,7 @@ export const EMPTY_QUERY_STATE: AiQueryState = {
   currency: "EUR",
   origin: "",
   maxFlightHours: 0,
+  searchedFrom: "",
 };
 
 /** What the model returns alongside its prose so the UI can render cards.

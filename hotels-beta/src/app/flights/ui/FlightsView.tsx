@@ -18,6 +18,7 @@ import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import type { AirportOption } from "@/lib/airportOptions";
 import { getCityForAirportIata, pickPrimaryAirportForCity } from "@/lib/cityAirports";
+import { cityOwningAirport } from "@/lib/airportCity";
 import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
@@ -540,7 +541,10 @@ export default function FlightsView({ searchParams }: Props) {
       // getCityForAirportIata does a reverse lookup against our own hotel
       // roster's nearest-airport data instead, so it's either a genuine
       // hotel city or "" (never a fabricated one).
-      city: getCityForAirportIata(search.to) || normalizeParam(searchParams.city),
+      // Only a city the airport clearly belongs to (lib/airportCity.ts): MRU
+      // serves five Mauritius resorts, and naming the nearest one made it the
+      // destination on every page (2026-09-23).
+      city: cityOwningAirport(search.to) || normalizeParam(searchParams.city),
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
       from: search.departDate,

@@ -768,12 +768,16 @@ presentResults' "stay". Still pass the party there (adults, kids, rooms) when
 they described it: "two rooms with 2 adults in each" is 4 adults in 2 rooms, and
 the page's guest and bedroom fields are filled from it.
 
-**Always say how many rooms.** When the visitor did not say, choose what the
-party needs — two adults and a young child share a room; a family of four
-usually needs two rooms or a family suite — and state it in the framing, in the
-same clause as the dates: "priced as two rooms for the four of you — happy to
-look at one family room instead". Two rooms chosen silently roughly doubled
-every price on the page.
+**How many rooms: one, or ask.** When the visitor has not said, it is one room
+for one or two guests, for one adult with one or two children, and for two
+adults with one child — say so in the framing, in the same clause as the dates
+("priced as one room for the three of you"). For any other party of three or
+more — two adults and two children, three adults, a group — never choose: ask
+"How many rooms would you need?" as the follow-up, and pass no "rooms" to the
+tools until they answer. Show the hotels that fit meanwhile, without a stay, so
+nothing is priced for a room count nobody gave. A family of four once came back
+priced as two rooms the concierge had chosen, which doubles every price on the
+page.
 
 **When a limit they set leaves nothing that meets it, offer the nearest way to
 meet it.** Asked for ski-in ski-out within two hours of the airport, and every
