@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import type maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import GuestSelector from "@/components/site/GuestSelector";
@@ -42,6 +41,7 @@ import {
 import type { HotelRecord } from "@/lib/directus";
 import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
+  getHotelImageAtWidth,
   getHotelImageSet,
   HOTEL_CARD_PLACEHOLDERS as PLACEHOLDERS,
   hasHotelPhotos,
@@ -2906,7 +2906,8 @@ export default function HotelsView(props: {
               <div className="oltra-scrollbar mt-3.5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
                 {orderedVisibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
-                  const img = getHotelImageSet(h)[0] ?? PLACEHOLDERS[0];
+                  /* Twice the drawn width, for dense screens. */
+                  const img = getHotelImageAtWidth(h, 264) ?? PLACEHOLDERS[0];
                   const hasPhoto = hasHotelPhotos(h);
                   const ratehawkCardAvailability = ratehawkResultAvailability[String(h.id)];
                   const featuredAwards = getFeaturedAwardsForHotel(h);
@@ -2966,7 +2967,13 @@ export default function HotelsView(props: {
                         <div>
                           <div className="hotel-result-card__fade overflow-hidden rounded-[var(--oltra-radius-md)]">
                             {hasPhoto ? (
-                              <Image src={img} alt="" width={132} height={80} className="h-20 w-full object-cover" sizes="132px" />
+                              // Plain <img> like every other supplier photo here: both
+                              // sources serve the requested size, and next/image cannot
+                              // reach the Directus proxy — the optimiser fetches
+                              // server-side with no beta cookie and is redirected to
+                              // the login page.
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={img} alt="" className="h-20 w-full object-cover" />
                             ) : (
                               <div className="oltra-photo-placeholder h-20 w-full">Photos coming soon</div>
                             )}
