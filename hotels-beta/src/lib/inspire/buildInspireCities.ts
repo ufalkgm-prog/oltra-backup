@@ -1,7 +1,8 @@
 import "server-only";
 
 import { getHotels } from "@/lib/directus";
-import { normalizeAgodaImage, resolveRatehawkUrl, RATEHAWK_THUMB_SIZE } from "@/lib/hotels/cardHelpers";
+import { resolveRatehawkUrl, RATEHAWK_THUMB_SIZE } from "@/lib/hotels/cardHelpers";
+import { getHotelImagesByHotelIds } from "@/lib/hotels/hotelImages";
 import { INSPIRE_CITY_METADATA } from "./cityMetadata";
 import type { InspireCity } from "./types";
 
@@ -61,7 +62,6 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
       "region",
       "lat",
       "lng",
-      "agoda_photo1",
       "ratehawk_image_1",
     ],
     filter: {
@@ -77,7 +77,6 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
     region?: string | null;
     lat?: number | string | null;
     lng?: number | string | null;
-    agoda_photo1?: string | null;
     ratehawk_image_1?: string | null;
   }>;
 
@@ -98,6 +97,12 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
       }>;
     }
   >();
+
+  // Hotels whose images live in Directus rather than in ratehawk_image_1 —
+  // one request for the whole set, keyed by hotel id.
+  const directusImages = await getHotelImagesByHotelIds(
+    hotels.filter((hotel) => !hotel.ratehawk_image_1).map((hotel) => hotel.id)
+  );
 
   for (const hotel of hotels) {
     const rawCity = hotel.city?.trim();
@@ -135,7 +140,7 @@ export async function buildInspireCities(): Promise<InspireCity[]> {
         lng,
         thumbnail: hotel.ratehawk_image_1
           ? resolveRatehawkUrl(hotel.ratehawk_image_1, RATEHAWK_THUMB_SIZE)
-          : normalizeAgodaImage(hotel.agoda_photo1),
+          : (directusImages.get(String(hotel.id))?.[0]?.url ?? null),
       });
     }
   }

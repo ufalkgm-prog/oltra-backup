@@ -7,7 +7,7 @@ import {
   buildBookingLink,
   type BookingSearchParams,
 } from "@/lib/hotels/buildBookingLink";
-import { getAgodaPhotos } from "@/lib/agoda/content";
+import { getHotelImages, imageCredits } from "@/lib/hotels/hotelImages";
 
 type Hotel = {
   id: string | number;
@@ -48,13 +48,6 @@ type Hotel = {
   booking_label?: string | null;
   booking_notes?: string | null;
 
-  // Agoda
-  agoda_hotel_id?: string | null;
-  agoda_photo1?: string | null;
-  agoda_photo2?: string | null;
-  agoda_photo3?: string | null;
-  agoda_photo4?: string | null;
-  agoda_photo5?: string | null;
 };
 
 function toArray<T>(v: T[] | null | undefined): T[] {
@@ -93,12 +86,6 @@ const HOTEL_DETAIL_FIELDS = [
   "awards",
   "setting",
   "style",
-  "agoda_hotel_id",
-  "agoda_photo1",
-  "agoda_photo2",
-  "agoda_photo3",
-  "agoda_photo4",
-  "agoda_photo5",
 ].join(",");
 
 async function fetchHotelById(param: string): Promise<Hotel | null> {
@@ -140,7 +127,8 @@ export default async function HotelDetailPage({
 
   if (!hotel) notFound();
 
-  const agodaPhotos = getAgodaPhotos(hotel.agoda_hotel_id);
+  const photos = await getHotelImages(hotel.id);
+  const photoCredits = imageCredits(photos);
 
   const loc = locationLine(hotel);
 
@@ -195,18 +183,26 @@ export default async function HotelDetailPage({
         {/* Hero */}
         <header className="mb-10">
 
-          {agodaPhotos.length > 0 ? (
-            <div className="mb-8 grid gap-3 sm:grid-cols-2">
-              {agodaPhotos.slice(0, 5).map((src, i) => (
-                // eslint-disable-next-line @next/next/no-img-element -- Agoda's CDN serves the photo sized; see HotelsView
-                <img
-                  key={i}
-                  src={src}
-                  alt={i === 0 ? (hotel.hotel_name ?? "Hotel photo") : ""}
-                  className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
-                />
-              ))}
-            </div>
+          {photos.length > 0 ? (
+            <>
+              <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                {photos.slice(0, 5).map((photo, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- Directus serves the asset sized; see HotelsView
+                  <img
+                    key={photo.url}
+                    src={`${photo.url}?width=${i === 0 ? 1600 : 900}&fit=cover`}
+                    alt={i === 0 ? (hotel.hotel_name ?? "Hotel photo") : ""}
+                    className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
+                  />
+                ))}
+              </div>
+              {/* The supplier's permission is conditional on this credit. */}
+              {photoCredits.length > 0 ? (
+                <p className="mb-8 text-xs text-[color:var(--oltra-text-muted)]">
+                  Photos: {photoCredits.join(", ")}
+                </p>
+              ) : null}
+            </>
           ) : (
             <div className="oltra-photo-placeholder mb-8 h-[320px] rounded-[var(--oltra-radius-lg)]">
               Photos coming soon

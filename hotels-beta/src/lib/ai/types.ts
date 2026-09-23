@@ -201,11 +201,6 @@ export type AiHotelCard = {
   ratehawk_hid: number | null;
   ratehawk_status: string | null;
   ratehawk_image_1: string | null;
-  agoda_photo1: string | null;
-  agoda_photo2: string | null;
-  agoda_photo3: string | null;
-  agoda_photo4: string | null;
-  agoda_photo5: string | null;
   www: string | null;
   booking_provider: string | null;
   booking_URL: string | null;
