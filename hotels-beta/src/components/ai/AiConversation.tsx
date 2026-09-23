@@ -5,6 +5,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isToolUIPart, getToolName, type UIMessage } from "ai";
 import { useAiConversation, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { collapseReturnLegs } from "@/lib/ai/flightLegs";
+import { flightLegsAreAlternatives } from "@/lib/ai/handoff";
 import {
   MAX_NAMED,
   completeLegsForHotels,
@@ -12,6 +13,12 @@ import {
   namedHotels,
 } from "@/lib/ai/hotelGateways";
 import { decodeStrayEscapes, panelText, stripLeadingName } from "@/lib/ai/rationale";
+import type { AiPageContext } from "@/lib/ai/types";
+import {
+  rememberConciergeStays,
+  rememberedConciergeStays,
+  stayKey,
+} from "@/lib/ai/conciergeStays";
 import { isMacroRegionTerm } from "@/lib/ai/macroRegionTerms";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { useHomeAirport } from "@/lib/members/useHomeAirport";
@@ -160,10 +167,23 @@ function readPresentation(message: UIMessage): Presentation | null {
       const input = part.input as PresentInput | undefined;
       if (!input?.framing) continue;
 
+      // Text about restaurants alone may not call them "rooms" (panelText).
+      const hotelIdSet = new Set([
+        ...(input.hotelIds ?? []),
+        ...(input.laterStops ?? []).flatMap((stop) => stop?.hotelIds ?? []),
+      ]);
+      const restaurantIdSet = new Set([
+        ...(input.restaurantIds ?? []),
+        ...(input.laterStops ?? []).flatMap((stop) => stop?.restaurantIds ?? []),
+      ]);
+      const answerHasHotels = hotelIdSet.size > 0;
+
       const rationales: Record<string, string> = {};
       for (const entry of input.rationales ?? []) {
         if (entry?.id != null && entry.reason) {
-          rationales[String(entry.id)] = panelText(entry.reason);
+          rationales[String(entry.id)] = panelText(entry.reason, {
+            restaurantsOnly: restaurantIdSet.has(entry.id) && !hotelIdSet.has(entry.id),
+          });
         }
       }
 
@@ -312,7 +332,8 @@ function readPresentation(message: UIMessage): Presentation | null {
 
       return {
         toolCallId: part.toolCallId,
-        framing: panelText(input.framing),
+        framing: panelText(input.framing, { restaurantsOnly: !answerHasHotels }),
+        // Not the follow-up: it often offers hotels next ("how many rooms?").
         followUp: panelText(input.followUp ?? ""),
         query,
         results,
@@ -559,13 +580,68 @@ function progressSteps(message: UIMessage | undefined): ProgressStep[] {
   });
 }
 
+/* Every stay a presentResults call in this transcript has presented — the
+ * dates the results sync may have written into the page's search form. Also
+ * remembered past Clear, in lib/ai/conciergeStays. */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+function conciergeStayKeys(messages: UIMessage[]): Set<string> {
+  const keys = new Set<string>();
+  for (const message of messages) {
+    if (message.role !== "assistant") continue;
+    for (const part of message.parts) {
+      if (!isToolUIPart(part) || getToolName(part) !== "presentResults") continue;
+      // A streaming input is partial: "2026-10" is not yet a date.
+      if (part.state === "input-streaming") continue;
+      const input = part.input as PresentInput | undefined;
+      const stays = [input?.stay, ...(input?.laterStops ?? [])];
+      for (const stay of stays) {
+        const { checkIn, checkOut } = stay ?? {};
+        if (checkIn && checkOut && ISO_DAY.test(checkIn) && ISO_DAY.test(checkOut)) {
+          keys.add(stayKey(checkIn, checkOut));
+        }
+      }
+    }
+  }
+  return keys;
+}
+
+/* The page's party goes to the concierge only when it differs from the form's
+ * default of 2 adults, no children, one room (Ulrik, 2026-09-23): a default
+ * is not something the visitor told us. Any change sends the whole party. */
+function withoutDefaultParty(context: AiPageContext | null): AiPageContext | null {
+  if (!context) return context;
+  const isDefault =
+    (context.adults ?? 2) === 2 && !context.kids && (context.rooms ?? 1) <= 1;
+  if (!isDefault) return context;
+  const rest = { ...context };
+  delete rest.adults;
+  delete rest.kids;
+  delete rest.rooms;
+  return rest;
+}
+
+/* The prose of a turn (2026-09-23). A concierge turn can speak before a tool
+ * call as well as after it — "I can't book or take payment — but let me check
+ * those nights for you." then the real answer — and joining the pieces with
+ * nothing between them printed "…for you.I can't book…", the opening twice.
+ * So an agent turn shows only what it said after its last tool call when it
+ * said anything there; otherwise all of it, a paragraph apart. */
 function messageText(message: UIMessage): string {
-  return panelText(
-    message.parts
+  const texts = (parts: UIMessage["parts"]) =>
+    parts
       .filter((part): part is { type: "text"; text: string } => part.type === "text")
-      .map((part) => part.text)
-      .join("")
-  );
+      .map((part) => part.text.trim())
+      .filter(Boolean);
+
+  if (message.role !== "assistant") return panelText(texts(message.parts).join("\n\n"));
+
+  let lastTool = -1;
+  message.parts.forEach((part, index) => {
+    if (isToolUIPart(part)) lastTool = index;
+  });
+  const after = texts(message.parts.slice(lastTool + 1));
+  return panelText((after.length ? after : texts(message.parts)).join("\n\n"));
 }
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
@@ -918,6 +994,22 @@ function ResultSummary({ past }: { past?: Presentation }) {
     return `${where} ${keep} ${page === "landing" ? REOPEN_CHAT : RESUME_CHAT}`;
   })();
 
+  /* ALTERNATIVE ROUTES ON THE FLIGHTS PAGE (2026-09-23). The page can search
+     one route, so the handoff gives it the first of them; the footnote said
+     "the results of your query are listed in the window behind" over three
+     airports of which the page held one. It names the one behind and how to
+     reach the others. */
+  const flightAlternativesFootnote = (() => {
+    if (page !== "flights" || multiStop || partsElsewhere.length > 0) return "";
+    if (!flightLegsAreAlternatives(flights)) return "";
+    const [shown, ...others] = flights;
+    const otherList =
+      others.length > 1
+        ? `${others.slice(0, -1).map((leg) => leg.destination).join(", ")} or ${others.at(-1)?.destination}`
+        : others[0]?.destination ?? "";
+    return `Flights to ${shown.destination} are listed in the window behind this panel. To see ${otherList}, change the destination in the search form there. ${REVIEW_BEHIND}`;
+  })();
+
   return (
     <div className={styles.summary}>
       {loneHotel && notSoldHere(loneHotel) ? (
@@ -1029,6 +1121,8 @@ function ResultSummary({ past }: { past?: Presentation }) {
       {past ? null : <p className={styles.summaryFootnote}>
         {multiStopFootnote
           ? multiStopFootnote
+          : flightAlternativesFootnote
+          ? flightAlternativesFootnote
           : partsBehind.length > 0 && partsElsewhere.length > 0
           ? /* Split: part of the answer is behind the panel, the rest is one
                link away — say which is where. */
@@ -1106,6 +1200,13 @@ export default function AiConversation() {
     useChat({
       transport: new DefaultChatTransport({ api: "/api/chat" }),
     });
+
+  // Every stay an answer presents is remembered past Clear (see
+  // rememberedConciergeStays), so its dates are never mistaken for the
+  // visitor's own once the transcript is gone.
+  useEffect(() => {
+    rememberConciergeStays(conciergeStayKeys(messages));
+  }, [messages]);
 
   // A failed turn leaves the user's message in the list with no reply. Left
   // there it is not just cosmetic: the next request replays it, so the model
@@ -1274,13 +1375,26 @@ export default function AiConversation() {
     if (!text || busy) return;
     setDraft("");
     setTimedOut(false);
+    // Dates in the form that no answer here presented are the visitor's own
+    // choice, which the concierge uses rather than offers (Ulrik, 2026-09-23).
+    const context = withoutDefaultParty(pageContextRef.current);
+    const formStay = context?.from && context.to ? stayKey(context.from, context.to) : null;
+    const pageContextForRequest =
+      context && formStay
+        ? {
+            ...context,
+            datesChosenByVisitor:
+              !conciergeStayKeys(messages).has(formStay) &&
+              !rememberedConciergeStays().has(formStay),
+          }
+        : context;
     void sendMessage(
       { text },
       // Where the visitor is standing, per request. It is re-validated and
       // scrubbed server-side before it reaches a system block. Residency
       // travels beside it, not inside it: it is for the supplier call only
       // and never reaches the model.
-      { body: { pageContext: pageContextRef.current, residency: currentResidency() } }
+      { body: { pageContext: pageContextForRequest, residency: currentResidency() } }
     );
   }
 

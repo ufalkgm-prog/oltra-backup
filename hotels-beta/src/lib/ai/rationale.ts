@@ -40,13 +40,30 @@ function keepCase(original: string, replacement: string): string {
     : replacement;
 }
 
+/* "Two easy, well-run rooms for lunch" (2026-09-23, live) — restaurants called
+ * "rooms", weeks after "rooms"/"kitchens" went on the prompt's never-list.
+ * Only where no hotel is being described, so hotel rooms are never touched,
+ * and never when the word names a real feature: a dining room, a private room,
+ * a chef's table room. Singular "kitchen" is left alone too — "the kitchen
+ * leans Japanese" and "an open kitchen" are real. */
+const RESTAURANT_NOUNS =
+  /(?<!\b(?:dining|private|guest|hotel|tasting|chef's|chef’s|table|tea|back|function|event|wine|cocktail|garden|drawing|living)\s)\b(rooms?|kitchens)\b/gi;
+
+function restaurantNoun(match: string): string {
+  const lower = match.toLowerCase();
+  return keepCase(match, lower === "room" ? "place" : "places");
+}
+
 /** Every model-authored string the panel shows: stray escapes decoded, and the
- * phrases that sound like a booking or read like our data rewritten. */
-export function panelText(text: string): string {
+ * phrases that sound like a booking or read like our data rewritten.
+ * `restaurantsOnly` marks text about restaurants and no hotel, where "rooms"
+ * can only mean the restaurants themselves. */
+export function panelText(text: string, options: { restaurantsOnly?: boolean } = {}): string {
   let out = decodeStrayEscapes(text);
   for (const [pattern, replacement] of HOUSE_WORDING) {
     out = out.replace(pattern, (match) => keepCase(match, replacement));
   }
+  if (options.restaurantsOnly) out = out.replace(RESTAURANT_NOUNS, restaurantNoun);
   return out;
 }
 

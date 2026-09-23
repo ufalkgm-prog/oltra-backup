@@ -36,6 +36,10 @@ export type AiPageContext = {
   /** Stay details the page's own controls already hold. */
   from?: string;
   to?: string;
+  /** True when `from`/`to` are the visitor's own — no concierge answer in this
+   * conversation presented those dates. Set at send time by AiConversation,
+   * not by the pages. */
+  datesChosenByVisitor?: boolean;
   adults?: number;
   kids?: number;
   rooms?: number;

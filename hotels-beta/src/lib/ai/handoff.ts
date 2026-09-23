@@ -51,9 +51,25 @@ export function allHotelsHref(query: AiQueryState): string {
   return `/hotels?${params.toString()}`;
 }
 
-/* More than one journey hands off as multi-city, which is precisely what that
- * mode on the Flights page is for — an open jaw flattened into a return would
- * send the traveller home from an airport they are not in. */
+/** More than one leg that is a CHOICE between routes rather than one journey:
+ * any leg with its own return, or every leg leaving the same place on the same
+ * day. A real multi-city trip is a chain of one-way legs. Read by the handoff
+ * below and by the panel's footnote, so the two cannot disagree. */
+export function flightLegsAreAlternatives(
+  legs: { origin: string; departureDate: string; returnDate?: string }[]
+): boolean {
+  if (legs.length < 2) return false;
+  const [first] = legs;
+  return (
+    legs.some((leg) => Boolean(leg.returnDate)) ||
+    legs.every((leg) => leg.origin === first.origin && leg.departureDate === first.departureDate)
+  );
+}
+
+/* A chain of one-way journeys hands off as multi-city, which is precisely what
+ * that mode on the Flights page is for — an open jaw flattened into a return
+ * would send the traveller home from an airport they are not in. Alternative
+ * routes hand off as the first of them. */
 export function flightsHref(query: AiQueryState, results: AiResultSet): string {
   /* The journey, the dates and the guests — nothing else (Ulrik, 2026-09-14).
      This used to start from queryStateToParams, so the Flights page URL
@@ -78,7 +94,15 @@ export function flightsHref(query: AiQueryState, results: AiResultSet): string {
   params.set("origin", first.origin);
   params.set("cabin", FLIGHTS_PAGE_CABIN[first.cabin] ?? "Economy");
 
-  if (legs.length > 1) {
+  /* ALTERNATIVES ARE NOT A MULTI-CITY TRIP (2026-09-23). "Copenhagen to
+     London, back on the 15th" came back as five return trips, one per London
+     airport, and all five were sent as legs of one multi-city itinerary —
+     five parallel departures on the same morning, which the page could not
+     make sense of and showed as an empty form. A real multi-city trip is a
+     chain of one-way legs; a set where any leg has its own return, or where
+     every leg leaves from the same place on the same day, is a choice between
+     routes, and the page gets the first of them. */
+  if (legs.length > 1 && !flightLegsAreAlternatives(legs)) {
     params.set("tripType", "multiple");
     // The form takes at most 5, and only searches when every leg is complete —
     // so send whole legs, and no more than it can hold.

@@ -93,6 +93,7 @@ export function sanitisePageContext(input: unknown): AiPageContext | null {
   assign("month", text(raw.month));
   assign("from", isoDate(raw.from));
   assign("to", isoDate(raw.to));
+  assign("datesChosenByVisitor", raw.datesChosenByVisitor === true ? true : undefined);
   assign("adults", count(raw.adults, 20));
   assign("kids", count(raw.kids, 20));
   assign("rooms", count(raw.rooms, 20));
@@ -143,9 +144,17 @@ export function describePageContext(context: AiPageContext | null): string {
      into the URL and the panel then reads back. Phrased as "for 6-13 March" the
      model adopted them as a stated intention and priced a beach question in
      France against a leftover ski week. The prompt tells it to offer these
-     rather than assume them; this wording is what makes that possible. */
+     rather than assume them; this wording is what makes that possible.
+
+     Unless the visitor put them there (Ulrik, 2026-09-23): dates no concierge
+     answer in this conversation presented were chosen by hand, and a manual
+     change from the default is to be used, not offered back. */
   if (context.from && context.to) {
-    facts.push(`with ${context.from} to ${context.to} filled into the search form`);
+    facts.push(
+      context.datesChosenByVisitor
+        ? `with ${context.from} to ${context.to} chosen by the visitor in the search form`
+        : `with ${context.from} to ${context.to} filled into the search form`
+    );
   }
 
   const party: string[] = [];

@@ -56,7 +56,9 @@ import {
   clearHotelFlightDestination,
   mergeHotelFlightSearch,
   readHotelFlightSearch,
+  clearHotelFlightDatesIf,
 } from "@/lib/searchSession";
+import { isConciergeStay } from "@/lib/ai/conciergeStays";
 import { aiResultsAreCurrent, useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import type { RatehawkGroupedRoom, RatehawkHeadline } from "@/lib/ratehawk/types";
 import type { PrebookFailureReason, PrebookHash } from "@/lib/ratehawk/prebook";
@@ -1073,11 +1075,13 @@ export default function HotelsView(props: {
      page is pinned to the concierge's set (`?ids=`). Removing it drops the set
      and the concierge's destination with it; the dates and guests stay. */
   const curatedIds = selected.ids.join(",");
-  const dropCuratedSet = () => {
-    clearHotelFlightDestination();
+  const dropCuratedSet = (options: { alsoDates?: boolean; keepSet?: boolean } = {}) => {
+    if (!options.keepSet) clearHotelFlightDestination();
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(searchParams)) {
-      if (value === undefined || CURATED_DROPS.has(key)) continue;
+      if (value === undefined) continue;
+      if (!options.keepSet && CURATED_DROPS.has(key)) continue;
+      if (options.alsoDates && (key === "from" || key === "to")) continue;
       for (const v of Array.isArray(value) ? value : [value]) params.append(key, v);
     }
     startTransition(() => {
@@ -1104,11 +1108,22 @@ export default function HotelsView(props: {
      from a conversation that no longer existed, labelled as the new answer's.
      Keyed on the Clear signal rather than on the store being empty, so a
      shared link carrying `?ids=` still opens with no conversation behind it. */
+  /* AND ITS DATES, WHEN THEY ARE ITS OWN (2026-09-23). The store takes them
+     back out of the shared search on Clear, but this page held them in its URL
+     and its own state and saved them straight back — so a fresh /hotels opened
+     on the cleared conversation's dates. Only dates a concierge answer
+     presented are dropped; dates the visitor picked by hand stay. */
   const seenClearSignal = useRef(aiClearSignal);
   useEffect(() => {
     if (aiClearSignal === seenClearSignal.current) return;
     seenClearSignal.current = aiClearSignal;
-    if (curatedIds) dropCuratedSet();
+    const dropDates = isConciergeStay(fromValue, toValue);
+    if (dropDates) {
+      clearHotelFlightDatesIf(fromValue, toValue);
+      setFromValue("");
+      setToValue("");
+    }
+    if (curatedIds || dropDates) dropCuratedSet({ alsoDates: dropDates, keepSet: !curatedIds });
     // Only the signal decides; the params it reads are this render's.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiClearSignal]);
