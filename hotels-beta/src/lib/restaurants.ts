@@ -1,5 +1,6 @@
 import { directusFetchJson } from "@/lib/directus";
 import { haversineKm } from "@/lib/geoDistance";
+import { foldedContains, foldForSearch } from "@/lib/searchFold";
 import type { RestaurantRecord } from "@/app/restaurants/types";
 
 type DirectusRestaurantRow = {
@@ -46,8 +47,9 @@ function normalizeText(value: string | null | undefined): string {
   return (value ?? "").trim();
 }
 
+// The shared search fold (lib/searchFold.ts): case, accents, dashes, "St".
 function normalizeCityKey(value: string | null | undefined): string {
-  return normalizeText(value).toLowerCase();
+  return foldForSearch(value);
 }
 
 export function normalizeRestaurant(row: DirectusRestaurantRow): RestaurantRecord {
@@ -238,20 +240,9 @@ export async function getRestaurantsByCity(city: string): Promise<RestaurantReco
     `/items/restaurants?${fallbackParams.toString()}`
   );
 
-  const cityKey = normalizeCityKey(requestedCity);
-
-  return (fallbackRows ?? []).map(normalizeRestaurant).filter((r) => {
-    const haystack = [
-      r.city,
-      r.local_area,
-      r.region,
-      r.country,
-      r.state_province_county_island,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(cityKey);
-  });
+  return (fallbackRows ?? []).map(normalizeRestaurant).filter((r) =>
+    [r.city, r.local_area, r.region, r.country, r.state_province_county_island].some((value) =>
+      foldedContains(value, requestedCity)
+    )
+  );
 }

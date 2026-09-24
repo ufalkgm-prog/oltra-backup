@@ -10,8 +10,10 @@ import {
   useState,
 } from "react";
 import type { UIMessage } from "ai";
+import { rememberConciergeParty } from "./conciergeStays";
 import {
   clearHotelFlightDatesIf,
+  clearHotelFlightPartyIf,
   clearHotelFlightDestination,
   clearHotelFlightDestinationIf,
   kidAgeFields,
@@ -355,6 +357,8 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       origin,
       ...(hotelId ? { hotelId } : {}),
     });
+    // So Clear can tell this party from one picked by hand (conciergeStays).
+    rememberConciergeParty(adults, kids, childrenAges, bedrooms);
   }, [state.query]);
 
   const setMessages = useCallback((messages: UIMessage[]) => {
@@ -379,8 +383,10 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   }, [state.query]);
 
   const clear = useCallback(() => {
-    const { from, to, destination } = latestQuery.current;
+    const { from, to, destination, adults, kids, bedrooms } = latestQuery.current;
     if (from || to) clearHotelFlightDatesIf(from, to);
+    // And the party it set, the same way (2026-09-24).
+    clearHotelFlightPartyIf(adults, kids, bedrooms);
     // And the city the conversation made the site's destination (the mirror
     // wrote exactly these four fields), unless something else has replaced it.
     clearHotelFlightDestinationIf({ ...destination, city: hotelCityFor(destination.city) });

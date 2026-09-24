@@ -15,7 +15,7 @@ import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
 import { clearHotelFlightDestination, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
-import { isConciergeStay } from "@/lib/ai/conciergeStays";
+import { DEFAULT_PARTY, isConciergeParty, isConciergeStay } from "@/lib/ai/conciergeStays";
 import {
   clampAdultsCount,
   clampKidsCount,
@@ -558,9 +558,19 @@ export default function LandingSearchPanel({
   useEffect(() => {
     if (aiClearSignal === seenClearSignal.current) return;
     seenClearSignal.current = aiClearSignal;
-    if (!isConciergeStay(fromValue, toValue)) return;
-    setFromValue("");
-    setToValue("");
+    const dropDates = isConciergeStay(fromValue, toValue);
+    // And the party it set (2026-09-24), the same way.
+    const rooms = Math.max(1, Number(bedroomsValue) || 1);
+    const dropParty = isConciergeParty(guestSelection.adults, guestSelection.kids, guestSelection.kidAges, rooms);
+    if (!dropDates && !dropParty) return;
+    if (dropDates) {
+      setFromValue("");
+      setToValue("");
+    }
+    if (dropParty) {
+      setGuestSelection({ adults: DEFAULT_PARTY.adults, kids: 0, kidAges: [] });
+      setEffectiveSearchParams((prev) => ({ ...prev, bedrooms: String(DEFAULT_PARTY.rooms) }));
+    }
     scheduleAutoSubmit();
     // Only the signal decides; the dates it reads are this render's.
     // eslint-disable-next-line react-hooks/exhaustive-deps

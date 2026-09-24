@@ -1,18 +1,14 @@
-/* Compared with dashes as spaces, so "Saint-Tropez", "St Tropez" and the
+import { foldForSearch } from "./searchFold";
+
+/* Compared folded (lib/searchFold.ts), so "Saint-Tropez", "St Tropez" and the
    restaurants' own combined city, "Saint-Tropez – Ramatuelle", all match. */
-const SAINT_TROPEZ_ALIASES = [
-  "saint tropez",
-  "st tropez",
-  "ramatuelle",
-  "saint tropez ramatuelle",
-];
+const SAINT_TROPEZ_ALIASES = ["saint tropez", "ramatuelle", "saint tropez ramatuelle"];
 
 /** How the restaurant collection files the whole cluster. */
 const SAINT_TROPEZ_RESTAURANT_CITY = "Saint-Tropez – Ramatuelle";
 
-function normalizeCity(value: string): string {
-  return value.trim().toLowerCase().replace(/[-–—]+/g, " ").replace(/\s+/g, " ");
-}
+// The shared search fold: case, accents, dashes, "St" for "Saint".
+const normalizeCity = foldForSearch;
 
 /* The cluster's every name, so each page finds what it holds under any of them
    (2026-09-24): a concierge answer about Pampelonne made the restaurants'

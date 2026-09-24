@@ -121,6 +121,24 @@ export function clearHotelFlightDatesIf(from: string, to: string) {
   saveHotelFlightSearch(next);
 }
 
+/** Puts the party back to 2 adults, no children, 1 room, but only if it is
+ * still the one given — Clear's counterpart to clearHotelFlightDatesIf for the
+ * guests a conversation set (2026-09-24). */
+export function clearHotelFlightPartyIf(adults: number, kids: number, rooms: number) {
+  const current = readHotelFlightSearch();
+  if (!current) return;
+  if (
+    (current.adults ?? "2") !== String(adults) ||
+    (current.kids ?? "0") !== String(kids) ||
+    (current.bedrooms ?? "1") !== String(rooms)
+  ) {
+    return;
+  }
+  const next: SharedTravelSearch = { ...current, adults: "2", kids: "0", bedrooms: "1" };
+  for (const key of KID_AGE_KEYS) delete next[key];
+  saveHotelFlightSearch(next);
+}
+
 export function readHotelFlightSearch(): SharedTravelSearch | null {
   if (typeof window === "undefined") return null;
 

@@ -2,6 +2,7 @@ import "server-only";
 import { tool, jsonSchema } from "ai";
 import { getHotels, type HotelRecord } from "@/lib/directus";
 import { expandCityAliases } from "@/lib/locationAliases";
+import { foldedContains, foldForSearch, storedSpellings } from "@/lib/searchFold";
 import { filterHotelsByTags } from "@/lib/hotelFilters";
 import {
   getAirportsForCity,
@@ -211,6 +212,53 @@ function candidateShape(hotel: HotelRecord) {
   };
 }
 
+/** Every published hotel's name and geography, for resolving what the model
+ * typed to what we store (lib/searchFold.ts). One short read, cached for ten
+ * minutes per server instance. */
+type HotelIndexRow = {
+  id: number;
+  name: string;
+  city: string;
+  area: string;
+  adminRegion: string;
+  country: string;
+};
+let hotelIndexCache: { at: number; rows: HotelIndexRow[] } | null = null;
+const HOTEL_INDEX_TTL_MS = 10 * 60 * 1000;
+
+async function hotelIndex(): Promise<HotelIndexRow[]> {
+  if (hotelIndexCache && Date.now() - hotelIndexCache.at < HOTEL_INDEX_TTL_MS) {
+    return hotelIndexCache.rows;
+  }
+  const rows = await getHotels({
+    fields: ["id", "hotel_name", "city", "state_province_county_island", "admin_region", "country"],
+    filter: { published: { _eq: true } },
+    limit: -1,
+  });
+  const index = rows.map((row) => {
+    const r = row as unknown as Record<string, string | number | null>;
+    const text = (key: string) => String(r[key] ?? "").trim();
+    return {
+      id: Number(r.id),
+      name: text("hotel_name"),
+      city: text("city"),
+      area: text("state_province_county_island"),
+      adminRegion: text("admin_region"),
+      country: text("country"),
+    };
+  });
+  hotelIndexCache = { at: Date.now(), rows: index };
+  return index;
+}
+
+/** A Directus condition on `field` for every stored value the input names —
+ * accents, dashes and abbreviations aside — or the raw input when nothing
+ * stored matches, so the zero-result path (didYouMean) still sees it. */
+function foldedIn(field: string, input: string, stored: string[]): Record<string, unknown> {
+  const values = storedSpellings(input, stored);
+  return values.length ? { [field]: { _in: values } } : { [field]: { _eq: input } };
+}
+
 /** Levenshtein distance, abandoned once it exceeds `max`.
  *
  * Bounded because the only question asked of it is "within two edits?", and
@@ -246,14 +294,7 @@ function editDistance(a: string, b: string, max: number): number {
  * it is the difference between the model saying "we have nothing in Tuscany"
  * and it noticing the value it wanted was spelled differently. */
 async function nearestGeography(terms: string[]) {
-  const simplify = (value: string) =>
-    value
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9 ]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+  const simplify = foldForSearch;
 
   const rows = await getHotels({
     fields: ["country", "admin_region", "state_province_county_island", "city"],
@@ -732,8 +773,14 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     const area = literal(resolveAreaAlias(input.area));
     const city = literal(resolveAreaAlias(input.city));
 
+    // Names and places are matched through the shared fold (lib/searchFold.ts):
+    // "Hotel du Cap-Eden-Roc" finds "Hôtel du Cap Eden-Roc", "St Tropez" finds
+    // "Saint-Tropez" (2026-09-24).
+    const index = input.name || country || city || area || adminRegion ? await hotelIndex() : [];
+    const column = (key: keyof HotelIndexRow) => index.map((row) => String(row[key])).filter(Boolean);
+
     if (input.region) and.push({ region: { _eq: input.region } });
-    if (country) and.push({ country: { _eq: country } });
+    if (country) and.push(foldedIn("country", country, column("country")));
     /* A name search, added 2026-09-11 after the concierge told a visitor that
      * "neither Cheval Blanc nor La Bouitte is in the myOLTRA collection" when
      * both are. There was no way for it to ask: this tool searched geography
@@ -744,8 +791,14 @@ const createSearchHotels = (turn: TurnMemory) => tool({
      *
      * Denying real inventory is worse than anything else this tool can get
      * wrong: a guest is told we cannot offer a hotel we can. */
-    if (input.name) and.push({ hotel_name: { _icontains: input.name } });
-    if (city) and.push({ city: { _eq: city } });
+    if (input.name) {
+      const named = index.filter((row) => foldedContains(row.name, input.name)).map((row) => row.id);
+      and.push(named.length ? { id: { _in: named } } : { hotel_name: { _icontains: input.name } });
+    }
+    if (city) {
+      const cities = expandCityAliases([city]).flatMap((c) => storedSpellings(c, column("city")));
+      and.push(cities.length ? { city: { _in: [...new Set(cities)] } } : { city: { _eq: city } });
+    }
 
     /* `area` and `adminRegion` are one geography slot, matched against BOTH
      * columns.
@@ -773,9 +826,9 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       if (!value) continue;
       and.push({
         _or: [
-          { admin_region: { _eq: value } },
-          { state_province_county_island: { _eq: value } },
-          { city: { _eq: value } },
+          foldedIn("admin_region", value, column("adminRegion")),
+          foldedIn("state_province_county_island", value, column("area")),
+          foldedIn("city", value, column("city")),
         ],
       });
     }
@@ -1542,14 +1595,10 @@ async function resolveDestinationKey(
   if (getAirportsForCity(city).length > 0 || getTransferRoute(city)) {
     return { city, resolvedFrom: null };
   }
-  const matches = await getHotels({
-    fields: ["hotel_name", "city", "state_province_county_island"] as unknown as string[],
-    filter: { hotel_name: { _icontains: city } },
-    limit: 2,
-  });
-  const hit = matches[0] as unknown as Record<string, string | null> | undefined;
+  const matches = (await hotelIndex()).filter((row) => foldedContains(row.name, city)).slice(0, 2);
+  const hit = matches[0];
   /* Its traveller area, for the eight wilderness lodges with no city (§3). */
-  const candidate = (hit?.city ?? "").trim() || (hit?.state_province_county_island ?? "").trim();
+  const candidate = hit?.city || hit?.area || "";
   if (matches.length === 1 && candidate) return { city: candidate, resolvedFrom: city };
   return { city, resolvedFrom: null };
 }
@@ -2025,15 +2074,13 @@ async function ourHotelNamedIn(near: string, city: string): Promise<{ id: number
     .split(",")
     .map((segment) => segment.trim())
     .filter((segment) => segment.length >= 4 && !/^\d/.test(segment));
-  const cities = new Set(expandCityAliases([city.trim()]).map((c) => c.toLowerCase()));
+  const cities = new Set(expandCityAliases([city.trim()]).map(foldForSearch));
+  const index = await hotelIndex();
   for (const segment of segments) {
-    const rows = await getHotels({
-      fields: ["id", "hotel_name", "city"],
-      filter: { hotel_name: { _icontains: segment }, published: { _eq: true } },
-      limit: 3,
-    });
-    const inCity = rows.filter((row) => cities.has((row.city ?? "").trim().toLowerCase()));
-    if (inCity.length === 1) return { id: Number(inCity[0].id), name: inCity[0].hotel_name ?? "" };
+    const inCity = index.filter(
+      (row) => foldedContains(row.name, segment) && cities.has(foldForSearch(row.city))
+    );
+    if (inCity.length === 1) return { id: inCity[0].id, name: inCity[0].name };
   }
   return null;
 }
@@ -2091,13 +2138,19 @@ const searchRestaurants = tool({
   }),
   async execute(input) {
     // The same place lookup searchHotels uses (lib/ai/nearPlace.ts).
+    // The city as the restaurant collection spells it (lib/searchFold.ts):
+    // "St Tropez" or "Saint Tropez" is its "Saint-Tropez – Ramatuelle".
+    const cities = await getRestaurantCities();
+    const city =
+      expandCityAliases([input.city]).flatMap((c) => storedSpellings(c, cities))[0] ?? input.city;
+
     const [near, nearHotel] = input.near
-      ? await Promise.all([findNearPlace(input.near), ourHotelNamedIn(input.near, input.city)])
+      ? await Promise.all([findNearPlace(input.near), ourHotelNamedIn(input.near, city)])
       : [null, null];
     const nearPlace = near?.status === "found" ? near.place : null;
 
     const found = await findRestaurants({
-      city: input.city,
+      city,
       cuisine: input.cuisine,
       restaurantType: input.restaurantType,
       limit: Math.min(input.limit ?? MAX_RESTAURANT_CANDIDATES, MAX_RESTAURANT_CANDIDATES),
@@ -2111,10 +2164,7 @@ const searchRestaurants = tool({
     // do not cover Oslo at all" call for different answers, and only the
     // second should send the visitor elsewhere. So say which it is.
     if (!rows.length) {
-      const cities = await getRestaurantCities();
-      const covered = cities.some(
-        (city) => city.toLowerCase() === input.city.trim().toLowerCase()
-      );
+      const covered = storedSpellings(city, cities).length > 0;
       return asUntrustedData("myoltra-restaurants", {
         returned: 0,
         cityCovered: covered,

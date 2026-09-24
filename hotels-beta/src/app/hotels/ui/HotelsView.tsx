@@ -57,8 +57,9 @@ import {
   mergeHotelFlightSearch,
   readHotelFlightSearch,
   clearHotelFlightDatesIf,
+  clearHotelFlightPartyIf,
 } from "@/lib/searchSession";
-import { isConciergeStay } from "@/lib/ai/conciergeStays";
+import { DEFAULT_PARTY, isConciergeParty, isConciergeStay } from "@/lib/ai/conciergeStays";
 import { aiResultsAreCurrent, useAiActions, useAiSearch } from "@/lib/ai/aiSearchStore";
 import type { RatehawkGroupedRoom, RatehawkHeadline } from "@/lib/ratehawk/types";
 import type { PrebookFailureReason, PrebookHash } from "@/lib/ratehawk/prebook";
@@ -1075,13 +1076,18 @@ export default function HotelsView(props: {
      page is pinned to the concierge's set (`?ids=`). Removing it drops the set
      and the concierge's destination with it; the dates and guests stay. */
   const curatedIds = selected.ids.join(",");
-  const dropCuratedSet = (options: { alsoDates?: boolean; keepSet?: boolean } = {}) => {
+  const dropCuratedSet = (
+    options: { alsoDates?: boolean; alsoParty?: boolean; keepSet?: boolean } = {}
+  ) => {
     if (!options.keepSet) clearHotelFlightDestination();
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(searchParams)) {
       if (value === undefined) continue;
       if (!options.keepSet && CURATED_DROPS.has(key)) continue;
       if (options.alsoDates && (key === "from" || key === "to")) continue;
+      if (options.alsoParty && (key === "adults" || key === "kids" || key === "bedrooms" || key.startsWith("kid_age_"))) {
+        continue;
+      }
       for (const v of Array.isArray(value) ? value : [value]) params.append(key, v);
     }
     startTransition(() => {
@@ -1123,7 +1129,18 @@ export default function HotelsView(props: {
       setFromValue("");
       setToValue("");
     }
-    if (curatedIds || dropDates) dropCuratedSet({ alsoDates: dropDates, keepSet: !curatedIds });
+    /* And its party (2026-09-24): six adults in three rooms outlived a cleared
+       conversation here and would have priced the next question. */
+    const rooms = Number(bedroomsValue) || 1;
+    const dropParty = isConciergeParty(guestSelection.adults, guestSelection.kids, guestSelection.kidAges, rooms);
+    if (dropParty) {
+      clearHotelFlightPartyIf(guestSelection.adults, guestSelection.kids, rooms);
+      setGuestSelection({ adults: DEFAULT_PARTY.adults, kids: 0, kidAges: [] });
+      setBedroomsValue(String(DEFAULT_PARTY.rooms));
+    }
+    if (curatedIds || dropDates || dropParty) {
+      dropCuratedSet({ alsoDates: dropDates, alsoParty: dropParty, keepSet: !curatedIds });
+    }
     // Only the signal decides; the params it reads are this render's.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiClearSignal]);
