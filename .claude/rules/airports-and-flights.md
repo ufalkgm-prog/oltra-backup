@@ -69,13 +69,11 @@ Cards are fixed `height: 96px`, two text rows: `dep → arr` + duration + (i); t
 
 **One-way and return: below 1400** (was 1180). The 360px sidebar and two flight columns do not both fit under it — at 1182 the times row had 132px for 178px of content, rendering `7h 40n` and `10h 3C`. Nothing narrower could be traded: the price lane, the Info-pill lane and the sidebar together cannot return 46px, and dropping the times from 1.1rem to the 0.8rem it would take is not the design. Above the results, departure stays beside return — which is the point of the page, and why the sidebar moved rather than the two columns collapsing into one.
 
-**Multi-city: at EVERY width** (`.layoutStacked`, set from `search.tripType === "multiple"`). Three leg columns plus the 140px price lane never fit beside the sidebar on any real screen — at 1440 the times row got 143px for 216px of content. Stacking buys about 126px per column and makes it clean from ~1230 up.
-
-**Still open below ~1230 in multi-city, and it is structural.** N leg columns side by side cannot fit a narrow viewport however the sidebar is placed, and it gets worse with 4 or 5 legs. The column template is an inline style built from `N` in three places in `FlightsView.tsx` (`gridCols`, and the pinned grid), so a media query cannot touch it — fixing it means either computing the template from a measured container width or letting the leg grid scroll horizontally. Not decided.
+**Multi-city: the sidebar stays beside the results down to 1000px, and the flight columns scroll sideways (Ulrik, 2026-09-24)** (`.layoutMulti`). It used to stack at every width (`.layoutStacked`, 2026-09-21), which stretched every filter across the page and put the results more than a screen down. Now each leg column is at least a return card's width (`MULTI_LEG_MIN_PX` = 400; return cards measure 403–417 at 1536) and stretches when there is room; when N columns do not fit, only the flight columns scroll horizontally (`.multiScrollX` around one `.multiTrack` holding the header, pinned rows and results, so they scroll together). The price column is sticky at the right edge (`.multiPriceLane`, solid background mixed from the glass tokens), so the total, BOOK and SAVE stay in view. Cards are full size at any leg count (`compact` is off). This closes the "below ~1230" problem, which was the column template shrinking with the viewport.
 
 ### Autocomplete
 
-`AirportAutocomplete` clears on focus, needs ≥2 chars, restores the previous label on blur if nothing new was picked. Panel `min-width: 320px`, `white-space: nowrap`.
+`AirportAutocomplete` clears on focus, needs ≥2 chars, restores the previous label on blur if nothing new was picked. Panel `min-width: 320px`, `white-space: nowrap`. `codeOnly` shows just the code once chosen ("CPH") with the full name on hover — the multi-city rows use it, since three fields share the 360px sidebar and read "CPH · C" otherwise (2026-09-24).
 
 ### Deep links
 

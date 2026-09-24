@@ -12,6 +12,10 @@ type Props = {
    * remember the airport's label/city without pulling in the full dataset
    * themselves (see the dynamic import below). */
   onChange: (code: string, option?: AirportOption) => void
+  /** Show only the airport code once chosen ("CPH"), for a field too narrow
+   * for its label; the full name is on hover. The multi-city rows read
+   * "CPH · C" and "FCO · R" in the 360px sidebar (2026-09-24). */
+  codeOnly?: boolean
 }
 
 // The generated airport list is ~4k entries / ~300KB of source, and this is
@@ -22,7 +26,7 @@ type Props = {
 // the critical path; the module is cached after the first load.
 let cachedOptions: AirportOption[] | null = null
 
-export default function AirportAutocomplete({ label, value, onChange }: Props) {
+export default function AirportAutocomplete({ label, value, onChange, codeOnly = false }: Props) {
   const [options, setOptions] = useState<AirportOption[] | null>(cachedOptions)
   const [text, setText] = useState(value)
   const [open, setOpen] = useState(false)
@@ -41,9 +45,10 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
 
   // Falls back to the bare code until the list resolves, so a preselected
   // airport still renders something meaningful on first paint.
+  const fullLabel = options?.find(o => o.value === value)?.label ?? value
   useEffect(() => {
-    setText(options?.find(o => o.value === value)?.label ?? value)
-  }, [value, options])
+    setText(codeOnly ? value : fullLabel)
+  }, [value, fullLabel, codeOnly])
 
   const dismissHoverProps = useDropdownDismiss({
     open,
@@ -87,7 +92,7 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
            anywhere. It is an input the visitor types into, so the value stays
            whole and the full text is available on hover instead (Ulrik,
            2026-09-21). */
-        title={text}
+        title={fullLabel}
         value={text}
         placeholder="Type 2+ letters…"
         onChange={e => { setText(e.target.value); setOpen(e.target.value.trim().length >= 2) }}
@@ -108,7 +113,7 @@ export default function AirportAutocomplete({ label, value, onChange }: Props) {
                 onPointerDown={e => {
                   e.preventDefault()
                   onChange(opt.value, opt)
-                  setText(opt.label)
+                  setText(codeOnly ? opt.value : opt.label)
                   setOpen(false)
                 }}
               >

@@ -28,6 +28,11 @@ import { useAiActions } from "@/lib/ai/aiSearchStore";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import styles from "./FlightsView.module.css";
 
+/* A multi-city flight column at its narrowest: a return card's width at 1536
+   (403-417px measured), so the cards are the same size on both pages. */
+const MULTI_LEG_MIN_PX = 400;
+const MULTI_PRICE_LANE_PX = 140;
+
 const ALLIANCE_LABELS: Record<Alliance, string> = {
   star: "Star Alliance",
   oneworld: "oneworld",
@@ -1276,11 +1281,12 @@ export default function FlightsView({ searchParams }: Props) {
           the URL once when the visitor arrives here on a bare one. */}
       <AiResultsSync page="flights" />
 
-      {/* Multi-city always puts the filters above the results, at every
-          width - see .layoutStacked. One-way and return do it below 1400. */}
+      {/* Multi-city keeps the filters beside the results down to 1000px and
+          scrolls its flight columns sideways instead - see .layoutMulti. One-way
+          and return put the filters above the results below 1400. */}
       <div
         className={`${styles.layout} ${
-          search.tripType === "multiple" ? styles.layoutStacked : ""
+          search.tripType === "multiple" ? styles.layoutMulti : ""
         }`}
       >
         <aside className={styles.sidebar}>
@@ -1312,11 +1318,13 @@ export default function FlightsView({ searchParams }: Props) {
                         <AirportAutocomplete
                           label={`From ${index + 1}`}
                           value={leg.from}
+                          codeOnly
                           onChange={(v, opt) => { rememberAirportCity(v, opt); updateMultiCityLeg(leg.id, { from: v }); }}
                         />
                         <AirportAutocomplete
                           label="To"
                           value={leg.to}
+                          codeOnly
                           onChange={(v, opt) => { rememberAirportCity(v, opt); updateMultiCityLeg(leg.id, { to: v }); }}
                         />
                         <SingleDatePicker
@@ -2090,9 +2098,18 @@ function MultipleResults({
   emptyHint: React.ReactNode;
 }) {
   const N = searchLegs.length;
-  const compact = N >= 4;
+  /* FULL-SIZE CARDS, SCROLLED SIDEWAYS (Ulrik, 2026-09-24). The columns used
+     to share the width - compact cards from four legs, and the whole page
+     stacked above the results at every width to make room. Each flight column
+     is now at least a return card's width and the columns scroll sideways
+     when they do not fit, beside the filters; the price column stays pinned
+     at the right edge (.multiPriceLane). */
+  const compact = false;
   const allSelected = activeLegIndex >= N;
-  const gridCols = `repeat(${N}, minmax(0, 1fr)) 140px`;
+  const gridCols = `repeat(${N}, minmax(${MULTI_LEG_MIN_PX}px, 1fr)) ${MULTI_PRICE_LANE_PX}px`;
+  // Wide enough for every column at its minimum, the gaps and the pinned
+  // rows' 13px padding each side; below this the track scrolls.
+  const trackMinWidth = `calc(${N * MULTI_LEG_MIN_PX + MULTI_PRICE_LANE_PX}px + ${N} * var(--oltra-gap-md) + 26px)`;
 
   // Each leg column (up to the fixed max of 5, per addMultiCityLeg) scrolls
   // independently, same as Departure/Return on the return-trip page - hooks
@@ -2108,7 +2125,8 @@ function MultipleResults({
   const [priceScrollRef, priceHasGutter] = useScrollGutter(selectedItinerary);
 
   return (
-    <>
+    <div className={styles.multiScrollX}>
+    <div className={styles.multiTrack} style={{ minWidth: trackMinWidth }}>
       {/* Column headers — one per leg pane, plus the final total-price pane */}
       <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", alignItems: "end", padding: "0 13px", marginBottom: "-4px" }}>
         {searchLegs.map((leg, i) => (
@@ -2116,7 +2134,7 @@ function MultipleResults({
             {`Flight ${i + 1}${leg.from ? ` · ${leg.from} → ${leg.to || "?"}` : ""}`}
           </div>
         ))}
-        <div className={`${styles.columnLabel} ${styles.columnLabelRight} ${priceHasGutter ? styles.withScrollGutter : ""}`}>Total price</div>
+        <div className={`${styles.columnLabel} ${styles.columnLabelRight} ${styles.multiPriceLane} ${priceHasGutter ? styles.withScrollGutter : ""}`}>Total price</div>
       </div>
 
       {/* Pinned rows — same visual style as Return page */}
@@ -2126,6 +2144,7 @@ function MultipleResults({
             label="Fastest"
             itinerary={fastest}
             columnCount={N}
+            gridCols={gridCols}
             compact={compact}
             allLegOptions={allLegOptions}
             selectedLegIds={selectedLegIds}
@@ -2140,6 +2159,7 @@ function MultipleResults({
             label="Best price"
             itinerary={recommended}
             columnCount={N}
+            gridCols={gridCols}
             compact={compact}
             allLegOptions={allLegOptions}
             selectedLegIds={selectedLegIds}
@@ -2194,7 +2214,7 @@ function MultipleResults({
 
         {/* Total price — only meaningful once every leg is picked; the
             active leg's own price is already inline on its cards above. */}
-        <div className={styles.resultsScroll} ref={priceScrollRef}>
+        <div className={`${styles.resultsScroll} ${styles.multiPriceLane}`} ref={priceScrollRef}>
           <div className={styles.cardStack}>
             {allSelected && selectedItinerary ? (
               <PriceCard itinerary={selectedItinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
@@ -2202,7 +2222,8 @@ function MultipleResults({
           </div>
         </div>
       </div>
-    </>
+    </div>
+    </div>
   );
 }
 
@@ -2210,6 +2231,7 @@ function MultiPinnedRow({
   label,
   itinerary,
   columnCount,
+  gridCols,
   compact,
   allLegOptions,
   selectedLegIds,
@@ -2221,6 +2243,8 @@ function MultiPinnedRow({
   label: string;
   itinerary: Itinerary;
   columnCount: number;
+  /** The same column template as the rows above and below it. */
+  gridCols: string;
   compact?: boolean;
   allLegOptions: FlightLeg[][];
   selectedLegIds: string[];
@@ -2234,7 +2258,7 @@ function MultiPinnedRow({
       <span className={styles.pinnedLegend}>{label}</span>
       <div
         className={styles.multiPinnedGrid}
-        style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr)) 140px` }}
+        style={{ gridTemplateColumns: gridCols }}
       >
         {itinerary.slices.slice(0, columnCount).map((leg, i) => {
           const tier = i === 0 ? null : getReturnMatchTier(itinerary.slices[0]!, leg);
@@ -2262,7 +2286,9 @@ function MultiPinnedRow({
             </div>
           );
         })}
-        <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
+        <div className={styles.multiPriceLane}>
+          <PriceCard itinerary={itinerary} handoff={handoff} onSaveToTrip={onSaveToTrip} active compact={compact} />
+        </div>
       </div>
     </div>
   );

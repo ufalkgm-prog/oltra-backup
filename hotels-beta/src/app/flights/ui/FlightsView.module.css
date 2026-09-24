@@ -1236,24 +1236,44 @@
   }
 }
 
-/* A multi-city itinerary puts THREE leg columns plus the price lane in the
-   results, and they do not fit beside the 360px sidebar at any width a laptop
-   or a desktop has: at 1440 the times row needs 216px in the 143 it gets, and
-   the departure time is cut. The width rule above already stacks the sidebar
-   below 1400, where multi-city then has ~33px to spare - this makes the same
-   thing happen at every width, because multi-city never fits the other way
-   (Ulrik, 2026-09-21).
+/* MULTI-CITY KEEPS THE FILTERS BESIDE THE RESULTS (Ulrik, 2026-09-24).
+   It used to stack them above the results at every width (.layoutStacked,
+   2026-09-21), because three leg columns plus the price lane did not fit
+   beside the 360px sidebar - which stretched every filter across the page and
+   put the results more than a screen down. The leg columns now keep a return
+   card's width and scroll sideways inside the results (.multiScrollX), so the
+   sidebar stays down to the 1000px breakpoint where every layout goes to one
+   column.
 
-   After the media query on purpose: same specificity, so source order is what
-   makes it win above 1400. */
-.layoutStacked {
-  grid-template-columns: 1fr;
+   After the 1400 query on purpose: same specificity, so source order makes it
+   win between 1001 and 1400. */
+@media (min-width: 1001px) {
+  .layoutMulti {
+    grid-template-columns: 360px minmax(0, 1fr);
+  }
 }
 
-.layoutStacked .sidebar {
-  position: static;
-  max-height: none;
-  overflow: visible;
+/* Only the flight columns scroll sideways; the filters beside them never do.
+   Top padding keeps the pinned rows' legend ("Fastest"), which sits 7px above
+   its border, from being clipped by the scroll box. */
+.multiScrollX {
+  overflow-x: auto;
+  padding-top: 8px;
+}
+
+.multiTrack {
+  display: grid;
+  gap: var(--oltra-gap-md);
+}
+
+/* The total price and BOOK stay at the right edge while the flight columns
+   scroll under them. Solid, so cards do not show through: the glass panel's
+   own colour over the page (--oltra-field-bg at the glass's 55%). */
+.multiPriceLane {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: color-mix(in srgb, var(--oltra-field-bg) 55%, var(--oltra-bg-color));
 }
 
 @media (max-width: 1000px) {
