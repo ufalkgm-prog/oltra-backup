@@ -130,7 +130,9 @@ const DECLINE =
    answered a password question nobody asked. */
 function accountReply(text: string): string {
   const t = text.toLowerCase();
-  if (/favou?rite|saved trip|my trip|save .* trip|to (a|my) trip/.test(t)) {
+  // Already known to be about the account, so any mention of a trip is one
+  // of their saved trips ("add it to my France trip").
+  if (/favou?rite|\btrips?\b/.test(t)) {
     return (
       "I can't add or remove anything from here. ADD TO FAVOURITES and SAVE TO TRIP on each " +
       "hotel, restaurant and flight do it directly, and your favourites and saved trips are " +

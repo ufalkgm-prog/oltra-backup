@@ -21,8 +21,8 @@ import type { createClient } from "@/lib/supabase/server";
 type Client = Awaited<ReturnType<typeof createClient>>;
 
 export type MemberFavourites = {
-  hotels: { id: number; name: string; location: string }[];
-  restaurants: { id: number; name: string; location: string }[];
+  hotels: { id: number | null; name: string; location: string }[];
+  restaurants: { id: number | null; name: string; location: string }[];
 };
 
 export type MemberSavedTrip = {
@@ -31,7 +31,7 @@ export type MemberSavedTrip = {
   period: string;
   travellers: string;
   hotels: {
-    id: number;
+    id: number | null;
     name: string;
     location: string;
     checkIn: string;
@@ -40,14 +40,16 @@ export type MemberSavedTrip = {
     kids: number | null;
     rooms: number | null;
   }[];
-  restaurants: { id: number; name: string; location: string; reservation: string }[];
+  restaurants: { id: number | null; name: string; location: string; reservation: string }[];
   flights: { route: string; departAt: string; returnDepartAt: string; cabin: string; timing: string }[];
 };
 
 const text = (value: string | null | undefined) => (value ?? "").trim();
-const idOf = (value: string | null | undefined) => {
+/** The Directus id, or null for an older row that saved a name-based
+ * reference instead: a 0 would read to the model as a real hotel. */
+const idOf = (value: string | null | undefined): number | null => {
   const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
+  return value && Number.isInteger(n) && n > 0 ? n : null;
 };
 
 export async function readMemberFavourites(supabase: Client, userId: string): Promise<MemberFavourites> {
