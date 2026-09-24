@@ -423,6 +423,13 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
         ...(stay.checkOut ? { to: stay.checkOut } : {}),
         ...(typeof stay.adults === "number" ? { adults: Math.max(1, stay.adults) } : {}),
         ...(typeof stay.kids === "number" ? { kids: Math.max(0, stay.kids) } : {}),
+        /* A party with adults and no children field has no children
+           (2026-09-24). "The kids are staying with their grandparents" came
+           back as {adults: 2}, and the merge kept the earlier two children, so
+           the page priced four under an answer for two. */
+        ...(typeof stay.adults === "number" && typeof stay.kids !== "number"
+          ? { kids: 0, childrenAges: [] }
+          : {}),
         ...(flightParty
           ? {
               adults: Math.max(1, flightParty.adults ?? 1),
