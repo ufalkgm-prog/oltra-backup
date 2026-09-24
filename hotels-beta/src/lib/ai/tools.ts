@@ -1911,6 +1911,7 @@ function createSearchFlights(preferred: PreferredAirline[]) {
     returnDate?: string;
     adults?: number;
     children?: number;
+    childrenAges?: number[];
     cabinClass?: string;
     alliance?: "star" | "oneworld" | "skyteam";
   }>({
@@ -1943,6 +1944,13 @@ function createSearchFlights(preferred: PreferredAirline[]) {
       returnDate: { type: "string", description: "yyyy-mm-dd" },
       adults: { type: "number" },
       children: { type: "number" },
+      childrenAges: {
+        type: "array",
+        items: { type: "number" },
+        description:
+          "Each child's age, when known - the same ages you searched hotels with. " +
+          "Under-2s fly on a parent's lap.",
+      },
       cabinClass: {
         type: "string",
         enum: ["economy", "premium_economy", "business", "first"],

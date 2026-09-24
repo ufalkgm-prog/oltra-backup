@@ -29,6 +29,8 @@ export interface FlightSearchRequest {
   adults?: number
   children?: number
   infants?: number
+  /** The seated children's ages, where known (lib/flights/passengers.ts). */
+  childAges?: number[]
   /** economy | premium_economy | business | first, in any of the spellings
    * `toCabin` accepts. Deliberately a plain string rather than a supplier's
    * cabin union: the request shape is ours too. */
@@ -55,6 +57,10 @@ export async function POST(req: NextRequest) {
   const adults = Math.max(1, body.adults ?? 1)
   const children = Math.max(0, body.children ?? 0)
   const infants = Math.max(0, body.infants ?? 0)
+  const childAges = (Array.isArray(body.childAges) ? body.childAges : [])
+    .map(Number)
+    .filter(age => Number.isInteger(age) && age >= 2 && age <= 17)
+    .slice(0, children)
   const cabin = toCabin(body.cabinClass)
 
   // Build legs — multi-city path or single/return path
@@ -85,7 +91,7 @@ export async function POST(req: NextRequest) {
     ]
   }
 
-  const key = JSON.stringify({ legs: legs.map(l => `${l.origin}${l.destination}${l.date}`), adults, children, infants, cabin })
+  const key = JSON.stringify({ legs: legs.map(l => `${l.origin}${l.destination}${l.date}`), adults, children, infants, childAges, cabin })
   const cached = cache.get(key)
   if (cached && cached.expiresAt > Date.now()) {
     return NextResponse.json({ ok: true, itineraries: cached.itineraries, cached: true, synthetic: flightDataIsSynthetic() })
@@ -95,7 +101,7 @@ export async function POST(req: NextRequest) {
     const itineraries = await duffelConnector.search({
       legs,
       cabin,
-      passengers: { adults, children, infants },
+      passengers: { adults, children, infants, childAges },
     })
     cache.set(key, { itineraries, expiresAt: Date.now() + CACHE_TTL_MS })
 

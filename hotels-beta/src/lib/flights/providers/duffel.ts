@@ -36,9 +36,12 @@ export const duffelConnector: FlightConnector = {
 
     const passengers: CreateOfferRequestPassenger[] = [
       ...Array.from({ length: query.passengers.adults }, () => ({ type: 'adult' as const })),
-      // Duffel takes an age rather than a category for the under-18s: 10 is a
-      // child fare, 0 an infant in arms. Same values the search route sends.
-      ...Array.from({ length: query.passengers.children }, () => ({ age: 10 })),
+      // Duffel takes an age rather than a category for the under-18s: 0 is an
+      // infant in arms. Each child at their real age where it is known
+      // (2026-09-24 - every child used to be sent as 10), else 10.
+      ...Array.from({ length: query.passengers.children }, (_, i) => ({
+        age: query.passengers.childAges?.[i] ?? 10,
+      })),
       ...Array.from({ length: query.passengers.infants }, () => ({ age: 0 })),
     ]
 

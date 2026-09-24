@@ -25,6 +25,7 @@ import HotelSmallCard, {
   type SmallCardAvailability,
 } from "@/components/hotels/HotelSmallCard";
 import { useLandingPanes } from "./landingPanes";
+import { flightPassengers } from "@/lib/flights/passengers";
 import styles from "./page.module.css";
 
 type HotelSummary = {
@@ -167,6 +168,10 @@ export default function LandingSummary({
    * quickest. See duffelClient.flightDataIsSynthetic. */
   const [syntheticFlights, setSyntheticFlights] = useState(false);
 
+  // The children's ages as a string, so the flights re-search when an age
+  // changes (a baby flies as a lap infant) and not on every render.
+  const flightAgesKey = childrenAges.join(",");
+
   useEffect(() => {
     if (!showFlights || !canSearchFlights) {
       setFlightResults({});
@@ -200,8 +205,8 @@ export default function LandingSummary({
             destination: airport.iata,
             departureDate: fromDate,
             returnDate: toDate || undefined,
-            adults: Math.max(1, adults),
-            children: kids,
+            // Under-2s as lap infants, the rest at their real ages.
+            ...flightPassengers(adults, kids, flightAgesKey ? flightAgesKey.split(",") : []),
             cabinClass: cabin.key,
           }),
         })
@@ -256,7 +261,7 @@ export default function LandingSummary({
       cancelled = true;
       controllers.forEach((c) => c.abort());
     };
-  }, [showFlights, canSearchFlights, candidateAirports, origin, fromDate, toDate, adults, kids]);
+  }, [showFlights, canSearchFlights, candidateAirports, origin, fromDate, toDate, adults, kids, flightAgesKey]);
 
   /* THE SAME RANKING THE CONCIERGE USES, on the results this page has already
    * fetched.
@@ -487,7 +492,7 @@ export default function LandingSummary({
            both, so the cabin belongs to the row and not to the page. */
         handoff={{
           cabin,
-          passengers: { adults: Math.max(1, adults), children: kids, infants: 0 },
+          passengers: flightPassengers(adults, kids, childrenAges),
           placement: "flight-results",
         }}
       />

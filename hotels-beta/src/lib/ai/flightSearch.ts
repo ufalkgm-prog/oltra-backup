@@ -2,6 +2,7 @@ import "server-only";
 import { factsFromDurations, type GatewayFlightFacts } from "@/lib/flights/gatewayRanking";
 import { sharedAlliance, type Alliance } from "@/lib/flights/airlineAlliances";
 import { toCabin } from "@/lib/flights/itinerary";
+import { flightPassengers } from "@/lib/flights/passengers";
 import { duffelConnector } from "@/lib/flights/providers/duffel";
 import type { PreferredAirline } from "./preferredAirlines";
 
@@ -28,6 +29,8 @@ export type FlightSearchInput = {
   returnDate?: string;
   adults?: number;
   children?: number;
+  /** Each child's age: under-2s fly as lap infants (lib/flights/passengers.ts). */
+  childrenAges?: number[];
   cabinClass?: string;
   /** Keep only options flown entirely within this alliance. */
   alliance?: Alliance;
@@ -70,6 +73,7 @@ async function fetchItineraries(input: FlightSearchInput) {
 
   const adults = Math.min(9, Math.max(1, input.adults ?? 1));
   const children = Math.min(8, Math.max(0, input.children ?? 0));
+  const party = flightPassengers(adults, children, input.childrenAges ?? []);
 
   const legs = [
     { origin, destination, date: input.departureDate },
@@ -82,7 +86,7 @@ async function fetchItineraries(input: FlightSearchInput) {
     const itineraries = await duffelConnector.search({
       legs,
       cabin: toCabin(input.cabinClass),
-      passengers: { adults, children, infants: 0 },
+      passengers: party,
     });
     return { ok: true as const, route: `${origin}-${destination}`, itineraries };
   } catch (err) {

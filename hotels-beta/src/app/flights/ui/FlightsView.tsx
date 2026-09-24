@@ -26,6 +26,9 @@ import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import AiResultsSync from "@/lib/ai/AiResultsSync";
 import { useAiActions } from "@/lib/ai/aiSearchStore";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
+import { getKidAgeValues } from "@/lib/guests";
+import { kidAgeFields } from "@/lib/searchSession";
+import { flightPassengers } from "@/lib/flights/passengers";
 import styles from "./FlightsView.module.css";
 
 /* A multi-city flight column at its narrowest: a return card's width at 1536
@@ -52,6 +55,9 @@ type SearchState = {
   returnDate: string;
   adults: number;
   children: number;
+  /** Each child's age as the guest selector holds it ("0"-"17", "" not yet
+   * chosen). Under-2s fly as lap infants (lib/flights/passengers.ts). */
+  childrenAges: string[];
   cabin: CabinClass;
   multiCity: MultiCityLeg[];
 };
@@ -96,6 +102,7 @@ const INITIAL_SEARCH: SearchState = {
   returnDate: "",
   adults: 2,
   children: 0,
+  childrenAges: [],
   cabin: "Economy",
   multiCity: [
     { id: "multi-1", from: "", to: "", date: "" },
@@ -286,6 +293,10 @@ function buildInitialSearch(
     returnDate: normalizeParam(source.to) || "",
     adults: Number(normalizeParam(source.adults)) || INITIAL_SEARCH.adults,
     children: Number(normalizeParam(source.kids)) || INITIAL_SEARCH.children,
+    childrenAges: getKidAgeValues(
+      source as PageSearchParams,
+      Number(normalizeParam(source.kids)) || INITIAL_SEARCH.children
+    ),
     cabin,
     multiCity:
       legs.length > 1
@@ -533,6 +544,11 @@ export default function FlightsView({ searchParams }: Props) {
        leg1/leg2 into the URL of an open page, which stayed on its old
        Copenhagen-Geneva return search. Real legs win, as on arrival. */
     const legsHanded = readLegParams(searchParams);
+    // The children's ages when the URL carries the party (2026-09-24).
+    const kidsHanded = Number(normalizeParam(searchParams.kids));
+    const agesHanded = normalizeParam(searchParams.kids)
+      ? getKidAgeValues(searchParams, kidsHanded || 0)
+      : undefined;
     if (legsHanded.length > 1) {
       setSearch(current => ({
         ...current,
@@ -541,6 +557,7 @@ export default function FlightsView({ searchParams }: Props) {
         multiCity: legsHanded,
         adults: Number(normalizeParam(searchParams.adults)) || current.adults,
         children: Number(normalizeParam(searchParams.kids)) || current.children,
+        childrenAges: agesHanded ?? current.childrenAges,
       }));
       setFilters(current => filtersFromParams(searchParams, current));
       return;
@@ -555,6 +572,7 @@ export default function FlightsView({ searchParams }: Props) {
       returnDate: normalizeParam(searchParams.to) || current.returnDate,
       adults: Number(normalizeParam(searchParams.adults)) || current.adults,
       children: Number(normalizeParam(searchParams.kids)) || current.children,
+      childrenAges: agesHanded ?? current.childrenAges,
       multiCity: current.multiCity.map((leg, i) =>
         i === 0 ? { ...leg, from: originParam || leg.from } : leg
       ),
@@ -612,6 +630,7 @@ export default function FlightsView({ searchParams }: Props) {
       to: isReturnTrip ? search.returnDate : "",
       adults: String(search.adults),
       kids: String(search.children),
+      ...kidAgeFields(search.childrenAges),
       origin: search.from,
     });
   }, [search, searchParams, isReturnTrip, sessionRestored]);
@@ -930,8 +949,8 @@ export default function FlightsView({ searchParams }: Props) {
     () =>
       JSON.stringify(
         isMultiple
-          ? [search.tripType, search.multiCity.map(l => [l.from, l.to, l.date]), search.adults, search.children, search.cabin]
-          : [search.tripType, search.from, search.to, search.departDate, isReturnTrip ? search.returnDate : "", search.adults, search.children, search.cabin]
+          ? [search.tripType, search.multiCity.map(l => [l.from, l.to, l.date]), search.adults, search.children, search.childrenAges, search.cabin]
+          : [search.tripType, search.from, search.to, search.departDate, isReturnTrip ? search.returnDate : "", search.adults, search.children, search.childrenAges, search.cabin]
       ),
     [isMultiple, isReturnTrip, search]
   );
@@ -957,11 +976,12 @@ export default function FlightsView({ searchParams }: Props) {
     lastReturnLegIdRef.current = "";
     setFilters(f => ({ ...f, airlines: [], layoverAirports: [] }));
     try {
+      // Under-2s as lap infants, the rest at their real ages (2026-09-24).
+      const party = flightPassengers(search.adults, search.children, search.childrenAges);
       const requestBody = isMultiple
         ? {
             slices: search.multiCity.map(l => ({ origin: l.from, destination: l.to, departureDate: l.date })),
-            adults: search.adults,
-            children: search.children,
+            ...party,
             cabinClass: CABIN_CLASS_MAP[search.cabin],
           }
         : {
@@ -969,8 +989,7 @@ export default function FlightsView({ searchParams }: Props) {
             destination: search.to,
             departureDate: search.departDate,
             returnDate: isReturnTrip ? search.returnDate : undefined,
-            adults: search.adults,
-            children: search.children,
+            ...party,
             cabinClass: CABIN_CLASS_MAP[search.cabin],
           };
 
@@ -1054,7 +1073,7 @@ export default function FlightsView({ searchParams }: Props) {
    * by any path. Duffel still supplies the search results above. */
   const handoff: FlightHandoff = {
     cabin: CABIN_CLASS_MAP[search.cabin],
-    passengers: { adults: search.adults, children: search.children, infants: 0 },
+    passengers: flightPassengers(search.adults, search.children, search.childrenAges),
     placement: "flight-results",
   };
 
@@ -1402,9 +1421,16 @@ export default function FlightsView({ searchParams }: Props) {
                 <div ref={guestsFieldRef}>
                   <label className="oltra-label">Guests</label>
                   <GuestSelector
-                    initialValue={{ adults: search.adults, kids: search.children, kidAges: [] }}
+                    initialValue={{ adults: search.adults, kids: search.children, kidAges: search.childrenAges }}
                     onChange={selection => {
-                      setSearch(c => ({ ...c, adults: selection.adults, children: selection.kids }));
+                      // The ages too (2026-09-24): they decide who flies as a
+                      // lap infant, and used to be dropped here.
+                      setSearch(c => ({
+                        ...c,
+                        adults: selection.adults,
+                        children: selection.kids,
+                        childrenAges: selection.kidAges,
+                      }));
                       markDirty();
                     }}
                   />

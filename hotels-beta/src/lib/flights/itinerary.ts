@@ -140,6 +140,8 @@ export type PassengerCounts = {
   adults: number
   children: number
   infants: number
+  /** The seated children's ages where known (lib/flights/passengers.ts). */
+  childAges?: number[]
 }
 
 /** What we ask a supplier for. Legs, not origin/destination/returnDate, for

@@ -29,6 +29,7 @@ import { useLandingPanes } from "./landingPanes";
 import type { Itinerary } from "@/lib/flights/itinerary";
 import FlightResultRow, { pickHeadlineItineraries, type TripDefaults } from "./FlightResultRow";
 import type { AiFlightLeg, AiHotelCard, AiQueryState } from "@/lib/ai/types";
+import { flightPassengers } from "@/lib/flights/passengers";
 import styles from "./page.module.css";
 
 /* The concierge's results, on the landing page.
@@ -83,12 +84,15 @@ function FlightLegPanel({
   leg,
   adults,
   kids,
+  childrenAges,
   tripDefaults,
   columns,
 }: {
   leg: AiFlightLeg;
   adults: number;
   kids: number;
+  /** Under-2s fly as lap infants (lib/flights/passengers.ts). */
+  childrenAges: number[];
   tripDefaults: { destination: string | null; periodLabel: string | null };
   columns: SmallCardColumns;
 }) {
@@ -112,9 +116,12 @@ function FlightLegPanel({
      is what the affiliate report will call a click that started here. */
   const handoff = {
     cabin: leg.cabin || "economy",
-    passengers: { adults: Math.max(1, adults), children: Math.max(0, kids), infants: 0 },
+    passengers: flightPassengers(adults, kids, childrenAges),
     placement: "concierge-chat" as const,
   };
+  // The ages as a string, so the search re-runs when they change and not on
+  // every render (the array is rebuilt each time).
+  const agesKey = childrenAges.join(",");
 
   useEffect(() => {
     let cancelled = false;
@@ -128,8 +135,7 @@ function FlightLegPanel({
         destination: leg.destination,
         departureDate: leg.departureDate,
         returnDate: leg.returnDate || undefined,
-        adults: Math.max(1, adults),
-        children: Math.max(0, kids),
+        ...flightPassengers(adults, kids, agesKey ? agesKey.split(",") : []),
         cabinClass: leg.cabin || "economy",
       }),
     })
@@ -156,7 +162,7 @@ function FlightLegPanel({
     return () => {
       cancelled = true;
     };
-  }, [leg.origin, leg.destination, leg.departureDate, leg.returnDate, leg.cabin, adults, kids, isOneWay]);
+  }, [leg.origin, leg.destination, leg.departureDate, leg.returnDate, leg.cabin, adults, kids, agesKey, isOneWay]);
 
   return (
     <div className={styles.aiFlightLeg}>
@@ -670,6 +676,7 @@ export default function AiResultFrames() {
                   leg={leg}
                   adults={query.adults}
                   kids={query.kids}
+                  childrenAges={query.childrenAges}
                   tripDefaults={tripDefaults}
                   columns={frameCount}
                 />
