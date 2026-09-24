@@ -2,6 +2,7 @@ import "server-only";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import { TRIAGE_MODEL } from "./config";
+import { parseExtraction, type RemovedKind } from "./extractParse";
 
 /* Cheap gate in front of the conversation model.
  *
@@ -76,7 +77,7 @@ One word. No punctuation, no explanation.`;
 const PREVIOUS_REPLY_MAX_CHARS = 700;
 
 /** What was taken out of a MIXED message before it reached the model. */
-export type RemovedKind = "PROBE" | "PRIVACY" | "ACCOUNT" | "OTHER";
+export type { RemovedKind } from "./extractParse";
 
 export type TriageVerdict =
   | { allow: true; travelOnly?: { text: string; removed: RemovedKind } }
@@ -193,16 +194,7 @@ async function travelOnly(
     maxOutputTokens: 300,
     temperature: 0,
   });
-  const [first = "", ...rest] = out.trim().split("\n");
-  const kind = first.trim().toUpperCase();
-  const removed: RemovedKind = kind.startsWith("ACCOUNT")
-    ? "ACCOUNT"
-    : kind.startsWith("PRIVACY")
-      ? "PRIVACY"
-      : kind.startsWith("OTHER")
-        ? "OTHER"
-        : "PROBE";
-  const request = rest.join(" ").trim();
+  const { removed, request } = parseExtraction(out);
   if (!request || /^NONE\b/i.test(request) || request.length > text.length) return null;
   // The rewrite came from a message carrying an injection, so it is checked
   // like any message: only a clean travel request goes through.

@@ -136,7 +136,7 @@ Moved to `.claude/rules/hotel-data.md` — it loads by itself when you open a fi
 
 **Concierge** — `/src/app/api/chat/route.ts`, `/src/lib/ai/*` (§50).
 
-**Shared** — `/src/lib/locationAliases.ts`, `/src/lib/guests`, `/src/lib/members`, `/src/lib/cityAirports.ts`.
+**Shared** — `/src/lib/locationAliases.ts`, `/src/lib/searchFold.ts` (the one rule for matching typed names against stored ones: accents, dashes, "St" → "Saint"), `/src/lib/guests`, `/src/lib/members`, `/src/lib/cityAirports.ts`.
 
 ---
 

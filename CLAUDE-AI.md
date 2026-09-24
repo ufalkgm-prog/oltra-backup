@@ -859,3 +859,35 @@ saved trips resolved Val d'Isère and Courchevel to **Lyon** and Zermatt to
 **Zurich** while the concierge said Geneva. The landing teaser already searched
 every candidate airport, so it needed no new request — only the ordering and a
 label, from the same `rankGateways`. See §52.
+
+### Q51–100 in batches (2026-09-24) — what each fault looked like
+
+The round's summary is in `.claude/rules/concierge.md` §50. These are the
+mechanisms worth recognising next time, because every one passed tsc, lint and
+the unit tests before a browser run found it.
+
+* **A missing field merged as "unchanged".** `setPresentation` merges query
+  facets, so a stay of `{adults: 2}` after "the kids are staying with their
+  grandparents" kept the earlier two children, and a flights-only answer kept
+  the previous two adults for "just me". Both are now read as what they mean:
+  adults without kids is no children, and a flights-only party comes from the
+  turn's own searchFlights. **When the model omits a field, ask whether the
+  omission is itself the answer.**
+* **A parser that trusted the requested format.** The extraction was asked for
+  two lines and answered in its examples' one-line shape; the parser found no
+  request and declined whole messages. Parse what the model actually produces
+  (`extractParse.ts`, tested), and keep examples in the shape you want back.
+* **An alias list nobody had checked against the rows.** It added "Saint Tropez"
+  while all five hotels say "Saint-Tropez", and the Hotels filter never used the
+  aliases at all. Read the stored values (a one-line Directus query) before
+  trusting a spelling. The general answer is `lib/searchFold.ts`.
+* **Airline alliances change.** SAS left Star for SkyTeam in 2024 and our table
+  still had it as Star, so both the badges and the concierge were wrong. Claims
+  about alliances now come only from `airlineAlliances.ts` — keep it current.
+* **Member data is read with the member's own session and explicit columns.**
+  A saved trip stores the price the member saw; `select("*")` would have handed
+  it to the model and ended the no-prices guarantee.
+* **Running triage outside Next.** `tsx` cannot resolve `server-only`; an empty
+  stub package on `NODE_PATH` lets a throwaway script call `triageMessage`
+  against the real model, which is how the extraction fault was found in two
+  minutes instead of guessed at.
