@@ -93,6 +93,8 @@ export function flightsHref(query: AiQueryState, results: AiResultSet): string {
 
   params.set("origin", first.origin);
   params.set("cabin", FLIGHTS_PAGE_CABIN[first.cabin] ?? "Economy");
+  // "Star Alliance only" pre-selects that alliance's airlines (2026-09-24).
+  if (first.alliance) params.set("alliance", first.alliance);
 
   /* ALTERNATIVES ARE NOT A MULTI-CITY TRIP (2026-09-23). "Copenhagen to
      London, back on the 15th" came back as five return trips, one per London

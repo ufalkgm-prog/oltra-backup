@@ -14,7 +14,7 @@ import SaveToTripControl, { type SaveToTripResult } from "@/components/members/S
 import type { Itinerary, FlightLeg, AirlineRef } from "@/lib/flights/itinerary";
 import TripComBookButton, { type FlightHandoff } from "@/components/flights/TripComBookButton";
 import { useApproxPrice } from "@/lib/flights/useApproxPrice";
-import { getAlliance, sharedAlliance } from "@/lib/flights/airlineAlliances";
+import { getAlliance, sharedAlliance, type Alliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import type { AirportOption } from "@/lib/airportOptions";
 import { getCityForAirportIata, pickPrimaryAirportForCity } from "@/lib/cityAirports";
@@ -27,6 +27,12 @@ import AiResultsSync from "@/lib/ai/AiResultsSync";
 import { useAiActions } from "@/lib/ai/aiSearchStore";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import styles from "./FlightsView.module.css";
+
+const ALLIANCE_LABELS: Record<Alliance, string> = {
+  star: "Star Alliance",
+  oneworld: "oneworld",
+  skyteam: "SkyTeam",
+};
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 type CabinClass = "Economy" | "Premium Economy" | "Business" | "First";
@@ -636,6 +642,30 @@ export default function FlightsView({ searchParams }: Props) {
     };
   }, []);
 
+  /* AN ALLIANCE HANDED OVER BY THE CONCIERGE (2026-09-24). "We only fly Star
+     Alliance" was answered with Star Alliance flights and landed here on every
+     airline. With `alliance` in the URL the page starts on that alliance's
+     airlines - by IATA code, from lib/flights/airlineAlliances.ts - and the
+     toggle below lets the visitor see the rest. */
+  const allianceParam = ((): Alliance | null => {
+    const value = normalizeParam(searchParams.alliance);
+    return value === "star" || value === "oneworld" || value === "skyteam" ? value : null;
+  })();
+  const [allianceOnly, setAllianceOnly] = useState(Boolean(allianceParam));
+  useEffect(() => {
+    setAllianceOnly(Boolean(allianceParam));
+  }, [allianceParam]);
+  const allianceAirlinesInResults = useMemo(() => {
+    if (!allianceParam) return [];
+    const codeByName = new Map<string, string>();
+    for (const item of itineraries) {
+      for (const leg of item.slices) {
+        for (const carrier of leg.airlines) codeByName.set(carrier.name, carrier.iataCode);
+      }
+    }
+    return allAirlines.filter(name => getAlliance(codeByName.get(name)) === allianceParam);
+  }, [allianceParam, itineraries, allAirlines]);
+
   // Duffel's carrier names and the profile's picklist do not always agree
   // exactly ("Swiss" vs "Swiss International Air Lines"), so match on
   // containment either way rather than string equality.
@@ -669,9 +699,11 @@ export default function FlightsView({ searchParams }: Props) {
     if (!allAirlines.length) return;
     setFilters(current => {
       if (current.airlines.length) return current;
-      return { ...current, airlines: allAirlines, layoverAirports };
+      const airlines =
+        allianceOnly && allianceAirlinesInResults.length ? allianceAirlinesInResults : allAirlines;
+      return { ...current, airlines, layoverAirports };
     });
-  }, [allAirlines, layoverAirports]);
+  }, [allAirlines, layoverAirports, allianceOnly, allianceAirlinesInResults]);
 
 
   const filteredItineraries = useMemo(() => {
@@ -688,6 +720,29 @@ export default function FlightsView({ searchParams }: Props) {
       })
       .sort((a, b) => b.score - a.score);
   }, [filters, itineraries, isOneWay, isMultiple]);
+
+  /* WHEN THE FILTERS HIDE EVERY FLIGHT, SAY SO (2026-09-24). A business
+     multi-city search found three offers, all leaving at 01:32, and the
+     default 08:00-24:00 departure window hid every one behind "No flights
+     match the filters" - true, and no help. The hint now says how many are
+     hidden, whether it is the departure times that do it, and offers them. */
+  const hiddenByFilters = itineraries.length > 0 && filteredItineraries.length === 0 ? itineraries.length : 0;
+  const hiddenByTimes = useMemo(() => {
+    if (!hiddenByFilters) return false;
+    const open = (leg: LegFilter): LegFilter => ({ ...leg, departStartHour: 0, departEndHour: 24 });
+    const wide = {
+      ...filters,
+      outbound: open(filters.outbound),
+      inbound: open(filters.inbound),
+      multi: filters.multi.map(open),
+    };
+    return itineraries.some(item =>
+      isMultiple
+        ? item.slices.every((leg, i) => legMatchesFilters(leg, wide, wide.multi[i] ?? DEFAULT_LEG_FILTER))
+        : legMatchesFilters(item.outbound, wide, wide.outbound) &&
+          (isOneWay || !item.inbound || legMatchesFilters(item.inbound, wide, wide.inbound))
+    );
+  }, [hiddenByFilters, filters, itineraries, isMultiple, isOneWay]);
 
   const { recommended, fastest } = useMemo(
     () => getPinnedItineraries(filteredItineraries, search.tripType),
@@ -1014,6 +1069,55 @@ export default function FlightsView({ searchParams }: Props) {
    * rather than a separate matching rule - it just narrows the selection to
    * the member's preferred carriers that actually fly this route, so both
    * controls can never disagree about what is shown. */
+  /** Every filter back to all flights: times, durations, stops, airlines and
+   * lay-overs, and the two "only" toggles off. */
+  function showAllFlights() {
+    setPreferredOnly(false);
+    setAllianceOnly(false);
+    const open = (leg: LegFilter): LegFilter => ({
+      ...leg,
+      departStartHour: 0,
+      departEndHour: 24,
+      maxDurationHours: 24,
+    });
+    setFilters(current => ({
+      ...current,
+      maxStops: "any",
+      airlines: allAirlines,
+      layoverAirports,
+      outbound: open(current.outbound),
+      inbound: open(current.inbound),
+      multi: current.multi.map(open),
+    }));
+  }
+
+  /** The empty state of a results column: why nothing shows, when it is the
+   * filters, and the way back. */
+  const emptyHint = (fallback: string) =>
+    hiddenByFilters ? (
+      <div className={styles.emptyHint}>
+        {hiddenByFilters === 1 ? "1 flight is" : `${hiddenByFilters} flights are`} hidden by your
+        filters{hiddenByTimes ? " — they leave outside your departure times" : ""}.{" "}
+        <button
+          type="button"
+          className="oltra-btn oltra-btn--condensed"
+          onClick={showAllFlights}
+        >
+          Show {hiddenByFilters === 1 ? "it" : "them"}
+        </button>
+      </div>
+    ) : (
+      <div className={styles.emptyHint}>{fallback}</div>
+    );
+
+  function toggleAllianceOnly(next: boolean) {
+    setAllianceOnly(next);
+    setFilters(current => ({
+      ...current,
+      airlines: next && allianceAirlinesInResults.length ? allianceAirlinesInResults : allAirlines,
+    }));
+  }
+
   function togglePreferredOnly(next: boolean) {
     setPreferredOnly(next);
     setFilters(current => ({
@@ -1399,6 +1503,25 @@ export default function FlightsView({ searchParams }: Props) {
                 </div>
               )}
 
+              {allAirlines.length > 0 && allianceParam && (
+                <label
+                  className={styles.preferredOnlyToggle}
+                  title={
+                    allianceAirlinesInResults.length
+                      ? `Show only ${allianceAirlinesInResults.join(", ")}`
+                      : `No ${ALLIANCE_LABELS[allianceParam]} airline flies this route`
+                  }
+                >
+                  <span>{ALLIANCE_LABELS[allianceParam]} only</span>
+                  <input
+                    type="checkbox"
+                    checked={allianceOnly && allianceAirlinesInResults.length > 0}
+                    disabled={!allianceAirlinesInResults.length}
+                    onChange={e => toggleAllianceOnly(e.target.checked)}
+                  />
+                </label>
+              )}
+
               {allAirlines.length > 0 && preferredAirlines.length > 0 && (
                 <label
                   className={styles.preferredOnlyToggle}
@@ -1510,6 +1633,7 @@ export default function FlightsView({ searchParams }: Props) {
                     handoff={handoff}
                     onInfo={setDetailFlight}
                         onSaveToTrip={handleSaveToTrip}
+                    emptyHint={emptyHint("No flights match the filters.")}
                   />
                 </div>
               ) : isOneWay ? (
@@ -1579,7 +1703,7 @@ export default function FlightsView({ searchParams }: Props) {
                         const displayedOutbound = sortTopFirst(outboundOptions, selectedOutboundId)
                           .filter(f => standardOutboundLegIds.has(f.id));
                         if (!displayedOutbound.length) {
-                          return <div className={styles.emptyHint}>No departure flights match the selected filters.</div>;
+                          return emptyHint("No departure flights match the selected filters.");
                         }
                         return displayedOutbound.map(flight => {
                           const it = itineraryByOutboundId.get(flight.id);
@@ -1679,7 +1803,7 @@ export default function FlightsView({ searchParams }: Props) {
                           const displayedOutbound = sortTopFirst(outboundOptions, selectedOutboundId)
                             .filter(f => standardOutboundLegIds.has(f.id));
                           if (!displayedOutbound.length) {
-                            return <div className={styles.emptyHint}>No departure flights match the selected filters.</div>;
+                            return emptyHint("No departure flights match the selected filters.");
                           }
                           return displayedOutbound.map(flight => {
                             const price = departureFromPriceMap.get(flight.id);
@@ -1948,6 +2072,7 @@ function MultipleResults({
   handoff,
   onInfo,
   onSaveToTrip,
+  emptyHint,
 }: {
   searchLegs: MultiCityLeg[];
   activeLegIndex: number;
@@ -1961,6 +2086,8 @@ function MultipleResults({
   handoff: FlightHandoff;
   onInfo: (flight: FlightLeg) => void;
   onSaveToTrip?: (tripId: string, itinerary: Itinerary) => Promise<SaveToTripResult>;
+  /** What an empty column says - why nothing shows, and the way back. */
+  emptyHint: React.ReactNode;
 }) {
   const N = searchLegs.length;
   const compact = N >= 4;
@@ -2058,7 +2185,7 @@ function MultipleResults({
                     );
                   })
                 ) : (
-                  <div className={styles.emptyHint}>No flights match the filters.</div>
+                  emptyHint
                 )}
               </div>
             </div>

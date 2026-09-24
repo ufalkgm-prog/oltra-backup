@@ -300,6 +300,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
               ? results.flightsForHotels
               : base.flightsForHotels,
             laterStops: results.laterStops ?? base.laterStops,
+            fullByStay: results.fullByStay ?? base.fullByStay,
           },
           query: {
             ...prev.query,

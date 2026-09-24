@@ -379,6 +379,15 @@
   font-style: italic;
 }
 
+/* Under a place's hotels on a trip in several places: the ones with no rooms
+   for that stay. A note about the list, so it reads like the not-sold-here
+   note rather than another hotel line. */
+.summaryFull {
+  margin: 0.25rem 0 0;
+  color: var(--oltra-text-muted);
+  font-style: italic;
+}
+
 /* The one aside inside the answer, and set as an aside: smaller and muted, so
    it reads as a note about the interface rather than as another sentence from
    the concierge. Said plainly because the summary deliberately carries no

@@ -129,6 +129,49 @@ function nearHotelIdOf(parts: UIMessage["parts"]): number | undefined {
   return found;
 }
 
+/** The hotels this turn found with no rooms, per stay ("checkIn|checkOut"),
+ * leaving out any the answer presents. From searchHotels (full hotels come
+ * back as id, name and city, `noRoomsForTheseDates`) and checkAvailability
+ * (`no-rates-for-these-dates`, by id - named from the turn's searches). */
+function fullHotelsByStay(
+  message: UIMessage,
+  presented: Set<number>
+): Record<string, { id: number; name: string }[]> {
+  type Stay = { checkIn?: string; checkOut?: string };
+  const names = new Map<number, string>();
+  const full = new Map<string, Map<number, true>>();
+  const add = (stay: Stay | undefined, id: number) => {
+    if (!stay?.checkIn || !stay.checkOut || presented.has(id)) return;
+    const key = stayKey(stay.checkIn, stay.checkOut);
+    full.set(key, (full.get(key) ?? new Map()).set(id, true));
+  };
+  for (const part of message.parts) {
+    if (!isToolUIPart(part) || part.state !== "output-available") continue;
+    const name = getToolName(part);
+    const out = toolOutputData(part.output) as { hotels?: unknown } | null;
+    const hotels = Array.isArray(out?.hotels) ? (out.hotels as Record<string, unknown>[]) : [];
+    for (const hotel of hotels) {
+      const id = Number(hotel.id);
+      if (!Number.isInteger(id)) continue;
+      if (typeof hotel.name === "string") names.set(id, hotel.name);
+      if (name === "searchHotels" && hotel.noRoomsForTheseDates) {
+        add((part.input as { stay?: Stay } | undefined)?.stay, id);
+      }
+      if (name === "checkAvailability" && hotel.reason === "no-rates-for-these-dates") {
+        add(part.input as Stay | undefined, id);
+      }
+    }
+  }
+  const byStay: Record<string, { id: number; name: string }[]> = {};
+  for (const [key, ids] of full) {
+    const named = [...ids.keys()]
+      .map((id) => ({ id, name: names.get(id) ?? "" }))
+      .filter((hotel) => hotel.name);
+    if (named.length) byStay[key] = named;
+  }
+  return byStay;
+}
+
 /** The "searchedRoutes" a searchFlights result reports ("LHR-RAK"). */
 function searchedRoutesOf(output: unknown): string[] {
   const routes = toolOutputData(output)?.searchedRoutes;
@@ -553,6 +596,12 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
         // the handoff URL and the Flights page's trip type all read the same
         // one round trip.
         results.flightsForHotels = Boolean(input.hotelIds?.length);
+        /* The alliance this turn searched with, if any, so the Flights page
+           shows the same airlines the answer described (2026-09-24). */
+        const searchedAlliance = message.parts
+          .filter((p) => isToolUIPart(p) && getToolName(p) === "searchFlights")
+          .map((p) => (isToolUIPart(p) ? (p.input as { alliance?: string } | undefined)?.alliance : undefined))
+          .find((a): a is "star" | "oneworld" | "skyteam" => a === "star" || a === "oneworld" || a === "skyteam");
         results.flights = collapseReturnLegs(
           input.flights
             .filter((leg) => leg?.origin && leg?.destination && leg?.departureDate)
@@ -562,6 +611,7 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
               departureDate: leg.departureDate,
               returnDate: leg.returnDate ?? "",
               cabin: leg.cabin ?? "economy",
+              ...(searchedAlliance ? { alliance: searchedAlliance } : {}),
               ...(isHour(leg.departAfter) ? { departAfter: leg.departAfter } : {}),
               ...(isHour(leg.returnAfter) ? { returnAfter: leg.returnAfter } : {}),
               ...(leg.details &&
@@ -586,6 +636,11 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
             hotelIds: ids(stop.hotelIds),
             restaurantIds: ids(stop.restaurantIds),
           }));
+        // Only a trip that moves on lists them; a single place is named in
+        // the framing, as before. Empty clears an earlier trip's.
+        results.fullByStay = results.laterStops.length
+          ? fullHotelsByStay(message, hotelIdSet)
+          : {};
       }
 
       return {
@@ -1203,6 +1258,28 @@ function ResultSummary({ past }: { past?: Presentation }) {
   const stopHeading = (kind: string, place: string, from?: string, to?: string) =>
     `${kind}${place ? ` in ${place}` : ""}${stayLabel(from, to)}`;
 
+  /* FULL HOTELS UNDER EACH PLACE OF A TRIP (2026-09-24), from the tool
+     results (AiResultSet.fullByStay), not asked of the model: "on the coast
+     four are full" left the guest guessing which. Five names, then a count. */
+  const fullLine = (from?: string, to?: string) => {
+    if (!multiStop || !from || !to) return null;
+    const full = results.fullByStay?.[stayKey(from, to)] ?? [];
+    if (!full.length) return null;
+    const names = full.slice(0, MAX_NAMED).map((hotel) => hotel.name.trim());
+    const more = full.length - names.length;
+    const list =
+      more > 0
+        ? `${names.join(", ")} and ${more} more`
+        : names.length > 1
+          ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`
+          : names[0];
+    return (
+      <p className={styles.summaryFull}>
+        No rooms {shortDate(from)} – {shortDate(to)}: {list}.
+      </p>
+    );
+  };
+
   /* THE STANDARD LINE FOR A HOTEL WE CANNOT PRICE (Ulrik, 2026-09-13):
      "Not available at myOLTRA yet.", italic, the last sentence under that
      hotel — never in the intro. The model used to say it in its own words in
@@ -1384,6 +1461,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
                 : "Hotels"}
           </div>
           <ul className={styles.summaryList}>{hotelPicks.map(hotelItem)}</ul>
+          {fullLine(query.from, query.to)}
         </div>
       ) : null}
 
@@ -1412,6 +1490,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
                 {stopHeading("Hotels", stop.place, stop.checkIn, stop.checkOut)}
               </div>
               <ul className={styles.summaryList}>{stopHotels.map(hotelItem)}</ul>
+              {fullLine(stop.checkIn, stop.checkOut)}
             </div>
           ) : null}
           {restaurantsByCity(stopRestaurants).map(([city, list]) => (

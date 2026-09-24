@@ -160,6 +160,12 @@ export type AiResultSet = {
    * lists every place's properties under its own place and dates, each priced
    * for its own stay (Ulrik, 2026-09-15). */
   laterStops: AiLaterStop[];
+  /** On a trip in several places: the hotels that came back with no rooms
+   * for each stay, keyed "checkIn|checkOut", listed by the panel under that
+   * place (2026-09-24). The model named Paris's full hotels and wrote "on the
+   * coast four are full" for the next stop, with the prompt asking for names;
+   * the tool results already hold them. */
+  fullByStay?: Record<string, { id: number; name: string }[]>;
   /** True when the answer that set `flights` presented hotels in the same
    * call, so every flight is there to reach one of those hotels (see
    * completeLegsForHotels). */
@@ -193,6 +199,9 @@ export type AiFlightLeg = {
    * its departure-time filters from them (2026-09-24). */
   departAfter?: number;
   returnAfter?: number;
+  /** The alliance the visitor flies, when the answer searched with one; the
+   * Flights page pre-selects that alliance's airlines (2026-09-24). */
+  alliance?: "star" | "oneworld" | "skyteam";
 };
 
 export const EMPTY_RESULT_SET: AiResultSet = {
