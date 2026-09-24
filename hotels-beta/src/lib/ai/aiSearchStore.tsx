@@ -17,7 +17,7 @@ import {
   kidAgeFields,
   mergeHotelFlightSearch,
 } from "@/lib/searchSession";
-import { expandCityAliases } from "@/lib/locationAliases";
+import { expandCityAliases, hotelCityFor } from "@/lib/locationAliases";
 import {
   EMPTY_QUERY_STATE,
   EMPTY_RESULT_SET,
@@ -331,7 +331,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     mirrorHotelId.current = "";
     if (placeOnly) {
       mergeHotelFlightSearch({
-        city: destination.city,
+        city: hotelCityFor(destination.city),
         state: destination.area,
         admin_region: destination.adminRegion,
         country: destination.country,
@@ -340,7 +340,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     mergeHotelFlightSearch({
-      city: destination.city,
+      city: hotelCityFor(destination.city),
       state: destination.area,
       admin_region: destination.adminRegion,
       country: destination.country,
@@ -383,7 +383,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     if (from || to) clearHotelFlightDatesIf(from, to);
     // And the city the conversation made the site's destination (the mirror
     // wrote exactly these four fields), unless something else has replaced it.
-    clearHotelFlightDestinationIf(destination);
+    clearHotelFlightDestinationIf({ ...destination, city: hotelCityFor(destination.city) });
     setState(EMPTY);
     try {
       window.sessionStorage.removeItem(STORAGE_KEY);

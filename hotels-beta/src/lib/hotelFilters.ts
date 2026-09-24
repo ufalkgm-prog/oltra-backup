@@ -2,6 +2,7 @@
 import "server-only";
 import type { DirectusFilter } from "@/lib/directus";
 import { AWARD_CODES } from "@/lib/hotels/awardCodes";
+import { expandCityAliases } from "@/lib/locationAliases";
 import {
   macroRegionFilter,
   matchesMacroSetting,
@@ -77,7 +78,10 @@ export function buildHotelsDirectusFilter(
   }
 
   for (const [key, field] of scalarMappings) {
-    const values = parseList(searchParams[key]);
+    // A city's aliases too: the Saint-Tropez cluster is one place however it
+    // arrives, including as the restaurants' "Saint-Tropez – Ramatuelle".
+    const values =
+      key === "city" ? expandCityAliases(parseList(searchParams[key])) : parseList(searchParams[key]);
     if (values.length) {
       and.push({ [field]: { _in: values } });
     }
