@@ -21,7 +21,9 @@ export type SmallCardAvailability =
   | { status: "unavailable" }
   | { status: "no-id" }
   | { status: "idle" }
-  | { status: "error" };
+  | { status: "error" }
+  /** Why there is no price, when that is known in advance ("Up to 30 nights"). */
+  | { status: "note"; text: string };
 
 /** How many result frames are sharing the row this card sits in.
  *
@@ -200,6 +202,13 @@ export default function HotelSmallCard({
     }
     if (availability.status === "no-id") {
       return null;
+    }
+    if (availability.status === "note") {
+      return (
+        <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+          {availability.text}
+        </div>
+      );
     }
     if (availability.status === "error") {
       return (

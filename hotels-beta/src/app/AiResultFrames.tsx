@@ -20,7 +20,7 @@ import type { RestaurantRecord } from "@/app/restaurants/types";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { currentResidency } from "@/lib/countries";
 import { guestSelectionIssue } from "@/lib/guests";
-import { isStayTooLong } from "@/lib/stay";
+import { isStayTooLong, MAX_STAY_NIGHTS } from "@/lib/stay";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { MAX_NAMED, completeLegsForHotels, namedHotels } from "@/lib/ai/hotelGateways";
 import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
@@ -259,7 +259,26 @@ function HotelStayGroup({
       },
       Math.max(1, query.bedrooms || 1)
     );
-    if (!priceable.length || !from || !to || isStayTooLong(from, to) || !residency || occupancyIssue) {
+    /* A price skipped on purpose says so, rather than leaving the card on
+       "Checking availability…" for good (2026-09-24: two months in Bali). A
+       stay over 30 nights reads as the Hotels page does; a party still missing
+       a rooms answer or a child's age, or a hotel we cannot price, shows no
+       price line. Only the residency is transient - it arrives in an effect. */
+    const settled = (entry: SmallCardAvailability) =>
+      setAvailability(Object.fromEntries(hotels.map((h) => [String(h.id), entry])));
+    if (!from || !to) {
+      setAvailability({});
+      return;
+    }
+    if (isStayTooLong(from, to)) {
+      settled({ status: "note", text: `Up to ${MAX_STAY_NIGHTS} nights` });
+      return;
+    }
+    if (!priceable.length || occupancyIssue) {
+      settled({ status: "no-id" });
+      return;
+    }
+    if (!residency) {
       setAvailability({});
       return;
     }
@@ -292,6 +311,8 @@ function HotelStayGroup({
         if (cancelled) return;
 
         const next: Record<string, SmallCardAvailability> = {};
+        // A hotel with nothing to price has no price line, not a spinner.
+        for (const hotel of hotels) next[String(hotel.id)] = { status: "no-id" };
         for (const hotel of priceable) next[String(hotel.id)] = { status: "unavailable" };
 
         if (res.ok && json.ok) {

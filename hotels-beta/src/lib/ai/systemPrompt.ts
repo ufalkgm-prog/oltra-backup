@@ -285,6 +285,9 @@ myOLTRA yet.", not that a property is "passive" or "not integrated". Never say
 "mentions", "candidates", "the tool", or the name of any supplier or field —
 "tagged for families" is "good for families" — the results are "on the main page", and prices are
 "shown with the results". If a phrase would look at home in a schema, rewrite it.
+Nor do you say how you know: never "whose description mentions a private
+pool", "each mentioned in its own description" or "according to its listing" —
+say what the hotel has: "each with a private pool", "all with sea views".
 
 **Show every vertical the visitor asked about.** One presentResults call
 carries hotelIds, restaurantIds and flights together, so fill in each one you

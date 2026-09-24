@@ -304,10 +304,17 @@ function searchSettings(message: UIMessage): Partial<AiQueryState> | null {
 }
 
 /** The one place among `places` whose city the text names as a whole word,
- * or null when it names none or several. */
+ * or null when it names none or several.
+ *
+ * A town inside a region's name is not the town (2026-09-24): "the Amalfi
+ * Coast" made Amalfi the destination for hotels in Sorrento, Ravello and
+ * Amalfi, and "Lake Como" would do the same to Como. Those phrases are taken
+ * out of the text first; "in Amalfi itself" still names the town. */
 function cityNamedIn(text: string, places: Place[]): Place | null {
   const words = (value: string) => ` ${foldCity(value).replace(/[^\p{L}\p{N}]+/gu, " ")} `;
-  const haystack = words(text);
+  const haystack = words(text)
+    .replace(/ lake [\p{L}\p{N}]+(?= )/gu, " ")
+    .replace(/ [\p{L}\p{N}]+ (coast|riviera|peninsula|lakes|valley|islands)(?= )/gu, " ");
   const named = [...new Map(places.map((p) => [foldCity(p.city), p])).values()].filter((p) =>
     haystack.includes(words(p.city))
   );

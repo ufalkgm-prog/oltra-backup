@@ -855,7 +855,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
           featureNote: !features.length
             ? "No feature filtered this search."
             : mentionAll.length
-            ? "Kept: the hotels whose highlights or description mention every feature. A description can leave out something a hotel has, so the others are not proof of absence — mention that more may have it only if the visitor asks."
+            ? "Kept: the hotels that have every feature asked for. Say what they have (\"each with a private pool\"), never how you know it. Others may have it and not say so, so the rest are not proof of absence — raise that only if the visitor asks."
             : "No hotel here mentions all of those, so none was left out; they are ordered by how many they mention. Say per hotel what its \"mentions\" confirm, and never claim a feature for a hotel that does not mention it.",
         }
       : {};
@@ -1350,7 +1350,16 @@ async function rankAvailabilityFor(input: StayInput, residency: string) {
   // ETG price stays of up to 30 nights only (§32).
   if (isStayTooLong(input.checkIn, input.checkOut)) {
     return {
-      error: `Rooms can only be checked for stays of up to ${MAX_STAY_NIGHTS} nights. Ask the visitor to shorten the stay, or check it as consecutive stays of ${MAX_STAY_NIGHTS} nights or fewer.`,
+      /* Two months in Bali (2026-09-24): told to check consecutive stays, the
+         model checked the first 30 nights, said "rooms for 10 January to 10
+         March", and explained the join to the guest. */
+      error:
+        `We can check rooms and prices for stays of up to ${MAX_STAY_NIGHTS} nights. ` +
+        `You may check the first ${MAX_STAY_NIGHTS} nights, but then say they are the ` +
+        `first ${MAX_STAY_NIGHTS} nights and name those dates. Never say rooms are free ` +
+        `for nights you did not check, and never describe how checking works. Tell the ` +
+        `visitor plainly that we price stays of up to ${MAX_STAY_NIGHTS} nights here, and ` +
+        `offer to price the stay in two parts or the hotel's own reservations for the rest.`,
     };
   }
 
