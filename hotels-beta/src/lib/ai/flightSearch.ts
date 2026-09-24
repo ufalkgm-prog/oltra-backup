@@ -1,5 +1,6 @@
 import "server-only";
 import { factsFromDurations, type GatewayFlightFacts } from "@/lib/flights/gatewayRanking";
+import { sharedAlliance, type Alliance } from "@/lib/flights/airlineAlliances";
 import { toCabin } from "@/lib/flights/itinerary";
 import { duffelConnector } from "@/lib/flights/providers/duffel";
 import type { PreferredAirline } from "./preferredAirlines";
@@ -28,7 +29,20 @@ export type FlightSearchInput = {
   adults?: number;
   children?: number;
   cabinClass?: string;
+  /** Keep only options flown entirely within this alliance. */
+  alliance?: Alliance;
 };
+
+const ALLIANCE_NAMES: Record<Alliance, string> = {
+  star: "Star Alliance",
+  oneworld: "oneworld",
+  skyteam: "SkyTeam",
+};
+
+/* The test token's own carrier (2026-09-24). "Duffel Airways" flies every route
+   in that environment and was being named to guests in flight details; it is
+   no airline anyone can book, so its itineraries never reach the model. */
+const isSupplierTestCarrier = (name: string) => /duffel/i.test(name);
 
 function isIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -106,9 +120,33 @@ export async function searchFlightOffers(
    * option to a traveller, and the cheapest fare stands for it), each flagged
    * for civilised hours, ordered civilised first, then fewest stops, then
    * shortest, then cheapest. The fare still only survives as a rank. */
-  const priced = [...itineraries]
-    .filter((it) => Number.isFinite(it.priceEur))
-    .sort((a, b) => a.priceEur - b.priceEur);
+  const carriersOf = (it: (typeof itineraries)[number]) => [
+    ...it.outbound.airlines,
+    ...(it.inbound?.airlines ?? []),
+  ];
+  /** The alliance every carrier on the itinerary belongs to, from our own
+   * table (lib/flights/airlineAlliances.ts) — never the model's memory. */
+  const allianceOf = (it: (typeof itineraries)[number]) =>
+    sharedAlliance(carriersOf(it).map((carrier) => carrier.iataCode));
+
+  const real = itineraries.filter(
+    (it) => Number.isFinite(it.priceEur) && !carriersOf(it).some((c) => isSupplierTestCarrier(c.name))
+  );
+  /* AN ALLIANCE THE VISITOR FLIES (2026-09-24). "We only fly Star Alliance"
+     had no effect and the answer named SAS as Star from memory - SAS has been
+     SkyTeam since 2024. With `alliance`, only itineraries flown entirely within
+     it are kept; when none is, the rest come back with that said. */
+  const inAlliance = input.alliance ? real.filter((it) => allianceOf(it) === input.alliance) : real;
+  const allianceNote = input.alliance
+    ? inAlliance.length
+      ? { allianceNote: `Every option here is flown entirely within ${ALLIANCE_NAMES[input.alliance]}.` }
+      : {
+          allianceNote:
+            `Nothing on this route on these dates is flown entirely within ${ALLIANCE_NAMES[input.alliance]}. ` +
+            "These are the other options; say so plainly.",
+        }
+    : {};
+  const priced = [...(inAlliance.length ? inAlliance : real)].sort((a, b) => a.priceEur - b.priceEur);
 
   type Leg = (typeof priced)[number]["outbound"];
   const signature = (leg: Leg | undefined) =>
@@ -195,7 +233,10 @@ export async function searchFlightOffers(
         : "") +
       "Most relevant first: civilised hours, then fewest stops, then shortest. " +
       "Times are local. priceRank is 1 for the cheapest schedule; no fares are " +
-      "provided - the flight cards display live prices.",
+      "provided - the flight cards display live prices. An option's \"alliance\" is " +
+      "set only when every airline on it belongs to that alliance; never name an " +
+      "airline's alliance otherwise.",
+    ...allianceNote,
     ...(preferredAirlines.length
       ? {
           preferredAirlines: preferredAirlines.map((airline) => airline.name),
@@ -204,6 +245,7 @@ export async function searchFlightOffers(
       : {}),
     options: chosen.map((itinerary) => ({
       ...(sensiblePreferred(itinerary) ? { preferredAirline: sensiblePreferred(itinerary) } : {}),
+      ...(allianceOf(itinerary) ? { alliance: ALLIANCE_NAMES[allianceOf(itinerary)!] } : {}),
       priceRank: priceRank.get(itinerary) ?? 0,
       outbound: describe(itinerary.outbound),
       inbound: describe(itinerary.inbound),

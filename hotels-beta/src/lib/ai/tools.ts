@@ -1912,9 +1912,17 @@ function createSearchFlights(preferred: PreferredAirline[]) {
     adults?: number;
     children?: number;
     cabinClass?: string;
+    alliance?: "star" | "oneworld" | "skyteam";
   }>({
     type: "object",
     properties: {
+      alliance: {
+        type: "string",
+        enum: ["star", "oneworld", "skyteam"],
+        description:
+          "Only when the visitor says they fly one alliance (\"Star Alliance only\"): keeps " +
+          "only options flown entirely within it, and says so when none is.",
+      },
       origin: { type: "string", description: "IATA code, for one departure airport." },
       originCity: {
         type: "string",

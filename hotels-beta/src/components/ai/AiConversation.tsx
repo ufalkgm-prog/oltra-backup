@@ -381,6 +381,19 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
         typeof flightSearch?.maxFlightHours === "number" && flightSearch.maxFlightHours > 0
           ? flightSearch.maxFlightHours
           : 0;
+      /* WHO IS FLYING, for an answer with flights and no stay (2026-09-24).
+         "One-way to New York, just me" searched one adult, but a flights-only
+         answer carried no party, so the Flights page got the previous two and
+         priced two seats. Read from the turn's own searchFlights, as the leg
+         details are. */
+      const flightParty =
+        input.flights?.length && typeof stay.adults !== "number"
+          ? message.parts
+              .filter((p) => isToolUIPart(p) && getToolName(p) === "searchFlights" && p.state !== "input-streaming")
+              .map((p) => (isToolUIPart(p) ? (p.input as { adults?: number; children?: number } | undefined) : undefined))
+              .filter((s) => typeof s?.adults === "number")
+              .at(-1)
+          : undefined;
       /* An answer spread over several places has no destination. It still moves
          the conversation away from the last one, so it clears the city rather
          than leaving the previous answer's on every page (2026-09-23). When
@@ -410,6 +423,13 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
         ...(stay.checkOut ? { to: stay.checkOut } : {}),
         ...(typeof stay.adults === "number" ? { adults: Math.max(1, stay.adults) } : {}),
         ...(typeof stay.kids === "number" ? { kids: Math.max(0, stay.kids) } : {}),
+        ...(flightParty
+          ? {
+              adults: Math.max(1, flightParty.adults ?? 1),
+              kids: Math.max(0, flightParty.children ?? 0),
+              ...(flightParty.children ? {} : { childrenAges: [] }),
+            }
+          : {}),
         /* The ages the concierge priced with. Without them the stay reached the
            page as "2 children" of no age, so the page priced a different stay
            from the one the answer checked (found 2026-09-14). */

@@ -514,10 +514,26 @@ export default function FlightsView({ searchParams }: Props) {
         : "";
     /* The cabin and trip type too (2026-09-24): business class asked for with
        this page open wrote cabin=Business into the URL and the form stayed on
-       Economy, showing economy fares under a business answer. Multi-city is
-       left to arrival, where its legs are read with it. */
+       Economy, showing economy fares under a business answer. A multi-city
+       trip is read with its legs, just below. */
     const cabinHanded = cabinFromParams(searchParams);
     const tripHanded = TRIP_TYPE_ALIASES[normalizeParam(searchParams.tripType)];
+    /* And a multi-city trip (2026-09-24): "Rome out, home from Naples" wrote
+       leg1/leg2 into the URL of an open page, which stayed on its old
+       Copenhagen-Geneva return search. Real legs win, as on arrival. */
+    const legsHanded = readLegParams(searchParams);
+    if (legsHanded.length > 1) {
+      setSearch(current => ({
+        ...current,
+        cabin: cabinHanded ?? current.cabin,
+        tripType: "multiple",
+        multiCity: legsHanded,
+        adults: Number(normalizeParam(searchParams.adults)) || current.adults,
+        children: Number(normalizeParam(searchParams.kids)) || current.children,
+      }));
+      setFilters(current => filtersFromParams(searchParams, current));
+      return;
+    }
     setSearch(current => ({
       ...current,
       cabin: cabinHanded ?? current.cabin,
