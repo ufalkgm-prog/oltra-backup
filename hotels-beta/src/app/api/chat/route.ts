@@ -11,6 +11,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { buildConciergeTools } from "@/lib/ai/tools";
 import { readMemberFavourites, readMemberSavedTrips } from "@/lib/ai/memberData";
+import { buildAnswerLog, type AnswerLogInput } from "@/lib/ai/answerLog";
+import { createHash } from "node:crypto";
 import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
 import { consumeRateLimit } from "@/lib/ai/rateLimit";
 import { triageMessage, type RemovedKind } from "@/lib/ai/triage";
@@ -82,6 +84,32 @@ function readPreferredAirlines(stored: unknown): string[] {
   ].slice(0, 10);
 }
 
+/** The member as the answer log records them: a hash, never their id. An
+ * optional server-only salt (CONCIERGE_LOG_SALT) keeps it from being matched
+ * back even by someone holding the member list. */
+function memberHash(userId: string): string {
+  return createHash("sha256")
+    .update(`${process.env.CONCIERGE_LOG_SALT ?? ""}${userId}`)
+    .digest("hex")
+    .slice(0, 24);
+}
+
+/* One record per answer (lib/ai/answerLog.ts), written with the member's own
+   session: the table accepts inserts from members and shows them nothing.
+   Never allowed to break an answer - a missing table or a failed insert is
+   logged and ignored. */
+async function writeAnswerLog(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: AnswerLogInput
+): Promise<void> {
+  try {
+    const { error } = await supabase.from("concierge_answer_log").insert(buildAnswerLog(input));
+    if (error) console.error("[ai log]", error.message);
+  } catch (err) {
+    console.error("[ai log]", err);
+  }
+}
+
 function reject(status: number, error: string) {
   return Response.json({ error }, { status });
 }
@@ -93,6 +121,7 @@ function todayNote(): string {
 }
 
 export async function POST(req: Request) {
+  const startedAt = Date.now();
   if (process.env.NEXT_PUBLIC_AI_CHAT_ENABLED !== "1") {
     return reject(404, "Not found");
   }
@@ -190,7 +219,18 @@ export async function POST(req: Request) {
   //    takes up its own offer ("List the others") is not read in isolation
   //    and declined as off-topic. See triage.ts.
   const verdict = await triageMessage(latestText, previousReplyText(trimmed.slice(0, -1)));
+  /* What every record of this answer shares. Answers only: the member's
+     question is never put in it (Ulrik, 2026-09-24). */
+  const logBase = {
+    memberHash: memberHash(userId),
+    page: pageContext?.page ?? null,
+    turn: trimmed.filter((message) => message.role === "user").length,
+    model: CHAT_MODEL,
+    triageLabel: verdict.label,
+    removedKind: verdict.allow ? (verdict.travelOnly?.removed ?? null) : null,
+  };
   if (verdict.allow === false) {
+    await writeAnswerLog(supabase, { ...logBase, durationMs: Date.now() - startedAt, declineReply: verdict.reply });
     return createUIMessageStreamResponse({
       stream: createUIMessageStream({
         execute({ writer }) {
@@ -308,6 +348,22 @@ export async function POST(req: Request) {
     abortSignal: req.signal,
     onError({ error }) {
       console.error("[ai chat]", error);
+    },
+    // The answer's record for the monitoring agent; awaited before the stream
+    // closes, so it is written while the request is still alive.
+    async onFinish(event) {
+      await writeAnswerLog(supabase, {
+        ...logBase,
+        durationMs: Date.now() - startedAt,
+        steps: event.steps.map((step) => ({
+          text: step.text,
+          toolCalls: step.toolCalls.flatMap((call) =>
+            call ? [{ toolName: call.toolName, input: call.input }] : []
+          ),
+        })),
+        finishReason: event.finishReason,
+        usage: event.totalUsage,
+      });
     },  });
 
   return result.toUIMessageStreamResponse(
