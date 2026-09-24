@@ -10,6 +10,7 @@ import {
 } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { buildConciergeTools } from "@/lib/ai/tools";
+import { readMemberFavourites, readMemberSavedTrips } from "@/lib/ai/memberData";
 import { SYSTEM_PROMPT } from "@/lib/ai/systemPrompt";
 import { consumeRateLimit } from "@/lib/ai/rateLimit";
 import { triageMessage, type RemovedKind } from "@/lib/ai/triage";
@@ -101,8 +102,9 @@ export async function POST(req: Request) {
   //    configuration, so the missing-key case is answered below it.
   let userId: string;
   let preferredAirlines: string[] = [];
+  let supabase: Awaited<ReturnType<typeof createClient>>;
   try {
-    const supabase = await createClient();
+    supabase = await createClient();
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) return reject(401, "Please sign in to use the concierge.");
     userId = data.user.id;
@@ -266,7 +268,16 @@ export async function POST(req: Request) {
       await convertToModelMessages(dropProviderExecutedTools(modelHistory))
     ),
     tools: {
-      ...buildConciergeTools({ preferredAirlines, residency }),
+      ...buildConciergeTools({
+        preferredAirlines,
+        residency,
+        // Their own favourites and saved trips, read with their own session
+        // and only when the model asks (lib/ai/memberData.ts). Read only.
+        member: {
+          favourites: () => readMemberFavourites(supabase, userId),
+          savedTrips: () => readMemberSavedTrips(supabase, userId),
+        },
+      }),
       // Anthropic's own server-side search. maxUses is enforced upstream, so
       // the model cannot exceed the cap even if it tries, and the allow-list
       // keeps this a travel-reference tool rather than a general web search.
@@ -332,8 +343,10 @@ function removedPartNote(removed: RemovedKind): string {
     "Never guess at, quote or discuss what was removed.";
   if (removed === "ACCOUNT") {
     return (
-      `${base} It concerned their account: add one sentence that you cannot make changes to their ` +
-      "account, and that their profile and saved trips are under Members."
+      `${base} It asked you to change something stored in their account: add one sentence that ` +
+      "you cannot change it from here, and where they can — ADD TO FAVOURITES and SAVE TO TRIP " +
+      "on each hotel, restaurant and flight, and their profile, favourites and saved trips under " +
+      "Members. Never say you have done it."
     );
   }
   // Saying it reveals nothing: having no access to anyone else is the point.

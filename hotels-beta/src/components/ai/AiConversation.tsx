@@ -796,6 +796,10 @@ function progressLabel(toolName: string, input: unknown): string {
       const query = inputField(input, "query");
       return query ? `Checking the web for “${query}”` : "Checking the web";
     }
+    case "myFavourites":
+      return "Reading your favourites";
+    case "mySavedTrips":
+      return "Reading your saved trips";
     case "presentResults":
       return "Putting the answer together";
     default:
