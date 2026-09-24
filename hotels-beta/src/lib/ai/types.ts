@@ -129,6 +129,11 @@ export type AiResultSet = {
    * Restaurants page keeps its own city-driven data and design, so a handoff
    * there carries the city, not this list. */
   restaurantIds: number[];
+  /** The hotel the restaurants were chosen for their distance from — the
+   * Restaurants page marks it on its map, and the walking times in the answer
+   * are measured from it (2026-09-24). Absent when the answer measured from
+   * no hotel of ours. */
+  nearHotelId?: number;
   /** id -> one-line editorial rationale. Never a price. */
   rationales: Record<string, string>;
   /** The subset of `hotelIds`/`restaurantIds` the model chose to name, in its
@@ -183,6 +188,11 @@ export type AiFlightLeg = {
    * airlines, direct or with stops, and the departure times each way — taken
    * from searchFlights. Never a fare; the cards carry those. */
   details?: string;
+  /** The earliest hour (0-23) the visitor will leave on the way out, and on
+   * the way back, when they said so ("not before 9"). The Flights page sets
+   * its departure-time filters from them (2026-09-24). */
+  departAfter?: number;
+  returnAfter?: number;
 };
 
 export const EMPTY_RESULT_SET: AiResultSet = {

@@ -65,7 +65,10 @@ type PresentInput = {
     returnDate?: string;
     cabin?: string;
     details?: string;
+    departAfter?: number;
+    returnAfter?: number;
   }[];
+  nearHotelId?: number;
   stay?: {
     checkIn?: string;
     checkOut?: string;
@@ -99,22 +102,36 @@ function flightKey(origin?: string, destination?: string, depart?: string, ret?:
   return `${code(origin)}-${code(destination)}-${depart ?? ""}-${ret ?? ""}`;
 }
 
-/** The "searchedRoutes" a searchFlights result reports ("LHR-RAK"). Tool output
- * reaches the client wrapped in untrusted-data markers, so the JSON is cut out
- * of the string rather than parsed whole. */
-function searchedRoutesOf(output: unknown): string[] {
-  let data: unknown = output;
-  if (typeof output === "string") {
-    const start = output.indexOf("{");
-    const end = output.lastIndexOf("}");
-    if (start < 0 || end <= start) return [];
-    try {
-      data = JSON.parse(output.slice(start, end + 1));
-    } catch {
-      return [];
-    }
+/** A tool result's JSON. Tool output reaches the client wrapped in
+ * untrusted-data markers, so the JSON is cut out of the string rather than
+ * parsed whole. */
+function toolOutputData(output: unknown): Record<string, unknown> | null {
+  if (typeof output !== "string") return (output as Record<string, unknown> | null) ?? null;
+  const start = output.indexOf("{");
+  const end = output.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  try {
+    return JSON.parse(output.slice(start, end + 1)) as Record<string, unknown>;
+  } catch {
+    return null;
   }
-  const routes = (data as { searchedRoutes?: unknown } | null)?.searchedRoutes;
+}
+
+/** The hotel of ours the turn's last restaurant search measured from, when
+ * its `near` named one (searchRestaurants reports it as nearHotelId). */
+function nearHotelIdOf(parts: UIMessage["parts"]): number | undefined {
+  let found: number | undefined;
+  for (const p of parts) {
+    if (!isToolUIPart(p) || getToolName(p) !== "searchRestaurants") continue;
+    const id = toolOutputData(p.output)?.nearHotelId;
+    if (Number.isInteger(id)) found = id as number;
+  }
+  return found;
+}
+
+/** The "searchedRoutes" a searchFlights result reports ("LHR-RAK"). */
+function searchedRoutesOf(output: unknown): string[] {
+  const routes = toolOutputData(output)?.searchedRoutes;
   return Array.isArray(routes)
     ? routes.filter((route): route is string => typeof route === "string" && /^[A-Z]{3}-[A-Z]{3}$/.test(route))
     : [];
@@ -449,6 +466,12 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
           input.restaurantIds.filter((id) => Number.isFinite(id)),
           highlightIds
         );
+        // Set with every restaurant answer, so one measured from no hotel
+        // clears the hotel an earlier answer walked from. The search's own
+        // finding first: the model often names the hotel without its id.
+        results.nearHotelId =
+          nearHotelIdOf(message.parts) ??
+          (Number.isInteger(input.nearHotelId) ? input.nearHotelId : undefined);
       }
       if (input.rationales) {
         results.rationales = rationales;
@@ -505,6 +528,8 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
               departureDate: leg.departureDate,
               returnDate: leg.returnDate ?? "",
               cabin: leg.cabin ?? "economy",
+              ...(isHour(leg.departAfter) ? { departAfter: leg.departAfter } : {}),
+              ...(isHour(leg.returnAfter) ? { returnAfter: leg.returnAfter } : {}),
               ...(leg.details &&
               searched.has(flightKey(leg.origin, leg.destination, leg.departureDate, leg.returnDate))
                 ? { details: panelText(leg.details) }
@@ -540,6 +565,11 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
     }
   }
   return null;
+}
+
+/** A departure-hour limit the Flights page's time filter can take. */
+function isHour(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 23;
 }
 
 /** The route answers a rejection with `{error}` and a real reason — not

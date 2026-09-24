@@ -215,10 +215,15 @@ export default function RestaurantsMapView({
 
     const target = aiQuery.destination.city.trim().toLowerCase();
     const covered = cityOptions.some((option) => option.toLowerCase() === target);
-    if (covered && target !== city.toLowerCase()) {
-      router.replace(restaurantsHref(aiQuery), { scroll: false });
+    /* Or the same city measured from another hotel (2026-09-24): "dinner near
+       the second one" walked from the Shangri-La while the map still marked the
+       Bulgari, the hotel last selected on Hotels. */
+    const nearHotel = aiResults.nearHotelId;
+    const hotelMoved = Boolean(nearHotel) && String(nearHotel) !== searchParams.get("hotel_id");
+    if (covered && (target !== city.toLowerCase() || hotelMoved)) {
+      router.replace(restaurantsHref(aiQuery, nearHotel), { scroll: false });
     }
-  }, [aiReady, presentedAt, aiQuery, city, cityOptions, router]);
+  }, [aiReady, presentedAt, aiQuery, aiResults.nearHotelId, city, cityOptions, router, searchParams]);
 
   // Marks the member's favourites in the list and the detail card. Keyed on the
   // Directus id, not the favourite row's own uuid.

@@ -189,6 +189,46 @@ function readLegParams(searchParams: PageSearchParams): MultiCityLeg[] {
   return legs;
 }
 
+const VALID_CABINS: CabinClass[] = ["Economy", "Premium Economy", "Business", "First"];
+
+function cabinFromParams(searchParams: PageSearchParams): CabinClass | null {
+  const value = normalizeParam(searchParams.cabin) as CabinClass;
+  return VALID_CABINS.includes(value) ? value : null;
+}
+
+// "oneway" is the spelling the rest of the app links with, and the one
+// CLAUDE.md documents; internally this page compares against "one-way".
+// Accepting only the former meant a one-way handoff set a tripType that
+// matched none of isOneWay/isReturnTrip/isMultiple, so the page arrived with
+// no trip type selected at all.
+const TRIP_TYPE_ALIASES: Record<string, TripType> = {
+  oneway: "one-way",
+  "one-way": "one-way",
+  return: "return",
+  multiple: "multiple",
+};
+
+/** "Not before 9" from the concierge (`depart_after`, `return_after`), as the
+ * departure-time filters' start hour; the filters as they were when the URL
+ * carries neither (2026-09-24). */
+function filtersFromParams(searchParams: PageSearchParams, current: FilterState): FilterState {
+  const hour = (key: string): number | null => {
+    const raw = normalizeParam(searchParams[key]);
+    const value = Number(raw);
+    return raw && Number.isInteger(value) && value >= 0 && value <= 23 ? value : null;
+  };
+  const departAfter = hour("depart_after");
+  const returnAfter = hour("return_after");
+  if (departAfter === null && returnAfter === null) return current;
+  return {
+    ...current,
+    outbound:
+      departAfter === null ? current.outbound : { ...current.outbound, departStartHour: departAfter },
+    inbound:
+      returnAfter === null ? current.inbound : { ...current.inbound, departStartHour: returnAfter },
+  };
+}
+
 /* `saved` is the shared cross-page search, passed in only AFTER the first
  * render. Reading sessionStorage in here made the server render an empty date
  * box and the browser a filled one — a hydration mismatch, so React threw the
@@ -216,32 +256,15 @@ function buildInitialSearch(
       ? resolveAirportCode(cityHandover)
       : "";
 
-  const cabinParam = normalizeParam(searchParams.cabin);
-  const validCabins = ["Economy", "Premium Economy", "Business", "First"] as const;
-  type Cabin = typeof validCabins[number];
-  const cabin: Cabin = validCabins.includes(cabinParam as Cabin)
-    ? (cabinParam as Cabin)
-    : INITIAL_SEARCH.cabin;
-
-  // "oneway" is the spelling the rest of the app links with, and the one
-  // CLAUDE.md documents; internally this page compares against "one-way".
-  // Accepting only the former meant a one-way handoff set a tripType that
-  // matched none of isOneWay/isReturnTrip/isMultiple, so the page arrived with
-  // no trip type selected at all.
+  const cabin = cabinFromParams(searchParams) ?? INITIAL_SEARCH.cabin;
   const tripTypeParam = normalizeParam(searchParams.tripType);
-  const tripTypeAliases: Record<string, TripType> = {
-    oneway: "one-way",
-    "one-way": "one-way",
-    return: "return",
-    multiple: "multiple",
-  };
   const legs = readLegParams(searchParams);
   // Legs win: a URL carrying real ones is describing a multi-city trip
   // whatever else it says.
   const tripType: TripType =
     legs.length > 1
       ? "multiple"
-      : tripTypeAliases[tripTypeParam] ?? INITIAL_SEARCH.tripType;
+      : TRIP_TYPE_ALIASES[tripTypeParam] ?? INITIAL_SEARCH.tripType;
 
   return {
     ...INITIAL_SEARCH,
@@ -378,7 +401,9 @@ export default function FlightsView({ searchParams }: Props) {
     // Once, on arrival: later URL changes are handled by the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
+  const [filters, setFilters] = useState<FilterState>(() =>
+    filtersFromParams(searchParams, INITIAL_FILTERS)
+  );
   // IATA -> municipality for airports the user picked here, so the route
   // header can still name a place for airports outside the hotel-city mapping
   // without this page importing the full airport dataset (see cityForCode).
@@ -487,8 +512,16 @@ export default function FlightsView({ searchParams }: Props) {
       : cityHandover
         ? resolveAirportCode(cityHandover)
         : "";
+    /* The cabin and trip type too (2026-09-24): business class asked for with
+       this page open wrote cabin=Business into the URL and the form stayed on
+       Economy, showing economy fares under a business answer. Multi-city is
+       left to arrival, where its legs are read with it. */
+    const cabinHanded = cabinFromParams(searchParams);
+    const tripHanded = TRIP_TYPE_ALIASES[normalizeParam(searchParams.tripType)];
     setSearch(current => ({
       ...current,
+      cabin: cabinHanded ?? current.cabin,
+      tripType: tripHanded && tripHanded !== "multiple" ? tripHanded : current.tripType,
       from: originParam || current.from,
       to: handedTo || current.to,
       departDate: normalizeParam(searchParams.from) || current.departDate,
@@ -499,6 +532,7 @@ export default function FlightsView({ searchParams }: Props) {
         i === 0 ? { ...leg, from: originParam || leg.from } : leg
       ),
     }));
+    setFilters(current => filtersFromParams(searchParams, current));
   }, [searchParams]);
 
   const autoSearchedRef = useRef(false);

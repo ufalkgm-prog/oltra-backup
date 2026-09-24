@@ -117,6 +117,11 @@ export function flightsHref(query: AiQueryState, results: AiResultSet): string {
     params.set("from", first.departureDate);
     if (first.returnDate) params.set("to", first.returnDate);
     else params.delete("to");
+    // "Not before 9" sets the page's departure-time filters (2026-09-24).
+    if (first.departAfter !== undefined) params.set("depart_after", String(first.departAfter));
+    if (first.returnDate && first.returnAfter !== undefined) {
+      params.set("return_after", String(first.returnAfter));
+    }
   }
   return `/flights?${params.toString()}`;
 }
@@ -161,7 +166,11 @@ export function cityFlightsHref(query: AiQueryState): string {
  * The Restaurants page is city-driven and keeps its own data and design — a
  * concierge pick list is a landing-page frame, not a new filtered mode there.
  * So the handoff opens the right city and lets the page be itself. */
-export function restaurantsHref(query: AiQueryState): string {
+export function restaurantsHref(query: AiQueryState, nearHotelId?: number): string {
   const city = query.destination.city.trim();
-  return city ? `/restaurants?city=${encodeURIComponent(city)}` : "/restaurants";
+  if (!city) return "/restaurants";
+  const params = new URLSearchParams({ city });
+  // The hotel the answer's walking times were measured from, marked on the map.
+  if (nearHotelId) params.set("hotel_id", String(nearHotelId));
+  return `/restaurants?${params.toString()}`;
 }

@@ -53,6 +53,8 @@ export function collapseReturnLegs(legs: AiFlightLeg[]): AiFlightLeg[] {
       cabin: leg.cabin || legs[mirror].cabin,
       // Each half may describe its own direction; the return is one line.
       details: [leg.details, legs[mirror].details].filter(Boolean).join(" ") || undefined,
+      // The mirror's own departure limit is the way back's.
+      returnAfter: leg.returnAfter ?? legs[mirror].departAfter,
     });
   }
 

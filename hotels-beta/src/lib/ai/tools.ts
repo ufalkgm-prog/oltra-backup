@@ -1,6 +1,7 @@
 import "server-only";
 import { tool, jsonSchema } from "ai";
 import { getHotels, type HotelRecord } from "@/lib/directus";
+import { expandCityAliases } from "@/lib/locationAliases";
 import { filterHotelsByTags } from "@/lib/hotelFilters";
 import {
   getAirportsForCity,
@@ -2004,6 +2005,30 @@ function restaurantKind(row: { awards?: string[] | null; restaurant_type?: strin
   return RELAXED_TYPES.has(row.restaurant_type ?? "") ? "relaxed" : "fine dining";
 }
 
+/** The hotel of ours a `near` phrase names — "Shangri-La Paris, 10 Avenue
+ * d'Iéna, Paris" — or null. Found here rather than asked of the model, which
+ * searched from a hotel the visitor named without ever holding its id, so the
+ * Restaurants page went on marking the last hotel selected on Hotels
+ * (2026-09-24). Only a single published match in the searched city counts. */
+async function ourHotelNamedIn(near: string, city: string): Promise<{ id: number; name: string } | null> {
+  const segments = near
+    .replace(/^our hotel,?\s*/i, "")
+    .split(",")
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length >= 4 && !/^\d/.test(segment));
+  const cities = new Set(expandCityAliases([city.trim()]).map((c) => c.toLowerCase()));
+  for (const segment of segments) {
+    const rows = await getHotels({
+      fields: ["id", "hotel_name", "city"],
+      filter: { hotel_name: { _icontains: segment }, published: { _eq: true } },
+      limit: 3,
+    });
+    const inCity = rows.filter((row) => cities.has((row.city ?? "").trim().toLowerCase()));
+    if (inCity.length === 1) return { id: Number(inCity[0].id), name: inCity[0].hotel_name ?? "" };
+  }
+  return null;
+}
+
 const searchRestaurants = tool({
   description:
     "Search the myOLTRA restaurant collection for one city. Returns candidate " +
@@ -2057,7 +2082,9 @@ const searchRestaurants = tool({
   }),
   async execute(input) {
     // The same place lookup searchHotels uses (lib/ai/nearPlace.ts).
-    const near = input.near ? await findNearPlace(input.near) : null;
+    const [near, nearHotel] = input.near
+      ? await Promise.all([findNearPlace(input.near), ourHotelNamedIn(input.near, input.city)])
+      : [null, null];
     const nearPlace = near?.status === "found" ? near.place : null;
 
     const found = await findRestaurants({
@@ -2100,6 +2127,8 @@ const searchRestaurants = tool({
             ),
           }
         : {}),
+      // Read by the panel, which marks this hotel on the Restaurants page.
+      ...(nearHotel ? { nearHotelId: nearHotel.id } : {}),
       restaurants: rows.map((row) => ({
         id: Number(row.id),
         name: row.restaurant_name,
@@ -2140,7 +2169,10 @@ const presentResults = tool({
       returnDate?: string;
       cabin?: string;
       details?: string;
+      departAfter?: number;
+      returnAfter?: number;
     }[];
+    nearHotelId?: number;
     stay?: {
       checkIn?: string;
       checkOut?: string;
@@ -2290,10 +2322,30 @@ const presentResults = tool({
                 "options at civilised hours. Only what searchFlights returned; " +
                 "leave it out if you did not search this journey. Never a fare.",
             },
+            departAfter: {
+              type: "number",
+              description:
+                "The earliest hour, 0-23, the visitor will leave on the way " +
+                "out - 9 for \"not before 9\", 12 for \"an afternoon flight\". " +
+                "Only when they said so.",
+            },
+            returnAfter: {
+              type: "number",
+              description:
+                "The same for the way back, on a round trip. Only when they " +
+                "said so.",
+            },
           },
           required: ["origin", "destination", "departureDate"],
           additionalProperties: false,
         },
+      },
+      nearHotelId: {
+        type: "number",
+        description:
+          "When the restaurants were chosen for their distance from one of our " +
+          "hotels (searchRestaurants \"near\" that hotel), that hotel's id. The " +
+          "Restaurants page marks it on its map.",
       },
       // The stay these results are for. WITHOUT THIS THE CARDS SHOW NO PRICE:
       // pricing needs check-in, check-out and occupancy, and nothing else in

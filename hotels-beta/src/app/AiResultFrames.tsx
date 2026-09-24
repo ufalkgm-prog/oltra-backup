@@ -714,7 +714,7 @@ export default function AiResultFrames() {
             {query.destination.city ? (
               <div className={styles.summaryFooter}>
                 <Link
-                  href={restaurantsHref(query)}
+                  href={restaurantsHref(query, results.nearHotelId)}
                   className={`oltra-btn ${styles.summaryFooterMain}`}
                   prefetch={false}
                 >

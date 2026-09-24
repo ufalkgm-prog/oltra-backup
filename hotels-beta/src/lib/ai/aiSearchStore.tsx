@@ -187,6 +187,10 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   const hydrated = useRef(false);
   /* "place" mirrors the destination only: see STAY_FIELDS. */
   const mirrorPending = useRef<false | "all" | "place">(false);
+  /* The hotel an answer's walking times were measured from, mirrored as the
+     session's current hotel so the Restaurants page and the header link mark
+     that one — not the hotel last selected on Hotels (2026-09-24). */
+  const mirrorHotelId = useRef("");
 
   useEffect(() => {
     setState(read());
@@ -243,6 +247,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
         ) as Partial<AiQueryState>;
       }
       mirrorPending.current = aboutStay ? "all" : "place";
+      mirrorHotelId.current = results.nearHotelId ? String(results.nearHotelId) : "";
       setState((prev) => {
         /* A NEW CITY TAKES THE OLD ONE'S RESULTS WITH IT (2026-09-23). Facets
            an answer does not speak to are kept, which is right for a follow-up
@@ -279,6 +284,8 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
           results: {
             hotelIds: results.hotelIds ?? base.hotelIds,
             restaurantIds: results.restaurantIds ?? base.restaurantIds,
+            // Goes with the restaurants it was measured for.
+            nearHotelId: results.restaurantIds ? results.nearHotelId : base.nearHotelId,
             rationales: results.rationales
               ? { ...base.rationales, ...results.rationales }
               : base.rationales,
@@ -320,12 +327,15 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
        the store's own destination already carries forward whatever an answer
        did not change, so the session simply copies it. */
     clearHotelFlightDestination();
+    const hotelId = mirrorHotelId.current;
+    mirrorHotelId.current = "";
     if (placeOnly) {
       mergeHotelFlightSearch({
         city: destination.city,
         state: destination.area,
         admin_region: destination.adminRegion,
         country: destination.country,
+        ...(hotelId ? { hotelId } : {}),
       });
       return;
     }
@@ -343,6 +353,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       ...kidAgeFields(childrenAges),
       bedrooms: String(bedrooms),
       origin,
+      ...(hotelId ? { hotelId } : {}),
     });
   }, [state.query]);
 
