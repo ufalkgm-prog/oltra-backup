@@ -326,6 +326,21 @@ export default function InspireView({ cities }: Props) {
   const { ready: aiReady, query: aiQuery, presentedAt } = useAiSearch();
   const appliedPresentationRef = useRef(0);
 
+  /* A purpose the concierge set is kept only if it leaves something to show
+     (2026-09-24). "Somewhere warm in March, 4 hours from Copenhagen" searched
+     beach settings and was answered with Cyprus and Crete, but Beach here also
+     needs an 18°C month, which nothing in range has in March - so the page
+     behind said "No matching destinations" under an answer that named three.
+     Purpose then falls back to All, with the month, limit and starting point
+     kept. Checked once, on the first render after the answer applies; a
+     purpose picked by hand is never undone. */
+  const aiPurposeRef = useRef(false);
+  useEffect(() => {
+    if (!aiPurposeRef.current) return;
+    aiPurposeRef.current = false;
+    if (purpose && !matches.length) setPurpose("");
+  }, [matches, purpose]);
+
   useEffect(() => {
     if (!aiReady || !presentedAt || presentedAt <= appliedPresentationRef.current) return;
     appliedPresentationRef.current = presentedAt;
@@ -337,7 +352,10 @@ export default function InspireView({ cities }: Props) {
     // express leaves the selector as the visitor left it, rather than being
     // reset to All.
     const nextPurpose = purposeFromQuery(aiQuery);
-    if (nextPurpose) setPurpose(nextPurpose);
+    if (nextPurpose) {
+      aiPurposeRef.current = true;
+      setPurpose(nextPurpose);
+    }
 
     /* The flying-time limit the answer searched with, and where it was
        measured from (2026-09-23). "No more than 3 hours from Copenhagen" left
@@ -441,6 +459,7 @@ export default function InspireView({ cities }: Props) {
                         purpose === item.value ? styles.dropdownOptionActive : ""
                       }`}
                       onClick={() => {
+                        aiPurposeRef.current = false;
                         setPurpose(item.value);
                         setOpenMenu(null);
                       }}

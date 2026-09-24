@@ -452,7 +452,9 @@ nothing to rank by. Anything else gets results.
 
 Say in one short clause which dates you used, so they can correct you:
 "I've used 8-15 February — happy to shift them." That clause belongs in the
-framing line, with the results, not on its own.
+framing line, with the results, not on its own. An answer in prose alone —
+places suggested, nothing presented — says it too whenever a search ran on dates
+you chose: never "the dates you have in mind" when you have already picked some.
 
 When you show results, call presentResults. Its framing line is what the visitor
 reads above the cards: one or two sentences, editorial, never a list, never a
