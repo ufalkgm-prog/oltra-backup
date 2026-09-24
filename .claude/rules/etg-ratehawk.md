@@ -175,7 +175,12 @@ Certification is conducted **in writing over 14–30 days**; for a website ETG w
 ### Open
 
 * Check-in over 730 days out is not enforced in the search form.
-* Different occupancy per room — product gap (above); the multiple-`p-`-hash question waits for the redirect spec and certification.
+* **GO-LIVE BLOCKER (Ulrik, 2026-09-24): choosing rooms on the Hotels page.**
+  * **What's needed:** guests choose the number of rooms and different room types. Today the count comes only from the search form, and one type covers every room.
+  * **Why it's deferred:** it was held on 2026-09-24 until ETG answer.
+  * **The dependency:** different types, like different occupancy (above), need a search and Prebook per room, joined at checkout. That rests on the multiple-`p-`-hash question, which waits for the redirect spec and certification.
+  * **Buildable now:** a same-type room-count stepper in the room panel (≤9 rooms), which stays within the rules above.
+  * **Rule:** must be settled before launch.
 * `hp` at 5/min site-wide — ask ETG for post-certification limits.
 * The White Label redirect format (ETG).
 

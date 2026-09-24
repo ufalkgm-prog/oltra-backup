@@ -40,18 +40,29 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
       className={`oltra-glass oltra-panel oltra-over-image ${styles.landingGlass} ${styles.introPanel}`}
       aria-labelledby="landing-intro-title"
     >
-      <button
-        type="button"
-        className={styles.introClose}
-        aria-label="Close introduction"
-        onClick={() => setHidden(true)}
-      >
-        ×
-      </button>
+      {/* "Become a member" at the top right, beside the close control, rather
+          than at the foot (Ulrik, 2026-09-24). */}
+      <div className={styles.introHeader}>
+        <h2 id="landing-intro-title" className={styles.introTagline}>
+          {LANDING_INTRO.tagline}
+        </h2>
 
-      <h2 id="landing-intro-title" className={styles.introTagline}>
-        {LANDING_INTRO.tagline}
-      </h2>
+        <Link
+          href={LANDING_INTRO.ctaHref}
+          className={`oltra-btn oltra-btn--ai ${styles.introCta}`}
+        >
+          {LANDING_INTRO.ctaLabel}
+        </Link>
+
+        <button
+          type="button"
+          className={styles.introClose}
+          aria-label="Close introduction"
+          onClick={() => setHidden(true)}
+        >
+          ×
+        </button>
+      </div>
 
       <div className={styles.introBody}>
         {LANDING_INTRO.paragraphs.map((paragraph) => (
@@ -59,13 +70,7 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
         ))}
       </div>
 
-      <div className={styles.introFooter}>
-        <p className={styles.introClosing}>{LANDING_INTRO.closing}</p>
-
-        <Link href={LANDING_INTRO.ctaHref} className="oltra-btn oltra-btn--ai">
-          {LANDING_INTRO.ctaLabel}
-        </Link>
-      </div>
+      <p className={styles.introClosing}>{LANDING_INTRO.closing}</p>
     </section>
   );
 }

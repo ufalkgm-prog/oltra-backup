@@ -4,6 +4,7 @@ import {
   SMALL_CARD_ACTION_WIDTH,
   type SmallCardColumns,
 } from "@/components/hotels/HotelSmallCard";
+import FavouriteStar from "@/components/members/FavouriteStar";
 
 /* A restaurant in a result frame, shaped like HotelSmallCard so the landing
  * page's three frames read as one set of results rather than three designs.
@@ -35,6 +36,9 @@ type Props = {
    * a restaurant from the concierge's trip can be saved like its hotels and
    * flights. */
   renderSaveControl?: () => React.ReactNode;
+  /** The member has it as a favourite: a star after the name. Passed by the
+   * list, which reads lib/members/favourites.ts once for all its cards. */
+  isFavourite?: boolean;
 };
 
 export default function RestaurantSmallCard({
@@ -42,6 +46,7 @@ export default function RestaurantSmallCard({
   href,
   columns = 1,
   renderSaveControl,
+  isFavourite = false,
 }: Props) {
   const layout = LAYOUT[columns];
 
@@ -68,6 +73,7 @@ export default function RestaurantSmallCard({
       <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <div className="min-w-0 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
           {restaurant.restaurant_name}
+          {isFavourite ? <FavouriteStar /> : null}
         </div>
         {restaurant.restaurant_type ? (
           <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">

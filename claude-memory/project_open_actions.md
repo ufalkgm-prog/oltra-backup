@@ -5,10 +5,17 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 113be546-0d38-4348-be9c-ff9b034556a4
-  modified: 2026-09-24T19:41:09.228Z
+  modified: 2026-09-24T20:24:45.801Z
 ---
 
 Outstanding, highest value first. Everything built so far is on `main` (through `c572e6d`) and backed up.
+
+**0. MUST FIX BEFORE GO-LIVE (Ulrik, 2026-09-24): choosing rooms on the Hotels page.** Guests need to choose the number of rooms and different room types. Today the room count comes only from the search form, and one room type covers every room. Ulrik deferred building it on 2026-09-24 until RateHawk answer the booking question. Constraints, from `.claude/rules/etg-ratehawk.md`:
+- one rate covers every room searched, up to 9 rooms, same type only;
+- mixed occupancy or types cannot be priced in one search (tested 2026-09-17);
+- different types need a search and Prebook per room, joined at checkout — only if the White Label accepts several `p-` hashes.
+
+The question to RateHawk is drafted and held until their redirect spec arrives and certification is done. A count-only stepper in the room panel is buildable now, within the rules, and was offered but deferred with the rest. Raise it when RateHawk reply or when go-live planning starts.
 
 **1. Two Supabase dashboard steps only Ulrik can do (members project `hrlvtzcapsqkgrcawluf`).**
 - Add `/auth/callback` to Authentication → URL Configuration → Redirect URLs, for `http://localhost:3000` **and** the Vercel domain. Without it the signup confirmation link silently falls back to the Site URL and lands on the landing page instead of Members — which looks exactly like the code failing.

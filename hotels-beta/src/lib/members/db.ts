@@ -329,6 +329,33 @@ export async function fetchFavoriteRestaurantDirectusIdsBrowser(): Promise<
     .filter((id): id is string => Boolean(id));
 }
 
+/* The same for hotels: only the Directus ids, for the favourite star on every
+ * hotel card (lib/members/favourites.ts). */
+export async function fetchFavoriteHotelDirectusIdsBrowser(): Promise<string[]> {
+  const supabase = createBrowserClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from("member_favorite_hotels")
+    .select("hotel_directus_id")
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+
+  return (data ?? [])
+    .map((row) => row.hotel_directus_id)
+    .filter((id): id is string | number => id !== null && id !== undefined && id !== "")
+    .map(String);
+}
+
 /* Writes back a re-checked price ("Update price and availability" in Saved
  * trips). The saved figure is a flat number captured at save time, so a
  * refresh replaces it rather than layering a second, live price beside it. */

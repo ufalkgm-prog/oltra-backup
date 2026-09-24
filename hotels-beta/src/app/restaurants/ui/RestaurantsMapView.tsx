@@ -26,9 +26,10 @@ import {
   addFavoriteRestaurantBrowser,
   addRestaurantToTripBrowser,
   createTripBrowser,
-  fetchFavoriteRestaurantDirectusIdsBrowser,
   fetchTripChoicesBrowser,
 } from "@/lib/members/db";
+import { markFavourite, useFavouriteIds } from "@/lib/members/favourites";
+import FavouriteStar from "@/components/members/FavouriteStar";
 import {
   MAX_TRIPS_PER_MEMBER,
   TRIP_LIMIT_MESSAGE,
@@ -38,20 +39,6 @@ import {
 } from "@/lib/members/tripLimits";
 import { applyEnglishLabels } from "@/lib/maps/englishLabels";
 import { mapStyleUrl } from "@/lib/maps/style";
-
-/* Green star on a restaurant the member has already favourited - shown on both
- * the list row and the selected-restaurant card. */
-function FavoriteMark() {
-  return (
-    <span
-      className="restaurant-favorite-mark"
-      title="In your favourites"
-      aria-label="In your favourites"
-    >
-      ★
-    </span>
-  );
-}
 
 type HotelPin = {
   id: string | number;
@@ -178,9 +165,9 @@ export default function RestaurantsMapView({
   });
 
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
-  const [favoriteRestaurantIds, setFavoriteRestaurantIds] = useState<Set<string>>(
-    new Set()
-  );
+  // The shared store (lib/members/favourites.ts), so a restaurant starred here
+  // is starred on every page, and one favourited there is starred here.
+  const favoriteRestaurantIds = useFavouriteIds().restaurants;
 
   useEffect(() => {
     setCityInput(city);
@@ -224,31 +211,6 @@ export default function RestaurantsMapView({
       router.replace(restaurantsHref(aiQuery, nearHotel), { scroll: false });
     }
   }, [aiReady, presentedAt, aiQuery, aiResults.nearHotelId, city, cityOptions, router, searchParams]);
-
-  // Marks the member's favourites in the list and the detail card. Keyed on the
-  // Directus id, not the favourite row's own uuid.
-  useEffect(() => {
-    if (!isMemberLoggedIn) {
-      setFavoriteRestaurantIds(new Set());
-      return;
-    }
-
-    let active = true;
-
-    async function loadFavorites() {
-      try {
-        const ids = await fetchFavoriteRestaurantDirectusIdsBrowser();
-        if (active) setFavoriteRestaurantIds(new Set(ids));
-      } catch {
-        // Not critical - the page works fine without the markers.
-      }
-    }
-
-    void loadFavorites();
-    return () => {
-      active = false;
-    };
-  }, [isMemberLoggedIn]);
 
   // If the user landed on /restaurants without an explicit ?city= param,
   // try saved hotel/flight search → member home airport → leave it blank.
@@ -319,6 +281,10 @@ export default function RestaurantsMapView({
     if (!filteredRestaurants.length) return null;
     return filteredRestaurants.find((r) => r.id === selectedId) ?? filteredRestaurants[0];
   }, [filteredRestaurants, selectedId]);
+
+  const selectedIsFavourite = Boolean(
+    selectedRestaurant && favoriteRestaurantIds.has(String(selectedRestaurant.id))
+  );
 
   /* What the concierge should assume if it is opened from this page. It still
      answers hotel and flight questions asked here — the city is a default,
@@ -506,10 +472,8 @@ export default function RestaurantsMapView({
         thumbnail: "/images/hero-lp.jpg",
       });
 
-      setFavoriteRestaurantIds((prev) =>
-        new Set(prev).add(String(selectedRestaurant.id))
-      );
-      setMemberActionMessage("Restaurant added to favourites.");
+      // The button turning passive, labelled FAVOURITE, is the confirmation.
+      markFavourite("restaurants", selectedRestaurant.id);
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
 
@@ -1021,10 +985,10 @@ export default function RestaurantsMapView({
                   className={`oltra-output restaurant-row${active ? " is-active" : ""}`}
                 >
                   <div className="restaurant-row__title">
-                    {favoriteRestaurantIds.has(String(restaurant.id)) ? (
-                      <FavoriteMark />
-                    ) : null}
                     {restaurant.restaurant_name}
+                    {favoriteRestaurantIds.has(String(restaurant.id)) ? (
+                      <FavouriteStar />
+                    ) : null}
                   </div>
                   <div className="restaurant-row__meta">
                     {[restaurant.cuisine, restaurant.local_area, restaurant.city]
@@ -1043,10 +1007,10 @@ export default function RestaurantsMapView({
 
             <article className="oltra-output restaurant-detail-card">
               <h2 className="restaurant-detail-card__title">
-                {favoriteRestaurantIds.has(String(selectedRestaurant.id)) ? (
-                  <FavoriteMark />
-                ) : null}
                 {selectedRestaurant.restaurant_name}
+                {favoriteRestaurantIds.has(String(selectedRestaurant.id)) ? (
+                  <FavouriteStar />
+                ) : null}
               </h2>
 
               {buildAddressLabel(selectedRestaurant) && (
@@ -1236,9 +1200,13 @@ export default function RestaurantsMapView({
                     {memberActionLoading === "trip" ? "SAVING..." : "SAVE TO TRIP"}
                   </button>
 
+                  {/* Passive and labelled FAVOURITE once it is one (Ulrik,
+                      2026-09-24): nothing left to do, and the label says so. */}
                   <button
                     type="button"
                     onClick={() => {
+                      if (isMemberLoggedIn && selectedIsFavourite) return;
+
                       setMemberActionMessage("");
                       setMemberActionError("");
 
@@ -1250,12 +1218,20 @@ export default function RestaurantsMapView({
                       void handleAddRestaurantToFavorites();
                     }}
                     className="oltra-btn oltra-btn--condensed"
-                    aria-disabled={!isMemberLoggedIn}
-                    data-reason={isMemberLoggedIn ? undefined : "Log in to add favourites"}
+                    aria-disabled={!isMemberLoggedIn || selectedIsFavourite}
+                    data-reason={
+                      !isMemberLoggedIn
+                        ? "Log in to add favourites"
+                        : selectedIsFavourite
+                          ? "Your favourite"
+                          : undefined
+                    }
                   >
                     {memberActionLoading === "favorite"
                       ? "ADDING..."
-                      : "ADD TO FAVOURITES"}
+                      : isMemberLoggedIn && selectedIsFavourite
+                        ? "FAVOURITE"
+                        : "ADD TO FAVOURITES"}
                   </button>
                 </div>
               </div>

@@ -398,13 +398,6 @@
   min-width: 0;
 }
 
-/* The member's own favourites, in the sage fill the old active buttons used. */
-.restaurant-favorite-mark {
-  margin-right: 6px;
-  color: var(--oltra-favorite-mark);
-  font-size: 0.85em;
-  line-height: 1;
-}
 
 .restaurants-type-pills {
   display: flex;

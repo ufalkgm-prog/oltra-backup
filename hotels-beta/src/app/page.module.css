@@ -411,8 +411,14 @@
   padding-top: 0.1rem;
 }
 
+/* align-content: start is what keeps a card its own height. Beside flights the
+   list is stretched to the panel (the rules above), and a grid taller than its
+   rows hands the spare height to them: two cards in a 500px pane each became
+   250px, their content at the top and the bottom half blank (Ulrik,
+   2026-09-24). Packed to the top, the spare height stays below the last card. */
 .smallCardsList {
   display: grid;
+  align-content: start;
   gap: 0.55rem;
   max-height: 380px;
   overflow-y: auto;
@@ -498,9 +504,23 @@
 }
 
 .flightRowPrice {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
   font-size: 0.95rem;
+  line-height: 1.2;
   color: var(--oltra-text-primary);
   margin-left: auto;
+}
+
+/* "Total · 2 passengers · return", in the hotel cards' price-basis style. */
+.flightRowPriceBasis {
+  margin-top: 2px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oltra-text-muted);
+  white-space: nowrap;
 }
 
 
@@ -782,9 +802,35 @@
   background: var(--oltra-bg-color);
 }
 
-/* Stops short of the close control so the two never overlap. */
+/* The tagline, "Become a member" and the close control on one row, the two
+   controls at the right. On a phone the row wraps and the tagline drops under
+   the controls rather than being squeezed into a narrow column beside them. */
+.introHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.introCta {
+  flex: none;
+  margin-left: auto;
+}
+
+@media (max-width: 560px) {
+  .introHeader {
+    flex-wrap: wrap;
+  }
+
+  .introHeader .introTagline {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
 .introTagline {
-  margin: 0 2.5rem 0.9rem 0;
+  margin: 0;
+  min-width: 0;
   font-size: 1.35rem;
   font-weight: 400;
   line-height: 1.25;
@@ -801,20 +847,9 @@
   margin: 0 0 0.75rem;
 }
 
-/* The closing line and "Become a member" on one row: the line on the left,
-   the button right-aligned and centred on it. Wraps under the line when the
-   panel is too narrow for both. */
-.introFooter {
-  margin-top: 1.1rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-}
-
+/* 1.1rem under the body, with the last paragraph's own 0.75rem. */
 .introClosing {
-  margin: 0;
+  margin: 0.35rem 0 0;
   font-size: 0.95rem;
   font-style: italic;
   line-height: 1.55;
@@ -824,9 +859,7 @@
 /* A close icon is a control, not an action (§35A), so no pill — the same
    round outline as the flight-details popup's close. */
 .introClose {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  flex: none;
   width: 28px;
   height: 28px;
   display: flex;
@@ -854,7 +887,9 @@
 
 /* Above 860px .heroPanel is capped at the viewport with overflow hidden, so
    on a short screen the panel scrolls inside itself rather than being cut
-   off. 200px approximates the search panel above it. */
+   off. 200px approximates the search panel above it.
+   Without a visible scrollbar (Ulrik, 2026-09-24). Where the note does not
+   fit, the wheel and touch still scroll it. */
 @media (min-width: 861px) {
   .introPanel {
     max-height: calc(
@@ -862,6 +897,11 @@
         200px - 2rem
     );
     overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .introPanel::-webkit-scrollbar {
+    display: none;
   }
 }
 

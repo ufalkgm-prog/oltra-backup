@@ -13,6 +13,7 @@ import { addFlightToTripBrowser } from "@/lib/members/db";
 import type { FlightLeg, Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
 import { useApproxPrice } from "@/lib/flights/useApproxPrice";
+import { flightPriceBasis } from "@/lib/priceBasis";
 import styles from "./page.module.css";
 
 /* One flight result row: label, price, BOOK, SAVE, and the leg cards.
@@ -248,8 +249,13 @@ export default function FlightResultRow({
         }`}
       >
         <span className={styles.flightLineLabel}>{label}</span>
+        {/* What the fare covers under it: every passenger, both ways on a
+            return (Ulrik, 2026-09-24; lib/priceBasis.ts). */}
         <span className={styles.flightRowPrice}>
           {currency} {approx(flight.priceEur, flight.currency)}
+          <span className={styles.flightRowPriceBasis}>
+            {flightPriceBasis(handoff.passengers, isOneWay ? "one-way" : "return")}
+          </span>
         </span>
         {/* The pair travels as one unit. As siblings of the label and price
             they were free to be split by the flex wrap: at three frames the
@@ -276,6 +282,10 @@ export default function FlightResultRow({
             <SaveToTripControl
               onSave={(tripId) => handleSave(tripId, flight)}
               newTripDefaults={tripDefaults}
+              /* An offer belongs to one search, so new dates or passengers
+                 are a new offer id and SAVE comes back. */
+              savedKey={`flight|${flight.offerId}`}
+              savedHint="Change the dates or passengers to save another."
               label="SAVE"
               compact
               align="right"

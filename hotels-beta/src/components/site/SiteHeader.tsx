@@ -163,10 +163,23 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
      * page it was written for was the one it excluded. Guessing which
      * containers are "the main window" from their height does not work; every
      * scroll darkening the header is predictable, and a small list scrolling
-     * under a header that is already legible costs nothing. */
+     * under a header that is already legible costs nothing.
+     *
+     * EXCEPT dropdowns and popups (Ulrik, 2026-09-24). They are recognised by
+     * what they are, not by their size: a scroller inside a control
+     * (data-oltra-control, which every field with a dropdown carries) or
+     * inside a dropdown or popup panel, including the portalled ones. Their
+     * scrolling moves nothing on the page, so it leaves the header as it is. */
     const onScroll = (event?: Event) => {
       const target = event?.target;
       if (target instanceof HTMLElement) {
+        if (
+          target.closest(
+            '[data-oltra-control="true"], .oltra-dropdown-panel, .oltra-popup-panel, .oltra-dropdown-list'
+          )
+        ) {
+          return;
+        }
         setIsScrolled(target.scrollTop > 8);
         return;
       }

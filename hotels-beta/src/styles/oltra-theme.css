@@ -508,7 +508,10 @@
 html {
   font-family: var(--oltra-font-sans);
   background: transparent;
-  overflow-y: scroll;
+  /* auto, not scroll (Ulrik, 2026-09-24): a page whose content fits shows no
+     scrollbar and cannot be scrolled. The gutter stays reserved, so a page
+     that does overflow does not shift sideways when its bar appears. */
+  overflow-y: auto;
   scrollbar-gutter: stable;
 }
 
@@ -748,6 +751,14 @@ button.oltra-select {
 .oltra-popup-panel--bounded {
   max-height: var(--oltra-dropdown-panel-max-height);
   overflow-y: auto;
+}
+
+/* A wheel or swipe that reaches the end of an open list stops there instead
+   of carrying on into the pane or page behind it (Ulrik, 2026-09-24). */
+.oltra-dropdown-panel,
+.oltra-popup-panel,
+.oltra-dropdown-list {
+  overscroll-behavior: contain;
 }
 
 .oltra-dropdown-panel--up,
@@ -2320,5 +2331,53 @@ details > summary::-webkit-details-marker {
 
 .oltra-temp-controls__unit button:disabled {
   cursor: not-allowed;
+}
+
+/* ---- favourite star (FavouriteStar.tsx) ----
+   After the name, in the favourite sage, with "Your favourite" on hover in the
+   same popup the passive buttons use (Ulrik, 2026-09-24). Opens BELOW the
+   star: names sit on a card's first line, so above would be cut by the top of
+   a scrolling list. */
+.oltra-favourite-star {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  margin-left: 6px;
+  color: var(--oltra-favorite-mark);
+  font-size: 0.85em;
+  font-style: normal;
+  line-height: 1;
+  cursor: default;
+  vertical-align: baseline;
+}
+
+.oltra-favourite-star::before {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  z-index: var(--oltra-z-popup);
+  transform: translateX(-50%);
+  width: max-content;
+  padding: 5px 9px;
+  border: var(--oltra-dropdown-border);
+  border-radius: var(--oltra-radius-md);
+  background: var(--oltra-field-bg-solid);
+  box-shadow: var(--oltra-dropdown-shadow);
+  color: var(--oltra-text-primary);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  pointer-events: none;
+  /* Not merely invisible: a hidden box still counts towards its list's scroll
+     height, and the star on the last card would give every list a few pixels
+     of scrolling. */
+  display: none;
+}
+
+.oltra-favourite-star:hover::before {
+  display: block;
 }
 

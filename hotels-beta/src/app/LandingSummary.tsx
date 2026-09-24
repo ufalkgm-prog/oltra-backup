@@ -9,7 +9,11 @@ import { getAirportsForCity } from "@/lib/cityAirports";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
 import { addHotelToTripBrowser } from "@/lib/members/db";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
-import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
+import SaveToTripControl, {
+  HOTEL_SAVED_HINT,
+  hotelSaveKey,
+  type SaveToTripResult,
+} from "@/components/members/SaveToTripControl";
 import FlightResultRow, { pickHeadlineItineraries } from "./FlightResultRow";
 import type { Itinerary } from "@/lib/flights/itinerary";
 import {
@@ -26,6 +30,8 @@ import HotelSmallCard, {
 } from "@/components/hotels/HotelSmallCard";
 import { useLandingPanes } from "./landingPanes";
 import { flightPassengers } from "@/lib/flights/passengers";
+import { useFavouriteIds } from "@/lib/members/favourites";
+import { hotelPriceBasis } from "@/lib/priceBasis";
 import styles from "./page.module.css";
 
 type HotelSummary = {
@@ -118,6 +124,7 @@ export default function LandingSummary({
      panes side by side, one from each source, is two answers to one question
      (Ulrik, 2026-09-21). */
   const panes = useLandingPanes();
+  const favouriteHotels = useFavouriteIds().hotels;
   const showHotels = includeHotels && !panes?.aiCovers.hotels;
   const showFlights = includeFlights && !panes?.aiCovers.flights;
   /* Density only. Left alone at the classic two-pane width, so a summary on
@@ -566,6 +573,8 @@ export default function LandingSummary({
                 <HotelSmallCard
                   key={String(h.id)}
                   hotel={h}
+                  isFavourite={favouriteHotels.has(String(h.id))}
+                  priceBasis={hotelPriceBasis(fromDate, toDate, bedrooms)}
                   columns={cardColumns}
                   href={hotelHref}
                   availability={
@@ -578,6 +587,16 @@ export default function LandingSummary({
                     <SaveToTripControl
                       onSave={(tripId) => handleSaveHotel(tripId, h)}
                       newTripDefaults={tripDefaults}
+                      savedKey={hotelSaveKey({
+                        hotelId: h.id,
+                        from: fromDate,
+                        to: toDate,
+                        adults,
+                        kids,
+                        childrenAges,
+                        rooms: bedrooms,
+                      })}
+                      savedHint={HOTEL_SAVED_HINT}
                       label="SAVE"
                       compact
                       align="right"

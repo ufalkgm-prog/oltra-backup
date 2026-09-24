@@ -774,7 +774,9 @@ export default function StructuredDestinationField({
 
   const isSingleHotel = tokens.length === 1 && tokens[0].type === "hotel";
 
-  const inputPlaceholder = isSingleHotel
+  // No helper beside the "AI curated results" token either: the token is the
+  // destination, and the helper read as a prompt to type one (Ulrik, 2026-09-24).
+  const inputPlaceholder = isSingleHotel || showCurated
     ? ""
     : tokens.length > 0
     ? helperPrompt(tokens) || placeholder

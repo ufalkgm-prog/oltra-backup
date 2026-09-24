@@ -26,19 +26,23 @@ import { clampBedrooms,
 } from "@/lib/guests";
 import { isBookableHere } from "@/components/hotels/HotelSmallCard";
 import SaveToTripControl, {
+  HOTEL_SAVED_HINT,
+  hotelSaveKey,
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
 import { applyEnglishLabels } from "@/lib/maps/englishLabels";
 import { mapStyleUrl } from "@/lib/maps/style";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import { isStayTooLong, MAX_STAY_NIGHTS, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
+import { hotelPriceBasis } from "@/lib/priceBasis";
 import type { HotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import {
   addFavoriteHotelBrowser,
   addHotelToTripBrowser,
-  fetchFavoriteHotelsBrowser,
   getMemberActionAccessBrowser,
 } from "@/lib/members/db";
+import { markFavourite, useFavouriteIds } from "@/lib/members/favourites";
+import FavouriteStar from "@/components/members/FavouriteStar";
 import type { HotelRecord } from "@/lib/directus";
 import type { AwardCode } from "@/lib/hotels/awardCodes";
 import {
@@ -65,6 +69,7 @@ import type { RatehawkGroupedRoom, RatehawkHeadline } from "@/lib/ratehawk/types
 import type { PrebookFailureReason, PrebookHash } from "@/lib/ratehawk/prebook";
 import { compareRates, type RateChange } from "@/lib/ratehawk/rateChanges";
 import type { HotelPolicies } from "@/lib/ratehawk/metapolicy";
+import { useCurrency } from "@/lib/currency/useCurrency";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -523,12 +528,6 @@ function formatRoomLayout(room: RatehawkGroupedRoom): string {
   return parts.join(" · ") || "—";
 }
 
-// A rate's price is the whole stay for every room searched (§32), so the label
-// says so rather than leaving it to read as one room's price.
-function formatRoomTotalLabel(rooms: number): string {
-  return rooms === 1 ? "total stay" : `total stay, ${rooms} rooms`;
-}
-
 // ETG's cancellation timestamps have no timezone offset (e.g.
 // "2026-09-22T11:00:00") and are documented as UTC+0 — see CLAUDE.md §32.
 // `new Date()` on a bare no-offset ISO string parses as LOCAL time per the
@@ -904,7 +903,13 @@ export default function HotelsView(props: {
 
   const [availabilitySearchDirty, setAvailabilitySearchDirty] = useState(false);
 
-  const [favoriteHotelIds, setFavoriteHotelIds] = useState<Set<string>>(new Set());
+  // The shared store (lib/members/favourites.ts): the same stars on every page.
+  const favoriteHotelIds = useFavouriteIds().hotels;
+  // The result cards price in the member's currency, converted from whatever
+  // RateHawk quoted, as the landing cards do (Ulrik, 2026-09-24). The batch
+  // asks for activeCurrency, but a price fetched before a currency change is
+  // kept by hid and was left showing the old currency.
+  const { currency: cardCurrency, format: formatCardPrice } = useCurrency();
 
   const [fromValue, setFromValue] = useState(normalizeParam(searchParams.from));
   const [toValue, setToValue] = useState(normalizeParam(searchParams.to));
@@ -1253,37 +1258,6 @@ export default function HotelsView(props: {
     setResidencyValue((prev) => prev || guessResidencyFromLocale());
   }, []);
 
-  useEffect(() => {
-    if (!isMemberLoggedIn) {
-      setFavoriteHotelIds(new Set());
-      return;
-    }
-
-    let active = true;
-
-    async function loadFavorites() {
-      try {
-        const list = await fetchFavoriteHotelsBrowser();
-        if (!active) return;
-        // hotelDirectusId, not id: `id` is the favourite row's own uuid, which
-        // can never equal a hotel id - so "ALREADY IN FAVOURITES" never showed
-        // and the same hotel could be favourited twice.
-        setFavoriteHotelIds(
-          new Set(
-            list
-              .map((f) => f.hotelDirectusId)
-              .filter((id): id is string => Boolean(id))
-              .map(String)
-          )
-        );
-      } catch {
-        // not critical
-      }
-    }
-
-    void loadFavorites();
-    return () => { active = false; };
-  }, [isMemberLoggedIn]);
 
   useEffect(() => {
     let active = true;
@@ -1942,6 +1916,10 @@ export default function HotelsView(props: {
   // The number of rooms the loaded rates were priced for.
   const searchedRoomCount = Math.max(1, Number(bedroomsValue) || 1);
 
+  // A rate's price is the whole stay for every room searched (§32), so every
+  // room price says what it covers: "Total · 7 nights · 2 rooms".
+  const roomPriceBasis = hotelPriceBasis(fromValue, toValue, searchedRoomCount);
+
   // A rate's price is already the total for every room searched — never
   // multiplied by the room count (§32).
   const roomSelectionTotal = selectedRoom?.pricePerStay ?? 0;
@@ -2526,19 +2504,9 @@ export default function HotelsView(props: {
       if (result.status === "already_exists") return { message: "Already in this trip." };
       if (result.overlapWarning) return { message: "Added with overlap warning." };
       return { message: "Added." };
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : "";
-
-      if (
-        message.includes("auth") ||
-        message.includes("login") ||
-        message.includes("sign in") ||
-        message.includes("unauthorized") ||
-        message.includes("not authenticated")
-      ) {
-        return { message: "Log in to add to trip." };
-      }
-      return { message: "Could not add hotel to trip." };
+      // A failure is thrown on to the control rather than returned as a line:
+      // a returned message now counts as saved and turns SAVE passive. The
+      // control words it ("Log in to…" or "Could not save to trip.").
     } finally {
       setMemberActionLoading(null);
     }
@@ -2558,7 +2526,7 @@ export default function HotelsView(props: {
       setMemberActionMessage("");
       setMemberActionError("");
 
-      const result = await addFavoriteHotelBrowser({
+      await addFavoriteHotelBrowser({
         hotelDirectusId: String(selectedHotel.id),
         name: selectedHotel.hotel_name ?? "Untitled hotel",
         location: locationLine(selectedHotel),
@@ -2566,10 +2534,9 @@ export default function HotelsView(props: {
         thumbnail: selectedHotel && hasHotelPhotos(selectedHotel) ? selectedHotelImages[0] : null,
       });
 
-      if (result.status !== "already_exists") {
-        setFavoriteHotelIds((prev) => new Set([...prev, String(selectedHotel.id)]));
-        setMemberActionMessage("Added to favourites.");
-      }
+      // Added, or found to be one already: a favourite either way. The button
+      // turning passive, labelled FAVOURITE, is the confirmation.
+      markFavourite("hotels", selectedHotel.id);
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
 
@@ -3037,11 +3004,14 @@ export default function HotelsView(props: {
                             ) : ratehawkCardAvailability?.status === "available" && ratehawkCardAvailability.headline ? (
                               <div className="px-2 py-1.5 text-center">
                                 <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
-                                  {ratehawkCardAvailability.headline.currency}{" "}
-                                  {Math.round(ratehawkCardAvailability.headline.pricePerStay).toLocaleString()}
+                                  {cardCurrency}{" "}
+                                  {formatCardPrice(
+                                    ratehawkCardAvailability.headline.pricePerStay,
+                                    ratehawkCardAvailability.headline.currency
+                                  )}
                                 </div>
                                 <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-                                  total stay
+                                  {roomPriceBasis}
                                 </div>
                               </div>
                             ) : cardUnavailable ? (
@@ -3071,8 +3041,14 @@ export default function HotelsView(props: {
                                   already did this; these cards never got it, so
                                   "Hôtel Plaza Athénée Paris" lost 112px at
                                   1024 (Ulrik, 2026-09-21). */}
-                              <div className="line-clamp-2 text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
-                                {h.hotel_name ?? "Untitled hotel"}
+                              {/* The star beside the clamped name, not in it:
+                                  line-clamp hides overflow, which would cut
+                                  the star's popup. */}
+                              <div className="flex min-w-0 items-baseline">
+                                <div className="line-clamp-2 min-w-0 text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+                                  {h.hotel_name ?? "Untitled hotel"}
+                                </div>
+                                {favoriteHotelIds.has(String(h.id)) ? <FavouriteStar /> : null}
                               </div>
                               <div className="mt-0.5 text-xs text-[color:var(--oltra-text-muted)]">
                                 {nameAndLocation || "—"}
@@ -3223,20 +3199,29 @@ export default function HotelsView(props: {
                 </form>
               </div>
 
-              {/* Second column, matching image 2's width. */}
-              <a
-                href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
-                className="flex cursor-pointer flex-col justify-center overflow-hidden rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)] sm:col-start-2"
+              {/* Second column, matching image 2's width.
+
+                  Built like the search beside it (Ulrik, 2026-09-24): the
+                  "Featured hotel" label sits ABOVE the box as an oltra-label,
+                  with the same 2px top padding the destination field has, so
+                  the two labels share a line and the box starts level with
+                  the input. The label used to be inside the box, whose top
+                  edge then sat a label's height above the input's, with its
+                  text centred lower down. */}
+              <div
+                className="flex min-w-0 flex-col pt-[2px] sm:col-start-2"
                 style={{ height: FEATURED_HEADER_HEIGHT }}
               >
-                <div className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--oltra-text-muted)]">
-                  Featured hotel
-                </div>
+              <div className="oltra-label">Featured hotel</div>
+              <a
+                href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
+                className="flex min-h-0 flex-1 cursor-pointer flex-col justify-start overflow-hidden rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)]"
+              >
                 {/* Clamped, both of them: the box is a fixed height now, so a
                     long name or a hotel with every award going has to be cut
                     rather than allowed to push the layout around. Two lines for
                     the name and location, four for the awards. */}
-                <div className="mt-1 line-clamp-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <div className="line-clamp-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
                     {featuredHotel.hotel_name ?? "Featured hotel"}
                   </span>
@@ -3250,6 +3235,7 @@ export default function HotelsView(props: {
                     .join(" · ") || "Curated featured selection"}
                 </div>
               </a>
+              </div>
               </div>
 
               <div className="relative">
@@ -3314,9 +3300,12 @@ export default function HotelsView(props: {
                 <div className="col-span-12 min-w-0 lg:col-span-8">
                   <div className="oltra-subheader">Selected hotel</div>
 
-                  <h2 className="mt-2 line-clamp-2 text-2xl font-light tracking-wide text-[color:var(--oltra-text-primary)] md:text-3xl">
-                    {selectedHotel.hotel_name ?? "Untitled hotel"}
-                  </h2>
+                  <div className="mt-2 flex min-w-0 items-baseline">
+                    <h2 className="line-clamp-2 min-w-0 text-2xl font-light tracking-wide text-[color:var(--oltra-text-primary)] md:text-3xl">
+                      {selectedHotel.hotel_name ?? "Untitled hotel"}
+                    </h2>
+                    {isFavorited ? <FavouriteStar /> : null}
+                  </div>
 
                   <div className="mt-1 text-sm text-[color:var(--oltra-text-muted)]">
                     {[selectedHotel.city, selectedHotel.country]
@@ -3584,7 +3573,7 @@ export default function HotelsView(props: {
                                     {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
                                   </div>
                                   <div className="text-[10px] text-[color:var(--oltra-text-muted)]">
-                                    {formatRoomTotalLabel(searchedRoomCount)}
+                                    {roomPriceBasis}
                                   </div>
                                   {nonIncludedTaxes(room).length > 0 ? (
                                     <div className="text-[10px] text-[color:var(--oltra-text-muted)]">+ taxes at hotel</div>
@@ -3684,7 +3673,7 @@ export default function HotelsView(props: {
                                     <div className="mt-4 text-right text-base font-light text-[color:var(--oltra-text-primary)]">
                                       {room.currency} {Math.round(room.pricePerStay).toLocaleString()}
                                       <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                                        {formatRoomTotalLabel(searchedRoomCount)}
+                                        {roomPriceBasis}
                                       </div>
                                     </div>
                                   </div>
@@ -3765,7 +3754,7 @@ export default function HotelsView(props: {
                     {roomSelectionTotal > 0 ? (
                       <div className="flex h-[var(--oltra-button-height)] w-full items-center justify-between rounded-[var(--oltra-radius-md)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-3 text-sm text-[color:var(--oltra-text-primary)]">
                         <span className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                          {searchedRoomCount === 1 ? "Total" : `Total for ${searchedRoomCount} rooms`}
+                          {roomPriceBasis}
                         </span>
                         <span className="font-light text-[color:var(--oltra-text-primary)]">
                           {roomSelectionCurrency} {Math.round(roomSelectionTotal).toLocaleString()}
@@ -3801,7 +3790,7 @@ export default function HotelsView(props: {
                           <div className="mt-1 font-light">
                             {prebook.rate.currency} {Math.round(prebook.rate.pricePerStay).toLocaleString()}{" "}
                             <span className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                              {formatRoomTotalLabel(searchedRoomCount)}
+                              {roomPriceBasis}
                             </span>
                           </div>
                           <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
@@ -3900,7 +3889,7 @@ export default function HotelsView(props: {
                                     {prebook.rate.currency} {Math.round(prebook.rate.pricePerStay).toLocaleString()}
                                   </div>
                                   <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                                    {formatRoomTotalLabel(searchedRoomCount)}
+                                    {roomPriceBasis}
                                   </div>
                                 </div>
                                 <RateTerms room={prebook.rate} />
@@ -4000,6 +3989,16 @@ export default function HotelsView(props: {
                             ? `${formatDisplayDate(fromValue)} – ${formatDisplayDate(toValue)}`
                             : null,
                       }}
+                      savedKey={hotelSaveKey({
+                        hotelId: selectedHotel.id,
+                        from: fromValue,
+                        to: toValue,
+                        adults: hasGuestDetails ? guestSelection.adults : null,
+                        kids: hasGuestDetails ? guestSelection.kids : null,
+                        childrenAges,
+                        rooms: bedroomsValue ? Number(bedroomsValue) : null,
+                      })}
+                      savedHint={HOTEL_SAVED_HINT}
                       className="oltra-btn oltra-btn--block"
                     />
 
@@ -4032,19 +4031,18 @@ export default function HotelsView(props: {
                           : !isMemberLoggedIn
                             ? "Log in to add favourites"
                             : isFavorited
-                              ? "Already in favourites"
+                              ? "Your favourite"
                               : undefined
                       }
                     >
-                      {/* The label never becomes "ALREADY IN FAVOURITES"
-                          (Ulrik, 2026-09-21). At 21 characters it outgrew the
-                          button as soon as the column narrowed. Being already
-                          favourited is a passive state, and §35A says a passive
-                          button explains itself through `data-reason` on hover
-                          — which this one already sets. So the label stays put
-                          and the state is carried by the rim, the label colour
-                          and the popup. */}
-                      {memberActionLoading === "favorite" ? "ADDING..." : "ADD TO FAVOURITES"}
+                      {/* FAVOURITE once it is one (Ulrik, 2026-09-24) - short
+                          enough for the narrowest column, which is why the
+                          earlier "ALREADY IN FAVOURITES" was dropped. */}
+                      {memberActionLoading === "favorite"
+                        ? "ADDING..."
+                        : isMemberLoggedIn && isFavorited
+                          ? "FAVOURITE"
+                          : "ADD TO FAVOURITES"}
                     </button>
 
                     {(memberActionError || memberActionMessage) ? (

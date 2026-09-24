@@ -6,6 +6,25 @@ const ALL_IMAGES = Array.from({ length: 49 }, (_, i) =>
   `/images/landing/landing-${String(i + 1).padStart(2, "0")}.webp`
 );
 
+/* PHOTOS WITH A BRIGHT TOP GET A TOP SHADE (Ulrik, 2026-09-24).
+   The site header sits over the top of the photo, and a pale sky took its
+   contrast away. Measured once with sharp: mean luminance (0-255) of each
+   photo's top sixth and the band under it. Every photo at 175+ in the top band
+   or 190+ just below it is listed - 19 of the 49. The rest keep only the 5%
+   overlay. 1-based, as in the file names; re-measure if the photos change. */
+const BRIGHT_TOP = new Set([
+  1, 3, 6, 11, 12, 14, 15, 16, 17, 20, 23, 26, 30, 31, 35, 39, 42, 45, 49,
+]);
+const TOP_SHADE =
+  "linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.14) 18%, rgba(0,0,0,0) 38%)";
+
+// The shade is a layer of the slide itself, so it cross-fades with its photo
+// rather than switching on or off between two.
+function slideBackground(src: string | undefined, index: number): string {
+  const photo = `url(${src ?? ""})`;
+  return BRIGHT_TOP.has(index + 1) ? `${TOP_SHADE}, ${photo}` : photo;
+}
+
 const SLIDE_MS = 5000;
 const FADE_MS = 1200;
 const GAP = 20;
@@ -264,7 +283,7 @@ export default function LandingBackground() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: `url(${validImages[slot.index] ?? ""})`,
+            backgroundImage: slideBackground(validImages[slot.index], slot.index),
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",

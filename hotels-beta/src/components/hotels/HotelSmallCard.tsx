@@ -1,6 +1,7 @@
 "use client";
 
 import type { HotelRecord } from "@/lib/directus";
+import FavouriteStar from "@/components/members/FavouriteStar";
 import { useCurrency } from "@/lib/currency/useCurrency";
 import {
   getHotelImageAtWidth,
@@ -131,6 +132,12 @@ type Props = {
   renderSaveControl?: () => React.ReactNode;
   /** Frames sharing the row. See SmallCardColumns — density only. */
   columns?: SmallCardColumns;
+  /** The member has it as a favourite: a star after the name. Passed by the
+   * list, which reads lib/members/favourites.ts once for all its cards. */
+  isFavourite?: boolean;
+  /** What the price covers, from lib/priceBasis.ts: "Total · 7 nights · 2
+   * rooms". The card cannot know the stay or the room count itself. */
+  priceBasis?: string;
 };
 
 export default function HotelSmallCard({
@@ -140,6 +147,8 @@ export default function HotelSmallCard({
   bookingHref,
   renderSaveControl,
   columns = 1,
+  isFavourite = false,
+  priceBasis = "Total stay",
 }: Props) {
   /* The card prices in whatever the member picked in the header, converting
      from the currency the supplier quoted. */
@@ -180,7 +189,7 @@ export default function HotelSmallCard({
               {displayCurrency} {formatMoney(availability.pricePerStay, availability.currency)}
             </div>
             <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-              total stay
+              {priceBasis}
             </div>
           </div>
         </div>
@@ -314,8 +323,13 @@ export default function HotelSmallCard({
               the price down the card. line-clamp keeps the ellipsis, so a
               longer name still reads as cut off rather than as the whole
               name. */}
-          <div className="min-w-0 line-clamp-2 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
-            {hotel.hotel_name ?? "Untitled hotel"}
+          {/* The star beside the clamped name, not inside it: line-clamp
+              hides overflow, which would cut the star's popup. */}
+          <div className="flex min-w-0 items-baseline">
+            <div className="min-w-0 line-clamp-2 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
+              {hotel.hotel_name ?? "Untitled hotel"}
+            </div>
+            {isFavourite ? <FavouriteStar /> : null}
           </div>
           {/* Wraps rather than truncates: at three frames the column is
               narrow enough for "Sabi Sand Reserve · South Africa" to clip,

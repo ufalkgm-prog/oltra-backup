@@ -13,11 +13,15 @@ import type { HotelRecord } from "@/lib/directus";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
 import SaveToTripControl, {
+  HOTEL_SAVED_HINT,
+  hotelSaveKey,
   type SaveToTripResult,
 } from "@/components/members/SaveToTripControl";
 import { addHotelToTripBrowser, addRestaurantToTripBrowser } from "@/lib/members/db";
 import type { RestaurantRecord } from "@/app/restaurants/types";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
+import { useFavouriteIds } from "@/lib/members/favourites";
+import { hotelPriceBasis } from "@/lib/priceBasis";
 import { currentResidency } from "@/lib/countries";
 import { guestSelectionIssue } from "@/lib/guests";
 import { isStayTooLong, MAX_STAY_NIGHTS } from "@/lib/stay";
@@ -239,6 +243,7 @@ function HotelStayGroup({
   columns: SmallCardColumns;
   tripDefaults: TripDefaults;
 }) {
+  const favouriteHotels = useFavouriteIds().hotels;
   const [availability, setAvailability] = useState<Record<string, SmallCardAvailability>>({});
 
   // Live prices, via the same batch route the structured landing summary uses.
@@ -420,6 +425,8 @@ function HotelStayGroup({
           <HotelSmallCard
             key={String(hotel.id)}
             hotel={record}
+            isFavourite={favouriteHotels.has(String(record.id))}
+            priceBasis={hotelPriceBasis(from, to, query.bedrooms)}
             href={hotelHref}
             columns={columns}
             availability={
@@ -432,6 +439,16 @@ function HotelStayGroup({
               <SaveToTripControl
                 onSave={(tripId) => handleSaveHotel(tripId, record)}
                 newTripDefaults={tripDefaults}
+                savedKey={hotelSaveKey({
+                  hotelId: record.id,
+                  from,
+                  to,
+                  adults: query.adults,
+                  kids: query.kids,
+                  childrenAges: query.childrenAges,
+                  rooms: query.bedrooms,
+                })}
+                savedHint={HOTEL_SAVED_HINT}
                 label="SAVE"
                 compact
                 align="right"
@@ -471,6 +488,7 @@ function stayDates(from: string, to: string): string {
  * below the search panel — the same relationship LandingSummary has to it. */
 export default function AiResultFrames() {
   const { results, query } = useAiSearch();
+  const favouriteRestaurants = useFavouriteIds().restaurants;
   const { hotels, restaurants, loading } = useAiResultRecords();
 
   /* THE WHOLE TRIP, STAY BY STAY (Ulrik, 2026-09-15). An answer about several
@@ -720,12 +738,16 @@ export default function AiResultFrames() {
                       <RestaurantSmallCard
                         key={String(restaurant.id)}
                         restaurant={restaurant}
+                        isFavourite={favouriteRestaurants.has(String(restaurant.id))}
                         href={`/restaurants?city=${encodeURIComponent(restaurant.city ?? "")}`}
                         columns={frameCount}
                         renderSaveControl={() => (
                           <SaveToTripControl
                             onSave={(tripId) => handleSaveRestaurant(tripId, restaurant)}
                             newTripDefaults={tripDefaults}
+                            /* A restaurant is saved without a date, so once
+                               saved there is nothing left to change. */
+                            savedKey={`restaurant|${restaurant.id}`}
                             label="SAVE"
                             compact
                             align="right"

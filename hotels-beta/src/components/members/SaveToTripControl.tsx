@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import { createTripBrowser, fetchTripChoicesBrowser } from "@/lib/members/db";
 import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
@@ -46,9 +53,71 @@ type Props = {
    * text confirmation would reflow the layout - the flights price cards sit in
    * a fixed-height grid. Errors still print, since they need to be read. */
   confirmInTrigger?: boolean;
+  /** What this save is: the item plus the dates and guests it carries. Once
+   * saved, the trigger goes passive until the key changes, and the confirmation
+   * becomes its hover reason instead of a line of text. */
+  savedKey?: string;
+  /** Added to that reason, saying what would make a new save. */
+  savedHint?: string;
 };
 
 const SAVED_FLASH_MS = 2500;
+
+/* SAVED IS PASSIVE UNTIL SOMETHING CHANGES (Ulrik, 2026-09-24).
+ *
+ * A save that has been made, with the same dates and guests, has nothing
+ * left to do, so its button reads passive (§35A) rather than inviting a second
+ * identical save. The confirmation line under it went too: the passive state
+ * is the confirmation, and its hover popup carries the words.
+ *
+ * Kept per page session, outside any one control, so every control showing
+ * the same save agrees (a hotel on the landing summary and in the concierge
+ * frame) and so a card that remounts still knows. A reload forgets it, and a
+ * repeat save then answers "Already in that trip." and goes passive again. */
+const savedSaves = new Map<string, string>();
+const savedListeners = new Set<() => void>();
+let savedVersion = 0;
+
+function markSaved(key: string, reason: string) {
+  savedSaves.set(key, reason);
+  savedVersion += 1;
+  savedListeners.forEach((listener) => listener());
+}
+
+function subscribeSaved(listener: () => void) {
+  savedListeners.add(listener);
+  return () => {
+    savedListeners.delete(listener);
+  };
+}
+
+const savedSnapshot = () => savedVersion;
+
+/** A hotel save is its stay: the hotel, the dates and the party. One
+ * definition, so the landing cards, the concierge frame and the Hotels page
+ * recognise the same save. */
+export function hotelSaveKey(stay: {
+  hotelId: string | number;
+  from?: string | null;
+  to?: string | null;
+  adults?: number | null;
+  kids?: number | null;
+  childrenAges?: readonly number[];
+  rooms?: number | null;
+}): string {
+  return [
+    "hotel",
+    stay.hotelId,
+    stay.from ?? "",
+    stay.to ?? "",
+    stay.adults ?? "",
+    stay.kids ?? "",
+    (stay.childrenAges ?? []).join(","),
+    stay.rooms ?? "",
+  ].join("|");
+}
+
+export const HOTEL_SAVED_HINT = "Change the dates or guests to save it again.";
 
 /* Room kept between the panel and the window edge, and between it and the
    trigger. The panel's height never exceeds this cap, as .oltra-popup-panel--
@@ -71,7 +140,11 @@ export default function SaveToTripControl({
   dropUp = false,
   disabled = false,
   confirmInTrigger = false,
+  savedKey,
+  savedHint,
 }: Props) {
+  useSyncExternalStore(subscribeSaved, savedSnapshot, savedSnapshot);
+  const savedReason = savedKey ? savedSaves.get(savedKey) : undefined;
   const [open, setOpen] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [trips, setTrips] = useState<Array<{ id: string; name: string; label: string }>>([]);
@@ -197,7 +270,8 @@ export default function SaveToTripControl({
 
   /** One place to land a successful save, so the two save paths can't drift. */
   function reportSaved(text: string) {
-    if (confirmInTrigger) setJustSaved(true);
+    if (savedKey) markSaved(savedKey, savedHint ? `${text} ${savedHint}` : text);
+    else if (confirmInTrigger) setJustSaved(true);
     else setMessage(text);
   }
 
@@ -382,9 +456,12 @@ export default function SaveToTripControl({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (savedReason) return;
           void handleToggle();
         }}
         disabled={disabled || busy}
+        aria-disabled={savedReason ? true : undefined}
+        data-reason={savedReason}
         className={className}
       >
         {justSaved ? "SAVED" : busy ? "SAVING..." : label}

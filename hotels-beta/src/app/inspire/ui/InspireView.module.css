@@ -7,8 +7,14 @@
   grid-template-columns: 380px minmax(0, 1fr);
   gap: 20px;
   width: 100%;
-  height: calc(100vh - 140px);
-  min-height: 720px;
+  /* The window less the page's own padding, as the Hotels layout does, so
+     the filters and the map end at the bottom of a laptop screen (Ulrik,
+     2026-09-24). It was 100vh - 140px with a 720px floor: the floor alone
+     ran past a laptop's ~650-800px browser window, and 140px undercounted
+     the padding. The floor is now only where the filters above the list
+     would leave it no room; below it the page scrolls. */
+  height: calc(100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding));
+  min-height: 520px;
   align-items: stretch;
   overflow: hidden;
 }

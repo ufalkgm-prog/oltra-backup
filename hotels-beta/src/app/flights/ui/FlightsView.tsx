@@ -29,6 +29,7 @@ import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import { getKidAgeValues } from "@/lib/guests";
 import { kidAgeFields } from "@/lib/searchSession";
 import { flightPassengers } from "@/lib/flights/passengers";
+import { flightPartyLabel, flightPriceBasis } from "@/lib/priceBasis";
 import styles from "./FlightsView.module.css";
 
 /* A multi-city flight column at its narrowest: a return card's width at 1536
@@ -1077,6 +1078,14 @@ export default function FlightsView({ searchParams }: Props) {
     placement: "flight-results",
   };
 
+  // What every fare on the page covers, in the Departure heading: "Total · 3
+  // passengers · return" (lib/priceBasis.ts). It replaced "total flight price
+  // from", which said neither who nor which way (Ulrik, 2026-09-24).
+  const priceBasisNote = flightPriceBasis(
+    handoff.passengers,
+    isOneWay ? "one-way" : "return"
+  );
+
   function toggleAirline(airline: string) {
     // Picking airlines by hand means the selection is no longer "just my
     // preferred ones", so the shortcut above unticks itself.
@@ -1617,7 +1626,7 @@ export default function FlightsView({ searchParams }: Props) {
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3em" }}>
                       <span>{fromCity}</span>
                       {(showOutbound || showInbound) ? (
-                        <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 0.75, fontSize: "0.62em", opacity: 0.85, margin: "0 0.05em", fontWeight: 900 }}>
+                        <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 0.5, fontSize: "0.62em", opacity: 0.85, margin: "0 0.05em", fontWeight: 900 }}>
                           {showInbound && <span>←</span>}
                           {showOutbound && <span>→</span>}
                         </span>
@@ -1673,7 +1682,7 @@ export default function FlightsView({ searchParams }: Props) {
               ) : isOneWay ? (
                 <>
                   <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
-                    Departure <span className={styles.columnLabelNote}>(total flight price from)</span>
+                    Departure <span className={styles.columnLabelNote}>({priceBasisNote})</span>
                   </div>
 
                   <div className={styles.pinnedStack}>
@@ -1767,7 +1776,7 @@ export default function FlightsView({ searchParams }: Props) {
                 <>
                   <div className={`${styles.splitPanes} ${styles.splitPanesHeader}`}>
                     <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
-                      Departure <span className={styles.columnLabelNote}>(total flight price from)</span>
+                      Departure <span className={styles.columnLabelNote}>({priceBasisNote})</span>
                     </div>
                     <div className={`${styles.columnHeadersOneWay} ${returnHasGutter ? styles.withScrollGutter : ""}`}>
                       <div className={styles.columnLabel}>Return</div>
@@ -2160,7 +2169,14 @@ function MultipleResults({
             {`Flight ${i + 1}${leg.from ? ` · ${leg.from} → ${leg.to || "?"}` : ""}`}
           </div>
         ))}
-        <div className={`${styles.columnLabel} ${styles.columnLabelRight} ${styles.multiPriceLane} ${priceHasGutter ? styles.withScrollGutter : ""}`}>Total price</div>
+        <div className={`${styles.columnLabel} ${styles.columnLabelRight} ${styles.multiPriceLane} ${priceHasGutter ? styles.withScrollGutter : ""}`}>
+          {/* One ticket for every flight and every passenger (§7B), and the
+              heading says both (Ulrik, 2026-09-24). */}
+          Total price{" "}
+          <span className={styles.columnLabelNote}>
+            ({flightPartyLabel(handoff.passengers)}, all flights)
+          </span>
+        </div>
       </div>
 
       {/* Pinned rows — same visual style as Return page */}
@@ -2562,10 +2578,15 @@ function matchTierLabel(tier: ReturnMatchTier): string {
 }
 
 function AirlineMarks({ airlines }: { airlines: AirlineRef[] }) {
-  const withLogo = airlines.filter(a => a.logoUrl).slice(0, 2);
-  if (!withLogo.length) return null;
+  // Up to four, in the fixed box (see .airlineMarks); none still keeps the
+  // box, so the text beside it never moves.
+  const withLogo = airlines.filter(a => a.logoUrl).slice(0, 4);
   return (
-    <span className={styles.airlineMarks}>
+    <span
+      className={`${styles.airlineMarks}${
+        withLogo.length === 1 ? ` ${styles.airlineMarksSingle}` : ""
+      }`}
+    >
       {withLogo.map(a => (
         // Plain <img>: Duffel's logo host is not in images.remotePatterns, and
         // onError hides a logo that fails rather than showing a broken image.
