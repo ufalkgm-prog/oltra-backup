@@ -8,7 +8,7 @@
 - [Verify manual steps yourself](feedback_verify_manual_steps.md) — a "done, I ran it" report is a starting point for verification, not proof
 - [Bash heredocs eat backslashes](feedback_bash_heredoc_eats_backslashes.md) — quoted heredocs still strip one level; write patch scripts with Write and run by path
 - [Subagents write CRLF](feedback_subagents_write_crlf.md) — parallel agents flipped whole files to CRLF on 2026-09-14; check and normalize to LF before review
-- [Concierge testing rounds](project_concierge_testing_rounds.md) — one query at a time in the dev browser, Ulrik reviews; 24 done by 2026-09-15, resume at 25
+- [Concierge testing rounds](project_concierge_testing_rounds.md) — Q1-50 one at a time (pushed 5a4f553); Q51-100 in 10 batches of 5 on 2026-09-24, fixes verified but uncommitted pending Ulrik
 - [Restaurant coverage to-do](project_restaurant_coverage_todo.md) — find restaurants for Reykjavik; Ulrik adding relaxed restaurants for large cities
 - [Open actions](project_open_actions.md) — after the 2026-09-21 sweep: two Supabase dashboard steps, the Trip.com affiliate click test, the map-window filtering decision, and infants having no collector
 - [Drive the UI with real events](feedback_drive_the_ui_with_real_events.md) — programmatic click/scroll produced 3 false findings in one sweep; also never run `npm run build` while `npm run dev` is up
