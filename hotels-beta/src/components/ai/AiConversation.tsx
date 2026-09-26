@@ -2028,6 +2028,10 @@ export default function AiConversation() {
           placeholder={hasConversation ? "Refine, or ask something else…" : PLACEHOLDER}
           aria-label="Ask the concierge"
           autoComplete="off"
+          // Gone while the concierge is thinking, back when it stops (Ulrik,
+          // 2026-09-26); Stop stands alone at the right meanwhile. Hidden
+          // rather than unmounted, so the draft and the ref survive.
+          hidden={busy}
           disabled={busy}
         />
         {busy ? (

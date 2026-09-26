@@ -96,7 +96,7 @@ Ulrik replaced the sage `#A8C4A2` with orange earlier the same day, then replace
 
 ### The two entry points part ways (Ulrik, 2026-09-23)
 
-The header "AI Concierge" is **transparent with a white label and, since 2026-09-26 (Ulrik), the standard sage rim** (it was white), no orange at all (`.oltra-btn--ai-concierge`). The landing field "Ask AI" is a **normal active button** — transparent, sage rim, standard label — at the AI variant's smaller size and still bold italic (`.oltra-btn--ai-ask`). Both are modifiers on `.oltra-btn--ai` in `oltra-theme.css`, applied by `AiModeButton`. "Become a member" keeps the plain orange pill. Everything above about the filled variant now describes only that button.
+The header "AI Concierge" is **transparent with a white label and, since 2026-09-26 (Ulrik), the standard sage rim** (it was white), no orange at all (`.oltra-btn--ai-concierge`). The landing field "Ask AI" is a **normal active button** — transparent, sage rim, standard label — at the AI variant's smaller size and still bold italic (`.oltra-btn--ai-ask`). Both are modifiers on `.oltra-btn--ai` in `oltra-theme.css`, applied by `AiModeButton`. "Become a member" is a **green pill since 2026-09-26 (Ulrik)** — sage fill `--oltra-button-active-bg` with the sage primary rim, scoped in `page.module.css` (`.introPanel .introCta`); it keeps the AI variant only for its shape. So no live button wears the orange fill any more; everything above about the filled variant describes the `.oltra-btn--ai` base, kept as reference.
 
 ### The values that moved from the spec, and why
 

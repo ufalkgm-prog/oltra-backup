@@ -407,6 +407,8 @@
   /* flex-end, not stretch: the textarea grows with the text and the buttons
      must keep their own height rather than growing with it. */
   align-items: flex-end;
+  /* Keeps Stop at the right while the input is hidden during an answer. */
+  justify-content: flex-end;
   min-width: 0;
 }
 

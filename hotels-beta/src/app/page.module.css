@@ -836,6 +836,26 @@
   margin-left: auto;
 }
 
+/* "Become a member" in the letter is a GREEN pill (Ulrik, 2026-09-26): the
+   sage fill of the site's active marks with the active buttons' sage rim,
+   replacing the orange of the AI variant it still wears for its shape. Both
+   step darker on hover and press, the fill further than the rim. Scoped under
+   the panel so it outranks .oltra-btn--ai's own fill at every state. */
+.introPanel .introCta {
+  background: var(--oltra-button-active-bg);
+  --btn-rim: var(--oltra-btn-primary-rim);
+  --btn-rim-hover: var(--oltra-btn-primary-rim);
+  --btn-rim-press: var(--oltra-btn-primary-rim-press);
+}
+
+.introPanel .introCta:hover {
+  background: #6f9470;
+}
+
+.introPanel .introCta:active {
+  background: #668a67;
+}
+
 /* The site's focus ring is the pale primary text colour, invisible on the
    sheet, so everything focusable here takes the letter's ink instead. */
 .introPanel :focus-visible {
