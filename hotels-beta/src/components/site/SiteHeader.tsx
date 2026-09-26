@@ -145,54 +145,26 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       }
     });
 
-    /* The window is not the only thing that scrolls.
+    /* The header changes only when the PAGE scrolls (Ulrik, 2026-09-26), and
+     * the page scrolls only when it overflows (html is overflow-y: auto).
      *
-     * Hotels, Flights and Restaurants each bound their layout to the viewport
-     * and scroll an inner pane instead (§30, §33), so window.scrollY never
-     * moves there and the header stayed transparent over content sliding
-     * under it — on exactly the pages where it is hardest to read.
-     *
-     * `scroll` does not bubble, so this listens in the CAPTURE phase on the
-     * document, which sees every scroller. A document-level scroll reports
-     * `document` as its target and falls through to window.scrollY; an element
-     * reports itself, and we read its scrollTop.
-     *
-     * Any scroller counts, with no size test. A first version required half
-     * the viewport, on the theory that a dropdown should not darken the site
-     * header — but Restaurants scrolls two panes of roughly 220px each, so the
-     * page it was written for was the one it excluded. Guessing which
-     * containers are "the main window" from their height does not work; every
-     * scroll darkening the header is predictable, and a small list scrolling
-     * under a header that is already legible costs nothing.
-     *
-     * EXCEPT dropdowns and popups (Ulrik, 2026-09-24). They are recognised by
-     * what they are, not by their size: a scroller inside a control
-     * (data-oltra-control, which every field with a dropdown carries) or
-     * inside a dropdown or popup panel, including the portalled ones. Their
-     * scrolling moves nothing on the page, so it leaves the header as it is. */
-    const onScroll = (event?: Event) => {
-      const target = event?.target;
-      if (target instanceof HTMLElement) {
-        if (
-          target.closest(
-            '[data-oltra-control="true"], .oltra-dropdown-panel, .oltra-popup-panel, .oltra-dropdown-list'
-          )
-        ) {
-          return;
-        }
-        setIsScrolled(target.scrollTop > 8);
-        return;
-      }
-      setIsScrolled(window.scrollY > 8);
-    };
+     * It used to react to every scroller on the page, inner panes included —
+     * Hotels, Flights and Restaurants scroll panes inside a viewport-bound
+     * layout (§30, §33) — with dropdowns and popups excepted. But the page
+     * reserves the header's measured height (below), so nothing in an inner
+     * pane passes under the header, and the header changing while the page
+     * itself stood still read as a glitch: scrolling the landing page's
+     * welcome letter darkened it. So inner scrollers are ignored entirely,
+     * and this listens on the window only. */
+    const onScroll = () => setIsScrolled(window.scrollY > 8);
     onScroll();
 
-    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       mounted = false;
       listener.subscription.unsubscribe();
-      document.removeEventListener("scroll", onScroll, { capture: true });
+      window.removeEventListener("scroll", onScroll);
     };
   }, [supabase]);
 
