@@ -303,19 +303,11 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
             />
           </Link>
 
-          <span
-            className="oltra-site-header__beta-badge"
-            tabIndex={0}
-            aria-label="OLTRA beta launch notice"
-          >
-            BETA
-            <span className="oltra-site-header__beta-popover" role="tooltip">
-              This site is at beta launch stage and does not yet include full hotel list or flights search functionality. Additional content and functionality will be added pending partner discussions.
-            </span>
-          </span>
+          {/* The orange BETA badge beside the logo was removed with the
+              green-A logo (Ulrik, 2026-09-26). */}
           {conciergeOpen ? (
-            /* Orange, like the button that opened it and like the logo's BETA
-               line (Ulrik, 2026-09-21). The modifier is on this one route
+            /* Orange, like the button that opened it and like the former BETA
+               badge's line (Ulrik, 2026-09-21). The modifier is on this one route
                label only — every other page's route name keeps the muted
                grey. */
             <div className="oltra-site-header__route oltra-route-label oltra-route-label--ai">

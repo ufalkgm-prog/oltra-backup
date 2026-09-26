@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import landingStyles from "../page.module.css";
 
 type View = "login" | "signup" | "forgot" | "reset";
 
@@ -223,263 +224,260 @@ export default function LoginView() {
   }
 
   return (
-    <main className="oltra-page members-login-page">
-      <div className="oltra-page__bg" />
-      <div className="oltra-page__header-bg" />
-      <section className="oltra-page__content">
-        <div
-          className="oltra-glass oltra-panel members-login-panel"
-          style={{ maxWidth: 560, margin: "40px auto 0" }}
-        >
-          {view === "login" ? (
-            <>
-              <div className="oltra-label members-login-panel__title">MEMBERS LOGIN</div>
-              {/* noValidate: the browser's own type="email" bubble would
-                  pre-empt the passive LOG IN and its focus move. */}
-              <form
-                onSubmit={handleLogin}
-                className="members-form-stack members-login-panel__form"
-                noValidate
+    // The page, header and slideshow come from login/page.tsx. Over the photo,
+    // so the landing panels' own surface: their tinted glass, and
+    // .oltra-over-image for the buttons' solid fill (§35A).
+    <div
+      className={`oltra-glass oltra-panel oltra-over-image members-login-panel ${landingStyles.landingGlass}`}
+      style={{ maxWidth: 560, margin: "40px auto 0", position: "relative", zIndex: 1 }}
+    >
+      {view === "login" ? (
+        <>
+          <div className="oltra-label members-login-panel__title">MEMBERS LOGIN</div>
+          {/* noValidate: the browser's own type="email" bubble would
+              pre-empt the passive LOG IN and its focus move. */}
+          <form
+            onSubmit={handleLogin}
+            className="members-form-stack members-login-panel__form"
+            noValidate
+          >
+            <div className="members-form-field">
+              <label className="oltra-label">E-MAIL</label>
+              <input
+                ref={emailRef}
+                className="oltra-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="members-form-field">
+              <label className="oltra-label">PASSWORD</label>
+              <input
+                ref={passwordRef}
+                className="oltra-input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error ? <div className="members-note members-note--error">{error}</div> : null}
+
+            <div className="members-login-panel__top-actions">
+              <button
+                type="submit"
+                className="oltra-btn"
+                aria-disabled={!loginEnabled}
+                data-reason={loginBlockedReason}
+                disabled={loading}
               >
-                <div className="members-form-field">
-                  <label className="oltra-label">E-MAIL</label>
-                  <input
-                    ref={emailRef}
-                    className="oltra-input"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                  />
-                </div>
+                LOG IN
+              </button>
 
-                <div className="members-form-field">
-                  <label className="oltra-label">PASSWORD</label>
-                  <input
-                    ref={passwordRef}
-                    className="oltra-input"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                  />
-                </div>
+              <button
+                type="button"
+                className="oltra-btn members-login-panel__create"
+                onClick={() => goTo("signup")}
+                disabled={loading}
+              >
+                CREATE NEW ACCOUNT
+              </button>
+            </div>
 
-                {error ? <div className="members-note members-note--error">{error}</div> : null}
+            <div className="members-login-panel__oauth">
+              <button
+                type="button"
+                className="oltra-btn oltra-btn--block"
+                onClick={handleOAuth}
+                disabled={loading}
+              >
+                CONTINUE WITH GOOGLE
+              </button>
+            </div>
 
-                <div className="members-login-panel__top-actions">
-                  <button
-                    type="submit"
-                    className="oltra-btn"
-                    aria-disabled={!loginEnabled}
-                    data-reason={loginBlockedReason}
-                    disabled={loading}
-                  >
-                    LOG IN
-                  </button>
+            <div className="members-login-panel__footer">
+              <button
+                type="button"
+                className="members-login-panel__forgot"
+                onClick={() => goTo("forgot")}
+              >
+                Forgot password
+              </button>
+            </div>
+          </form>
+        </>
+      ) : view === "signup" && signedUp ? (
+        <>
+          <div className="oltra-label members-login-panel__title">CHECK YOUR EMAIL</div>
+          <div className="members-form-stack members-login-panel__form">
+            <div className="members-note members-note--success">
+              Account created. Follow the link we have sent you to confirm
+              your membership — it will sign you in.
+            </div>
+            {/* Said to everyone, not only to the visitor whose address was
+                already registered: telling only them would give away who
+                has an account, which is the thing the neutral signup
+                response above exists to protect. */}
+            <div className="members-login-panel__hint">
+              If you already have an account, no new mail is sent — log in,
+              or reset your password.
+            </div>
+            <div className="members-login-panel__top-actions">
+              <button
+                type="button"
+                className="oltra-btn oltra-btn--block"
+                onClick={() => window.location.assign("/")}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </>
+      ) : view === "signup" ? (
+        <>
+          <div className="oltra-label members-login-panel__title">CREATE ACCOUNT</div>
+          <form onSubmit={handleSignup} className="members-form-stack members-login-panel__form">
+            <div className="members-form-field">
+              <label className="oltra-label">E-MAIL</label>
+              <input
+                className="oltra-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
 
-                  <button
-                    type="button"
-                    className="oltra-btn members-login-panel__create"
-                    onClick={() => goTo("signup")}
-                    disabled={loading}
-                  >
-                    CREATE NEW ACCOUNT
-                  </button>
-                </div>
-
-                <div className="members-login-panel__oauth">
-                  <button
-                    type="button"
-                    className="oltra-btn oltra-btn--block"
-                    onClick={handleOAuth}
-                    disabled={loading}
-                  >
-                    CONTINUE WITH GOOGLE
-                  </button>
-                </div>
-
-                <div className="members-login-panel__footer">
-                  <button
-                    type="button"
-                    className="members-login-panel__forgot"
-                    onClick={() => goTo("forgot")}
-                  >
-                    Forgot password
-                  </button>
-                </div>
-              </form>
-            </>
-          ) : view === "signup" && signedUp ? (
-            <>
-              <div className="oltra-label members-login-panel__title">CHECK YOUR EMAIL</div>
-              <div className="members-form-stack members-login-panel__form">
-                <div className="members-note members-note--success">
-                  Account created. Follow the link we have sent you to confirm
-                  your membership — it will sign you in.
-                </div>
-                {/* Said to everyone, not only to the visitor whose address was
-                    already registered: telling only them would give away who
-                    has an account, which is the thing the neutral signup
-                    response above exists to protect. */}
-                <div className="members-login-panel__hint">
-                  If you already have an account, no new mail is sent — log in,
-                  or reset your password.
-                </div>
-                <div className="members-login-panel__top-actions">
-                  <button
-                    type="button"
-                    className="oltra-btn oltra-btn--block"
-                    onClick={() => window.location.assign("/")}
-                  >
-                    OK
-                  </button>
-                </div>
+            <div className="members-form-field">
+              <label className="oltra-label">PASSWORD</label>
+              <input
+                className="oltra-input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+              <div className="members-login-panel__hint">
+                Minimum 7 characters, must include letters and numbers
               </div>
-            </>
-          ) : view === "signup" ? (
-            <>
-              <div className="oltra-label members-login-panel__title">CREATE ACCOUNT</div>
-              <form onSubmit={handleSignup} className="members-form-stack members-login-panel__form">
-                <div className="members-form-field">
-                  <label className="oltra-label">E-MAIL</label>
-                  <input
-                    className="oltra-input"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                  />
-                </div>
+            </div>
 
-                <div className="members-form-field">
-                  <label className="oltra-label">PASSWORD</label>
-                  <input
-                    className="oltra-input"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                  <div className="members-login-panel__hint">
-                    Minimum 7 characters, must include letters and numbers
-                  </div>
-                </div>
+            <div className="members-form-field">
+              <label className="oltra-label">CONFIRM PASSWORD</label>
+              <input
+                className="oltra-input"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
 
-                <div className="members-form-field">
-                  <label className="oltra-label">CONFIRM PASSWORD</label>
-                  <input
-                    className="oltra-input"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                </div>
+            {error ? <div className="members-note members-note--error">{error}</div> : null}
 
-                {error ? <div className="members-note members-note--error">{error}</div> : null}
+            <div className="members-login-panel__top-actions">
+              <button
+                type="submit"
+                className="oltra-btn oltra-btn--block"
+                disabled={loading}
+              >
+                {loading ? "Creating…" : "CREATE ACCOUNT"}
+              </button>
 
-                <div className="members-login-panel__top-actions">
-                  <button
-                    type="submit"
-                    className="oltra-btn oltra-btn--block"
-                    disabled={loading}
-                  >
-                    {loading ? "Creating…" : "CREATE ACCOUNT"}
-                  </button>
+              <button
+                type="button"
+                className="oltra-btn oltra-btn--block"
+                onClick={() => goTo("login")}
+                disabled={loading}
+              >
+                BACK TO LOG IN
+              </button>
+            </div>
+          </form>
+        </>
+      ) : view === "reset" ? (
+        <>
+          <div className="oltra-label members-login-panel__title">SET A NEW PASSWORD</div>
+          <form onSubmit={handleSetNewPassword} className="members-form-stack members-login-panel__form">
+            <div className="members-form-field">
+              <label className="oltra-label">NEW PASSWORD</label>
+              <input
+                className="oltra-input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
 
-                  <button
-                    type="button"
-                    className="oltra-btn oltra-btn--block"
-                    onClick={() => goTo("login")}
-                    disabled={loading}
-                  >
-                    BACK TO LOG IN
-                  </button>
-                </div>
-              </form>
-            </>
-          ) : view === "reset" ? (
-            <>
-              <div className="oltra-label members-login-panel__title">SET A NEW PASSWORD</div>
-              <form onSubmit={handleSetNewPassword} className="members-form-stack members-login-panel__form">
-                <div className="members-form-field">
-                  <label className="oltra-label">NEW PASSWORD</label>
-                  <input
-                    className="oltra-input"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                </div>
+            <div className="members-form-field">
+              <label className="oltra-label">CONFIRM NEW PASSWORD</label>
+              <input
+                className="oltra-input"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
 
-                <div className="members-form-field">
-                  <label className="oltra-label">CONFIRM NEW PASSWORD</label>
-                  <input
-                    className="oltra-input"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                </div>
+            {error ? <div className="members-note members-note--error">{error}</div> : null}
+            {message ? <div className="members-note members-note--success">{message}</div> : null}
 
-                {error ? <div className="members-note members-note--error">{error}</div> : null}
-                {message ? <div className="members-note members-note--success">{message}</div> : null}
+            <div className="members-login-panel__top-actions">
+              <button
+                type="submit"
+                className="oltra-btn oltra-btn--block"
+                disabled={loading}
+              >
+                {loading ? "Saving…" : "SAVE PASSWORD"}
+              </button>
+            </div>
+          </form>
+        </>
+      ) : (
+        <>
+          <div className="oltra-label members-login-panel__title">FORGOT PASSWORD</div>
+          <form onSubmit={handleForgotPassword} className="members-form-stack members-login-panel__form">
+            <div className="members-form-field">
+              <label className="oltra-label">E-MAIL</label>
+              <input
+                className="oltra-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
 
-                <div className="members-login-panel__top-actions">
-                  <button
-                    type="submit"
-                    className="oltra-btn oltra-btn--block"
-                    disabled={loading}
-                  >
-                    {loading ? "Saving…" : "SAVE PASSWORD"}
-                  </button>
-                </div>
-              </form>
-            </>
-          ) : (
-            <>
-              <div className="oltra-label members-login-panel__title">FORGOT PASSWORD</div>
-              <form onSubmit={handleForgotPassword} className="members-form-stack members-login-panel__form">
-                <div className="members-form-field">
-                  <label className="oltra-label">E-MAIL</label>
-                  <input
-                    className="oltra-input"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                  />
-                </div>
+            {error ? <div className="members-note members-note--error">{error}</div> : null}
+            {message ? <div className="members-note members-note--success">{message}</div> : null}
 
-                {error ? <div className="members-note members-note--error">{error}</div> : null}
-                {message ? <div className="members-note members-note--success">{message}</div> : null}
+            <div className="members-login-panel__top-actions">
+              <button
+                type="submit"
+                className="oltra-btn oltra-btn--block"
+                disabled={loading}
+              >
+                {loading ? "Sending…" : "SEND RESET LINK"}
+              </button>
 
-                <div className="members-login-panel__top-actions">
-                  <button
-                    type="submit"
-                    className="oltra-btn oltra-btn--block"
-                    disabled={loading}
-                  >
-                    {loading ? "Sending…" : "SEND RESET LINK"}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="oltra-btn oltra-btn--block"
-                    onClick={() => goTo("login")}
-                    disabled={loading}
-                  >
-                    BACK TO LOG IN
-                  </button>
-                </div>
-              </form>
-            </>
-          )}
-        </div>
-      </section>
-    </main>
+              <button
+                type="button"
+                className="oltra-btn oltra-btn--block"
+                onClick={() => goTo("login")}
+                disabled={loading}
+              >
+                BACK TO LOG IN
+              </button>
+            </div>
+          </form>
+        </>
+      )}
+    </div>
   );
 }

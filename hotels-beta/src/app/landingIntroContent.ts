@@ -2,7 +2,7 @@
  * apart from the layout so it can be edited without touching it. Paragraphs
  * render in order; a `label` leads its paragraph ("Hotels – ..."). */
 export const LANDING_INTRO = {
-  tagline: "Curated travel booking redefined",
+  tagline: "Curated travel planning redefined",
   paragraphs: [
     {
       text: "myOLTRA was born from a vision of creating one single platform for discovering and booking the very best hotels and restaurants in the world and facilitate easy flight booking, high-quality concierge services and intuitive travel planning tools.",
