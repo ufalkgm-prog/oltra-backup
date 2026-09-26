@@ -20,7 +20,8 @@ import styles from "./AiModeButton.module.css";
  *    field, the one search box that kept it. Labelled "Ask AI".
  *
  * Since 2026-09-23 the two look different: the header one is transparent with a
- * white rim and label, the inline one a transparent sage-rim button.
+ * white label and (since 2026-09-26) a sage rim, the inline one a transparent
+ * sage-rim button.
  *
  * MEMBERS ONLY (Ulrik, 2026-09-16). The concierge needs a signed-in session
  * (the chat route answers 401 without one), so only a member sees the AI
@@ -48,7 +49,7 @@ export default function AiModeButton({ placement, label }: Props) {
   if (!AI_CHAT_ENABLED) return null;
 
   const text = label ?? (placement === "header" ? "AI Concierge" : "Ask AI");
-  // Header: transparent, white rim and label. Inline: a sage-rim active button, small
+  // Header: transparent, sage rim, white label. Inline: a sage-rim active button, small
   // and bold italic (Ulrik, 2026-09-23).
   const placementClass =
     placement === "header"

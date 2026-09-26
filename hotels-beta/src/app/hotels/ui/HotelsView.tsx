@@ -860,21 +860,19 @@ export default function HotelsView(props: {
     ratehawkResultAvailabilityStatus === "loading";
 
   // Result-card ordering: priced hotels first, everything we couldn't price
-  // (no dates yet, no Ratehawk match, check failed) in the middle, explicitly
-  // unavailable hotels below those, and anything we cannot sell at all last of
-  // all. The pinned hotel still wins outright so clicking a card never makes it
+  // (no dates yet, no Ratehawk match, check failed) next, then hotels we can
+  // only send to their own website, and explicitly unavailable hotels last.
+  // The pinned hotel still wins outright so clicking a card never makes it
   // jump away under the cursor.
   const orderedVisibleHotels = useMemo(() => {
     const rank = (h: HotelRecord) => {
       const availability = ratehawkResultAvailability[String(h.id)];
-      // A "Book on website" card comes last, always (Ulrik, 2026-09-21).
-      // It used to sit ABOVE sold-out, on the reasoning that it is not a dead
-      // end because the guest can still book on the hotel's own site — but it
-      // is a dead end for everything the list is for: no price, no rooms,
-      // nothing to save to a trip. This is also the same test the card uses to
-      // decide it draws that button, where the old check read `ratehawk_status
-      // === "passive"` and missed a hotel with no supplier id at all.
-      if (!isBookableHere(h)) return 4;
+      // A "Book on website" card ranks ABOVE "No availability" (Ulrik,
+      // 2026-09-26), reversing the 2026-09-21 "always last": the guest can
+      // still book it on the hotel's own site, where a sold-out card is a
+      // true dead end for these dates. `isBookableHere` is the same test the
+      // card uses to decide it draws that button.
+      if (!isBookableHere(h)) return 2;
       if (availability?.status === "available" && availability.headline) return 0;
       if (availability?.status === "unavailable") return 3;
       return 1;

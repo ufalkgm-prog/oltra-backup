@@ -1,16 +1,43 @@
-/* The wording of the landing page's introduction panel (LandingIntro.tsx), kept
+/* The wording of the landing page's welcome letter (LandingIntro.tsx), kept
  * apart from the layout so it can be edited without touching it. Paragraphs
- * render in order. */
+ * render in order; a `label` leads its paragraph ("Hotels – ..."). */
 export const LANDING_INTRO = {
-  tagline: "Concierge meets travel booking",
+  tagline: "Curated travel booking redefined",
   paragraphs: [
-    "myOLTRA brings together the world's finest hotels and restaurants, and the flights to reach them. We then wrap it into an appealing and intuitive user interface and add an interactive AI Concierge layer.",
-    "Our collection of around 800 hotels is selected by our team and informed by respected authorities such as Forbes Travel Guide, the MICHELIN Guide, Condé Nast Traveler and The World's 50 Best Hotels. Our restaurants are selected the same way, drawing on sources such as the MICHELIN Guide, Gault&Millau, The World's 50 Best Restaurants and La Liste.",
-    "We have also built a new way to search and book flights, designed to be simple and intuitive. It will enable you to find the most convenient flight with your favorite airlines in a matter of seconds.",
-    "Membership is free. It gives you full access to our AI Concierge, trip planning tools and other member benefits.",
-    "We have only just started. New partners, inventory, services and improvements will follow, shaped in part by your suggestions and feedback.",
-  ],
-  closing: "Our success is the memories you treasure",
+    {
+      text: "myOLTRA was born from a vision of creating one single platform for discovering and booking the very best hotels and restaurants in the world and facilitate easy flight booking, high-quality concierge services and intuitive travel planning tools.",
+    },
+    {
+      label: "Hotels",
+      text: "Our collection currently includes around 750 of the world’s very best hotels, and we expect to add another 100 or so shortly. Each hotel has been reviewed and selected by our team, informed in part by the most recognized guides and rankings.",
+    },
+    {
+      label: "Restaurants",
+      text: "Our restaurant collection includes around 3,500 restaurants in around 70 typical travel destinations around the world, all selected using external sources as curation input. They range from some of the world’s most celebrated dining rooms to more relaxed bistros and beach clubs to cater to all occasions and moods.",
+    },
+    {
+      label: "Flights",
+      text: "We have redefined flight search and selection and offer a simple and intuitive tool to find the best connections to get you to where you are going. It’s simple, easy to use and gives you the information you need to make the best choice.",
+    },
+    {
+      label: "Membership",
+      text: "Membership is all about offering additional valuable travel planning tools, which we would like you to use again and again. It’s free and not designed to push ads or promotions, only to improve your overall travel planning experience.",
+    },
+    {
+      label: "AI Concierge",
+      text: "Our AI Concierge is a truly novel concierge format trained by us to assist you with all aspects of your trip including assisting and refining searches within myOLTRA, aligning with relevant leisure interests, and answering essentially any destination or travel related question, and pairing it with your travel itinerary.",
+    },
+    {
+      text: "Bookings are currently completed through one of our partners or directly with the hotel or restaurant. This means that the final booking and payment will be confirmed and managed by them. These are all highly accredited travel companies that we trust.",
+    },
+    {
+      text: "myOLTRA has only just launched. More content, categories and a growing selection of hotels and restaurants will follow. We will also continue to increase our integration with partners to offer you an increasingly seamless and direct booking experience.",
+    },
+    {
+      text: "We hope you will enjoy using myOLTRA and return whenever you are looking for inspiration for your next trip. We also urge you to give us feedback on content and functionality as you go using the members feedback feature.",
+    },
+  ] as { label?: string; text: string }[],
+  closing: "Thank you for visiting myOLTRA – we hope you return",
   ctaLabel: "Become a member",
   ctaHref: "/login?view=signup",
 } as const;

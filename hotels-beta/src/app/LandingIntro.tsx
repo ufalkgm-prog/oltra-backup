@@ -64,13 +64,24 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
         </button>
       </div>
 
-      <div className={styles.introBody}>
-        {LANDING_INTRO.paragraphs.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
+      {/* The letter: a pale sheet that scrolls under the fixed header row,
+          with no visible scrollbar (Ulrik, 2026-09-26). Focusable so the
+          keyboard can scroll it too, since nothing shows that it scrolls. */}
+      <div
+        className={styles.introLetter}
+        tabIndex={0}
+        role="region"
+        aria-label="Welcome letter"
+      >
+        {LANDING_INTRO.paragraphs.map(({ label, text }) => (
+          <p key={text}>
+            {label ? <span className={styles.introLabel}>{label} – </span> : null}
+            {text}
+          </p>
         ))}
-      </div>
 
-      <p className={styles.introClosing}>{LANDING_INTRO.closing}</p>
+        <p className={styles.introClosing}>{LANDING_INTRO.closing}</p>
+      </div>
     </section>
   );
 }

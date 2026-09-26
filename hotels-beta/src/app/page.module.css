@@ -806,6 +806,7 @@
    controls at the right. On a phone the row wraps and the tagline drops under
    the controls rather than being squeezed into a narrow column beside them. */
 .introHeader {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -837,23 +838,52 @@
   color: var(--oltra-text-primary);
 }
 
-.introBody {
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: var(--oltra-text-muted);
-}
-
-.introBody p {
-  margin: 0 0 0.75rem;
-}
-
-/* 1.1rem under the body, with the last paragraph's own 0.75rem. */
-.introClosing {
-  margin: 0.35rem 0 0;
+/* The welcome letter (Ulrik, 2026-09-26): deliberately unlike the rest of the
+   site — a pale sheet with very dark italic text, in Geist (already loaded by
+   the root layout) rather than the site's Arial, for a crisper letterform.
+   It scrolls on its own under the header row, with no visible scrollbar; the
+   wheel, touch and keyboard (it is focusable) still scroll it. */
+.introLetter {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 1.4rem 1.6rem 1.5rem;
+  border-radius: var(--oltra-radius-md);
+  background: #f3f2ef;
+  color: #262a29;
+  font-family: var(--font-geist-sans), var(--oltra-font-sans);
   font-size: 0.95rem;
   font-style: italic;
-  line-height: 1.55;
-  color: var(--oltra-text-primary);
+  line-height: 1.6;
+  letter-spacing: 0.005em;
+}
+
+.introLetter::-webkit-scrollbar {
+  display: none;
+}
+
+.introLetter:focus-visible {
+  outline: 2px solid var(--oltra-text-primary);
+  outline-offset: 2px;
+}
+
+.introLetter p {
+  margin: 0 0 0.85rem;
+}
+
+.introLabel {
+  font-weight: 600;
+}
+
+/* The sign-off, a little apart from the body. */
+.introClosing {
+  margin: 1.25rem 0 0;
+  font-weight: 500;
+}
+
+.introLetter p.introClosing {
+  margin-bottom: 0;
 }
 
 /* A close icon is a control, not an action (§35A), so no pill — the same
@@ -885,23 +915,23 @@
   outline-offset: 2px;
 }
 
-/* Above 860px .heroPanel is capped at the viewport with overflow hidden, so
-   on a short screen the panel scrolls inside itself rather than being cut
-   off. 200px approximates the search panel above it.
-   Without a visible scrollbar (Ulrik, 2026-09-24). Where the note does not
-   fit, the wheel and touch still scroll it. */
+/* The panel is a column: the header row stays put and the letter below it
+   takes the rest and scrolls. Above 860px .heroPanel is capped at the
+   viewport with overflow hidden, so the panel is capped to what is left under
+   the search panel (200px approximates it). Narrower, the page scrolls
+   normally, and the letter gets its own cap so the header still frames it. */
+.introPanel {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
 @media (min-width: 861px) {
   .introPanel {
     max-height: calc(
       100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding) -
         200px - 2rem
     );
-    overflow-y: auto;
-    scrollbar-width: none;
-  }
-
-  .introPanel::-webkit-scrollbar {
-    display: none;
   }
 }
 
