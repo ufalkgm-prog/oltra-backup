@@ -36,10 +36,10 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
   if (hidden || resultsShown || isMember !== false) return null;
 
   return (
-    <section
-      className={`oltra-glass oltra-panel oltra-over-image ${styles.landingGlass} ${styles.introPanel}`}
-      aria-labelledby="landing-intro-title"
-    >
+    /* The whole panel is the letter: a pale sheet, no dark frame, with the
+       tagline and buttons as its header and the text scrolling beneath them
+       (Ulrik, 2026-09-26). So none of the landing glass classes. */
+    <section className={styles.introPanel} aria-labelledby="landing-intro-title">
       {/* "Become a member" at the top right, beside the close control, rather
           than at the foot (Ulrik, 2026-09-24). */}
       <div className={styles.introHeader}>
@@ -64,9 +64,9 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
         </button>
       </div>
 
-      {/* The letter: a pale sheet that scrolls under the fixed header row,
-          with no visible scrollbar (Ulrik, 2026-09-26). Focusable so the
-          keyboard can scroll it too, since nothing shows that it scrolls. */}
+      {/* The letter's text, scrolling under the header row with no visible
+          scrollbar. Focusable so the keyboard can scroll it too, since
+          nothing shows that it scrolls. */}
       <div
         className={styles.introLetter}
         tabIndex={0}

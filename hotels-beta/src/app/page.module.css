@@ -774,32 +774,49 @@
   --oltra-field-bg-strong: rgba(255, 255, 255, 0.17);
 }
 
-/* ─── Introduction panel (LandingIntro.tsx) ───────────────────────────────
-   The search panel's own surface (.oltra-glass + .landingGlass), so it reads
-   as a second card in the same system. 32px from the search panel: the hero
-   grid's 1rem gap plus the 1rem margin here, which leaves the gap the results
-   boxes use alone. */
+/* ─── Welcome letter (LandingIntro.tsx) ───────────────────────────────────
+   Deliberately unlike the rest of the site (Ulrik, 2026-09-26): the whole
+   panel is a pale sheet with very dark italic text, no dark frame, in Geist
+   (already loaded by the root layout) rather than the site's Arial, for a
+   crisper letterform. The tagline and buttons are the letter's own header and
+   stay put while the text scrolls beneath them, with no visible scrollbar. */
 .introPanel {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   /* 56px clear of the search panel: the hero grid's 1rem gap plus 2.5rem here.
      It used to be 1rem, giving the same 32px the results boxes use, and the
      note read as part of the search frame rather than as a separate welcome
      (Ulrik, 2026-09-21). */
   margin-top: 2.5rem;
-  /* Narrower than the search panel, and centred under it. The panel inherited
-     the hero's width, so five paragraphs of reading text ran to 1120px — far
-     past the ~75 characters a line can be read comfortably at. */
+  /* Narrower than the search panel, and centred under it, so the text keeps
+     to a line length that can be read comfortably. */
   max-width: 720px;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
-  color: var(--oltra-text-primary);
-  /* Solid, and the same dark grey every non-landing page uses (Ulrik,
-     2026-09-21). It was rgba(18, 28, 40, 0.92) — the landing glass's blue-black
-     tint at near-opacity, so it read as a slightly different colour from the
-     rest of the site while still letting the photo through. Declared after
-     .landingGlass in this file, so it wins on source order. */
-  background: var(--oltra-bg-color);
+  /* Narrower than 861px the page scrolls normally; the cap keeps the header
+     framing the letter there too. Wider, see the media query below. */
+  max-height: 70vh;
+  border-radius: var(--oltra-radius-xl);
+  background: #f3f2ef;
+  box-shadow: 0 18px 40px rgba(10, 16, 20, 0.28);
+  color: #262a29;
+  font-family: var(--font-geist-sans), var(--oltra-font-sans);
+  overflow: hidden;
+}
+
+/* Above 860px .heroPanel is capped at the viewport with overflow hidden, so
+   the letter is capped to what is left under the search panel (200px
+   approximates it). */
+@media (min-width: 861px) {
+  .introPanel {
+    max-height: calc(
+      100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding) -
+        200px - 2rem
+    );
+  }
 }
 
 /* The tagline, "Become a member" and the close control on one row, the two
@@ -810,12 +827,19 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.9rem;
+  padding: 1.25rem 1.6rem 0.9rem;
 }
 
 .introCta {
   flex: none;
   margin-left: auto;
+}
+
+/* The site's focus ring is the pale primary text colour, invisible on the
+   sheet, so everything focusable here takes the letter's ink instead. */
+.introPanel :focus-visible {
+  outline: 2px solid #262a29;
+  outline-offset: 2px;
 }
 
 @media (max-width: 560px) {
@@ -833,30 +857,26 @@
   margin: 0;
   min-width: 0;
   font-size: 1.35rem;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.25;
-  color: var(--oltra-text-primary);
+  color: #1e2221;
 }
 
-/* The welcome letter (Ulrik, 2026-09-26): deliberately unlike the rest of the
-   site — a pale sheet with very dark italic text, in Geist (already loaded by
-   the root layout) rather than the site's Arial, for a crisper letterform.
-   It scrolls on its own under the header row, with no visible scrollbar; the
-   wheel, touch and keyboard (it is focusable) still scroll it. */
+/* The text: scrolls under the header, the wheel, touch and keyboard (it is
+   focusable) still scroll it. A short fade at the top edge so lines pass
+   under the header rather than being cut against it. */
 .introLetter {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
-  padding: 1.4rem 1.6rem 1.5rem;
-  border-radius: var(--oltra-radius-md);
-  background: #f3f2ef;
-  color: #262a29;
-  font-family: var(--font-geist-sans), var(--oltra-font-sans);
+  padding: 0.6rem 1.6rem 1.5rem;
   font-size: 0.95rem;
   font-style: italic;
   line-height: 1.6;
   letter-spacing: 0.005em;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 0.9rem);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 0.9rem);
 }
 
 .introLetter::-webkit-scrollbar {
@@ -864,8 +884,7 @@
 }
 
 .introLetter:focus-visible {
-  outline: 2px solid var(--oltra-text-primary);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 .introLetter p {
@@ -877,17 +896,13 @@
 }
 
 /* The sign-off, a little apart from the body. */
-.introClosing {
+.introLetter p.introClosing {
   margin: 1.25rem 0 0;
   font-weight: 500;
 }
 
-.introLetter p.introClosing {
-  margin-bottom: 0;
-}
-
-/* A close icon is a control, not an action (§35A), so no pill — the same
-   round outline as the flight-details popup's close. */
+/* A close icon is a control, not an action (§35A), so no pill — a round
+   outline, in the letter's ink. */
 .introClose {
   flex: none;
   width: 28px;
@@ -896,43 +911,18 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid var(--oltra-border-medium);
+  border: 1px solid rgba(38, 42, 41, 0.35);
   border-radius: 50%;
   background: transparent;
-  color: var(--oltra-text-muted);
+  color: #4a504e;
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .introClose:hover {
-  background: var(--oltra-surface-lift);
-  color: var(--oltra-text-primary);
-}
-
-.introClose:focus-visible {
-  outline: 2px solid var(--oltra-text-primary);
-  outline-offset: 2px;
-}
-
-/* The panel is a column: the header row stays put and the letter below it
-   takes the rest and scrolls. Above 860px .heroPanel is capped at the
-   viewport with overflow hidden, so the panel is capped to what is left under
-   the search panel (200px approximates it). Narrower, the page scrolls
-   normally, and the letter gets its own cap so the header still frames it. */
-.introPanel {
-  display: flex;
-  flex-direction: column;
-  max-height: 70vh;
-}
-
-@media (min-width: 861px) {
-  .introPanel {
-    max-height: calc(
-      100vh - var(--oltra-page-top-padding) - var(--oltra-page-bottom-padding) -
-        200px - 2rem
-    );
-  }
+  background: rgba(38, 42, 41, 0.07);
+  color: #1e2221;
 }
 
 @media (max-width: 1280px) {
