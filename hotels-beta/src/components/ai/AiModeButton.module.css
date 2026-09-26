@@ -36,17 +36,19 @@
   font-weight: 400;
 }
 
-/* Rim and label in the pale white of the landing search panel's field labels
+/* Label in the pale white of the landing search panel's field labels
    (--oltra-text-secondary, as .oltra-label), not the standard passive grey,
-   which read as broken over the photo (Ulrik, 2026-09-16). Qualified past the
-   standard's own aria-disabled rule so it wins whichever stylesheet loads
-   last. */
+   which read as broken over the photo (Ulrik, 2026-09-16). The rim is the
+   active buttons' sage (Ulrik, 2026-09-26 - it was the same pale white), so
+   signed out the button wears the same green outline as signed in. Qualified
+   past the standard's own aria-disabled rule so it wins whichever stylesheet
+   loads last. */
 :global(.oltra-btn.oltra-btn--ai)[aria-disabled="true"].passive {
   /* No fill: the live button is a solid orange pill since 2026-09-21, and an
      orange pill that does nothing would read as the live one. Passive stays
      an outline. */
   background: transparent;
-  border-color: var(--oltra-text-secondary);
+  border-color: var(--oltra-btn-primary-rim);
   color: var(--oltra-text-secondary);
 }
 

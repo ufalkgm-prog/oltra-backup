@@ -800,7 +800,8 @@
      framing the letter there too. Wider, see the media query below. */
   max-height: 70vh;
   border-radius: var(--oltra-radius-xl);
-  background: #f3f2ef;
+  /* A very light pale grey, not white (Ulrik, 2026-09-26 - it was #f3f2ef). */
+  background: #e6e8e6;
   box-shadow: 0 18px 40px rgba(10, 16, 20, 0.28);
   color: #262a29;
   font-family: var(--font-geist-sans), var(--oltra-font-sans);
