@@ -16,6 +16,8 @@ import { buildTripWarnings } from "@/lib/members/tripWarnings";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import type { Itinerary } from "@/lib/flights/itinerary";
 import type { CabinClass } from "@duffel/api/types";
+import { SMALL_CARD_ACTION_WIDTH } from "@/components/hotels/HotelSmallCard";
+import { flightPriceBasisShort, hotelPriceBasis } from "@/lib/priceBasis";
 import TripItineraryDocument from "./TripItineraryDocument";
 
 type TripItemCard = {
@@ -24,13 +26,16 @@ type TripItemCard = {
   secondary: string;
   meta: string;
   travelers: string;
-  status: string;
   thumbnail: string;
   hasPhoto?: boolean;
   hasOverlapWarning?: boolean;
   bookUrl?: string;
   roomsSummary?: string;
+  /** "EUR 1,234" — the figure saved, or last updated. */
   priceLabel?: string;
+  /** What it covers, as on the landing cards: "2 rooms – 3 nights", "2 pax ·
+   * return". */
+  priceBasis?: string;
   priceCurrency?: string;
   /** Set when the item can be re-priced against its live source. */
   refresh?: RefreshTarget;
@@ -81,14 +86,14 @@ function summarizeRoomSelection(
 }
 
 /* Price stored on the item at save time. Falls back to summing the saved room
- * picks for hotels saved before price_amount existed. */
+ * picks for hotels saved before price_amount existed. The amount alone: what
+ * it covers is its own line under it, as on the landing cards. */
 function formatSavedPrice(
   amount: number | null | undefined,
-  currency: string | null | undefined,
-  suffix: string
+  currency: string | null | undefined
 ): string | undefined {
   if (!amount || !currency) return undefined;
-  return `${currency} ${Math.round(amount).toLocaleString()} ${suffix}`;
+  return `${currency} ${Math.round(amount).toLocaleString()}`;
 }
 
 /* The guests and rooms actually saved with this hotel, e.g. "2 adults, 1 child
@@ -131,20 +136,42 @@ function summarizeRoomPrice(
     (sum, room) => sum + room.pricePerStay * room.quantity,
     0
   );
-  return formatSavedPrice(total, currency, "total stay");
+  return formatSavedPrice(total, currency);
 }
 
-function statusLabel(status: "confirmed" | "pending" | "saved") {
-  switch (status) {
-    case "confirmed":
-      return "Confirmed";
-    case "pending":
-      return "Inquiry pending";
-    case "saved":
-      return "Saved";
-    default:
-      return "";
-  }
+/* A TRIP WHOSE DATES HAVE PASSED (Ulrik, 2026-09-27). Its last date: the
+   latest check-out, flight or table it holds. Measured on the END, not the
+   start, so a trip under way keeps its itinerary and notes; once the last
+   date is behind us there is nothing left to book, update or plan, and only
+   Delete trip stays live. Undated trips are never outdated. */
+function tripLastDate(trip: SavedTrip): string {
+  const dates = [
+    ...trip.hotels.map((hotel) => hotel.checkOut ?? hotel.checkIn ?? ""),
+    ...trip.flights.map(
+      (flight) =>
+        flight.returnDepartAt ??
+        flight.arriveAt ??
+        flight.departAt ??
+        parseDateFromTiming(flight.timing)
+    ),
+    ...trip.restaurants.map((restaurant) => restaurant.reservedAt ?? ""),
+  ]
+    .map((value) => (value ?? "").slice(0, 10))
+    .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value));
+  return dates.sort().at(-1) ?? "";
+}
+
+function localToday(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function longDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d} ${MONTHS[m - 1] ?? ""} ${y}`;
 }
 
 function notesKey(tripId: string) {
@@ -242,6 +269,7 @@ export default function SavedTripsView() {
     itemId: string;
   } | null>(null);
   const [showItinerary, setShowItinerary] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [refreshStates, setRefreshStates] = useState<
     Record<string, RefreshState>
   >({});
@@ -298,6 +326,9 @@ export default function SavedTripsView() {
     () => (selectedTrip ? buildTripWarnings(selectedTrip) : []),
     [selectedTrip]
   );
+
+  const lastDate = selectedTrip ? tripLastDate(selectedTrip) : "";
+  const outdated = Boolean(lastDate) && lastDate < localToday();
 
   function handleNotesChange(value: string) {
     setCurrentNotes(value);
@@ -499,15 +530,15 @@ export default function SavedTripsView() {
     primary: item.name,
     secondary: item.location,
     meta: item.stay,
-    status: statusLabel(item.status),
     thumbnail: item.thumbnail,
     hasPhoto: Boolean(item.thumbnail) && item.thumbnail !== "/images/hero-lp.jpg",
     hasOverlapWarning: item.hasOverlapWarning,
     bookUrl: buildHotelBookUrl(item.name, item.checkIn, item.checkOut, travelers),
     roomsSummary: summarizeRoomSelection(item.roomSelection),
     priceLabel:
-      formatSavedPrice(item.priceAmount, item.priceCurrency, "total stay") ??
+      formatSavedPrice(item.priceAmount, item.priceCurrency) ??
       summarizeRoomPrice(item.roomSelection),
+    priceBasis: hotelPriceBasis(item.checkIn, item.checkOut, item.rooms),
     priceCurrency: item.priceCurrency ?? item.roomSelection?.[0]?.currency,
     // The item's own saved guests/rooms win; the trip-level travellers label is
     // only a fallback for hotels saved before those were stored.
@@ -544,11 +575,17 @@ export default function SavedTripsView() {
       secondary: item.cabin,
       meta: item.timing,
       travelers,
-      status: statusLabel(item.status),
       thumbnail: item.thumbnail,
       hasOverlapWarning: item.hasOverlapWarning,
       bookUrl: buildFlightBookUrl(item.route, item.timing, item.departAt, item.cabin, travelers),
-      priceLabel: formatSavedPrice(item.priceAmount, item.priceCurrency, "total"),
+      priceLabel: formatSavedPrice(item.priceAmount, item.priceCurrency),
+      priceBasis: flightPriceBasisShort(
+        {
+          adults: item.adults ?? parseTravelersAdults(travelers),
+          children: item.kids ?? parseTravelersKids(travelers),
+        },
+        item.returnDepartAt ? "return" : "one-way"
+      ),
       priceCurrency: item.priceCurrency ?? undefined,
       refresh:
         origin && destination && departureDate
@@ -572,7 +609,6 @@ export default function SavedTripsView() {
     secondary: item.location,
     meta: item.time,
     travelers: "",
-    status: statusLabel(item.status),
     thumbnail: item.thumbnail,
     hasOverlapWarning: item.hasOverlapWarning,
   }));
@@ -593,38 +629,51 @@ export default function SavedTripsView() {
             />
           </div>
 
-          <button
-            type="button"
-            className="oltra-btn"
-            onClick={() => setShowItinerary(true)}
-          >
-            Itinerary
-          </button>
+          {/* Notes, Itinerary and Delete trip: one width, level with the
+              trip field (Ulrik, 2026-09-27). The notes moved from a field on
+              the page into a popup behind the first. */}
+          <div className="members-trip-buttons">
+            <button
+              type="button"
+              className="oltra-btn oltra-btn--block"
+              aria-disabled={outdated ? "true" : undefined}
+              onClick={() => !outdated && setShowNotes(true)}
+            >
+              Notes
+            </button>
 
-          <button
-            type="button"
-            className="oltra-btn oltra-btn--destructive"
-            onClick={() => setTripPendingDelete(selectedTrip)}
-          >
-            Delete trip
-          </button>
+            <button
+              type="button"
+              className="oltra-btn oltra-btn--block"
+              aria-disabled={outdated ? "true" : undefined}
+              onClick={() => !outdated && setShowItinerary(true)}
+            >
+              Itinerary
+            </button>
+
+            <button
+              type="button"
+              className="oltra-btn oltra-btn--destructive oltra-btn--block"
+              onClick={() => setTripPendingDelete(selectedTrip)}
+            >
+              Delete trip
+            </button>
+          </div>
         </div>
 
-        <div className="members-form-field members-trip-notes-field">
-          <label className="oltra-label">TRIP NOTES</label>
-          <textarea
-            className="oltra-input members-textarea members-trip-notes"
-            value={currentNotes}
-            onChange={(e) => handleNotesChange(e.target.value)}
-            placeholder="Add notes for this trip..."
-          />
-        </div>
-
-        {/* Always present, directly under the notes and above the columns it
-            refers to. Soft: nothing here blocks saving or booking. */}
+        {/* Always present, directly under the trip row and above the columns
+            it refers to. Soft: nothing here blocks saving or booking — except
+            a trip whose dates have passed, which is said here and leaves only
+            Delete trip live. */}
         <div className="members-editor-notes">
-          <div className="oltra-label">EDITOR NOTES</div>
-          {tripWarnings.length ? (
+          <div className="oltra-label">CONCIERGE NOTES</div>
+          {outdated ? (
+            <p className="members-editor-note is-warning">
+              This trip is outdated: its dates have passed (the last was{" "}
+              {longDate(lastDate)}). It can no longer be booked or updated —
+              only deleted.
+            </p>
+          ) : tripWarnings.length ? (
             tripWarnings.map((warning) => (
               <p className="members-editor-note is-warning" key={warning.id}>
                 {warning.message}
@@ -644,6 +693,7 @@ export default function SavedTripsView() {
             title="HOTELS"
             items={hotelItems}
             showThumb
+            outdated={outdated}
             refreshStates={refreshStates}
             onRefreshPrice={(item) => refreshItemPrice("hotels", item)}
             onDelete={(id) => setItemPendingDelete({ section: "hotels", itemId: id })}
@@ -652,6 +702,7 @@ export default function SavedTripsView() {
           <TripSection
             title="FLIGHTS"
             items={flightItems}
+            outdated={outdated}
             refreshStates={refreshStates}
             onRefreshPrice={(item) => refreshItemPrice("flights", item)}
             onDelete={(id) => setItemPendingDelete({ section: "flights", itemId: id })}
@@ -660,6 +711,7 @@ export default function SavedTripsView() {
           <TripSection
             title="RESTAURANTS"
             items={restaurantItems}
+            outdated={outdated}
             onDelete={(id) =>
               setItemPendingDelete({ section: "restaurants", itemId: id })
             }
@@ -674,6 +726,35 @@ export default function SavedTripsView() {
           notes={currentNotes}
           onClose={() => setShowItinerary(false)}
         />
+      ) : null}
+
+      {showNotes ? (
+        <div className="members-leave-overlay" onClick={() => setShowNotes(false)}>
+          <div
+            className="oltra-glass oltra-panel members-leave-modal members-trip-notes-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Trip notes"
+          >
+            <label className="oltra-label" htmlFor="members-trip-notes">
+              TRIP NOTES
+            </label>
+            <textarea
+              id="members-trip-notes"
+              className="oltra-input members-textarea members-trip-notes"
+              value={currentNotes}
+              onChange={(e) => handleNotesChange(e.target.value)}
+              placeholder="Add notes for this trip..."
+              autoFocus
+            />
+            <div className="members-leave-modal__actions">
+              <button type="button" className="oltra-btn" onClick={() => setShowNotes(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {warningItemId ? (
@@ -784,6 +865,7 @@ function TripSection({
   title,
   items,
   showThumb = false,
+  outdated = false,
   refreshStates,
   onRefreshPrice,
   onDelete,
@@ -792,11 +874,14 @@ function TripSection({
   title: string;
   items: TripItemCard[];
   showThumb?: boolean;
+  /** The trip's dates have passed: every button here is passive. */
+  outdated?: boolean;
   refreshStates?: Record<string, RefreshState>;
   onRefreshPrice?: (item: TripItemCard) => void;
   onDelete: (itemId: string) => void;
   onBook: (itemId: string, bookUrl?: string, hasOverlapWarning?: boolean) => void;
 }) {
+  const passive = outdated ? "true" : undefined;
   return (
     <div className="members-trip-col">
       <div className="members-section__header">
@@ -805,107 +890,126 @@ function TripSection({
 
       <div className="members-section__body">
         {items.length ? (
-          items.map((item) => (
-            <article key={item.id} className="members-item members-trip-item">
-              <div
-                className={`members-item__layout${
-                  showThumb ? "" : " members-item__layout--no-thumb"
-                }`}
-              >
-                {showThumb ? (
-                  item.hasPhoto === false ? (
-                    <div className="members-item__thumb members-item__thumb--placeholder">
-                      Photos coming soon
+          items.map((item) => {
+            const refreshing = refreshStates?.[item.id]?.status === "loading";
+            const canRefresh = Boolean(item.refresh && onRefreshPrice);
+            const lines = [item.meta, item.travelers, item.roomsSummary].filter(Boolean);
+            return (
+              /* THE LANDING PAGE'S CARD (Ulrik, 2026-09-27): HotelSmallCard's
+                 frame, image, type and action column at its three-frame
+                 density, which is about as wide as a trip column. The price
+                 and what it covers over the buttons, stacked in the card's
+                 action width. No status label (Saved / Inquiry pending). */
+              <article key={item.id} className="oltra-output members-trip-card">
+                <div
+                  className={`grid gap-2.5 ${
+                    showThumb ? "grid-cols-[88px_1fr_auto]" : "grid-cols-[1fr_auto]"
+                  }`}
+                >
+                  {showThumb ? (
+                    <div className="overflow-hidden rounded-[var(--oltra-radius-md)] self-start">
+                      {item.hasPhoto === false ? (
+                        <div className="oltra-photo-placeholder h-[58px] w-full">
+                          Photos coming soon
+                        </div>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.thumbnail} alt="" className="h-[58px] w-full object-cover" />
+                      )}
                     </div>
-                  ) : (
-                    <div
-                      className="members-item__thumb"
-                      style={{ backgroundImage: `url(${item.thumbnail})` }}
-                    />
-                  )
-                ) : null}
+                  ) : null}
 
-                <div className="members-item__content">
-                  <div className="members-item__top">
-                    <div className="members-item__head">
-                      <div className="members-item__title">{item.primary}</div>
-                      <div className="members-item__location">{item.secondary}</div>
+                  <div className="flex min-h-[58px] min-w-0 flex-col">
+                    <div className="min-w-0 line-clamp-2 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
+                      {item.primary}
                     </div>
-                    <div className="members-item__status">{item.status}</div>
+                    {item.secondary ? (
+                      <div className="mt-0.5 min-w-0 text-xs break-words text-[color:var(--oltra-text-muted)]">
+                        {item.secondary}
+                      </div>
+                    ) : null}
+                    {lines.length ? (
+                      <div className="mt-2 text-xs leading-relaxed text-[color:var(--oltra-text-muted)]">
+                        {lines.map((line) => (
+                          <div key={line}>{line}</div>
+                        ))}
+                      </div>
+                    ) : null}
+                    {/* The saved price is a flat number from save time, so the
+                        only way it moves is if the member asks (Update). */}
+                    {refreshing || refreshStates?.[item.id]?.message ? (
+                      <div
+                        className={
+                          refreshStates?.[item.id]?.status === "error"
+                            ? "members-item__refresh-note members-item__refresh-note--error"
+                            : "members-item__refresh-note"
+                        }
+                      >
+                        {refreshing ? "Checking..." : refreshStates?.[item.id]?.message}
+                      </div>
+                    ) : null}
+                    {/* No warning text on the card: every warning belongs in
+                        the Concierge notes, so there is one place to read
+                        them. hasOverlapWarning still gates the confirm step
+                        on Book. */}
                   </div>
 
-                  {item.meta ? (
-                    <div className="members-item__meta">{item.meta}</div>
-                  ) : null}
+                  <div
+                    className={`members-trip-card__actions flex ${SMALL_CARD_ACTION_WIDTH[3]} shrink-0 flex-col justify-center`}
+                  >
+                    {item.priceLabel ? (
+                      <div className="w-full text-center">
+                        <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
+                          {item.priceLabel}
+                        </div>
+                        {item.priceBasis ? (
+                          <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
+                            {item.priceBasis}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
 
-                  {item.travelers ? (
-                    <div className="members-item__meta">{item.travelers}</div>
-                  ) : null}
-
-                  {item.roomsSummary ? (
-                    <div className="members-item__meta">{item.roomsSummary}</div>
-                  ) : null}
-
-                  {item.priceLabel ? (
-                    <div className="members-item__price">{item.priceLabel}</div>
-                  ) : null}
-
-                  {/* The saved price is a flat number from save time, so the
-                      only way it moves is if the member asks. */}
-                  {item.refresh && onRefreshPrice ? (
-                    <div className="members-item__price-refresh">
+                    <div className="mt-1.5 flex w-full flex-col gap-1.5">
+                      {canRefresh ? (
+                        <button
+                          type="button"
+                          className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-top"
+                          disabled={refreshing}
+                          aria-disabled={passive}
+                          onClick={() => !outdated && onRefreshPrice?.(item)}
+                        >
+                          Update
+                        </button>
+                      ) : null}
                       <button
                         type="button"
-                        className="oltra-btn oltra-btn--condensed"
-                        disabled={refreshStates?.[item.id]?.status === "loading"}
-                        onClick={() => onRefreshPrice(item)}
+                        className={`oltra-btn oltra-btn--condensed oltra-btn--block ${
+                          canRefresh ? "members-trip-card__middle" : "oltra-btn--stack-top"
+                        }`}
+                        aria-disabled={passive}
+                        onClick={() =>
+                          !outdated && onBook(item.id, item.bookUrl, item.hasOverlapWarning)
+                        }
                       >
-                        {refreshStates?.[item.id]?.status === "loading"
-                          ? "Checking..."
-                          : "Update price and availability"}
+                        Book
                       </button>
-
-                      {refreshStates?.[item.id]?.message ? (
-                        <div
-                          className={
-                            refreshStates[item.id].status === "error"
-                              ? "members-item__refresh-note members-item__refresh-note--error"
-                              : "members-item__refresh-note"
-                          }
-                        >
-                          {refreshStates[item.id].message}
-                        </div>
-                      ) : null}
+                      {/* Not immediate: onDelete opens the "Remove this item"
+                          confirm in SavedTripsView. */}
+                      <button
+                        type="button"
+                        className="oltra-btn oltra-btn--destructive oltra-btn--condensed oltra-btn--block oltra-btn--stack-bottom"
+                        aria-disabled={passive}
+                        onClick={() => !outdated && onDelete(item.id)}
+                      >
+                        Delete
+                      </button>
                     </div>
-                  ) : null}
-
-                  {/* No warning text on the card: every warning belongs in the
-                      Editor notes box under Trip notes, so there is one place
-                      to read them. hasOverlapWarning still gates the confirm
-                      step on Book. */}
-
-                  <div className="members-item__actions">
-                    <button
-                      type="button"
-                      className="oltra-btn oltra-btn--condensed"
-                      onClick={() => onBook(item.id, item.bookUrl, item.hasOverlapWarning)}
-                    >
-                      Book
-                    </button>
-                    {/* Not immediate: onDelete opens the "Remove this item"
-                        confirm in SavedTripsView. */}
-                    <button
-                      type="button"
-                      className="oltra-btn oltra-btn--destructive oltra-btn--condensed"
-                      onClick={() => onDelete(item.id)}
-                    >
-                      Delete
-                    </button>
                   </div>
                 </div>
-              </div>
-            </article>
-          ))
+              </article>
+            );
+          })
         ) : (
           <div className="members-empty">Nothing saved yet.</div>
         )}

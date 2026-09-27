@@ -462,14 +462,51 @@
   flex: 1;
 }
 
-.members-trip-notes-field {
-  margin-top: 0;
+/* Notes, Itinerary and Delete trip (Ulrik, 2026-09-27). One width — the
+   tracks are 1fr in a grid sized to its content, so each takes the widest
+   label's width — and centred on the trip field: the box is the field's
+   control height, and the row aligns bottoms, so the 30px buttons sit level
+   with the 34px select rather than flush with its bottom edge. */
+.members-trip-buttons {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+  height: var(--oltra-control-height);
+}
+
+/* The trip notes, now in a popup behind Notes. Two classes, to beat
+   .members-leave-modal's 420px cap further down the file. */
+.members-leave-modal.members-trip-notes-modal {
+  width: min(520px, calc(100vw - 48px));
+  max-width: none;
+  display: grid;
+  gap: 8px;
 }
 
 .members-trip-notes {
-  min-height: 72px;
+  min-height: 160px;
   resize: vertical;
   padding-top: 10px;
+}
+
+/* A trip card is the landing page's card (HotelSmallCard); the spacing
+   between cards comes from .members-section__body. */
+.members-trip-card {
+  display: block;
+  width: 100%;
+}
+
+/* Update, Book and Delete stack three high. The standard's stack classes
+   split the gap between two buttons; the one in the middle gets half the gap
+   on each side, so no tap reaches a neighbour. */
+.members-trip-card__middle::after {
+  top: calc(var(--oltra-btn-stack-gap, 6px) / -2);
+  bottom: calc(var(--oltra-btn-stack-gap, 6px) / -2);
+  height: auto;
+  min-height: 0;
+  transform: translateX(-50%);
 }
 
 .members-trip-columns {
@@ -1069,6 +1106,10 @@
 @media (max-width: 760px) {
   .members-trip-line {
     grid-template-columns: 1fr;
+  }
+
+  .members-trip-selector-row {
+    flex-wrap: wrap;
   }
 
   .members-item__layout {
