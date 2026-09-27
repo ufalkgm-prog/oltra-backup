@@ -15,6 +15,20 @@ export function formatDuration(totalMinutes: number): string {
   return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
 }
 
+/* Written out rather than Intl's "short" month: en-GB gives "Sept", and the
+   format is dd mmm, three letters every month. */
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "05 Nov" — the leg's departure date as the airport's local calendar has
+ * it. Duffel's departing_at is local time with no offset, so the date part is
+ * read as written, never shifted through the viewer's time zone. */
+export function legDate(flight: FlightLeg): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(flight.segments[0]?.departIso ?? "");
+  if (!match) return "";
+  const month = MONTHS[Number(match[2]) - 1];
+  return month ? `${match[3]} ${month}` : "";
+}
+
 function matchTierLabel(tier: ReturnMatchTier): string {
   if (tier === "alliance") return "Alliance partner";
   return "";
@@ -72,6 +86,7 @@ export default function FlightCardContent({
     : flight.airline;
   const label = matchTierLabel(matchTier ?? null);
   const timeStyle = compact ? { fontSize: "0.82rem" } : undefined;
+  const date = legDate(flight);
   return (
     <>
       {onInfo ? (
@@ -106,6 +121,15 @@ export default function FlightCardContent({
             <span className={styles.flightDuration} style={timeStyle}>{formatDuration(flight.durationMinutes)}</span>
           </div>
           <div className={styles.flightStopsRow}>
+            {/* The date leads the line (Ulrik, 2026-09-27), and never gives
+                way: when the column is tight the airline name is what
+                ellipsises. */}
+            {date ? (
+              <>
+                <span className={`${styles.flightMetaText} ${styles.flightDateText}`}>{date}</span>
+                <span className={styles.flightMetaDot}>·</span>
+              </>
+            ) : null}
             <span className={`${styles.flightMetaText} ${styles.flightAirlineText}`}>{airlineLabel}</span>
             {flight.stopSummary ? (
               <>

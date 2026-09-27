@@ -1078,6 +1078,11 @@
   border-radius: 3px;
 }
 
+/* The leg's date, first on the airline line: kept whole, never ellipsised. */
+.flightDateText {
+  flex: 0 0 auto;
+}
+
 .flightAirlineText {
   overflow: hidden;
   text-overflow: ellipsis;
