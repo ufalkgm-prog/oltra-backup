@@ -541,8 +541,9 @@
 
 /* SaveToTripControl puts the caller's className on the button and keeps its
    own wrapper for the popup anchor; that wrapper fills the column so SAVE is
-   BOOK's width. */
-.flightRowActions > div {
+   BOOK's width. Not the price block, which is a div here too: as a flex row it
+   put "2 PAX · RETURN" beside the price instead of under it (2026-09-27). */
+.flightRowActions > div:not(.flightRowPrice) {
   display: flex;
   min-width: 0;
 }
