@@ -148,17 +148,34 @@
   flex-wrap: wrap;
 }
 
+/* ONE WIDTH FOR THE ACCOUNT ACTIONS (Ulrik, 2026-09-27). Save and Log out
+   share it half and half, Add family member spans it beneath them, and
+   Terminate membership (below the panel) takes it too. 15rem is the widest
+   label, TERMINATE MEMBERSHIP, measured at 234px, with a little to spare —
+   and leaves Save and Log out 115px each against Log out's 111px. */
+.members-profile-buttons,
+.members-action-width {
+  width: 15rem;
+  max-width: 100%;
+}
+
 .members-profile-buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  display: grid;
   gap: 10px;
   flex-shrink: 0;
 }
 
 .members-profile-save-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+/* Two lines, evenly (Ulrik, 2026-09-27): the sentence is about 1,090px on
+   one line, so 600px balanced gives two of about 545px. */
+.members-contact-note {
+  max-width: 600px;
+  text-wrap: balance;
 }
 
 .members-form-stack {
@@ -1027,7 +1044,7 @@
   }
 
   .members-profile-buttons {
-    align-items: flex-start;
+    align-self: flex-start;
   }
 
   .members-membership-row,

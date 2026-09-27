@@ -594,7 +594,7 @@ export default function PersonalInformationView() {
           </label>
 
           <div className="members-profile-actions-row">
-            <div className="members-note" style={{ maxWidth: 360 }}>
+            <div className="members-note members-contact-note">
               Contact details are used in booking context and, only if you tick
               the box above, for e-mails about new myOLTRA services. OLTRA never
               passes them on to third parties.
@@ -613,7 +613,7 @@ export default function PersonalInformationView() {
                     click. Disabled only while the save is in flight. */}
                 <button
                   type="button"
-                  className="oltra-btn"
+                  className="oltra-btn oltra-btn--block"
                   onClick={handleSave}
                   aria-disabled={!isDirty}
                   data-reason={!isDirty ? "No changes to save" : undefined}
@@ -624,19 +624,27 @@ export default function PersonalInformationView() {
 
                 <button
                   type="button"
-                  className="oltra-btn"
+                  className="oltra-btn oltra-btn--block"
                   onClick={handleLogout}
                 >
                   Log out
                 </button>
               </div>
 
+              {/* Under Save and Log out, their combined width (Ulrik,
+                  2026-09-27); it swapped places with Terminate membership. */}
               <button
                 type="button"
-                className="oltra-btn oltra-btn--destructive"
-                onClick={() => setShowTerminatePrompt(true)}
+                className="oltra-btn oltra-btn--block"
+                onClick={addFamilyMember}
+                aria-disabled={familyCapReached}
+                data-reason={
+                  familyCapReached
+                    ? `Up to ${MAX_FAMILY_MEMBERS} family members`
+                    : undefined
+                }
               >
-                Terminate membership
+                Add family member
               </button>
             </div>
           </div>
@@ -647,19 +655,17 @@ export default function PersonalInformationView() {
             empty box for a member with no family members saved. */}
         <div className="members-family-block">
           <div className="members-family-block__actions">
-            <button
-              type="button"
-              className="oltra-btn"
-              onClick={addFamilyMember}
-              aria-disabled={familyCapReached}
-              data-reason={
-                familyCapReached
-                  ? `Up to ${MAX_FAMILY_MEMBERS} family members`
-                  : undefined
-              }
-            >
-              Add family member
-            </button>
+            {/* In a wrapper of the account actions' width, so it matches the
+                Add family member button above. */}
+            <div className="members-action-width">
+              <button
+                type="button"
+                className="oltra-btn oltra-btn--destructive oltra-btn--block"
+                onClick={() => setShowTerminatePrompt(true)}
+              >
+                Terminate membership
+              </button>
+            </div>
           </div>
 
           <div className="members-family-grid">
