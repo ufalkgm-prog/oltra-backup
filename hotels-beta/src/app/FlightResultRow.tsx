@@ -153,18 +153,13 @@ export default function FlightResultRow({
           )
         : null}
       {/* THE FLIGHTS PAGE'S CARD, WITH THE HOTEL CARD'S ACTIONS (Ulrik,
-          2026-09-27). Label on the first line, what the fare covers on the
-          second ("2 pax · return", lib/priceBasis.ts), the Flights page's own
-          leg cards under them; the price stands over BOOK and SAVE, stacked
-          and right-aligned in the hotel card's action width, so every BOOK
-          and SAVE on the landing page lines up with every other. */}
+          2026-09-27). The label, then the Flights page's own leg cards; on
+          the right, as on a hotel card, the price with what it covers under
+          it ("2 pax · return", lib/priceBasis.ts), both centred over BOOK and
+          SAVE, stacked in the hotel card's action width so every BOOK and
+          SAVE on the landing page lines up with every other. */}
       <div className={styles.flightRowMain}>
-        <div className={styles.flightRowLegend}>
-          <span className={styles.flightLineLabel}>{label}</span>
-          <span className={styles.flightRowPriceBasis}>
-            {flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")}
-          </span>
-        </div>
+        <span className={styles.flightLineLabel}>{label}</span>
         <div
           className={`${styles.flightLegsGrid} ${
             columns === 3 ? styles.flightLegsStacked : ""
@@ -183,6 +178,9 @@ export default function FlightResultRow({
       <div className={`${styles.flightRowActions} ${SMALL_CARD_ACTION_WIDTH[columns]}`}>
         <div className={styles.flightRowPrice}>
           {currency} {approx(flight.priceEur, flight.currency)}
+          <div className={styles.flightRowPriceBasis}>
+            {flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")}
+          </div>
         </div>
         {/* Opens the "find this flight on Trip.com" dialog; PROCEED there is
             what leaves the site. */}

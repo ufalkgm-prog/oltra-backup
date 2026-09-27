@@ -507,15 +507,6 @@
   min-width: 0;
 }
 
-/* The label on the first line, what the fare covers on the second. */
-.flightRowLegend {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  min-width: 0;
-}
-
 /* The hotel card's price: 13px, light, centred over the buttons. */
 .flightRowPrice {
   font-size: 13px;
@@ -527,13 +518,16 @@
   white-space: nowrap;
 }
 
-/* "2 pax · return", in the hotel cards' price-basis style. */
+/* "2 pax · return" under the price, in the hotel cards' price-basis style.
+   Free to wrap, as the hotel card's is: the action column is 74-84px and
+   "2 PAX · ONE-WAY" is wider than that on one line. */
 .flightRowPriceBasis {
+  margin-top: 2px;
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--oltra-text-muted);
-  white-space: nowrap;
+  white-space: normal;
 }
 
 /* Price, BOOK and SAVE stacked in the hotel card's action width
