@@ -487,35 +487,48 @@
   gap: 0.5rem;
 }
 
+/* Two columns: the label, its price basis and the leg cards on the left; the
+   price over BOOK and SAVE on the right, as on the hotel cards (Ulrik,
+   2026-09-27). */
 .flightDetailRow {
   border: 1px solid var(--oltra-border-soft);
   background: var(--oltra-surface-lift-soft);
   border-radius: var(--oltra-radius-md);
   padding: 0.5rem 0.7rem;
   display: grid;
-  gap: 0.4rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.7rem;
+  align-items: start;
 }
 
+.flightRowMain {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/* The label on the first line, what the fare covers on the second. */
 .flightRowLegend {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.flightRowPrice {
-  display: inline-flex;
   flex-direction: column;
-  align-items: flex-end;
-  font-size: 0.95rem;
-  line-height: 1.2;
-  color: var(--oltra-text-primary);
-  margin-left: auto;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
 }
 
-/* "Total · 2 passengers · return", in the hotel cards' price-basis style. */
+/* The hotel card's price: 13px, light, centred over the buttons. */
+.flightRowPrice {
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.25;
+  letter-spacing: 0.025em;
+  text-align: center;
+  color: var(--oltra-text-primary);
+  white-space: nowrap;
+}
+
+/* "2 pax · return", in the hotel cards' price-basis style. */
 .flightRowPriceBasis {
-  margin-top: 2px;
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -523,32 +536,20 @@
   white-space: nowrap;
 }
 
-
-/* BOOK and SAVE as one unit, so the flex wrap can never put one on a line
-   without the other. align-items: center rather than the row's default
-   stretch, because the Save control renders its button inside a positioning
-   wrapper — an inline-level button in a block box leaves descender space
-   under it, which measured as a 25px SAVE beside a 22px BOOK. */
+/* Price, BOOK and SAVE stacked in the hotel card's action width
+   (SMALL_CARD_ACTION_WIDTH), right-aligned by the row's second column. */
 .flightRowActions {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.375rem;
 }
 
-/* The wrapper itself, not the button: SaveToTripControl puts the caller's
-   className on the button and keeps the wrapper for its popup anchor. */
+/* SaveToTripControl puts the caller's className on the button and keeps its
+   own wrapper for the popup anchor; that wrapper fills the column so SAVE is
+   BOOK's width. */
 .flightRowActions > div {
   display: flex;
-}
-
-/* BOOK sits straight in its width wrapper, SAVE one level deeper inside the
-   control's own wrapper. That inner wrapper shrank to its label as a flex
-   item, so SAVE came out narrower than BOOK, and as a plain block it left
-   descender space under the button. Filling the wrapper as a flex box gives
-   the pair one width and one height (Ulrik, 2026-09-16). */
-.flightRowActions > div > div {
-  display: flex;
-  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -577,101 +578,22 @@
 /* THE SAME STACK, TRIGGERED BY THE ROW'S OWN WIDTH RATHER THAN THE FRAME COUNT.
  *
  * .flightLegsStacked above is set from JS when three frames share a row. It
- * is not the only way the row gets narrow: at a 502px viewport a single
- * flights frame leaves this grid 406px, each leg card 199px, and after the
- * info pill's 2.9rem lane and the card padding the times row has 141px for
- * content that measures 177. It is `nowrap` by design, so the arrival time
- * was simply cut — "CPH-ORY 19:10 -> 2" (Ulrik, 2026-09-21).
- *
- * A container query rather than a media query because what decides this is
- * how wide THIS row is, and the viewport is only one of the two things that
- * move it - a media query would have to guess the frame count as well. The
- * first one in the codebase; .flightDetailRow is the container it measures.
- * Specificity ties with the :has() rule above, so source order decides and
- * this sits after it, exactly as .flightLegsStacked does. */
+ * is not the only way the row gets narrow. A container query rather than a
+ * media query because what decides this is how wide THIS row is, and the
+ * viewport is only one of the two things that move it. The Flights page's
+ * card (logos, times and duration on one nowrap line, the info pill's lane)
+ * needs about 250px, and the action column takes about 95px of the row, so
+ * two cards side by side need a row of about 640px (2026-09-27; it was 500
+ * for the landing page's own narrower card). Specificity ties with the :has()
+ * rule above, so source order decides and this sits after it. */
 .flightDetailRow {
   container-type: inline-size;
 }
 
-@container (max-width: 500px) {
+@container (max-width: 640px) {
   .flightLegsGrid:has(> :nth-child(2)) {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-/* At that width the legend cannot keep label, price, BOOK and SAVE on one
-   line. Wrapping is the honest answer; the Condensed buttons size to their
-   labels and are never shrunk below that. */
-.flightRowLegendTight {
-  flex-wrap: wrap;
-  row-gap: 0.4rem;
-}
-
-/* The actions take a line of their own rather than wrapping only when they
-   happen not to fit. Left to the wrap alone, "Best price" and "Fastest" —
-   one directly above the other — broke differently, because the longer label
-   pushed its buttons over and the shorter one did not, so the pair no longer
-   lined up down the column. Right-aligned, under the price. */
-.flightRowLegendTight .flightRowActions {
-  flex: 1 0 100%;
-  justify-content: flex-end;
-}
-
-.flightCardInner {
-  display: grid;
-  gap: 0.2rem;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid var(--oltra-border-subtle);
-  background: var(--oltra-surface-lift-soft);
-  border-radius: var(--oltra-radius-sm);
-}
-
-/* nowrap, and that is what holds the card to four lines: this row is short
-   enough at every width the card is used at (route plus two times), and left
-   to wrap it would silently make some cards five lines and others four. */
-.flightCardTimes {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  font-size: 0.92rem;
-  color: var(--oltra-text-primary);
-  flex-wrap: nowrap;
-  min-width: 0;
-}
-
-.flightCardTime {
-  font-weight: 400;
-}
-
-/* The direction, leading the line it belongs to. Muted and letter-spaced so it
-   reads as a label on the times rather than competing with them. */
-.flightCardRoute {
-  flex: 0 0 auto;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  color: var(--oltra-text-muted);
-  white-space: nowrap;
-}
-
-.flightCardArrow {
-  color: var(--oltra-text-muted);
-}
-
-/* Its own line now, left aligned under the times. No margin-left: auto — that
-   was what pushed it to the far right of the times row. */
-.flightCardDuration {
-  font-size: 0.78rem;
-  color: var(--oltra-text-secondary);
-}
-
-.flightCardMeta {
-  font-size: 0.82rem;
-  color: var(--oltra-text-secondary);
-}
-
-.flightCardStops {
-  font-size: 0.78rem;
-  color: var(--oltra-text-secondary);
 }
 
 .flightLines {
@@ -1188,12 +1110,4 @@
 
 .aiStayHead:first-child {
   margin-top: 0;
-}
-
-/* A flight card carrying the Flights page's "info" pill (FlightsView.module.css
-   .infoButton, absolutely placed top-right): the card becomes its positioning
-   context and keeps a lane on the right so the pill never sits on the times. */
-.flightCardWithInfo {
-  position: relative;
-  padding-right: 2.9rem;
 }

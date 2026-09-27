@@ -1915,7 +1915,7 @@ export default function HotelsView(props: {
   const searchedRoomCount = Math.max(1, Number(bedroomsValue) || 1);
 
   // A rate's price is the whole stay for every room searched (§32), so every
-  // room price says what it covers: "Total · 7 nights · 2 rooms".
+  // room price says what it covers: "2 rooms – 7 nights".
   const roomPriceBasis = hotelPriceBasis(fromValue, toValue, searchedRoomCount);
 
   // A rate's price is already the total for every room searched — never

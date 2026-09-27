@@ -135,8 +135,8 @@ type Props = {
   /** The member has it as a favourite: a star after the name. Passed by the
    * list, which reads lib/members/favourites.ts once for all its cards. */
   isFavourite?: boolean;
-  /** What the price covers, from lib/priceBasis.ts: "Total · 7 nights · 2
-   * rooms". The card cannot know the stay or the room count itself. */
+  /** What the price covers, from lib/priceBasis.ts: "2 rooms – 7 nights".
+   * The card cannot know the stay or the room count itself. */
   priceBasis?: string;
 };
 
@@ -148,7 +148,7 @@ export default function HotelSmallCard({
   renderSaveControl,
   columns = 1,
   isFavourite = false,
-  priceBasis = "Total stay",
+  priceBasis = "",
 }: Props) {
   /* The card prices in whatever the member picked in the header, converting
      from the currency the supplier quoted. */
@@ -188,9 +188,11 @@ export default function HotelSmallCard({
             <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
               {displayCurrency} {formatMoney(availability.pricePerStay, availability.currency)}
             </div>
-            <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-              {priceBasis}
-            </div>
+            {priceBasis ? (
+              <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
+                {priceBasis}
+              </div>
+            ) : null}
           </div>
         </div>
       );

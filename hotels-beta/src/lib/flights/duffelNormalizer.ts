@@ -91,8 +91,7 @@ function formatStopDuration(mins: number): string {
  *
  * "1 stop · Singapore 3h 10m" is 25 characters and did not fit a multi-city
  * leg column at any width; "1 stop · SIN 3h10" is 17 and does. The code is
- * what a traveller reads off a ticket anyway, and FlightResultRow's own
- * describeStops already names stops by code. Falls back to the name for a
+ * what a traveller reads off a ticket anyway. Falls back to the name for a
  * layover we hold no code for. */
 function buildStopSummary(layovers: Layover[]): string {
   if (!layovers.length) return 'Direct'

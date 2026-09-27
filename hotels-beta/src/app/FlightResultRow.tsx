@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import FlightDetailsPopup from "./flights/ui/FlightDetailsPopup";
+import FlightCardContent from "./flights/ui/FlightCardContent";
 import flightsStyles from "./flights/ui/FlightsView.module.css";
 import { SMALL_CARD_ACTION_WIDTH } from "@/components/hotels/HotelSmallCard";
 import SaveToTripControl, {
@@ -13,10 +14,11 @@ import { addFlightToTripBrowser } from "@/lib/members/db";
 import type { FlightLeg, Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
 import { useApproxPrice } from "@/lib/flights/useApproxPrice";
-import { flightPriceBasis } from "@/lib/priceBasis";
+import { flightPriceBasisShort } from "@/lib/priceBasis";
 import styles from "./page.module.css";
 
-/* One flight result row: label, price, BOOK, SAVE, and the leg cards.
+/* One flight result row: label and what the fare covers, the leg cards, and
+ * the price over BOOK and SAVE.
  *
  * Extracted from LandingSummary so the AI concierge renders flights in exactly
  * the same frame as the structured search rather than a lookalike — same
@@ -34,13 +36,6 @@ import styles from "./page.module.css";
  * flight this row describes - their post-selection URL carries session state
  * that expires and cannot be constructed - so the row's own carrier, times and
  * stops are what the member matches against once they are there. */
-
-export function formatDurationMinutes(total: number): string {
-  if (!Number.isFinite(total) || total <= 0) return "—";
-  const h = Math.floor(total / 60);
-  const m = Math.round(total % 60);
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
-}
 
 function totalMinutes(itinerary: Itinerary): number {
   return itinerary.outbound.durationMinutes + (itinerary.inbound?.durationMinutes ?? 0);
@@ -80,92 +75,6 @@ export function pickHeadlineItineraries(itineraries: Itinerary[]): {
   }
 
   return { bestPrice, fastest: quickest, bestIsAlsoFastest: false };
-}
-
-/* The stop line, and it is always present — every card is four lines whether
- * the flight is direct or not, so a return trip's two cards are the same
- * height and a row of them does not go ragged.
- *
- * Names the airport you actually wait in and how long for, which is what a
- * stop costs you. The leg's own stopSummary ("1 stop · Frankfurt 2h 15m") had
- * the same facts in an order that led with a count. */
-export function describeStops(flight: FlightLeg): string {
-  const stops = flight.layovers;
-
-  if (!stops.length) {
-    // The count wins over an empty list: a leg with stops we hold no layover
-    // detail for must not go out claiming to be direct.
-    return flight.stops > 0
-      ? `${flight.stops} ${flight.stops === 1 ? "stop" : "stops"}`
-      : "Direct";
-  }
-
-  if (stops.length === 1) {
-    return `via ${stops[0].code}, ${formatDurationMinutes(stops[0].durationMinutes)} layover`;
-  }
-
-  const codes = stops.map((stop) => stop.code);
-  const total = stops.reduce((sum, stop) => sum + stop.durationMinutes, 0);
-  return `via ${codes.slice(0, -1).join(", ")} and ${codes[codes.length - 1]}, ${formatDurationMinutes(
-    total
-  )} total layover`;
-}
-
-/* Four lines, in this order:
- *
- *   CPH–ORY  14:42 → 17:49
- *   Duration: 2h 7m
- *   Air France
- *   via FRA, 2h 15m layover
- *
- * The route leads, because on a return trip the two cards were otherwise told
- * apart only by their times — which direction you were reading was left to be
- * inferred from the order they sat in. Duration moved off the end of the times
- * line onto its own: right-aligned there it drifted away from the times it
- * describes, and it was the first thing to wrap as the column narrowed. */
-export function FlightDetailCard({
-  flight,
-  onInfo,
-}: {
-  flight: FlightLeg;
-  /** Opens the Flights page's details popup for this leg — the same "info"
-   * pill and popup, on the landing page's cards too (Ulrik, 2026-09-15). */
-  onInfo?: (flight: FlightLeg) => void;
-}) {
-  const airlineLabel = flight.airlines.length
-    ? flight.airlines.map((a) => a.name).join(" + ")
-    : flight.airline;
-
-  return (
-    <div className={`${styles.flightCardInner} ${onInfo ? styles.flightCardWithInfo : ""}`}>
-      {onInfo ? (
-        <button
-          type="button"
-          className={flightsStyles.infoButton}
-          onClick={(event) => {
-            event.stopPropagation();
-            onInfo(flight);
-          }}
-          aria-label="Flight details"
-        >
-          info
-        </button>
-      ) : null}
-      <div className={styles.flightCardTimes}>
-        <span className={styles.flightCardRoute}>
-          {flight.originCode}–{flight.destinationCode}
-        </span>
-        <span className={styles.flightCardTime}>{flight.departTime}</span>
-        <span className={styles.flightCardArrow}>→</span>
-        <span className={styles.flightCardTime}>{flight.arriveTime}</span>
-      </div>
-      <div className={styles.flightCardDuration}>
-        Duration: {formatDurationMinutes(flight.durationMinutes)}
-      </div>
-      <div className={styles.flightCardMeta}>{airlineLabel}</div>
-      <div className={styles.flightCardStops}>{describeStops(flight)}</div>
-    </div>
-  );
 }
 
 export type TripDefaults = {
@@ -243,66 +152,59 @@ export default function FlightResultRow({
             document.body
           )
         : null}
-      <div
-        className={`${styles.flightRowLegend} ${
-          columns === 3 ? styles.flightRowLegendTight : ""
-        }`}
-      >
-        <span className={styles.flightLineLabel}>{label}</span>
-        {/* What the fare covers under it: every passenger, both ways on a
-            return (Ulrik, 2026-09-24; lib/priceBasis.ts). */}
-        <span className={styles.flightRowPrice}>
-          {currency} {approx(flight.priceEur, flight.currency)}
+      {/* THE FLIGHTS PAGE'S CARD, WITH THE HOTEL CARD'S ACTIONS (Ulrik,
+          2026-09-27). Label on the first line, what the fare covers on the
+          second ("2 pax · return", lib/priceBasis.ts), the Flights page's own
+          leg cards under them; the price stands over BOOK and SAVE, stacked
+          and right-aligned in the hotel card's action width, so every BOOK
+          and SAVE on the landing page lines up with every other. */}
+      <div className={styles.flightRowMain}>
+        <div className={styles.flightRowLegend}>
+          <span className={styles.flightLineLabel}>{label}</span>
           <span className={styles.flightRowPriceBasis}>
-            {flightPriceBasis(handoff.passengers, isOneWay ? "one-way" : "return")}
+            {flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")}
           </span>
-        </span>
-        {/* The pair travels as one unit. As siblings of the label and price
-            they were free to be split by the flex wrap: at three frames the
-            legend is 291px, so a row labelled "Best price" pushed SAVE onto a
-            second line at the far left while BOOK stayed top right, and the
-            shorter "Fastest" row beside it kept both on one line. Grouping
-            them means they wrap together or not at all, and line up with each
-            other and across rows either way. */}
-        <div className={styles.flightRowActions}>
-          {/* Each in the hotel card's action width, so every BOOK and SAVE on
-              the page is one width (Ulrik, 2026-09-16). */}
-          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
-            {/* Opens the "find this flight on Trip.com" dialog; PROCEED there
-                is what leaves the site. */}
-            <TripComBookButton
-              itinerary={flight}
-              price={`${currency} ${approx(flight.priceEur, flight.currency)}`}
-              handoff={handoff}
-              currency={currency}
-              className="oltra-btn oltra-btn--condensed oltra-btn--block"
-            />
+        </div>
+        <div
+          className={`${styles.flightLegsGrid} ${
+            columns === 3 ? styles.flightLegsStacked : ""
+          }`}
+        >
+          <div className={flightsStyles.staticCard}>
+            <FlightCardContent flight={flight.outbound} onInfo={setDetail} />
           </div>
-          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>
-            <SaveToTripControl
-              onSave={(tripId) => handleSave(tripId, flight)}
-              newTripDefaults={tripDefaults}
-              /* An offer belongs to one search, so new dates or passengers
-                 are a new offer id and SAVE comes back. */
-              savedKey={`flight|${flight.offerId}`}
-              savedHint="Change the dates or passengers to save another."
-              label="SAVE"
-              compact
-              align="right"
-              className="oltra-btn oltra-btn--condensed oltra-btn--block"
-            />
-          </div>
+          {!isOneWay && flight.inbound ? (
+            <div className={flightsStyles.staticCard}>
+              <FlightCardContent flight={flight.inbound} onInfo={setDetail} />
+            </div>
+          ) : null}
         </div>
       </div>
-      <div
-        className={`${styles.flightLegsGrid} ${
-          columns === 3 ? styles.flightLegsStacked : ""
-        }`}
-      >
-        <FlightDetailCard flight={flight.outbound} onInfo={setDetail} />
-        {!isOneWay && flight.inbound ? (
-          <FlightDetailCard flight={flight.inbound} onInfo={setDetail} />
-        ) : null}
+      <div className={`${styles.flightRowActions} ${SMALL_CARD_ACTION_WIDTH[columns]}`}>
+        <div className={styles.flightRowPrice}>
+          {currency} {approx(flight.priceEur, flight.currency)}
+        </div>
+        {/* Opens the "find this flight on Trip.com" dialog; PROCEED there is
+            what leaves the site. */}
+        <TripComBookButton
+          itinerary={flight}
+          price={`${currency} ${approx(flight.priceEur, flight.currency)}`}
+          handoff={handoff}
+          currency={currency}
+          className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-top"
+        />
+        <SaveToTripControl
+          onSave={(tripId) => handleSave(tripId, flight)}
+          newTripDefaults={tripDefaults}
+          /* An offer belongs to one search, so new dates or passengers are a
+             new offer id and SAVE comes back. */
+          savedKey={`flight|${flight.offerId}`}
+          savedHint="Change the dates or passengers to save another."
+          label="SAVE"
+          compact
+          align="right"
+          className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-bottom"
+        />
       </div>
     </div>
   );
