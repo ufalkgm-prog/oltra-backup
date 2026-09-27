@@ -7,7 +7,7 @@ import type { RatehawkHeadline } from "@/lib/ratehawk/types";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import { getAirportsForCity } from "@/lib/cityAirports";
 import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
-import { addHotelToTripBrowser } from "@/lib/members/db";
+import { addHotelToTripBrowser, addRestaurantToTripBrowser } from "@/lib/members/db";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
 import SaveToTripControl, {
   HOTEL_SAVED_HINT,
@@ -28,6 +28,8 @@ import HotelSmallCard, {
   smallCardHasTopAction,
   type SmallCardAvailability,
 } from "@/components/hotels/HotelSmallCard";
+import RestaurantSmallCard from "@/components/restaurants/RestaurantSmallCard";
+import type { RestaurantRecord } from "@/app/restaurants/types";
 import { useLandingPanes } from "./landingPanes";
 import { flightPassengers } from "@/lib/flights/passengers";
 import { useFavouriteIds } from "@/lib/members/favourites";
@@ -45,6 +47,9 @@ type Props = {
   hotelHeaderLabel?: string;
   includeHotels: boolean;
   includeFlights: boolean;
+  /** The destination city's restaurants when Restaurants is ticked; null when
+   * it is not. */
+  restaurants: RestaurantRecord[] | null;
   origin: string;
   destinationCity: string;
   fromDate: string;
@@ -105,6 +110,7 @@ export default function LandingSummary({
   hotelHeaderLabel,
   includeHotels,
   includeFlights,
+  restaurants,
   origin,
   destinationCity,
   fromDate,
@@ -124,9 +130,12 @@ export default function LandingSummary({
      panes side by side, one from each source, is two answers to one question
      (Ulrik, 2026-09-21). */
   const panes = useLandingPanes();
-  const favouriteHotels = useFavouriteIds().hotels;
+  const favourites = useFavouriteIds();
+  const favouriteHotels = favourites.hotels;
   const showHotels = includeHotels && !panes?.aiCovers.hotels;
   const showFlights = includeFlights && !panes?.aiCovers.flights;
+  const showRestaurants = restaurants !== null && !panes?.aiCovers.restaurants;
+  const favouriteRestaurants = favourites.restaurants;
   /* Density only. Left alone at the classic two-pane width, so a summary on
      its own renders exactly as it always has; it tightens only when a
      concierge pane joins the row and makes it three. */
@@ -506,7 +515,27 @@ export default function LandingSummary({
     );
   }
 
-  if (!showHotels && !showFlights) return null;
+  const handleSaveRestaurant = async (
+    tripId: string,
+    restaurant: RestaurantRecord
+  ): Promise<SaveToTripResult> => {
+    const result = await addRestaurantToTripBrowser({
+      tripId,
+      restaurantDirectusId: String(restaurant.id),
+      name: restaurant.restaurant_name,
+      location: [restaurant.local_area, restaurant.city].filter(Boolean).join(" · "),
+      reservationLabel: null,
+      thumbnail: "/images/hero-lp.jpg",
+    });
+    return { message: result.duplicate ? "Already in that trip." : "Saved to trip." };
+  };
+
+  if (!showHotels && !showFlights && !showRestaurants) return null;
+
+  /* How many panes this summary draws on its own, for the column rules in
+     .summaryGrid (Ulrik, 2026-09-27): one is centred at a half-row width, two
+     or three share the row under the search frame. */
+  const ownPanes = [showHotels, showFlights, showRestaurants].filter(Boolean).length;
 
   const hotelCount = hotelSummary?.count ?? 0;
 
@@ -533,6 +562,8 @@ export default function LandingSummary({
        :has() rules that key on it still match. */
     <div
       className={`${styles.summaryGrid}${panes ? ` ${styles.paneGroupContents}` : ""}`}
+      style={{ "--panes": ownPanes } as React.CSSProperties}
+      data-panes={ownPanes}
     >
       {showHotels ? (
         <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}>
@@ -735,6 +766,63 @@ export default function LandingSummary({
               Go to flights
             </Link>
           </div>
+        </div>
+      ) : null}
+
+      {showRestaurants ? (
+        <div className={`oltra-glass oltra-panel oltra-over-image ${styles.summaryColumn} ${styles.summaryColumnWithFooter} ${styles.landingGlass}`}>
+          <div className={styles.summaryBody}>
+          <div className={styles.summaryHeaderRow}>
+            <div className="oltra-label">
+              {restaurants?.length
+                ? `${restaurants.length} ${restaurants.length === 1 ? "restaurant" : "restaurants"} in ${destinationCity}`
+                : "Restaurants"}
+            </div>
+          </div>
+
+          {restaurants?.length ? (
+            <div className={styles.smallCardsList}>
+              {restaurants.map((restaurant) => (
+                <RestaurantSmallCard
+                  key={String(restaurant.id)}
+                  restaurant={restaurant}
+                  isFavourite={favouriteRestaurants.has(String(restaurant.id))}
+                  href={`/restaurants?city=${encodeURIComponent(restaurant.city ?? destinationCity)}`}
+                  columns={cardColumns}
+                  renderSaveControl={() => (
+                    <SaveToTripControl
+                      onSave={(tripId) => handleSaveRestaurant(tripId, restaurant)}
+                      newTripDefaults={tripDefaults}
+                      /* A restaurant is saved without a date, so once saved
+                         there is nothing left to change. */
+                      savedKey={`restaurant|${restaurant.id}`}
+                      label="SAVE"
+                      compact
+                      align="right"
+                      className="oltra-btn oltra-btn--condensed oltra-btn--block"
+                    />
+                  )}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.summaryLine}>
+              We don&apos;t hold restaurants for this destination yet. Choose a city to see ours.
+            </div>
+          )}
+          </div>
+
+          {restaurants?.length ? (
+            <div className={styles.summaryFooter}>
+              <Link
+                href={`/restaurants?city=${encodeURIComponent(destinationCity)}`}
+                className={`oltra-btn ${styles.summaryFooterMain}`}
+                prefetch={false}
+              >
+                Go to restaurants
+              </Link>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

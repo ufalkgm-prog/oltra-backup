@@ -41,7 +41,7 @@ export default function LandingResults({
   classicCity: string;
   /** Which panes that summary would draw, so the row can be counted before
    * anything renders. */
-  classicPanes: { hotels: boolean; flights: boolean };
+  classicPanes: { hotels: boolean; flights: boolean; restaurants: boolean };
 }) {
   const { results, query, presentedAt, searchedAt, conciergeOpen } = useAiSearch();
 
@@ -51,7 +51,7 @@ export default function LandingResults({
      closes and go again when it reopens. */
   if (conciergeOpen) return null;
 
-  const classicLive = classicPanes.hotels || classicPanes.flights;
+  const classicLive = classicPanes.hotels || classicPanes.flights || classicPanes.restaurants;
 
   // Whichever happened last wins. Without the comparison, running a classic
   // search after an AI answer left the AI frames on screen and the new search
@@ -75,12 +75,19 @@ export default function LandingResults({
 
   const showClassicHotels = classicPanes.hotels && !ai.hotels;
   const showClassicFlights = classicPanes.flights && !ai.flights;
+  const showClassicRestaurants = classicPanes.restaurants && !ai.restaurants;
   const columns = Math.min(
     3,
     Math.max(
       1,
-      [showClassicHotels, showClassicFlights, ai.hotels, ai.flights, ai.restaurants].filter(Boolean)
-        .length
+      [
+        showClassicHotels,
+        showClassicFlights,
+        showClassicRestaurants,
+        ai.hotels,
+        ai.flights,
+        ai.restaurants,
+      ].filter(Boolean).length
     )
   ) as SmallCardColumns;
 
@@ -90,11 +97,15 @@ export default function LandingResults({
      grids stacked one above the other. */
   return (
     <LandingPanesProvider
-      value={{ columns, aiCovers: { hotels: ai.hotels, flights: ai.flights } }}
+      value={{
+        columns,
+        aiCovers: { hotels: ai.hotels, flights: ai.flights, restaurants: ai.restaurants },
+      }}
     >
       <div
         className={styles.landingPaneGrid}
         style={{ "--panes": columns } as React.CSSProperties}
+        data-panes={columns}
       >
         {summary}
         <AiResultFrames />

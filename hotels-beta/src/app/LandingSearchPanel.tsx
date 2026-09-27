@@ -14,7 +14,7 @@ import { guessResidencyFromLocale } from "@/lib/countries";
 import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
-import { clearHotelFlightDestination, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
+import { clearHotelFlightDestination, clearHotelFlightSearch, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
 import { DEFAULT_PARTY, isConciergeParty, isConciergeStay } from "@/lib/ai/conciergeStays";
 import {
   clampAdultsCount,
@@ -189,6 +189,10 @@ export default function LandingSearchPanel({
   const [includeFlights, setIncludeFlights] = useState(
     normalizeParam(initialSearchParams.include_flights) === "1"
   );
+  // Off unless ticked, like Flights (Ulrik, 2026-09-27).
+  const [includeRestaurants, setIncludeRestaurants] = useState(
+    normalizeParam(initialSearchParams.include_restaurants) === "1"
+  );
   const [homeAirport, setHomeAirport] = useState(
     normalizeParam(initialSearchParams.origin)
   );
@@ -239,6 +243,7 @@ export default function LandingSearchPanel({
     setIncludeFlights(
       normalizeParam(initialSearchParams.include_flights) === "1"
     );
+    setIncludeRestaurants(normalizeParam(initialSearchParams.include_restaurants) === "1");
     // Keyed on the content string above on purpose; see its comment.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSearchContent]);
@@ -259,6 +264,7 @@ export default function LandingSearchPanel({
       setIncludeHotels(normalizeParam(saved.include_hotels) !== "0");
       setHomeAirport(normalizeParam(saved.origin));
       setIncludeFlights(normalizeParam(saved.include_flights) === "1");
+      setIncludeRestaurants(normalizeParam(saved.include_restaurants) === "1");
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -576,6 +582,47 @@ export default function LandingSearchPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiClearSignal]);
 
+  /* CLEAR (Ulrik, 2026-09-27): the form back to a blank search — no
+     destination, dates or party, Hotels ticked and nothing else — and nothing
+     left for a later visit to restore it from: this page's remembered search
+     and the shared one the Hotels and Flights pages read on a bare visit both
+     go. The departure airport is a preference, not part of a search, and
+     stays. The concierge's conversation is untouched; its results give way on
+     this page the way they do to any search run after them. */
+  const formIsBlank =
+    !destinationState.hasSelection &&
+    !fromValue &&
+    !toValue &&
+    guestSelection.adults === DEFAULT_PARTY.adults &&
+    guestSelection.kids === 0 &&
+    bedroomsValue === String(DEFAULT_PARTY.rooms) &&
+    includeHotels &&
+    !includeFlights &&
+    !includeRestaurants &&
+    !showsAiResults;
+
+  function handleClear() {
+    if (formIsBlank) return;
+    if (autoSubmitTimerRef.current) window.clearTimeout(autoSubmitTimerRef.current);
+    try {
+      sessionStorage.removeItem(SEARCH_STATE_KEY);
+    } catch {}
+    clearHotelFlightSearch();
+    setEffectiveSearchParams({});
+    setFromValue("");
+    setToValue("");
+    setGuestSelection({ adults: DEFAULT_PARTY.adults, kids: 0, kidAges: [] });
+    setIncludeHotels(true);
+    setIncludeFlights(false);
+    setIncludeRestaurants(false);
+    setAirportPopoverOpen(false);
+    lastSubmittedKeyRef.current = "";
+    markClassicSearch();
+    startTransition(() => {
+      router.push("/", { scroll: false });
+    });
+  }
+
   function scheduleAutoSubmit() {
     if (!formRef.current) return;
 
@@ -729,6 +776,11 @@ export default function LandingSearchPanel({
               name="include_flights"
               value={effectiveIncludeFlights ? "1" : "0"}
             />
+            <input
+              type="hidden"
+              name="include_restaurants"
+              value={includeRestaurants ? "1" : "0"}
+            />
             {/* Always present, not gated on effectiveIncludeFlights - a
                 previously-picked home airport should still hand off to
                 Flights/the shared session even if the Flights box isn't
@@ -823,8 +875,34 @@ export default function LandingSearchPanel({
                 </div>
               ) : null}
             </div>
+
+            {/* After Flights in the same wrapping row, so it moves along as
+                the Flights line grows into "Flights assume you depart from
+                London". */}
+            <label className={styles.includeChecksItem}>
+              <input
+                type="checkbox"
+                checked={includeRestaurants}
+                onChange={(e) => {
+                  setIncludeRestaurants(e.target.checked);
+                  scheduleAutoSubmit();
+                }}
+              />
+              <span>Restaurants</span>
+            </label>
           </div>
 
+          <div className={styles.includeClear}>
+            <button
+              type="button"
+              className="oltra-btn oltra-btn--destructive"
+              aria-disabled={formIsBlank ? "true" : undefined}
+              data-reason={formIsBlank ? "Nothing to clear" : undefined}
+              onClick={handleClear}
+            >
+              Clear
+            </button>
+          </div>
         </div>
       </form>
     </div>

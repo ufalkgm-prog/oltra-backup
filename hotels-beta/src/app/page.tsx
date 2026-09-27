@@ -10,6 +10,8 @@ import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { guestSelectionIssue, readGuestSelection } from "@/lib/guests";
 import { isValidResidencyCode } from "@/lib/countries";
 import { isStayTooLong } from "@/lib/stay";
+import { getRestaurantsByCity } from "@/lib/restaurants";
+import type { RestaurantRecord } from "@/app/restaurants/types";
 import LandingSearchPanel from "./LandingSearchPanel";
 import LandingResults from "./LandingResults";
 import LandingSummary from "./LandingSummary";
@@ -120,6 +122,7 @@ export default async function HomePage({
 
   const includeHotels = normalizeParam(resolvedSearchParams.include_hotels) !== "0";
   const includeFlights = normalizeParam(resolvedSearchParams.include_flights) === "1";
+  const includeRestaurants = normalizeParam(resolvedSearchParams.include_restaurants) === "1";
 
   const q = normalizeParam(resolvedSearchParams.q).trim();
   const cityParam = normalizeParam(resolvedSearchParams.city).trim();
@@ -241,6 +244,20 @@ export default async function HomePage({
     destinationCity = pickDestinationCity(q, hotels, cityParam);
   }
 
+  /* The city's restaurants when Restaurants is ticked (Ulrik, 2026-09-27) —
+     the same list the Restaurants page draws for it, alias fallback included.
+     A destination that is not a city we hold restaurants in gives an empty
+     list, and the pane says so. */
+  let restaurants: RestaurantRecord[] | null = null;
+  if (submitted && hasDestination && includeRestaurants) {
+    try {
+      restaurants = destinationCity ? await getRestaurantsByCity(destinationCity) : [];
+    } catch (err) {
+      console.error("[landing] restaurants", err);
+      restaurants = [];
+    }
+  }
+
   const sharedQuery = buildQueryString({
     ...resolvedSearchParams,
     submitted: undefined,
@@ -278,6 +295,7 @@ export default async function HomePage({
             classicPanes={{
               hotels: submitted && hasDestination && includeHotels,
               flights: submitted && hasDestination && includeFlights,
+              restaurants: submitted && hasDestination && includeRestaurants,
             }}
             summary={
               submitted && hasDestination ? (
@@ -286,6 +304,7 @@ export default async function HomePage({
                   hotelHeaderLabel={hotelHeaderLabel}
                   includeHotels={includeHotels}
                   includeFlights={includeFlights}
+                  restaurants={restaurants}
                   origin={origin}
                   destinationCity={destinationCity}
                   fromDate={fromDate}

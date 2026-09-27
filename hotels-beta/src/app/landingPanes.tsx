@@ -25,7 +25,7 @@ export type LandingPanes = {
   /** Verticals the concierge answered. The structured summary skips these:
    * two hotel panes side by side, one from each source, is two answers to one
    * question. */
-  aiCovers: { hotels: boolean; flights: boolean };
+  aiCovers: { hotels: boolean; flights: boolean; restaurants: boolean };
 };
 
 const LandingPanesContext = createContext<LandingPanes | null>(null);

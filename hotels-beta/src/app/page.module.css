@@ -292,6 +292,16 @@
   align-self: center;
 }
 
+/* Clear at the right end of the checkbox row, level with the checkboxes
+   (Ulrik, 2026-09-27). The row's last track, whatever the track count. */
+.includeClear {
+  grid-column: -2 / -1;
+  justify-self: end;
+  align-self: center;
+  display: flex;
+  align-items: center;
+}
+
 .includeLabel {
   margin-left: 2px;
 }
@@ -317,11 +327,14 @@
   gap: 1rem;
 }
 
+/* One track per pane, set inline as --panes (Ulrik, 2026-09-27): two or three
+   panes share the row under the search frame; one alone is centred at a
+   half-row width — see the single-pane rule after .aiFrameGrid. */
 .summaryGrid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(var(--panes, 2), minmax(0, 1fr));
   gap: 1rem;
   align-items: stretch;
 }
@@ -1045,6 +1058,28 @@
    at. */
 @media (max-width: 1100px) {
   .aiFrameGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ONE PANE IS CENTRED, AT THE WIDTH IT HAS BESIDE A SECOND (Ulrik,
+   2026-09-27). Whichever grid draws it — the structured summary, the shared
+   row, or the concierge's frames alone — a single pane sits in the middle
+   under the search frame, half the row wide less half the gap, which is
+   exactly its width when two share the row. Above the widths where every grid
+   falls back to one full-width column. Three panes in the summary collapse to
+   one column below 1101px, as the other two grids already do. */
+@media (min-width: 861px) {
+  .summaryGrid[data-panes="1"],
+  .landingPaneGrid[data-panes="1"],
+  .aiFrameGrid[data-panes="1"] {
+    grid-template-columns: minmax(0, calc((100% - 1rem) / 2));
+    justify-content: center;
+  }
+}
+
+@media (max-width: 1100px) {
+  .summaryGrid[data-panes="3"] {
     grid-template-columns: minmax(0, 1fr);
   }
 }

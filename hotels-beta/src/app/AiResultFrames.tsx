@@ -619,6 +619,7 @@ export default function AiResultFrames() {
       <div
         className={`${styles.aiFrameGrid}${contents}`}
         style={{ "--ai-frames": frameCount } as React.CSSProperties}
+        data-panes={frameCount}
       >
         {showHotels ? (
           <div

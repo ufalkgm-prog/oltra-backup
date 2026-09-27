@@ -87,6 +87,14 @@ export function clearHotelFlightDestination() {
   saveHotelFlightSearch(stay);
 }
 
+/** Empties the shared search except the departure airport — the landing
+ * page's Clear (2026-09-27), so a bare Hotels or Flights visit restores
+ * nothing of the search that was cleared. */
+export function clearHotelFlightSearch() {
+  const origin = readHotelFlightSearch()?.origin;
+  saveHotelFlightSearch(origin ? { origin } : {});
+}
+
 /** Drops the destination, but only if it is still the one given — so Clear in
  * the concierge takes back the city its conversation set (2026-09-23) and
  * never one picked by hand since. */
