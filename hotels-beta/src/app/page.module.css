@@ -156,19 +156,13 @@
   color: var(--oltra-text-primary);
 }
 
+/* Where the home-airport popup opens. Its look is the standard small popup's
+   (.oltra-popup-panel: border, fill, shadow, radius, padding), like the
+   passport picker's (Ulrik, 2026-09-27); only the position is set here. */
 .airportPopover {
-  position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  z-index: 600;
   width: min(320px, calc(100vw - 2rem));
-  padding: 0.85rem 0.9rem 0.95rem;
-  border-radius: var(--oltra-radius-lg);
-  border: 1px solid var(--oltra-border-soft);
-  background: rgba(24, 37, 46, 0.96);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .landingField {

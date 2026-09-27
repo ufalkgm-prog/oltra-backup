@@ -58,6 +58,7 @@ import {
 import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import {
   clearHotelFlightDestination,
+  clearHotelFlightSearch,
   mergeHotelFlightSearch,
   readHotelFlightSearch,
   clearHotelFlightDatesIf,
@@ -1099,6 +1100,23 @@ export default function HotelsView(props: {
       });
     });
   };
+  /* CLEAR (Ulrik, 2026-09-27): the page back to a bare Hotels page — every
+     field and filter, and the concierge's curated set, which gives way the
+     way it does to any search run after it. The shared search goes too
+     (departure airport kept), or the bare-visit restore below would put it
+     straight back. Passive when the URL already holds nothing. */
+  const nothingToClear = Object.values(searchParams).every(
+    (value) => value === undefined || value === "" || (Array.isArray(value) && !value.length)
+  );
+  const clearSearch = () => {
+    if (nothingToClear) return;
+    clearHotelFlightSearch();
+    markClassicSearch();
+    startTransition(() => {
+      router.replace("/hotels", { scroll: false });
+    });
+  };
+
   const curatedDestination = curatedIds
     ? {
         key: curatedIds,
@@ -2758,7 +2776,9 @@ export default function HotelsView(props: {
               {!compactTopMode ? (
                 /* Filters left, SEARCH right, one width. That width is the first
                    track of the field grid above (1.45fr of 4.6fr, less its three
-                   14px gaps), so Filters still lines up under the date field. */
+                   14px gaps), so Filters still lines up under the date field.
+                   Clear between them: with the two outer buttons one width,
+                   space-between puts it exactly in the middle (2026-09-27). */
                 <div className="md:col-span-12 flex flex-col gap-[14px] md:flex-row md:items-start md:justify-between">
                   <button
                     type="button"
@@ -2767,6 +2787,15 @@ export default function HotelsView(props: {
                     className="oltra-btn w-full md:w-[calc((100%_-_42px)*1.45/4.6)]"
                   >
                     Filters
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    aria-disabled={nothingToClear ? "true" : undefined}
+                    className="oltra-btn oltra-btn--destructive"
+                  >
+                    Clear
                   </button>
 
                   <button

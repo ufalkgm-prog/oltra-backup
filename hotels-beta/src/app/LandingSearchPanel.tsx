@@ -859,7 +859,7 @@ export default function LandingSearchPanel({
               </label>
 
               {flightsCanActivate && effectiveIncludeFlights && airportPopoverOpen ? (
-                <div className={styles.airportPopover}>
+                <div className={`oltra-popup-panel ${styles.airportPopover}`}>
                   <AirportAutocomplete
                     label="Home airport"
                     value={homeAirport}
@@ -897,7 +897,6 @@ export default function LandingSearchPanel({
               type="button"
               className="oltra-btn oltra-btn--destructive"
               aria-disabled={formIsBlank ? "true" : undefined}
-              data-reason={formIsBlank ? "Nothing to clear" : undefined}
               onClick={handleClear}
             >
               Clear
