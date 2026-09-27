@@ -57,8 +57,12 @@ ACCOUNT — even when it mentions a card, payment details or "my account".
 Changing the trip being planned in the conversation — other dates, an earlier
 flight, an extra night, another hotel, more rooms or guests — is TRAVEL, not
 ACCOUNT: "can we fly out a day earlier", "add a night at the hotel", "move it to
-July" are all TRAVEL. ACCOUNT is only about what is stored in their myOLTRA
-account itself ("change my home airport", "delete my saved trip to Rome").
+July" are all TRAVEL. So is asking for more in the answer: "add flights", "add
+restaurants", "add hotels too", "include flights" mean search those as well, and
+are TRAVEL. "Add" is ACCOUNT only when it names where to add: favourites or a
+saved trip ("add Le Bristol to my favourites"). ACCOUNT is only about what is
+stored in their myOLTRA account itself ("change my home airport", "delete my
+saved trip to Rome").
 
 OTHER — anything else, with no trip question in it: coding help, general
 knowledge, homework, medical or legal questions, abuse.

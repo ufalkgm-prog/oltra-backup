@@ -1107,7 +1107,7 @@ function highlightsFirst(ids: number[], highlightIds: number[]): number[] {
  * the model wrote, so a name here can never disagree with the card beside it.
  * The rationale is the model's. No prices: the summary is deliberately
  * incapable of carrying one. */
-function ResultSummary({ past }: { past?: Presentation }) {
+function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation | null }) {
   const store = useAiSearch();
   const { pageContext } = store;
   /* An EARLIER answer, redrawn further up the transcript, reads its own call:
@@ -1185,6 +1185,31 @@ function ResultSummary({ past }: { past?: Presentation }) {
     return raw ? capitaliseFirst(stripLeadingName(raw, name ?? "")) : "";
   };
 
+  /* ONLY WHAT THIS ANSWER SPOKE ABOUT IS LISTED (Ulrik, 2026-09-27). The store
+     keeps the facets an answer does not mention, which is right for the page
+     behind and wrong for the panel: asked for restaurants after a hotels
+     answer, the model named five restaurants, `namedHotels` found none of
+     them among the carried-over hotels and fell back to the first five — the
+     previous answer's picks, with its lines still in the merged rationales —
+     so the panel printed the same hotels again under a restaurant answer. A
+     group is listed when this call carries its ids AND wrote a line about one
+     of them (or wrote no lines at all, the small-set case). Asked to show the
+     hotels again, the model writes lines for them, and they are listed. */
+  const answered = (() => {
+    const thisAnswer = past ?? own;
+    if (!thisAnswer) return { hotels: true, restaurants: true, flights: true };
+    const r = thisAnswer.results;
+    const stops = r.laterStops ?? [];
+    const ids = (first: number[] | undefined, rest: number[]) =>
+      new Set([...(first ?? []), ...rest].map(String));
+    const hotelIds = ids(r.hotelIds, stops.flatMap((stop) => stop.hotelIds));
+    const restaurantIds = ids(r.restaurantIds, stops.flatMap((stop) => stop.restaurantIds));
+    const named = (r.highlightIds ?? []).map(String);
+    const wrote = (set: Set<string>) =>
+      set.size > 0 && (named.length === 0 || named.some((id) => set.has(id)));
+    return { hotels: wrote(hotelIds), restaurants: wrote(restaurantIds), flights: Boolean(r.flights?.length) };
+  })();
+
   /* Name the shortlist, not the whole result set.
    *
    * Above a handful, reciting every card is not a summary — it is the list the
@@ -1226,8 +1251,12 @@ function ResultSummary({ past }: { past?: Presentation }) {
     const gateway = gatewayForHotel(hotel, flights);
     return gateway ? `Fly into ${gateway.label} (${gateway.iata}).` : null;
   };
+  const listFlights = answered.flights && flights.length > 0;
+  // Counted over the groups this answer lists: "the other N below" follows
+  // the ones it named.
   const alsoBehind =
-    hotels.length - hotelPicks.length + (restaurants.length - restaurantPicks.length);
+    (answered.hotels ? hotels.length - hotelPicks.length : 0) +
+    (answered.restaurants ? restaurants.length - restaurantPicks.length : 0);
 
   /* ONE PROPERTY IS AN ANSWER, NOT A LIST (Ulrik, 2026-09-13). Asked what Aman
      Sveti Stefan is like, how to get there and whether the spa is good, the
@@ -1241,8 +1270,9 @@ function ResultSummary({ past }: { past?: Presentation }) {
      framing introduces the trip, so it cannot also be the answer about one
      property in it. */
   const multiStop = laterStops.length > 0;
-  const listHotels = hotels.length > 1 || (multiStop && hotels.length > 0);
-  const listRestaurants = restaurants.length > 1 || (multiStop && restaurants.length > 0);
+  const listHotels = answered.hotels && (hotels.length > 1 || (multiStop && hotels.length > 0));
+  const listRestaurants =
+    answered.restaurants && (restaurants.length > 1 || (multiStop && restaurants.length > 0));
 
   /* The first place's name and dates, for the group headings of a multi-stop
      answer. Taken from the answer's own destination; a colloquial region was
@@ -1291,11 +1321,12 @@ function ResultSummary({ past }: { past?: Presentation }) {
      the member price route apply. */
   const notSoldHere = (hotel: { ratehawk_status: string | null; ratehawk_hid: number | null }) =>
     hotel.ratehawk_status === "passive" || !hotel.ratehawk_hid;
-  const loneHotel = !listHotels && hotels.length === 1 ? hotels[0] : null;
+  const loneHotel = answered.hotels && !listHotels && hotels.length === 1 ? hotels[0] : null;
   /* A STARRED RESTAURANT CARRIES ITS STARS (Ulrik, 2026-09-15): said
      whenever it has them, and nothing when it has none. Drawn from the
      record, like the not-sold-here note, so it is never a remembered star. */
-  const loneRestaurant = !listRestaurants && restaurants.length === 1 ? restaurants[0] : null;
+  const loneRestaurant =
+    answered.restaurants && !listRestaurants && restaurants.length === 1 ? restaurants[0] : null;
 
   /* An earlier single-hotel answer that we CAN price draws nothing at all here
      — no list, no note, and no footnote under a past answer — and an empty
@@ -1307,7 +1338,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
     (listHotels && hotelPicks.length > 0) ||
     (listRestaurants && restaurantPicks.length > 0) ||
     multiStop ||
-    flights.length > 0;
+    listFlights;
   if (!drawsAnything) return null;
 
   const hotelItem = (hotel: (typeof hotels)[number]) => {
@@ -1484,7 +1515,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
 
       {stopRecords.map(({ stop, hotels: stopHotels, restaurants: stopRestaurants }) => (
         <Fragment key={`stop-${stop.place}-${stop.checkIn}`}>
-          {stopHotels.length ? (
+          {answered.hotels && stopHotels.length ? (
             <div className={styles.summaryGroup}>
               <div className={styles.summaryHeading}>
                 {stopHeading("Hotels", stop.place, stop.checkIn, stop.checkOut)}
@@ -1493,7 +1524,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
               {fullLine(stop.checkIn, stop.checkOut)}
             </div>
           ) : null}
-          {restaurantsByCity(stopRestaurants).map(([city, list]) => (
+          {(answered.restaurants ? restaurantsByCity(stopRestaurants) : []).map(([city, list]) => (
             <div key={`rc-${stop.place}-${city}`} className={styles.summaryGroup}>
               <div className={styles.summaryHeading}>
                 {stopHeading("Restaurants", city || stop.place)}
@@ -1504,7 +1535,7 @@ function ResultSummary({ past }: { past?: Presentation }) {
         </Fragment>
       ))}
 
-      {flights.length ? (
+      {listFlights ? (
         <div className={styles.summaryGroup}>
           <div className={styles.summaryHeading}>
             {flights.length === 1 ? "Flight" : "Flights"}
@@ -1931,7 +1962,13 @@ export default function AiConversation() {
   const framingBlock = framing ? (
     <Fragment key="framing">
       <p className={styles.framing}>{framing}</p>
-      <ResultSummary />
+      <ResultSummary
+        own={
+          presentationIndex >= 0
+            ? readPresentation(messages[presentationIndex], messages.slice(0, presentationIndex + 1))
+            : null
+        }
+      />
       {followUp ? (
         <div className={`${styles.turnAgent} ${styles.followUp}`}>
           <AgentText text={followUp} detectClosingQuestion={false} />
