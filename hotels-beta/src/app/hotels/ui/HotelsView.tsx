@@ -2798,7 +2798,11 @@ export default function HotelsView(props: {
                     type="button"
                     onClick={() => updateFiltersOpen(!filtersOpen)}
                     aria-expanded={filtersOpen}
-                    className="oltra-btn w-full md:w-[calc((100%_-_42px)*1.45/4.6)]"
+                    /* Green while collapsed, the red rim while the filters
+                       are open (Ulrik, 2026-09-28). */
+                    className={`oltra-btn${
+                      filtersOpen ? " oltra-btn--destructive" : ""
+                    } w-full md:w-[calc((100%_-_42px)*1.45/4.6)]`}
                   >
                     Filters
                   </button>
@@ -2809,7 +2813,9 @@ export default function HotelsView(props: {
                     <button
                       type="button"
                       onClick={clearSearch}
-                      className="oltra-btn oltra-btn--destructive"
+                      /* Filters' and Search's width, so the three read as one
+                         row of equal buttons (Ulrik, 2026-09-28). */
+                      className="oltra-btn oltra-btn--destructive w-full md:w-[calc((100%_-_42px)*1.45/4.6)]"
                     >
                       Clear
                     </button>
