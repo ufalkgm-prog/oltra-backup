@@ -648,16 +648,19 @@ export default function LandingSummary({
           ) : null}
           </div>
 
-          {/* The way on sits under what it leads to (Ulrik, 2026-09-16). */}
-          <div className={styles.summaryFooter}>
-            <Link
-              href={hotelsHref}
-              className={`oltra-btn ${styles.summaryFooterMain}`}
-              prefetch={false}
-            >
-              Go to hotels
-            </Link>
-          </div>
+          {/* The way on sits under what it leads to (Ulrik, 2026-09-16) — and
+              is not offered when it leads to no hotels (2026-09-28). */}
+          {hotelCount > 0 ? (
+            <div className={styles.summaryFooter}>
+              <Link
+                href={hotelsHref}
+                className={`oltra-btn ${styles.summaryFooterMain}`}
+                prefetch={false}
+              >
+                Go to hotels
+              </Link>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
