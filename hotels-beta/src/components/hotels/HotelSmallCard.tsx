@@ -56,10 +56,10 @@ export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
  *         their place on the right but sit at the BOTTOM, so a long name
  *         extends above them rather than being squeezed beside them. "2 rooms –
  *         7 nights" stays on one line under the price.
- *   3     under the photo, BOOK and SAVE sit beside the price, and the
- *         highlights run below both at the card's full width; rooms and nights
- *         go on two lines, without the dash, and the name comes down to the
- *         price's 13px.
+ *   3     the highlights follow the name and location, with BOOK and SAVE
+ *         side by side under them; rooms and nights go on two lines under the
+ *         price, without the dash, and the name comes down to the price's
+ *         13px.
  *
  * `basis` sizes the rooms/nights line to its column: at 104px "2 ROOMS – 14
  * NIGHTS" only fits one line at 9px with almost no tracking. */
@@ -189,7 +189,7 @@ export default function HotelSmallCard({
   // sells this hotel, so "No availability" would wrongly read as "sold out".
   const isPassive = hotel.ratehawk_status === "passive";
 
-  /* At three frames the actions sit beside the price under the photo. */
+  /* At three frames BOOK and SAVE sit side by side under the highlights. */
   const stacked = columns === 3;
   /* "2 rooms – 7 nights" on one line, or rooms over nights with no dash. */
   const basisLines = !priceBasis ? [] : stacked ? priceBasis.split(" – ") : [priceBasis];
@@ -295,10 +295,15 @@ export default function HotelSmallCard({
   const actions =
     topAction || renderSaveControl ? (
       <div
-        className="flex w-full flex-col gap-1.5"
+        className={
+          stacked
+            ? "oltra-btn-row flex flex-wrap justify-end gap-1.5"
+            : "flex w-full flex-col gap-1.5"
+        }
         onClick={(e) => e.preventDefault()}
       >
         {topAction ? (
+          <div className={stacked ? `flex ${layout.right}` : "contents"}>
           <button
             type="button"
             onClick={(e) => {
@@ -318,10 +323,16 @@ export default function HotelSmallCard({
           >
             {topAction.label}
           </button>
+          </div>
         ) : null}
-        {/* Stacked, not side by side: the save control opens a trip picker
-            panel and needs the full column width to anchor it. */}
-        {renderSaveControl ? renderSaveControl() : null}
+        {/* Each button at the action width, side by side at three frames
+            (Ulrik, 2026-09-28) and stacked otherwise. The trip picker is
+            portalled and measures its own trigger, so it anchors either way. */}
+        {renderSaveControl ? (
+          <div className={stacked ? `flex ${layout.right}` : "contents"}>
+            {renderSaveControl()}
+          </div>
+        ) : null}
       </div>
     ) : null;
 
@@ -355,7 +366,7 @@ export default function HotelSmallCard({
             </div>
           )}
         </div>
-        {!stacked && rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
+        {rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
       </div>
 
       <div className="flex min-w-0 flex-col">
@@ -383,8 +394,12 @@ export default function HotelSmallCard({
           </div>
         </div>
 
-        {stacked ? null : !actions ? (
-          highlights
+        {stacked || !actions ? (
+          <>
+            {highlights}
+            {/* Three frames: BOOK and SAVE side by side under the text. */}
+            {stacked && actions ? <div className="mt-2">{actions}</div> : null}
+          </>
         ) : (
           /* flex-1 so this row takes whatever height the card has left, and
              the actions sit at its foot — under a long name, not beside it. */
@@ -397,15 +412,6 @@ export default function HotelSmallCard({
         )}
       </div>
 
-      {/* The same two columns again, so the price stays under the photo and
-          the buttons start where the name does. */}
-      {stacked && (rightBlock || actions) ? (
-        <>
-          <div className="flex min-w-0 flex-col justify-center">{rightBlock}</div>
-          <div className={`flex ${layout.right} flex-col justify-center`}>{actions}</div>
-        </>
-      ) : null}
-      {stacked && highlights ? <div className="col-span-2 -mt-2">{highlights}</div> : null}
     </div>
   );
 

@@ -61,7 +61,7 @@ So the fix for a panel that renders behind something, or gets clipped, is **`cre
 
 * **Map and photo-overlay chrome**: `.oltra-temp-controls__*` and `PageShell`'s `.intro` (it carries a `text-shadow` and sits over a hero image — overlay chrome, and that question is settled).
 * **Functional borders at alpha 0.32+** — checkbox edges, focus rings, the selected flight-card outline. These are the only cue for what they enclose.
-* **The flight Info button** (`.infoButton`) — **a 16px sage circle (`--oltra-button-active-bg`) with a white bold italic serif "i" since 2026-09-28 (Ulrik)**, on every flight card; it replaced the inverted white "info" pill. The white is literal, not a theme colour.
+* **The flight Info button** (`.infoButton`) — **a 16px sage ring (`--oltra-btn-primary-rim`, 1.5px, no fill) with a white bold italic serif "i" since 2026-09-28 (Ulrik)**, on every flight card; it replaced the inverted white "info" pill. The white is literal, not a theme colour.
 * **`@media print` `#000`/`#fff`** in `members.css` — paper is white.
 * **`/editor/*` and `TopNav.tsx`** — an internal tool that doesn't follow the design system, and dead code (`TopNav` is never imported anywhere).
 

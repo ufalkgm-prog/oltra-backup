@@ -1212,6 +1212,18 @@ button.oltra-select {
   bottom: calc((var(--oltra-btn-hit-size) - var(--oltra-btn-condensed-height)) / -2);
 }
 
+/* The same pair side by side (the three-frame hotel card): the stack split
+   is vertical and means nothing here, so each hit area goes back to the
+   standard centred 44px. At the 60px card width the two do not overlap. */
+.oltra-btn-row .oltra-btn--stack-top::after,
+.oltra-btn-row .oltra-btn--stack-bottom::after {
+  top: 50%;
+  bottom: auto;
+  height: 100%;
+  min-height: var(--oltra-btn-hit-size);
+  transform: translate(-50%, -50%);
+}
+
 /* Over photography: a solid fill of the site background and no shadow, so the
    rim and label sit on the same ground as everywhere else however bright the
    photo behind is. It replaced a translucent scrim with a soft halo, which

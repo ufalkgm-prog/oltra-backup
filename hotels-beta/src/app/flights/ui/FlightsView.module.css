@@ -732,8 +732,9 @@
 /* z-index matters here: .flightCardInner is position:relative and comes
    later in the DOM, so without it these pills paint (and hit-test) behind
    the card content that overlaps them. */
-/* A GREEN CIRCLE WITH A WHITE BOLD ITALIC "i" (Ulrik, 2026-09-28), on every
-   flight card. It replaced an inverted white "info" pill. */
+/* A GREEN CIRCLE WITH A WHITE BOLD ITALIC "i" AND NO FILL (Ulrik,
+   2026-09-28), on every flight card. It replaced an inverted white "info"
+   pill. The ring is the button standard's sage rim. */
 .infoButton {
   position: absolute;
   z-index: 2;
@@ -744,10 +745,11 @@
   justify-content: center;
   width: 16px;
   height: 16px;
+  box-sizing: border-box;
   padding: 0;
-  border: 0;
+  border: 1.5px solid var(--oltra-btn-primary-rim);
   border-radius: 999px;
-  background: var(--oltra-button-active-bg);
+  background: transparent;
   color: #fff;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 11px;
@@ -755,11 +757,11 @@
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  transition: background 140ms ease;
+  transition: border-color 140ms ease;
 }
 
 .infoButton:hover {
-  background: var(--oltra-btn-primary-rim);
+  border-color: var(--oltra-btn-primary-rim-hover);
 }
 
 /* On the leg's second line instead of in the corner (the landing page at
