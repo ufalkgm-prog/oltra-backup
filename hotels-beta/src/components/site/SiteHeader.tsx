@@ -315,7 +315,20 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
             </div>
           ) : current ? (
             <div className="oltra-site-header__route oltra-route-label">{current}</div>
-          ) : null}
+          ) : (
+            /* The line is reserved even with no label (the landing page), so
+               the header is the same height with or without one. Opening the
+               concierge adds "AI Concierge" here, and without this the header
+               grew, --oltra-header-height with it, and the search frame under
+               it moved 8px down (Ulrik, 2026-09-28). */
+            <div
+              className="oltra-site-header__route oltra-route-label"
+              aria-hidden="true"
+              style={{ visibility: "hidden" }}
+            >
+              &nbsp;
+            </div>
+          )}
         </div>
 
         <nav className="oltra-site-header__nav" aria-label="Primary">
