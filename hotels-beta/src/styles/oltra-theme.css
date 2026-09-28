@@ -1135,7 +1135,11 @@ button.oltra-select {
      tracked label carries a trailing gap and sits left of centre - about 1.3px
      at this size, visible on a 74px BOOK or SAVE (Ulrik, 2026-09-28). The
      same amount on the left puts the glyphs themselves in the middle. */
-  padding: 0 var(--oltra-btn-condensed-padding-x) 0
+  /* And 0.16em on top: at line-height 1 Chrome draws Arial's capitals flush
+     with the top of the line box, so a centred line put the label 1.1px high
+     at 100% scaling. Measured in headless Chrome at 100/125/150/200%, this
+     keeps the capitals within 0.6px of centre at every one (2026-09-28). */
+  padding: 0.16em var(--oltra-btn-condensed-padding-x) 0
     calc(var(--oltra-btn-condensed-padding-x) + var(--oltra-btn-condensed-tracking));
   font-size: var(--oltra-btn-condensed-font-size);
   line-height: 1;

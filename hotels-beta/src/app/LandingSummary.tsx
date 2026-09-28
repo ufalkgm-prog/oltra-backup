@@ -136,10 +136,16 @@ export default function LandingSummary({
   const showFlights = includeFlights && !panes?.aiCovers.flights;
   const showRestaurants = restaurants !== null && !panes?.aiCovers.restaurants;
   const favouriteRestaurants = favourites.restaurants;
-  /* Density only. Left alone at the classic two-pane width, so a summary on
-     its own renders exactly as it always has; it tightens only when a
-     concierge pane joins the row and makes it three. */
-  const cardColumns = panes && panes.columns >= 3 ? panes.columns : undefined;
+  /* How many panes this summary draws on its own, for the column rules in
+     .summaryGrid (Ulrik, 2026-09-27): one is centred at a half-row width, two
+     or three share the row under the search frame. */
+  const ownPanes = [showHotels, showFlights, showRestaurants].filter(Boolean).length;
+  /* Density only. Left alone at the two-pane width; it tightens whenever the
+     row holds three panes — a concierge pane joining two of these, or Hotels,
+     Flights and Restaurants on their own. It used to count only the first, so
+     three panes of the summary's own drew the two-pane card (2026-09-28). */
+  const rowPanes = panes ? panes.columns : ownPanes;
+  const cardColumns = rowPanes >= 3 ? 3 : undefined;
 
   // A destination city can resolve to more than one relevant airport (a
   // multi-airport city like London, or an area served by several comparably
@@ -531,11 +537,6 @@ export default function LandingSummary({
   };
 
   if (!showHotels && !showFlights && !showRestaurants) return null;
-
-  /* How many panes this summary draws on its own, for the column rules in
-     .summaryGrid (Ulrik, 2026-09-27): one is centred at a half-row width, two
-     or three share the row under the search frame. */
-  const ownPanes = [showHotels, showFlights, showRestaurants].filter(Boolean).length;
 
   const hotelCount = hotelSummary?.count ?? 0;
 

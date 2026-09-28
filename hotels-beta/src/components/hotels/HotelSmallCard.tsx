@@ -42,9 +42,11 @@ export type SmallCardColumns = 1 | 2 | 3;
  * same width (Ulrik, 2026-09-16) — every BOOK and SAVE on the landing page
  * lines up with every other. Literal class names, so Tailwind sees them. */
 export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
-  1: "w-[84px]",
-  2: "w-[80px]",
-  3: "w-[74px]",
+  /* Narrowed from 84/80/74 (Ulrik, 2026-09-28). 60px still holds "SAVED",
+     the widest one-line label these columns show. */
+  1: "w-[64px]",
+  2: "w-[62px]",
+  3: "w-[60px]",
 };
 
 /* TWO ARRANGEMENTS (Ulrik, 2026-09-28). In every one the price and what it
@@ -54,9 +56,10 @@ export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
  *         their place on the right but sit at the BOTTOM, so a long name
  *         extends above them rather than being squeezed beside them. "2 rooms –
  *         7 nights" stays on one line under the price.
- *   3     BOOK and SAVE move under the price too, so the text column gets the
- *         card's whole width; rooms and nights go on two lines, without the
- *         dash, and the name comes down to the price's 13px.
+ *   3     under the photo, BOOK and SAVE sit beside the price, and the
+ *         highlights run below both at the card's full width; rooms and nights
+ *         go on two lines, without the dash, and the name comes down to the
+ *         price's 13px.
  *
  * `basis` sizes the rooms/nights line to its column: at 104px "2 ROOMS – 14
  * NIGHTS" only fits one line at 9px with almost no tracking. */
@@ -186,7 +189,7 @@ export default function HotelSmallCard({
   // sells this hotel, so "No availability" would wrongly read as "sold out".
   const isPassive = hotel.ratehawk_status === "passive";
 
-  /* At three frames the actions go under the photo with the price. */
+  /* At three frames the actions sit beside the price under the photo. */
   const stacked = columns === 3;
   /* "2 rooms – 7 nights" on one line, or rooms over nights with no dash. */
   const basisLines = !priceBasis ? [] : stacked ? priceBasis.split(" – ") : [priceBasis];
@@ -352,8 +355,7 @@ export default function HotelSmallCard({
             </div>
           )}
         </div>
-        {rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
-        {stacked && actions ? <div className="mt-2">{actions}</div> : null}
+        {!stacked && rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
       </div>
 
       <div className="flex min-w-0 flex-col">
@@ -381,7 +383,7 @@ export default function HotelSmallCard({
           </div>
         </div>
 
-        {stacked || !actions ? (
+        {stacked ? null : !actions ? (
           highlights
         ) : (
           /* flex-1 so this row takes whatever height the card has left, and
@@ -394,6 +396,16 @@ export default function HotelSmallCard({
           </div>
         )}
       </div>
+
+      {/* The same two columns again, so the price stays under the photo and
+          the buttons start where the name does. */}
+      {stacked && (rightBlock || actions) ? (
+        <>
+          <div className="flex min-w-0 flex-col justify-center">{rightBlock}</div>
+          <div className={`flex ${layout.right} flex-col justify-center`}>{actions}</div>
+        </>
+      ) : null}
+      {stacked && highlights ? <div className="col-span-2 -mt-2">{highlights}</div> : null}
     </div>
   );
 

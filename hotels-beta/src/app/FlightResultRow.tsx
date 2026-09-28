@@ -180,13 +180,17 @@ export default function FlightResultRow({
           ) : null}
         </div>
       </div>
-      <div className={`${styles.flightRowActions} ${SMALL_CARD_ACTION_WIDTH[columns]}`}>
+      <div className={styles.flightRowActions}>
         <div className={styles.flightRowPrice}>
           {currency} {approx(flight.priceEur, flight.currency)}
           <div className={styles.flightRowPriceBasis}>
             {flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")}
           </div>
         </div>
+        {/* The buttons at the hotel card's width; the price above them takes
+            what it needs, which is wider than the buttons since they narrowed
+            (2026-09-28). */}
+        <div className={`${styles.flightRowButtons} ${SMALL_CARD_ACTION_WIDTH[columns]}`}>
         {/* Opens the "find this flight on Trip.com" dialog; PROCEED there is
             what leaves the site. */}
         <TripComBookButton
@@ -208,6 +212,7 @@ export default function FlightResultRow({
           align="right"
           className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-bottom"
         />
+        </div>
       </div>
     </div>
   );

@@ -464,7 +464,9 @@ export default function SaveToTripControl({
         data-reason={savedReason}
         className={className}
       >
-        {justSaved ? "SAVED" : busy ? "SAVING..." : label}
+        {/* No dots on the compact trigger: "SAVING..." is wider than the 60px
+            card buttons it sits in (2026-09-28). */}
+        {justSaved ? "SAVED" : busy ? (compact ? "SAVING" : "SAVING...") : label}
       </button>
 
       {error || (message && !confirmInTrigger) ? (

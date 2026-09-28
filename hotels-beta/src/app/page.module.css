@@ -537,9 +537,17 @@
   white-space: normal;
 }
 
-/* Price, BOOK and SAVE stacked in the hotel card's action width
-   (SMALL_CARD_ACTION_WIDTH), right-aligned by the row's second column. */
+/* Price over BOOK and SAVE, right-aligned by the row's second column. The
+   column is as wide as the price needs; the buttons below it keep the hotel
+   card's action width (SMALL_CARD_ACTION_WIDTH), centred under the price. */
 .flightRowActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.flightRowButtons {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -548,9 +556,8 @@
 
 /* SaveToTripControl puts the caller's className on the button and keeps its
    own wrapper for the popup anchor; that wrapper fills the column so SAVE is
-   BOOK's width. Not the price block, which is a div here too: as a flex row it
-   put "2 PAX · RETURN" beside the price instead of under it (2026-09-27). */
-.flightRowActions > div:not(.flightRowPrice) {
+   BOOK's width. */
+.flightRowButtons > div {
   display: flex;
   min-width: 0;
 }

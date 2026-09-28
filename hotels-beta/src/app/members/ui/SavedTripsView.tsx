@@ -16,7 +16,6 @@ import { buildTripWarnings } from "@/lib/members/tripWarnings";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import type { Itinerary } from "@/lib/flights/itinerary";
 import type { CabinClass } from "@duffel/api/types";
-import { SMALL_CARD_ACTION_WIDTH } from "@/components/hotels/HotelSmallCard";
 import { flightPriceBasisShort, hotelPriceBasis } from "@/lib/priceBasis";
 import TripItineraryDocument from "./TripItineraryDocument";
 
@@ -955,7 +954,7 @@ function TripSection({
                   </div>
 
                   <div
-                    className={`members-trip-card__actions flex ${SMALL_CARD_ACTION_WIDTH[3]} shrink-0 flex-col justify-center`}
+                    className={`members-trip-card__actions flex w-[74px] shrink-0 flex-col justify-center`}
                   >
                     {item.priceLabel ? (
                       <div className="w-full text-center">
