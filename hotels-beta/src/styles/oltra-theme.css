@@ -1131,7 +1131,12 @@ button.oltra-select {
 .oltra-btn--condensed {
   height: var(--oltra-btn-condensed-height);
   min-height: var(--oltra-btn-condensed-height);
-  padding: 0 var(--oltra-btn-condensed-padding-x);
+  /* Letter-spacing is added after EVERY letter, the last one included, so a
+     tracked label carries a trailing gap and sits left of centre - about 1.3px
+     at this size, visible on a 74px BOOK or SAVE (Ulrik, 2026-09-28). The
+     same amount on the left puts the glyphs themselves in the middle. */
+  padding: 0 var(--oltra-btn-condensed-padding-x) 0
+    calc(var(--oltra-btn-condensed-padding-x) + var(--oltra-btn-condensed-tracking));
   font-size: var(--oltra-btn-condensed-font-size);
   line-height: 1;
   letter-spacing: var(--oltra-btn-condensed-tracking);
@@ -1147,6 +1152,7 @@ button.oltra-select {
   font-size: 10px;
   line-height: 1.2;
   letter-spacing: 0.02em;
+  padding-left: calc(var(--oltra-btn-condensed-padding-x) + 0.02em);
   text-transform: none;
   white-space: normal;
   text-align: center;

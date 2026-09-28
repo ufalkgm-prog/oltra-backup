@@ -7,7 +7,6 @@ import {
   getHotelImageAtWidth,
   HOTEL_CARD_PLACEHOLDERS,
   hasHotelPhotos,
-  clampHotelText,
 } from "@/lib/hotels/cardHelpers";
 
 export type SmallCardAvailability =
@@ -48,32 +47,56 @@ export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
   3: "w-[74px]",
 };
 
+/* TWO ARRANGEMENTS (Ulrik, 2026-09-28). In every one the price and what it
+ * covers sit under the photo, and the highlights are shown in full.
+ *
+ *   1, 2  the name runs the full width of the text column; BOOK and SAVE keep
+ *         their place on the right but sit at the BOTTOM, so a long name
+ *         extends above them rather than being squeezed beside them. "2 rooms –
+ *         7 nights" stays on one line under the price.
+ *   3     BOOK and SAVE move under the price too, so the text column gets the
+ *         card's whole width; rooms and nights go on two lines, without the
+ *         dash, and the name comes down to the price's 13px.
+ *
+ * `basis` sizes the rooms/nights line to its column: at 104px "2 ROOMS – 14
+ * NIGHTS" only fits one line at 9px with almost no tracking. */
 const LAYOUT: Record<
   SmallCardColumns,
-  { grid: string; image: number; imageBox: string; body: string; clamp: string; right: string }
+  {
+    grid: string;
+    gap: string;
+    image: number;
+    imageBox: string;
+    name: string;
+    basis: string;
+    right: string;
+  }
 > = {
   1: {
-    grid: "grid-cols-[132px_1fr_auto] gap-3.5",
+    grid: "grid-cols-[132px_1fr]",
+    gap: "gap-3.5",
     image: 132,
     imageBox: "h-20 w-full",
-    body: "min-h-[80px]",
-    clamp: "line-clamp-3",
+    name: "text-base",
+    basis: "whitespace-nowrap text-[10px] tracking-[0.12em]",
     right: SMALL_CARD_ACTION_WIDTH[1],
   },
   2: {
-    grid: "grid-cols-[104px_1fr_auto] gap-3",
+    grid: "grid-cols-[104px_1fr]",
+    gap: "gap-3",
     image: 104,
     imageBox: "h-[66px] w-full",
-    body: "min-h-[66px]",
-    clamp: "line-clamp-2",
+    name: "text-base",
+    basis: "whitespace-nowrap text-[9px] tracking-[0.02em]",
     right: SMALL_CARD_ACTION_WIDTH[2],
   },
   3: {
-    grid: "grid-cols-[88px_1fr_auto] gap-2.5",
+    grid: "grid-cols-[88px_1fr]",
+    gap: "gap-2.5",
     image: 88,
     imageBox: "h-[58px] w-full",
-    body: "min-h-[58px]",
-    clamp: "line-clamp-2",
+    name: "text-[13px]",
+    basis: "text-[10px] tracking-[0.12em]",
     right: SMALL_CARD_ACTION_WIDTH[3],
   },
 };
@@ -163,6 +186,11 @@ export default function HotelSmallCard({
   // sells this hotel, so "No availability" would wrongly read as "sold out".
   const isPassive = hotel.ratehawk_status === "passive";
 
+  /* At three frames the actions go under the photo with the price. */
+  const stacked = columns === 3;
+  /* "2 rooms – 7 nights" on one line, or rooms over nights with no dash. */
+  const basisLines = !priceBasis ? [] : stacked ? priceBasis.split(" – ") : [priceBasis];
+
   const rightBlock = (() => {
     if (isPassive) {
       // With a website to send the guest to, the caveat is the button label
@@ -188,11 +216,14 @@ export default function HotelSmallCard({
             <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
               {displayCurrency} {formatMoney(availability.pricePerStay, availability.currency)}
             </div>
-            {priceBasis ? (
-              <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-                {priceBasis}
+            {basisLines.map((line, i) => (
+              <div
+                key={i}
+                className={`mt-0.5 uppercase text-[color:var(--oltra-text-muted)] ${layout.basis}`}
+              >
+                {line}
               </div>
-            ) : null}
+            ))}
           </div>
         </div>
       );
@@ -261,7 +292,7 @@ export default function HotelSmallCard({
   const actions =
     topAction || renderSaveControl ? (
       <div
-        className="mt-1.5 flex w-full flex-col gap-1.5"
+        className="flex w-full flex-col gap-1.5"
         onClick={(e) => e.preventDefault()}
       >
         {topAction ? (
@@ -291,9 +322,16 @@ export default function HotelSmallCard({
       </div>
     ) : null;
 
+  /* In full (Ulrik, 2026-09-28) — no character cap and no line clamp. */
+  const highlights = hotel.highlights?.trim() ? (
+    <div className="mt-2 text-xs leading-relaxed text-[color:var(--oltra-text-muted)]">
+      {hotel.highlights.trim()}
+    </div>
+  ) : null;
+
   const inner = (
-    <div className={`grid ${layout.grid}`}>
-      <div>
+    <div className={`grid ${layout.grid} ${layout.gap}`}>
+      <div className="min-w-0">
         <div className="overflow-hidden rounded-[var(--oltra-radius-md)]">
           {hasPhoto ? (
             /* Plain <img>, as everywhere else supplier photos are drawn: both
@@ -314,9 +352,11 @@ export default function HotelSmallCard({
             </div>
           )}
         </div>
+        {rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
+        {stacked && actions ? <div className="mt-2">{actions}</div> : null}
       </div>
 
-      <div className={`flex ${layout.body} min-w-0 flex-col`}>
+      <div className="flex min-w-0 flex-col">
         <div className="min-w-0">
           {/* Two lines, then an ellipsis — the middle ground between the two
               things that were wrong. A single truncated line clipped
@@ -328,7 +368,7 @@ export default function HotelSmallCard({
           {/* The star beside the clamped name, not inside it: line-clamp
               hides overflow, which would cut the star's popup. */}
           <div className="flex min-w-0 items-baseline">
-            <div className="min-w-0 line-clamp-2 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
+            <div className={`min-w-0 line-clamp-2 ${layout.name} font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]`}>
               {hotel.hotel_name ?? "Untitled hotel"}
             </div>
             {isFavourite ? <FavouriteStar /> : null}
@@ -341,21 +381,18 @@ export default function HotelSmallCard({
           </div>
         </div>
 
-        {/* Clamped by lines, not by a per-variant character count: the text
-            handed in is the same at every width, so a narrow frame shows less
-            of it rather than a different string. */}
-        {hotel.highlights ? (
-          <div
-            className={`mt-2 ${layout.clamp} text-xs leading-relaxed text-[color:var(--oltra-text-muted)]`}
-          >
-            {clampHotelText(hotel.highlights, 170)}
+        {stacked || !actions ? (
+          highlights
+        ) : (
+          /* flex-1 so this row takes whatever height the card has left, and
+             the actions sit at its foot — under a long name, not beside it. */
+          <div className={`flex flex-1 ${layout.gap}`}>
+            <div className="min-w-0 flex-1">{highlights}</div>
+            <div className={`mt-2 flex ${layout.right} shrink-0 flex-col justify-end`}>
+              {actions}
+            </div>
           </div>
-        ) : null}
-      </div>
-
-      <div className={`flex ${layout.right} shrink-0 flex-col justify-center`}>
-        {rightBlock}
-        {actions}
+        )}
       </div>
     </div>
   );

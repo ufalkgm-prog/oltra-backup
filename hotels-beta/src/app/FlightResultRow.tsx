@@ -141,6 +141,11 @@ export default function FlightResultRow({
 
   if (!flight) return null;
 
+  /* At three frames the times and duration come down to the hotel name's 13px
+     and the info button moves to the end of the second line (Ulrik,
+     2026-09-28). */
+  const denseCard = columns === 3 ? { compact: true, infoOnStopsRow: true } : {};
+
   return (
     <div className={styles.flightDetailRow}>
       {/* Portalled: the row sits inside a glass frame whose backdrop-filter
@@ -166,11 +171,11 @@ export default function FlightResultRow({
           }`}
         >
           <div className={flightsStyles.staticCard}>
-            <FlightCardContent flight={flight.outbound} onInfo={setDetail} />
+            <FlightCardContent flight={flight.outbound} onInfo={setDetail} {...denseCard} />
           </div>
           {!isOneWay && flight.inbound ? (
             <div className={flightsStyles.staticCard}>
-              <FlightCardContent flight={flight.inbound} onInfo={setDetail} />
+              <FlightCardContent flight={flight.inbound} onInfo={setDetail} {...denseCard} />
             </div>
           ) : null}
         </div>

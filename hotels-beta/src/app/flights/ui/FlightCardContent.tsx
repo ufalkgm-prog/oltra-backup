@@ -68,6 +68,7 @@ export default function FlightCardContent({
   showAirlineMarks = true,
   onDeselect,
   deselectLabel,
+  infoOnStopsRow = false,
 }: {
   flight: FlightLeg;
   matchTier?: ReturnMatchTier;
@@ -80,6 +81,10 @@ export default function FlightCardContent({
   showAirlineMarks?: boolean;
   onDeselect?: () => void;
   deselectLabel?: string;
+  /** The info button at the end of the second line rather than in the top
+   * corner, with that line's text cut off before it — the landing page's
+   * three-frame flight rows (Ulrik, 2026-09-28). */
+  infoOnStopsRow?: boolean;
 }) {
   const airlineLabel = flight.airlines.length
     ? flight.airlines.map(a => a.name).join(" + ")
@@ -87,18 +92,20 @@ export default function FlightCardContent({
   const label = matchTierLabel(matchTier ?? null);
   const timeStyle = compact ? { fontSize: "0.82rem" } : undefined;
   const date = legDate(flight);
+  const infoButton = onInfo ? (
+    <button
+      type="button"
+      className={`${styles.infoButton}${infoOnStopsRow ? ` ${styles.infoButtonInline}` : ""}`}
+      onClick={e => { e.stopPropagation(); onInfo(flight); }}
+      aria-label="Flight details"
+      title="Flight details"
+    >
+      i
+    </button>
+  ) : null;
   return (
     <>
-      {onInfo ? (
-        <button
-          type="button"
-          className={styles.infoButton}
-          onClick={e => { e.stopPropagation(); onInfo(flight); }}
-          aria-label="Flight details"
-        >
-          info
-        </button>
-      ) : null}
+      {infoOnStopsRow ? null : infoButton}
       {onDeselect ? (
         <button
           type="button"
@@ -113,7 +120,11 @@ export default function FlightCardContent({
       <div className={styles.flightCardInner}>
         {showAirlineMarks ? <AirlineMarks airlines={flight.airlines} /> : null}
         <div className={styles.flightCardText}>
-          <div className={styles.flightTimesRow}>
+          <div
+            className={`${styles.flightTimesRow}${
+              infoOnStopsRow ? ` ${styles.flightTimesRowFull}` : ""
+            }`}
+          >
             <span className={styles.flightDepart} style={timeStyle}>{flight.departTime}</span>
             <span className={styles.flightArrow}>→</span>
             <span className={styles.flightArrive} style={timeStyle}>{flight.arriveTime}</span>
@@ -152,6 +163,7 @@ export default function FlightCardContent({
                 {label}
               </span>
             ) : null}
+            {infoOnStopsRow ? infoButton : null}
             {/* Cabin and fare brand used to sit here too. The row is
                 flex-wrap: nowrap with every child ellipsised, so four facts in
                 a 251px multi-city column meant all four clipped - at 1440 as

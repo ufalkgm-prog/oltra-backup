@@ -61,7 +61,7 @@ So the fix for a panel that renders behind something, or gets clipped, is **`cre
 
 * **Map and photo-overlay chrome**: `.oltra-temp-controls__*` and `PageShell`'s `.intro` (it carries a `text-shadow` and sits over a hero image — overlay chrome, and that question is settled).
 * **Functional borders at alpha 0.32+** — checkbox edges, focus rings, the selected flight-card outline. These are the only cue for what they enclose.
-* **The Info pill** (`.infoButton`: `background:#fff; color:#111`) — a deliberately inverted control, not a theme colour.
+* **The flight Info button** (`.infoButton`) — **a 16px sage circle (`--oltra-button-active-bg`) with a white bold italic serif "i" since 2026-09-28 (Ulrik)**, on every flight card; it replaced the inverted white "info" pill. The white is literal, not a theme colour.
 * **`@media print` `#000`/`#fff`** in `members.css` — paper is white.
 * **`/editor/*` and `TopNav.tsx`** — an internal tool that doesn't follow the design system, and dead code (`TopNav` is never imported anywhere).
 
@@ -110,7 +110,7 @@ The header "AI Concierge" is **transparent with a white label and, since 2026-09
 * **Hit areas** reach 44px via `::after`, never padding. Two stacked card buttons use `--stack-top` / `--stack-bottom`, which split the gap between them instead of overlapping.
 * **Yes/No pairs are always the same width** — `.oltra-btn-pair`.
 * **Over photography a button gets a solid fill — the one exception to "transparent" (2026-09-14).** A surface carrying `.oltra-over-image` gives its buttons `--oltra-btn-over-image-bg` (the site background, `#2C3634`) and no shadow, so every rim and label sits on exactly the ground its contrast was measured against. It replaced a translucent scrim with a halo, which still let the photo through; on the brightest hero photo the bare sage rim had fallen to about 1.5:1 through the 72% landing glass. The AI button (inside the field) and buttons inside popups stay transparent.
-* **No clickable italic anywhere except the AI button** — italic now means AI. The italic delete links became Destructive pills, and the /flights "info" pill stayed inverted but upright.
+* **No clickable italic anywhere except the AI button** — italic now means AI. The italic delete links became Destructive pills, and the flight info button is the second exception — a green circle with a bold italic "i" (Ulrik, 2026-09-28).
 * **Selection controls share one look (`--oltra-choice-*`)**: the Flights trip-type tabs. **The header menu no longer shows an edge on hover or on the current page (2026-09-15)** — the 2px border is kept transparent so the click area is unchanged; the rest of this bullet now describes the tabs. Semisquare (`--oltra-radius-md`), 2px edge. The chosen one is sage (`#8AA884`, standard label); unchosen tabs wear passive colours, while unchosen header items have no edge. Hover lifts the edge to neutral grey `#9AA39E`. The current page stays sage while another item is hovered.
 * **Controls are not actions** and keep their shapes: tabs, steppers, carousel arrows, close icons, calendar cells, nav links, selectable rows, disclosures, text links in prose. The destination-field chip keeps its pill as a declared exception.
 * The Hotels search button says **SEARCH**; what's missing is the popup, not the label.
