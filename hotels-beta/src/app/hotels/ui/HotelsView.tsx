@@ -512,8 +512,18 @@ function locationLine(h: HotelRecord): string {
   return [h.local_area, h.city, h.region, h.country].filter(Boolean).join(" · ");
 }
 
-function formatRoomCapacity(capacity: number): string {
-  return `Sleeps ${capacity}`;
+/* WHO THE RATE IS PRICED FOR, not "Sleeps N" (Ulrik, 2026-09-28).
+ *
+ * ETG returns only rates that take the party searched: for 2 adults and a
+ * 15-year-old at Madame Rêve it offered 11 of the 20 two-adult rates, the
+ * double rooms dropped and the rest priced higher for the child. "Sleeps N"
+ * came from rg_ext.capacity, a room CATEGORY read off the room name — it put
+ * "Sleeps 2" on rooms priced for three and "Sleeps 1" on family suites — so
+ * it said a room could not hold a party it was priced for. */
+function formatRatePartyLabel(adults: number, kids: number, rooms: number): string {
+  const parts = [`${adults} ${adults === 1 ? "adult" : "adults"}`];
+  if (kids > 0) parts.push(`${kids} ${kids === 1 ? "child" : "children"}`);
+  return `For ${parts.join(" + ")}${rooms > 1 ? ` in ${rooms} rooms` : ""}`;
 }
 
 function formatRoomLayout(room: RatehawkGroupedRoom): string {
@@ -3585,7 +3595,7 @@ export default function HotelsView(props: {
                                     {room.roomName}
                                   </div>
                                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[color:var(--oltra-text-muted)]">
-                                    <span>{formatRoomCapacity(room.capacity)}</span>
+                                    <span>{formatRatePartyLabel(guestSelection.adults, guestSelection.kids, searchedRoomCount)}</span>
                                     {room.balcony ? <span>· Balcony</span> : null}
                                     {room.sizeSquareMeters ? (
                                       <span>· {room.sizeSquareMeters} m²</span>
@@ -3682,7 +3692,7 @@ export default function HotelsView(props: {
                                         <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
                                           Occupancy
                                         </div>
-                                        <div className="mt-0.5">{formatRoomCapacity(room.capacity)}</div>
+                                        <div className="mt-0.5">{formatRatePartyLabel(guestSelection.adults, guestSelection.kids, searchedRoomCount)}</div>
                                       </div>
                                       <div>
                                         <div className="text-[12px] uppercase tracking-[0.1em] text-[color:var(--oltra-text-muted)]">
