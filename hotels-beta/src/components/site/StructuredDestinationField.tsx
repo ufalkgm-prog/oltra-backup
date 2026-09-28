@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import OltraSpinner from "./OltraSpinner";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import type {
@@ -880,6 +880,85 @@ export default function StructuredDestinationField({
     });
   }
 
+  /* THE TRAILING CONTROL STAYS ON THE FIRST LINE, AT THE RIGHT (Ulrik,
+     2026-09-28). When chips wrap, what does not fit beside it runs on
+     underneath at the full width. A wrapping flex row cannot keep space free
+     on its first line only, so the control is placed in the flow right after
+     the last item that fits beside it, and margin-left: auto takes it to the
+     right edge; everything after it wraps. Chips keep their width wherever
+     they sit, so one measurement pass settles it. null = at the end, which is
+     also the single-line case. */
+  const chipBoxRef = useRef<HTMLDivElement | null>(null);
+  const trailingRef = useRef<HTMLDivElement | null>(null);
+  const [trailingIndex, setTrailingIndex] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const box = chipBoxRef.current;
+    const slot = trailingRef.current;
+    if (!box || !slot) return;
+
+    const place = () => {
+      const style = window.getComputedStyle(box);
+      const width =
+        box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const gap = parseFloat(style.columnGap) || 0;
+      const items = Array.from(box.children).filter(
+        (el): el is HTMLElement => el instanceof HTMLElement && "flowItem" in el.dataset
+      );
+      let used = slot.offsetWidth;
+      let fit = 0;
+      for (const item of items) {
+        /* The input grows into whatever is left, so it needs only its minimum. */
+        const itemWidth =
+          item instanceof HTMLInputElement
+            ? parseFloat(window.getComputedStyle(item).minWidth) || 0
+            : item.offsetWidth;
+        if (used + gap + itemWidth > width) break;
+        used += gap + itemWidth;
+        fit += 1;
+      }
+      const next = fit >= items.length ? null : fit;
+      setTrailingIndex((prev) => (prev === next ? prev : next));
+    };
+
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [tokens, showCurated, isSingleHotel, trailingControl, busy]);
+
+  /* Inside the box, in the flex run, at trailingIndex. The busy spinner comes
+     with it: the absolutely-positioned one below sits exactly where this
+     control is on one line, and the two would overlap. */
+  const trailingNode = trailingControl ? (
+    <div key="trailing" ref={trailingRef} className={styles.trailingSlot}>
+      {busy ? <OltraSpinner size={14} /> : null}
+      {trailingControl}
+    </div>
+  ) : null;
+  const placeTrailing = (items: React.ReactNode[]) => {
+    if (!trailingNode) return items;
+    const at = trailingIndex === null ? items.length : Math.min(trailingIndex, items.length);
+    return [...items.slice(0, at), trailingNode, ...items.slice(at)];
+  };
+
+  const flowItems: React.ReactNode[] = [];
+  if (showCurated) {
+    flowItems.push(
+      <button
+        key="curated"
+        type="button"
+        data-flow-item=""
+        onClick={removeCurated}
+        className={styles.tokenPill}
+        title={`${CURATED_LABEL} — remove to clear them`}
+      >
+        <span className={styles.tokenPillLabel}>{CURATED_LABEL}</span>
+        <span className={styles.tokenPillClose}>×</span>
+      </button>
+    );
+  }
+
   return (
     <div
       ref={rootRef}
@@ -891,27 +970,19 @@ export default function StructuredDestinationField({
 
       <div className={styles.inputWrap}>
         <div
+          ref={chipBoxRef}
           className={styles.chipInputBox}
           onClick={() => {
             if (!isSingleHotel) inputRef.current?.focus();
           }}
         >
-          {showCurated ? (
-            <button
-              type="button"
-              onClick={removeCurated}
-              className={styles.tokenPill}
-              title={`${CURATED_LABEL} — remove to clear them`}
-            >
-              <span className={styles.tokenPillLabel}>{CURATED_LABEL}</span>
-              <span className={styles.tokenPillClose}>×</span>
-            </button>
-          ) : null}
-
-          {tokens.map((token) => (
+          {placeTrailing([
+            ...flowItems,
+            ...tokens.map((token) => (
             <button
               key={`${token.type}-${token.id ?? token.value}`}
               type="button"
+              data-flow-item=""
               onClick={() => removeToken(token)}
               className={styles.tokenPill}
               title={
@@ -923,10 +994,11 @@ export default function StructuredDestinationField({
               </span>
               <span className={styles.tokenPillClose}>×</span>
             </button>
-          ))}
-
-          {!isSingleHotel ? (
+          )),
+          ...(!isSingleHotel ? [
             <input
+              key="input"
+              data-flow-item=""
               ref={inputRef}
               value={typedValue}
               onChange={(e) => {
@@ -976,20 +1048,9 @@ export default function StructuredDestinationField({
               autoComplete="off"
               spellCheck={false}
               style={busy && !trailingControl ? { paddingRight: 36 } : undefined}
-            />
-          ) : null}
-
-          {/* Inside the box, at the end of the flex run — so when chips wrap to
-              a second line it follows them down rather than floating over
-              them. The busy spinner comes with it: the absolutely-positioned
-              one below sits exactly where this control now is, and the two
-              would overlap. */}
-          {trailingControl ? (
-            <div className={styles.trailingSlot}>
-              {busy ? <OltraSpinner size={14} /> : null}
-              {trailingControl}
-            </div>
-          ) : null}
+            />,
+          ] : []),
+          ])}
         </div>
 
         {busy && !trailingControl ? (

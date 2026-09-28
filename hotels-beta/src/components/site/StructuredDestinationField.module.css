@@ -38,10 +38,10 @@
   border-color: var(--oltra-border-medium);
 }
 
-/* The caller's own control at the right-hand end of the input row.
-   margin-left: auto rather than a fixed position, so it keeps to the end of
-   the last line when chips wrap to a second row — the box is flex-wrap and
-   grows downward by design. */
+/* The caller's own control at the right-hand end of the FIRST line.
+   margin-left: auto takes it to the right edge; the component places it in
+   the flow after the last item that fits beside it (trailingIndex), so chips
+   that do not fit run on underneath it (Ulrik, 2026-09-28). */
 .trailingSlot {
   display: inline-flex;
   align-items: center;

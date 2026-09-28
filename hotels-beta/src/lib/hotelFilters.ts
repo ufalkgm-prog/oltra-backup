@@ -141,20 +141,30 @@ export function serializeList(values: string[]): string {
 /**
  * JS-side filter for the activities/setting/style multiselect tag fields.
  * Directus can't filter these natively (see note above), so this runs on
- * the already-fetched rows. A hotel matches a field if its tag array
- * overlaps at least one selected value (OR within a field, AND across the
- * three fields) — the same semantics the old M2M `_some`/`_in` filter intended.
- */
+ * the already-fetched rows.
+ *
+ * EVERY SELECTED TAG MUST MATCH (Ulrik, 2026-09-28). A hotel passes only if it
+ * carries every value picked, so each filter narrows the result: France +
+ * Beach + Gastronomy is French hotels tagged Beach AND Gastronomy. It used to
+ * OR within a field — the old M2M `_some`/`_in` semantics — which made two
+ * purposes widen the list instead.
+ *
+ * `match: "any"` keeps the old OR-within-a-field rule, for the concierge only:
+ * it passes a whole family of alternatives at once (every water setting for
+ * "by the sea", §50) and ranks by how many match (tagMatchScore). */
 export function filterHotelsByTags<
   T extends { activities?: string[] | null; setting?: string[] | null; style?: string[] | null }
 >(
   hotels: T[],
-  selected: { activities: string[]; settings: string[]; styles: string[] }
+  selected: { activities: string[]; settings: string[]; styles: string[] },
+  { match = "all" }: { match?: "all" | "any" } = {}
 ): T[] {
   const overlaps = (values: string[] | null | undefined, selectedValues: string[]): boolean => {
     if (!selectedValues.length) return true;
     const set = new Set(values ?? []);
-    return selectedValues.some((v) => set.has(v));
+    return match === "all"
+      ? selectedValues.every((v) => set.has(v))
+      : selectedValues.some((v) => set.has(v));
   };
 
   if (!selected.activities.length && !selected.settings.length && !selected.styles.length) {

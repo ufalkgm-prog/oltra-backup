@@ -244,19 +244,23 @@ export default async function HomePage({
     destinationCity = pickDestinationCity(q, hotels, cityParam);
   }
 
-  /* The city's restaurants when Restaurants is ticked (Ulrik, 2026-09-27) —
-     the same list the Restaurants page draws for it, alias fallback included.
-     A destination that is not a city we hold restaurants in gives an empty
-     list, and the pane says so. */
-  let restaurants: RestaurantRecord[] | null = null;
-  if (submitted && hasDestination && includeRestaurants) {
+  /* The city's restaurants — the same list the Restaurants page draws for it,
+     alias fallback included (Ulrik, 2026-09-27). Looked up whether or not
+     Restaurants is ticked, because the checkbox is passive when the
+     destination is not a city we hold restaurants in (Ulrik, 2026-09-28):
+     there is no pane saying "we don't hold…" any more, because it can no
+     longer be asked for. */
+  let cityRestaurants: RestaurantRecord[] = [];
+  if (submitted && hasDestination && destinationCity) {
     try {
-      restaurants = destinationCity ? await getRestaurantsByCity(destinationCity) : [];
+      cityRestaurants = await getRestaurantsByCity(destinationCity);
     } catch (err) {
       console.error("[landing] restaurants", err);
-      restaurants = [];
     }
   }
+  const restaurantsAvailable = cityRestaurants.length > 0;
+  const showRestaurants = submitted && hasDestination && includeRestaurants && restaurantsAvailable;
+  const restaurants: RestaurantRecord[] | null = showRestaurants ? cityRestaurants : null;
 
   const sharedQuery = buildQueryString({
     ...resolvedSearchParams,
@@ -283,6 +287,7 @@ export default async function HomePage({
           <LandingSearchPanel
             initialSearchParams={resolvedSearchParams}
             dataset={dataset}
+            restaurantsAvailable={restaurantsAvailable}
           />
 
           {/* The structured summary and the concierge's frames are alternative
@@ -295,7 +300,7 @@ export default async function HomePage({
             classicPanes={{
               hotels: submitted && hasDestination && includeHotels,
               flights: submitted && hasDestination && includeFlights,
-              restaurants: submitted && hasDestination && includeRestaurants,
+              restaurants: showRestaurants,
             }}
             summary={
               submitted && hasDestination ? (

@@ -229,9 +229,19 @@ export async function getRestaurantsByCity(city: string): Promise<RestaurantReco
     return exactCityMatches;
   }
 
+  /* The place fields only, then full records for the matches. The landing
+     page now asks this on every search, to know whether Restaurants can be
+     ticked (2026-09-28), and a place with no restaurants used to fetch every
+     record in full just to find none. */
+  const placeFields = [
+    "city",
+    "local_area",
+    "region",
+    "country",
+    "state_province_county_island",
+  ] as const;
   const fallbackParams = new URLSearchParams({
-    fields: buildRestaurantFields(),
-    sort: "rank,sort,restaurant_name",
+    fields: ["id", ...placeFields].join(","),
     "filter[status][_eq]": "published",
     limit: "-1",
   });
@@ -240,9 +250,21 @@ export async function getRestaurantsByCity(city: string): Promise<RestaurantReco
     `/items/restaurants?${fallbackParams.toString()}`
   );
 
-  return (fallbackRows ?? []).map(normalizeRestaurant).filter((r) =>
-    [r.city, r.local_area, r.region, r.country, r.state_province_county_island].some((value) =>
-      foldedContains(value, requestedCity)
-    )
+  const matchingIds = (fallbackRows ?? [])
+    .filter((row) => placeFields.some((field) => foldedContains(row[field], requestedCity)))
+    .map((row) => String(row.id));
+  if (!matchingIds.length) return [];
+
+  const matchParams = new URLSearchParams({
+    fields: buildRestaurantFields(),
+    sort: "rank,sort,restaurant_name",
+    "filter[id][_in]": matchingIds.join(","),
+    limit: "-1",
+  });
+
+  const matchRows = await directusFetchJson<DirectusRestaurantRow[]>(
+    `/items/restaurants?${matchParams.toString()}`
   );
+
+  return (matchRows ?? []).map(normalizeRestaurant);
 }

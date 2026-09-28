@@ -52,20 +52,13 @@ export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
   3: "w-[52px]",
 };
 
-/* TWO ARRANGEMENTS (Ulrik, 2026-09-28). In every one the price and what it
- * covers sit under the photo, and the highlights are shown in full.
+/* TWO ARRANGEMENTS (Ulrik, 2026-09-28). The highlights are shown in full in
+ * both, and rooms and nights sit on two lines under the price, with no dash.
  *
- *   1, 2  the name runs the full width of the text column; BOOK and SAVE keep
- *         their place on the right but sit at the BOTTOM, so a long name
- *         extends above them rather than being squeezed beside them. "2 rooms –
- *         7 nights" stays on one line under the price.
- *   3     BOOK beside SAVE under the price, below the photo, and the
- *         highlights follow the name and location; rooms and nights go on two
- *         lines under the price, without the dash, and the name comes down to
- *         the price's 13px.
- *
- * `basis` sizes the rooms/nights line to its column: at 104px "2 ROOMS – 14
- * NIGHTS" only fits one line at 9px with almost no tracking. */
+ *   1, 2  a column on the right: the price, rooms and nights at the top, BOOK
+ *         over SAVE at the foot.
+ *   3     the price, then BOOK beside SAVE, under the photo; the name comes
+ *         down to the price's 13px. */
 const LAYOUT: Record<
   SmallCardColumns,
   {
@@ -74,7 +67,6 @@ const LAYOUT: Record<
     image: number;
     imageBox: string;
     name: string;
-    basis: string;
     right: string;
   }
 > = {
@@ -84,7 +76,6 @@ const LAYOUT: Record<
     image: 132,
     imageBox: "h-20 w-full",
     name: "text-base",
-    basis: "whitespace-nowrap text-[10px] tracking-[0.12em]",
     right: SMALL_CARD_ACTION_WIDTH[1],
   },
   2: {
@@ -93,7 +84,6 @@ const LAYOUT: Record<
     image: 104,
     imageBox: "h-[66px] w-full",
     name: "text-base",
-    basis: "whitespace-nowrap text-[9px] tracking-[0.02em]",
     right: SMALL_CARD_ACTION_WIDTH[2],
   },
   3: {
@@ -102,7 +92,6 @@ const LAYOUT: Record<
     image: 108,
     imageBox: "h-[70px] w-full",
     name: "text-[13px]",
-    basis: "text-[10px] tracking-[0.12em]",
     right: SMALL_CARD_ACTION_WIDTH[3],
   },
 };
@@ -194,8 +183,8 @@ export default function HotelSmallCard({
 
   /* At three frames BOOK and SAVE go side by side under the price. */
   const stacked = columns === 3;
-  /* "2 rooms – 7 nights" on one line, or rooms over nights with no dash. */
-  const basisLines = !priceBasis ? [] : stacked ? priceBasis.split(" – ") : [priceBasis];
+  /* Rooms over nights, no dash, in every density (Ulrik, 2026-09-28). */
+  const basisLines = !priceBasis ? [] : priceBasis.split(" – ");
 
   const rightBlock = (() => {
     if (isPassive) {
@@ -225,7 +214,7 @@ export default function HotelSmallCard({
             {basisLines.map((line, i) => (
               <div
                 key={i}
-                className={`mt-0.5 uppercase text-[color:var(--oltra-text-muted)] ${layout.basis}`}
+                className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]"
               >
                 {line}
               </div>
@@ -373,12 +362,13 @@ export default function HotelSmallCard({
             </div>
           )}
         </div>
-        {rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
+        {stacked && rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
         {/* Three frames: BOOK beside SAVE, under the price. */}
         {stacked && actions ? <div className="mt-2">{actions}</div> : null}
       </div>
 
-      <div className="flex min-w-0 flex-col">
+      <div className={stacked ? "flex min-w-0 flex-col" : `flex min-w-0 ${layout.gap}`}>
+        <div className="flex min-w-0 flex-1 flex-col">
         <div className="min-w-0">
           {/* Two lines, then an ellipsis — the middle ground between the two
               things that were wrong. A single truncated line clipped
@@ -403,18 +393,19 @@ export default function HotelSmallCard({
           </div>
         </div>
 
-        {stacked || !actions ? (
-          highlights
-        ) : (
-          /* flex-1 so this row takes whatever height the card has left, and
-             the actions sit at its foot — under a long name, not beside it. */
-          <div className={`flex flex-1 ${layout.gap}`}>
-            <div className="min-w-0 flex-1">{highlights}</div>
-            <div className={`mt-2 flex ${layout.right} shrink-0 flex-col justify-end`}>
-              {actions}
-            </div>
+        {highlights}
+        </div>
+
+        {/* One and two frames: the price with rooms and nights under it at the
+            top right, BOOK and SAVE at the foot of the same column (Ulrik,
+            2026-09-28). 84px so a price like "GBP 12,345" fits on one line
+            and a status note wraps rather than widening the column. */}
+        {!stacked && (rightBlock || actions) ? (
+          <div className="flex w-[84px] shrink-0 flex-col justify-between gap-2">
+            <div>{rightBlock}</div>
+            {actions ? <div className={`self-center ${layout.right}`}>{actions}</div> : null}
           </div>
-        )}
+        ) : null}
       </div>
 
     </div>

@@ -52,6 +52,9 @@ type PageSearchParams = Record<string, string | string[] | undefined>;
 type Props = {
   initialSearchParams: PageSearchParams;
   dataset: HotelSuggestionDataset;
+  /** The submitted destination is a city we hold restaurants in — worked out
+   * by the page, which looks it up. */
+  restaurantsAvailable: boolean;
 };
 
 function buildComparableSearchKey(params: PageSearchParams): string {
@@ -75,6 +78,7 @@ function buildComparableSearchKey(params: PageSearchParams): string {
 export default function LandingSearchPanel({
   initialSearchParams,
   dataset,
+  restaurantsAvailable,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -462,6 +466,15 @@ export default function LandingSearchPanel({
   ]);
 
   const effectiveIncludeFlights = flightsCanActivate && includeFlights;
+
+  /* PASSIVE WHEN THERE IS NOTHING TO SHOW (Ulrik, 2026-09-28): the
+     destination is not a city we hold restaurants in (France + Beach), or the
+     page is showing the concierge's curated results. It used to tick anyway
+     and open a pane saying "We don't hold restaurants for this destination".
+     The choice itself is kept in the URL, so it comes back with a city that
+     has restaurants. */
+  const restaurantsCanActivate = restaurantsAvailable && !showsAiResults;
+  const effectiveIncludeRestaurants = restaurantsCanActivate && includeRestaurants;
 
   useEffect(() => {
     if (!flightsCanActivate && airportPopoverOpen) {
@@ -879,10 +892,25 @@ export default function LandingSearchPanel({
             {/* After Flights in the same wrapping row, so it moves along as
                 the Flights line grows into "Flights assume you depart from
                 London". */}
-            <label className={styles.includeChecksItem}>
+            <label
+              className={[
+                styles.includeChecksItem,
+                !restaurantsCanActivate ? styles.includeChecksItemDisabled : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              title={
+                !restaurantsCanActivate
+                  ? showsAiResults
+                    ? "Restaurants come with the AI curated results"
+                    : "Choose a city we hold restaurants in to activate"
+                  : undefined
+              }
+            >
               <input
                 type="checkbox"
-                checked={includeRestaurants}
+                checked={effectiveIncludeRestaurants}
+                disabled={!restaurantsCanActivate}
                 onChange={(e) => {
                   setIncludeRestaurants(e.target.checked);
                   scheduleAutoSubmit();

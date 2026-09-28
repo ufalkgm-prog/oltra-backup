@@ -199,7 +199,7 @@ New city: add geocoded JSON to `newrestaurants/` → `node scripts/restaurants/g
 
 Directus `_contains`/`_in` throw `500` against native array columns — they cannot be used for server-side filtering.
 
-* `activities` / `setting` / `style` filter as a **JS-side post-fetch pass**: `filterHotelsByTags()` in `/src/lib/hotelFilters.ts`. OR within a field, AND across fields.
+* `activities` / `setting` / `style` filter as a **JS-side post-fetch pass**: `filterHotelsByTags()` in `/src/lib/hotelFilters.ts`. **Every selected tag must match — AND within a field as well as across (Ulrik, 2026-09-28)**, so each filter narrows: France + Beach + Gastronomy is 9 hotels, not the 50 the old OR-within-a-field gave. The concierge alone passes `{ match: "any" }`, because it sends a family of alternatives at once (every water setting for "by the sea") and ranks by match count.
 * `awards` (the "Accolades" facet) instead uses the **7 boolean columns**, which Directus can filter natively (`_eq: true`, OR'd). Allow-list in `/src/lib/hotels/awardCodes.ts`, shared between the server filter builder and the client badge UI so they can't drift.
 * The general `awards` tag field is separate from the 7 booleans and isn't wired into any UI.
 

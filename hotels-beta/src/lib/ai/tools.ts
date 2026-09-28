@@ -376,7 +376,7 @@ async function nearestGeography(terms: string[]) {
 
 /** How many of the tags the visitor asked for this hotel actually carries.
  *
- * filterHotelsByTags is an OR within each field (§4), so a hotel matching one
+ * The concierge filters with match: "any" — an OR within each field (§4) — so a hotel matching one
  * of three requested activities passes the same test as one matching all three.
  * That is right for inclusion and wrong for ordering: asked for skiing AND a
  * family, a hotel tagged both should come first. */
@@ -862,11 +862,14 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       styles: input.styles ?? [],
     };
     // The macro-region's own setting requirement is a separate AND pass, not
-    // merged into `requested.settings` — filterHotelsByTags ORs within a field,
+    // merged into `requested.settings` — this search ORs within a field,
     // so folding "Mountains" in beside a visitor's own setting would widen the
     // search instead of narrowing it.
     const inRegion = macro ? rows.filter((h) => matchesMacroSetting(h, macro)) : rows;
-    const tagFit = relevanceSort(filterHotelsByTags(inRegion, requested), requested);
+    const tagFit = relevanceSort(
+      filterHotelsByTags(inRegion, requested, { match: "any" }),
+      requested
+    );
 
     const features = parseFeatures(input.features);
     const earlierFeatures = [...turn.features.values()].filter(
