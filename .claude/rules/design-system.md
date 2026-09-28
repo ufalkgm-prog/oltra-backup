@@ -96,7 +96,7 @@ Ulrik replaced the sage `#A8C4A2` with orange earlier the same day, then replace
 
 ### A hotel we cannot sell, on the small hotel cards (Ulrik, 2026-09-28)
 
-`HotelSmallCard` (landing and concierge) no longer uses Neutral. It shows an ordinary condensed **BOOK**, the same size as SAVE, with the destructive rim via its own class **`.oltra-btn--offsite`** (not `--destructive`, which it is not), and above it in 10px white italic *"Booking not yet possible here – book on website"*. The Neutral row above still describes the Hotels page. On the same cards, **BOOK is passive when the dates have no availability** ("No availability for these dates").
+`HotelSmallCard` (landing and concierge) no longer uses Neutral. It shows an ordinary condensed **BOOK**, the same size as SAVE, with the destructive rim via its own class **`.oltra-btn--offsite`** (not `--destructive`, which it is not), and *"Booking not yet possible here – book on website"* where the price would be, in the "No availability" format (11px muted, since 2026-09-28 — it was 10px white italic above the button the same day). The Neutral row above still describes the Hotels page. On the same cards, **BOOK is passive when the dates have no availability** ("No availability for these dates").
 
 ### The two entry points part ways (Ulrik, 2026-09-23)
 

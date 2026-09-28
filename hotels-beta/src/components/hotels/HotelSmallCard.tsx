@@ -188,10 +188,16 @@ export default function HotelSmallCard({
 
   const rightBlock = (() => {
     if (isPassive) {
-      // With a website to send the guest to, the caveat sits over the BOOK
-      // button in the actions, so it is not repeated here. Without one, the
-      // note is all there is to say.
-      if (bookingHref) return null;
+      // Where the price would be, in the "No availability" format (Ulrik,
+      // 2026-09-28), with the orange-rimmed BOOK below it. Without a website
+      // to send the guest to, the note is all there is to say.
+      if (bookingHref) {
+        return (
+          <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+            Booking not yet possible here – book on website
+          </div>
+        );
+      }
       return (
         <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
           Check availability on website
@@ -273,7 +279,7 @@ export default function HotelSmallCard({
   // used to open. Only a hotel we cannot sell sends the guest away, and says so.
   const bookableHere = isBookableHere(hotel);
   /* A hotel we cannot sell gets an ordinary BOOK, the same size as SAVE, with
-     the orange-red rim and the caveat above it in white italic (Ulrik,
+     the orange-red rim, and the caveat where the price would be (Ulrik,
      2026-09-28). It replaced a neutral "Book on website" button whose label
      wrapped and made it taller than SAVE. */
   const topAction = bookableHere
@@ -296,11 +302,6 @@ export default function HotelSmallCard({
         className="flex w-full flex-col gap-1.5"
         onClick={(e) => e.preventDefault()}
       >
-        {topAction?.offsite ? (
-          <div className="text-center text-[10px] italic leading-tight text-[color:var(--oltra-text-primary)]">
-            Booking not yet possible here – book on website
-          </div>
-        ) : null}
         {/* Three frames: side by side under the price, each 52px across the
             108px photo (Ulrik, 2026-09-28). Stacked otherwise. */}
         <div className={stacked ? "grid grid-cols-2 gap-1" : "contents"}>
@@ -397,11 +398,11 @@ export default function HotelSmallCard({
         </div>
 
         {/* One and two frames: the price with rooms and nights under it at the
-            top right, BOOK and SAVE at the foot of the same column (Ulrik,
-            2026-09-28). 84px so a price like "GBP 12,345" fits on one line
-            and a status note wraps rather than widening the column. */}
+            top right, BOOK and SAVE straight under it (Ulrik, 2026-09-28).
+            84px so a price like "GBP 12,345" fits on one line and a status
+            note wraps rather than widening the column. */}
         {!stacked && (rightBlock || actions) ? (
-          <div className="flex w-[84px] shrink-0 flex-col justify-between gap-2">
+          <div className="flex w-[84px] shrink-0 flex-col gap-2">
             <div>{rightBlock}</div>
             {actions ? <div className={`self-center ${layout.right}`}>{actions}</div> : null}
           </div>
