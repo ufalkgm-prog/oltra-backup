@@ -508,6 +508,13 @@
   align-items: start;
 }
 
+/* Three frames: the price and buttons sit further right and closer to the
+   leg cards, which take the width (Ulrik, 2026-09-28). */
+.flightDetailRow.flightDetailRowDense {
+  padding-right: 0.45rem;
+  column-gap: 0.45rem;
+}
+
 .flightRowMain {
   display: grid;
   gap: 0.4rem;

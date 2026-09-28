@@ -147,7 +147,11 @@ export default function FlightResultRow({
   const denseCard = columns === 3 ? { compact: true, infoOnStopsRow: true } : {};
 
   return (
-    <div className={styles.flightDetailRow}>
+    <div
+      className={`${styles.flightDetailRow}${
+        columns === 3 ? ` ${styles.flightDetailRowDense}` : ""
+      }`}
+    >
       {/* Portalled: the row sits inside a glass frame whose backdrop-filter
           makes it the containing block for fixed elements, so the popup's
           full-screen backdrop would otherwise be clipped to the frame. */}
@@ -183,9 +187,17 @@ export default function FlightResultRow({
       <div className={styles.flightRowActions}>
         <div className={styles.flightRowPrice}>
           {currency} {approx(flight.priceEur, flight.currency)}
-          <div className={styles.flightRowPriceBasis}>
-            {flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")}
-          </div>
+          {/* "2 pax" over "return" at three frames (Ulrik, 2026-09-28): one
+              line set the action column's width, and the leg cards beside it
+              get what that frees. */}
+          {(columns === 3
+            ? flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return").split(" · ")
+            : [flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")]
+          ).map((line, i) => (
+            <div key={i} className={styles.flightRowPriceBasis}>
+              {line}
+            </div>
+          ))}
         </div>
         {/* The buttons at the hotel card's width; the price above them takes
             what it needs, which is wider than the buttons since they narrowed

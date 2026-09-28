@@ -49,6 +49,22 @@ export default function RestaurantSmallCard({
   isFavourite = false,
 }: Props) {
   const layout = LAYOUT[columns];
+  /* At three frames SAVE goes top right and the type becomes a subheader
+     under the name (Ulrik, 2026-09-28). */
+  const dense = columns === 3;
+
+  /* Inside the card's link, so a click on the control or its trip picker
+     must not follow it — the same guard HotelSmallCard's actions carry. The
+     hotel card's action width, so SAVE matches BOOK and SAVE there; the
+     caller's control fills it (oltra-btn--block). */
+  const save = renderSaveControl ? (
+    <div
+      className={`${SMALL_CARD_ACTION_WIDTH[columns]} shrink-0`}
+      onClick={(e) => e.preventDefault()}
+    >
+      {renderSaveControl()}
+    </div>
+  ) : null;
 
   const meta = [restaurant.cuisine, restaurant.local_area, restaurant.city]
     .filter(Boolean)
@@ -70,17 +86,34 @@ export default function RestaurantSmallCard({
    * a column this narrow. */
   const inner = (
     <div className={`flex ${layout.pad} min-w-0 flex-col`}>
-      <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <div className="min-w-0 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
-          {restaurant.restaurant_name}
-          {isFavourite ? <FavouriteStar /> : null}
-        </div>
-        {restaurant.restaurant_type ? (
-          <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-            {restaurant.restaurant_type}
+      {dense ? (
+        <div className="flex min-w-0 items-start justify-between gap-2.5">
+          <div className="min-w-0">
+            <div className="min-w-0 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
+              {restaurant.restaurant_name}
+              {isFavourite ? <FavouriteStar /> : null}
+            </div>
+            {restaurant.restaurant_type ? (
+              <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
+                {restaurant.restaurant_type}
+              </div>
+            ) : null}
           </div>
-        ) : null}
-      </div>
+          {save}
+        </div>
+      ) : (
+        <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <div className="min-w-0 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
+            {restaurant.restaurant_name}
+            {isFavourite ? <FavouriteStar /> : null}
+          </div>
+          {restaurant.restaurant_type ? (
+            <div className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
+              {restaurant.restaurant_type}
+            </div>
+          ) : null}
+        </div>
+      )}
 
       <div className="mt-0.5 min-w-0 text-xs break-words text-[color:var(--oltra-text-muted)]">
         {meta || "—"}
@@ -100,15 +133,7 @@ export default function RestaurantSmallCard({
         </div>
       ) : null}
 
-      {/* Inside the card's link, so a click on the control or its trip picker
-          must not follow it — the same guard HotelSmallCard's actions carry. */}
-      {renderSaveControl ? (
-        <div className="mt-2 flex justify-end" onClick={(e) => e.preventDefault()}>
-          {/* The hotel card's action width, so SAVE matches BOOK and SAVE
-              there; the caller's control fills it (oltra-btn--block). */}
-          <div className={SMALL_CARD_ACTION_WIDTH[columns]}>{renderSaveControl()}</div>
-        </div>
-      ) : null}
+      {save && !dense ? <div className="mt-2 flex justify-end">{save}</div> : null}
     </div>
   );
 
