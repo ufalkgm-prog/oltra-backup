@@ -750,10 +750,28 @@
   /* Narrower than 861px the page scrolls normally; the cap keeps the header
      framing the letter there too. Wider, see the media query below. */
   max-height: 70vh;
-  border-radius: var(--oltra-radius-xl);
-  /* A very light pale grey, not white (Ulrik, 2026-09-26 - it was #f3f2ef). */
-  background: #e6e8e6;
-  box-shadow: 0 18px 40px rgba(10, 16, 20, 0.28);
+  /* A SHEET OF WARM, GREEN-GREY PAPER LYING ON THE PAGE (Ulrik, 2026-09-28):
+     straight edges and square-ish corners like a sheet, and light falling
+     across it — a sheen from the top, the lower corners a touch darker, and a
+     lower edge that catches a little shadow — over a three-layer shadow: a
+     tight contact line, a mid shadow, and a deep soft lift off the screen.
+     Grain (14%) and a coarse fibrous mottling (6%) are inline SVG, so no image
+     request. An irregular hand-cut edge was tried the same day and dropped.
+     It was a flat #e6e8e6 on the xl panel radius (and #f3f2ef before that). */
+  border-radius: 3px;
+  background-color: #dfe2d7;
+  background-image:
+    linear-gradient(176deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 30%),
+    linear-gradient(0deg, rgba(40, 50, 40, 0.1) 0%, rgba(40, 50, 40, 0) 14%),
+    radial-gradient(ellipse at 0% 100%, rgba(52, 62, 50, 0.14), rgba(52, 62, 50, 0) 45%),
+    radial-gradient(ellipse at 100% 100%, rgba(52, 62, 50, 0.18), rgba(52, 62, 50, 0) 45%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.18 0 0 0 0 0.21 0 0 0 0 0.16 0 0 0 0.14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.03' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.24 0 0 0 0 0.18 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 1px rgba(10, 16, 20, 0.35),
+    0 6px 12px rgba(10, 16, 20, 0.28),
+    0 26px 48px rgba(10, 16, 20, 0.42);
   color: #262a29;
   font-family: var(--font-geist-sans), var(--oltra-font-sans);
   overflow: hidden;
@@ -793,6 +811,13 @@
    step darker on hover and press, the fill further than the rim. Scoped under
    the panel so it outranks .oltra-btn--ai's own fill at every state. */
 .introPanel .introCta {
+  /* The close control's 28px, so the two sit as a pair (Ulrik, 2026-09-28).
+     Vertical padding gives way to the fixed height; the label stays centred
+     by the button's own flex centring. */
+  box-sizing: border-box;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
   background: var(--oltra-button-active-bg);
   --btn-rim: var(--oltra-btn-primary-rim);
   --btn-rim-hover: var(--oltra-btn-primary-rim);
@@ -837,6 +862,49 @@
 /* The text: scrolls under the header, the wheel, touch and keyboard (it is
    focusable) still scroll it. A short fade at the top edge so lines pass
    under the header rather than being cut against it. */
+/* The letter and its scroll arrows: the arrows are placed on this box, which
+   does not scroll, so they stay put while the text moves under them. */
+.introBody {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Round, like the close control, on a near-opaque disc of the paper's own
+   colour so the text scrolling beneath does not show through. */
+.introScroll {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(38, 42, 41, 0.35);
+  border-radius: 50%;
+  background: rgba(223, 226, 215, 0.94);
+  color: #4a504e;
+  cursor: pointer;
+  transform: translateX(-50%);
+}
+
+.introScroll:hover {
+  background: #d6d9ce;
+  color: #1e2221;
+}
+
+.introScrollDown {
+  bottom: 10px;
+}
+
+.introScrollUp {
+  top: 2px;
+}
+
 .introLetter {
   flex: 1 1 auto;
   min-height: 0;

@@ -920,15 +920,19 @@ export default function LandingSearchPanel({
             </label>
           </div>
 
+          {/* Not shown while there is nothing to clear (Ulrik, 2026-09-28) —
+              it was a passive button until then. The slot stays, so the row
+              does not reflow when it appears. */}
           <div className={styles.includeClear}>
-            <button
-              type="button"
-              className="oltra-btn oltra-btn--destructive"
-              aria-disabled={formIsBlank ? "true" : undefined}
-              onClick={handleClear}
-            >
-              Clear
-            </button>
+            {formIsBlank ? null : (
+              <button
+                type="button"
+                className="oltra-btn oltra-btn--destructive"
+                onClick={handleClear}
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
       </form>

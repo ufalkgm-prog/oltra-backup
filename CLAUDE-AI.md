@@ -28,7 +28,7 @@ One `AiModeButton`, two placements, no toggle — the concierge opens *over* the
 * **`inline`** — landing and Hotels, via an optional `trailingControl` slot on `StructuredDestinationField`, so the shared component knows nothing about the concierge. The slot sits *inside* the chip box with `margin-left: auto`, so when chips wrap the button follows.
 * **`corner`** — Flights, Restaurants, Inspire: **its own row at the top of the frame, in normal flow, NOT an absolute corner.** Each of those frames opens with a full-width control that an absolute button overlapped at some width. A row costs 34px and cannot overlap anything.
 
-Exit is a labelled button, not a bare glyph — the visitor is mid-conversation and needs to know the exchange survives leaving.
+Close (labelled "Exit" until 2026-09-28) is a labelled button, not a bare glyph — the visitor is mid-conversation and needs to know the exchange survives leaving.
 
 The modal reuses the hotel photo lightbox's pattern: `createPortal` to `document.body`, `.oltra-modal-scrim`, `.oltra-modal-panel`, Esc and click-outside. **Portalled for a concrete reason**: `.oltra-page__content` is `position: relative; z-index: 1` and therefore its own stacking context, so a panel inside it can never clear the fixed header however high its z-index (§45). The one addition is **blur** — `--oltra-modal-blur`, on this scrim only, since blurring behind the photo lightbox would blur the photo's own context.
 

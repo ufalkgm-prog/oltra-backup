@@ -2803,14 +2803,17 @@ export default function HotelsView(props: {
                     Filters
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={clearSearch}
-                    aria-disabled={nothingToClear ? "true" : undefined}
-                    className="oltra-btn oltra-btn--destructive"
-                  >
-                    Clear
-                  </button>
+                  {/* Not shown while there is nothing to clear (Ulrik,
+                      2026-09-28); Filters and Search keep the row's ends. */}
+                  {nothingToClear ? null : (
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      className="oltra-btn oltra-btn--destructive"
+                    >
+                      Clear
+                    </button>
+                  )}
 
                   <button
                     type="submit"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { aiResultsAreCurrent, useAiSearch } from "@/lib/ai/aiSearchStore";
 import { useIsMember } from "@/lib/members/useIsMember";
@@ -33,7 +33,40 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
     if (resultsShown) setHidden(true);
   }, [resultsShown]);
 
-  if (hidden || resultsShown || isMember !== false) return null;
+  const visible = !hidden && !resultsShown && isMember === false;
+
+  /* The letter scrolls with no visible scrollbar, so arrows say there is more
+     (Ulrik, 2026-09-28): down at the bottom centre until the end is reached,
+     up at the top only once it has been scrolled. Re-read on scroll and when
+     the box or its text changes size. */
+  const letterRef = useRef<HTMLDivElement | null>(null);
+  const [scrollState, setScrollState] = useState({ canUp: false, canDown: false });
+  useEffect(() => {
+    const el = letterRef.current;
+    if (!visible || !el) return;
+    const update = () => {
+      const canUp = el.scrollTop > 2;
+      const canDown = el.scrollTop + el.clientHeight < el.scrollHeight - 2;
+      setScrollState((prev) =>
+        prev.canUp === canUp && prev.canDown === canDown ? prev : { canUp, canDown }
+      );
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, [visible]);
+
+  const scrollLetter = (direction: 1 | -1) => {
+    const el = letterRef.current;
+    if (el) el.scrollBy({ top: direction * el.clientHeight * 0.7, behavior: "smooth" });
+  };
+
+  if (!visible) return null;
 
   return (
     /* The whole panel is the letter: a pale sheet, no dark frame, with the
@@ -60,14 +93,38 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
           aria-label="Close introduction"
           onClick={() => setHidden(true)}
         >
-          ×
+          {/* Drawn, not the "×" character: a glyph sits wherever the font's
+              metrics put it, which was off-centre in the circle (Ulrik,
+              2026-09-28). 12px, a little larger than the glyph was. */}
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <path
+              d="M2 2 L10 10 M10 2 L2 10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
       </div>
 
       {/* The letter's text, scrolling under the header row with no visible
           scrollbar. Focusable so the keyboard can scroll it too, since
           nothing shows that it scrolls. */}
+      <div className={styles.introBody}>
+      {scrollState.canUp ? (
+        <button
+          type="button"
+          className={`${styles.introScroll} ${styles.introScrollUp}`}
+          aria-label="Scroll up"
+          onClick={() => scrollLetter(-1)}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M2 8 L6 4 L10 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      ) : null}
       <div
+        ref={letterRef}
         className={styles.introLetter}
         tabIndex={0}
         role="region"
@@ -81,6 +138,19 @@ export default function LandingIntro({ summaryShown }: { summaryShown: boolean }
         ))}
 
         <p className={styles.introClosing}>{LANDING_INTRO.closing}</p>
+      </div>
+      {scrollState.canDown ? (
+        <button
+          type="button"
+          className={`${styles.introScroll} ${styles.introScrollDown}`}
+          aria-label="Scroll down"
+          onClick={() => scrollLetter(1)}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M2 4 L6 8 L10 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      ) : null}
       </div>
     </section>
   );

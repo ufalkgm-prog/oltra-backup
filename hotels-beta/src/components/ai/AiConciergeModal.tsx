@@ -300,7 +300,7 @@ export default function AiConciergeModal() {
               </button>
             ) : null}
             <button type="button" className={`oltra-btn ${styles.action}`} onClick={close}>
-              Exit
+              Close
             </button>
           </div>
         </div>
