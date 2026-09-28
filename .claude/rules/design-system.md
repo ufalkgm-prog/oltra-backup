@@ -94,6 +94,10 @@ Ulrik replaced the sage `#A8C4A2` with orange earlier the same day, then replace
 * **`.oltra-over-image .oltra-btn--ai` must carry the fill explicitly.** It outranks `.oltra-btn--ai`, so deleting the old transparent reset did not hand the button its orange — it handed it `--oltra-btn-over-image-bg`, the site background, and "Ask AI" went dark on the landing photo.
 * **Passive resets `background: transparent`** (`AiModeButton.module.css`). An orange pill that opens nothing would read as the live one.
 
+### A hotel we cannot sell, on the small hotel cards (Ulrik, 2026-09-28)
+
+`HotelSmallCard` (landing and concierge) no longer uses Neutral. It shows an ordinary condensed **BOOK**, the same size as SAVE, with the destructive rim via its own class **`.oltra-btn--offsite`** (not `--destructive`, which it is not), and above it in 10px white italic *"Booking not yet possible here – book on website"*. The Neutral row above still describes the Hotels page. On the same cards, **BOOK is passive when the dates have no availability** ("No availability for these dates").
+
 ### The two entry points part ways (Ulrik, 2026-09-23)
 
 The header "AI Concierge" is **transparent with a white label and, since 2026-09-26 (Ulrik), the standard sage rim** (it was white), no orange at all (`.oltra-btn--ai-concierge`). The landing field "Ask AI" is a **normal active button** — transparent, sage rim, standard label — at the AI variant's smaller size and still bold italic (`.oltra-btn--ai-ask`). Both are modifiers on `.oltra-btn--ai` in `oltra-theme.css`, applied by `AiModeButton`. "Become a member" is a **green pill since 2026-09-26 (Ulrik)** — sage fill `--oltra-button-active-bg` with the sage primary rim, scoped in `page.module.css` (`.introPanel .introCta`); it keeps the AI variant only for its shape. So no live button wears the orange fill any more; everything above about the filled variant describes the `.oltra-btn--ai` base, kept as reference.

@@ -56,10 +56,10 @@ export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
  *         their place on the right but sit at the BOTTOM, so a long name
  *         extends above them rather than being squeezed beside them. "2 rooms –
  *         7 nights" stays on one line under the price.
- *   3     the highlights follow the name and location, with BOOK and SAVE
- *         side by side under them; rooms and nights go on two lines under the
- *         price, without the dash, and the name comes down to the price's
- *         13px.
+ *   3     BOOK over SAVE under the price, below the photo, and the
+ *         highlights follow the name and location; rooms and nights go on two
+ *         lines under the price, without the dash, and the name comes down to
+ *         the price's 13px.
  *
  * `basis` sizes the rooms/nights line to its column: at 104px "2 ROOMS – 14
  * NIGHTS" only fits one line at 9px with almost no tracking. */
@@ -151,7 +151,7 @@ type Props = {
   href?: string;
   availability?: SmallCardAvailability;
   /** The hotel's own booking link or website — used ONLY for a hotel we
-   * cannot sell, as "Book on website". */
+   * cannot sell, behind the orange-rimmed BOOK. */
   bookingHref?: string | null;
   /** Supplied by the caller so the card doesn't have to know about trips - it
    * is a SaveToTripControl, which owns its own popup picker. */
@@ -189,16 +189,16 @@ export default function HotelSmallCard({
   // sells this hotel, so "No availability" would wrongly read as "sold out".
   const isPassive = hotel.ratehawk_status === "passive";
 
-  /* At three frames BOOK and SAVE sit side by side under the highlights. */
+  /* At three frames BOOK and SAVE go under the price, below the photo. */
   const stacked = columns === 3;
   /* "2 rooms – 7 nights" on one line, or rooms over nights with no dash. */
   const basisLines = !priceBasis ? [] : stacked ? priceBasis.split(" – ") : [priceBasis];
 
   const rightBlock = (() => {
     if (isPassive) {
-      // With a website to send the guest to, the caveat is the button label
-      // below (one neutral button instead of a note plus BOOK), so it is not
-      // repeated here. Without one, the note is all there is to say.
+      // With a website to send the guest to, the caveat sits over the BOOK
+      // button in the actions, so it is not repeated here. Without one, the
+      // note is all there is to say.
       if (bookingHref) return null;
       return (
         <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
@@ -280,59 +280,59 @@ export default function HotelSmallCard({
   // the guest chooses a room — never to the hotel's own site, which is what it
   // used to open. Only a hotel we cannot sell sends the guest away, and says so.
   const bookableHere = isBookableHere(hotel);
+  /* A hotel we cannot sell gets an ordinary BOOK, the same size as SAVE, with
+     the orange-red rim and the caveat above it in white italic (Ulrik,
+     2026-09-28). It replaced a neutral "Book on website" button whose label
+     wrapped and made it taller than SAVE. */
   const topAction = bookableHere
     ? href
-      ? { label: "BOOK", neutral: false, go: () => window.location.assign(href) }
+      ? { offsite: false, go: () => window.location.assign(href) }
       : null
     : bookingHref
       ? {
-          label: "Book on website",
-          neutral: true,
+          offsite: true,
           go: () => window.open(bookingHref, "_blank", "noopener,noreferrer"),
         }
       : null;
+  /* Nothing to book on these dates: BOOK stays, passive, and says why. */
+  const noAvailability =
+    Boolean(topAction && !topAction.offsite) && availability?.status === "unavailable";
 
   const actions =
     topAction || renderSaveControl ? (
       <div
-        className={
-          stacked
-            ? "oltra-btn-row flex flex-wrap justify-end gap-1.5"
-            : "flex w-full flex-col gap-1.5"
-        }
+        className={`flex flex-col gap-1.5 ${stacked ? `mx-auto ${layout.right}` : "w-full"}`}
         onClick={(e) => e.preventDefault()}
       >
+        {topAction?.offsite ? (
+          <div className="text-center text-[10px] italic leading-tight text-[color:var(--oltra-text-primary)]">
+            Booking not yet possible here – book on website
+          </div>
+        ) : null}
         {topAction ? (
-          <div className={stacked ? `flex ${layout.right}` : "contents"}>
           <button
             type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              if (noAvailability) return;
               topAction.go();
             }}
+            aria-disabled={noAvailability || undefined}
+            data-reason={noAvailability ? "No availability for these dates" : undefined}
             /* Sizing lives in .oltra-btn--condensed, not an inline style: the
                Save control below it is rendered by the caller, and the two have
-               to match. A hotel we cannot sell gets the neutral button instead
-               of BOOK, carrying its caveat as the label. */
+               to match. */
             className={`oltra-btn ${
-              topAction.neutral ? "oltra-btn--neutral " : ""
+              topAction.offsite ? "oltra-btn--offsite " : ""
             }oltra-btn--condensed oltra-btn--block${
               renderSaveControl ? " oltra-btn--stack-top" : ""
             }`}
           >
-            {topAction.label}
+            BOOK
           </button>
-          </div>
         ) : null}
-        {/* Each button at the action width, side by side at three frames
-            (Ulrik, 2026-09-28) and stacked otherwise. The trip picker is
-            portalled and measures its own trigger, so it anchors either way. */}
-        {renderSaveControl ? (
-          <div className={stacked ? `flex ${layout.right}` : "contents"}>
-            {renderSaveControl()}
-          </div>
-        ) : null}
+        {renderSaveControl ? renderSaveControl() : null}
       </div>
     ) : null;
 
@@ -367,6 +367,8 @@ export default function HotelSmallCard({
           )}
         </div>
         {rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
+        {/* Three frames: BOOK over SAVE, under the price. */}
+        {stacked && actions ? <div className="mt-2">{actions}</div> : null}
       </div>
 
       <div className="flex min-w-0 flex-col">
@@ -395,11 +397,7 @@ export default function HotelSmallCard({
         </div>
 
         {stacked || !actions ? (
-          <>
-            {highlights}
-            {/* Three frames: BOOK and SAVE side by side under the text. */}
-            {stacked && actions ? <div className="mt-2">{actions}</div> : null}
-          </>
+          highlights
         ) : (
           /* flex-1 so this row takes whatever height the card has left, and
              the actions sit at its foot — under a long name, not beside it. */

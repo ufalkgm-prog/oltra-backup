@@ -362,7 +362,7 @@ export default function LandingSummary({
     }
 
     // Passive hotels are left out of the request - Ratehawk cannot price them
-    // for any date, so the card shows "Book on website" instead
+    // for any date, so the card sends the guest to the hotel's website instead
     // and asking would be pure latency.
     const withIds = visibleHotels
       .filter((h) => h.ratehawk_status !== "passive")

@@ -1037,6 +1037,16 @@ button.oltra-select {
   --btn-rim-press: var(--oltra-btn-destructive-rim-press);
 }
 
+/* BOOK for a hotel we cannot sell, which leaves for the hotel's own site
+   (Ulrik, 2026-09-28): the destructive rim, standard label. A separate class
+   rather than --destructive, because it is not one and should not inherit
+   whatever that variant gains later. */
+.oltra-btn--offsite {
+  --btn-rim: var(--oltra-btn-destructive-rim);
+  --btn-rim-hover: var(--oltra-btn-destructive-rim-hover);
+  --btn-rim-press: var(--oltra-btn-destructive-rim-press);
+}
+
 .oltra-btn--neutral {
   --btn-rim: var(--oltra-btn-neutral-rim);
   --btn-rim-hover: var(--oltra-btn-neutral-rim-hover);
@@ -1212,17 +1222,6 @@ button.oltra-select {
   bottom: calc((var(--oltra-btn-hit-size) - var(--oltra-btn-condensed-height)) / -2);
 }
 
-/* The same pair side by side (the three-frame hotel card): the stack split
-   is vertical and means nothing here, so each hit area goes back to the
-   standard centred 44px. At the 60px card width the two do not overlap. */
-.oltra-btn-row .oltra-btn--stack-top::after,
-.oltra-btn-row .oltra-btn--stack-bottom::after {
-  top: 50%;
-  bottom: auto;
-  height: 100%;
-  min-height: var(--oltra-btn-hit-size);
-  transform: translate(-50%, -50%);
-}
 
 /* Over photography: a solid fill of the site background and no shadow, so the
    rim and label sit on the same ground as everywhere else however bright the
