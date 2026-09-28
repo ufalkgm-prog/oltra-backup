@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import type { UIMessage } from "ai";
-import { rememberConciergeParty } from "./conciergeStays";
+import { isConciergeStay, rememberConciergeParty } from "./conciergeStays";
 import {
   clearHotelFlightDatesIf,
   clearHotelFlightPartyIf,
@@ -477,7 +477,12 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
 
   const clear = useCallback(() => {
     const { from, to, destination, adults, kids, bedrooms } = latestQuery.current;
-    if (from || to) clearHotelFlightDatesIf(from, to);
+    /* Only dates the concierge itself presented — the test Landing and
+       Hotels use (isConciergeStay). Dates changed by hand after the answer
+       are the visitor's: Clear used to take them out of the shared search
+       while the landing form kept them, so the two pages disagreed
+       (2026-09-28). */
+    if ((from || to) && isConciergeStay(from, to)) clearHotelFlightDatesIf(from, to);
     // And the party it set, the same way (2026-09-24).
     clearHotelFlightPartyIf(adults, kids, bedrooms);
     // And the city the conversation made the site's destination (the mirror

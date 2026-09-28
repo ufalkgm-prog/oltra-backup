@@ -136,8 +136,15 @@ function buildInitialTokens(
     out.push({ type: "admin_region", label: adminRegion, value: adminRegion });
   }
 
+  /* Not beside a city in that country (2026-09-28). The concierge saves the
+     country with the city, so Paris arrived as "City: Paris · Country:
+     France", the second chip saying nothing the first did not. A country
+     with no city of its own in the box is still a chip. */
   const country = normalizeParam(searchParams.country);
-  if (country && dataset.hotels.some((hotel) => hotel.country === country)) {
+  const cityIsInCountry =
+    Boolean(city) &&
+    dataset.hotels.some((hotel) => hotel.city === city && hotel.country === country);
+  if (country && !cityIsInCountry && dataset.hotels.some((hotel) => hotel.country === country)) {
     out.push({ type: "country", label: country, value: country });
   }
 

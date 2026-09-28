@@ -197,6 +197,21 @@ export default function LandingSearchPanel({
      the flag is set by the field's handlers, never by the answer's own dates
      landing in the form. */
   const aiDatesLocked = showsAiResults && aiMultiStop;
+
+  /* DATES ARE SUBMITTED AS A RANGE, NEVER HALF OF ONE (2026-09-28). Picking a
+     check-in clears the check-out, and submitting that half range 220ms later
+     meant its navigation landed after the check-out had been picked — and the
+     URL sync then put the empty check-out back over it. Now the search runs
+     once both dates are there, or both are cleared. */
+  const dateSubmitPendingRef = useRef(false);
+  useEffect(() => {
+    if (!dateSubmitPendingRef.current) return;
+    if (Boolean(fromValue) !== Boolean(toValue)) return;
+    dateSubmitPendingRef.current = false;
+    scheduleAutoSubmit();
+    // scheduleAutoSubmit reads the form when it fires, not these values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromValue, toValue]);
   /* THE CHECKBOXES SAY WHAT THE ANSWER SHOWS (2026-09-28). While the
      concierge's results are on the page, each box is ticked exactly when its
      pane is showing, and locked — a trip in several places has no dates in
@@ -794,13 +809,13 @@ export default function LandingSearchPanel({
               lockedLabel={aiDatesLocked ? "AI curated" : undefined}
               onFromChange={(value) => {
                 datesEditedRef.current = true;
+                dateSubmitPendingRef.current = true;
                 setFromValue(value);
-                scheduleAutoSubmit();
               }}
               onToChange={(value) => {
                 datesEditedRef.current = true;
+                dateSubmitPendingRef.current = true;
                 setToValue(value);
-                scheduleAutoSubmit();
               }}
             />
             {stayTooLong ? (
