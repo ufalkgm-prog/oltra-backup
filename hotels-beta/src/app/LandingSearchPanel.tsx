@@ -14,7 +14,13 @@ import { guessResidencyFromLocale } from "@/lib/countries";
 import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { getCityForAirportIata } from "@/lib/cityAirports";
-import { clearHotelFlightDestination, clearHotelFlightSearch, kidAgeFields, mergeHotelFlightSearch } from "@/lib/searchSession";
+import {
+  clearHotelFlightDestination,
+  clearHotelFlightSearch,
+  readHotelFlightSearch,
+  recordSearchEntry,
+} from "@/lib/searchSession";
+import { aiPanes } from "@/lib/ai/resultPanes";
 import { DEFAULT_PARTY, isConciergeParty, isConciergeStay } from "@/lib/ai/conciergeStays";
 import {
   clampAdultsCount,
@@ -93,6 +99,8 @@ export default function LandingSearchPanel({
     searchedAt,
     results: aiResults,
     clearSignal: aiClearSignal,
+    setStopDates,
+    ready: aiReady,
   } = useAiSearch();
 
   /* While the frames below are the concierge's, the destination box says so
@@ -182,6 +190,30 @@ export default function LandingSearchPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentedAt, searchedAt, aiQuery.vertical, aiQuery.from, aiQuery.to, aiQuery.adults, aiQuery.kids, aiQuery.bedrooms, aiChildrenAgesKey, aiMultiStop]);
 
+  /* A single-place answer keeps its hotels when the dates change (Ulrik,
+     2026-09-28): dates picked here move the answer's stay, so the same curated
+     hotels are priced on the new nights, here and on every page, and the
+     "AI curated results" pill stays. Only dates the visitor picked count —
+     the flag is set by the field's handlers, never by the answer's own dates
+     landing in the form. */
+  const aiDatesLocked = showsAiResults && aiMultiStop;
+  /* THE CHECKBOXES SAY WHAT THE ANSWER SHOWS (2026-09-28). While the
+     concierge's results are on the page, each box is ticked exactly when its
+     pane is showing, and locked — a trip in several places has no dates in
+     the form, which greyed Flights out beside a Flights pane full of flights.
+     The visitor's own choices are kept underneath and come back when the
+     pill is removed. */
+  const aiLockedPanes = showsAiResults ? aiPanes(aiResults) : null;
+  const AI_LOCK_REASON = "Set by the AI curated results";
+  const datesEditedRef = useRef(false);
+  useEffect(() => {
+    if (!datesEditedRef.current) return;
+    if (!showsAiResults || aiMultiStop) return;
+    if (!fromValue || !toValue) return;
+    datesEditedRef.current = false;
+    setStopDates(0, fromValue, toValue);
+  }, [fromValue, toValue, showsAiResults, aiMultiStop, setStopDates]);
+
   const [includeHotels, setIncludeHotels] = useState(
     normalizeParam(initialSearchParams.include_hotels) !== "0"
   );
@@ -252,18 +284,41 @@ export default function LandingSearchPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSearchContent]);
 
-  // On mount: if the URL has no params, restore the last search from sessionStorage
-  // so navigating away and back doesn't clear the form.
+  // On mount: if the URL has no params, restore the latest search so
+  // navigating away and back doesn't clear the form.
+  //
+  // THE SHARED SEARCH, NOT THIS PAGE'S OWN COPY (Ulrik, 2026-09-28): the latest
+  // entry may have been made on the Hotels page, and it is that search —
+  // destination, tags, dates, party — that should arrive here. This page's own
+  // copy supplies only what the shared one does not hold: which of Hotels,
+  // Flights and Restaurants are ticked.
   useEffect(() => {
     if (buildComparableSearchKey(initialSearchParams)) return;
     try {
       const raw = sessionStorage.getItem(SEARCH_STATE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as PageSearchParams;
+      const own = raw ? (JSON.parse(raw) as PageSearchParams) : {};
+      const shared = readHotelFlightSearch();
+      const saved: PageSearchParams = shared
+        ? {
+            ...Object.fromEntries(
+              Object.entries(shared).filter(
+                ([key]) => !["hotelId", "savedAt", "styles", "awards", "affiliation", "local_area", "min_price", "max_price"].includes(key)
+              )
+            ),
+            include_hotels: own.include_hotels,
+            include_flights: own.include_flights,
+            include_restaurants: own.include_restaurants,
+          }
+        : own;
       if (!buildComparableSearchKey(saved)) return;
       setEffectiveSearchParams(saved);
-      setFromValue(normalizeParam(saved.from));
-      setToValue(normalizeParam(saved.to));
+      /* Not the dates of a trip in several places: the shared search holds
+         the first stay's, and this form shows "AI curated" for that trip
+         rather than one stay's dates as though they were the trip's. */
+      if (!(showsAiResults && aiMultiStop)) {
+        setFromValue(normalizeParam(saved.from));
+        setToValue(normalizeParam(saved.to));
+      }
       setGuestSelection(readGuestSelection(saved));
       setIncludeHotels(normalizeParam(saved.include_hotels) !== "0");
       setHomeAirport(normalizeParam(saved.origin));
@@ -331,43 +386,49 @@ export default function LandingSearchPanel({
     }
   }, [homeAirport, homeAirportCity]);
 
-  // Mirrors the equivalent save effects in HotelsView/FlightsView - keeps
-  // the shared cross-page session (read by SiteHeader's nav links, and by
-  // Hotels/Flights on a bare visit) in sync with the landing search,
-  // including the departure airport, which previously had no path into
-  // that shared session at all.
+  /* Records this page's search as the latest entry (recordSearchEntry) —
+     read by SiteHeader's nav links and by Hotels/Flights on a bare visit.
+     From the URL, not the form: every change here is auto-submitted into the
+     URL, and a bare visit restores into the form before anything is
+     submitted, so the URL holds only searches actually made or arrived with.
+     Recording the form on mount would write an empty search over the latest
+     one before the restore above had applied (2026-09-28). */
   useEffect(() => {
-    const city = normalizeParam(effectiveSearchParams.city);
-    const state = normalizeParam(effectiveSearchParams.state);
-    const admin_region = normalizeParam(effectiveSearchParams.admin_region);
-    const country = normalizeParam(effectiveSearchParams.country);
-    const macro_region = normalizeParam(effectiveSearchParams.macro_region);
-    const region = normalizeParam(effectiveSearchParams.region);
-    const q = normalizeParam(effectiveSearchParams.q);
-
-    const hasAnythingToSave = Boolean(
-      city || state || admin_region || country || macro_region || region || q ||
-        fromValue || toValue || homeAirport
-    );
-
-    if (!hasAnythingToSave) return;
-
-    mergeHotelFlightSearch({
-      q,
-      city,
-      state,
-      admin_region,
-      country,
-      macro_region,
-      region,
-      from: fromValue,
-      to: toValue,
-      adults: String(guestSelection.adults),
-      kids: String(guestSelection.kids),
-      ...kidAgeFields(guestSelection.kidAges),
-      origin: homeAirport,
+    if (!buildComparableSearchKey(initialSearchParams)) return;
+    /* Not before the concierge store has loaded from sessionStorage — until
+       then a current answer reads as none, and on a reload this recorded the
+       empty destination over the conversation's city (measured 2026-09-28) —
+       and not while its answer is showing: the answer is not in this URL, so
+       recording it would replace the conversation's destination in the shared
+       search with this page's empty one. */
+    if (!aiReady || showsAiResults) return;
+    const pick = (key: string) => normalizeParam(initialSearchParams[key]);
+    recordSearchEntry({
+      q: pick("q"),
+      city: pick("city"),
+      state: pick("state"),
+      admin_region: pick("admin_region"),
+      country: pick("country"),
+      region: pick("region"),
+      macro_region: pick("macro_region"),
+      activities: pick("activities"),
+      settings: pick("settings"),
+      from: pick("from"),
+      to: pick("to"),
+      adults: pick("adults"),
+      kids: pick("kids"),
+      bedrooms: pick("bedrooms"),
+      kid_age_1: pick("kid_age_1"),
+      kid_age_2: pick("kid_age_2"),
+      kid_age_3: pick("kid_age_3"),
+      kid_age_4: pick("kid_age_4"),
+      kid_age_5: pick("kid_age_5"),
+      kid_age_6: pick("kid_age_6"),
+      origin: pick("origin"),
     });
-  }, [effectiveSearchParams, fromValue, toValue, guestSelection, homeAirport]);
+    // Keyed on the URL's content, like the sync above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSearchContent, showsAiResults, aiReady]);
 
   useEffect(() => {
     if (!airportPopoverOpen) return;
@@ -726,11 +787,18 @@ export default function LandingSearchPanel({
               fromValue={fromValue}
               toValue={toValue}
               fromMinDate={todayIso}
+              /* A trip in several places answered by the concierge has no one
+                 date range: each stay's dates are with its hotels below, and
+                 the field says so rather than being editable (Ulrik,
+                 2026-09-28). */
+              lockedLabel={aiDatesLocked ? "AI curated" : undefined}
               onFromChange={(value) => {
+                datesEditedRef.current = true;
                 setFromValue(value);
                 scheduleAutoSubmit();
               }}
               onToChange={(value) => {
+                datesEditedRef.current = true;
                 setToValue(value);
                 scheduleAutoSubmit();
               }}
@@ -801,10 +869,19 @@ export default function LandingSearchPanel({
                 SiteHeader's saved-session nav links). */}
             <input type="hidden" name="origin" value={homeAirport} />
 
-            <label className={styles.includeChecksItem}>
+            <label
+              className={[
+                styles.includeChecksItem,
+                aiLockedPanes ? styles.includeChecksItemDisabled : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              title={aiLockedPanes ? AI_LOCK_REASON : undefined}
+            >
               <input
                 type="checkbox"
-                checked={includeHotels}
+                checked={aiLockedPanes ? aiLockedPanes.hotels : includeHotels}
+                disabled={Boolean(aiLockedPanes)}
                 onChange={(e) => {
                   setIncludeHotels(e.target.checked);
                   scheduleAutoSubmit();
@@ -817,20 +894,22 @@ export default function LandingSearchPanel({
               <label
                 className={[
                   styles.includeChecksItem,
-                  !flightsCanActivate ? styles.includeChecksItemDisabled : "",
+                  aiLockedPanes || !flightsCanActivate ? styles.includeChecksItemDisabled : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
                 title={
-                  !flightsCanActivate
-                    ? "Fill in city or hotel, dates and guests to activate"
-                    : undefined
+                  aiLockedPanes
+                    ? AI_LOCK_REASON
+                    : !flightsCanActivate
+                      ? "Fill in city or hotel, dates and guests to activate"
+                      : undefined
                 }
               >
                 <input
                   type="checkbox"
-                  checked={effectiveIncludeFlights}
-                  disabled={!flightsCanActivate}
+                  checked={aiLockedPanes ? aiLockedPanes.flights : effectiveIncludeFlights}
+                  disabled={Boolean(aiLockedPanes) || !flightsCanActivate}
                   onChange={(e) => {
                     const checked = e.target.checked;
                     setIncludeFlights(checked);
@@ -850,7 +929,7 @@ export default function LandingSearchPanel({
                     that changes it. */}
                 <span className={styles.flightsCheckLabel}>
                   Flights
-                  {flightsCanActivate && effectiveIncludeFlights ? (
+                  {flightsCanActivate && effectiveIncludeFlights && !aiLockedPanes ? (
                     <>
                       {homeAirport ? " assume you depart from " : " "}
                       <button
@@ -902,14 +981,14 @@ export default function LandingSearchPanel({
               title={
                 !restaurantsCanActivate
                   ? showsAiResults
-                    ? "Restaurants come with the AI curated results"
+                    ? AI_LOCK_REASON
                     : "Choose a city we hold restaurants in to activate"
                   : undefined
               }
             >
               <input
                 type="checkbox"
-                checked={effectiveIncludeRestaurants}
+                checked={aiLockedPanes ? aiLockedPanes.restaurants : effectiveIncludeRestaurants}
                 disabled={!restaurantsCanActivate}
                 onChange={(e) => {
                   setIncludeRestaurants(e.target.checked);

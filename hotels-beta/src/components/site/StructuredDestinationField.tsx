@@ -773,6 +773,12 @@ export default function StructuredDestinationField({
   const settingTokens = tokens.filter((token) => token.type === "setting");
 
   const isSingleHotel = tokens.length === 1 && tokens[0].type === "hotel";
+  /* NOTHING CAN BE ADDED BESIDE "AI CURATED RESULTS" (Ulrik, 2026-09-28). The
+     curated set is the concierge's answer, not a search that can be narrowed,
+     so there is no text input while it shows: removing the pill (its ×) is the
+     one way back to an ordinary search, and it also drops the set from the
+     search memory. Typing used to replace the pill silently. */
+  const acceptsInput = !isSingleHotel && !showCurated;
 
   // No helper beside the "AI curated results" token either: the token is the
   // destination, and the helper read as a prompt to type one (Ulrik, 2026-09-24).
@@ -973,7 +979,7 @@ export default function StructuredDestinationField({
           ref={chipBoxRef}
           className={styles.chipInputBox}
           onClick={() => {
-            if (!isSingleHotel) inputRef.current?.focus();
+            if (acceptsInput) inputRef.current?.focus();
           }}
         >
           {placeTrailing([
@@ -995,7 +1001,7 @@ export default function StructuredDestinationField({
               <span className={styles.tokenPillClose}>×</span>
             </button>
           )),
-          ...(!isSingleHotel ? [
+          ...(acceptsInput ? [
             <input
               key="input"
               data-flow-item=""

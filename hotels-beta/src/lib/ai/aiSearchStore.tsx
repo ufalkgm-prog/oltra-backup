@@ -18,6 +18,7 @@ import {
   clearHotelFlightDestinationIf,
   kidAgeFields,
   mergeHotelFlightSearch,
+  readHotelFlightSearch,
 } from "@/lib/searchSession";
 import { expandCityAliases, hotelCityFor } from "@/lib/locationAliases";
 import {
@@ -71,6 +72,10 @@ type Persisted = {
    * next search. */
   presentedAt: number;
   searchedAt: number;
+  /* When a stay's dates were last changed by hand (setStopDates). Newer than
+   * presentedAt means the answer's own words describe dates that have since
+   * moved, and the panel says so (2026-09-28). */
+  datesChangedAt: number;
 };
 
 const EMPTY: Persisted = {
@@ -81,6 +86,7 @@ const EMPTY: Persisted = {
   messages: [],
   presentedAt: 0,
   searchedAt: 0,
+  datesChangedAt: 0,
 };
 
 /* The results half of the store. Deliberately does NOT carry `messages`:
@@ -110,6 +116,9 @@ type AiSearchContextValue = Omit<Persisted, "messages"> & {
   /** Called when the visitor runs a classic search, so the landing page knows
    * that is the more recent of the two. */
   markClassicSearch: () => void;
+  /** New dates for one stay of the answer — 0 is the first place (the query's
+   * stay), 1.. the later stops — keeping its hotels. See setStopDates. */
+  setStopDates: (stop: number, from: string, to: string) => void;
   clear: () => void;
   /** Whether there is a transcript at all. A boolean rather than the message
    * list itself, deliberately: the modal header needs to know whether to offer
@@ -169,6 +178,7 @@ function read(): Persisted {
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
       presentedAt: typeof parsed.presentedAt === "number" ? parsed.presentedAt : 0,
       searchedAt: typeof parsed.searchedAt === "number" ? parsed.searchedAt : 0,
+      datesChangedAt: typeof parsed.datesChangedAt === "number" ? parsed.datesChangedAt : 0,
     };
   } catch {
     return EMPTY;
@@ -187,12 +197,17 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
   const [conciergeOpen, setConciergeOpen] = useState(false);
   const [pageContext, setPageContext] = useState<AiPageContext | null>(null);
   const hydrated = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   /* "place" mirrors the destination only: see STAY_FIELDS. */
   const mirrorPending = useRef<false | "all" | "place">(false);
   /* The hotel an answer's walking times were measured from, mirrored as the
      session's current hotel so the Restaurants page and the header link mark
      that one — not the hotel last selected on Hotels (2026-09-24). */
   const mirrorHotelId = useRef("");
+  /* A place-only mirror that also replaces the dates — a move to a new place
+     without a stay of its own (see setPresentation). */
+  const mirrorDates = useRef(false);
 
   useEffect(() => {
     setState(read());
@@ -243,12 +258,27 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       const aboutStay = Boolean(
         results.hotelIds?.length || results.flights?.length || results.laterStops?.length
       );
+      /* Except the dates of a MOVE: a reply that names a new place and shows
+         nothing sends that place's own dates, or none (2026-09-28) — the stay
+         in the store belongs to the place before, and was going with Paris
+         onto every page as Rome's 6-9 December. The party is still kept. */
+      const movesPlace = Boolean(
+        !aboutStay &&
+          query.destination?.city &&
+          query.destination.city !== stateRef.current.query.destination.city &&
+          ("from" in query || "to" in query)
+      );
       if (!aboutStay) {
         query = Object.fromEntries(
-          Object.entries(query).filter(([key]) => !(STAY_FIELDS as readonly string[]).includes(key))
+          Object.entries(query).filter(
+            ([key]) =>
+              !(STAY_FIELDS as readonly string[]).includes(key) ||
+              (movesPlace && (key === "from" || key === "to"))
+          )
         ) as Partial<AiQueryState>;
       }
       mirrorPending.current = aboutStay ? "all" : "place";
+      mirrorDates.current = movesPlace;
       mirrorHotelId.current = results.nearHotelId ? String(results.nearHotelId) : "";
       setState((prev) => {
         /* A NEW CITY TAKES THE OLD ONE'S RESULTS WITH IT (2026-09-23). Facets
@@ -333,6 +363,12 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
     const hotelId = mirrorHotelId.current;
     mirrorHotelId.current = "";
     if (placeOnly) {
+      if (mirrorDates.current) {
+        mirrorDates.current = false;
+        const shared = readHotelFlightSearch();
+        if (shared?.from || shared?.to) clearHotelFlightDatesIf(shared.from ?? "", shared.to ?? "");
+        if (from || to) mergeHotelFlightSearch({ from, to });
+      }
       mergeHotelFlightSearch({
         city: hotelCityFor(destination.city),
         state: destination.area,
@@ -368,6 +404,62 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
 
   const markClassicSearch = useCallback(() => {
     setState((prev) => ({ ...prev, searchedAt: Date.now() }));
+  }, []);
+
+  /* NEW DATES FOR ONE STAY, THE HOTELS KEPT (Ulrik, 2026-09-28). Changing the
+     dates of an answer does not end it: the same curated hotels are priced on
+     the new stay, on every page. The first stay is the query's own dates and
+     is mirrored into the shared search (so Flights and a bare Hotels visit
+     follow); a later stop changes only its own entry in laterStops.
+
+     Flight legs that were on the old dates move with them — a departure on
+     the stay's old first night or last day, a return on its last day — so the
+     Flights page is handed journeys that still meet the hotels. Other stays
+     are left alone, even where that now leaves a gap: only the stay the
+     visitor edited changes. */
+  const setStopDates = useCallback((stop: number, from: string, to: string) => {
+    // Read from the latest committed state, not from inside the updater: React
+    // may run an updater later, so a flag set there cannot be trusted here.
+    const current = stateRef.current;
+    if (stop === 0 && (current.query.from !== from || current.query.to !== to)) {
+      mirrorPending.current = "all";
+    }
+    setState((prev) => {
+      const laterStops = prev.results.laterStops ?? [];
+      const oldFrom = stop === 0 ? prev.query.from : laterStops[stop - 1]?.checkIn;
+      const oldTo = stop === 0 ? prev.query.to : laterStops[stop - 1]?.checkOut;
+      if (oldFrom === undefined || oldTo === undefined) return prev;
+      if (oldFrom === from && oldTo === to) return prev;
+      const flights = prev.results.flights.map((leg) => ({
+        ...leg,
+        departureDate:
+          oldFrom && leg.departureDate === oldFrom
+            ? from
+            : oldTo && leg.departureDate === oldTo
+              ? to
+              : leg.departureDate,
+        returnDate: oldTo && leg.returnDate === oldTo ? to : leg.returnDate,
+      }));
+      if (stop === 0) {
+        return {
+          ...prev,
+          datesChangedAt: Date.now(),
+          query: { ...prev.query, from, to },
+          results: { ...prev.results, flights },
+        };
+      }
+      return {
+        ...prev,
+        datesChangedAt: Date.now(),
+        results: {
+          ...prev.results,
+          flights,
+          laterStops: laterStops.map((entry, index) =>
+            index === stop - 1 ? { ...entry, checkIn: from, checkOut: to } : entry
+          ),
+        },
+      };
+    });
   }, []);
 
   /* Outside `Persisted` on purpose: `clear()` resets that wholesale, and a
@@ -417,6 +509,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       followUp: state.followUp,
       presentedAt: state.presentedAt,
       searchedAt: state.searchedAt,
+      datesChangedAt: state.datesChangedAt,
       ready,
       conciergeOpen,
       setConciergeOpen,
@@ -425,6 +518,7 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       setQuery,
       setPresentation,
       markClassicSearch,
+      setStopDates,
       clear,
       hasConversation,
       clearSignal,
@@ -437,12 +531,14 @@ export function AiSearchProvider({ children }: { children: React.ReactNode }) {
       state.followUp,
       state.presentedAt,
       state.searchedAt,
+      state.datesChangedAt,
       ready,
       conciergeOpen,
       pageContext,
       setQuery,
       setPresentation,
       markClassicSearch,
+      setStopDates,
       clear,
       hasConversation,
       clearSignal,

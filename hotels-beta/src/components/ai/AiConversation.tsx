@@ -318,6 +318,30 @@ function departureFilter(message: UIMessage | undefined): (place: Place) => bool
  * (Inspire): its settings and activities, flight limit, departure airport and
  * the month it searched. Read even when nothing was presented - a broad
  * search that ended in a question still says what kind of trip it is. */
+/** Every place a turn's hotel searches looked at, with the stay each was
+ * searched for. Used to keep a question-only reply from moving the site. */
+function turnSearchedPlaces(message: UIMessage): { place: string; checkIn: string; checkOut: string }[] {
+  return message.parts
+    .filter((p) => isToolUIPart(p) && getToolName(p) === "searchHotels" && p.state !== "input-streaming")
+    .map((p) =>
+      isToolUIPart(p)
+        ? (p.input as {
+            city?: string;
+            area?: string;
+            country?: string;
+            stay?: { checkIn?: string; checkOut?: string };
+          } | undefined)
+        : undefined
+    )
+    .filter((input): input is NonNullable<typeof input> => Boolean(input))
+    .map((input) => ({
+      place: foldCity(input.city || input.area || input.country || ""),
+      checkIn: input.stay?.checkIn ?? "",
+      checkOut: input.stay?.checkOut ?? "",
+    }))
+    .filter((entry) => entry.place);
+}
+
 function searchSettings(message: UIMessage): Partial<AiQueryState> | null {
   const search = message.parts
     .filter((p) => isToolUIPart(p) && getToolName(p) === "searchHotels" && p.state !== "input-streaming")
@@ -1617,8 +1641,39 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
               ? `The results of your query are listed in the window behind this panel. ${REVIEW_BEHIND}`
               : `The results are on ${linkedPage} — open it with the button below. ${RESUME_CHAT}`}
       </p>}
+      {past ? null : <DatesChangedNote />}
     </div>
   );
+}
+
+/* THE ANSWER'S WORDS CAN BE OLDER THAN ITS DATES (2026-09-28). A stay's
+ * dates can be changed on Landing or Hotels after the answer was written, and
+ * the answer still says "then three on the Riviera to 16 November". One line
+ * under the latest answer gives the stays as they now stand, for as long as a
+ * date change is newer than the answer. */
+function DatesChangedNote() {
+  const { datesChangedAt, presentedAt, query, results } = useAiSearch();
+  if (!datesChangedAt || datesChangedAt <= presentedAt) return null;
+  const short = (iso: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+    if (!match) return iso;
+    const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][
+      Number(match[2]) - 1
+    ];
+    return `${Number(match[3])} ${month}`;
+  };
+  const place =
+    query.destination.city || query.destination.area || query.destination.adminRegion || query.destination.country;
+  const stays = [
+    { place, from: query.from, to: query.to },
+    ...(results.laterStops ?? []).map((stop) => ({ place: stop.place, from: stop.checkIn, to: stop.checkOut })),
+  ].filter((stay) => stay.from && stay.to);
+  if (!stays.length) return null;
+  const text =
+    stays.length === 1
+      ? `now ${short(stays[0].from)} – ${short(stays[0].to)}`
+      : stays.map((stay) => `${stay.place} ${short(stay.from)} – ${short(stay.to)}`).join(" · ");
+  return <p className={styles.summaryFootnote}>Dates changed since this answer: {text}.</p>;
 }
 
 export default function AiConversation() {
@@ -1822,7 +1877,23 @@ export default function AiConversation() {
       questionText(messages),
       [...placesById(messages).values()].filter(departureFilter(last))
     );
-    const place = found && foldCity(storeQuery.destination.city) !== foldCity(found.city) ? found : null;
+    /* NOT WHEN THE TURN LOOKED AT SEVERAL PLACES (2026-09-28). "3 nights in
+       London, then 3 in Paris" can be answered with a question — too many
+       hotels to show — and the one city the question happened to name among
+       places we had returned made Paris the destination on every page, on the
+       previous answer's dates. A reply that searched more than one place has
+       not chosen one. */
+    const searched = turnSearchedPlaces(last);
+    const severalPlaces = new Set(searched.map((entry) => entry.place)).size > 1;
+    const place =
+      !severalPlaces && found && foldCity(storeQuery.destination.city) !== foldCity(found.city)
+        ? found
+        : null;
+    /* A new place takes the dates it was searched for, or none: the stay in the
+       store belongs to the place before it. */
+    const placeStay = place
+      ? searched.find((entry) => entry.place === foldCity(place.city))
+      : undefined;
     /* And what it searched for, so Inspire follows a question answered with a
        question: "museums and food, three hours from Paris, mid-April" searched
        City, Gastronomy, 3h from CDG in April and presented nothing, and the page
@@ -1831,7 +1902,13 @@ export default function AiConversation() {
     if (!place && !settings) return;
     setPresentation(framing, followUp, {}, {
       ...(settings ?? {}),
-      ...(place ? { destination: { city: place.city, area: "", adminRegion: "", country: place.country } } : {}),
+      ...(place
+        ? {
+            destination: { city: place.city, area: "", adminRegion: "", country: place.country },
+            from: placeStay?.checkIn ?? "",
+            to: placeStay?.checkOut ?? "",
+          }
+        : {}),
     });
   }, [messages, status, framing, followUp, storeQuery.destination.city, setPresentation]);
 

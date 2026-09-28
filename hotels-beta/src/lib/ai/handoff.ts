@@ -43,6 +43,31 @@ export function hotelsHref(query: AiQueryState, results: AiResultSet): string {
   return `/hotels?${params.toString()}`;
 }
 
+/** One stay of a trip in several places, on the Hotels page (Ulrik,
+ * 2026-09-28): that stay's hotels and its own dates, with `stop` saying which
+ * stay it is — 0 the first place, 1.. the later ones — so the Hotels page can
+ * write a date change back to that stay alone (setStopDates). */
+export function stopHotelsHref(
+  query: AiQueryState,
+  results: AiResultSet,
+  stop: number
+): string {
+  const later = stop > 0 ? (results.laterStops ?? [])[stop - 1] : null;
+  const ids = stop === 0 ? results.hotelIds : later?.hotelIds ?? [];
+  const params = queryStateToParams(query);
+  for (const key of ["city", "state", "admin_region", "country", "settings", "activities", "from", "to"]) {
+    params.delete(key);
+  }
+  const from = stop === 0 ? query.from : later?.checkIn ?? "";
+  const to = stop === 0 ? query.to : later?.checkOut ?? "";
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  params.set("ids", ids.join(","));
+  params.set("stop", String(stop));
+  params.set("search_submitted", "1");
+  return `/hotels?${params.toString()}`;
+}
+
 /** Everything we hold in the destination, rather than the concierge's pick —
  * the "see all hotels in X" escape. */
 export function allHotelsHref(query: AiQueryState): string {

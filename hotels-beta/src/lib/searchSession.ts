@@ -24,6 +24,19 @@ export type SharedTravelSearch = {
   kid_age_4?: string;
   kid_age_5?: string;
   kid_age_6?: string;
+  /* The destination field's tags (Landing and Hotels) and the Hotels page's
+   * own filters, so the latest search carries all of it (2026-09-28). */
+  activities?: string;
+  settings?: string;
+  styles?: string;
+  awards?: string;
+  affiliation?: string;
+  local_area?: string;
+  min_price?: string;
+  max_price?: string;
+  /** When it was written (ms). Lets a page with its own copy — Flights —
+   * tell whether the shared search is newer than what it remembers. */
+  savedAt?: number;
 };
 
 const HOTEL_FLIGHT_KEY = "oltra_hotel_flight_search";
@@ -34,12 +47,133 @@ function clean(values: SharedTravelSearch): SharedTravelSearch {
   ) as SharedTravelSearch;
 }
 
+/* The fields that make a search an entry, as opposed to the party or the
+   departure airport, which every page fills with a default. */
+const ENTRY_KEYS = [
+  "q",
+  "city",
+  "state",
+  "admin_region",
+  "country",
+  "region",
+  "macro_region",
+  "activities",
+  "settings",
+  "from",
+  "to",
+] as const;
+
 export function saveHotelFlightSearch(values: SharedTravelSearch) {
   if (typeof window === "undefined") return;
 
-  const next = clean(values);
+  const next = { ...clean(values), savedAt: Date.now() };
   window.sessionStorage.setItem(HOTEL_FLIGHT_KEY, JSON.stringify(next));
   window.dispatchEvent(new Event("oltra:hotel-flight-search-change"));
+}
+
+/* THE LATEST ENTRY WINS, WHOLE (Ulrik, 2026-09-28).
+ *
+ * A page calls this with everything its search holds — destination, tags,
+ * dates, party and, on Hotels, its filters. If that is what is already saved,
+ * nothing happens: arriving on a page, or passing through one that cannot show
+ * some of the saved fields (the landing page has no accolade filter), is not a
+ * new entry and must not rewrite the search. If anything differs, the page's
+ * set REPLACES the saved one, so nothing from an earlier search lingers.
+ *
+ * Kept across a replace: the departure airport (a standing preference, not
+ * part of an entry — it is not compared either, or the landing page's own
+ * home-airport fill would read as an entry), and the selected hotel while the
+ * city is unchanged. The concierge and small updates still use the merge
+ * below. */
+export function recordSearchEntry(values: SharedTravelSearch) {
+  if (typeof window === "undefined") return;
+
+  const current = readHotelFlightSearch() ?? {};
+  const DEFAULTS: Partial<Record<keyof SharedTravelSearch, string>> = {
+    adults: "2",
+    kids: "0",
+    bedrooms: "1",
+  };
+  const norm = (key: keyof SharedTravelSearch, value: string | number | undefined) =>
+    String(value ?? "").trim() || DEFAULTS[key] || "";
+
+  const keys = new Set([
+    ...(Object.keys(values) as (keyof SharedTravelSearch)[]),
+    ...(Object.keys(current) as (keyof SharedTravelSearch)[]),
+  ]);
+  keys.delete("origin");
+  keys.delete("hotelId");
+  keys.delete("savedAt");
+  const unchanged = [...keys].every((key) => {
+    // A field this page does not have cannot differ on it.
+    if (!(key in values)) return true;
+    return norm(key, values[key]) === norm(key, current[key]);
+  });
+
+  const origin = values.origin?.trim() || current.origin;
+  if (unchanged) {
+    if (origin && origin !== current.origin) saveHotelFlightSearch({ ...current, origin });
+    return;
+  }
+
+  const sameCity = norm("city", values.city) === norm("city", current.city);
+  saveHotelFlightSearch({
+    ...clean(values),
+    ...(origin ? { origin } : {}),
+    ...(sameCity && current.hotelId ? { hotelId: current.hotelId } : {}),
+  });
+}
+
+/* FLIGHTS WRITES ONLY INTO AN EMPTY SEARCH (Ulrik, 2026-09-28). An entry on
+ * the Flights page carries to Landing and Hotels only while they hold no
+ * entry of their own; otherwise it stays on Flights, in Flights' own copy
+ * below, and never clears or replaces what the other pages show. */
+export function fillHotelFlightSearchIfEmpty(values: SharedTravelSearch) {
+  if (typeof window === "undefined") return;
+  const current = readHotelFlightSearch() ?? {};
+  if (ENTRY_KEYS.some((key) => (current[key] ?? "").toString().trim())) return;
+  if (!ENTRY_KEYS.some((key) => (values[key] ?? "").toString().trim())) return;
+  mergeHotelFlightSearch(values);
+}
+
+const FLIGHTS_KEY = "oltra_flights_search";
+
+/** The Flights page's own copy of its search, written on every change there
+ * (only when it differs, so the timestamp means an entry). */
+export function saveFlightsOwnSearch(values: SharedTravelSearch) {
+  if (typeof window === "undefined") return;
+  const next = clean(values);
+  const current = readFlightsOwnSearch();
+  if (current) {
+    const { savedAt: _ignored, ...rest } = current;
+    void _ignored;
+    if (JSON.stringify(rest) === JSON.stringify(next)) return;
+  }
+  try {
+    window.sessionStorage.setItem(FLIGHTS_KEY, JSON.stringify({ ...next, savedAt: Date.now() }));
+    window.dispatchEvent(new Event("oltra:hotel-flight-search-change"));
+  } catch {}
+}
+
+function readFlightsOwnSearch(): SharedTravelSearch | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(FLIGHTS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** What the Flights page (and the header's Flights link) should open on: its
+ * own last search, unless a newer one was made on Landing or Hotels — or
+ * written by the concierge — in which case that one. */
+export function readLatestFlightsSearch(): SharedTravelSearch | null {
+  const own = readFlightsOwnSearch();
+  const shared = readHotelFlightSearch();
+  if (!own) return shared;
+  if (!shared) return own;
+  return (own.savedAt ?? 0) >= (shared.savedAt ?? 0) ? own : shared;
 }
 
 export function mergeHotelFlightSearch(values: SharedTravelSearch) {

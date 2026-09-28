@@ -59,8 +59,10 @@ import { getMemberActionLoginMessage } from "@/lib/members/memberActionUi";
 import {
   clearHotelFlightDestination,
   clearHotelFlightSearch,
+  kidAgeFields,
   mergeHotelFlightSearch,
   readHotelFlightSearch,
+  recordSearchEntry,
   clearHotelFlightDatesIf,
   clearHotelFlightPartyIf,
 } from "@/lib/searchSession";
@@ -334,6 +336,19 @@ const CURATED_DROPS = new Set([
   "settings",
   "search_submitted",
 ]);
+
+/* The destination field's tags and this page's own filters, carried in the
+ * shared search so the latest one arrives whole on the next page. */
+const HOTEL_FILTER_SESSION_KEYS = [
+  "activities",
+  "settings",
+  "styles",
+  "awards",
+  "affiliation",
+  "local_area",
+  "min_price",
+  "max_price",
+] as const;
 
 function hasHotelSearchContext(params: PageSearchParams): boolean {
   return Boolean(
@@ -1082,6 +1097,8 @@ export default function HotelsView(props: {
     presentedAt: aiPresentedAt,
     searchedAt: aiSearchedAt,
     clearSignal: aiClearSignal,
+    query: aiQuery,
+    setStopDates,
   } = useAiSearch();
   const aiHotelsPending =
     aiResults.hotelIds.length > 0 && aiResultsAreCurrent(aiResults, aiPresentedAt, aiSearchedAt);
@@ -1090,6 +1107,58 @@ export default function HotelsView(props: {
      page is pinned to the concierge's set (`?ids=`). Removing it drops the set
      and the concierge's destination with it; the dates and guests stay. */
   const curatedIds = selected.ids.join(",");
+
+  /* WHICH STAY OF THE ANSWER THIS PAGE IS SHOWING, AND ITS DATES WRITTEN BACK
+     TO THAT STAY ALONE (Ulrik, 2026-09-28). A landing "Go to hotels" under a
+     stay opens this page with that stay's hotels, its dates and `stop`; the
+     header link opens the first stay. Changing the dates here re-prices the
+     same curated hotels and moves that stay — and only it — in the concierge's
+     answer, so Landing and Flights follow. A classic search (no `ids`) is not
+     an answer and writes nothing back. */
+  const curatedStop = curatedIds ? Math.max(0, Number(normalizeParam(searchParams.stop)) || 0) : null;
+  const aiAnswerCurrent = aiResultsAreCurrent(aiResults, aiPresentedAt, aiSearchedAt);
+  const curatedStay = (() => {
+    if (curatedStop === null) return null;
+    if (curatedStop === 0) return { from: aiQuery.from, to: aiQuery.to };
+    const later = (aiResults.laterStops ?? [])[curatedStop - 1];
+    return later ? { from: later.checkIn, to: later.checkOut } : null;
+  })();
+  /* Set by the date field's own handlers, so only a date the visitor picked
+     here is written back — never the URL's, which can be older than the
+     answer: a reload or Back after a change here reopened the page on the
+     URL's dates and wrote them back over the answer (2026-09-28). */
+  const datesEditedRef = useRef(false);
+
+  // On arrival, the answer's dates for this stay win over the URL's.
+  useEffect(() => {
+    if (!aiAnswerCurrent || !curatedStay || datesEditedRef.current) return;
+    if (!curatedStay.from || !curatedStay.to) return;
+    if (fromValue === curatedStay.from && toValue === curatedStay.to) return;
+    setFromValue(curatedStay.from);
+    setToValue(curatedStay.to);
+    // Only when the answer or the page's stay changes, not on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiAnswerCurrent, curatedStay?.from, curatedStay?.to, curatedStop]);
+
+  // A date picked here moves that stay alone, and goes into the URL at once so
+  // a reload or Back keeps it.
+  useEffect(() => {
+    if (!datesEditedRef.current || !curatedStay || !aiAnswerCurrent) return;
+    if (!fromValue || !toValue || !datesAreValid) return;
+    datesEditedRef.current = false;
+    if (fromValue === curatedStay.from && toValue === curatedStay.to) return;
+    setStopDates(curatedStop ?? 0, fromValue, toValue);
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(searchParams)) {
+      const text = normalizeParam(value);
+      if (text) params.set(key, text);
+    }
+    params.set("from", fromValue);
+    params.set("to", toValue);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    // Only a change of this page's dates writes back.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromValue, toValue, datesAreValid, curatedStop, aiAnswerCurrent]);
   const dropCuratedSet = (
     options: { alsoDates?: boolean; alsoParty?: boolean; keepSet?: boolean } = {}
   ) => {
@@ -1204,6 +1273,12 @@ export default function HotelsView(props: {
     if (saved.adults) params.set("adults", saved.adults);
     if (saved.kids) params.set("kids", saved.kids);
     if (saved.bedrooms) params.set("bedrooms", saved.bedrooms);
+    // The destination field's tags and this page's filters too: the latest
+    // search arrives whole (2026-09-28).
+    for (const key of HOTEL_FILTER_SESSION_KEYS) {
+      const value = saved[key];
+      if (value) params.set(key, value);
+    }
 
     for (let i = 1; i <= 6; i += 1) {
       const key = `kid_age_${i}` as keyof typeof saved;
@@ -1217,35 +1292,21 @@ export default function HotelsView(props: {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, router, pathname, aiReady, aiHotelsPending]);
 
+  /* This page's search as the latest entry (lib/searchSession.ts,
+     recordSearchEntry): only once the URL holds one, because a bare visit
+     restores from the saved search first, and recording the empty form before
+     that would erase it (2026-09-28). */
   useEffect(() => {
-    const hasAnythingToSave =
-      hasHotelSearchContext(searchParams) ||
-      Boolean(fromValue) ||
-      Boolean(toValue) ||
-      Boolean(bedroomsValue);
-
-    if (!hasAnythingToSave) return;
-
-    mergeHotelFlightSearch({
-      q: normalizeParam(searchParams.q),
-      city: normalizeParam(searchParams.city),
-      state: normalizeParam(searchParams.state),
-      admin_region: normalizeParam(searchParams.admin_region),
-      country: normalizeParam(searchParams.country),
-      region: normalizeParam(searchParams.region),
-      macro_region: normalizeParam(searchParams.macro_region),
-      from: fromValue,
-      to: toValue,
-      adults: String(guestSelection.adults),
-      kids: String(guestSelection.kids),
-      bedrooms: bedroomsValue,
-      kid_age_1: normalizeParam(searchParams.kid_age_1),
-      kid_age_2: normalizeParam(searchParams.kid_age_2),
-      kid_age_3: normalizeParam(searchParams.kid_age_3),
-      kid_age_4: normalizeParam(searchParams.kid_age_4),
-      kid_age_5: normalizeParam(searchParams.kid_age_5),
-      kid_age_6: normalizeParam(searchParams.kid_age_6),
-    });
+    if (!hasHotelSearchContext(searchParams)) return;
+    /* Not while showing the concierge's curated set: its URL carries the
+       answer's ids and no city, and recording it would replace the city the
+       conversation put in the shared search — the one every other page reads
+       as the destination. The concierge owns the search until the set is
+       dropped (2026-09-28). */
+    if (normalizeParam(searchParams.ids)) return;
+    saveCurrentHotelFlightSearch();
+    // saveCurrentHotelFlightSearch reads exactly these.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, fromValue, toValue, guestSelection, bedroomsValue]);
 
   useEffect(() => {
@@ -2447,7 +2508,7 @@ export default function HotelsView(props: {
   ]);
 
   function saveCurrentHotelFlightSearch() {
-    mergeHotelFlightSearch({
+    recordSearchEntry({
       q: normalizeParam(searchParams.q),
       city: normalizeParam(searchParams.city),
       state: normalizeParam(searchParams.state),
@@ -2455,17 +2516,15 @@ export default function HotelsView(props: {
       country: normalizeParam(searchParams.country),
       region: normalizeParam(searchParams.region),
       macro_region: normalizeParam(searchParams.macro_region),
+      ...Object.fromEntries(
+        HOTEL_FILTER_SESSION_KEYS.map((key) => [key, normalizeParam(searchParams[key])])
+      ),
       from: fromValue,
       to: toValue,
       adults: String(guestSelection.adults),
       kids: String(guestSelection.kids),
       bedrooms: bedroomsValue,
-      kid_age_1: normalizeParam(searchParams.kid_age_1),
-      kid_age_2: normalizeParam(searchParams.kid_age_2),
-      kid_age_3: normalizeParam(searchParams.kid_age_3),
-      kid_age_4: normalizeParam(searchParams.kid_age_4),
-      kid_age_5: normalizeParam(searchParams.kid_age_5),
-      kid_age_6: normalizeParam(searchParams.kid_age_6),
+      ...kidAgeFields(guestSelection.kidAges.slice(0, guestSelection.kids)),
     });
   }
 
@@ -2718,10 +2777,12 @@ export default function HotelsView(props: {
                         toValue={toValue}
                         fromMinDate={todayIso}
                         onFromChange={(value) => {
+                          datesEditedRef.current = true;
                           setFromValue(value);
                           setAvailabilitySearchDirty(true);
                         }}
                         onToChange={(value) => {
+                          datesEditedRef.current = true;
                           setToValue(value);
                           setAvailabilitySearchDirty(true);
                         }}
@@ -2957,7 +3018,6 @@ export default function HotelsView(props: {
                   const img = getHotelImageAtWidth(h, 264) ?? PLACEHOLDERS[0];
                   const hasPhoto = hasHotelPhotos(h);
                   const ratehawkCardAvailability = ratehawkResultAvailability[String(h.id)];
-                  const featuredAwards = getFeaturedAwardsForHotel(h);
                   const hotelBadges = getHotelBadges(h);
                   const nameAndLocation = [h.city, h.country].filter(Boolean).join(" · ");
                   const cardAvailable =
@@ -3026,7 +3086,51 @@ export default function HotelsView(props: {
                             )}
                           </div>
 
-                          <div className="mt-2">
+                          {/* Accolades as icons under the photo, the text
+                              line under the highlights gone (Ulrik,
+                              2026-09-28). */}
+                          {hotelBadges.length > 0 ? (
+                            <div className="mt-1.5 flex flex-wrap gap-0.5">
+                              {hotelBadges.map(({ key, title, bg }) => (
+                                <span
+                                  key={key}
+                                  title={title}
+                                  className="inline-flex items-center justify-center rounded-full text-[color:var(--oltra-text-primary)]"
+                                  style={{ width: "18px", height: "18px", background: bg, fontSize: "0.46rem", fontWeight: 700, flexShrink: 0, lineHeight: 1 }}
+                                >
+                                  {key}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="hotel-result-card__fade flex min-h-[80px] min-w-0 flex-col">
+                          <div className="flex items-baseline gap-2">
+                            <div className="min-w-0 flex-1">
+                              {/* Two lines, not one clipped one: the house
+                                  rule is wrap, never clip, with the hotel name
+                                  capped at two (CLAUDE-AI.md). HotelSmallCard
+                                  already did this; these cards never got it, so
+                                  "Hôtel Plaza Athénée Paris" lost 112px at
+                                  1024 (Ulrik, 2026-09-21). */}
+                              {/* The star beside the clamped name, not in it:
+                                  line-clamp hides overflow, which would cut
+                                  the star's popup. */}
+                              <div className="flex min-w-0 items-baseline">
+                                <div className="line-clamp-2 min-w-0 text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+                                  {h.hotel_name ?? "Untitled hotel"}
+                                </div>
+                                {favoriteHotelIds.has(String(h.id)) ? <FavouriteStar /> : null}
+                              </div>
+                              <div className="mt-0.5 text-xs text-[color:var(--oltra-text-muted)]">
+                                {nameAndLocation || "—"}
+                              </div>
+                            </div>
+                            {/* The price, or what stands in for it, at the top
+                                right beside the name (Ulrik, 2026-09-28): it sat
+                                under the photo and made every card taller. */}
+                            <div className="w-[96px] shrink-0">
                             {cardPassive ? (
                               /* Never bookable through Ratehawk for any date -
                                  "No availability" would wrongly read as "sold
@@ -3066,9 +3170,16 @@ export default function HotelsView(props: {
                                     ratehawkCardAvailability.headline.currency
                                   )}
                                 </div>
-                                <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-                                  {roomPriceBasis}
-                                </div>
+                                {/* Rooms over nights, no dash, as on the landing
+                                    cards (2026-09-28). */}
+                                {roomPriceBasis.split(" – ").map((line) => (
+                                  <div
+                                    key={line}
+                                    className="mt-0.5 text-[10px] uppercase leading-tight tracking-[0.12em] text-[color:var(--oltra-text-muted)]"
+                                  >
+                                    {line}
+                                  </div>
+                                ))}
                               </div>
                             ) : cardUnavailable ? (
                               <div className="hotel-availability-pill">No availability</div>
@@ -3085,45 +3196,7 @@ export default function HotelsView(props: {
                                 No Ratehawk match
                               </div>
                             )}
-                          </div>
-                        </div>
-
-                        <div className="hotel-result-card__fade flex min-h-[80px] min-w-0 flex-col">
-                          <div className="flex items-start gap-1.5">
-                            <div className="min-w-0 flex-1">
-                              {/* Two lines, not one clipped one: the house
-                                  rule is wrap, never clip, with the hotel name
-                                  capped at two (CLAUDE-AI.md). HotelSmallCard
-                                  already did this; these cards never got it, so
-                                  "Hôtel Plaza Athénée Paris" lost 112px at
-                                  1024 (Ulrik, 2026-09-21). */}
-                              {/* The star beside the clamped name, not in it:
-                                  line-clamp hides overflow, which would cut
-                                  the star's popup. */}
-                              <div className="flex min-w-0 items-baseline">
-                                <div className="line-clamp-2 min-w-0 text-base font-light tracking-wide text-[color:var(--oltra-text-primary)]">
-                                  {h.hotel_name ?? "Untitled hotel"}
-                                </div>
-                                {favoriteHotelIds.has(String(h.id)) ? <FavouriteStar /> : null}
-                              </div>
-                              <div className="mt-0.5 text-xs text-[color:var(--oltra-text-muted)]">
-                                {nameAndLocation || "—"}
-                              </div>
                             </div>
-                            {hotelBadges.length > 0 ? (
-                              <div className="flex shrink-0 flex-wrap justify-end gap-0.5" style={{ maxWidth: "62px" }}>
-                                {hotelBadges.map(({ key, title, bg }) => (
-                                  <span
-                                    key={key}
-                                    title={title}
-                                    className="inline-flex items-center justify-center rounded-full text-[color:var(--oltra-text-primary)]"
-                                    style={{ width: "18px", height: "18px", background: bg, fontSize: "0.46rem", fontWeight: 700, flexShrink: 0, lineHeight: 1 }}
-                                  >
-                                    {key}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : null}
                           </div>
 
                           {h.highlights ? (
@@ -3131,14 +3204,6 @@ export default function HotelsView(props: {
                               {clampText(h.highlights, 170)}
                             </div>
                           ) : null}
-
-                          <div className="mt-auto pt-2">
-                            {featuredAwards.length ? (
-                              <div className="line-clamp-2 text-[11px] text-[color:var(--oltra-text-muted)]">
-                                {featuredAwards.map((award) => award.label).join(" · ")}
-                              </div>
-                            ) : null}
-                          </div>
                         </div>
                       </div>
                     </div>

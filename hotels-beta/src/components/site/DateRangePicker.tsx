@@ -27,6 +27,10 @@ type Props = {
   className?: string;
   fromName?: string;
   toName?: string;
+  /** Shown as a chip in place of the dates, with the calendar unavailable:
+   * a trip in several places answered by the concierge has no one date range
+   * to edit here (Ulrik, 2026-09-28). */
+  lockedLabel?: string;
 };
 
 type Awaiting = "start" | "end";
@@ -94,6 +98,7 @@ export default function DateRangePicker({
   className = "",
   fromName = "from",
   toName = "to",
+  lockedLabel,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [draftFrom, setDraftFrom] = useState("");
@@ -299,14 +304,19 @@ export default function DateRangePicker({
       <div className="oltra-label">{label}</div>
       <button
         type="button"
-        className={styles.trigger}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={openPicker}
+        className={`${styles.trigger}${lockedLabel ? ` ${styles.triggerLocked}` : ""}`}
+        aria-haspopup={lockedLabel ? undefined : "dialog"}
+        aria-expanded={lockedLabel ? undefined : open}
+        aria-disabled={lockedLabel ? "true" : undefined}
+        onClick={lockedLabel ? undefined : openPicker}
       >
-        <span className={styles.triggerText} data-has-value={fromValue ? "true" : "false"}>
-          {displayText || "Select dates"}
-        </span>
+        {lockedLabel ? (
+          <span className={styles.lockedChip}>{lockedLabel}</span>
+        ) : (
+          <span className={styles.triggerText} data-has-value={fromValue ? "true" : "false"}>
+            {displayText || "Select dates"}
+          </span>
+        )}
       </button>
 
       {open && typeof document !== "undefined"

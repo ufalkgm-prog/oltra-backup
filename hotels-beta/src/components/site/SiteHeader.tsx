@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { readHotelFlightSearch } from "@/lib/searchSession";
+import { readHotelFlightSearch, readLatestFlightsSearch, type SharedTravelSearch } from "@/lib/searchSession";
 import { fetchMemberProfileBrowser } from "@/lib/members/db";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import { aiResultsAreCurrent, useAiSearch } from "@/lib/ai/aiSearchStore";
@@ -217,8 +217,11 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   useEffect(() => {
     function updateSearchHrefs() {
       const saved = readHotelFlightSearch();
+      /* Flights opens on its own last search unless a newer one was made on
+         Landing, Hotels or by the concierge (2026-09-28). */
+      const flightSaved = readLatestFlightsSearch();
 
-      if (!saved) {
+      if (!saved && !flightSaved) {
         setHotelsHref("/hotels");
         setFlightsHref("/flights");
         setRestaurantsHref("/restaurants");
@@ -228,7 +231,12 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       const hotelParams = new URLSearchParams();
       const flightParams = new URLSearchParams();
 
-      for (const params of [hotelParams, flightParams]) {
+      for (const [params, source] of [
+        [hotelParams, saved],
+        [flightParams, flightSaved],
+      ] as [URLSearchParams, SharedTravelSearch | null][]) {
+        if (!source) continue;
+        const saved = source;
         if (saved.q) params.set("q", saved.q);
         if (saved.city) params.set("city", saved.city);
         if (saved.country) params.set("country", saved.country);
@@ -247,16 +255,35 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
         params.set("search_submitted", "1");
       }
 
-      if (saved.bedrooms) hotelParams.set("bedrooms", saved.bedrooms);
-      if (saved.origin) flightParams.set("origin", saved.origin);
+      if (saved?.bedrooms) hotelParams.set("bedrooms", saved.bedrooms);
+      /* The rest of the latest search, so Hotels opens on all of it: the finer
+         destination levels (an area search arrived as nothing before), the
+         destination field's tags and the Hotels filters (2026-09-28). */
+      for (const key of [
+        "state",
+        "admin_region",
+        "macro_region",
+        "activities",
+        "settings",
+        "styles",
+        "awards",
+        "affiliation",
+        "local_area",
+        "min_price",
+        "max_price",
+      ] as const) {
+        const value = saved?.[key];
+        if (value) hotelParams.set(key, String(value));
+      }
+      if (flightSaved?.origin) flightParams.set("origin", flightSaved.origin);
 
       setHotelsHref(hotelParams.toString() ? `/hotels?${hotelParams.toString()}` : "/hotels");
       setFlightsHref(flightParams.toString() ? `/flights?${flightParams.toString()}` : "/flights");
 
-      const restaurantCity = saved.city?.trim();
+      const restaurantCity = saved?.city?.trim();
       const restaurantParams = new URLSearchParams();
       if (restaurantCity) restaurantParams.set("city", restaurantCity);
-      if (saved.hotelId) restaurantParams.set("hotel_id", saved.hotelId);
+      if (saved?.hotelId) restaurantParams.set("hotel_id", saved.hotelId);
       setRestaurantsHref(restaurantParams.toString() ? `/restaurants?${restaurantParams.toString()}` : "/restaurants");
     }
 

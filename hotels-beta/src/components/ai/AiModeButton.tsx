@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
 import { AI_CHAT_ENABLED } from "@/lib/ai/routes";
 import { useIsMember } from "@/lib/members/useIsMember";
@@ -28,8 +29,8 @@ import styles from "./AiModeButton.module.css";
  * button. Anyone else sees it grey — passive rim and label, upright rather than
  * the AI italic — and it opens nothing. Why is the standard passive popup on
  * hover (data-reason), which replaced a "Members only" note printed beneath
- * the button (Ulrik, 2026-09-16). Until the session has been read it keeps its place but stays
- * invisible, so a member's page does not flash "Members only" on every load.
+ * the button (Ulrik, 2026-09-16). Until the session has been read it shows as
+ * the member's button and keeps a click for when it knows (see below).
  *
  * It renders nothing when the flag is off, so a disabled feature leaves no
  * trace on any page. */
@@ -46,6 +47,21 @@ export default function AiModeButton({ placement, label }: Props) {
   const { conciergeOpen, setConciergeOpen } = useAiSearch();
   const isMember = useIsMember();
 
+  /* A CLICK BEFORE THE SESSION IS READ IS KEPT, NOT LOST (2026-09-28).
+     Reading the session takes a moment after every page load — about two
+     seconds on the dev server — and the button used to be invisible and
+     inert for all of it, so a click there fell through to the destination
+     field behind it. It now shows as the member's button straight away, and a
+     click in that window opens the concierge as soon as membership is
+     confirmed; a visitor who turns out not to be signed in gets the passive
+     button, and nothing opens. */
+  const [openWhenKnown, setOpenWhenKnown] = useState(false);
+  useEffect(() => {
+    if (!openWhenKnown || isMember === null) return;
+    setOpenWhenKnown(false);
+    if (isMember) setConciergeOpen(true);
+  }, [openWhenKnown, isMember, setConciergeOpen]);
+
   if (!AI_CHAT_ENABLED) return null;
 
   const text = label ?? (placement === "header" ? "AI Concierge" : "Ask AI");
@@ -56,12 +72,11 @@ export default function AiModeButton({ placement, label }: Props) {
       ? `oltra-btn--ai-concierge ${styles.header}`
       : `oltra-btn--ai-ask ${styles.inline}`;
 
-  if (isMember !== true) {
+  if (isMember === false) {
     return (
       <button
         type="button"
         className={`oltra-btn oltra-btn--ai ${styles.passive} ${placementClass}`}
-        style={isMember === null ? { visibility: "hidden" } : undefined}
         aria-disabled="true"
         data-reason={MEMBERS_ONLY_REASON}
         aria-label={`${text}. ${MEMBERS_ONLY_REASON}`}
@@ -91,7 +106,8 @@ export default function AiModeButton({ placement, label }: Props) {
         // suggestions dropdown behind it.
         event.preventDefault();
         event.stopPropagation();
-        setConciergeOpen(true);
+        if (isMember) setConciergeOpen(true);
+        else setOpenWhenKnown(true);
       }}
     >
       {text}

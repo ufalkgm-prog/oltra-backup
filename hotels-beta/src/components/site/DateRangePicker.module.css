@@ -5,6 +5,24 @@
   min-width: 0;
 }
 
+/* Locked to the concierge's answer: no calendar, the chip says why. */
+.trigger.triggerLocked {
+  cursor: default;
+}
+
+/* The destination box's "AI curated results" chip, so the two read as one
+   rule: this field belongs to the concierge's answer until that is removed. */
+.lockedChip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(245, 242, 236, 0.16);
+  padding: 2px 8px;
+  color: var(--oltra-text-primary);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .trigger {
   width: 100%;
   height: var(--oltra-control-height);

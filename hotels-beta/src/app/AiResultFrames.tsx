@@ -24,10 +24,10 @@ import { useFavouriteIds } from "@/lib/members/favourites";
 import { hotelPriceBasis } from "@/lib/priceBasis";
 import { currentResidency } from "@/lib/countries";
 import { guestSelectionIssue } from "@/lib/guests";
-import { isStayTooLong, MAX_STAY_NIGHTS } from "@/lib/stay";
+import { isStayTooLong, MAX_STAY_NIGHTS, stayNights } from "@/lib/stay";
 import { useAiResultRecords } from "@/lib/ai/useAiResultRecords";
 import { MAX_NAMED, completeLegsForHotels, namedHotels } from "@/lib/ai/hotelGateways";
-import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref } from "@/lib/ai/handoff";
+import { allHotelsHref, flightsHref, hotelsHref, restaurantsHref, stopHotelsHref } from "@/lib/ai/handoff";
 import { aiPanes } from "@/lib/ai/resultPanes";
 import { useLandingPanes } from "./landingPanes";
 import type { Itinerary } from "@/lib/flights/itinerary";
@@ -228,6 +228,7 @@ function FlightLegPanel({
  * is one stay with no header, exactly as before. */
 function HotelStayGroup({
   heading,
+  note,
   hotels,
   from,
   to,
@@ -236,6 +237,8 @@ function HotelStayGroup({
   tripDefaults,
 }: {
   heading: { place: string; dates: string } | null;
+  /** Said under the heading — an overlap with the stay before (2026-09-28). */
+  note?: string;
   hotels: AiHotelCard[];
   from: string;
   to: string;
@@ -405,6 +408,7 @@ function HotelStayGroup({
   return (
     <>
       {heading ? <StayHeading place={heading.place} dates={heading.dates} /> : null}
+      {note ? <p className={styles.aiStayNote}>{note}</p> : null}
       {/* The concierge's own ranking, with the hotels we cannot sell moved to
           the bottom (Ulrik, 2026-09-21). The sort is stable, so everything
           else keeps the order the model chose — including highlightsFirst,
@@ -480,6 +484,23 @@ function StayHeading({ place, dates }: { place: string; dates: string }) {
   );
 }
 
+/* A stay that starts before the previous one ends — after one stay's dates
+   were moved on Hotels, which changes that stay alone (Ulrik, 2026-09-28:
+   "show a note for overlaps"). Gaps are not flagged. */
+function stayOverlapNote(
+  stays: { stop: number; place: string; from: string; to: string }[],
+  stop: number
+): string | undefined {
+  const index = stays.findIndex((stay) => stay.stop === stop);
+  if (index <= 0) return undefined;
+  const previous = stays[index - 1];
+  const current = stays[index];
+  if (!previous.to || !current.from || previous.to <= current.from) return undefined;
+  const nights = stayNights(current.from, previous.to) ?? 0;
+  if (nights <= 0) return undefined;
+  return `Overlaps ${previous.place} by ${nights} ${nights === 1 ? "night" : "nights"}`;
+}
+
 function stayDates(from: string, to: string): string {
   return from && to ? `${legDateLabel(from)} – ${legDateLabel(to)}` : "";
 }
@@ -516,6 +537,7 @@ export default function AiResultFrames() {
     return [
       {
         key: "first",
+        stop: 0,
         place: destinationLabel,
         from: query.from,
         to: query.to,
@@ -524,6 +546,7 @@ export default function AiResultFrames() {
       },
       ...laterStops.map((stop, index) => ({
         key: `stop-${index}-${stop.place}`,
+        stop: index + 1,
         place: stop.place,
         from: stop.checkIn,
         to: stop.checkOut,
@@ -637,23 +660,41 @@ export default function AiResultFrames() {
               {stays
                 .filter((stay) => stay.hotels.length)
                 .map((stay) => (
-                  <HotelStayGroup
-                    key={stay.key}
-                    heading={multiStop ? { place: stay.place, dates: stayDates(stay.from, stay.to) } : null}
-                    hotels={stay.hotels}
-                    from={stay.from}
-                    to={stay.to}
-                    query={query}
-                    columns={frameCount}
-                    tripDefaults={tripDefaults}
-                  />
+                  <div key={stay.key} className={styles.aiStayBlock}>
+                    <HotelStayGroup
+                      heading={multiStop ? { place: stay.place, dates: stayDates(stay.from, stay.to) } : null}
+                      note={stayOverlapNote(stays, stay.stop)}
+                      hotels={stay.hotels}
+                      from={stay.from}
+                      to={stay.to}
+                      query={query}
+                      columns={frameCount}
+                      tripDefaults={tripDefaults}
+                    />
+                    {/* A way to each stay's own hotels and dates on the Hotels
+                        page (Ulrik, 2026-09-28). The footer's button can only
+                        open one stay, so on a trip it gives way to these. */}
+                    {multiStop ? (
+                      <div className={styles.aiStayFooter}>
+                        <Link
+                          href={stopHotelsHref(query, results, stay.stop)}
+                          className="oltra-btn"
+                          prefetch={false}
+                        >
+                          Go to hotels
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
                 ))}
             </div>
             </div>
 
-            {/* The way on sits under what it leads to (Ulrik, 2026-09-16). */}
+            {/* The way on sits under what it leads to (Ulrik, 2026-09-16).
+                A trip in several places has one under each stay instead. */}
+            {multiStop ? null : (
             <div className={styles.summaryFooter}>
-              {destinationLabel && !multiStop ? (
+              {destinationLabel ? (
                 <Link
                   href={allHotelsHref(query)}
                   className={`oltra-btn ${styles.aiEscape}`}
@@ -670,6 +711,7 @@ export default function AiResultFrames() {
                 Go to hotels
               </Link>
             </div>
+            )}
           </div>
         ) : null}
 

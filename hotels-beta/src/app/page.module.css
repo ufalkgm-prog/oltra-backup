@@ -1230,3 +1230,25 @@
 .aiStayHead:first-child {
   margin-top: 0;
 }
+
+/* One stay of a trip in several places, and the "Go to hotels" under it that
+   opens that stay alone on the Hotels page (Ulrik, 2026-09-28). */
+.aiStayBlock {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.aiStayFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+/* The overlap note under a stay's heading (stayOverlapNote). Muted, like the
+   other notes in the frames, but the error colour: it is a problem with the
+   trip as it now stands. */
+.aiStayNote {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 12px;
+  color: var(--oltra-error-text);
+}

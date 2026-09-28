@@ -4,8 +4,9 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import {
-  mergeHotelFlightSearch,
-  readHotelFlightSearch,
+  fillHotelFlightSearchIfEmpty,
+  readLatestFlightsSearch,
+  saveFlightsOwnSearch,
   type SharedTravelSearch,
 } from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
@@ -24,7 +25,6 @@ import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import AiResultsSync from "@/lib/ai/AiResultsSync";
-import { useAiActions } from "@/lib/ai/aiSearchStore";
 import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import { getKidAgeValues } from "@/lib/guests";
 import { kidAgeFields } from "@/lib/searchSession";
@@ -401,7 +401,6 @@ function getPinnedItineraries(itineraries: Itinerary[], tripType: TripType) {
 
 export default function FlightsView({ searchParams }: Props) {
   const [search, setSearch] = useState<SearchState>(() => buildInitialSearch(searchParams));
-  const { markClassicSearch } = useAiActions();
 
   /* The shared search restored after hydration rather than during it (see
      buildInitialSearch). Declared before every other effect that touches
@@ -412,7 +411,9 @@ export default function FlightsView({ searchParams }: Props) {
   const [sessionRestored, setSessionRestored] = useState(false);
   useEffect(() => {
     if (!hasFlightSearchParams(searchParams)) {
-      const saved = readHotelFlightSearch();
+      // This page's own last search, unless Landing, Hotels or the concierge
+      // made a newer one (lib/searchSession.ts, 2026-09-28).
+      const saved = readLatestFlightsSearch();
       if (saved) setSearch(buildInitialSearch(searchParams, saved));
     }
     setSessionRestored(true);
@@ -601,9 +602,13 @@ export default function FlightsView({ searchParams }: Props) {
     });
   }, []);
 
+  /* THIS PAGE'S SEARCH IS ITS OWN (Ulrik, 2026-09-28). It is remembered here
+     (saveFlightsOwnSearch) and reaches Landing and Hotels only while they hold
+     no entry of their own (fillHotelFlightSearchIfEmpty) — a flight search
+     never replaces a hotel search or the concierge's answer there. */
   useEffect(() => {
     if (!sessionRestored) return;
-    mergeHotelFlightSearch({
+    const values = {
       q: normalizeParam(searchParams.q),
       // Destination typed directly into this page's own AirportAutocomplete
       // (search.to) has to win over a stale/absent URL `city` param, or the
@@ -628,7 +633,9 @@ export default function FlightsView({ searchParams }: Props) {
       kids: String(search.children),
       ...kidAgeFields(search.childrenAges),
       origin: search.from,
-    });
+    };
+    saveFlightsOwnSearch(values);
+    fillHotelFlightSearchIfEmpty(values);
   }, [search, searchParams, isReturnTrip, sessionRestored]);
 
   const allAirlines = useMemo(
@@ -1394,10 +1401,9 @@ export default function FlightsView({ searchParams }: Props) {
                       rememberAirportCity(v, opt);
                       setSearch(c => ({ ...c, to: v }));
                       markDirty();
-                      // A destination picked by hand supersedes the concierge's
-                      // (see the Restaurants city picker), so the other pages
-                      // follow this one rather than bringing the answer back.
-                      if (v && v !== search.to) markClassicSearch();
+                      // No longer supersedes the concierge's answer: a flight
+                      // search does not clear a selection on Landing or Hotels
+                      // (Ulrik, 2026-09-28).
                     }}
                   />
                   {isReturnTrip ? (
