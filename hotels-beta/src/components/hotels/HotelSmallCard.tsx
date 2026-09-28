@@ -43,10 +43,13 @@ export type SmallCardColumns = 1 | 2 | 3;
  * lines up with every other. Literal class names, so Tailwind sees them. */
 export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
   /* Narrowed from 84/80/74 (Ulrik, 2026-09-28). 60px still holds "SAVED",
-     the widest one-line label these columns show. */
+     the widest one-line label these columns show. At three frames it is 52px,
+     narrowed again the same day, so two fit side by side under the 108px
+     photo; "SAVED" and "SAVING" then run into the padding but stay inside the
+     rim. */
   1: "w-[64px]",
   2: "w-[62px]",
-  3: "w-[60px]",
+  3: "w-[52px]",
 };
 
 /* TWO ARRANGEMENTS (Ulrik, 2026-09-28). In every one the price and what it
@@ -56,7 +59,7 @@ export const SMALL_CARD_ACTION_WIDTH: Record<SmallCardColumns, string> = {
  *         their place on the right but sit at the BOTTOM, so a long name
  *         extends above them rather than being squeezed beside them. "2 rooms –
  *         7 nights" stays on one line under the price.
- *   3     BOOK over SAVE under the price, below the photo, and the
+ *   3     BOOK beside SAVE under the price, below the photo, and the
  *         highlights follow the name and location; rooms and nights go on two
  *         lines under the price, without the dash, and the name comes down to
  *         the price's 13px.
@@ -94,10 +97,10 @@ const LAYOUT: Record<
     right: SMALL_CARD_ACTION_WIDTH[2],
   },
   3: {
-    grid: "grid-cols-[88px_1fr]",
+    grid: "grid-cols-[108px_1fr]",
     gap: "gap-2.5",
-    image: 88,
-    imageBox: "h-[58px] w-full",
+    image: 108,
+    imageBox: "h-[70px] w-full",
     name: "text-[13px]",
     basis: "text-[10px] tracking-[0.12em]",
     right: SMALL_CARD_ACTION_WIDTH[3],
@@ -189,7 +192,7 @@ export default function HotelSmallCard({
   // sells this hotel, so "No availability" would wrongly read as "sold out".
   const isPassive = hotel.ratehawk_status === "passive";
 
-  /* At three frames BOOK and SAVE go under the price, below the photo. */
+  /* At three frames BOOK and SAVE go side by side under the price. */
   const stacked = columns === 3;
   /* "2 rooms – 7 nights" on one line, or rooms over nights with no dash. */
   const basisLines = !priceBasis ? [] : stacked ? priceBasis.split(" – ") : [priceBasis];
@@ -301,7 +304,7 @@ export default function HotelSmallCard({
   const actions =
     topAction || renderSaveControl ? (
       <div
-        className={`flex flex-col gap-1.5 ${stacked ? `mx-auto ${layout.right}` : "w-full"}`}
+        className="flex w-full flex-col gap-1.5"
         onClick={(e) => e.preventDefault()}
       >
         {topAction?.offsite ? (
@@ -309,6 +312,9 @@ export default function HotelSmallCard({
             Booking not yet possible here – book on website
           </div>
         ) : null}
+        {/* Three frames: side by side under the price, each 52px across the
+            108px photo (Ulrik, 2026-09-28). Stacked otherwise. */}
+        <div className={stacked ? "grid grid-cols-2 gap-1" : "contents"}>
         {topAction ? (
           <button
             type="button"
@@ -326,13 +332,14 @@ export default function HotelSmallCard({
             className={`oltra-btn ${
               topAction.offsite ? "oltra-btn--offsite " : ""
             }oltra-btn--condensed oltra-btn--block${
-              renderSaveControl ? " oltra-btn--stack-top" : ""
+              renderSaveControl && !stacked ? " oltra-btn--stack-top" : ""
             }`}
           >
             BOOK
           </button>
         ) : null}
         {renderSaveControl ? renderSaveControl() : null}
+        </div>
       </div>
     ) : null;
 
@@ -367,7 +374,7 @@ export default function HotelSmallCard({
           )}
         </div>
         {rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
-        {/* Three frames: BOOK over SAVE, under the price. */}
+        {/* Three frames: BOOK beside SAVE, under the price. */}
         {stacked && actions ? <div className="mt-2">{actions}</div> : null}
       </div>
 
