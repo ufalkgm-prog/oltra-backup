@@ -464,6 +464,11 @@
   color: var(--oltra-text-primary);
 }
 
+/* Three frames: the hotel name's 13px (Ulrik, 2026-09-28). */
+.airportBlockTitle.airportBlockTitleDense {
+  font-size: 13px;
+}
+
 .airportBlockDistance {
   font-size: 0.72rem;
   color: var(--oltra-text-muted);
@@ -636,6 +641,12 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--oltra-text-secondary);
+}
+
+/* Three frames: 12px, the size of the line under a hotel's name, as the
+   restaurant type is (Ulrik, 2026-09-28). */
+.flightLineLabel.flightLineLabelDense {
+  font-size: 12px;
 }
 
 .summaryHeader {

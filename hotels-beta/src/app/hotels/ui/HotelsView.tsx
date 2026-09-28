@@ -1932,6 +1932,10 @@ export default function HotelsView(props: {
   // The number of rooms the loaded rates were priced for.
   const searchedRoomCount = Math.max(1, Number(bedroomsValue) || 1);
 
+  /* Both stay dates chosen. Every BOOK on this page is passive without them
+     (Ulrik, 2026-09-28). */
+  const hasStayDates = Boolean(fromValue && toValue);
+
   // A rate's price is the whole stay for every room searched (§32), so every
   // room price says what it covers: "2 rooms – 7 nights".
   const roomPriceBasis = hotelPriceBasis(fromValue, toValue, searchedRoomCount);
@@ -3013,8 +3017,14 @@ export default function HotelsView(props: {
                                   href={h.www}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // No BOOK without dates (Ulrik, 2026-09-28).
+                                    if (!hasStayDates) e.preventDefault();
+                                  }}
                                   onKeyDown={(e) => e.stopPropagation()}
+                                  aria-disabled={hasStayDates ? undefined : "true"}
+                                  data-reason={hasStayDates ? undefined : "Select dates to book"}
                                   className="oltra-btn oltra-btn--neutral oltra-btn--condensed oltra-btn--block"
                                 >
                                   Book on website
@@ -3792,6 +3802,11 @@ export default function HotelsView(props: {
                         href={selectedHotelBookingHref}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={(e) => {
+                          if (!hasStayDates) e.preventDefault();
+                        }}
+                        aria-disabled={hasStayDates ? undefined : "true"}
+                        data-reason={hasStayDates ? undefined : "Select dates to book"}
                         className="oltra-btn oltra-btn--block"
                       >
                         {selectedHotelBookingLabel}

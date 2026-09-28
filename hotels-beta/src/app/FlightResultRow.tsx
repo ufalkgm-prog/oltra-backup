@@ -168,7 +168,13 @@ export default function FlightResultRow({
           SAVE, stacked in the hotel card's action width so every BOOK and
           SAVE on the landing page lines up with every other. */}
       <div className={styles.flightRowMain}>
-        <span className={styles.flightLineLabel}>{label}</span>
+        <span
+          className={`${styles.flightLineLabel}${
+            columns === 3 ? ` ${styles.flightLineLabelDense}` : ""
+          }`}
+        >
+          {label}
+        </span>
         <div
           className={`${styles.flightLegsGrid} ${
             columns === 3 ? styles.flightLegsStacked : ""

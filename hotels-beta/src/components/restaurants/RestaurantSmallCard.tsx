@@ -86,12 +86,18 @@ export default function RestaurantSmallCard({
           density (Ulrik, 2026-09-28 — three frames first, then all). */}
       <div className="flex min-w-0 items-start justify-between gap-2.5">
         <div className="min-w-0">
-          <div className="min-w-0 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
+          {/* Three frames: the hotel name's 13px, and the type at the 12px of
+              the line under it (Ulrik, 2026-09-28). */}
+          <div
+            className={`min-w-0 ${columns === 3 ? "text-[13px]" : "text-base"} font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]`}
+          >
             {restaurant.restaurant_name}
             {isFavourite ? <FavouriteStar /> : null}
           </div>
           {restaurant.restaurant_type ? (
-            <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
+            <div
+              className={`mt-0.5 ${columns === 3 ? "text-xs" : "text-[10px]"} uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]`}
+            >
               {restaurant.restaurant_type}
             </div>
           ) : null}

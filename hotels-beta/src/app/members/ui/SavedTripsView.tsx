@@ -29,6 +29,8 @@ type TripItemCard = {
   hasPhoto?: boolean;
   hasOverlapWarning?: boolean;
   bookUrl?: string;
+  /** A hotel saved without dates: BOOK is passive (Ulrik, 2026-09-28). */
+  missingDates?: boolean;
   roomsSummary?: string;
   /** "EUR 1,234" — the figure saved, or last updated. */
   priceLabel?: string;
@@ -533,6 +535,7 @@ export default function SavedTripsView() {
     hasPhoto: Boolean(item.thumbnail) && item.thumbnail !== "/images/hero-lp.jpg",
     hasOverlapWarning: item.hasOverlapWarning,
     bookUrl: buildHotelBookUrl(item.name, item.checkIn, item.checkOut, travelers),
+    missingDates: !item.checkIn || !item.checkOut,
     roomsSummary: summarizeRoomSelection(item.roomSelection),
     priceLabel:
       formatSavedPrice(item.priceAmount, item.priceCurrency) ??
@@ -986,9 +989,16 @@ function TripSection({
                         className={`oltra-btn oltra-btn--condensed oltra-btn--block ${
                           canRefresh ? "members-trip-card__middle" : "oltra-btn--stack-top"
                         }`}
-                        aria-disabled={passive}
+                        aria-disabled={passive ?? (item.missingDates ? "true" : undefined)}
+                        data-reason={
+                          !outdated && item.missingDates
+                            ? "Saved without dates - search the hotel with dates to book"
+                            : undefined
+                        }
                         onClick={() =>
-                          !outdated && onBook(item.id, item.bookUrl, item.hasOverlapWarning)
+                          !outdated &&
+                          !item.missingDates &&
+                          onBook(item.id, item.bookUrl, item.hasOverlapWarning)
                         }
                       >
                         Book

@@ -677,7 +677,11 @@ export default function LandingSummary({
               {airportBlocks.map(({ airport, ranked }) => (
                 <div className={styles.airportBlock} key={airport.iata}>
                   <div className={styles.airportBlockHeader}>
-                    <span className={styles.airportBlockTitle}>
+                    <span
+                      className={`${styles.airportBlockTitle}${
+                        cardColumns === 3 ? ` ${styles.airportBlockTitleDense}` : ""
+                      }`}
+                    >
                       {airport.label} ({airport.iata})
                       {/* Only claimed when every candidate had both halves of
                           the journey, and only worth saying when there is more

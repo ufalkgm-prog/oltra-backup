@@ -220,7 +220,10 @@ export default function HotelSmallCard({
             {basisLines.map((line, i) => (
               <div
                 key={i}
-                className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]"
+                /* leading-tight, as the flight rows' price basis inherits from
+                   the price (Ulrik, 2026-09-28): without it each 10px line
+                   took the page's fixed 24px line height. */
+                className="mt-0.5 text-[10px] uppercase leading-tight tracking-[0.12em] text-[color:var(--oltra-text-muted)]"
               >
                 {line}
               </div>
@@ -292,9 +295,15 @@ export default function HotelSmallCard({
           go: () => window.open(bookingHref, "_blank", "noopener,noreferrer"),
         }
       : null;
-  /* Nothing to book on these dates: BOOK stays, passive, and says why. */
-  const noAvailability =
-    Boolean(topAction && !topAction.offsite) && availability?.status === "unavailable";
+  /* BOOK stays, passive, and says why: no dates chosen yet — for every BOOK,
+     the hotel's own website included (Ulrik, 2026-09-28) — or nothing free on
+     the dates that were. "idle" is what callers pass without dates. */
+  const bookBlockedReason =
+    availability?.status === "idle"
+      ? "Select dates to book"
+      : topAction && !topAction.offsite && availability?.status === "unavailable"
+        ? "No availability for these dates"
+        : null;
 
   const actions =
     topAction || renderSaveControl ? (
@@ -311,11 +320,11 @@ export default function HotelSmallCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (noAvailability) return;
+              if (bookBlockedReason) return;
               topAction.go();
             }}
-            aria-disabled={noAvailability || undefined}
-            data-reason={noAvailability ? "No availability for these dates" : undefined}
+            aria-disabled={bookBlockedReason ? true : undefined}
+            data-reason={bookBlockedReason ?? undefined}
             /* Sizing lives in .oltra-btn--condensed, not an inline style: the
                Save control below it is rendered by the caller, and the two have
                to match. */
