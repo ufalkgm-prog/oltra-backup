@@ -193,13 +193,12 @@ export default function FlightResultRow({
       <div className={styles.flightRowActions}>
         <div className={styles.flightRowPrice}>
           {currency} {approx(flight.priceEur, flight.currency)}
-          {/* "2 pax" over "return" at three frames (Ulrik, 2026-09-28): one
-              line set the action column's width, and the leg cards beside it
-              get what that frees. */}
-          {(columns === 3
-            ? flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return").split(" · ")
-            : [flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")]
-          ).map((line, i) => (
+          {/* "2 pax" over "return", no dot, at every density (Ulrik,
+              2026-09-28 — three frames first): one line set the action
+              column's width, and the leg cards beside it get what that frees. */}
+          {flightPriceBasisShort(handoff.passengers, isOneWay ? "one-way" : "return")
+            .split(" · ")
+            .map((line, i) => (
             <div key={i} className={styles.flightRowPriceBasis}>
               {line}
             </div>

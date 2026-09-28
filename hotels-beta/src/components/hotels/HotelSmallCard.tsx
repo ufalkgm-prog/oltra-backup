@@ -377,7 +377,12 @@ export default function HotelSmallCard({
         {stacked && actions ? <div className="mt-2">{actions}</div> : null}
       </div>
 
-      <div className={stacked ? "flex min-w-0 flex-col" : `flex min-w-0 ${layout.gap}`}>
+      {/* items-baseline: the price sits on the name's first line rather than
+          above it (Ulrik, 2026-09-28) — the name has the page's taller line,
+          so top alignment set the smaller price higher than the name. */}
+      <div
+        className={stacked ? "flex min-w-0 flex-col" : `flex min-w-0 items-baseline ${layout.gap}`}
+      >
         <div className="flex min-w-0 flex-1 flex-col">
         <div className="min-w-0">
           {/* Two lines, then an ellipsis — the middle ground between the two

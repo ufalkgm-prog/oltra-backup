@@ -510,7 +510,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: 0.7rem;
-  align-items: start;
+  /* The price on the label's line ("Standard · Best price"), not above it
+     (Ulrik, 2026-09-28): first baselines, whatever the two font sizes. */
+  align-items: baseline;
 }
 
 /* Three frames: the price and buttons sit further right and closer to the
