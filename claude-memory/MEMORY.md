@@ -12,3 +12,4 @@
 - [Restaurant coverage to-do](project_restaurant_coverage_todo.md) — find restaurants for Reykjavik; Ulrik adding relaxed restaurants for large cities
 - [Open actions](project_open_actions.md) — GO-LIVE BLOCKER: Hotels room selector (count + mixed types, waits on ETG); Supabase dashboard steps, PARKED concierge answer-log/monitoring-agent wiring (steps listed); infants and multi-city ellipsis fixed, Trip.com tracking confirmed, map-window filtering dropped
 - [Drive the UI with real events](feedback_drive_the_ui_with_real_events.md) — programmatic click/scroll produced 3 false findings in one sweep; also never run `npm run build` while `npm run dev` is up
+- [Check tab visibility before UI tests](feedback_check_tab_visibility.md) — a hidden Chrome tab throttles timers and drops CDP clicks; check visibilityState first
