@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import GuestSelector from "@/components/site/GuestSelector";
 import OltraSelect from "@/components/site/OltraSelect";
 import {
@@ -29,7 +30,7 @@ import { useAiPageContext } from "@/lib/ai/useAiPageContext";
 import { getKidAgeValues } from "@/lib/guests";
 import { kidAgeFields } from "@/lib/searchSession";
 import { flightPassengers } from "@/lib/flights/passengers";
-import { flightPartyLabel, flightPriceBasis } from "@/lib/priceBasis";
+import { flightPartyLabel } from "@/lib/priceBasis";
 import styles from "./FlightsView.module.css";
 import FlightCardContent, { type ReturnMatchTier } from "./FlightCardContent";
 
@@ -961,6 +962,51 @@ export default function FlightsView({ searchParams }: Props) {
   // A failed search stays runnable, so "Please try again" can be acted on.
   const searchUpToDate = !isDirty && !searchError && searchKey === lastSearchKey;
 
+  /* CLEAR, AS ON LANDING AND HOTELS (Ulrik, 2026-09-28): the destination,
+     dates, party, cabin, trip type, filters and results all go back to the
+     start; the departure airport stays, as a standing preference. Only this
+     page's search is cleared — a Flights entry never reaches Landing or
+     Hotels (lib/searchSession.ts), so neither does clearing one. Not shown
+     while there is nothing to clear. */
+  const router = useRouter();
+  const pathname = usePathname();
+  const nothingToClear =
+    !search.to &&
+    !search.departDate &&
+    !search.returnDate &&
+    search.adults === INITIAL_SEARCH.adults &&
+    search.children === 0 &&
+    search.cabin === INITIAL_SEARCH.cabin &&
+    search.multiCity.every((leg, i) => !leg.to && !leg.date && (i === 0 || !leg.from)) &&
+    itineraries.length === 0 &&
+    !preferredOnly &&
+    JSON.stringify(filters) === JSON.stringify(INITIAL_FILTERS);
+  function clearFlights() {
+    const origin = search.from;
+    setSearch({
+      ...INITIAL_SEARCH,
+      from: origin,
+      multiCity: INITIAL_SEARCH.multiCity.map((leg, i) => (i === 0 ? { ...leg, from: origin } : leg)),
+    });
+    setFilters(INITIAL_FILTERS);
+    setPreferredOnly(false);
+    setItineraries([]);
+    setSelectedOutboundId("");
+    setSelectedReturnId("");
+    setSelectedMultiLegIds([]);
+    lastReturnLegIdRef.current = "";
+    setSearchError(null);
+    setLastSearchKey("");
+    setIsDirty(true);
+    router.replace(pathname, { scroll: false });
+  }
+
+  /* The Search button's hover reason is held back from the click until the
+     pointer leaves (2026-09-28): a search that finishes under the pointer
+     turns the button passive ("These results are up to date…"), and the
+     popup appeared at once, unasked. */
+  const [searchReasonMuted, setSearchReasonMuted] = useState(false);
+
   const handleSearch = useCallback(async () => {
     if (isMultiple) {
       const valid = search.multiCity.every(l => l.from && l.to && l.date);
@@ -1080,12 +1126,16 @@ export default function FlightsView({ searchParams }: Props) {
     placement: "flight-results",
   };
 
-  // What every fare on the page covers, in the Departure heading: "Total · 3
-  // passengers · return" (lib/priceBasis.ts). It replaced "total flight price
-  // from", which said neither who nor which way (Ulrik, 2026-09-24).
-  const priceBasisNote = flightPriceBasis(
-    handoff.passengers,
-    isOneWay ? "one-way" : "return"
+  /* WHAT THE FARES COVER, OVER THE PRICE COLUMN (Ulrik, 2026-09-28): "Total",
+     and under it "2 passengers". Every fare is Duffel's total_amount — the
+     whole party, every flight on the ticket (§7B) — measured again the same
+     day: CPH-LHR came back about €63 for one adult and €126 for two. It used
+     to sit in brackets after the Departure heading. */
+  const totalHeading = (
+    <span className={styles.totalHeading}>
+      Total
+      <span className={styles.totalHeadingNote}>{flightPartyLabel(handoff.passengers)}</span>
+    </span>
   );
 
   function toggleAirline(airline: string) {
@@ -1458,30 +1508,48 @@ export default function FlightsView({ searchParams }: Props) {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="oltra-btn oltra-btn--block"
-                onClick={() => {
-                  if (searchBlocker) {
-                    focusSearchBlocker(searchBlocker);
-                    return;
+              {/* Clear and Search at the Hotels page's button width, Clear at the
+                  left (Ulrik, 2026-09-28). Search used to fill the column. */}
+              <div className={styles.searchActions}>
+                {nothingToClear ? (
+                  <span />
+                ) : (
+                  <button
+                    type="button"
+                    className={`oltra-btn oltra-btn--destructive ${styles.searchActionButton}`}
+                    onClick={clearFlights}
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={`oltra-btn ${styles.searchActionButton}`}
+                  onClick={() => {
+                    setSearchReasonMuted(true);
+                    if (searchBlocker) {
+                      focusSearchBlocker(searchBlocker);
+                      return;
+                    }
+                    if (searchUpToDate) return;
+                    void handleSearch();
+                  }}
+                  onMouseLeave={() => setSearchReasonMuted(false)}
+                  onBlur={() => setSearchReasonMuted(false)}
+                  disabled={isLoading}
+                  aria-disabled={!isLoading && (Boolean(searchBlocker) || searchUpToDate)}
+                  data-reason={
+                    isLoading || searchReasonMuted
+                      ? undefined
+                      : searchBlocker?.reason ??
+                        (searchUpToDate
+                          ? "These results are up to date — change the search to run it again"
+                          : undefined)
                   }
-                  if (searchUpToDate) return;
-                  void handleSearch();
-                }}
-                disabled={isLoading}
-                aria-disabled={!isLoading && (Boolean(searchBlocker) || searchUpToDate)}
-                data-reason={
-                  isLoading
-                    ? undefined
-                    : searchBlocker?.reason ??
-                      (searchUpToDate
-                        ? "These results are up to date — change the search to run it again"
-                        : undefined)
-                }
-              >
-                {isLoading ? "Searching…" : "Search"}
-              </button>
+                >
+                  {isLoading ? "Searching…" : "Search"}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1682,8 +1750,9 @@ export default function FlightsView({ searchParams }: Props) {
                 </div>
               ) : isOneWay ? (
                 <>
-                  <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
-                    Departure <span className={styles.columnLabelNote}>({priceBasisNote})</span>
+                  <div className={`${styles.columnLabel} ${styles.paneHeader} ${styles.paneHeaderWithTotal} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
+                    <span>Departure</span>
+                    <span className={styles.oneWayTotalLane}>{totalHeading}</span>
                   </div>
 
                   <div className={styles.pinnedStack}>
@@ -1777,11 +1846,11 @@ export default function FlightsView({ searchParams }: Props) {
                 <>
                   <div className={`${styles.splitPanes} ${styles.splitPanesHeader}`}>
                     <div className={`${styles.columnLabel} ${styles.paneHeader} ${departureHasGutter ? styles.withScrollGutter : ""}`}>
-                      Departure <span className={styles.columnLabelNote}>({priceBasisNote})</span>
+                      Departure
                     </div>
                     <div className={`${styles.columnHeadersOneWay} ${returnHasGutter ? styles.withScrollGutter : ""}`}>
                       <div className={styles.columnLabel}>Return</div>
-                      <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>Total price</div>
+                      <div className={`${styles.columnLabel} ${styles.columnLabelRight}`}>{totalHeading}</div>
                     </div>
                   </div>
 
@@ -2171,11 +2240,11 @@ function MultipleResults({
           </div>
         ))}
         <div className={`${styles.columnLabel} ${styles.columnLabelRight} ${styles.multiPriceLane} ${priceHasGutter ? styles.withScrollGutter : ""}`}>
-          {/* One ticket for every flight and every passenger (§7B), and the
-              heading says both (Ulrik, 2026-09-24). */}
-          Total price{" "}
-          <span className={styles.columnLabelNote}>
-            ({flightPartyLabel(handoff.passengers)}, all flights)
+          {/* One ticket for every flight and every passenger (§7B): "Total",
+              and the party under it (Ulrik, 2026-09-28). */}
+          <span className={styles.totalHeading}>
+            Total
+            <span className={styles.totalHeadingNote}>{flightPartyLabel(handoff.passengers)}</span>
           </span>
         </div>
       </div>

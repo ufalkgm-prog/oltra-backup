@@ -1389,3 +1389,58 @@
   color: var(--oltra-text-secondary);
   padding: 12px 0;
 }
+
+/* "Total" over the price column, with the party under it (2026-09-28). */
+.totalHeading {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.totalHeadingNote {
+  letter-spacing: 0.06em;
+  color: var(--oltra-text-muted);
+}
+
+/* The one-way pane has no column row of its own, so the heading carries the
+   Total over the cards' price lane (--flight-price-lane, 68px, plus the
+   card's own 14px right padding). */
+.paneHeaderWithTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.oneWayTotalLane {
+  width: 68px;
+  margin-right: 1px;
+  display: flex;
+  justify-content: center;
+}
+
+/* The Total heading is two lines ("Total" / "2 passengers"), so the header
+   row aligns its labels on the bottom line: Departure level with Return. */
+.splitPanes.splitPanesHeader {
+  align-items: end;
+}
+
+/* Departure is the label itself (margin -4px, .paneHeader); Return sits 8px
+   up inside .columnHeadersOneWay, which carries the -4px. 4px here puts the
+   two on one line. */
+.splitPanesHeader > .paneHeader {
+  margin-bottom: 4px;
+}
+
+/* Clear and Search, one row, at the Hotels page's button width (154px),
+   narrowing only if the sidebar cannot hold two (2026-09-28). */
+.searchActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.searchActionButton {
+  width: min(154px, calc(50% - 7px));
+}
