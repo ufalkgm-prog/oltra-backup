@@ -88,12 +88,10 @@ export default function AiConciergeModal() {
    * frame's height as last measured on the landing page.
    *
    * A layout effect, so the first measurement lands before the first paint (no
-   * jump from centred to anchored). It is taken again on the next frame,
-   * because the scroll lock below runs after it and does move the frame:
-   * removing the scrollbar re-centres the page, and the body padding that
-   * replaces it does not cancel that out — measured live, the panel sat 5px
-   * right of the frame on a first-paint reading alone. The top is kept on
-   * screen in case the page was scrolled past the frame. */
+   * jump from centred to anchored). The frame keeps moving after that — the
+   * scroll lock below re-centres the page (the panel once sat 5px right of the
+   * frame on a first-paint reading), and the results under it hide — which is
+   * why the effect below tracks it rather than measuring once. */
   const [anchor, setAnchor] = useState<{
     top: number;
     left: number;
@@ -101,32 +99,41 @@ export default function AiConciergeModal() {
     height: number;
   } | null>(null);
 
+  /* EXACTLY ON THE FRAME, FOR AS LONG AS IT IS OPEN (Ulrik, 2026-09-28).
+   * Measured once, the panel sat 8px above the frame: the frame moves after
+   * the first reading (the results below it hide as the panel opens), and it
+   * grows and shrinks with the destination chips. So it is re-read every
+   * animation frame while open — one getBoundingClientRect — and the state
+   * changes only when the box does. A page scrolled past the frame goes back
+   * to the top first, so the panel can sit exactly on it rather than being
+   * clamped below the header, which is what it used to do. */
   useLayoutEffect(() => {
     if (!conciergeOpen) return;
 
-    const measure = () => {
-      const frame = document.querySelector<HTMLElement>("[data-ai-concierge-anchor]");
-      if (frame) {
-        const rect = frame.getBoundingClientRect();
-        rememberLandingPanelHeight(rect.height);
-        setAnchor({
-          top: Math.max(rect.top, 16),
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-        });
-        return;
-      }
+    const frame = document.querySelector<HTMLElement>("[data-ai-concierge-anchor]");
+    if (!frame) {
       setAnchor(landingPanelBox());
-    };
+      const onResize = () => setAnchor(landingPanelBox());
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }
 
-    measure();
-    const settle = window.requestAnimationFrame(measure);
-    window.addEventListener("resize", measure);
-    return () => {
-      window.cancelAnimationFrame(settle);
-      window.removeEventListener("resize", measure);
+    if (frame.getBoundingClientRect().top < 0) window.scrollTo(0, 0);
+
+    let last = "";
+    let frameId = 0;
+    const track = () => {
+      const rect = frame.getBoundingClientRect();
+      const key = `${rect.top}|${rect.left}|${rect.width}|${rect.height}`;
+      if (key !== last) {
+        last = key;
+        rememberLandingPanelHeight(rect.height);
+        setAnchor({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+      }
+      frameId = window.requestAnimationFrame(track);
     };
+    track();
+    return () => window.cancelAnimationFrame(frameId);
   }, [conciergeOpen]);
 
   /* Esc closes, and the page underneath stops scrolling entirely.
