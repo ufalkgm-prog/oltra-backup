@@ -188,6 +188,10 @@ export type SelectedLeg = {
   /** YYYY-MM-DD. */
   date: string
   nonstop?: boolean
+  /** The leg's marketing carriers as IATA codes, in segment order. Absent or
+   * empty means unknown, and an unknown leg turns the airline filter off -
+   * see `carrierFilter` in tripCom.ts. */
+  carriers?: string[]
 }
 
 /** The journey the member chose, and nothing else.
@@ -261,6 +265,12 @@ export function selectedItineraryFrom(
       destination: slice.destinationCode,
       date: slice.segments[0]?.departIso.slice(0, 10) ?? '',
       nonstop: slice.stops === 0,
+      /* The supplier's test carrier ("Duffel Airways") is dropped: it is no
+       * airline Trip.com sells, and a leg left without carriers switches the
+       * airline filter off rather than sending a code that empties the page. */
+      carriers: slice.airlines.every(a => a.iataCode && !/duffel/i.test(a.name))
+        ? slice.airlines.map(a => a.iataCode)
+        : [],
     })),
     cabin,
     passengers,

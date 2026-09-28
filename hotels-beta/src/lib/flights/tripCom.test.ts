@@ -249,6 +249,43 @@ test('a leg that does not say is not treated as nonstop', () => {
   assert.equal(get(buildTripComUrl(unknown, opts), 'nonstoponly'), 'off')
 })
 
+/* ------------------------------------------------------------- airline --- */
+
+const withCarriers = (itinerary: SelectedItinerary, carriers: string[][]): SelectedItinerary => ({
+  ...itinerary,
+  legs: itinerary.legs.map((leg, i) => ({ ...leg, carriers: carriers[i] })),
+})
+
+test('the carrier travels as airline, lowercased', () => {
+  const url = buildTripComUrl(withCarriers(oneWay, [['TG']]), opts)
+  assert.equal(get(url, 'airline'), 'tg')
+})
+
+test('every carrier on the journey is sent once, in order', () => {
+  const url = buildTripComUrl(withCarriers(roundTrip, [['LH', 'LX'], ['LX', 'SK']]), opts)
+  assert.equal(get(url, 'airline'), 'lh,lx,sk')
+})
+
+test('multi-city sends one top-level airline, not one per leg', () => {
+  const url = buildTripComUrl(withCarriers(multiCity, [['EK'], ['NZ'], ['EK']]), opts)
+  assert.equal(get(url, 'airline'), 'ek,nz')
+  for (const key of params(url).keys()) assert.ok(!/^airline\d/.test(key), `unexpected ${key}`)
+})
+
+test('no airline filter when any leg does not name its carriers', () => {
+  /* A wrong or partial airline empties or skews Trip.com's list; a missing one
+   * only lengthens it. So one unknown leg turns the filter off. */
+  assert.equal(get(buildTripComUrl(oneWay, opts), 'airline'), null)
+  assert.equal(get(buildTripComUrl(withCarriers(roundTrip, [['BA'], []]), opts), 'airline'), null)
+})
+
+test('no airline filter when a code is not a two-character IATA code', () => {
+  for (const bad of ['', 'BAW', 'B-']) {
+    const url = buildTripComUrl(withCarriers(oneWay, [['BA', bad]]), opts)
+    assert.equal(get(url, 'airline'), null, `"${bad}" should switch it off`)
+  }
+})
+
 /* ------------------------------------------------------------ tracking --- */
 
 test('every link carries the affiliate identifiers', () => {

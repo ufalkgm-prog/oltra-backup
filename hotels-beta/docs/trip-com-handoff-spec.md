@@ -101,11 +101,25 @@ The airport parameters appeared inconsistently in the captured example
 emitted only where the search form had a specific airport rather than a city.
 Send them only where the member specified an airport.
 
-### Airline filter — not available
+### Airline filter — `airline`, available (corrected 2026-09-28)
 
-Confirmed by testing: filtering to a carrier on the results page changes page
-state only and leaves the URL unchanged. There is no way to hand a member off to
-a single airline's results. See section 4 for how to compensate.
+This section used to say there is no airline filter. There is: the results
+page reads `airline` from the URL even though filtering on the page does not
+write it back, which is how the earlier test missed it. Tested live, CPH–LHR:
+
+- `airline=ba` on a one-way: 32 flights → BA's 6, with a "British Airways" chip.
+- `airline=ba,sk`: both carriers, 25 of 35. Comma-separated, lowercase.
+- Round trip and multi-city: applied too (6 of 33, 6 of 40), shown as a
+  **Oneworld** chip — alliance partners may appear on a connecting route.
+- **An airline Trip.com does not list (`airline=zz`) returns an empty page**,
+  and `ba,zz` behaved erratically. The builder sends the filter only when every
+  leg names its marketing carriers and every code is well formed, and never the
+  supplier's test carrier.
+
+Not accepted, all ignored: a flight number (`flightno`, `flightNo`, `fltno`,
+`flightnumber`) and a departure-time window (`departuretime` as `1100-1200`,
+`11:00-12:00` or `660-720`). The chosen flight itself stays unreachable
+(section 4), so the copy still names the flight numbers.
 
 Case sensitivity: Trip.com accepts both `triptype=rt` / `class=c` (search form)
 and `triptype=RT` / `class=C` (later pages). An earlier affiliate-generated link
@@ -212,9 +226,9 @@ Consequences for the concierge layer:
 - Phrase the handoff as taking the member to the relevant options, never as
   booking a specific flight. For example: "I'll take you to the Thai Airways
   business class options for these dates" rather than "book this flight".
-- **There is no airline filter parameter.** Confirmed by testing: filtering to a
-  carrier on the results page changes page state only and leaves the URL
-  unchanged. A member cannot be handed off to a single airline's results.
+- **The airline can be set** (`airline`, section 1 — this bullet said the
+  opposite until 2026-09-28). A flight number and a departure time cannot, so
+  the member still lands on a short list with their flight in it, not on it.
 - Narrow the results with the filters that *are* in the URL. `class` already
   restricts the cabin. Set `nonstoponly=on` whenever the itinerary the member
   chose is non-stop; this typically cuts the results list dramatically and often

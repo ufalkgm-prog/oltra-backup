@@ -24,11 +24,13 @@ import { isNonstop, tripShapeOf, type SelectedItinerary } from './itinerary.ts'
  *
  * WHAT THE LINK CAN AND CANNOT DO. It opens a filtered search, not the flight
  * the concierge recommended (spec §4). The filters that survive into a URL are
- * the cabin, the passenger counts, the dates, the route and nonstop-only -
- * there is no airline parameter, confirmed by testing: filtering to a carrier
- * on the results page changes page state and leaves the URL unchanged. So the
- * copy next to this link has to name the carrier and the flight numbers, and
- * has to say "the options for these dates" rather than "book this flight". */
+ * the cabin, the passenger counts, the dates, the route, nonstop-only and the
+ * airline. `airline` was long recorded as missing; tested live on 2026-09-28,
+ * `airline=ba` cut CPH-LHR from 32 flights to BA's 6 and `airline=ba,sk` shows
+ * both. A flight number and a departure-time window are NOT accepted (four
+ * spellings and three time formats tried, all ignored). So the copy next to
+ * this link still has to name the carrier and the flight numbers, and has to
+ * say "the options for these dates" rather than "book this flight". */
 
 type BuildOptions = {
   /** Which button this link sits on. Reported as `trip_sub1`. */
@@ -62,6 +64,30 @@ function assertLeg(leg: { origin: string; destination: string; date: string }, i
   if (!ISO_DATE.test(leg.date)) {
     throw new Error(`Trip.com link: leg ${index} needs a YYYY-MM-DD date, got "${leg.date}"`)
   }
+}
+
+const CARRIER = /^[A-Z0-9]{2}$/
+
+/** The `airline` value: every marketing carrier on the journey, deduplicated
+ * in order, lowercase as Trip.com's own filter emits. Null - no filter - unless
+ * every leg names its carriers and every code is a well-formed IATA code.
+ *
+ * All or nothing, because this filter fails badly. An airline Trip.com does not
+ * list (`airline=zz`) returns an EMPTY results page, and a list with one bad
+ * code in it behaved erratically (`ba,zz` showed a Oneworld chip). A search
+ * without the airline is a longer list with the member's flight in it; a search
+ * with a wrong one hides it. */
+function carrierFilter(legs: SelectedItinerary['legs']): string | null {
+  const codes: string[] = []
+  for (const leg of legs) {
+    if (!leg.carriers?.length) return null
+    for (const raw of leg.carriers) {
+      const carrier = raw.trim().toUpperCase()
+      if (!CARRIER.test(carrier)) return null
+      if (!codes.includes(carrier)) codes.push(carrier)
+    }
+  }
+  return codes.length ? codes.join(',').toLowerCase() : null
 }
 
 /** Anything we do not recognise becomes EUR. See TRIP_COM_CURRENCIES for why
@@ -136,11 +162,17 @@ export function buildTripComUrl(
   params.set('childqty', String(passengers.children))
   params.set('babyqty', String(passengers.infants))
 
-  /* The only filter in the URL that meaningfully narrows the results list, so
-   * it is set whenever it is accurate. `isNonstop` refuses to claim a journey
+  /* The two filters in the URL that meaningfully narrow the results list, so
+   * each is set whenever it is accurate. `isNonstop` refuses to claim a journey
    * is direct unless every leg says so - an unknown leg is not a direct one. */
   const nonstop = options.nonstopOnly ?? isNonstop(legs)
   params.set('nonstoponly', nonstop ? 'on' : 'off')
+  /* One top-level value on every trip type, checked live on all three. On a
+   * round trip and a multi-city Trip.com shows `ba` as a Oneworld chip rather
+   * than a British Airways one - still BA's flights on CPH-LHR (6 of 33 and 6
+   * of 40), but alliance partners may appear on a connecting route. */
+  const airline = carrierFilter(legs)
+  if (airline) params.set('airline', airline)
 
   params.set('locale', options.locale ?? TRIP_COM_LOCALE)
   params.set('curr', currencyFor(options.currency))
