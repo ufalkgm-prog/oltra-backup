@@ -55,13 +55,16 @@ function resolveAreaAlias(value: string | undefined): string | undefined {
   if (!value) return value;
   return AREA_ALIASES[normaliseRegionTerm(value)] ?? value;
 }
-import { distanceFromPlace, findNearPlace, nearSummary, sortByDistance } from "./nearPlace";
+import { distanceFromPlace, findNearPlace, kmFromPlace, nearSummary, sortByDistance } from "./nearPlace";
 import { mustAskRooms, ROOMS_QUESTION } from "./rooms";
 import { FLIGHT_TIME_BASIS, flightHoursBetween, knownAirports, shortestFlightHours } from "./flightTime";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { toPreferredAirlines, type PreferredAirline } from "./preferredAirlines";
 import { checkPresentation, correctionNote, returnedIds, type PresentOutput } from "./presentGuard";
 import { phraseAt } from "./featureMatch";
+import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
+import { AIRPORT_COORDS } from "@/lib/airportCoords";
+import { haversineKm } from "@/lib/geoDistance";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -1155,10 +1158,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     }));
     const nearInfo = near
       ? {
-          near: nearSummary(
-            near,
-            nearPlace ? (distanceFromPlace(nearPlace, capped[0]?.lat, capped[0]?.lng)?.distanceKm ?? null) : null
-          ),
+          near: nearSummary(near, nearPlace ? kmFromPlace(nearPlace, capped[0]?.lat, capped[0]?.lng) : null),
         }
       : {};
 
@@ -1641,8 +1641,19 @@ async function rankAvailabilityFor(input: StayInput, residency: string) {
   const rankById = new Map(ranked.map(([id], index) => [id, index + 1]));
 
   const budgetByRoom = input.maxPricePerStay != null && roomFeatures.length > 0;
+  /* Which party this was priced for (2026-09-30). A saved trip with no
+     travellers was checked on the default two adults, and the answer could
+     not tell whether to say so or ask. */
+  const pricedAdults = Math.max(1, input.adults ?? 2);
+  const pricedKids = Math.max(0, input.kids ?? 0);
+  const pricedFor =
+    `${pricedAdults} adult${pricedAdults === 1 ? "" : "s"}` +
+    (pricedKids ? `, ${pricedKids} child${pricedKids === 1 ? "" : "ren"}` : "") +
+    `, ${rooms} room${rooms === 1 ? "" : "s"}` +
+    (input.adults == null ? " (the default - no party was given: say so, or ask)" : "");
   return {
     note: "Ranks only. No amounts are provided; the cards display live prices.",
+    pricedFor,
     ...(budgetByRoom
       ? {
           budgetNote:
@@ -1778,6 +1789,45 @@ function transferSentence(basis: TransferBasis, minutes: number | null): string 
   }
 }
 
+/** Scheduled-service airports nearest a place found on a map, for a place we
+ * hold no hotel in. Straight-line, nearest first, within 150 km.
+ *
+ * ONLY A TOWN OR A REGION (2026-09-30). The map lookup leans towards the
+ * caller's own location, and ours is in Denmark: a bare "Cambridge" was found
+ * 8 km from Copenhagen airport. A result that is not a locality or an
+ * administrative area - a pub, a shop - gives no airports at all, and the
+ * country, when the model passes it, goes into the search. */
+const TOWN_TYPES = new Set([
+  "locality",
+  "postal_town",
+  "sublocality",
+  "administrative_area_level_1",
+  "administrative_area_level_2",
+  "administrative_area_level_3",
+  "colloquial_area",
+  "natural_feature",
+  "archipelago",
+]);
+
+async function airportsNearPlace(
+  place: string,
+  country?: string
+): Promise<{ iata: string; label: string; distKm: number }[]> {
+  const query = country?.trim() ? `${place}, ${country.trim()}` : place;
+  const lookup = await findNearPlace(query);
+  if (lookup.status !== "found") return [];
+  if (!(lookup.place.types ?? []).some((type) => TOWN_TYPES.has(type))) return [];
+  const { lat, lng } = lookup.place;
+  return AIRPORT_OPTIONS.flatMap((option) => {
+    const at = AIRPORT_COORDS[option.value];
+    if (!at) return [];
+    const distKm = Math.round(haversineKm(lat, lng, at[0], at[1]));
+    return distKm <= 150 ? [{ iata: option.value, label: option.label.replace(/^[A-Z]{3} · /, ""), distKm }] : [];
+  })
+    .sort((a, b) => a.distKm - b.distKm)
+    .slice(0, 4);
+}
+
 const nearestAirport = tool({
   description:
     "Which airports serve a destination we cover, how far they are, and how a " +
@@ -1788,7 +1838,7 @@ const nearestAirport = tool({
     "question about which airport to use or how to reach a property — your own " +
     "knowledge of the route is not a substitute, because the transfer detail " +
     "here is ours and yours may be out of date or wrong for this property.",
-  inputSchema: jsonSchema<{ city: string }>({
+  inputSchema: jsonSchema<{ city: string; country?: string }>({
     type: "object",
     properties: {
       city: {
@@ -1798,11 +1848,18 @@ const nearestAirport = tool({
           "area (\"Masai Mara\", \"Okavango Delta\"). Use the obvious name; an " +
           "unknown one simply returns found: false.",
       },
+      country: {
+        type: "string",
+        description:
+          "The country, in English. Used only to find a place we hold no hotel " +
+          "in on a map (\"Cambridge\" in \"United Kingdom\"), so pass it whenever " +
+          "the name could be in more than one country.",
+      },
     },
     required: ["city"],
     additionalProperties: false,
   }),
-  async execute({ city }) {
+  async execute({ city, country }) {
     /* `resolvedFrom` reports the swap when a hotel name was resolved to its
      * destination, so an answer can say which destination it is describing. */
     const resolved = await resolveDestinationKey(city);
@@ -1820,6 +1877,35 @@ const nearestAirport = tool({
      * prompt-only rule of this shape gets skipped (§50) and an invented boat
      * is something a guest can act on. */
     const route = getTransferRoute(key);
+    /* Why the primary is the primary (2026-09-30). Named with no reason,
+       Kansai became "the closest to Kyoto" in an answer - Itami is 39 km,
+       Kansai 81. Same basis compareGateways already gives. */
+    const primaryBasis = !primary
+      ? null
+      : hasCuratedGatewayOrder(key)
+        ? "Our standing choice for this destination, set by hand: the airport guests use. Not necessarily the nearest."
+        : "The destination's main airport by size and runway, not by distance: never call it the closest or the one guests use. distKm and transferMinutes say how near each one is.";
+
+    /* A PLACE WE HOLD NO HOTEL IN (2026-09-30). "Our son's university in
+       Cambridge" returned found: false, and every answer flew into Heathrow
+       from general knowledge; Stansted is the natural airport. The place is
+       found on a map instead and the nearest airports with scheduled service
+       listed, by straight line - no drive times, since none were measured. */
+    if (!airports.length) {
+      const nearby = await airportsNearPlace(city, country);
+      if (nearby.length) {
+        return asUntrustedData("airports", {
+          city: key,
+          resolvedFrom,
+          found: false,
+          notOurDestination: true,
+          nearbyAirports: nearby,
+          note:
+            "We hold no hotel here, so this is not one of our destinations. These are the airports with scheduled flights nearest to it on a map, by straight line (distKm), nearest first. There are no drive times: say \"about N km from X\", never a number of minutes, and do not call any of them the one guests use.",
+        });
+      }
+    }
+
     return asUntrustedData("airports", {
       city: key,
       resolvedFrom,
@@ -1827,6 +1913,7 @@ const nearestAirport = tool({
       primary: primary
         ? { iata: primary.iata, label: primary.label, distKm: primary.distKm }
         : null,
+      ...(primaryBasis ? { primaryBasis } : {}),
       /* `transferMinutes` is the MEASURED drive from that airport to the
        * destination, and it is here rather than left to be inferred from
        * distKm because distKm is a straight line: Val d'Isere is 111km from
@@ -1885,6 +1972,7 @@ const compareGateways = tool({
     "over by the change of planes needed to get there.",
   inputSchema: jsonSchema<{
     city: string;
+    country?: string;
     origin: string;
     departureDate: string;
     returnDate?: string;
@@ -1900,6 +1988,12 @@ const compareGateways = tool({
           "The destination as we name it — a city (\"Courchevel 1850\") or a " +
           "traveller area (\"Masai Mara\"). A hotel name is resolved to its " +
           "destination, as in nearestAirport.",
+      },
+      country: {
+        type: "string",
+        description:
+          "The country, in English, as in nearestAirport: only for finding a " +
+          "place we hold no hotel in on a map.",
       },
       origin: {
         type: "string",
@@ -1921,7 +2015,7 @@ const compareGateways = tool({
     additionalProperties: false,
   }),
   async execute(input) {
-    const { city, origin, ...given } = input;
+    const { city, origin, country, ...given } = input;
     const movedDates = rollPastDates(
       { departureDate: given.departureDate, returnDate: given.returnDate },
       "departureDate"
@@ -1931,10 +2025,22 @@ const compareGateways = tool({
     const airports = getAirportsForCity(key.city);
 
     if (!airports.length) {
+      /* The same fallback as nearestAirport (2026-09-30): the model asks this
+         tool first for a place we do not hold, and found: false alone left it
+         choosing the airport from memory. */
+      const nearby = await airportsNearPlace(city, country);
       return asUntrustedData("gateways", {
         city: key.city,
         resolvedFrom: key.resolvedFrom,
         found: false,
+        ...(nearby.length
+          ? {
+              notOurDestination: true,
+              nearbyAirports: nearby,
+              note:
+                "We hold no hotel here. These are the airports with scheduled flights nearest to it on a map, by straight line (distKm), nearest first; there is no comparison of journeys and no drive times. Say \"about N km from X\", and do not call any of them the one guests use or the quickest.",
+            }
+          : {}),
       });
     }
 
@@ -2712,6 +2818,33 @@ const MEMBER_DATA_NOTE =
   "an id of null was saved before ids were kept — find that one with searchHotels by name. Dates " +
   "before today are a trip already taken.";
 
+/* WHICH SAVED HOTELS CAN BE BOOKED HERE (2026-09-30). A Paris weekend was
+   planned around Cheval Blanc Paris, a favourite we cannot sell, and most
+   answers never said so. Read from the hotel records by id; a row saved before
+   ids were kept (id null) is left without it. */
+const BOOKABLE_NOTE =
+  "bookableHere false: that hotel is not available at myOLTRA yet, so it has no price or BOOK button here. Still name it if it fits, with that standard sentence, and offer one we can book beside it.";
+
+async function bookableHereFor(ids: (number | null)[]): Promise<Map<number, boolean>> {
+  const wanted = [...new Set(ids.filter((id): id is number => typeof id === "number" && id > 0))];
+  if (!wanted.length) return new Map();
+  try {
+    const rows = await getHotels({
+      fields: ["id", "ratehawk_hid", "ratehawk_status"],
+      filter: { id: { _in: wanted } },
+      limit: -1,
+    });
+    return new Map(rows.map((h) => [Number(h.id), h.ratehawk_status !== "passive" && Boolean(h.ratehawk_hid)]));
+  } catch (err) {
+    console.error("[ai tools] bookableHereFor", err);
+    return new Map();
+  }
+}
+
+function withBookable<H extends { id: number | null }>(hotel: H, bookable: Map<number, boolean>): H & { bookableHere?: boolean } {
+  return hotel.id != null && bookable.has(hotel.id) ? { ...hotel, bookableHere: bookable.get(hotel.id) } : hotel;
+}
+
 /* READ-ONLY MEMBER DATA (Ulrik, 2026-09-24). Without these, "which of my
    favourites have rooms in June" got a fixed account reply. */
 function createMemberTools(member: MemberReaders) {
@@ -2728,7 +2861,13 @@ function createMemberTools(member: MemberReaders) {
       async execute() {
         try {
           const favourites = await member.favourites();
-          return asUntrustedData("member-favourites", { note: MEMBER_DATA_NOTE, ...favourites });
+          const bookable = await bookableHereFor(favourites.hotels.map((h) => h.id));
+          return asUntrustedData("member-favourites", {
+            note: MEMBER_DATA_NOTE,
+            ...favourites,
+            hotels: favourites.hotels.map((h) => withBookable(h, bookable)),
+            ...(bookable.size ? { bookableNote: BOOKABLE_NOTE } : {}),
+          });
         } catch (err) {
           console.error("[ai tools] myFavourites", err);
           return asUntrustedData("member-favourites", {
@@ -2750,7 +2889,12 @@ function createMemberTools(member: MemberReaders) {
       async execute() {
         try {
           const trips = await member.savedTrips();
-          return asUntrustedData("member-saved-trips", { note: MEMBER_DATA_NOTE, trips });
+          const bookable = await bookableHereFor(trips.flatMap((t) => t.hotels.map((h) => h.id)));
+          return asUntrustedData("member-saved-trips", {
+            note: MEMBER_DATA_NOTE,
+            trips: trips.map((t) => ({ ...t, hotels: t.hotels.map((h) => withBookable(h, bookable)) })),
+            ...(bookable.size ? { bookableNote: BOOKABLE_NOTE } : {}),
+          });
         } catch (err) {
           console.error("[ai tools] mySavedTrips", err);
           return asUntrustedData("member-saved-trips", {

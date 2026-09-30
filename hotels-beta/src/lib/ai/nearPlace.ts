@@ -26,6 +26,9 @@ export type NearPlace = {
   lat: number;
   lng: number;
   bounds?: PlaceBounds;
+  /** Google's place types ("locality", "bar", …), so a caller that wants a
+   * town can tell one from a business with the same name. */
+  types?: string[];
 };
 
 export type NearLookup =
@@ -72,7 +75,7 @@ export async function findNearPlace(query: string): Promise<NearLookup> {
   const params = new URLSearchParams({
     input: searchedFor,
     inputtype: "textquery",
-    fields: "geometry,name,formatted_address",
+    fields: "geometry,name,formatted_address,types",
     key: apiKey,
   });
 
@@ -88,6 +91,7 @@ export async function findNearPlace(query: string): Promise<NearLookup> {
       candidates?: {
         name?: string;
         formatted_address?: string;
+        types?: string[];
         geometry?: { location?: LatLng; viewport?: { northeast?: LatLng; southwest?: LatLng } };
       }[];
     };
@@ -114,6 +118,7 @@ export async function findNearPlace(query: string): Promise<NearLookup> {
           lat,
           lng,
           ...(large ? { bounds: large } : {}),
+          ...(Array.isArray(first?.types) ? { types: first.types } : {}),
         },
       };
     } else if (res.ok && data.status === "ZERO_RESULTS") {
@@ -134,7 +139,7 @@ export async function findNearPlace(query: string): Promise<NearLookup> {
 
 /** Straight-line km to the place: to its point, or for a large place to the
  * nearest edge of its box (coarse — used to order results, never quoted). */
-function kmFromPlace(
+export function kmFromPlace(
   place: NearPlace,
   lat: number | string | null | undefined,
   lng: number | string | null | undefined
@@ -198,7 +203,14 @@ export function nearSummary(lookup: NearLookup, nearestKm: number | null) {
     found: place.address ? `${place.name}, ${place.address}` : place.name,
     ...(place.bounds ? { area: true } : {}),
     note: place.bounds
-      ? "This is a large area (a park or a district), so there are no distances or walking times: its outline cannot be measured precisely. Results are only roughly ordered by closeness. Judge which hotels are by it or in it from each hotel's own highlights and description, and never give a number of minutes."
+      ? /* An area with nothing near it (2026-09-30): "near the University of
+           Cambridge" came back with London hotels about 80 km away, roughly
+           ordered, and no word that none was close. Measured to the area's
+           box, which is coarse but cannot overstate how far the nearest is. */
+        (nearestKm != null && nearestKm > 20
+          ? `Nothing we hold is within 20 km of it: the nearest is about ${Math.round(nearestKm)} km away in a straight line. Say plainly that we have no hotel near it, and offer the nearest as what they are. `
+          : "") +
+        "This is a large area (a park or a district), so there are no distances or walking times: its outline cannot be measured precisely. Results are only roughly ordered by closeness. Judge which hotels are by it or in it from each hotel's own highlights and description, and never give a number of minutes."
       :
       (nearestKm != null && nearestKm > 50
         ? "The place found is more than 50 km from every result — check it is the place the visitor meant before using these distances. "
