@@ -493,6 +493,11 @@ Data that goes stale on a clock rather than when someone changes something. **Wh
 | Airport options list (§39) | With the above | 2026-09-23 | on demand | `build-airport-options.mjs` (also writes the server-only `airportCoords.ts`) |
 | Last-leg transfer times (§52) | With the above | 2026-09-23 | on demand | `build-transfer-times.mjs` — incremental, so a re-run after one new destination costs cents |
 
+* **For the 2026-11-16 status run**: a partial probe of the nine passive Côte
+  d'Azur hotels on 2026-09-30 found **La Réserve de Beaulieu (1348) and Pan Deï
+  Palais (3005) now returning rates** on several windows. Ulrik chose to leave
+  them for the quarterly run, so they are still `passive`; the other seven had
+  none.
 * **Ratehawk status is the one needing a human to remember it.** The static-content row runs itself; it's listed so its existence and failure point are on the record.
 * Award refreshes are event-driven — T+L published its 2026 list a week before a session happened to check. Annually is a reminder to *look*, not a deadline.
 * Re-run the two airport builds after any meaningful batch of new hotels, or destinations resolve to the wrong nearest airport.
