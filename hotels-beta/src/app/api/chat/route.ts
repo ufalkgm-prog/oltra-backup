@@ -20,6 +20,7 @@ import {
   dropUnansweredToolCalls,
 } from "@/lib/ai/sanitiseHistory";
 import { describePageContext, sanitisePageContext } from "@/lib/ai/pageContext";
+import { withPageNotes } from "@/lib/ai/historyNotes";
 import { isValidResidencyCode, residencyFromAcceptLanguage } from "@/lib/countries";
 import {
   CHAT_EFFORT,
@@ -248,7 +249,12 @@ export async function POST(req: Request) {
   // the question before it is replaced on every later turn, so the removed part
   // never reaches the model on the way back either.
   const travelOnly = verdict.travelOnly;
-  const modelHistory = withTravelOnlyQuestions(trimmed, travelOnly?.text);
+  // Each question keeps a note of the page it was asked from (historyNotes.ts).
+  const modelHistory = withPageNotes(
+    withTravelOnlyQuestions(trimmed, travelOnly?.text),
+    pageContext,
+    Boolean(travelOnly)
+  );
 
   /* When the removed part asked about another guest, the hotel or restaurant
      open on the page is left out of what the model is told (2026-09-23).

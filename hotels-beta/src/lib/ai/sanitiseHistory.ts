@@ -1,5 +1,6 @@
 import "server-only";
 import type { ModelMessage, UIMessage } from "ai";
+import { webSearchNote } from "./historyNotes";
 
 /* Removes the web search's own parts before the history is replayed.
  *
@@ -20,9 +21,10 @@ import type { ModelMessage, UIMessage } from "ai";
  * sessionStorage. dropUnansweredToolCalls cannot catch it: the part HAS its
  * output. It simply is not replayable.
  *
- * Dropping it loses nothing the model needs. What it learned from the search
- * is already in the reasoning and the answer it wrote at the time; only the
- * unreplayable envelope goes.
+ * What it learned is in the answer it wrote at the time. The reasoning cannot
+ * stay (below), so the search itself is kept as a one-line note in its place
+ * (webSearchNote, 2026-09-30): without it the next turn forgot the lookup had
+ * happened at all.
  */
 export function dropProviderExecutedTools(messages: UIMessage[]): UIMessage[] {
   return messages.map((message) => {
@@ -40,11 +42,13 @@ export function dropProviderExecutedTools(messages: UIMessage[]): UIMessage[] {
        matched what was sent. A turn we do not touch keeps its thinking intact
        and stays valid, which is why this is scoped rather than applied to
        every message. */
-    const parts = message.parts.filter(
-      (part) =>
-        !(part as { providerExecuted?: boolean }).providerExecuted &&
-        part.type !== "reasoning"
-    );
+    const parts = message.parts
+      .filter((part) => part.type !== "reasoning")
+      .map((part) =>
+        (part as { providerExecuted?: boolean }).providerExecuted
+          ? { type: "text" as const, text: webSearchNote(part as { input?: unknown; output?: unknown }) }
+          : part
+      );
     return { ...message, parts };
   });
 }

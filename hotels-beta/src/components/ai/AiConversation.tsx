@@ -2034,7 +2034,9 @@ export default function AiConversation() {
           }
         : context;
     void sendMessage(
-      { text },
+      // The page travels with the question too, so later turns still know
+      // where it was asked from (lib/ai/historyNotes.ts).
+      { text, metadata: { pageContext: pageContextForRequest } },
       // Where the visitor is standing, per request. It is re-validated and
       // scrubbed server-side before it reaches a system block. Residency
       // travels beside it, not inside it: it is for the supplier call only

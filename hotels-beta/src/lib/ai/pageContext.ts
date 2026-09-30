@@ -109,11 +109,10 @@ const PAGE_LABEL: Record<AiPageType, string> = {
   inspire: "the Inspire page",
 };
 
-/** One short sentence for the model's page-context system block. Kept to a
- * sentence deliberately: it is a default to lean on, not a brief. */
-export function describePageContext(context: AiPageContext | null): string {
-  if (!context) return "";
-
+/** What the page showed, as phrases, and the page's name. Shared by the
+ * system block for the current question and the note each question carries
+ * in the history (askedFromNote). */
+function pageFacts(context: AiPageContext): { where: string; tail: string } {
   const facts: string[] = [];
   if (context.hotelName) facts.push(`looking at ${context.hotelName}`);
   if (context.restaurantName) facts.push(`looking at ${context.restaurantName}`);
@@ -163,12 +162,31 @@ export function describePageContext(context: AiPageContext | null): string {
   if (context.rooms && context.rooms > 1) party.push(`${context.rooms} rooms`);
   if (party.length) facts.push(party.join(", "));
 
-  const where = PAGE_LABEL[context.page];
-  const tail = facts.length ? `, ${facts.join(", ")}` : "";
+  return { where: PAGE_LABEL[context.page], tail: facts.length ? `, ${facts.join(", ")}` : "" };
+}
 
+/** One short sentence for the model's page-context system block. Kept to a
+ * sentence deliberately: it is a default to lean on, not a brief. */
+export function describePageContext(context: AiPageContext | null): string {
+  if (!context) return "";
+  const { where, tail } = pageFacts(context);
   return (
     `The visitor opened you from ${where}${tail}. ` +
     `Default to that scope when their question does not name one, and answer ` +
     `anything else they ask regardless.`
   );
+}
+
+/* WHERE EACH QUESTION WAS ASKED FROM (2026-09-30). The system block above
+ * describes the current question only, so by the next turn the model no longer
+ * knew the page: asked on the Hotels page about the Bulgari, with dates the
+ * visitor had chosen, the next answer apologised for having "chosen that hotel
+ * without you naming it" and told them to disregard their own dates. Every
+ * question now carries this note in the history, the latest included, so the
+ * history only ever grows (Opus 5.5 treats edits to earlier turns as history
+ * edits). The route adds it (lib/ai/historyNotes.ts). */
+export function askedFromNote(context: AiPageContext | null): string {
+  if (!context) return "";
+  const { where, tail } = pageFacts(context);
+  return `[Asked from ${where}${tail}.]`;
 }
