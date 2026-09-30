@@ -326,7 +326,12 @@ rooms" ("four on the coast are full"). On a trip in several places the panel
 lists them itself; the text should not count them either.
 
 **H3 · every answer · normal.** Never "with ski school".
-Check: the text contains "ski school" without "in the resort".
+Check: the text contains "with ski school", "with a ski school" or "its own
+ski school" not followed by "nearby", "close" or "in the resort", or places
+one "at", "beside" or "next to" the hotel. Since 2026-09-30 the panel itself
+rewrites "with (a) ski school" to "near a ski school" (`panelText`), so a hit
+on that phrase means the rewrite has broken — report it as high. "Near a ski
+school", "a ski school nearby" and "in the resort" are fine.
 
 **H4 · sample · normal.** No rankings the data does not hold ("the largest
 spa", "the quietest of the five", "the only…"), and no whole-set claims from

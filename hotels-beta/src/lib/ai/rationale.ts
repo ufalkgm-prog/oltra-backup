@@ -32,6 +32,11 @@ export function decodeStrayEscapes(text: string): string {
 const HOUSE_WORDING: Array<[RegExp, string]> = [
   [/\b(held|set aside) for\b/gi, "for"],
   [/\btagged for\b/gi, "good for"],
+  /* Hotels do not run their own ski schools (Ulrik, 2026-09-15), and "with
+     ski school" still came back in five answers of the model test
+     (2026-09-30). "With (a/its own) ski school" becomes "near a ski school"
+     unless the sentence already places it ("with a ski school nearby"). */
+  [/\bwith (?:a |an |its own |their own |its )?(?:in-house )?ski[- ]school(?!s?\s+(?:nearby|close by|close to|in the resort|next door|a short))/gi, "near a ski school"],
 ];
 
 function keepCase(original: string, replacement: string): string {

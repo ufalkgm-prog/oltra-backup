@@ -2,7 +2,7 @@ import "server-only";
 import { anthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import { TRIAGE_MODEL } from "./config";
-import { parseExtraction, type RemovedKind } from "./extractParse";
+import { hasInstructionMarkers, parseExtraction, type RemovedKind } from "./extractParse";
 
 /* Cheap gate in front of the conversation model.
  *
@@ -222,9 +222,15 @@ export async function triageMessage(
   try {
     const label = await classify(text, context);
     const recorded = shortLabel(label);
-    if (recorded === "TRAVEL") return { allow: true, label: recorded };
+    // Orders pasted into a travel question are taken out too (extractParse.ts).
+    const carriesOrders = hasInstructionMarkers(text);
+    if (recorded === "TRAVEL" && !carriesOrders) return { allow: true, label: recorded };
     // Unrecognised label — treat as travel and let the main model decide.
-    if (recorded === "UNKNOWN") return { allow: true, label: recorded };
+    if (recorded === "UNKNOWN" && !carriesOrders) return { allow: true, label: recorded };
+    /* A travel question the extraction cannot separate goes on whole, as it
+       did before: the classifier called it travel, and declining it would
+       refuse a real question over pasted text. */
+    const passesWhole = recorded === "TRAVEL" || recorded === "UNKNOWN";
 
     /* Anything not plainly TRAVEL is looked at for a travel request, whatever
        its label: the classifier is not steady on "a probe with a real trip
@@ -244,12 +250,15 @@ export async function triageMessage(
       if (travel && fold(travel.text) === fold(text)) {
         return { allow: true, label: recorded };
       }
-      return travel
-        ? { allow: true, label: recorded, travelOnly: travel }
+      if (travel) return { allow: true, label: recorded, travelOnly: travel };
+      return passesWhole
+        ? { allow: true, label: recorded }
         : { allow: false, label: recorded, reply: noTravelReply };
     } catch (err) {
       console.error("[ai triage] travel-only", err);
-      return { allow: false, label: recorded, reply: noTravelReply };
+      return passesWhole
+        ? { allow: true, label: recorded }
+        : { allow: false, label: recorded, reply: noTravelReply };
     }
   } catch (err) {
     console.error("[ai triage]", err);

@@ -950,6 +950,12 @@ const createSearchHotels = (turn: TurnMemory) => tool({
           featureCounts: Object.fromEntries(
             checkedFeatures.map((f) => [f.label, tagFit.filter((h) => mentionsOf(h).includes(f.label)).length])
           ),
+          ...(checkedFeatures.some((f) => f.words.some((w) => w.includes("ski school") || w.includes("ski-school")))
+            ? {
+                skiSchoolNote:
+                  "Hotels do not run their own ski schools. Say a ski school is nearby or in the resort; say the hotel can arrange it only where the hotel's own text says so, and never place it at or beside the hotel.",
+              }
+            : {}),
           ...(matchedAs.size
             ? {
                 mentionedAsNote:

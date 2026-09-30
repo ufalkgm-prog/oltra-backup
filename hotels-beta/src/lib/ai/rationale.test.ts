@@ -54,6 +54,18 @@ test('real rooms and kitchens survive', () => {
   }
 })
 
+test('a hotel never has its own ski school', () => {
+  assert.equal(panelText('Ski-in ski-out with ski school for the children.'), 'Ski-in ski-out near a ski school for the children.')
+  assert.equal(panelText('With its own ski school and a kids club.'), 'Near a ski school and a kids club.')
+  for (const text of [
+    'With a ski school nearby for the children.',
+    'A ski school in the resort, which the hotel can arrange.',
+    'with ski school close by',
+  ]) {
+    assert.equal(panelText(text), text)
+  }
+})
+
 test('hotel text is never rewritten', () => {
   const text = 'Two rooms side by side, sea-facing rooms on the upper floors.'
   assert.equal(panelText(text), text)
