@@ -601,6 +601,21 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "luggage and is not usually worth it.",
   },
 
+  /* Venice (2026-09-30). The hotels are reached from Marco Polo by water, and
+   * the measured "drive" (45 minutes for 18km) was a road to Piazzale Roma
+   * with the boat folded in; the concierge then said "45 minutes by water".
+   * Not in doubt for any hotel we hold there - they sit on the Grand Canal,
+   * the Giudecca and the lagoon islands. */
+  Venice: {
+    arriveAt: "VCE",
+    arriveAtLabel: "Venice Marco Polo",
+    legs: [{ mode: "boat", to: "the hotel's own landing stage" }],
+    note:
+      "From Marco Polo the way in is by water: a private water taxi to the " +
+      "hotel's own landing stage, or the slower Alilaguna water bus. Many " +
+      "hotels arrange the water taxi on request.",
+  },
+
   // ---- British Virgin Islands. Spanish Town is on Virgin Gorda itself; the
   // other two are private islands off it, so the final leg is by water. ----
   "Spanish Town": {

@@ -61,6 +61,7 @@ import { FLIGHT_TIME_BASIS, flightHoursBetween, knownAirports, shortestFlightHou
 import { michelinStatus } from "@/app/restaurants/utils";
 import { toPreferredAirlines, type PreferredAirline } from "./preferredAirlines";
 import { checkPresentation, correctionNote, returnedIds, type PresentOutput } from "./presentGuard";
+import { phraseAt } from "./featureMatch";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -148,6 +149,7 @@ function parseFeatures(values: string[] | undefined): Feature[] {
 
 const MAX_FEATURES = 4;
 
+
 /* WHAT ONE ANSWER HAS ALREADY SEARCHED FOR (2026-09-15). The family ski answer
  * searched "ski-in ski-out" and "ski school", then searched again with ski-in
  * alone, and presented seven hotels "with ski school" — four of which were never
@@ -186,6 +188,12 @@ function hotelGateway(hotel: HotelRecord): { airport: string; transferMinutes: n
   return { airport: gateway.iata, transferMinutes: resolveTransfer(key, gateway.iata).minutes };
 }
 
+/* "About 45 minutes from Venice airport by water" (2026-09-30): the minutes
+ * were a road time and the mode was the model's. A hotel reached by boat or
+ * light aircraft has a route in transferRoutes.ts and no minutes at all. */
+const TRANSFER_NOTE =
+  "transferMinutes is the drive by road from the hotel's airport: say \"about N minutes by road from X\" or \"from the airport\", never another mode. Null means we have no road time to give (the last leg may be by boat or air): say the transfer is worth confirming, never a number.";
+
 function candidateShape(hotel: HotelRecord) {
   return {
     id: Number(hotel.id),
@@ -209,7 +217,8 @@ function candidateShape(hotel: HotelRecord) {
     // its destination's standing order. The panel prints the same airport
     // under the hotel's name, so a set spanning several airports can be flown
     // to every one of them without a nearestAirport call per city.
-    // `transferMinutes` is the measured drive from that airport to this hotel.
+    // `transferMinutes` is the measured drive from that airport to this hotel -
+    // by road, which is all it can be (TRANSFER_NOTE).
     ...hotelGateway(hotel),
   };
 }
@@ -879,12 +888,24 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     for (const f of features) turn.features.set(f.label, f);
     const checkedFeatures = [...features, ...earlierFeatures];
     const mentionsByHotel = new Map<HotelRecord, string[]>();
+    /* WHICH PHRASING MATCHED (2026-09-30). A feature is reported under its
+       first phrasing, so "private onsen|onsen|hot spring" labelled a hotel with
+       a shared hot spring "private onsen", and "rooftop|roof terrace|terrace"
+       made every terraced hotel a rooftop one; the answers said so. When only
+       a later phrasing matched, the hotel carries `mentionedAs` with it. */
+    const matchedAs = new Map<HotelRecord, Record<string, string>>();
     for (const hotel of checkedFeatures.length ? tagFit : []) {
       const text = foldText(`${hotel.highlights ?? ""} ${hotel.description ?? ""}`);
-      mentionsByHotel.set(
-        hotel,
-        checkedFeatures.filter((f) => f.words.some((word) => text.includes(word))).map((f) => f.label)
-      );
+      const labels: string[] = [];
+      const loose: Record<string, string> = {};
+      for (const f of checkedFeatures) {
+        const hit = f.words.find((word) => phraseAt(text, word));
+        if (!hit) continue;
+        labels.push(f.label);
+        if (hit !== f.words[0]) loose[f.label] = hit;
+      }
+      mentionsByHotel.set(hotel, labels);
+      if (Object.keys(loose).length) matchedAs.set(hotel, loose);
     }
     const mentionsOf = (hotel: HotelRecord) => mentionsByHotel.get(hotel) ?? [];
     const currentMentioned = (hotel: HotelRecord) =>
@@ -902,6 +923,12 @@ const createSearchHotels = (turn: TurnMemory) => tool({
           featureCounts: Object.fromEntries(
             checkedFeatures.map((f) => [f.label, tagFit.filter((h) => mentionsOf(h).includes(f.label)).length])
           ),
+          ...(matchedAs.size
+            ? {
+                mentionedAsNote:
+                  "A hotel with \"mentionedAs\" matched a later phrasing of that feature, not its first: it has what that phrasing says (\"hot spring\"), not necessarily the feature itself (\"private onsen\"). Describe it in the matched words, and do not count it as having the feature.",
+              }
+            : {}),
           leftOutByFeatures: tagFit.length - featureFit.length,
           ...(earlierFeatures.length
             ? {
@@ -914,7 +941,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
             ? "No feature filtered this search."
             : mentionAll.length
             ? "Kept: the hotels that have every feature asked for. Say what they have (\"each with a private pool\"), never how you know it. Others may have it and not say so, so the rest are not proof of absence — raise that only if the visitor asks."
-            : "No hotel here mentions all of those, so none was left out; they are ordered by how many they mention. Say per hotel what its \"mentions\" confirm, and never claim a feature for a hotel that does not mention it.",
+            : "No hotel here mentions all of those, so none was left out; they are ordered by how many they mention. Say per hotel what its \"mentions\" confirm, and never claim a feature for a hotel that does not mention it. Not mentioned is not absent: say a hotel \"doesn't list\" it or that it is worth asking, never that it \"has no\" or \"none has\" it.",
         }
       : {};
 
@@ -1090,6 +1117,7 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       ...candidateShape(hotel),
       ...(nearPlace ? distanceFromPlace(nearPlace, hotel.lat, hotel.lng) : {}),
       ...(checkedFeatures.length ? { mentions: mentionsOf(hotel) } : {}),
+      ...(matchedAs.has(hotel) ? { mentionedAs: matchedAs.get(hotel) } : {}),
       ...(flightHoursOf.has(hotel) ? { flightHours: flightHoursOf.get(hotel) } : {}),
     }));
     const nearInfo = near
@@ -1146,13 +1174,14 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         return { id: hotel.id, name: hotel.name, city: hotel.city, noRoomsForTheseDates: true };
       }
       if (turn.shownIds.has(hotel.id)) {
-        const extra = hotel as { mentions?: string[]; flightHours?: number | null; distanceKm?: number; walkMinutes?: number | null };
+        const extra = hotel as { mentions?: string[]; mentionedAs?: Record<string, string>; flightHours?: number | null; distanceKm?: number; walkMinutes?: number | null };
         return {
           id: hotel.id,
           name: hotel.name,
           city: hotel.city,
           shownEarlier: true,
           ...(extra.mentions ? { mentions: extra.mentions } : {}),
+          ...(extra.mentionedAs ? { mentionedAs: extra.mentionedAs } : {}),
           ...(extra.flightHours !== undefined ? { flightHours: extra.flightHours } : {}),
           ...(extra.distanceKm !== undefined ? { distanceKm: extra.distanceKm, walkMinutes: extra.walkMinutes } : {}),
         };
@@ -1170,6 +1199,13 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         ? rankedHotels.filter((h) => "withinBudget" in h && h.withinBudget === true).length
         : null;
     const facing = withinBudgetCount ?? availableCount ?? narrowed.length;
+    const facingIds = new Set(
+      (rankedHotels ?? [])
+        .filter((h) => "available" in h && h.available)
+        .filter((h) => withinBudgetCount == null || ("withinBudget" in h && h.withinBudget === true))
+        .map((h) => h.id)
+    );
+    const facingHotels = narrowed.filter((h) => facingIds.has(Number(h.id)));
 
     // Too many to recommend: hand back counts and the axes that would cut it
     // down, and no properties at all. The model has nothing to present, so it
@@ -1187,7 +1223,13 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         ...flightInfo,
         availableForTheseDates: availableCount,
         ...(withinBudgetCount != null ? { withinBudgetForTheseDates: withinBudgetCount } : {}),
-        narrowBy: narrowingAxes(narrowed, requested),
+        /* Counted over the hotels they could actually book (2026-09-30).
+           Counted over every match, the axes suggested Crete and Bodrum for
+           a March week when nothing we sell there had rooms. */
+        narrowBy: narrowingAxes(facingHotels.length ? facingHotels : narrowed, requested),
+        ...(facingHotels.length
+          ? { narrowByBasis: "narrowBy counts only hotels we sell that have rooms for these dates" + (withinBudgetCount != null ? " within budget" : "") + "." }
+          : {}),
         guidance:
           `${facing} properties is a directory, not a recommendation. Do NOT ` +
           `call presentResults. Tell the visitor the counts above, say what ` +
@@ -1238,8 +1280,12 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     const seenWhole = Boolean(geographyKey) && turn.wholeGeographies.has(geographyKey);
     const filtered =
       tagged || features.length > 0 || maxHours !== null || Boolean(input.name) || Boolean(nearPlace);
+    /* Not for a name search (2026-09-30): the name filter is part of the query
+       that fills inRegion, so {name: "Ritz Paris", city: "Paris"} reported
+       "We hold only 1 hotels in Paris" and an answer said the Ritz was the only
+       Paris hotel we hold, of nineteen. */
     const geographyInfo =
-      geography && inRegion.length <= BROAD_RESULT_LIMIT
+      geography && !input.name && inRegion.length <= BROAD_RESULT_LIMIT
         ? {
             geographyNote: seenWhole
               ? `Every hotel we hold in ${geography} already came back in this answer; this search can only return some of them again. Choose from what you have.`
@@ -1252,6 +1298,11 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     for (const hotel of hotelsOut) {
       if (!("shownEarlier" in hotel) && !("noRoomsForTheseDates" in hotel)) turn.shownIds.add(hotel.id);
     }
+    const notSoldHereIds = new Set(
+      (rankedHotels ?? []).filter((h) => "reason" in h && h.reason === "not-sold-here").map((h) => h.id)
+    );
+    const notSoldHere = shaped.filter((h) => notSoldHereIds.has(h.id)).map((h) => h.name);
+
     if (geographyKey && !filtered && inRegion.length <= BROAD_RESULT_LIMIT) {
       turn.wholeGeographies.add(geographyKey);
     }
@@ -1264,16 +1315,28 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         ? {
             withoutFeature,
             withoutFeatureNote:
-              "Hotels listed under a feature do not mention it. When the visitor asked for that feature, say for each hotel you present whether its description mentions it, and never let the framing suggest they all have it.",
+              "Hotels listed under a feature do not mention it. When the visitor asked for that feature, say for each hotel you present whether it is listed, and never let the framing suggest they all have it. Not mentioned is not absent: \"doesn't list\" or \"worth asking\", never \"has no\" or \"none has\".",
           }
         : {}),
       ...geographyInfo,
+      ...(shaped.some((h) => h.airport) ? { transferNote: TRANSFER_NOTE } : {}),
       ...(repeatedIds
         ? {
             shownEarlierNote: `${repeatedIds} of these came back in full earlier in this answer, so only their names are repeated here; their details are in that earlier result.`,
           }
         : {}),
       ...flightInfo,
+      /* Counted here, not by the model (2026-09-30): asked for Paris on dates,
+         answers said "all nineteen have rooms" where 17 did - the two not sold
+         here sat in the same list. */
+      ...(availableCount != null ? { availableForTheseDates: availableCount } : {}),
+      ...(notSoldHere.length
+        ? {
+            notSoldHere,
+            notSoldHereNote:
+              "These cannot be priced or booked here: they are not full and not available, so never count them among the hotels with rooms.",
+          }
+        : {}),
       ...(withinBudgetCount != null ? { withinBudgetForTheseDates: withinBudgetCount } : {}),
       returned: shaped.length,
       truncated: narrowed.length > shaped.length,

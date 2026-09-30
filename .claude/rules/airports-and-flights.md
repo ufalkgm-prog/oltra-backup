@@ -361,7 +361,7 @@ in the list", not "is the listed one plausible".
 
 `src/lib/transferRoutes.ts` (2026-09-11, see CLAUDE-AI.md) holds the
 arrival-to-door route per destination, so the concierge stops answering "how do
-I get to the Masai Mara" with Nairobi and a full stop. **59 routes populated**
+I get to the Masai Mara" with Nairobi and a full stop. **61 routes populated** (counted 2026-09-30, when Venice was added: its hotels are reached from Marco Polo by water, and the measured 45-minute "drive" had the concierge saying "45 minutes by water")
 (Zermatt and Marmaris were added 2026-09-12, §52);
 an absent entry makes it decline rather than guess, which is the point.
 
