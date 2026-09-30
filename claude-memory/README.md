@@ -15,7 +15,7 @@ reason this folder is here.
 
 ## What it holds
 
-Nine files: `MEMORY.md` is the index loaded each session, one line per memory,
+`MEMORY.md` is the index loaded each session, one line per memory,
 and the rest are one fact each — who Ulrik is, corrections he has given, and
 project context not derivable from the code. No credentials; checked before
 committing, and worth re-checking before any future sync.

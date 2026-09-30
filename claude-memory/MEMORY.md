@@ -13,3 +13,6 @@
 - [Open actions](project_open_actions.md) — GO-LIVE BLOCKER: Hotels room selector (count + mixed types, waits on ETG); Supabase dashboard steps, PARKED concierge answer-log/monitoring-agent wiring (steps listed); infants and multi-city ellipsis fixed, Trip.com tracking confirmed, map-window filtering dropped
 - [Drive the UI with real events](feedback_drive_the_ui_with_real_events.md) — programmatic click/scroll produced 3 false findings in one sweep; also never run `npm run build` while `npm run dev` is up
 - [Check tab visibility before UI tests](feedback_check_tab_visibility.md) — a hidden Chrome tab throttles timers and drops CDP clicks; check visibilityState first
+- [Model eval method](feedback_model_eval_method.md) — concierge model comparisons: per-axis rubric, full safety set every arm, Ulrik's blind vote decides, separate fix list, calibration gate
+- [Concierge model test](project_concierge_model_test.md) — 2026-09-30: Opus 5.5 chosen (medium ≈ high quality at $0.080); Sonnet 8.8; committed 102cc14/4fd4d33; fix batches B1-B6 pushed (regression 9.44 vs 8.89); tiering parked; open: Duffel key, showAll bypass
+- [Eval runner checks](feedback_eval_runner_checks.md) — confirm the first eval record within ~90s (a reload wipes the runner); run tsc/lint/test alone, not in a parallel batch
