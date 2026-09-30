@@ -496,6 +496,18 @@ function narrowingAxes(
   // Up to 20, not 8: a set spread thinly over many cities lost its one-hotel
   // places to the cap, and the summary then could not name them.
   add("city", shape(tally(hotels.map((h) => h.city)), [], 20));
+  /* A city whose hotels we cannot sell (2026-09-30): "where would you send
+     us" answers recommended Provence and the Douro on Villa La Coste and Six
+     Senses Douro Valley alone, neither bookable here. */
+  if (axes.city) {
+    const sellable = new Set(
+      hotels.filter((h) => h.ratehawk_status !== "passive" && h.ratehawk_hid).map((h) => (h.city ?? "").trim())
+    );
+    axes.city = {
+      ...axes.city,
+      values: axes.city.values.map((v) => (sellable.has(v.value) ? v : { ...v, notSoldHere: true })),
+    };
+  }
   add("style", shape(flat((h) => h.style), requested.styles));
   add("activities", shape(flat((h) => h.activities), requested.activities));
 
@@ -643,7 +655,10 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         type: "string",
         description:
           "Part of a hotel name. Use alone to answer whether we hold a named " +
-          "property; matching is case-insensitive and partial.",
+          "property; matching is case-insensitive and partial. To compare " +
+          "named hotels, give them all at once, separated by \"|\" " +
+          "(\"Gritti|Aman\"), with the city: they are then priced and ranked " +
+          "together in this one call.",
       },
       city: { type: "string", description: "Exact city name." },
       // Enumerated, not free text. These are locked vocabularies (§44), and a
@@ -802,9 +817,21 @@ const createSearchHotels = (turn: TurnMemory) => tool({
      *
      * Denying real inventory is worse than anything else this tool can get
      * wrong: a guest is told we cannot offer a hotel we can. */
+    /* Several names at once, "Gritti|Aman" (2026-09-30): comparing two hotels
+       took a search each and then a third call to rank them together, since a
+       priceRank is only comparable within one call. */
     if (input.name) {
-      const named = index.filter((row) => foldedContains(row.name, input.name)).map((row) => row.id);
-      and.push(named.length ? { id: { _in: named } } : { hotel_name: { _icontains: input.name } });
+      const names = input.name.split("|").map((n) => n.trim()).filter(Boolean);
+      const named = index
+        .filter((row) => names.some((n) => foldedContains(row.name, n)))
+        .map((row) => row.id);
+      and.push(
+        named.length
+          ? { id: { _in: named } }
+          : names.length > 1
+            ? { _or: names.map((n) => ({ hotel_name: { _icontains: n } })) }
+            : { hotel_name: { _icontains: input.name } }
+      );
     }
     if (city) {
       const cities = expandCityAliases([city]).flatMap((c) => storedSpellings(c, column("city")));
@@ -1105,13 +1132,13 @@ const createSearchHotels = (turn: TurnMemory) => tool({
       }
     }
 
-    const capped = narrowed.slice(
-      0,
-      Math.min(
-        input.limit ?? MAX_HOTEL_CANDIDATES,
-        nearPlace ? BROAD_RESULT_LIMIT : MAX_HOTEL_CANDIDATES
-      )
-    );
+    /* `limit` trims what comes back, never what the gate counts (2026-09-30).
+       Availability was ranked over the limited list, so limit: 30 turned 327
+       matches into a count under BROAD_RESULT_LIMIT and 30 full hotels went
+       back where the same search without it was gated. */
+    const pool = narrowed.slice(0, nearPlace ? BROAD_RESULT_LIMIT : MAX_HOTEL_CANDIDATES);
+    const capped = pool.slice(0, Math.min(input.limit ?? pool.length, pool.length));
+    const cappedIds = new Set(capped.map((hotel) => Number(hotel.id)));
 
     const shaped = capped.map((hotel) => ({
       ...candidateShape(hotel),
@@ -1133,9 +1160,10 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     // asked for these two things back to back every single time, and the
     // second ask cost more than the supplier call it triggered.
     const ids = shaped.map((h) => h.id);
+    const poolIds = pool.map((hotel) => Number(hotel.id));
     const [ranked, details] = await Promise.all([
       input.stay?.checkIn && input.stay?.checkOut && !mustAskRooms(input.stay)
-        ? rankAvailability({ ...input.stay, ids }, turn.residency)
+        ? rankAvailability({ ...input.stay, ids: poolIds, roomFeatures: checkedFeatures }, turn.residency)
         : null,
       ids.length && ids.length <= INLINE_DESCRIPTIONS_MAX ? descriptionsFor(ids) : null,
     ]);
@@ -1227,6 +1255,18 @@ const createSearchHotels = (turn: TurnMemory) => tool({
            Counted over every match, the axes suggested Crete and Bodrum for
            a March week when nothing we sell there had rooms. */
         narrowBy: narrowingAxes(facingHotels.length ? facingHotels : narrowed, requested),
+        /* A feature nothing mentions cannot narrow the set (2026-09-30):
+           "fireworks from the hotel" matched no description, filtered nothing,
+           and every answer stopped at counts. */
+        ...(features.some((f) => !tagFit.some((h) => mentionsOf(h).includes(f.label)))
+          ? {
+              unmatchedFeatures: features
+                .filter((f) => !tagFit.some((h) => mentionsOf(h).includes(f.label)))
+                .map((f) => f.label),
+              unmatchedFeaturesNote:
+                "No hotel here mentions these, so they narrowed nothing and cannot be claimed for any hotel. Do not ask about them. Offer two or three places from narrowBy.city where the visitor is most likely to find what they asked for, each with its reason, and say it is worth confirming with the hotel.",
+            }
+          : {}),
         ...(facingHotels.length
           ? { narrowByBasis: "narrowBy counts only hotels we sell that have rooms for these dates" + (withinBudgetCount != null ? " within budget" : "") + "." }
           : {}),
@@ -1241,7 +1281,9 @@ const createSearchHotels = (turn: TurnMemory) => tool({
           `place while naming one with fewer properties. ` +
           `IF THE VISITOR ASKED WHERE TO GO ("where would you send us", ` +
           `"where should we go", "suggest somewhere"), answer that before you ` +
-          `ask: suggest two or three of the cities in narrowBy.city, each with ` +
+          `ask: suggest two or three of the cities in narrowBy.city - prefer ` +
+          `ones we sell; one marked notSoldHere has only hotels that cannot be ` +
+          `booked here yet, so say so if you suggest it - each with ` +
           `one reason tied to what they told you (the occasion, the season, ` +
           `what they love) — a destination recommendation, not a hotel one, so ` +
           `name no property — then ask which appeals, or what else would help. ` +
@@ -1352,7 +1394,14 @@ const createSearchHotels = (turn: TurnMemory) => tool({
               "Hotels marked noRoomsForTheseDates have no rooms on these dates, so only their name is given. Do not present them for these dates; name one as full when it plainly fits, and offer other dates if the visitor chose none.",
           }
         : {}),
-      ...(ranked ? { availability: ranked } : {}),
+      ...(ranked
+        ? {
+            availability:
+              rankedHotels && "hotels" in ranked
+                ? { ...ranked, hotels: rankedHotels.filter((h) => cappedIds.has(h.id)) }
+                : ranked,
+          }
+        : {}),
       /* NOTHING FREE ON THOSE DATES (2026-09-15). Asked about Iceland "next
          September", the concierge chose 10-17 September, found no rates at the
          one hotel we hold, and presented it for that dead week anyway — its
@@ -1406,6 +1455,9 @@ const getHotelDetails = tool({
 
 type StayInput = {
   ids: number[];
+  /** Features asked for this answer (turn memory): a budget is tested on the
+   * rooms named like them where a hotel has any (2026-09-30). */
+  roomFeatures?: Feature[];
   checkIn: string;
   checkOut: string;
   adults?: number;
@@ -1547,12 +1599,24 @@ async function rankAvailabilityFor(input: StayInput, residency: string) {
     residency,
   });
 
-  // Cheapest rate per hotel, used ONLY to rank and to test the ceiling.
-  // The amount is deliberately dropped before anything reaches the model.
+  /* A BUDGET IS FOR THE ROOM THEY ASKED ABOUT (2026-09-30). "An overwater
+     villa with a private pool under 2,000 a night" was tested on each hotel's
+     cheapest room, a beach villa as often as not. Room names say what a room
+     is ("Sunrise Water Villa with Pool", "Overwater Pool Villa"), so where a
+     hotel names rooms like the features asked for, the budget is tested on
+     those; a feature no room name carries (a butler) is ignored for this. Where
+     none is named that way (Huvafen Fushi calls its overwater rooms "Ocean
+     pool Bungalow"), it is tested on any room and says so. */
+  const roomFeatures = input.roomFeatures ?? [];
+  const cheapestAsked = new Map<number, number>();
   const cheapest = new Map<number, number>();
   for (const hotel of serp) {
     const id = hidToId.get(Number(hotel.hid));
     if (!id) continue;
+    const roomName = (rate: { room_name?: string }) => foldText(rate.room_name ?? "");
+    const named = roomFeatures.filter((f) =>
+      (hotel.rates ?? []).some((rate) => f.words.some((word) => phraseAt(roomName(rate), word)))
+    );
     for (const rate of hotel.rates ?? []) {
       const price = ratePrice(rate);
       if (!price) continue;
@@ -1560,14 +1624,25 @@ async function rankAvailabilityFor(input: StayInput, residency: string) {
       if (current === undefined || price.amount < current) {
         cheapest.set(id, price.amount);
       }
+      if (named.length && named.every((f) => f.words.some((word) => phraseAt(roomName(rate), word)))) {
+        const asked = cheapestAsked.get(id);
+        if (asked === undefined || price.amount < asked) cheapestAsked.set(id, price.amount);
+      }
     }
   }
 
   const ranked = [...cheapest.entries()].sort((a, b) => a[1] - b[1]);
   const rankById = new Map(ranked.map(([id], index) => [id, index + 1]));
 
+  const budgetByRoom = input.maxPricePerStay != null && roomFeatures.length > 0;
   return {
     note: "Ranks only. No amounts are provided; the cards display live prices.",
+    ...(budgetByRoom
+      ? {
+          budgetNote:
+            "withinBudgetFor says what the budget was tested on. \"the rooms asked for\": rooms named like the features asked for. \"any room\": no room here is named that way, so the fit may be a different kind of room - say so, and never say the room they asked for is within budget.",
+        }
+      : {}),
     hotels: rows.map((h) => {
       const id = Number(h.id);
       const amount = cheapest.get(id);
@@ -1586,7 +1661,10 @@ async function rankAvailabilityFor(input: StayInput, residency: string) {
         available: true,
         priceRank: rankById.get(id) ?? null,
         withinBudget:
-          input.maxPricePerStay == null ? null : amount <= input.maxPricePerStay,
+          input.maxPricePerStay == null ? null : (cheapestAsked.get(id) ?? amount) <= input.maxPricePerStay,
+        ...(budgetByRoom
+          ? { withinBudgetFor: cheapestAsked.has(id) ? "the rooms asked for" : "any room" }
+          : {}),
       };
     }),
   };
@@ -1639,7 +1717,10 @@ const createCheckAvailability = (turn: TurnMemory) => tool({
   }),
   async execute(input) {
     if (mustAskRooms(input)) return asUntrustedData("availability", { roomsQuestion: ROOMS_NOTE });
-    return asUntrustedData("availability", await rankAvailability(input, turn.residency));
+    return asUntrustedData(
+      "availability",
+      await rankAvailability({ ...input, roomFeatures: [...turn.features.values()] }, turn.residency)
+    );
   },
 });
 
