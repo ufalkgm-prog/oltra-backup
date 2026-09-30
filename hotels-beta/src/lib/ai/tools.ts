@@ -171,6 +171,8 @@ type TurnMemory = {
   residency: string;
   shownIds: Set<number>;
   wholeGeographies: Set<string>;
+  /** A too-broad result was returned in this answer (see showAll below). */
+  gated: boolean;
 };
 
 /* THE DRIVE FROM A HOTEL'S OWN AIRPORT (2026-09-15). Asked for Lake Como via
@@ -719,7 +721,10 @@ const createSearchHotels = (turn: TurnMemory) => tool({
         type: "boolean",
         description:
           "Only when the visitor has been told the set is large and has asked " +
-          "to see it anyway. Returns the properties instead of counts.",
+          "to see it anyway, or when their own message asks for everything - " +
+          "then pass it on the first search. Returns the properties instead " +
+          "of counts. Ignored after a too-broad result in the same answer: " +
+          "the visitor has to ask.",
       },
       flyingFrom: {
         type: "array",
@@ -1245,9 +1250,23 @@ const createSearchHotels = (turn: TurnMemory) => tool({
     // down, and no properties at all. The model has nothing to present, so it
     // asks — which is the behaviour we want and could not get from the prompt
     // alone. `showAll` is the way back out for a visitor who wants the lot.
-    if (facing > BROAD_RESULT_LIMIT && !input.showAll && !nearPlace) {
+    /* ...and only for the visitor (2026-09-30). The regression run caught the
+       model passing showAll: true itself, straight after a too-broad result
+       in the same answer: a worldwide family-ski search came back as eight
+       cards, seven of them in North America. A visitor's "show me all of
+       them" arrives in a later turn, so within one answer a gated search
+       cannot be reopened. */
+    const showAll = Boolean(input.showAll) && !turn.gated;
+    if (facing > BROAD_RESULT_LIMIT && !showAll && !nearPlace) {
+      turn.gated = true;
       return asUntrustedData("myoltra-hotels", {
         tooBroadToShow: true,
+        ...(input.showAll
+          ? {
+              showAllIgnored:
+                "showAll is only for a visitor who has been told the set is large and asked to see it anyway. They have not answered since this answer's first too-broad result: ask them, or narrow the search.",
+            }
+          : {}),
         matched: narrowed.length,
         // Only reached when the place was NOT found: say so, or the model
         // fills the gap with a distance of its own.
@@ -2921,7 +2940,7 @@ export function buildConciergeTools({
   member?: MemberReaders;
   pageHotelId?: number;
 }) {
-  const turn: TurnMemory = { features: new Map(), residency, shownIds: new Set(), wholeGeographies: new Set() };
+  const turn: TurnMemory = { features: new Map(), residency, shownIds: new Set(), wholeGeographies: new Set(), gated: false };
   return {
     ...(member ? createMemberTools(member) : {}),
     searchHotels: createSearchHotels(turn),
