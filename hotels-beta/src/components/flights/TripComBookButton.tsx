@@ -6,6 +6,7 @@ import { identifyItinerary } from "@/lib/flights/flightIdentity";
 import type { Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
 import { tripComHref, TRIP_COM_LINK_REL } from "@/lib/flights/tripComHandoff";
+import { recordBookClick } from "@/lib/members/bookClicks";
 import flightsStyles from "@/app/flights/ui/FlightsView.module.css";
 import styles from "./TripComBookButton.module.css";
 
@@ -79,6 +80,7 @@ export default function TripComBookButton({
           itinerary={itinerary}
           price={price}
           href={href}
+          placement={handoff.placement}
           onClose={() => setOpen(false)}
         />
       ) : null}
@@ -90,11 +92,13 @@ function TripComHandoffDialog({
   itinerary,
   price,
   href,
+  placement,
   onClose,
 }: {
   itinerary: Itinerary;
   price: string;
   href: string;
+  placement: TripComPlacement;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -182,7 +186,14 @@ function TripComHandoffDialog({
             target="_blank"
             rel={TRIP_COM_LINK_REL}
             className="oltra-btn"
-            onClick={onClose}
+            onClick={() => {
+              recordBookClick({
+                kind: "flight_tripcom",
+                flightRoute: legs.map((leg) => leg.route.replace(" → ", "-")).join(" / "),
+                source: placement === "concierge-chat" ? "concierge" : "classic",
+              });
+              onClose();
+            }}
           >
             Proceed
           </a>

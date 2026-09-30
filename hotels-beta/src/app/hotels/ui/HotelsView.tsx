@@ -73,6 +73,7 @@ import type { PrebookFailureReason, PrebookHash } from "@/lib/ratehawk/prebook";
 import { compareRates, type RateChange } from "@/lib/ratehawk/rateChanges";
 import type { HotelPolicies } from "@/lib/ratehawk/metapolicy";
 import { useCurrency } from "@/lib/currency/useCurrency";
+import { recordBookClick } from "@/lib/members/bookClicks";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -2052,8 +2053,19 @@ export default function HotelsView(props: {
     setPrebook((prev) => (prev.status === "failed" ? prev : { status: "idle" }));
   }, [selectedRoomKey, ratehawkRooms.rooms]);
 
+  /* The last click on our side of a booking (lib/members/bookClicks.ts):
+     from the concierge when the hotel is in the answer this page is showing. */
+  function recordHotelBookClick(kind: "hotel_checkout" | "hotel_external") {
+    const hotelId = Number(selectedHotel?.id);
+    if (!Number.isInteger(hotelId) || hotelId <= 0) return;
+    const fromAnswer =
+      aiAnswerCurrent && aiResults.hotelIds.some((id) => String(id) === String(hotelId));
+    recordBookClick({ kind, hotelId, source: fromAnswer ? "concierge" : "classic" });
+  }
+
   async function handleContinueToCheckout() {
     if (!selectedRoom || prebook.status === "checking") return;
+    recordHotelBookClick("hotel_checkout");
     const original = selectedRoom;
     setPrebook({ status: "checking" });
 
@@ -3887,7 +3899,11 @@ export default function HotelsView(props: {
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => {
-                          if (!hasStayDates) e.preventDefault();
+                          if (!hasStayDates) {
+                            e.preventDefault();
+                            return;
+                          }
+                          recordHotelBookClick("hotel_external");
                         }}
                         aria-disabled={hasStayDates ? undefined : "true"}
                         data-reason={hasStayDates ? undefined : "Select dates to book"}

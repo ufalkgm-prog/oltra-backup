@@ -8,6 +8,7 @@ import {
   HOTEL_CARD_PLACEHOLDERS,
   hasHotelPhotos,
 } from "@/lib/hotels/cardHelpers";
+import { recordBookClick } from "@/lib/members/bookClicks";
 
 export type SmallCardAvailability =
   | { status: "loading" }
@@ -292,7 +293,12 @@ export default function HotelSmallCard({
     : bookingHref
       ? {
           offsite: true,
-          go: () => window.open(bookingHref, "_blank", "noopener,noreferrer"),
+          go: () => {
+            // Leaving for the hotel's own site is still booking intent.
+            const hotelId = Number(hotel.id);
+            if (Number.isInteger(hotelId) && hotelId > 0) recordBookClick({ kind: "hotel_external", hotelId });
+            window.open(bookingHref, "_blank", "noopener,noreferrer");
+          },
         }
       : null;
   /* BOOK stays, passive, and says why: no dates chosen yet — for every BOOK,
