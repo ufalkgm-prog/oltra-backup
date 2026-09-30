@@ -3,7 +3,6 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  hasToolCall,
   stepCountIs,
   streamText,
   type UIMessage,
@@ -321,6 +320,8 @@ export async function POST(req: Request) {
       ...buildConciergeTools({
         preferredAirlines,
         residency,
+        // The hotel open on their page may be presented without a search.
+        pageHotelId: pageContext?.hotelId,
         // Their own favourites and saved trips, read with their own session
         // and only when the model asks (lib/ai/memberData.ts). Read only.
         member: {
@@ -344,7 +345,14 @@ export async function POST(req: Request) {
     // round trip that emitted a single short sentence — measured at 2.4s of a
     // 26.6s answer for 30 tokens. That sentence is now the tool's own
     // `followUp` field, so the answer and the question arrive together.
-    stopWhen: [stepCountIs(MAX_TOOL_STEPS), hasToolCall("presentResults")],
+    /* Ends when presentResults has RUN, not merely been called (2026-09-30).
+       An invalid call - the model once sent its input as a string of broken
+       JSON - counted as a call, ended the turn, and left the visitor with
+       nothing. Now the error goes back to the model, which calls it again. */
+    stopWhen: [
+      stepCountIs(MAX_TOOL_STEPS),
+      ({ steps }) => steps.at(-1)?.toolResults.some((r) => r?.toolName === "presentResults") ?? false,
+    ],
     /* THE LAST STEP IS FOR ANSWERING (2026-09-15). A family ski question spent
        all eight steps searching and checking other weeks, and the turn ended
        with nothing on screen — once with presentResults cut off mid-stream,
@@ -373,6 +381,9 @@ export async function POST(req: Request) {
         })),
         finishReason: event.finishReason,
         usage: event.totalUsage,
+        presentOutput: event.steps
+          .flatMap((step) => step.toolResults)
+          .find((result) => result?.toolName === "presentResults")?.output,
       });
     },  });
 

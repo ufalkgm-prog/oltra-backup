@@ -12,6 +12,7 @@
  *
  * Pure, so it can be tested without the model or the database: the route
  * hands it what it already has and writes what comes back. */
+import { applyCorrections, correctionsFromOutput } from "./presentGuard.ts";
 
 export type AnswerLogRecord = {
   member_hash: string;
@@ -64,6 +65,9 @@ export type AnswerLogInput = {
   /** A reply triage gave instead of the model (a decline or an account reply). */
   declineReply?: string;
   steps?: Step[];
+  /** presentResults' own output: the corrections the panel applied
+   * (presentGuard.ts), so the record holds what the visitor saw. */
+  presentOutput?: unknown;
   finishReason?: string | null;
   usage?: Usage;
 };
@@ -94,7 +98,8 @@ export function buildAnswerLog(input: AnswerLogInput): AnswerLogRecord {
   const calls = steps.flatMap((step) => step.toolCalls ?? []);
   const last = (name: string) => record([...calls].reverse().find((call) => call.toolName === name)?.input);
 
-  const present = last("presentResults");
+  const written = last("presentResults");
+  const present = written ? record(applyCorrections(written, correctionsFromOutput(input.presentOutput))) : null;
   const flights = Array.isArray(present?.flights)
     ? (present.flights as unknown[])
         .map((leg) =>

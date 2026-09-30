@@ -1,6 +1,31 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { panelText } from './rationale.ts'
+import { claimsMemberChange, panelText } from './rationale.ts'
+
+/* "I've moved your Ski 2027 stay…" (2026-09-30): a claim to have changed saved
+ * data. Caught so the panel can say nothing was changed; the check only runs on
+ * turns that read the member's trips or favourites. */
+test('a claim to have changed saved data is caught', () => {
+  for (const text of [
+    "I've moved your Ski 2027 stay at La Sivolière to 1–8 March.",
+    'I’ve added The Peninsula to your France trip.',
+    'I have updated your favourites.',
+    'I removed the Ritz from your trip.',
+  ]) {
+    assert.equal(claimsMemberChange(text), true, text)
+  }
+})
+
+test('offers and plain answers are not claims', () => {
+  for (const text of [
+    'La Sivolière has rooms for 1–8 March.',
+    'SAVE TO TRIP on the hotel will record the new dates.',
+    'Shall I check another week?',
+    'The trip was moved to March last year.',
+  ]) {
+    assert.equal(claimsMemberChange(text), false, text)
+  }
+})
 
 /* A restaurant is never a "room" in the panel (2026-09-23): the model called
  * two lunch places "well-run rooms" with the rule already in the prompt. The

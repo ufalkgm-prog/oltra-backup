@@ -275,6 +275,10 @@ One room needs no question for: 1–2 adults and no children; 1 adult and 1–2
 children; 2 adults and 1 child. Any other party of three or more needs a
 room count. Check: `stay` has such a party, no `stay.rooms`, and the text
 does not contain "room" in a question.
+Since 2026-09-30 the record is the answer as the visitor saw it: when the
+model sent dates for such a party, presentResults dropped them and put the
+rooms question in `follow_up` (`lib/ai/presentGuard.ts`). So a D2 hit with
+`stay.checkIn` set means that guard has broken — report it as high.
 
 **D3 · every answer · high.** The party that reached the pages is the one
 searched. Check: `stay.adults` differs from `search_party.adults` or

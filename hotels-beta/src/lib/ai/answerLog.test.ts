@@ -79,3 +79,36 @@ test('the record has no field for the question', () => {
   const log = buildAnswerLog({ ...base, steps: [] })
   for (const key of Object.keys(log)) assert.ok(!/question|prompt|message/i.test(key), key)
 })
+
+/* The record holds what the visitor saw (2026-09-30): presentResults'
+ * corrections (presentGuard.ts) are applied, so a family of four shown without
+ * dates is not logged as a dated answer with no room count (brief rule D2). */
+test('corrections from presentResults are applied to the record', () => {
+  const log = buildAnswerLog({
+    ...base,
+    steps: [
+      {
+        toolCalls: [
+          {
+            toolName: 'presentResults',
+            input: {
+              framing: 'Easter week at COMO Alpina.',
+              hotelIds: [1436, 9999],
+              followUp: 'Shall I add flights?',
+              stay: { checkIn: '2027-03-27', checkOut: '2027-04-03', adults: 2, kids: 2 },
+            },
+          },
+        ],
+      },
+    ],
+    presentOutput: {
+      shown: true,
+      corrections: { unknownIds: [9999], roomsAsked: true, followUp: 'How many rooms would you need?' },
+      note: 'x',
+    },
+  })
+  assert.equal(log.hotel_count, 1)
+  assert.equal(log.follow_up, 'How many rooms would you need?')
+  assert.equal(log.stay?.checkIn, undefined)
+  assert.equal(log.stay?.adults, 2)
+})

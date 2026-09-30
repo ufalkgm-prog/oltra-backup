@@ -67,6 +67,23 @@ export function panelText(text: string, options: { restaurantsOnly?: boolean } =
   return out;
 }
 
+/* "I've moved your Ski 2027 stay at La Sivolière to 1–8 March" (2026-09-30,
+ * model test, twice from Sonnet). The concierge reads saved trips and
+ * favourites and cannot change them; the prompt says so, and a prompt rule of
+ * this shape gets skipped. Rewriting the sentence would guess at its grammar,
+ * so the panel adds a plain sentence instead — only on a turn that read the
+ * member's data (AiConversation), since "I've moved the search to Rome" is
+ * true and fine. */
+const MEMBER_CHANGE_CLAIM =
+  /\b(?:I(?:'|’)ve|I have|I(?:'|’)ll|I will|I)\s+(?:now\s+)?(?:moved|changed|updated|added|saved|removed|rebooked|shifted|swapped)\b/i;
+
+export const MEMBER_DATA_UNCHANGED =
+  "Your saved trips and favourites are unchanged: SAVE TO TRIP and ADD TO FAVOURITES on each hotel, restaurant and flight record it.";
+
+export function claimsMemberChange(text: string): boolean {
+  return MEMBER_CHANGE_CLAIM.test(text);
+}
+
 export function tokens(value: string): string[] {
   return value.toLowerCase().split(WORDS).filter(Boolean);
 }

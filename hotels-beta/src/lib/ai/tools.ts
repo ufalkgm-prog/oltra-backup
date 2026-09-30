@@ -60,6 +60,7 @@ import { mustAskRooms, ROOMS_QUESTION } from "./rooms";
 import { FLIGHT_TIME_BASIS, flightHoursBetween, knownAirports, shortestFlightHours } from "./flightTime";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { toPreferredAirlines, type PreferredAirline } from "./preferredAirlines";
+import { checkPresentation, correctionNote, returnedIds, type PresentOutput } from "./presentGuard";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -2230,7 +2231,9 @@ const searchRestaurants = tool({
   },
 });
 
-const presentResults = tool({
+/* `pageHotelId`: the hotel open on the visitor's page, which is a hotel they
+   chose themselves and may be presented without a search (presentGuard.ts). */
+const createPresentResults = (pageHotelId?: number) => tool({
   description:
     "Show results to the visitor. Call this once you have decided what to " +
     "recommend. The framing line appears above the cards in the editorial " +
@@ -2531,8 +2534,16 @@ const presentResults = tool({
   // unanswered tool_use ("Tool result is missing for tool call ..."). That made
   // every second turn in a conversation fail. The acknowledgement is
   // deliberately tiny; it exists to close the loop, not to inform the model.
-  async execute() {
-    return "shown";
+  //
+  // Unless the answer needs correcting (2026-09-30): an id no tool returned, a
+  // line for a property not presented, or dates for a party whose rooms must
+  // be asked. The panel reads the corrections from this output and applies
+  // them before drawing (presentGuard.ts), and the model reads them next turn.
+  async execute(input, { messages }): Promise<PresentOutput> {
+    const known = returnedIds(messages);
+    if (pageHotelId) known.add(pageHotelId);
+    const corrections = checkPresentation(input, known);
+    return corrections ? { shown: true, corrections, note: correctionNote(corrections) } : "shown";
   },
 });
 
@@ -2609,10 +2620,12 @@ export function buildConciergeTools({
   preferredAirlines,
   residency,
   member,
+  pageHotelId,
 }: {
   preferredAirlines: string[];
   residency: string;
   member?: MemberReaders;
+  pageHotelId?: number;
 }) {
   const turn: TurnMemory = { features: new Map(), residency, shownIds: new Set(), wholeGeographies: new Set() };
   return {
@@ -2624,6 +2637,6 @@ export function buildConciergeTools({
     compareGateways,
     searchFlights: createSearchFlights(toPreferredAirlines(preferredAirlines)),
     searchRestaurants,
-    presentResults,
+    presentResults: createPresentResults(pageHotelId),
   };
 }

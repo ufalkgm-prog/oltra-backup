@@ -12,7 +12,14 @@ import {
   gatewayForHotel,
   namedHotels,
 } from "@/lib/ai/hotelGateways";
-import { decodeStrayEscapes, panelText, stripLeadingName } from "@/lib/ai/rationale";
+import {
+  claimsMemberChange,
+  decodeStrayEscapes,
+  MEMBER_DATA_UNCHANGED,
+  panelText,
+  stripLeadingName,
+} from "@/lib/ai/rationale";
+import { applyCorrections, correctionsFromOutput } from "@/lib/ai/presentGuard";
 import type { AiPageContext } from "@/lib/ai/types";
 import {
   rememberConciergeStays,
@@ -408,8 +415,15 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
       // the input to be whole.
       if (part.state === "input-streaming") continue;
 
-      const input = part.input as PresentInput | undefined;
-      if (!input?.framing) continue;
+      const raw = part.input as PresentInput | undefined;
+      if (!raw?.framing) continue;
+      // What the tool's execute found wrong with the answer (presentGuard.ts):
+      // ids no search returned, lines for properties not presented, dates for
+      // a party whose rooms must be asked first.
+      const input = applyCorrections(
+        raw,
+        correctionsFromOutput(part.state === "output-available" ? part.output : undefined)
+      );
 
       // Text about restaurants alone may not call them "rooms" (panelText).
       const hotelIdSet = new Set([
@@ -669,7 +683,7 @@ function readPresentation(message: UIMessage, history: UIMessage[] = [message]):
 
       return {
         toolCallId: part.toolCallId,
-        framing: panelText(input.framing, { restaurantsOnly: !answerHasHotels }),
+        framing: memberDataText(message, panelText(raw.framing, { restaurantsOnly: !answerHasHotels })),
         // Not the follow-up: it often offers hotels next ("how many rooms?").
         followUp: panelText(input.followUp ?? ""),
         query,
@@ -850,6 +864,12 @@ const ANSWER_LIMIT_MS = 170_000;
    that visitor "a couple of minutes" would be wrong. */
 const SLOW_NOTICE_MS = 45_000;
 const STALL_LIMIT_MS = 90_000;
+
+/* A finished turn with neither words nor results (2026-09-30): the model
+ * test found one whose results call was malformed, and the panel showed a
+ * blank. The route now lets the model retry such a call, so this is the
+ * last resort rather than the expected path. */
+const EMPTY_TURN_MESSAGE = "I couldn't put that answer together. Please ask me again.";
 
 const TIMED_OUT_MESSAGE =
   "This is taking longer than it should, so I stopped. Your question is back in the box: try again, or ask about one destination at a time.";
@@ -1055,6 +1075,18 @@ function withoutDefaultParty(context: AiPageContext | null): AiPageContext | nul
   return rest;
 }
 
+/* "I've moved your Ski 2027 stay…" (2026-09-30, model test): the concierge
+ * reads saved trips and favourites and cannot change them. Where a turn read
+ * them and its words claim a change, the panel says plainly that nothing was
+ * changed (rationale.ts). Only then: "I've moved the search to Rome" is fine. */
+function memberDataText(message: UIMessage, text: string): string {
+  if (message.role !== "assistant" || !text) return text;
+  const readMemberData = message.parts.some(
+    (part) => isToolUIPart(part) && ["mySavedTrips", "myFavourites"].includes(getToolName(part))
+  );
+  return readMemberData && claimsMemberChange(text) ? `${text} ${MEMBER_DATA_UNCHANGED}` : text;
+}
+
 /* The prose of a turn (2026-09-23). A concierge turn can speak before a tool
  * call as well as after it — "I can't book or take payment — but let me check
  * those nights for you." then the real answer — and joining the pieces with
@@ -1074,8 +1106,12 @@ function messageText(message: UIMessage): string {
   message.parts.forEach((part, index) => {
     if (isToolUIPart(part)) lastTool = index;
   });
-  const after = texts(message.parts.slice(lastTool + 1));
-  return panelText((after.length ? after : texts(message.parts)).join("\n\n"));
+  /* Only what it said after its last tool call (2026-09-30). The fallback to
+     all of its prose put the model's working notes on screen: "Try without
+     stay." sat above an answer whose words were all in presentResults. A turn
+     that said nothing after its tools has its answer in the panel, or has no
+     answer at all, which EMPTY_TURN_MESSAGE covers. */
+  return memberDataText(message, panelText(texts(message.parts.slice(lastTool + 1)).join("\n\n")));
 }
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
@@ -2067,6 +2103,20 @@ export default function AiConversation() {
              read as though the concierge had never replied. Each such turn is
              now redrawn from its own call. */
           const pastAnswer = anchorsAnswer ? null : readPresentation(message);
+          const emptyLastTurn =
+            !busy &&
+            index === messages.length - 1 &&
+            message.role === "assistant" &&
+            !text.trim() &&
+            !anchorsAnswer &&
+            !pastAnswer;
+          if (emptyLastTurn) {
+            return (
+              <div key={message.id} className={styles.turnAgent}>
+                <AgentText text={EMPTY_TURN_MESSAGE} />
+              </div>
+            );
+          }
           if (!text.trim() && !anchorsAnswer && !pastAnswer) return null;
 
           const row = text.trim() ? (
