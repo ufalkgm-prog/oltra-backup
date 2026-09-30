@@ -7,8 +7,21 @@ import "server-only";
  * only inside the chat route — it must never reach a NEXT_PUBLIC_* variable or
  * any client bundle, same rule the Ratehawk and Directus credentials follow. */
 
-/** Conversation model. */
-export const CHAT_MODEL = "claude-opus-5";
+/** Conversation model.
+ *
+ * Opus 5.5 since 2026-09-30, replacing Opus 5. On the 32-conversation model
+ * test (Q51–100, the §50 hard cases and the full safety set, graded blind) it
+ * scored 9.41/10 against 8.88 and cost $0.096 an answer against $0.149, with
+ * no guardrail failures. Sonnet 5.5 cost $0.053 but lost on fit and follow-up.
+ * See CLAUDE-AI.md ("Model test"). */
+export const CHAT_MODEL = "claude-opus-5-5";
+
+/** Medium (2026-09-30). The effort test ran Opus 5.5 at high and medium on
+ * the same 32 conversations: 9.41 against 9.39, 24 of 32 tied, medium better
+ * on the hard cases (9.43 against 9.00), at $0.080 an answer against $0.101
+ * and 6s faster. Medium is also Opus 5.5's own default; it is set explicitly
+ * so a change of model cannot move it silently. */
+export const CHAT_EFFORT = "medium" as const;
 
 /** Cheap triage pass, run before any CHAT_MODEL spend. */
 export const TRIAGE_MODEL = "claude-haiku-4-5";

@@ -38,7 +38,7 @@ page), which the answer moves to match.
 |---|---|---|
 | Chat route | `src/app/api/chat/route.ts` | Flag → session → rate limit → input caps → triage → model with tools, streamed; writes one answer-log record per answer |
 | Triage | `src/lib/ai/triage.ts` (+ `extractParse.ts`) | `claude-haiku-4-5` classifies TRAVEL / MIXED / PROBE / ACCOUNT / OTHER before any main-model spend; a mixed message is cut to its travel part |
-| Main model | `src/lib/ai/config.ts` → `CHAT_MODEL` | `claude-opus-5`, up to 8 tool steps, 16,000 output tokens (thinking included) |
+| Main model | `src/lib/ai/config.ts` → `CHAT_MODEL` | `claude-opus-5-5` at effort medium (since 2026-09-30; records before that say `claude-opus-5`), up to 8 tool steps, 16,000 output tokens (thinking included) |
 | Prompt | `src/lib/ai/systemPrompt.ts` | Byte-stable per deploy (it carries the prompt-cache breakpoint) |
 | Tools | `src/lib/ai/tools.ts` | `searchHotels`, `getHotelDetails`, `checkAvailability`, `nearestAirport`, `compareGateways`, `searchFlights`, `searchRestaurants`, `myFavourites`, `mySavedTrips`, `presentResults`, plus Anthropic web search (max 3, allow-listed domains) |
 | Panel | `src/components/ai/AiConversation.tsx` | Draws the answer from the `presentResults` call, not from prose; adds notes from data |

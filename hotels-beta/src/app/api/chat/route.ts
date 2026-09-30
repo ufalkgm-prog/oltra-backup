@@ -23,6 +23,7 @@ import {
 import { describePageContext, sanitisePageContext } from "@/lib/ai/pageContext";
 import { isValidResidencyCode, residencyFromAcceptLanguage } from "@/lib/countries";
 import {
+  CHAT_EFFORT,
   CHAT_MODEL,
   MAX_MESSAGE_CHARS,
   MAX_OUTPUT_TOKENS,
@@ -265,6 +266,15 @@ export async function POST(req: Request) {
   // 5. The conversation.
   const result = streamText({
     model: anthropic(CHAT_MODEL),
+    providerOptions: {
+      anthropic: {
+        effort: CHAT_EFFORT,
+        // Opus 5.5 can decline on its own safety classifiers. "default" has
+        // Anthropic retry the request on a fitting model instead of returning
+        // an empty turn, which the panel has no message for.
+        fallbacks: "default",
+      },
+    },
     // Two system blocks, not one string. The cache breakpoint sits on the
     // stable prompt; today's date follows it, uncached. Appending the date to
     // the prompt itself would invalidate the cached prefix for every user every
