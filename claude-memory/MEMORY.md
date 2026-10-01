@@ -16,3 +16,5 @@
 - [Model eval method](feedback_model_eval_method.md) — concierge model comparisons: per-axis rubric, full safety set every arm, Ulrik's blind vote decides, separate fix list, calibration gate
 - [Concierge model test](project_concierge_model_test.md) — 2026-09-30: Opus 5.5 chosen (medium ≈ high quality at $0.080); Sonnet 8.8; committed 102cc14/4fd4d33; fix batches B1-B6 pushed (regression 9.44 vs 8.89); tiering parked; open: Duffel key, showAll bypass
 - [Eval runner checks](feedback_eval_runner_checks.md) — confirm the first eval record within ~90s (a reload wipes the runner); run tsc/lint/test alone, not in a parallel batch
+- [JS replace $ patterns corrupt patches](feedback_js_replace_dollar_patterns.md) — String.replace replacement strings expand $` $&; patch with split/join or a function, then node --check
+- [Booking partners](project_booking_partners.md) — every published hotel needs RateHawk, KAYAK or andBeyond (direct); andBeyond never via RH/KAYAK; KAYAK fields added 2026-10-01
