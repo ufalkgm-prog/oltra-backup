@@ -101,7 +101,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "ZRH", label: "Zürich", distKm: 114, size: "large", runwayM: 9808 }
   ],
   "Arue Tahiti": [
-    { iata: "MOZ", label: "Moorea Temae", distKm: 55, size: "medium", runwayM: 1230 },
     { iata: "PPT", label: "Fa'a'ā", distKm: 59, size: "large", runwayM: 3463 }
   ],
   "Ashar Valley": [
@@ -389,7 +388,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "ORD", label: "Chicago O'Hare", distKm: 25, size: "large", runwayM: 23432 }
   ],
   "Chobe National Park": [
-    { iata: "MPA", label: "Katima Mulilo", distKm: 105, size: "medium", runwayM: 2292 },
+    { iata: "MUB", label: "Maun", distKm: 169, size: "large", runwayM: 2000 },
     { iata: "BBK", label: "Kasane", distKm: 143, size: "large", runwayM: 2000 }
   ],
   "Chongzou": [
@@ -413,9 +412,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "VCS", label: "Con Dao", distKm: 3, size: "medium", runwayM: 1830 }
   ],
   "Cong": [
-    { iata: "NNR", label: "Connemara", distKm: 36, size: "small", runwayM: 600 },
     { iata: "NOC", label: "Ireland West Knock", distKm: 52, size: "large", runwayM: 2300 },
-    { iata: "IIA", label: "Inishmaan Aerodrome", distKm: 53, size: "small", runwayM: 811 }
+    { iata: "SNN", label: "Shannon", distKm: 96, size: "large", runwayM: 3199 },
+    { iata: "DUB", label: "Dublin", distKm: 200, size: "large", runwayM: 7819 }
   ],
   "Copenhagen": [
     { iata: "CPH", label: "Copenhagen Kastrup", distKm: 8, size: "large", runwayM: 9700 },
@@ -812,9 +811,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Las Vegas": [
     { iata: "LAS", label: "Harry Reid", distKm: 4, size: "large", runwayM: 13686 }
   ],
-  "Laucala Island": [
-    { iata: "NAN", label: "Nadi", distKm: 326, size: "large", runwayM: 5409 }
-  ],
   "Lausanne": [
     { iata: "GVA", label: "Geneva", distKm: 50, size: "large", runwayM: 3900 }
   ],
@@ -856,9 +852,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SEN", label: "London Southend", distKm: 58, size: "medium", runwayM: 1856 }
   ],
   "Long Bay Village": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 9, size: "medium", runwayM: 1665 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 13, size: "medium", runwayM: 1200 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 17, size: "large", runwayM: 2300 }
+    { iata: "SXM", label: "Princess Juliana", distKm: 17, size: "large", runwayM: 2300 },
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 9, size: "medium", runwayM: 1665 }
   ],
   "Long Island": [
     { iata: "ANU", label: "V. C. Bird", distKm: 4, size: "large", runwayM: 2744 }
@@ -952,9 +947,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "OGG", label: "Kahului", distKm: 24, size: "large", runwayM: 3651 }
   ],
   "Maundays Bay": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10, size: "medium", runwayM: 1665 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 12, size: "medium", runwayM: 1200 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 14, size: "large", runwayM: 2300 }
+    { iata: "SXM", label: "Princess Juliana", distKm: 14, size: "large", runwayM: 2300 },
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10, size: "medium", runwayM: 1665 }
   ],
   "Medhufaru Island": [
     { iata: "NMF", label: "Maafaru", distKm: 12, size: "medium", runwayM: 2850 }
@@ -1135,7 +1129,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "MUB", label: "Maun", distKm: 69, size: "large", runwayM: 2000 }
   ],
   "Olarro Conservancy": [
-    { iata: "MRE", label: "Mara Serena Lodge Airstrip", distKm: 65, size: "medium", runwayM: 1052 }
+    { iata: "NBO", label: "Jomo Kenyatta", distKm: 149, size: "large", runwayM: 4117 }
   ],
   "Olhuveli": [
     { iata: "TMF", label: "Thimarafushi", distKm: 58, size: "small", runwayM: 0 }
@@ -1164,15 +1158,16 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "HHH", label: "Hilton Head", distKm: 18, size: "medium", runwayM: 1524 }
   ],
   "Pamalican Island": [
-    { iata: "MNL", label: "Ninoy Aquino", distKm: 352, size: "large", runwayM: 5995 }
+    { iata: "MNL", label: "Ninoy Aquino", distKm: 352, size: "large", runwayM: 5995 },
+    { iata: "CRK", label: "Clark / Clark Air Base", distKm: 426, size: "large", runwayM: 3200 }
   ],
   "Pansea Beach": [
     { iata: "HKT", label: "Phuket", distKm: 15, size: "large", runwayM: 3100 }
   ],
   "Papas Beach": [
     { iata: "JTR", label: "Santorini", distKm: 33, size: "large", runwayM: 2197 },
-    { iata: "JNX", label: "Naxos Island National", distKm: 44, size: "small", runwayM: 900 },
-    { iata: "PAS", label: "Paros National", distKm: 44, size: "small", runwayM: 1400 }
+    { iata: "JMK", label: "Mykonos Island National", distKm: 84, size: "medium", runwayM: 1902 },
+    { iata: "ATH", label: "Athens Eleftherios Venizelos", distKm: 188, size: "large", runwayM: 7800 }
   ],
   "Paphos": [
     { iata: "PFO", label: "Paphos", distKm: 7, size: "large", runwayM: 2700 }
@@ -1227,9 +1222,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "CZM", label: "Cozumel", distKm: 21, size: "large", runwayM: 2700 }
   ],
   "Porto Ercole": [
-    { iata: "EBA", label: "Marina di Campo", distKm: 89, size: "medium", runwayM: 949 },
     { iata: "FCO", label: "Rome-Fiumicino Leonardo da Vinci", distKm: 108, size: "large", runwayM: 11104 },
-    { iata: "CIA", label: "Ciampino-G. B. Pastine", distKm: 133, size: "large", runwayM: 2202 }
+    { iata: "PSA", label: "Pisa", distKm: 159, size: "large", runwayM: 5785 },
+    { iata: "FLR", label: "Florence, Peretola", distKm: 160, size: "large", runwayM: 1560 }
   ],
   "Portofino": [
     { iata: "GOA", label: "Genoa Cristoforo Colombo", distKm: 32, size: "large", runwayM: 2915 }
@@ -1299,9 +1294,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "MLE", label: "Velana", distKm: 41, size: "large", runwayM: 3400 }
   ],
   "Rendezvous Bay": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 7, size: "medium", runwayM: 1665 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 11, size: "medium", runwayM: 1200 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 15, size: "large", runwayM: 2300 }
+    { iata: "SXM", label: "Princess Juliana", distKm: 15, size: "large", runwayM: 2300 },
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 7, size: "medium", runwayM: 1665 }
   ],
   "Reykjavik": [
     { iata: "RKV", label: "Reykjavík", distKm: 2, size: "medium", runwayM: 2796 },
@@ -1491,7 +1485,7 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "FLL", label: "Fort Lauderdale Hollywood", distKm: 22, size: "large", runwayM: 5181 }
   ],
   "Suyian Conservancy": [
-    { iata: "NYK", label: "Nanyuki Civil", distKm: 69, size: "medium", runwayM: 1189 }
+    { iata: "NBO", label: "Jomo Kenyatta", distKm: 201, size: "large", runwayM: 4117 }
   ],
   "Sveti Stefan": [
     { iata: "TIV", label: "Tivat", distKm: 22, size: "medium", runwayM: 2502 },
@@ -1548,9 +1542,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "YYZ", label: "Toronto Pearson", distKm: 19, size: "large", runwayM: 15226 }
   ],
   "Torres Del Paine": [
-    { iata: "RYO", label: "28 de Noviembre", distKm: 75, size: "small", runwayM: 1932 },
     { iata: "PNT", label: "Lieutenant Julio Gallardo", distKm: 78, size: "medium", runwayM: 1764 },
-    { iata: "FTE", label: "El Calafate - Commander Armando Tola", distKm: 86, size: "medium", runwayM: 2550 }
+    { iata: "PUQ", label: "President Carlos Ibáñez", distKm: 256, size: "large", runwayM: 6868 }
   ],
   "Tourrettes": [
     { iata: "NCE", label: "Nice-Côte d'Azur", distKm: 40, size: "large", runwayM: 5591 },
@@ -1652,9 +1645,8 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "WST", label: "Westerly State", distKm: 6, size: "medium", runwayM: 2429 }
   ],
   "West End": [
-    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10, size: "medium", runwayM: 1665 },
-    { iata: "SFG", label: "Grand Case-l'Espérance", distKm: 14, size: "medium", runwayM: 1200 },
-    { iata: "SXM", label: "Princess Juliana", distKm: 16, size: "large", runwayM: 2300 }
+    { iata: "SXM", label: "Princess Juliana", distKm: 16, size: "large", runwayM: 2300 },
+    { iata: "AXA", label: "Clayton J. Lloyd", distKm: 10, size: "medium", runwayM: 1665 }
   ],
   "West Hollywood": [
     { iata: "BUR", label: "Hollywood Burbank/Bob Hope", distKm: 12, size: "large", runwayM: 3867 },
@@ -1702,12 +1694,13 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
  * NOT a blanket "first entry wins". For everything else the list is
  * nearest-first, where the first entry is the closest strip and not the
  * gateway - New York's nearest to the hotel centroid is LaGuardia and the
- * answer has to be JFK. So the size rule stays for the other 426
- * destinations and only these 58 read position one as the answer. */
+ * answer has to be JFK. So the size rule stays for the other 414
+ * destinations and only these 69 read position one as the answer. */
 const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "andermatt",
   "arenal",
   "arosa",
+  "arue tahiti",
   "bad ragaz",
   "big island",
   "blevio",
@@ -1715,7 +1708,9 @@ const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "casares",
   "cernobbio",
   "cerretto langhe",
+  "chobe national park",
   "chongzou",
+  "cong",
   "courchevel 1850",
   "crans-montana",
   "dorado",
@@ -1732,23 +1727,28 @@ const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "kyoto",
   "la croix-valmer",
   "lamego",
-  "laucala island",
   "le baux de provence",
   "lech am arlberg",
   "les belleville",
+  "long bay village",
   "lugano",
   "marmaris",
   "masai mara",
+  "maundays bay",
   "menlo park",
   "moltrasio",
   "montalcino",
   "natales",
   "nikko",
+  "olarro conservancy",
   "palmetto bluff",
   "pamalican island",
+  "papas beach",
+  "porto ercole",
   "puligny-montrachet",
   "ramatuelle",
   "rancho santa fe",
+  "rendezvous bay",
   "saint-tropez",
   "serengeti",
   "sesriem",
@@ -1756,12 +1756,15 @@ const CURATED_GATEWAY_ORDER: ReadonlySet<string> = new Set([
   "st. andrews",
   "st. moritz",
   "stresa",
+  "suyian conservancy",
   "sveti stefan",
   "taipei",
   "tokyo",
   "torno",
+  "torres del paine",
   "tremezzina",
   "val d'isere",
+  "west end",
   "zermatt",
 ]);
 

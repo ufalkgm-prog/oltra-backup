@@ -177,15 +177,16 @@ const CASES: Case[] = [
   },
   {
     kind: "REAL",
-    name: "genuinely no road: nothing is totalled and no figure is claimed",
+    name: "an island reached by boat: nothing is totalled and no figure is claimed",
     destination: "Koh Yao Yai",
     itineraries: { HKT: [[660, 1]], KBV: [[690, 1]] },
     expect: "HKT",
     because:
       "An island in Phang Nga Bay with no causeway from either airport, so " +
       "there is no door-to-door total to rank on and `comparable` must be " +
-      "false. The order falls back to flying time. An answer here says the " +
-      "transfer will be confirmed rather than describing a boat nobody checked.",
+      "false. The order falls back to flying time. Since 2026-10-01 the boat is " +
+      "a checked transfer route (pier, then the resort's speedboat), so the last " +
+      "leg reads as onward-leg rather than an unknown.",
   },
 ];
 
@@ -294,16 +295,30 @@ for (const testCase of CASES) {
 }
 
 // 4. A destination with genuinely no road must produce no total. Checked on a
-//    single airport, so the chosen winner cannot mask it.
+//    single airport, so the chosen winner cannot mask it. Kythira (KIT) is an
+//    island across the water from Amanzoe's Argolida, with no route written;
+//    Koh Yao Yai, which this used to check, gained a boat route on 2026-10-01.
+{
+  const r = rankGateways("Argolida", {
+    KIT: factsFromDurations([{ minutes: 300, stops: 1 }]),
+  });
+  if (r.comparable || r.ranked[0].totalMinutes !== null) {
+    fail("Argolida via Kythira produced a door-to-door total, and there is no road from an island");
+  }
+  if (r.ranked[0].transferBasis !== "no-road-route") {
+    fail(`Argolida via Kythira reads as ${r.ranked[0].transferBasis}, not no-road-route`);
+  }
+}
+// 4b. An island with a written boat route: still no total, and the boat is the route's.
 {
   const r = rankGateways("Koh Yao Yai", {
     HKT: factsFromDurations([{ minutes: 660, stops: 1 }]),
   });
   if (r.comparable || r.ranked[0].totalMinutes !== null) {
-    fail("Koh Yao Yai produced a door-to-door total, and there is no road to it");
+    fail("Koh Yao Yai produced a door-to-door total, and its last leg is a boat");
   }
-  if (r.ranked[0].transferBasis !== "no-road-route") {
-    fail(`Koh Yao Yai's transfer reads as ${r.ranked[0].transferBasis}, not no-road-route`);
+  if (r.ranked[0].transferBasis !== "onward-leg") {
+    fail(`Koh Yao Yai's transfer reads as ${r.ranked[0].transferBasis}, not onward-leg`);
   }
 }
 

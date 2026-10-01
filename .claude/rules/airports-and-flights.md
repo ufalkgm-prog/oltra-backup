@@ -361,7 +361,7 @@ in the list", not "is the listed one plausible".
 
 `src/lib/transferRoutes.ts` (2026-09-11, see CLAUDE-AI.md) holds the
 arrival-to-door route per destination, so the concierge stops answering "how do
-I get to the Masai Mara" with Nairobi and a full stop. **61 routes populated** (counted 2026-09-30, when Venice was added: its hotels are reached from Marco Polo by water, and the measured 45-minute "drive" had the concierge saying "45 minutes by water")
+I get to the Masai Mara" with Nairobi and a full stop. **72 routes populated** (counted 2026-10-01, after a sweep of every published destination whose last leg is a flight or boat the flight page cannot sell: Olarro, Suyian, Savute, Kisawa, Soneva Secret, Amanwana, Amanpulo — whose plane now leaves from **Clark**, not Manila — Laucala and The Brando by air; six Malé-atoll resorts, Koh Yao Yai, Yao Noi, Rayavadee, Ninh Van Bay, Jumby Bay, Pine Cay, Nujuma, Mnemba, Anguilla's four resorts, Kéa and Ios by boat, each from the property's own "getting here" page where it could be read. The same sweep found five airports the audit cannot see — Savute on Mpacha in Namibia, The Brando on Moorea, Torres del Paine on Río Turbio in Argentina, Porto Ercole on Elba, Ashford Castle on the Aran Islands strip — now overridden. 61 on 2026-09-30, when Venice was added: its hotels are reached from Marco Polo by water, and the measured 45-minute "drive" had the concierge saying "45 minutes by water")
 (Zermatt and Marmaris were added 2026-09-12, §52);
 an absent entry makes it decline rather than guess, which is the point.
 

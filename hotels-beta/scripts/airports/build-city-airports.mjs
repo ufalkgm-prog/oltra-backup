@@ -126,6 +126,45 @@ const GATEWAY_OVERRIDE = {
   // Nairobi, not Wilson: WIL is where the safari light aircraft departs from,
   // NBO is where the international ticket lands.
   "Masai Mara": ["NBO"],
+  // Same answer for two conservancy keys the audit queued on 2026-10-01 (Ulrik):
+  // Olarro Lodge's city now reads "Olarro Conservancy" (it was cleared on
+  // 2026-09-12 to use "Masai Mara", see the note further down), which fell back
+  // to the Mara Serena strip; andBeyond Suyian (Laikipia) fell back to Nanyuki.
+  "Olarro Conservancy": ["NBO"],
+  "Suyian Conservancy": ["NBO"],
+
+  /* Five wrong nearest-airport answers found 2026-10-01 while checking last
+   * legs, each confirmed against the hotel's own "getting here" page. Every
+   * one passed the audit's screens: close enough, long enough runway, and in
+   * three cases scheduled service — just not service a guest could use. */
+  // Belmond Savute Elephant Lodge: had MPA (Mpacha, NAMIBIA). Reached only by
+  // light aircraft from Maun or Kasane.
+  "Chobe National Park": ["MUB", "BBK"],
+  // The Brando, Tetiaroa: had MOZ (Moorea), which has no flights to Tetiaroa.
+  // Air Tetiaroa leaves from its own terminal at Papeete.
+  "Arue Tahiti": ["PPT"],
+  // Awasi and Tierra Patagonia: had RYO (Rio Turbio, ARGENTINA). Puerto
+  // Natales ~1h45 by road (direct from Santiago), Punta Arenas ~5h year-round.
+  "Torres Del Paine": ["PNT", "PUQ"],
+  // Il Pellicano: had EBA (Elba, an island). The hotel lists FCO first, then
+  // Pisa and Florence; all by road.
+  "Porto Ercole": ["FCO", "PSA", "FLR"],
+  // Ashford Castle: had NNR (Connemara, the Aran Islands airstrip). Knock is
+  // nearest, Shannon the transatlantic gateway, Dublin the most flights.
+  "Cong": ["NOC", "SNN", "DUB"],
+  // Anguilla, four resorts: St Maarten then a boat to Blowing Point is "the
+  // most common way to arrive" (Four Seasons); Anguilla's own airport has
+  // direct flights from Miami and a winter service from the US north-east.
+  // Grand Case (SFG) was listed second and no resort mentions it.
+  "Long Bay Village": ["SXM", "AXA"],
+  "Maundays Bay": ["SXM", "AXA"],
+  "Rendezvous Bay": ["SXM", "AXA"],
+  "West End": ["SXM", "AXA"],
+  // Calilo, Ios: the island has no airport. Santorini is the resort's closest
+  // international airport (45 min by ferry), then Mykonos and Athens. Naxos and
+  // Paros were listed by distance; the resort names neither (§52 had flagged
+  // this key's transfer times as looking wrong).
+  "Papas Beach": ["JTR", "JMK", "ATH"],
   // Angama Amboseli. Keyed "Amboseli National Park" (its traveller area, with a
   // blank city) until the row was given city "Kimana Sanctuary" - the private
   // sanctuary east of the park where the lodge actually stands. Re-keyed
@@ -389,7 +428,9 @@ const GATEWAY_OVERRIDE = {
   "Kokomo Island": ["NAN"],
   "Laucala Island": ["NAN"],
   "Turtle Island": ["NAN"],
-  "Pamalican Island": ["MNL"],
+  // Amanpulo's own flights now leave from Clark (aman.com, checked 2026-10-01),
+  // so CRK is listed after Manila for guests who can fly into Clark.
+  "Pamalican Island": ["MNL", "CRK"],
 
   /* An East African row that was pointing at a Kenyan LODGE AIRSTRIP. Namiri
    * Plains is in the eastern SERENGETI, in Tanzania, and was mapped to MRE —

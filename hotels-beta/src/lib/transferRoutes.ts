@@ -106,6 +106,22 @@ const MALDIVES_NOTE =
   "to the resort or a short domestic flight and a speedboat - the resort " +
   "arranges whichever applies and meets you on arrival.";
 
+/* Anguilla's four resorts share one route: the same airport, the same crossing
+ * to Blowing Point, and a short drive along the West End. Added 2026-10-01. */
+const ANGUILLA: TransferRoute = {
+  arriveAt: "SXM",
+  arriveAtLabel: "St Maarten Princess Juliana",
+  legs: [
+    { mode: "road", to: "the boat dock across from the airport, a few minutes", arrangedByHotel: true },
+    { mode: "boat", to: "Blowing Point, Anguilla, about 25 minutes", arrangedByHotel: true },
+    { mode: "road", to: "the resort, about 10 to 15 minutes", arrangedByHotel: true },
+  ],
+  note:
+    "The boats run in daylight hours, so a late arrival in St Maarten misses the " +
+    "crossing. Anguilla's own airport has direct flights from Miami, and a small " +
+    "plane from St Maarten takes about ten minutes.",
+};
+
 function maldives(iata: string, label: string): TransferRoute {
   return {
     arriveAt: iata,
@@ -701,6 +717,292 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
       "About two and a half hours north-west by road. A short domestic hop to " +
       "La Fortuna is possible instead, and Liberia is the other international " +
       "gateway if it suits your routing better.",
+  },
+
+  /* ==== LAST LEGS BY AIR, added 2026-10-01 (Ulrik) ====
+   * Remote properties whose final leg the flight page cannot sell. Each was
+   * checked against the property's own "getting here" page where it has one
+   * (Olarro's site gives none; its strip comes from travel press). Airstrips a
+   * source could not pin down are left unnamed, as the Masai Mara entry does.
+   * Fares and schedules are deliberately not stored: they change, and §50
+   * forbids giving the model a figure it could quote. */
+
+  // ---- Kenya: the light aircraft leave from Wilson, not Jomo Kenyatta ----
+  "Olarro Conservancy": {
+    arriveAt: "NBO",
+    arriveAtLabel: "Nairobi Jomo Kenyatta",
+    legs: [
+      { mode: "road", to: "Wilson Airport, on the other side of Nairobi", toIata: "WIL" },
+      { mode: "light aircraft", to: "an airstrip near the lodge in the Mara" },
+      { mode: "road", to: "the lodge", arrangedByHotel: true },
+    ],
+    note:
+      "Scheduled light-aircraft flights to the Mara leave from Wilson, not from " +
+      "Jomo Kenyatta, and the transfer between the two is by road. The lodge " +
+      "also has helipads for private charters.",
+  },
+  "Suyian Conservancy": {
+    arriveAt: "NBO",
+    arriveAtLabel: "Nairobi Jomo Kenyatta",
+    legs: [
+      { mode: "road", to: "Wilson Airport, on the other side of Nairobi", toIata: "WIL" },
+      { mode: "light aircraft", to: "Loisaba airstrip in Laikipia" },
+      { mode: "road", to: "the lodge, about an hour" },
+    ],
+    note:
+      "Scheduled flights from Wilson land at Loisaba; Suyian's own airstrip " +
+      "takes private charters only. By road from Nairobi it is about five hours.",
+  },
+
+  // ---- Botswana ----
+  // Belmond Savute Elephant Lodge: "reachable only by plane" (Belmond).
+  "Chobe National Park": {
+    arriveAt: "MUB",
+    arriveAtLabel: "Maun",
+    legs: [
+      { mode: "light aircraft", to: "the Savute airstrip, about 50 minutes" },
+      { mode: "road", to: "the lodge", arrangedByHotel: true },
+    ],
+    note:
+      "The lodge is reached only by light aircraft, from Maun or from Kasane " +
+      "(about 40 minutes). Both are reached by connecting flight, most often " +
+      "through Johannesburg.",
+  },
+
+  // ---- Mozambique ----
+  // Kisawa Sanctuary: its own FAQ describes the helicopter only.
+  "Benguerra Island": {
+    arriveAt: "VNX",
+    arriveAtLabel: "Vilankulo",
+    legs: [{ mode: "helicopter", to: "Kisawa's helipad on Benguerra, a few minutes", arrangedByHotel: true }],
+    note:
+      "Vilankulo is reached by direct flight from Johannesburg. Kisawa's host " +
+      "meets guests at the airport for the shared helicopter; a private one " +
+      "can be booked ahead.",
+  },
+
+  // ---- Indian Ocean and Pacific ----
+  // Soneva Secret: city "Maldives" in Directus; Soneva's own journey page.
+  "Maldives": {
+    arriveAt: "HDK",
+    arriveAtLabel: "Kulhudhuffushi",
+    legs: [{ mode: "boat", to: "the resort, about an hour by speedboat", arrangedByHotel: true }],
+    note:
+      "Everything routes through Male. The resort's seaplane flies straight " +
+      "there in about 75 minutes, in daylight only, so a same-day seaplane " +
+      "needs an arrival in Male by mid-afternoon; otherwise it is the domestic " +
+      "flight to Kulhudhuffushi and a speedboat. Transfers are booked through " +
+      "the resort, at least three days ahead.",
+    flyInto: { iata: "MLE", label: "Velana" },
+  },
+  // Amanwana: Aman's own travel page. SWQ is a domestic airport.
+  "Moyo Island": {
+    arriveAt: "SWQ",
+    arriveAtLabel: "Sumbawa Besar",
+    legs: [
+      { mode: "road", to: "Amanwana's jetty, about 15 minutes", arrangedByHotel: true },
+      { mode: "boat", to: "Moyo Island, about 40 minutes", arrangedByHotel: true },
+    ],
+    note:
+      "Sumbawa Besar is reached by domestic flight from Bali (about an hour) " +
+      "or Lombok (about 35 minutes). A helicopter from Bali straight to the " +
+      "resort can be arranged on request.",
+    flyInto: { iata: "DPS", label: "Bali Ngurah Rai" },
+  },
+  // Amanpulo: aman.com/resorts/amanpulo/flights — the resort's plane now
+  // leaves from Clark, not Manila.
+  "Pamalican Island": {
+    arriveAt: "MNL",
+    arriveAtLabel: "Manila Ninoy Aquino",
+    legs: [
+      { mode: "road", to: "Clark International Airport, about two hours", toIata: "CRK" },
+      { mode: "light aircraft", to: "Pamalican's own airstrip, about 90 minutes", arrangedByHotel: true },
+    ],
+    note:
+      "Amanpulo's own flights leave from its lounge at Clark, not from Manila, " +
+      "so an international flight into Clark saves the drive.",
+  },
+  // Laucala: the resort's own plane from its lounge at Nadi.
+  "Laucala Island": {
+    arriveAt: "NAN",
+    arriveAtLabel: "Nadi",
+    legs: [{ mode: "light aircraft", to: "Laucala's own airstrip, about 50 minutes", arrangedByHotel: true }],
+    note: "The resort flies guests from its private lounge at Nadi in its own aircraft.",
+  },
+  // The Brando: Air Tetiaroa, the resort's airline, from its own terminal at Papeete.
+  "Arue Tahiti": {
+    arriveAt: "PPT",
+    arriveAtLabel: "Tahiti Faa'a",
+    legs: [{ mode: "light aircraft", to: "Tetiaroa, about 20 minutes", arrangedByHotel: true }],
+    note:
+      "Air Tetiaroa, the resort's own airline, flies from a private terminal at " +
+      "Papeete; flights from Bora Bora can also be arranged.",
+  },
+
+  /* ==== LAST LEGS BY BOAT, added 2026-10-01 (Ulrik) ====
+   * Same standard as the block above: the resort's own page where it could be
+   * read, travel press otherwise. Boat schedules, fees and booking deadlines
+   * change and are left to the resort. */
+
+  // ---- Maldives, North and South Male atolls: a speedboat straight from the airport ----
+  "Cocoa Island": {
+    arriveAt: "MLE",
+    arriveAtLabel: "Velana, Male",
+    legs: [{ mode: "boat", to: "the resort, about 40 minutes by speedboat", arrangedByHotel: true }],
+  },
+  "Kuda Huraa Island": {
+    arriveAt: "MLE",
+    arriveAtLabel: "Velana, Male",
+    legs: [{ mode: "boat", to: "the resort, about 25 minutes by speedboat", arrangedByHotel: true }],
+    note: "The resort meets guests at the airport and has its own lounge there.",
+  },
+  "Lankanfushi": {
+    arriveAt: "MLE",
+    arriveAtLabel: "Velana, Male",
+    legs: [{ mode: "boat", to: "the resort, about 20 minutes by speedboat", arrangedByHotel: true }],
+    note: "The transfer is booked through the resort ahead of arrival.",
+  },
+  "Huvafen Fushi Island": {
+    arriveAt: "MLE",
+    arriveAtLabel: "Velana, Male",
+    legs: [{ mode: "boat", to: "the resort, about 30 minutes by speedboat", arrangedByHotel: true }],
+    note: "Guests wait in the resort's airport lounge; the boats run at any hour.",
+  },
+  "Reethi Rah Island": {
+    arriveAt: "MLE",
+    arriveAtLabel: "Velana, Male",
+    legs: [{ mode: "boat", to: "the resort, about 45 minutes by yacht or speedboat", arrangedByHotel: true }],
+    note: "Longer in a swell; a seaplane of about 15 minutes is the alternative.",
+  },
+  // Patina and The Ritz-Carlton share the Fari Islands.
+  "Fari Islands Archipelago": {
+    arriveAt: "MLE",
+    arriveAtLabel: "Velana, Male",
+    legs: [{ mode: "boat", to: "the resort, about 45 minutes by speedboat", arrangedByHotel: true }],
+    note: "Each resort runs its own boats, day or night; a seaplane can be arranged instead.",
+  },
+
+  // ---- Thailand and Vietnam: road to a pier, then the resort's boat ----
+  "Koh Yao Yai": {
+    arriveAt: "HKT",
+    arriveAtLabel: "Phuket",
+    legs: [
+      { mode: "road", to: "Laem Sai Pier, about 20 minutes", arrangedByHotel: true },
+      { mode: "boat", to: "the resort, about 30 minutes by speedboat", arrangedByHotel: true },
+    ],
+    note: "Shared boats run on a fixed schedule through the day; a private boat can be booked.",
+  },
+  "Yao Noi": {
+    arriveAt: "HKT",
+    arriveAtLabel: "Phuket",
+    legs: [
+      { mode: "road", to: "Ao Po Grand Marina, about 30 minutes", arrangedByHotel: true },
+      { mode: "boat", to: "the resort, about 40 minutes by speedboat", arrangedByHotel: true },
+    ],
+    note: "Shared boats run on a fixed schedule through the day; a private boat can be booked.",
+  },
+  // Rayavadee, Railay: rayavadee.com getting-here page.
+  "Amphur Muang": {
+    arriveAt: "KBV",
+    arriveAtLabel: "Krabi",
+    legs: [
+      { mode: "road", to: "Nong Nuch Pier, about 20 minutes", arrangedByHotel: true },
+      { mode: "boat", to: "the resort, about 20 minutes by the resort's speedboat", arrangedByHotel: true },
+    ],
+    note: "Railay has no road access.",
+  },
+  "Ninh Van Bay": {
+    arriveAt: "CXR",
+    arriveAtLabel: "Cam Ranh",
+    legs: [
+      { mode: "road", to: "the resort's lounge and jetty near Nha Trang, about an hour", arrangedByHotel: true },
+      { mode: "boat", to: "the resort, about 20 minutes", arrangedByHotel: true },
+    ],
+    note: "The resort is reached only by water.",
+  },
+
+  // ---- Caribbean ----
+  // Jumby Bay Island, Antigua: Oetker's own FAQ.
+  "Long Island": {
+    arriveAt: "ANU",
+    arriveAtLabel: "Antigua V.C. Bird",
+    legs: [
+      { mode: "road", to: "the resort's private dock, about 5 minutes", arrangedByHotel: true },
+      { mode: "boat", to: "Jumby Bay, about 10 minutes", arrangedByHotel: true },
+    ],
+    note: "The resort asks for flight details a few days ahead to arrange the car and boat.",
+  },
+  // Pine Cay (The Meridian Club): customs are cleared at Providenciales.
+  "Pine Cay": {
+    arriveAt: "PLS",
+    arriveAtLabel: "Providenciales",
+    legs: [
+      { mode: "road", to: "the Leeward marina, about 20 minutes", arrangedByHotel: true },
+      { mode: "boat", to: "Pine Cay, about 20 minutes", arrangedByHotel: true },
+    ],
+    note: "The resort sends its boat once it has the guest's flight details, a few days ahead.",
+  },
+
+  // Anguilla: the resorts' own pages (Auberge, Belmond, Aurora; Four Seasons
+  // via its press facts). Every boat from St Maarten lands at Blowing Point.
+  "Long Bay Village": ANGUILLA,
+  "Maundays Bay": ANGUILLA,
+  "Rendezvous Bay": ANGUILLA,
+  "West End": ANGUILLA,
+
+  // ---- Greek islands ----
+  // One&Only Kea Island: Kea has no airport.
+  "Kea Island": {
+    arriveAt: "ATH",
+    arriveAtLabel: "Athens",
+    legs: [
+      { mode: "road", to: "Lavrio port, about 30 minutes", arrangedByHotel: true },
+      { mode: "boat", to: "the resort's pier, about 45 minutes by the resort's speedboat", arrangedByHotel: true },
+    ],
+    note:
+      "A helicopter from Athens airport to the resort takes about 15 minutes, and " +
+      "the public ferry from Lavrio to Kea about an hour. The summer meltemi wind " +
+      "can disrupt boats and helicopters.",
+  },
+  // Calilo, Ios: calilo.com getting-here and FAQ pages.
+  "Papas Beach": {
+    arriveAt: "JTR",
+    arriveAtLabel: "Santorini",
+    legs: [
+      { mode: "ferry", to: "Ios port, about 45 minutes" },
+      { mode: "road", to: "the resort, about 30 minutes" },
+    ],
+    note:
+      "Ios has no airport. Ferries also run from Mykonos (about an hour and a half) " +
+      "and Athens (three and a half hours or more). The resort can arrange a " +
+      "helicopter to its own helipad, or a private boat to its dock, in advance.",
+  },
+
+  // ---- Red Sea and East Africa ----
+  // Nujuma: the boat is run by Red Sea Global, not the hotel, so not "arranged by hotel".
+  "Ummahat Islands": {
+    arriveAt: "RSI",
+    arriveAtLabel: "Red Sea International",
+    legs: [
+      { mode: "road", to: "Turtle Bay Marina, about 30 minutes" },
+      { mode: "boat", to: "the resort, about an hour by speedboat" },
+    ],
+    note:
+      "A seaplane of about 30 minutes is the alternative and must be booked about " +
+      "a week ahead. The resort books either once it has flight details.",
+  },
+  // andBeyond Mnemba Island: andBeyond's own arrival advice.
+  "Mnemba Island": {
+    arriveAt: "ZNZ",
+    arriveAtLabel: "Zanzibar",
+    legs: [
+      { mode: "road", to: "Muyuni Beach on the north-east coast, about an hour and a half", arrangedByHotel: true },
+      { mode: "boat", to: "the island, about 15 minutes", arrangedByHotel: true },
+    ],
+    note:
+      "There is no jetty, so guests wade to the boat, and the crossing is made in " +
+      "daylight only: flights should land by about 4 pm. A helicopter from the " +
+      "airport is an alternative.",
   },
 };
 
