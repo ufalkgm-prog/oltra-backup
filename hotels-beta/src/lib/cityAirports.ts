@@ -461,6 +461,11 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "SEZ", label: "Seychelles", distKm: 236, size: "large", runwayM: 2987 },
     { iata: "PRI", label: "Praslin Island", distKm: 273, size: "medium", runwayM: 1316 }
   ],
+  "Dhipparafushi": [
+    { iata: "HDK", label: "Kulhudhuffushi", distKm: 59, size: "small", runwayM: 0 },
+    { iata: "FND", label: "Funadhoo", distKm: 74, size: "small", runwayM: 0 },
+    { iata: "HAQ", label: "Hanimaadhoo", distKm: 75, size: "large", runwayM: 2465 }
+  ],
   "Dibba": [
     { iata: "RKT", label: "Ras Al Khaimah", distKm: 34, size: "large", runwayM: 3760 }
   ],
@@ -690,6 +695,9 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   "Kalafati": [
     { iata: "JMK", label: "Mykonos Island National", distKm: 7, size: "medium", runwayM: 1902 }
   ],
+  "Kanuhura": [
+    { iata: "NMF", label: "Maafaru", distKm: 32, size: "medium", runwayM: 2850 }
+  ],
   "Kapalua, Maui": [
     { iata: "OGG", label: "Kahului", distKm: 26, size: "large", runwayM: 3651 }
   ],
@@ -833,9 +841,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
     { iata: "CMF", label: "Chambéry Aix les Bains", distKm: 58, size: "medium", runwayM: 2020 },
     { iata: "LYS", label: "Lyon Saint-Exupéry", distKm: 118, size: "large", runwayM: 6670 }
   ],
-  "Lhaviyani Atoll": [
-    { iata: "NMF", label: "Maafaru", distKm: 32, size: "medium", runwayM: 2850 }
-  ],
   "Lima": [
     { iata: "LIM", label: "Jorge Chávez", distKm: 16, size: "large", runwayM: 6987 }
   ],
@@ -900,11 +905,6 @@ export const CITY_AIRPORTS: Record<string, CityAirport[]> = {
   ],
   "Malaga": [
     { iata: "AGP", label: "Málaga-Costa del Sol", distKm: 10, size: "large", runwayM: 5950 }
-  ],
-  "Maldives": [
-    { iata: "HDK", label: "Kulhudhuffushi", distKm: 59, size: "small", runwayM: 0 },
-    { iata: "FND", label: "Funadhoo", distKm: 74, size: "small", runwayM: 0 },
-    { iata: "HAQ", label: "Hanimaadhoo", distKm: 75, size: "large", runwayM: 2465 }
   ],
   "Maldonado": [
     { iata: "PDP", label: "Capitan Corbeta CA Curbelo", distKm: 19, size: "medium", runwayM: 3733 }

@@ -468,7 +468,8 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
   Olhuveli: maldives("TMF", "Thimarafushi"),
   "Hurawalhi Island": maldives("NMF", "Maafaru"),
   "Kudadoo Island": maldives("NMF", "Maafaru"),
-  "Lhaviyani Atoll": maldives("NMF", "Maafaru"),
+  // Six Senses Kanuhura; keyed "Lhaviyani Atoll" until its city was corrected to the island (2026-10-01).
+  "Kanuhura": maldives("NMF", "Maafaru"),
   "Medhufaru Island": maldives("NMF", "Maafaru"),
   Randheli: maldives("NMF", "Maafaru"),
   Velaa: maldives("NMF", "Maafaru"),
@@ -782,8 +783,8 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
   },
 
   // ---- Indian Ocean and Pacific ----
-  // Soneva Secret: city "Maldives" in Directus; Soneva's own journey page.
-  "Maldives": {
+  // Soneva Secret on Dhipparafushi (city read "Maldives" until 2026-10-01); Soneva's own journey page.
+  "Dhipparafushi": {
     arriveAt: "HDK",
     arriveAtLabel: "Kulhudhuffushi",
     legs: [{ mode: "boat", to: "the resort, about an hour by speedboat", arrangedByHotel: true }],
