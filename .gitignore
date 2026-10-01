@@ -46,3 +46,6 @@ backups/*.sql.gzhotels-beta/oltra-beta/
 
 .vercel
 .env*
+
+# KAYAK sandbox review scripts and raw responses (local only)
+kayak-sandbox-test/

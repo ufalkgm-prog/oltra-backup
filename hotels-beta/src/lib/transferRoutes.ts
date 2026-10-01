@@ -400,6 +400,19 @@ export const TRANSFER_ROUTES: Record<string, TransferRoute> = {
   // ---- Indian Ocean and Pacific island hops. In each of these the listed
   // airport is a domestic one and the international gateway is a different
   // island; you cannot fly in directly. ----
+  // Shinta Mani Mustang (2026-10-01). Jomsom's strip takes domestic flights from Pokhara only.
+  "Jomsom": {
+    arriveAt: "KTM",
+    arriveAtLabel: "Kathmandu Tribhuvan",
+    legs: [
+      { mode: "domestic flight", to: "Pokhara", toIata: "PKR" },
+      { mode: "domestic flight", to: "Jomsom", toIata: "JMO" },
+      { mode: "road", to: "the lodge" },
+    ],
+    note:
+      "There is no direct flight from Kathmandu to Jomsom: the route connects through " +
+      "Pokhara, and flights into Jomsom are weather-dependent.",
+  },
   "Desroches Island": {
     arriveAt: "SEZ",
     arriveAtLabel: "Seychelles International, Mahé",

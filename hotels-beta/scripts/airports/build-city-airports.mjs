@@ -71,6 +71,10 @@ const MANUAL_EXCLUDE_IATA = new Set([
   "TEB", // Teterboro (NYC) — business aviation only
   "LBG", // Paris-Le Bourget — business aviation / air show venue, not scheduled airline service
   "OPF", // Miami-Opa Locka Executive — business aviation only
+  // Doha International, the old airport: commercial flights moved to Hamad (DOH) in 2014 and it
+  // carries no scheduled passenger service today, yet it sat FIRST for Doha (6km vs 8km) and for
+  // Lusail. Found 2026-10-01 when Rosewood Doha was published.
+  "DIA",
   // NCA (North Caicos) is a different case from the three above, and the
   // distinction matters if this is ever revisited: it carries real scheduled
   // inter-island service, so it is not a false positive in the dataset. It is
@@ -129,6 +133,9 @@ const GATEWAY_OVERRIDE = {
   // nothing; the audit's no-hotel-at-all check is what found it.
   "Kimana Sanctuary": ["NBO"],
   "Volcanoes National Park": ["KGL"],
+  // Shinta Mani Mustang (published 2026-10-01). Nearest-wins gave Jomsom's own strip, which takes
+  // only domestic flights from Pokhara; the international ticket lands in Kathmandu.
+  "Jomsom": ["KTM"],
 
   /* Added 2026-09-11 after checking the eight remaining "jet gateway, but far"
    * destinations one by one. TWO OF THE EIGHT NEEDED NOTHING and are listed
