@@ -1037,16 +1037,6 @@ button.oltra-select {
   --btn-rim-press: var(--oltra-btn-destructive-rim-press);
 }
 
-/* BOOK for a hotel we cannot sell, which leaves for the hotel's own site
-   (Ulrik, 2026-09-28): the destructive rim, standard label. A separate class
-   rather than --destructive, because it is not one and should not inherit
-   whatever that variant gains later. */
-.oltra-btn--offsite {
-  --btn-rim: var(--oltra-btn-destructive-rim);
-  --btn-rim-hover: var(--oltra-btn-destructive-rim-hover);
-  --btn-rim-press: var(--oltra-btn-destructive-rim-press);
-}
-
 .oltra-btn--neutral {
   --btn-rim: var(--oltra-btn-neutral-rim);
   --btn-rim-hover: var(--oltra-btn-neutral-rim-hover);

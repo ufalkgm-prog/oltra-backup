@@ -35,6 +35,7 @@ import FlightResultRow, { pickHeadlineItineraries, type TripDefaults } from "./F
 import type { AiFlightLeg, AiHotelCard, AiQueryState } from "@/lib/ai/types";
 import { flightPassengers } from "@/lib/flights/passengers";
 import styles from "./page.module.css";
+import { sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
 
 /* The concierge's results, on the landing page.
  *
@@ -260,9 +261,8 @@ function HotelStayGroup({
   }, []);
 
   useEffect(() => {
-    const priceable = hotels.filter(
-      (h) => h.ratehawk_hid && h.ratehawk_status !== "passive"
-    );
+    // Only hotels RateHawk sells (lib/hotels/bookingPartner.ts).
+    const priceable = hotels.filter((h) => sellsThroughRatehawk(h));
     // No price without every child's age and a party the rooms can hold —
     // nothing is defaulted (§32).
     const occupancyIssue = guestSelectionIssue(

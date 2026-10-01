@@ -65,6 +65,7 @@ import { phraseAt } from "./featureMatch";
 import { AIRPORT_OPTIONS } from "@/lib/airportOptions";
 import { AIRPORT_COORDS } from "@/lib/airportCoords";
 import { haversineKm } from "@/lib/geoDistance";
+import { sellsThroughRatehawk, soldElsewhere } from "@/lib/hotels/bookingPartner";
 
 /* Tools for the concierge. Every one is read-only: they search and retrieve,
  * and nothing here writes, sends, charges, or mutates state (CLAUDE.md §50).
@@ -90,6 +91,7 @@ const CANDIDATE_FIELDS = [
   "style",
   "activities",
   "ratehawk_status",
+  "booking_partner",
   "ratehawk_hid",
   "editor_rank",
   "ext_points",
@@ -217,7 +219,8 @@ function candidateShape(hotel: HotelRecord) {
     // supplier at all and never will be (CLAUDE.md §42) — not that it is sold
     // out. The model should still recommend these; it just must not promise
     // they can be priced here.
-    bookableHere: hotel.ratehawk_status !== "passive" && Boolean(hotel.ratehawk_hid),
+    // Another partner (KAYAK, andBeyond) counts the same: not priced here.
+    bookableHere: sellsThroughRatehawk(hotel),
     // The airport this hotel is reached through, as an IATA code: the first of
     // its destination's standing order. The panel prints the same airport
     // under the hotel's name, so a set spanning several airports can be flown
@@ -506,7 +509,7 @@ function narrowingAxes(
      Senses Douro Valley alone, neither bookable here. */
   if (axes.city) {
     const sellable = new Set(
-      hotels.filter((h) => h.ratehawk_status !== "passive" && h.ratehawk_hid).map((h) => (h.city ?? "").trim())
+      hotels.filter((h) => sellsThroughRatehawk(h)).map((h) => (h.city ?? "").trim())
     );
     axes.city = {
       ...axes.city,
@@ -1585,16 +1588,16 @@ async function rankAvailabilityFor(input: StayInput, residency: string) {
   if (!ids.length) return { hotels: [] };
 
   const rows = await getHotels({
-    fields: ["id", "ratehawk_hid", "ratehawk_status"],
+    fields: ["id", "ratehawk_hid", "ratehawk_status", "booking_partner"],
     filter: { id: { _in: ids } },
     limit: -1,
   });
 
   // Skip passive properties entirely — they will never return rates, so
   // asking wastes a request against a rate-limited supplier (§42).
-  const priceable = rows.filter(
-    (h) => h.ratehawk_status !== "passive" && h.ratehawk_hid
-  );
+  // Only hotels RateHawk sells (lib/hotels/bookingPartner.ts): an andBeyond
+  // lodge can hold a RateHawk id without RateHawk being its partner.
+  const priceable = rows.filter((h) => sellsThroughRatehawk(h));
   const hidToId = new Map<number, number>();
   for (const h of priceable) hidToId.set(Number(h.ratehawk_hid), Number(h.id));
 
@@ -1604,7 +1607,7 @@ async function rankAvailabilityFor(input: StayInput, residency: string) {
         id: Number(h.id),
         available: false,
         reason:
-          h.ratehawk_status === "passive" ? "not-sold-here" : "no-supplier-record",
+          soldElsewhere(h) ? "not-sold-here" : "no-supplier-record",
       })),
     };
   }
@@ -2849,11 +2852,11 @@ async function bookableHereFor(ids: (number | null)[]): Promise<Map<number, bool
   if (!wanted.length) return new Map();
   try {
     const rows = await getHotels({
-      fields: ["id", "ratehawk_hid", "ratehawk_status"],
+      fields: ["id", "ratehawk_hid", "ratehawk_status", "booking_partner"],
       filter: { id: { _in: wanted } },
       limit: -1,
     });
-    return new Map(rows.map((h) => [Number(h.id), h.ratehawk_status !== "passive" && Boolean(h.ratehawk_hid)]));
+    return new Map(rows.map((h) => [Number(h.id), sellsThroughRatehawk(h)]));
   } catch (err) {
     console.error("[ai tools] bookableHereFor", err);
     return new Map();

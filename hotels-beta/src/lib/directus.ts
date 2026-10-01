@@ -237,6 +237,8 @@ export type HotelRecord = {
    * means never bookable there for any date, which is a different thing from a
    * live search returning no rooms for the chosen dates. */
   ratehawk_status?: "active" | "passive" | "not_integrated" | null;
+  /** Who sells it: ratehawk (shown as ZenHotels), kayak or andbeyond. See lib/hotels/bookingPartner.ts. */
+  booking_partner?: "ratehawk" | "kayak" | "andbeyond" | null;
 };
 
 export async function getHotels(query: DirectusQuery): Promise<HotelRecord[]> {

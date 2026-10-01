@@ -25,6 +25,8 @@ import { clampBedrooms,
   type GuestSelection,
 } from "@/lib/guests";
 import { isBookableHere } from "@/components/hotels/HotelSmallCard";
+import HotelBookButton from "@/components/hotels/HotelBookButton";
+import { offsiteHandoff, PARTNER_NAME, sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
 import SaveToTripControl, {
   HOTEL_SAVED_HINT,
   hotelSaveKey,
@@ -579,6 +581,17 @@ function formatRatehawkUtcDateTime(isoNoOffset: string): string {
     minute: "2-digit",
     timeZoneName: "short",
   });
+}
+
+/* "14 Dec – 17 Dec 2026", for the BOOK pop-up. Dates are the form's YYYY-MM-DD. */
+function formatStayDates(from: string, to: string): string {
+  const day = (v: string, withYear: boolean) =>
+    new Date(`${v}T00:00:00`).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      ...(withYear ? { year: "numeric" } : {}),
+    });
+  return `${day(from, false)} – ${day(to, true)}`;
 }
 
 function nonIncludedTaxes(room: RatehawkGroupedRoom) {
@@ -1981,7 +1994,10 @@ export default function HotelsView(props: {
   );
 
   const selectedRatehawkHid = useMemo(() => {
-    const raw = selectedHotel?.ratehawk_hid;
+    // Only hotels RateHawk sells get its rooms (lib/hotels/bookingPartner.ts):
+    // an andBeyond lodge can hold a RateHawk id without RateHawk selling it.
+    if (!selectedHotel || !sellsThroughRatehawk(selectedHotel)) return null;
+    const raw = selectedHotel.ratehawk_hid;
     if (!raw) return null;
 
     const parsed = Number(raw);
@@ -2055,8 +2071,8 @@ export default function HotelsView(props: {
 
   /* The last click on our side of a booking (lib/members/bookClicks.ts):
      from the concierge when the hotel is in the answer this page is showing. */
-  function recordHotelBookClick(kind: "hotel_checkout" | "hotel_external") {
-    const hotelId = Number(selectedHotel?.id);
+  function recordHotelBookClick(kind: "hotel_checkout" | "hotel_external", forHotelId?: string | number | null) {
+    const hotelId = Number(forHotelId ?? selectedHotel?.id);
     if (!Number.isInteger(hotelId) || hotelId <= 0) return;
     const fromAnswer =
       aiAnswerCurrent && aiResults.hotelIds.some((id) => String(id) === String(hotelId));
@@ -2365,11 +2381,10 @@ export default function HotelsView(props: {
       return;
     }
 
-    // Passive hotels are excluded from the request entirely - Ratehawk cannot
-    // price them for any date, so asking is pure latency (and ~17% of the
-    // published inventory).
+    // Only hotels RateHawk sells are asked: passive ones and other partners'
+    // (KAYAK, andBeyond) can never be priced there, so asking is pure latency.
     const hotelsWithRatehawkHids = visibleHotels
-      .filter((hotel) => hotel.ratehawk_status !== "passive")
+      .filter((hotel) => sellsThroughRatehawk(hotel))
       .map((hotel) => ({
         directusId: String(hotel.id),
         hid: getRatehawkHidForHotel(hotel),
@@ -3035,9 +3050,11 @@ export default function HotelsView(props: {
                   const cardAvailable =
                     ratehawkCardAvailability?.status === "available" &&
                     Boolean(ratehawkCardAvailability.headline);
-                  // Passive is a stored property fact, not a live result, so it
-                  // takes precedence over whatever the batch check returned.
-                  const cardPassive = h.ratehawk_status === "passive";
+                  // Booked through another partner (KAYAK, andBeyond), or
+                  // RateHawk-passive: stored facts, not live results, so they
+                  // take precedence over whatever the batch check returned.
+                  const cardHandoff = offsiteHandoff(h);
+                  const cardPassive = Boolean(cardHandoff) || h.ratehawk_status === "passive";
                   const cardUnavailable =
                     !cardPassive && ratehawkCardAvailability?.status === "unavailable";
 
@@ -3148,22 +3165,21 @@ export default function HotelsView(props: {
                                  "No availability" would wrongly read as "sold
                                  out for your dates". */
                               h.www ? (
-                                <a
+                                /* The same BOOK as every partner; the pop-up
+                                   says who takes the booking (Ulrik,
+                                   2026-10-01). No BOOK without dates
+                                   (2026-09-28). */
+                                <HotelBookButton
+                                  title={cardHandoff?.title ?? "Book on the hotel’s website"}
+                                  body={
+                                    cardHandoff?.body ??
+                                    `We can’t book ${h.hotel_name?.trim() || "this hotel"} here yet. You book directly on its own website.`
+                                  }
                                   href={h.www}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // No BOOK without dates (Ulrik, 2026-09-28).
-                                    if (!hasStayDates) e.preventDefault();
-                                  }}
-                                  onKeyDown={(e) => e.stopPropagation()}
-                                  aria-disabled={hasStayDates ? undefined : "true"}
-                                  data-reason={hasStayDates ? undefined : "Select dates to book"}
-                                  className="oltra-btn oltra-btn--neutral oltra-btn--condensed oltra-btn--block"
-                                >
-                                  Book on website
-                                </a>
+                                  onProceed={() => recordHotelBookClick("hotel_external", h.id)}
+                                  blockedReason={hasStayDates ? null : "Select dates to book"}
+                                  className="oltra-btn oltra-btn--condensed oltra-btn--block"
+                                />
                               ) : (
                                 <div className="hotel-availability-note">
                                   Check availability on website
@@ -3911,6 +3927,22 @@ export default function HotelsView(props: {
                       >
                         {selectedHotelBookingLabel}
                       </a>
+                    ) : selectedHotel && !sellsThroughRatehawk(selectedHotel) && selectedHotel.www ? (
+                      /* Booked through another partner, or on the hotel's own
+                         site: the same BOOK, the pop-up names who takes it
+                         (Ulrik, 2026-10-01). */
+                      <HotelBookButton
+                        title={offsiteHandoff(selectedHotel)?.title ?? "Book on the hotel’s website"}
+                        body={
+                          offsiteHandoff(selectedHotel)?.body ??
+                          `We can’t book ${selectedHotel.hotel_name?.trim() || "this hotel"} here yet. You book directly on its own website.`
+                        }
+                        details={hasStayDates && fromValue && toValue ? [{ label: "Dates", value: formatStayDates(fromValue, toValue) }] : []}
+                        href={selectedHotel.www}
+                        onProceed={() => recordHotelBookClick("hotel_external")}
+                        blockedReason={hasStayDates ? null : "Select dates to book"}
+                        className="oltra-btn oltra-btn--block"
+                      />
                     ) : null}
 
                     {PREBOOK_ENABLED && ratehawkRooms.status === "loaded" && ratehawkRooms.rooms.length > 0 ? (
@@ -3953,23 +3985,44 @@ export default function HotelsView(props: {
                         </div>
                       ) : (
                         <div className="mt-2">
-                          <button
-                            type="button"
+                          {/* BOOK names the partner first (Ulrik, 2026-10-01):
+                              ZenHotels runs the checkout for RateHawk rates.
+                              Prebook still fires only on the pop-up's own
+                              Continue (§32) — opening it costs nothing. */}
+                          <HotelBookButton
+                            title={`Book with ${PARTNER_NAME.ratehawk}`}
+                            body={`${PARTNER_NAME.ratehawk}, our booking partner, takes your booking and payment. When you continue, we first confirm this rate with them, and any change is shown before you go on.`}
+                            details={
+                              selectedRoom
+                                ? [
+                                    { label: "Hotel", value: selectedHotel?.hotel_name?.trim() ?? "" },
+                                    ...(fromValue && toValue ? [{ label: "Dates", value: formatStayDates(fromValue, toValue) }] : []),
+                                    { label: "Room", value: selectedRoom.roomName },
+                                    { label: "Meals", value: formatMeal(selectedRoom) },
+                                    { label: "Cancellation", value: formatFreeCancellation(selectedRoom.freeCancellationBefore) },
+                                    {
+                                      label: "Total",
+                                      value: `${roomSelectionCurrency} ${Math.round(roomSelectionTotal).toLocaleString()} · ${roomPriceBasis}`,
+                                    },
+                                    ...(nonIncludedTaxes(selectedRoom).length
+                                      ? [{ label: "Taxes", value: "Some taxes are paid at the hotel, as shown on the room" }]
+                                      : []),
+                                  ]
+                                : []
+                            }
+                            note="Nothing is booked or charged at this step."
+                            onContinue={() => void handleContinueToCheckout()}
+                            blockedReason={!selectedRoom ? "Choose a room to continue" : null}
+                            busyLabel={
+                              prebook.status === "checking" ? (
+                                <>
+                                  <OltraSpinner size={14} decorative />
+                                  Checking rate…
+                                </>
+                              ) : null
+                            }
                             className="oltra-btn oltra-btn--block"
-                            onClick={() => {
-                              // aria-disabled does not block the click.
-                              if (!selectedRoom) return;
-                              void handleContinueToCheckout();
-                            }}
-                            disabled={prebook.status === "checking"}
-                            aria-disabled={!selectedRoom ? "true" : undefined}
-                            data-reason={!selectedRoom ? "Choose a room to continue" : undefined}
-                          >
-                            {prebook.status === "checking" ? (
-                              <OltraSpinner size={14} decorative />
-                            ) : null}
-                            {prebook.status === "checking" ? "Checking rate…" : "Continue"}
-                          </button>
+                          />
                           {!selectedRoom ? (
                             <div className="mt-1 text-[12px] text-[color:var(--oltra-text-muted)]">
                               Choose a room to continue.

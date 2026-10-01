@@ -9,6 +9,7 @@ import {
 import { isValidResidencyCode } from "@/lib/countries";
 import { guestSelectionIssue } from "@/lib/guests";
 import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
+import { sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
 
 /* Re-prices one saved trip hotel on demand ("Update price and availability").
  *
@@ -34,6 +35,7 @@ type HotelPricingRow = {
   id: string | number;
   ratehawk_hid: number | null;
   ratehawk_status: string | null;
+  booking_partner?: string | null;
   www: string | null;
 };
 
@@ -98,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     const rows = await getItems<HotelPricingRow>("hotels", {
-      fields: ["id", "ratehawk_hid", "ratehawk_status", "www"],
+      fields: ["id", "ratehawk_hid", "ratehawk_status", "booking_partner", "www"],
       filter: { id: { _eq: hotelDirectusId } },
       limit: 1,
     });
@@ -114,7 +116,8 @@ export async function POST(request: Request) {
     // A stored property fact, checked before spending a request: Ratehawk
     // never sells this hotel, so "no availability" would read as sold out
     // (CLAUDE.md §42).
-    if (hotel.ratehawk_status === "passive" || !hotel.ratehawk_hid) {
+    // Another partner (KAYAK, andBeyond) is "not sold" here too.
+    if (!sellsThroughRatehawk(hotel) || !hotel.ratehawk_hid) {
       return NextResponse.json({
         ok: true,
         status: "not_sold",

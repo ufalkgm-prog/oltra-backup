@@ -34,6 +34,7 @@ import { currentResidency } from "@/lib/countries";
 import { michelinStatus } from "@/app/restaurants/utils";
 import { EMPTY_RESULT_SET, type AiQueryState, type AiResultSet } from "@/lib/ai/types";
 import styles from "./AiConcierge.module.css";
+import { sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
 
 /* The conversation, and the summary of what it found.
  *
@@ -1379,8 +1380,8 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
      model, so the wording cannot drift and the right hotels get it: passive,
      or no supplier id at all — the same test searchHotels' `bookableHere` and
      the member price route apply. */
-  const notSoldHere = (hotel: { ratehawk_status: string | null; ratehawk_hid: number | null }) =>
-    hotel.ratehawk_status === "passive" || !hotel.ratehawk_hid;
+  const notSoldHere = (hotel: { ratehawk_status: string | null; ratehawk_hid: number | null; booking_partner?: string | null }) =>
+    !sellsThroughRatehawk(hotel);
   const loneHotel = answered.hotels && !listHotels && hotels.length === 1 ? hotels[0] : null;
   /* A STARRED RESTAURANT CARRIES ITS STARS (Ulrik, 2026-09-15): said
      whenever it has them, and nothing when it has none. Drawn from the

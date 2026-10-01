@@ -234,6 +234,7 @@ export type AiHotelCard = {
   highlights: string | null;
   ratehawk_hid: number | null;
   ratehawk_status: string | null;
+  booking_partner?: string | null;
   ratehawk_image_1: string | null;
   /** Supplier images held in Directus, attached by getItems rather than stored
    * on the row. Takes priority over ratehawk_image_1 — a lodge whose Ratehawk

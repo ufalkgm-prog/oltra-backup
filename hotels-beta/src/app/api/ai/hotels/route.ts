@@ -27,6 +27,7 @@ const CARD_FIELDS = [
   "highlights",
   "ratehawk_hid",
   "ratehawk_status",
+  "booking_partner",
   "ratehawk_image_1",
   "www",
   "booking_provider",

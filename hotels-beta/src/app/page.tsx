@@ -210,6 +210,7 @@ export default async function HomePage({
         // which this page no longer prices against.)
         "ratehawk_hid",
         "ratehawk_status",
+        "booking_partner",
         // For the card's BOOK link (buildBookingLink).
         "www",
         "booking_provider",

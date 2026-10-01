@@ -134,6 +134,7 @@ const hotelFields = [
   "booking_notes",
   "ratehawk_hid",
   "ratehawk_status",
+  "booking_partner",
   "activities",
   "awards",
   "setting",

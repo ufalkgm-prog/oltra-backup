@@ -9,6 +9,8 @@ import {
   hasHotelPhotos,
 } from "@/lib/hotels/cardHelpers";
 import { recordBookClick } from "@/lib/members/bookClicks";
+import { offsiteHandoff, sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
+import HotelBookButton from "@/components/hotels/HotelBookButton";
 
 export type SmallCardAvailability =
   | { status: "loading" }
@@ -105,12 +107,13 @@ const LAYOUT: Record<
 type SellableFields = {
   ratehawk_status?: string | null;
   ratehawk_hid?: number | string | null;
+  booking_partner?: string | null;
 };
 
 /** Whether we can price and sell this hotel ourselves — the same test as the
- * concierge's `bookableHere`. */
+ * concierge's `bookableHere`, both from lib/hotels/bookingPartner.ts. */
 export function isBookableHere(hotel: SellableFields): boolean {
-  return hotel.ratehawk_status !== "passive" && Boolean(hotel.ratehawk_hid);
+  return sellsThroughRatehawk(hotel);
 }
 
 /** Hotels we can sell first; the ones that only send the guest to the hotel's
@@ -181,6 +184,9 @@ export default function HotelSmallCard({
   // A stored property fact, checked before any live result: Ratehawk never
   // sells this hotel, so "No availability" would wrongly read as "sold out".
   const isPassive = hotel.ratehawk_status === "passive";
+  /* Booked through another partner (KAYAK, andBeyond): the BOOK pop-up names
+     it, and this line says it where the price would be. */
+  const handoff = offsiteHandoff(hotel);
 
   /* At three frames BOOK and SAVE go side by side under the price. */
   const stacked = columns === 3;
@@ -188,6 +194,13 @@ export default function HotelSmallCard({
   const basisLines = !priceBasis ? [] : priceBasis.split(" – ");
 
   const rightBlock = (() => {
+    if (handoff) {
+      return (
+        <div className="text-center text-[11px] leading-tight text-[color:var(--oltra-text-muted)]">
+          {handoff.partner === "andbeyond" ? "Booked with andBeyond" : "Book on the hotel’s website"}
+        </div>
+      );
+    }
     if (isPassive) {
       // Where the price would be, in the "No availability" format (Ulrik,
       // 2026-09-28), with the orange-rimmed BOOK below it. Without a website
@@ -282,24 +295,15 @@ export default function HotelSmallCard({
   // the guest chooses a room — never to the hotel's own site, which is what it
   // used to open. Only a hotel we cannot sell sends the guest away, and says so.
   const bookableHere = isBookableHere(hotel);
-  /* A hotel we cannot sell gets an ordinary BOOK, the same size as SAVE, with
-     the orange-red rim, and the caveat where the price would be (Ulrik,
-     2026-09-28). It replaced a neutral "Book on website" button whose label
-     wrapped and made it taller than SAVE. */
+  /* A hotel booked elsewhere (KAYAK, andBeyond, or its own website) gets the
+     same BOOK as one we sell, and the pop-up names who takes the booking
+     (Ulrik, 2026-10-01). It replaced the orange-red-rimmed BOOK of 2026-09-28. */
   const topAction = bookableHere
     ? href
-      ? { offsite: false, go: () => window.location.assign(href) }
+      ? { offsite: false as const, go: () => window.location.assign(href) }
       : null
     : bookingHref
-      ? {
-          offsite: true,
-          go: () => {
-            // Leaving for the hotel's own site is still booking intent.
-            const hotelId = Number(hotel.id);
-            if (Number.isInteger(hotelId) && hotelId > 0) recordBookClick({ kind: "hotel_external", hotelId });
-            window.open(bookingHref, "_blank", "noopener,noreferrer");
-          },
-        }
+      ? { offsite: true as const }
       : null;
   /* BOOK stays, passive, and says why: no dates chosen yet — for every BOOK,
      the hotel's own website included (Ulrik, 2026-09-28) — or nothing free on
@@ -320,7 +324,22 @@ export default function HotelSmallCard({
         {/* Three frames: side by side under the price, each 52px across the
             108px photo (Ulrik, 2026-09-28). Stacked otherwise. */}
         <div className={stacked ? "grid grid-cols-2 gap-1" : "contents"}>
-        {topAction ? (
+        {topAction?.offsite && bookingHref ? (
+          <HotelBookButton
+            title={handoff?.title ?? "Book on the hotel’s website"}
+            body={handoff?.body ?? `We can’t book ${hotel.hotel_name?.trim() || "this hotel"} here yet. You book directly on its own website.`}
+            href={bookingHref}
+            onProceed={() => {
+              // Leaving for a partner's or the hotel's own site is still booking intent.
+              const hotelId = Number(hotel.id);
+              if (Number.isInteger(hotelId) && hotelId > 0) recordBookClick({ kind: "hotel_external", hotelId });
+            }}
+            blockedReason={bookBlockedReason}
+            className={`oltra-btn oltra-btn--condensed oltra-btn--block${
+              renderSaveControl && !stacked ? " oltra-btn--stack-top" : ""
+            }`}
+          />
+        ) : topAction && !topAction.offsite ? (
           <button
             type="button"
             onClick={(e) => {
@@ -334,9 +353,7 @@ export default function HotelSmallCard({
             /* Sizing lives in .oltra-btn--condensed, not an inline style: the
                Save control below it is rendered by the caller, and the two have
                to match. */
-            className={`oltra-btn ${
-              topAction.offsite ? "oltra-btn--offsite " : ""
-            }oltra-btn--condensed oltra-btn--block${
+            className={`oltra-btn oltra-btn--condensed oltra-btn--block${
               renderSaveControl && !stacked ? " oltra-btn--stack-top" : ""
             }`}
           >

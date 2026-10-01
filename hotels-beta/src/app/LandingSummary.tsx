@@ -35,6 +35,7 @@ import { flightPassengers } from "@/lib/flights/passengers";
 import { useFavouriteIds } from "@/lib/members/favourites";
 import { hotelPriceBasis } from "@/lib/priceBasis";
 import styles from "./page.module.css";
+import { sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
 
 type HotelSummary = {
   count: number;
@@ -365,7 +366,7 @@ export default function LandingSummary({
     // for any date, so the card sends the guest to the hotel's website instead
     // and asking would be pure latency.
     const withIds = visibleHotels
-      .filter((h) => h.ratehawk_status !== "passive")
+      .filter((h) => sellsThroughRatehawk(h))
       .map((h) => ({ directusId: String(h.id), hid: getRatehawkHid(h) }))
       .filter((x): x is { directusId: string; hid: number } => x.hid !== null);
 
