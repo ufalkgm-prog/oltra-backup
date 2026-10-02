@@ -168,7 +168,11 @@ Other fields:
 
 ### Restaurants
 
-Separate Directus collection (`restaurants`): `id`, `status`, `rank`, `restaurant_name`, `slug` (kebab-case, unique — the upsert key), `description`, `highlights`, `restaurant_type` (`Fine dining` | `High-end casual` | `Informal local favorite` | `Beach club`), `cuisine`, `restaurant_setting`, `restaurant_style`, geography fields, `lat`/`lng`, `www`, `insta`, `awards` (JSON array: `michelin_3`, `michelin_2`, `michelin_1`, `worlds_50`, `laliste100`), `sources`, `hotel_name_hint`.
+Separate Directus collection (`restaurants`): `id`, `status`, `rank`, `restaurant_name`, `slug` (kebab-case, unique — the upsert key), `description`, `highlights`, `restaurant_type` (`Fine dining` | `High-end casual` | `Informal local favorite` | `Beach club`), `cuisine`, `restaurant_setting`, `restaurant_style`, geography fields, `lat`/`lng`, `www`, `insta`, `awards` (JSON array: `michelin_3`, `michelin_2`, `michelin_1`, `worlds_50`, `laliste100`), `sources`, `hotel_name_hint`, `phone`, `address`.
+
+`phone` (varchar 40) and `address` (text) were added 2026-10-02, empty, for the contact-field check staged in `oltra-agents` (`restaurants/pending/contact-check-<city>-<date>.json`). Phone is international (`+33 1 23 45 67 89`); a hotel restaurant takes the hotel's street address. Not yet read by the app.
+
+`status` is `published` or `archived` (closed for good; added 2026-10-02 with the first 13 closures — `draft` also exists but is unused). Every listing query filters `status = published`, so archiving hides a restaurant from the page and the concierge; `getRestaurantsByIds` (Members favourites) does not filter, so a member's saved favourite still resolves.
 
 **Coverage: 63 cities, 2,192 records (2026-06-28), all Google Maps–geocoded.** Source JSON lives in `hotels-beta/scripts/restaurants/updated_restaurants/` (the original 23 cities) and `newrestaurants/` (everything added since). Old v2 files are archived in `olddata/`.
 
