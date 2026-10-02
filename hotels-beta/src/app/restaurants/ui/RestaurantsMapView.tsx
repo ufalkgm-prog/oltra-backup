@@ -1013,13 +1013,27 @@ export default function RestaurantsMapView({
                 ) : null}
               </h2>
 
-              {buildAddressLabel(selectedRestaurant) && (
+              {/* The street address ends with city and country, so beside it
+                  the area line keeps only the neighbourhood. */}
+              {(selectedRestaurant.address
+                ? selectedRestaurant.local_area
+                : buildAddressLabel(selectedRestaurant)) && (
                 <div className="restaurant-detail-card__address">
-                  {buildAddressLabel(selectedRestaurant)}
+                  {selectedRestaurant.address
+                    ? selectedRestaurant.local_area
+                    : buildAddressLabel(selectedRestaurant)}
                 </div>
               )}
 
-              {(selectedRestaurant.www || selectedRestaurant.insta) && (
+              {selectedRestaurant.address && (
+                <div className="restaurant-detail-card__street">
+                  {selectedRestaurant.address}
+                </div>
+              )}
+
+              {(selectedRestaurant.www ||
+                selectedRestaurant.insta ||
+                selectedRestaurant.phone) && (
                 <div className="restaurant-detail-card__links">
                   {selectedRestaurant.www && (
                     <a
@@ -1042,6 +1056,18 @@ export default function RestaurantsMapView({
                       className="restaurant-detail-card__link-text"
                     >
                       Instagram
+                    </a>
+                  )}
+                  {(selectedRestaurant.www || selectedRestaurant.insta) &&
+                    selectedRestaurant.phone && (
+                      <span className="restaurant-detail-card__link-sep">·</span>
+                    )}
+                  {selectedRestaurant.phone && (
+                    <a
+                      href={`tel:${selectedRestaurant.phone.replace(/[^\d+]/g, "")}`}
+                      className="restaurant-detail-card__link-text"
+                    >
+                      {selectedRestaurant.phone}
                     </a>
                   )}
                 </div>

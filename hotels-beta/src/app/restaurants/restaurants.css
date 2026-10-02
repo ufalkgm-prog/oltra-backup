@@ -202,6 +202,15 @@
   color: var(--oltra-text-secondary);
 }
 
+/* Street address under the area line: same muted metadata role, no gap. */
+.restaurant-detail-card__street {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--oltra-text-secondary);
+}
+
 .restaurant-detail-card__highlights {
   margin-top: 16px;
   font-size: 14px;

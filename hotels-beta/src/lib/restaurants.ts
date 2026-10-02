@@ -23,6 +23,8 @@ type DirectusRestaurantRow = {
   lng?: number | string | null;
   www?: string | null;
   insta?: string | null;
+  phone?: string | null;
+  address?: string | null;
   restaurant_setting?: string | null;
   restaurant_style?: string | null;
   awards?: unknown;
@@ -73,6 +75,8 @@ export function normalizeRestaurant(row: DirectusRestaurantRow): RestaurantRecor
     lng: toNumber(row.lng),
     www: row.www ?? null,
     insta: row.insta ?? null,
+    phone: row.phone?.trim() || null,
+    address: row.address?.trim() || null,
     restaurant_setting: row.restaurant_setting ?? null,
     restaurant_style: row.restaurant_style ?? null,
     awards: normalizeAwards(row.awards),
@@ -102,6 +106,8 @@ function buildRestaurantFields() {
     "lng",
     "www",
     "insta",
+    "phone",
+    "address",
     "restaurant_setting",
     "restaurant_style",
     "awards",

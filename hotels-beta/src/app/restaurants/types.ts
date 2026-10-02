@@ -23,6 +23,8 @@ export type RestaurantRecord = {
 
   www?: string | null;
   insta?: string | null;
+  phone?: string | null;
+  address?: string | null;
 
   restaurant_setting?: string | null;
   restaurant_style?: string | null;
