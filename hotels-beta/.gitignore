@@ -59,3 +59,4 @@ scripts/hotels/geo-2026/output/
 scripts/airports/airports.csv
 scripts/airports/runways.csv
 scripts/restaurants/contact-check/output/
+scripts/hotels/name-check/output/
