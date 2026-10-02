@@ -1,0 +1,155 @@
+[
+ {
+  "id": "1076",
+  "hotel_name": "Banyan Tree Shanghai On The Bund",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1087",
+  "hotel_name": "Rosewood Hong Kong",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1094",
+  "hotel_name": "The Peninsula Hong Kong ",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1095",
+  "hotel_name": "The Peninsula Shanghai",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1106",
+  "hotel_name": "Four Seasons Hotel Hong Kong",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1201",
+  "hotel_name": "Capella Bangkok",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1278",
+  "hotel_name": "Four Seasons Hotel Prague",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1323",
+  "hotel_name": "Cheval Blanc Paris",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1423",
+  "hotel_name": "Aman Venice",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1427",
+  "hotel_name": "Hotel Cipriani",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1466",
+  "hotel_name": "Palazzo Venart Luxury Hotel",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1479",
+  "hotel_name": "The Gritti Palace",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1483",
+  "hotel_name": "The St. Regis Florence",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1612",
+  "hotel_name": "The Lana",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1728",
+  "hotel_name": "The Langham, Chicago",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1766",
+  "hotel_name": "Trump International Hotel & Tower Chicago",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ },
+ {
+  "id": "1796",
+  "hotel_name": "Crown Towers Melbourne",
+  "primary_setting": "City",
+  "secondary_setting": null,
+  "setting": [
+   "City"
+  ]
+ }
+]

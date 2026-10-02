@@ -19,5 +19,6 @@
 - [JS replace $ patterns corrupt patches](feedback_js_replace_dollar_patterns.md) — String.replace replacement strings expand $` $&; patch with split/join or a function, then node --check
 - [Contact-field rules](feedback_contact_field_rules.md) — Instagram = the restaurant's own account only (never chef/brand/hotel); website phone wins over Google
 - [Restaurant contact check](project_restaurant_contact_check.md) — 2026-10-02: all restaurants' www/insta/phone/address/pins applied; open items listed; WebSearch capped at 200 per session → use Brave/Places scripts
-- [Hotel naming](feedback_hotel_naming.md) — official name wins (keep a city the hotel uses, drop one we added), no parent-brand phrases, brand spelling (Bvlgari); 114 renamed 2026-10-02, 7 held
+- [Hotel naming](feedback_hotel_naming.md) — official name wins (keep a city the hotel uses, drop one we added), no parent-brand phrases, brand spelling (Bvlgari); 114 renamed 2026-10-02, 7 more 2026-10-03; renames update descriptions too
+- [Pre-launch member data](project_prelaunch_member_data.md) — stale names in members' saved items don't matter pre-launch; don't flag or migrate them
 - [Booking partners](project_booking_partners.md) — every published hotel needs RateHawk, KAYAK or andBeyond (direct); andBeyond never via RH/KAYAK; KAYAK fields added 2026-10-01

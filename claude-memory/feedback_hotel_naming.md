@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ee9f4d77-16e0-4916-b9cf-a8c954458563
-  modified: 2026-10-02T19:09:39.679Z
+  modified: 2026-10-02T19:48:48.270Z
 ---
 
 Hotel names follow the hotel's own official name (Ulrik, 2026-10-02):
@@ -15,4 +15,4 @@ Hotel names follow the hotel's own official name (Ulrik, 2026-10-02):
 - Spelling and punctuation follow the brand: Bvlgari, "The Langham, London", Monte-Carlo, andBeyond.
 
 **Why:** names should read the way the hotel presents itself; brand phrases are marketing, cities we invented are noise.
-**How to apply:** when creating or renaming hotels; the full rule is in `.claude/rules/hotel-data.md` and the tooling in `hotels-beta/scripts/hotels/name-check/`. 7 renames are still held back (Guanahani/Airelles, Salamander/Potomac, Reschio, Solaire Sky Tower, Tokyo EDITION, Old Cataract, MO Riyadh).
+**How to apply:** when creating or renaming hotels; the full rule is in `.claude/rules/hotel-data.md` and the tooling in `hotels-beta/scripts/hotels/name-check/`. The 7 held-back renames were resolved 2026-10-03 (Le Guanahani → Airelles incl. affiliation and URL; Salamander DC deleted). A rename also updates the hotel's name in its description (and affiliation on a rebrand).
