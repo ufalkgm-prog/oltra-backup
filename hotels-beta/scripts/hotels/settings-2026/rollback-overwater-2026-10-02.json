@@ -1,0 +1,316 @@
+[
+ {
+  "id": "1155",
+  "hotel_name": "Anantara Kihavah Maldives Villas",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1156",
+  "hotel_name": "Baglioni Resort Maldives",
+  "published": true,
+  "primary_setting": "Private Island",
+  "secondary_setting": null,
+  "setting": [
+   "Private Island"
+  ]
+ },
+ {
+  "id": "1157",
+  "hotel_name": "Cheval Blanc Randheli",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1158",
+  "hotel_name": "COMO Cocoa Island",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1159",
+  "hotel_name": "COMO Maalifushi",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1160",
+  "hotel_name": "Conrad Maldives Rangali Island",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1161",
+  "hotel_name": "Emerald Maldives Resort & Spa",
+  "published": false,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1162",
+  "hotel_name": "Four Seasons Private Island at Voavah",
+  "published": false,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1163",
+  "hotel_name": "Four Seasons Resort Maldives at Kuda Huraa ",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1164",
+  "hotel_name": "Four Seasons Resort Maldives at Landaa Giraavaru",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1165",
+  "hotel_name": "Gili Lankanfushi Maldives",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1166",
+  "hotel_name": "Hurawalhi Island Resort",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1167",
+  "hotel_name": "Huvafen Fushi Maldives",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1168",
+  "hotel_name": "JOALI Maldives",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1169",
+  "hotel_name": "Kudadoo Maldives Private Island",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1170",
+  "hotel_name": "Niyama Private Islands Maldives",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1171",
+  "hotel_name": "One&Only Reethi Rah",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1172",
+  "hotel_name": "Patina Maldives",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1173",
+  "hotel_name": "The Halcyon Private Isles Maldives",
+  "published": true,
+  "primary_setting": "Private Island",
+  "secondary_setting": null,
+  "setting": [
+   "Private Island"
+  ]
+ },
+ {
+  "id": "1175",
+  "hotel_name": "Six Senses Laamu",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1176",
+  "hotel_name": "Soneva Fushi",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1177",
+  "hotel_name": "Soneva Jani",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1178",
+  "hotel_name": "The St. Regis Maldives Vommuli Resort",
+  "published": true,
+  "primary_setting": "Island",
+  "secondary_setting": null,
+  "setting": [
+   "Island"
+  ]
+ },
+ {
+  "id": "1179",
+  "hotel_name": "The Nautilus Maldives",
+  "published": true,
+  "primary_setting": "Private Island",
+  "secondary_setting": null,
+  "setting": [
+   "Private Island"
+  ]
+ },
+ {
+  "id": "1180",
+  "hotel_name": "The Ritz-Carlton Maldives, Fari Islands",
+  "published": true,
+  "primary_setting": "Private Island",
+  "secondary_setting": null,
+  "setting": [
+   "Private Island"
+  ]
+ },
+ {
+  "id": "1181",
+  "hotel_name": "Velaa Private Island",
+  "published": true,
+  "primary_setting": "Beachfront",
+  "secondary_setting": "Private Island",
+  "setting": [
+   "Beachfront",
+   "Private Island"
+  ]
+ },
+ {
+  "id": "1234",
+  "hotel_name": "Six Senses Ninh Van Bay",
+  "published": true,
+  "primary_setting": "Beachfront",
+  "secondary_setting": null,
+  "setting": [
+   "Beachfront"
+  ]
+ },
+ {
+  "id": "1644",
+  "hotel_name": "Rosewood Mayakoba",
+  "published": true,
+  "primary_setting": "Beachfront",
+  "secondary_setting": "Jungle",
+  "setting": [
+   "Beachfront",
+   "Jungle"
+  ]
+ },
+ {
+  "id": "1834",
+  "hotel_name": "Nujuma, a Ritz-Carlton Reserve",
+  "published": true,
+  "primary_setting": "Beachfront",
+  "secondary_setting": null,
+  "setting": [
+   "Beachfront"
+  ]
+ },
+ {
+  "id": "2007",
+  "hotel_name": "Six Senses Kanuhura",
+  "published": true,
+  "primary_setting": "Private Island",
+  "secondary_setting": "Beachfront",
+  "setting": [
+   "Private Island",
+   "Beachfront"
+  ]
+ },
+ {
+  "id": "2067",
+  "hotel_name": "Soneva Secret",
+  "published": true,
+  "primary_setting": "Private Island",
+  "secondary_setting": "Oceanfront",
+  "setting": [
+   "Private Island",
+   "Oceanfront"
+  ]
+ }
+]

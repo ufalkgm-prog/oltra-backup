@@ -1,0 +1,220 @@
+[
+ {
+  "id": "1105",
+  "hotel_name": "Four Seasons Hotel Hangzhou at West Lake",
+  "primary_setting": "Waterfront",
+  "secondary_setting": null,
+  "setting": [
+   "Waterfront"
+  ]
+ },
+ {
+  "id": "1111",
+  "hotel_name": "Taj Lake Palace, Udaipur",
+  "primary_setting": "Waterfront",
+  "secondary_setting": null,
+  "setting": [
+   "Waterfront"
+  ]
+ },
+ {
+  "id": "1113",
+  "hotel_name": "The Oberoi Mumbai",
+  "primary_setting": "Oceanfront",
+  "secondary_setting": null,
+  "setting": [
+   "Oceanfront"
+  ]
+ },
+ {
+  "id": "1191",
+  "hotel_name": "Paradise Hotel Busan",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "1305",
+  "hotel_name": "The Gainsborough Bath Spa",
+  "primary_setting": "Countryside",
+  "secondary_setting": null,
+  "setting": [
+   "Countryside"
+  ]
+ },
+ {
+  "id": "1573",
+  "hotel_name": "The Woodward",
+  "primary_setting": "Waterfront",
+  "secondary_setting": null,
+  "setting": [
+   "Waterfront"
+  ]
+ },
+ {
+  "id": "1604",
+  "hotel_name": "Mandarin Oriental Jumeira, Dubai",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "1617",
+  "hotel_name": "W Dubai - Mina Seyahi",
+  "primary_setting": "Beachfront",
+  "secondary_setting": null,
+  "setting": [
+   "Beachfront"
+  ]
+ },
+ {
+  "id": "1622",
+  "hotel_name": "Fairmont Waterfront",
+  "primary_setting": "Oceanfront",
+  "secondary_setting": null,
+  "setting": [
+   "Oceanfront"
+  ]
+ },
+ {
+  "id": "1667",
+  "hotel_name": "Faena Hotel Miami Beach",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "1687",
+  "hotel_name": "Hotel Casa del Mar",
+  "primary_setting": "Beachfront",
+  "secondary_setting": null,
+  "setting": [
+   "Beachfront"
+  ]
+ },
+ {
+  "id": "1699",
+  "hotel_name": "Nobu Hotel Miami Beach",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "1735",
+  "hotel_name": "The Miami Beach EDITION",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "1749",
+  "hotel_name": "The Ritz-Carlton, Fort Lauderdale ",
+  "primary_setting": "Beachfront",
+  "secondary_setting": null,
+  "setting": [
+   "Beachfront"
+  ]
+ },
+ {
+  "id": "1758",
+  "hotel_name": "The St. Regis Bal Harbour Resort",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "2012",
+  "hotel_name": "Reid's Palace",
+  "primary_setting": "Oceanfront",
+  "secondary_setting": null,
+  "setting": [
+   "Oceanfront"
+  ]
+ },
+ {
+  "id": "2021",
+  "hotel_name": "Mandarin Oriental Bosphorus, Istanbul",
+  "primary_setting": "Oceanfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Oceanfront",
+   "City"
+  ]
+ },
+ {
+  "id": "2030",
+  "hotel_name": "Mandarin Oriental, Muscat",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "2036",
+  "hotel_name": "Four Seasons Hotel Baku",
+  "primary_setting": "Waterfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Waterfront",
+   "City"
+  ]
+ },
+ {
+  "id": "2038",
+  "hotel_name": "Four Seasons Hotel Doha",
+  "primary_setting": "Beachfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Beachfront",
+   "City"
+  ]
+ },
+ {
+  "id": "2049",
+  "hotel_name": "Rosewood Washington, D.C.",
+  "primary_setting": "Waterfront",
+  "secondary_setting": "City",
+  "setting": [
+   "Waterfront",
+   "City"
+  ]
+ },
+ {
+  "id": "3018",
+  "hotel_name": "Collegio alla Querce",
+  "primary_setting": "Hillside",
+  "secondary_setting": null,
+  "setting": [
+   "Hillside"
+  ]
+ },
+ {
+  "id": "3031",
+  "hotel_name": "Mandarin Oriental, Old Cataract, Aswan",
+  "primary_setting": "Waterfront",
+  "secondary_setting": null,
+  "setting": [
+   "Waterfront"
+  ]
+ }
+]
