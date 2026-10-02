@@ -172,7 +172,7 @@ Separate Directus collection (`restaurants`): `id`, `status`, `rank`, `restauran
 
 `phone` (varchar 40) and `address` (text) were added 2026-10-02, empty, for the contact-field check staged in `oltra-agents` (`restaurants/pending/contact-check-<city>-<date>.json`). Phone is international (`+33 1 23 45 67 89`); a hotel restaurant takes the hotel's street address. Not yet read by the app.
 
-`status` is `published` or `archived` (closed for good; added 2026-10-02 with the first 13 closures — `draft` also exists but is unused). Every listing query filters `status = published`, so archiving hides a restaurant from the page and the concierge; `getRestaurantsByIds` (Members favourites) does not filter, so a member's saved favourite still resolves.
+**A restaurant that closes for good is deleted, not archived (Ulrik, 2026-10-02).** The 14 closures found that day were deleted; their full records are in `hotels-beta/scripts/restaurants/contact-check/output/rollback/deleted-closed-restaurants-2026-10-02.json` (gitignored, one machine). `status` is `published` (`draft` exists, unused); every listing query filters on it. A member's saved favourite of a deleted restaurant falls back to the name and label stored with the favourite.
 
 **Coverage: 63 cities, 2,192 records (2026-06-28), all Google Maps–geocoded.** Source JSON lives in `hotels-beta/scripts/restaurants/updated_restaurants/` (the original 23 cities) and `newrestaurants/` (everything added since). Old v2 files are archived in `olddata/`.
 
