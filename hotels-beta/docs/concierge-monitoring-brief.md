@@ -124,7 +124,7 @@ structured fields. The member is a 24-character hash, never their id.
 | `declined` | true when triage replied instead of the model |
 | `duration_ms` | request start to answer finished |
 | `steps`, `tools` | model steps; tool names in the order called |
-| `finish_reason` | `length` = cut off |
+| `finish_reason` | `length` = cut off; `error: …` = the answer broke off part-way (since 2026-10-04) |
 | `input_tokens`, `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `reasoning_tokens` | cost and cache |
 | `presented` | whether `presentResults` was called (cards shown) |
 | `hotel_count`, `restaurant_count`, `flight_count`, `later_stop_count` | what it showed; later stops > 0 = a trip in several places |
@@ -208,7 +208,10 @@ it is checked, and a severity: **critical** (report at the top, even once),
 ### T — Technical health
 
 **T1 · every answer · critical.** No answer is cut off.
-Check: `finish_reason = 'length'`.
+Check: `finish_reason = 'length'`, or `finish_reason` starting `error:` — a stream
+that failed part-way (the panel retries such an answer once by itself, so one
+error record followed by a normal one is the rescue working; report the
+error text and how often it happens).
 
 **T2 · every answer · high.** A search that found results shows them.
 Check: `declined = false`, `presented = false`, `tools` contains

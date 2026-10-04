@@ -370,8 +370,17 @@ export async function POST(req: Request) {
     // Stop, or the panel giving up, ends the model call and its tools too —
     // without this the answer carried on (and cost) after nobody was waiting.
     abortSignal: req.signal,
-    onError({ error }) {
+    /* A stream that fails part-way leaves a record too (2026-10-04), or the
+       monitoring agent only ever sees answers that finished. Not for Stop or
+       the panel giving up, which abort the request. */
+    async onError({ error }) {
       console.error("[ai chat]", error);
+      if (req.signal.aborted) return;
+      await writeAnswerLog(supabase, {
+        ...logBase,
+        durationMs: Date.now() - startedAt,
+        finishReason: `error: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200),
+      });
     },
     // The answer's record for the monitoring agent; awaited before the stream
     // closes, so it is written while the request is still alive.

@@ -443,15 +443,15 @@
   border-color: var(--oltra-border-medium);
 }
 
-/* ── handoffs ─────────────────────────────────────────────────────────── */
+/* ── go to results ──────────────────────────────────────────────────── */
 
 /* Where this answer can be seen in full: one Primary Full .oltra-btn (the
    button standard made handoff links pills). There is only ever one, so it
    cannot read as a menu of buttons under the conversation. */
-.handoffs {
+/* "Go to results", between the transcript and the question box. */
+.goToResults {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.1rem;
+  justify-content: flex-end;
   padding-top: 0.6rem;
   border-top: 1px solid var(--oltra-border-subtle);
   margin-top: 0.15rem;

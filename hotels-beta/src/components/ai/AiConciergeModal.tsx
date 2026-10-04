@@ -200,22 +200,20 @@ export default function AiConciergeModal() {
     };
   }, [conciergeOpen, close]);
 
-  /* One offer, chosen by how the answer sits against the page it was asked
-   * from.
+  /* "GO TO RESULTS" (Ulrik, 2026-10-04): one button, in the chat just above
+   * the question box, whenever the latest answer has results. Where it goes is
+   * chosen by how the answer sits against the page it was asked from:
    *
-   *  - The answer is exactly this page's own subject → no link; it is already
-   *    behind the panel.
+   *  - The answer is already on this page — the landing page, which IS the
+   *    combined page, or a vertical page answered about its own subject → it
+   *    closes the panel, uncovering them. (null below.)
    *  - The answer is wider than this page, or about something else entirely →
-   *    the only place that can show all of it at once is the main page, which
-   *    renders a frame per vertical.
+   *    the main page, the only one that shows all of it at once.
    *
-   * A single option rather than one per vertical: three links under a
-   * conversation is a menu, and the answer has already said what it found.
-   *
-   * The landing page gets none. It IS the combined page, its frames are
-   * already rendering behind this panel, and offering to go somewhere you are
-   * standing is noise. */
-  const handoff = useMemo(() => {
+   * It used to be a link under the input row, offered only in the second case,
+   * so on the landing page a visitor had to know that closing the window was
+   * how to see what the concierge had found. */
+  const handoff = useMemo((): { href: string | null } | null => {
     const covered: Vertical[] = [];
     if (results.hotelIds.length) covered.push("hotels");
     if (results.flights.length) covered.push("flights");
@@ -230,7 +228,7 @@ export default function AiConciergeModal() {
        2026-09-15), so every other page offers the way there, even when the
        answer is purely its own vertical. */
     if ((results.laterStops ?? []).length > 0) {
-      return page === "landing" ? null : { href: "/", label: "Go to combined results on main page" };
+      return { href: page === "landing" ? null : "/" };
     }
 
     // Specific to the page it was asked from.
@@ -240,18 +238,29 @@ export default function AiConciergeModal() {
          through its "AI curated results" type (2026-09-15) — so a link to the
          same page is a way to go where you are standing: the landing page's
          reason for having none, found 2026-09-14 on a hotels answer asked on
-         Hotels. */
-      return null;
+         Hotels. So the button only closes the panel. */
+      return { href: null };
     }
 
-    if (page === "landing") return null;
+    if (page === "landing") return { href: null };
 
     // Broader than the page, so the combined view is the only one that fits.
     // Plain "/" — the landing frames read the answer from the store, not from
     // the URL, and leaving the URL clean keeps any earlier classic search out
     // of the way.
-    return { href: "/", label: "Go to combined results on main page" };
+    return { href: "/" };
   }, [results, pageContext]);
+
+  const goToResults = useMemo(() => {
+    if (!handoff) return undefined;
+    return () => {
+      // Close first, then navigate: the results are already in the store, so
+      // there is nothing to wait for — and leaving the modal open over a page
+      // transition looks like the click did nothing.
+      close();
+      if (handoff.href) router.push(handoff.href);
+    };
+  }, [handoff, close, router]);
 
   if (!conciergeOpen || typeof document === "undefined") return null;
 
@@ -305,26 +314,7 @@ export default function AiConciergeModal() {
           </div>
         </div>
 
-        <AiConversation />
-
-        {handoff ? (
-          <div className={styles.handoffs}>
-            <button
-              type="button"
-              className="oltra-btn"
-              onClick={() => {
-                // Close first, then navigate: the results are already in the
-                // store, so there is nothing to wait for — and leaving the
-                // modal open over a page transition looks like the click did
-                // nothing.
-                close();
-                router.push(handoff.href);
-              }}
-            >
-              {handoff.label}
-            </button>
-          </div>
-        ) : null}
+        <AiConversation onGoToResults={goToResults} />
       </div>
     </div>,
     document.body

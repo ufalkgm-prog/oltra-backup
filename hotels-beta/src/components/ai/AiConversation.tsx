@@ -706,13 +706,17 @@ function isHour(value: unknown): value is number {
  * it. Falling back to a generic "try again" for a 401 told a signed-out
  * visitor to retry something that could never succeed. */
 function errorMessage(error: Error | undefined): string {
-  const generic = "I couldn't answer that just now. Please try again.";
-  if (!error?.message) return generic;
+  return rejectionReason(error) ?? "I couldn't answer that just now. Please try again.";
+}
+
+/** The route's own refusal, or null for anything else - a stream that broke. */
+function rejectionReason(error: Error | undefined): string | null {
+  if (!error?.message) return null;
   try {
     const parsed = JSON.parse(error.message) as { error?: unknown };
-    return typeof parsed.error === "string" && parsed.error ? parsed.error : generic;
+    return typeof parsed.error === "string" && parsed.error ? parsed.error : null;
   } catch {
-    return generic;
+    return null;
   }
 }
 
@@ -871,6 +875,25 @@ const STALL_LIMIT_MS = 90_000;
  * blank. The route now lets the model retry such a call, so this is the
  * last resort rather than the expected path. */
 const EMPTY_TURN_MESSAGE = "I couldn't put that answer together. Please ask me again.";
+
+/* AN ANSWER THAT BROKE OFF IS WRITTEN AGAIN (Ulrik, 2026-10-04).
+ *
+ * A general question about Africa in April stopped half-way through its prose
+ * with a red "I couldn't answer that just now" under it. That is the shape of a
+ * stream that failed after it started - the model provider overloaded, or the
+ * connection dropped - and the panel used to keep the half answer on screen.
+ *
+ * Now the half answer is taken away and the question is sent again, once, at
+ * once, saying so in the progress line. Only if that fails too does the visitor
+ * see a message, in the concierge's own voice rather than as an error, with the
+ * question back in the box. Not retried: a refusal from the route (not signed
+ * in, the daily limit, a message too long), which would only be refused again,
+ * and a break this late, which is most likely the platform's own time limit
+ * and would hit it again. */
+const RETRY_WITHIN_MS = 150_000;
+const RETRYING_NOTE = "That answer broke off, so I'm writing it again…";
+const BROKE_OFF_MESSAGE =
+  "I'm sorry - that answer broke off before it was finished, and so did a second try. Your question is back in the box: send it again in a moment, or ask about one part of the trip at a time.";
 
 const TIMED_OUT_MESSAGE =
   "This is taking longer than it should, so I stopped. Your question is back in the box: try again, or ask about one destination at a time.";
@@ -1127,7 +1150,10 @@ function shortDate(iso: string): string {
 
 /* Ulrik's wording, 2026-09-13. The second half matters as much as the first:
  * a visitor told to close the panel needs to know the conversation survives. */
-const REVIEW_BEHIND = "Close this window to review — you can reopen this concierge chat anytime.";
+/* The button the footnotes point at, drawn above the question box. */
+const GO_TO_RESULTS = "Go to results";
+
+const REVIEW_BEHIND = `Use ${GO_TO_RESULTS} below to see them — you can reopen this concierge chat anytime.`;
 
 /* The same promise for the pages where nothing renders behind the panel and the
  * results are one link away (Ulrik, 2026-09-14). "Cards" is our word for a UI
@@ -1136,8 +1162,7 @@ const REVIEW_BEHIND = "Close this window to review — you can reopen this conci
  * were changed. */
 const RESUME_CHAT = "You can resume this chat anytime.";
 
-/* The second half of REVIEW_BEHIND, for the landing page, where closing the
- * window is what shows the results. */
+/* The second half of REVIEW_BEHIND, for the landing page. */
 const REOPEN_CHAT = "You can reopen this concierge chat anytime.";
 
 /* Ulrik's standard wording for a hotel we cannot price or book. */
@@ -1503,8 +1528,8 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
       (hasFlights ? ", and the flights" : "");
     const where =
       page === "landing"
-        ? `When you close this window, the whole trip is listed on this page: ${layout}.`
-        : `I can only show the full trip on the main page — open it with the button below. There you will find ${layout}.`;
+        ? `${GO_TO_RESULTS} below shows the whole trip on this page: ${layout}.`
+        : `I can only show the full trip on the main page — ${GO_TO_RESULTS} below takes you there. There you will find ${layout}.`;
     // "…in each city, on your flights —" had lost its "and" (2026-09-15).
     const saveOn = [
       "on your choice in each city",
@@ -1658,25 +1683,25 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
               alsoBehind > 0 && !partsBehind.includes("hotels") && !partsBehind.includes("restaurants")
                 ? ` — the ones named here first, with the other ${alsoBehind} after them`
                 : ""
-            }. Open it with the button below. ${RESUME_CHAT}`
+            }. ${GO_TO_RESULTS} below shows both. ${RESUME_CHAT}`
           : page === "landing"
           ? /* The landing page no longer shows its results under the open
                panel (2026-09-15) — they appear when it closes — so "behind this
                panel" would send the visitor looking for something hidden. */
             alsoBehind > 0
-            ? `These are listed first on this page when you close this window, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REOPEN_CHAT}`
-            : `The results of your query${priced ? ", with prices and availability," : ""} appear on this page when you close this window. ${REOPEN_CHAT}`
+            ? `These are listed first on this page, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. Use ${GO_TO_RESULTS} below to see them. ${REOPEN_CHAT}`
+            : `The results of your query${priced ? ", with prices and availability," : ""} are ready on this page. Use ${GO_TO_RESULTS} below to see them. ${REOPEN_CHAT}`
           : alsoBehind > 0
           ? rendersBehind
             ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REVIEW_BEHIND}`
-            : `These are listed first on ${linkedPage}, with the other ${alsoBehind} after them${priced ? " — all with prices and availability" : ""}. Open it with the button below. ${RESUME_CHAT}`
+            : `These are listed first on ${linkedPage}, with the other ${alsoBehind} after them${priced ? " — all with prices and availability" : ""}. ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`
           : priced
             ? rendersBehind
               ? `The results of your query, with prices and availability, are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : `Prices and availability are on ${linkedPage} — open it with the button below. ${RESUME_CHAT}`
+              : `Prices and availability are on ${linkedPage} — ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`
             : rendersBehind
               ? `The results of your query are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : `The results are on ${linkedPage} — open it with the button below. ${RESUME_CHAT}`}
+              : `The results are on ${linkedPage} — ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`}
       </p>}
       {past ? null : <DatesChangedNote />}
     </div>
@@ -1713,7 +1738,14 @@ function DatesChangedNote() {
   return <p className={styles.summaryFootnote}>Dates changed since this answer: {text}.</p>;
 }
 
-export default function AiConversation() {
+export default function AiConversation({
+  onGoToResults,
+}: {
+  /** Shows the latest answer's results: closes the panel, and moves to the
+   * main page when they are not on this one. Set by the modal only while the
+   * answer has results. */
+  onGoToResults?: () => void;
+}) {
   const {
     framing,
     followUp,
@@ -1763,7 +1795,7 @@ export default function AiConversation() {
     el.style.height = `${Math.min(el.scrollHeight + border, ASK_INPUT_MAX_PX)}px`;
   }, [draft]);
 
-  const { messages, sendMessage, status, error, setMessages, stop, clearError } =
+  const { messages, sendMessage, regenerate, status, error, setMessages, stop, clearError } =
     useChat({
       transport: new DefaultChatTransport({ api: "/api/chat" }),
     });
@@ -1775,24 +1807,67 @@ export default function AiConversation() {
     rememberConciergeStays(conciergeStayKeys(messages));
   }, [messages]);
 
-  // A failed turn leaves the user's message in the list with no reply. Left
-  // there it is not just cosmetic: the next request replays it, so the model
-  // answers the old question alongside the new one, and a retry shows the same
-  // message twice. Drop it, and let the error line carry the explanation.
+  const [timedOut, setTimedOut] = useState(false);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
+  /* What the rescue below needs: when the question went, what went with it,
+     and whether it has been retried already. */
+  const sentAtRef = useRef(0);
+  const requestBodyRef = useRef<Record<string, unknown> | undefined>(undefined);
+  const retriedRef = useRef(false);
+  const [retrying, setRetrying] = useState(false);
+  const [brokeOff, setBrokeOff] = useState(false);
+
+  /* A failed turn is never left on screen. Its question left in the list is
+     not just cosmetic: the next request replays it, so the model answers the
+     old question alongside the new one. A turn that broke off half-way is
+     written again once (RETRY_WITHIN_MS above); otherwise, or if that fails
+     too, the turn - question and any half answer - comes out and the question
+     goes back in the box. */
   useEffect(() => {
     if (!error) return;
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      return last?.role === "user" ? prev.slice(0, -1) : prev;
-    });
-  }, [error, setMessages]);
+    const refused = rejectionReason(error) !== null;
+    if (!refused && !retriedRef.current && Date.now() - sentAtRef.current < RETRY_WITHIN_MS) {
+      retriedRef.current = true;
+      setRetrying(true);
+      clearError();
+      // Drops a half-written answer and sends the question again.
+      void regenerate({ body: requestBodyRef.current });
+      return;
+    }
+    setRetrying(false);
+    const current = messagesRef.current;
+    let lastUser = -1;
+    for (let i = current.length - 1; i >= 0; i -= 1) {
+      if (current[i].role === "user") {
+        lastUser = i;
+        break;
+      }
+    }
+    if (lastUser >= 0) {
+      const question = current[lastUser].parts
+        .filter((part): part is { type: "text"; text: string } => part.type === "text")
+        .map((part) => part.text)
+        .join("");
+      setMessages(current.slice(0, lastUser));
+      setDraft((draftNow) => draftNow || question);
+    }
+    if (!refused) {
+      // Said in the concierge's voice below, not as the red error line.
+      setBrokeOff(true);
+      clearError();
+    }
+  }, [error, setMessages, regenerate, clearError]);
+
+  // The retry's own answer arrived: nothing left to say about it.
+  useEffect(() => {
+    if (status === "ready") setRetrying(false);
+  }, [status]);
 
   /* Giving up on an answer that has run too long: stop it, take the turn back
      out (as a failed turn is, above — replayed, the model would answer it
      again beside the next question), and put the question back in the box. */
-  const [timedOut, setTimedOut] = useState(false);
-  const messagesRef = useRef(messages);
-  messagesRef.current = messages;
 
   const giveUp = useCallback(() => {
     stop();
@@ -1819,6 +1894,8 @@ export default function AiConversation() {
     stop();
     clearError();
     setTimedOut(false);
+    setBrokeOff(false);
+    setRetrying(false);
     setMessages([]);
     setDraft("");
     appliedPresentationRef.current = null;
@@ -1843,16 +1920,29 @@ export default function AiConversation() {
   useEffect(() => {
     if (!ready || seededRef.current) return;
     seededRef.current = true;
-    if (stored.length) {
-      setMessages(stored);
+    let seed = stored;
+    if (seed.length) {
+      /* A question still unanswered when the page went away (a reload, or
+         leaving mid-answer) would be replayed beside the next one, so the
+         model answered both. It goes back in the box instead (2026-10-04). */
+      const last = seed[seed.length - 1];
+      if (last.role === "user") {
+        const question = last.parts
+          .filter((part): part is { type: "text"; text: string } => part.type === "text")
+          .map((part) => part.text)
+          .join("");
+        seed = seed.slice(0, -1);
+        setDraft((draftNow) => draftNow || question);
+      }
+      setMessages(seed);
       /* The stored answer is already in the store, so mark it applied. Without
          this, every time the concierge opened (this component mounts with the
          modal) the persist effect re-applied the latest answer with a fresh
          presentedAt — an old answer re-dated as new, which put its dates back
          into the landing form and let AiResultsSync treat it as a new answer
          that overrides a search made since (found 2026-09-14). */
-      appliedPresentationRef.current = readLatestPresentation(stored)?.toolCallId ?? null;
-      namedPlaceAppliedRef.current = stored[stored.length - 1]?.id ?? null;
+      appliedPresentationRef.current = readLatestPresentation(seed)?.toolCallId ?? null;
+      namedPlaceAppliedRef.current = seed[seed.length - 1]?.id ?? null;
     }
   }, [ready, stored, setMessages]);
 
@@ -2021,6 +2111,10 @@ export default function AiConversation() {
     if (!text || busy) return;
     setDraft("");
     setTimedOut(false);
+    setBrokeOff(false);
+    setRetrying(false);
+    retriedRef.current = false;
+    sentAtRef.current = Date.now();
     // Dates in the form that no answer here presented are the visitor's own
     // choice, which the concierge uses rather than offers (Ulrik, 2026-09-23).
     const context = withoutDefaultParty(pageContextRef.current);
@@ -2034,15 +2128,17 @@ export default function AiConversation() {
               !rememberedConciergeStays().has(formStay),
           }
         : context;
+    // Where the visitor is standing, per request. It is re-validated and
+    // scrubbed server-side before it reaches a system block. Residency
+    // travels beside it, not inside it: it is for the supplier call only
+    // and never reaches the model. Kept, so a retry sends the same.
+    const body = { pageContext: pageContextForRequest, residency: currentResidency() };
+    requestBodyRef.current = body;
     void sendMessage(
       // The page travels with the question too, so later turns still know
       // where it was asked from (lib/ai/historyNotes.ts).
       { text, metadata: { pageContext: pageContextForRequest } },
-      // Where the visitor is standing, per request. It is re-validated and
-      // scrubbed server-side before it reaches a system block. Residency
-      // travels beside it, not inside it: it is for the supplier call only
-      // and never reaches the model.
-      { body: { pageContext: pageContextForRequest, residency: currentResidency() } }
+      { body }
     );
   }
 
@@ -2162,7 +2258,9 @@ export default function AiConversation() {
 
         {busy ? (
           <div className={styles.thinking} role="status" aria-live="polite">
-            {showSlowNotice ? (
+            {retrying ? (
+              <div className={styles.thinkingNote}>{RETRYING_NOTE}</div>
+            ) : showSlowNotice ? (
               <div className={styles.thinkingNote}>This may take a couple of minutes.</div>
             ) : null}
             {facts ? <div className={styles.thinkingFacts}>{facts}</div> : null}
@@ -2172,8 +2270,26 @@ export default function AiConversation() {
 
         {timedOut && !busy ? <div className={styles.error}>{TIMED_OUT_MESSAGE}</div> : null}
 
+        {brokeOff && !busy ? (
+          <div className={styles.turnAgent}>
+            <AgentText text={BROKE_OFF_MESSAGE} detectClosingQuestion={false} />
+          </div>
+        ) : null}
+
         {error ? <div className={styles.error}>{errorMessage(error)}</div> : null}
       </div>
+
+      {/* In the chat, just above the question box, so the way to the results
+          is where the eye is when the answer ends (Ulrik, 2026-10-04). Not
+          while an answer is being written: the results it will replace are
+          the previous question's. */}
+      {onGoToResults && !busy ? (
+        <div className={styles.goToResults}>
+          <button type="button" className="oltra-btn" onClick={onGoToResults}>
+            {GO_TO_RESULTS}
+          </button>
+        </div>
+      ) : null}
 
       <form className={styles.form} onSubmit={submit}>
         {/* A textarea, not an input: a brief long enough to be worth writing
