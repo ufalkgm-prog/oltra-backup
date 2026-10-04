@@ -40,6 +40,10 @@ export const MACRO_REGION_TERMS: MacroRegionTerm[] = [
  * normaliseRegionTerm. */
 export const AREA_ALIAS_TERMS: { label: string; area: string; aliases: string[] }[] = [
   { label: "French Riviera", area: "Côte d'Azur", aliases: ["french riviera", "cote d azur", "riviera francaise"] },
+  // The resort town people name for the coast: its restaurants are filed under
+  // the city "Costa Smeralda" with "Porto Cervo" as their area, and Romazzino
+  // under the area Costa Smeralda (Ulrik, 2026-10-04).
+  { label: "Porto Cervo", area: "Costa Smeralda", aliases: ["porto cervo"] },
 ];
 
 /** The `region` column's fixed vocabulary — continents, plus the two basins

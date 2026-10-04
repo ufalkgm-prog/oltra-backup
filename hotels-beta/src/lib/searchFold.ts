@@ -49,6 +49,30 @@ export function foldedContains(haystack: string | null | undefined, needle: stri
   return ` ${foldForSearch(haystack)} `.includes(` ${n} `);
 }
 
+/** Whether `typed` starts a word of `label` - for a list filtered as the
+ * visitor types. Tried twice: accent- and case-blind as typed, so "st" still
+ * finds Stockholm, and folded, so "St Tropez" and "saint tropez" find
+ * "Saint-Tropez" (Ulrik, 2026-10-04). A word starts the label or follows
+ * anything that is not a letter or digit, so "az" finds Côte d'Azur. */
+export function startsAWordOf(label: string | null | undefined, typed: string | null | undefined): boolean {
+  const plain = (value: string | null | undefined) =>
+    (value ?? "").normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+  const startsWord = (text: string, q: string) => {
+    if (!q) return true;
+    let from = 0;
+    for (;;) {
+      const at = text.indexOf(q, from);
+      if (at < 0) return false;
+      if (at === 0 || !/[\p{L}\p{N}]/u.test(text[at - 1])) return true;
+      from = at + 1;
+    }
+  };
+  return (
+    startsWord(plain(label), plain(typed)) ||
+    startsWord(foldForSearch(label), foldForSearch(typed))
+  );
+}
+
 /** Every value in `stored` the input names, folded equal. */
 export function storedSpellings(input: string | null | undefined, stored: Iterable<string>): string[] {
   const want = foldForSearch(input);

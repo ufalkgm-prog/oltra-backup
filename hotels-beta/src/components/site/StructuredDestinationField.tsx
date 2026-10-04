@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { foldForSearch, startsAWordOf } from "@/lib/searchFold";
 import OltraSpinner from "./OltraSpinner";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 import type {
@@ -314,18 +315,10 @@ function simplifyForMatch(value: string): string {
 /* True when the typed text starts a WORD of the label — "me" finds Mexico,
  * New Mexico and The Mediterranean, but not Palermo or Jumeirah. A word starts
  * the label or follows anything that is not a letter or digit (space, hyphen,
- * apostrophe: "az" finds Côte d'Azur). Accent- and case-blind. */
+ * apostrophe: "az" finds Côte d'Azur). Accent- and case-blind, and through the
+ * site's search fold, so "St Tropez" finds Saint-Tropez (2026-10-04). */
 function matchesWordStart(label: string, typed: string): boolean {
-  const text = simplifyForMatch(label);
-  const q = simplifyForMatch(typed);
-  if (!q) return true;
-  let from = 0;
-  for (;;) {
-    const at = text.indexOf(q, from);
-    if (at < 0) return false;
-    if (at === 0 || !/[\p{L}\p{N}]/u.test(text[at - 1])) return true;
-    from = at + 1;
-  }
+  return startsAWordOf(label, typed);
 }
 
 function getExternalSyncKey(
@@ -729,7 +722,11 @@ export default function StructuredDestinationField({
 
     const rank = (item: SuggestionItem) => NARROWEST_FIRST.indexOf(item.type);
     const exact = selectableItems
-      .filter((item) => simplifyForMatch(item.label) === typed)
+      .filter(
+        (item) =>
+          simplifyForMatch(item.label) === typed ||
+          foldForSearch(item.label) === foldForSearch(typedValue)
+      )
       .sort((a, b) => rank(a) - rank(b));
     if (exact.length) return exact[0];
 

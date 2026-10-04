@@ -1,3 +1,19 @@
 @import "tailwindcss";
 @import "../styles/oltra-theme.css";
 /* You can keep custom styles below this */
+
+/* EVERYTHING THAT DOES SOMETHING SHOWS THE HAND (Ulrik, 2026-10-04).
+   Tailwind v4 gives every <button> the arrow cursor, so the cards that are
+   buttons or role="button" elements (Hotels results, flight options), the
+   hotel photo that opens the gallery and every small control read as
+   inert. Links already show the hand. In the base layer, so any rule in
+   oltra-theme.css that sets a cursor - passive buttons, the active header
+   item - still wins; passive (aria-disabled) and disabled controls keep the
+   arrow. */
+@layer base {
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]),
+  summary {
+    cursor: pointer;
+  }
+}

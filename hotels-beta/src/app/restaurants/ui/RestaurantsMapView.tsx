@@ -38,6 +38,7 @@ import {
   MAX_TRIP_NAME_CHARS,
 } from "@/lib/members/tripLimits";
 import { applyEnglishLabels } from "@/lib/maps/englishLabels";
+import { placeNameMatches, storedPlaceFor } from "@/lib/locationAliases";
 import { mapStyleUrl } from "@/lib/maps/style";
 
 type HotelPin = {
@@ -505,14 +506,15 @@ export default function RestaurantsMapView({
     return map;
   }, [cityOptions]);
 
+  /* The destination field's rule (2026-10-04): the start of a word, through
+     the search fold, under the city's own name or another one - "St Tropez"
+     finds Saint-Tropez – Ramatuelle, "Porto Cervo" finds Costa Smeralda. */
   const filteredCityOptions = useMemo(() => {
-    const query = cityInput.trim().toLowerCase();
+    const query = cityInput.trim();
 
     if (!query) return cityOptions;
 
-    return cityOptions.filter((option) =>
-      option.toLowerCase().includes(query)
-    );
+    return cityOptions.filter((option) => placeNameMatches(option, query));
   }, [cityInput, cityOptions]);
 
   function updateCity(nextCityRaw: string) {
@@ -523,24 +525,17 @@ export default function RestaurantsMapView({
       return;
     }
 
-    const matchedCity = cityLookup.get(normalizedInput);
+    // Typed whole, under any of its names ("St Tropez", "Porto Cervo").
+    const matchedCity =
+      cityLookup.get(normalizedInput) ?? storedPlaceFor(nextCityRaw, cityOptions);
     if (!matchedCity) {
-      const fallbackMatch = cityOptions.find(
-        (option) => option.toLowerCase() === normalizedInput
-      );
-
-      if (!fallbackMatch) {
-        setCityInput(city);
-        setShowCityOptions(false);
-        cityInputRef.current?.blur();
-        return;
-      }
+      setCityInput(city);
+      setShowCityOptions(false);
+      cityInputRef.current?.blur();
+      return;
     }
 
-    const nextCity =
-      cityLookup.get(normalizedInput) ??
-      cityOptions.find((option) => option.toLowerCase() === normalizedInput) ??
-      city;
+    const nextCity = matchedCity;
 
     setCityInput(nextCity);
     setShowCityOptions(false);

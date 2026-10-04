@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { foldForSearch, foldedContains, storedSpellings } from './searchFold.ts'
+import { foldForSearch, foldedContains, startsAWordOf, storedSpellings } from './searchFold.ts'
 
 /* The one rule for matching typed text against stored text (Ulrik,
  * 2026-09-24): case, accents, dashes, hyphens and punctuation carry no
@@ -30,6 +30,16 @@ test('contains matches whole words only', () => {
   assert.ok(foldedContains('Hôtel du Cap Eden-Roc', 'eden roc'))
   assert.ok(!foldedContains('Rocco Forte Hotel de Russie', 'roc'))
   assert.ok(!foldedContains('Anything', ''))
+})
+
+test('a list filters on the start of a word, typed or folded', () => {
+  assert.ok(startsAWordOf('Saint-Tropez', 'St Tropez'))
+  assert.ok(startsAWordOf('Saint-Tropez', 'saint tro'))
+  assert.ok(startsAWordOf('Saint-Tropez – Ramatuelle', 'ramat'))
+  assert.ok(startsAWordOf('Stockholm', 'st'))
+  assert.ok(startsAWordOf("Côte d'Azur", 'az'))
+  assert.ok(!startsAWordOf('Palermo', 'me'))
+  assert.ok(startsAWordOf('Anything', ''))
 })
 
 test('stored spellings are found for any way of typing them', () => {

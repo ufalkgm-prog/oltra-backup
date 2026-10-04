@@ -101,6 +101,7 @@ export default function LandingSearchPanel({
     clearSignal: aiClearSignal,
     setStopDates,
     ready: aiReady,
+    clear: clearAi,
   } = useAiSearch();
 
   /* While the frames below are the concierge's, the destination box says so
@@ -706,6 +707,10 @@ export default function LandingSearchPanel({
     setIncludeRestaurants(false);
     setAirportPopoverOpen(false);
     lastSubmittedKeyRef.current = "";
+    /* The concierge too (Ulrik, 2026-10-04): its conversation and its results,
+       or the "AI curated results" came straight back. The same reset as the
+       panel's own Clear. */
+    clearAi();
     markClassicSearch();
     startTransition(() => {
       router.push("/", { scroll: false });
