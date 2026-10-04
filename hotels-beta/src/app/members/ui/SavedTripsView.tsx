@@ -17,6 +17,21 @@ import { guessResidencyFromLocale } from "@/lib/countries";
 import type { Itinerary } from "@/lib/flights/itinerary";
 import type { CabinClass } from "@duffel/api/types";
 import { flightPriceBasisShort, hotelPriceBasis } from "@/lib/priceBasis";
+import HotelSmallCard, {
+  SMALL_CARD_ACTION_WIDTH,
+  type SmallCardAvailability,
+} from "@/components/hotels/HotelSmallCard";
+import RestaurantSmallCard from "@/components/restaurants/RestaurantSmallCard";
+import type { HotelRecord } from "@/lib/directus";
+import type { RestaurantRecord } from "@/app/restaurants/types";
+import {
+  bookingOrWebsiteHref,
+  type BookingSearchParams,
+} from "@/lib/hotels/buildBookingLink";
+import { useFavouriteIds } from "@/lib/members/favourites";
+import { useApproxPrice } from "@/lib/flights/useApproxPrice";
+import landing from "@/app/page.module.css";
+import flightsStyles from "@/app/flights/ui/FlightsView.module.css";
 import TripItineraryDocument from "./TripItineraryDocument";
 
 type TripItemCard = {
@@ -32,8 +47,13 @@ type TripItemCard = {
   /** A hotel saved without dates: BOOK is passive (Ulrik, 2026-09-28). */
   missingDates?: boolean;
   roomsSummary?: string;
-  /** "EUR 1,234" — the figure saved, or last updated. */
-  priceLabel?: string;
+  /** The hotel's or restaurant's Directus id, for the full record its landing
+   * card draws (photo, highlights, who sells it). */
+  recordId?: string;
+  /** The stay behind a hotel's booking link. */
+  bookingParams?: BookingSearchParams;
+  /** The figure saved, or last updated, in priceCurrency. */
+  priceAmount?: number;
   /** What it covers, as on the landing cards: "2 rooms – 3 nights", "2 pax ·
    * return". */
   priceBasis?: string;
@@ -86,17 +106,6 @@ function summarizeRoomSelection(
     .join(", ");
 }
 
-/* Price stored on the item at save time. Falls back to summing the saved room
- * picks for hotels saved before price_amount existed. The amount alone: what
- * it covers is its own line under it, as on the landing cards. */
-function formatSavedPrice(
-  amount: number | null | undefined,
-  currency: string | null | undefined
-): string | undefined {
-  if (!amount || !currency) return undefined;
-  return `${currency} ${Math.round(amount).toLocaleString()}`;
-}
-
 /* The guests and rooms actually saved with this hotel, e.g. "2 adults, 1 child
  * · 2 rooms". Returns undefined when the hotel was saved without a search, so
  * the card falls back to the trip's own travellers line. */
@@ -124,20 +133,66 @@ function describeStayParty(
   return [guests, rooms].filter(Boolean).join(" · ");
 }
 
-function summarizeRoomPrice(
+/* The saved room picks summed, for hotels saved before price_amount existed. */
+function roomSelectionTotal(
   roomSelection: SavedTrip["hotels"][number]["roomSelection"]
-): string | undefined {
+): number | undefined {
   if (!roomSelection?.length) return undefined;
   const currency = roomSelection[0]?.currency;
   if (!currency) return undefined;
   // Mixed currencies would make a single total meaningless - skip rather than
   // add numbers that are not comparable.
   if (roomSelection.some((room) => room.currency !== currency)) return undefined;
-  const total = roomSelection.reduce(
+  return roomSelection.reduce(
     (sum, room) => sum + room.pricePerStay * room.quantity,
     0
   );
-  return formatSavedPrice(total, currency);
+}
+
+const OUTDATED_REASON = "This trip's dates have passed";
+
+/* What the landing card shows where the price goes: the saved figure, or the
+   state of an Update in progress. Without dates, "Select dates" and a passive
+   BOOK, exactly as on the landing page. */
+function hotelAvailability(
+  item: TripItemCard,
+  refresh: RefreshState | undefined
+): SmallCardAvailability | undefined {
+  if (item.missingDates) return { status: "idle" };
+  if (refresh?.status === "loading") return { status: "loading" };
+  if (refresh?.status === "error") {
+    return { status: "note", text: refresh.message ?? "Could not check availability." };
+  }
+  if (item.priceAmount && item.priceCurrency) {
+    return {
+      status: "available",
+      currency: item.priceCurrency,
+      pricePerStay: item.priceAmount,
+    };
+  }
+  return undefined;
+}
+
+/* A stand-in record while the real one loads, or for a hotel no longer in
+   Directus: the name, location and photo saved with the item. */
+function fallbackHotel(item: TripItemCard): HotelRecord {
+  return {
+    id: item.recordId ?? item.id,
+    hotel_name: item.primary,
+    published: true,
+    city: item.secondary,
+    directus_images: item.hasPhoto ? [{ url: item.thumbnail, credit: null }] : undefined,
+  };
+}
+
+function fallbackRestaurant(item: TripItemCard): RestaurantRecord {
+  return {
+    id: Number(item.recordId) || 0,
+    restaurant_name: item.primary,
+    city: item.secondary,
+    lat: null,
+    lng: null,
+  };
 }
 
 /* A TRIP WHOSE DATES HAVE PASSED (Ulrik, 2026-09-27). Its last date: the
@@ -322,6 +377,73 @@ export default function SavedTripsView() {
     () => trips.map((t) => ({ value: t.id, label: t.name })),
     [trips]
   );
+
+  /* The full records behind the saved items, so each draws the landing
+     page's own card (Ulrik, 2026-10-04). Merged rather than replaced, so
+     switching between trips does not blank cards already loaded. */
+  const favourites = useFavouriteIds();
+  const [hotelRecords, setHotelRecords] = useState<Record<string, HotelRecord>>({});
+  const [restaurantRecords, setRestaurantRecords] = useState<
+    Record<string, RestaurantRecord>
+  >({});
+  const hotelIdsKey = (selectedTrip?.hotels ?? [])
+    .map((hotel) => hotel.hotelDirectusId)
+    .filter(Boolean)
+    .join(",");
+  const restaurantIdsKey = (selectedTrip?.restaurants ?? [])
+    .map((restaurant) => restaurant.restaurantDirectusId)
+    .filter(Boolean)
+    .join(",");
+
+  useEffect(() => {
+    if (!hotelIdsKey) return;
+    let active = true;
+    fetch("/api/hotels/by-ids", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: hotelIdsKey.split(",") }),
+    })
+      .then((res) => res.json() as Promise<{ ok?: boolean; hotels?: HotelRecord[] }>)
+      .then((data) => {
+        if (!active || !data?.ok) return;
+        setHotelRecords((prev) => ({
+          ...prev,
+          ...Object.fromEntries((data.hotels ?? []).map((h) => [String(h.id), h])),
+        }));
+      })
+      .catch(() => {
+        // The cards still render from what was saved with them.
+      });
+    return () => {
+      active = false;
+    };
+  }, [hotelIdsKey]);
+
+  useEffect(() => {
+    if (!restaurantIdsKey) return;
+    let active = true;
+    fetch("/api/restaurants/by-ids", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: restaurantIdsKey.split(",") }),
+    })
+      .then(
+        (res) => res.json() as Promise<{ ok?: boolean; restaurants?: RestaurantRecord[] }>
+      )
+      .then((data) => {
+        if (!active || !data?.ok) return;
+        setRestaurantRecords((prev) => ({
+          ...prev,
+          ...Object.fromEntries((data.restaurants ?? []).map((r) => [String(r.id), r])),
+        }));
+      })
+      .catch(() => {
+        // The cards still render from what was saved with them.
+      });
+    return () => {
+      active = false;
+    };
+  }, [restaurantIdsKey]);
 
   const tripWarnings = useMemo(
     () => (selectedTrip ? buildTripWarnings(selectedTrip) : []),
@@ -537,9 +659,14 @@ export default function SavedTripsView() {
     bookUrl: buildHotelBookUrl(item.name, item.checkIn, item.checkOut, travelers),
     missingDates: !item.checkIn || !item.checkOut,
     roomsSummary: summarizeRoomSelection(item.roomSelection),
-    priceLabel:
-      formatSavedPrice(item.priceAmount, item.priceCurrency) ??
-      summarizeRoomPrice(item.roomSelection),
+    recordId: item.hotelDirectusId ?? undefined,
+    bookingParams: {
+      from: item.checkIn,
+      to: item.checkOut,
+      adults: item.adults ?? parseTravelersAdults(travelers),
+      kids: item.kids ?? parseTravelersKids(travelers),
+    },
+    priceAmount: item.priceAmount ?? roomSelectionTotal(item.roomSelection),
     priceBasis: hotelPriceBasis(item.checkIn, item.checkOut, item.rooms),
     priceCurrency: item.priceCurrency ?? item.roomSelection?.[0]?.currency,
     // The item's own saved guests/rooms win; the trip-level travellers label is
@@ -580,7 +707,7 @@ export default function SavedTripsView() {
       thumbnail: item.thumbnail,
       hasOverlapWarning: item.hasOverlapWarning,
       bookUrl: buildFlightBookUrl(item.route, item.timing, item.departAt, item.cabin, travelers),
-      priceLabel: formatSavedPrice(item.priceAmount, item.priceCurrency),
+      priceAmount: item.priceAmount ?? undefined,
       priceBasis: flightPriceBasisShort(
         {
           adults: item.adults ?? parseTravelersAdults(travelers),
@@ -607,6 +734,7 @@ export default function SavedTripsView() {
 
   const restaurantItems: TripItemCard[] = selectedTrip.restaurants.map((item) => ({
     id: item.id,
+    recordId: item.restaurantDirectusId ?? undefined,
     primary: item.name,
     secondary: item.location,
     meta: item.time,
@@ -688,37 +816,84 @@ export default function SavedTripsView() {
           )}
         </div>
 
+        {/* THE LANDING PAGE'S PANES AND CARDS (Ulrik, 2026-10-04): three
+            equal columns with no rule between them, each item in the card the
+            landing page draws at its three-pane density - without SAVE, and
+            with this page's Update and Delete where SAVE was. */}
         <div className="members-trip-columns">
-          {/* Only hotels keep a thumbnail - the flight and restaurant ones
-              were a generic placeholder image carrying no information. */}
-          <TripSection
-            title="HOTELS"
-            items={hotelItems}
-            showThumb
-            outdated={outdated}
-            refreshStates={refreshStates}
-            onRefreshPrice={(item) => refreshItemPrice("hotels", item)}
-            onDelete={(id) => setItemPendingDelete({ section: "hotels", itemId: id })}
-            onBook={handleBook}
-          />
-          <TripSection
-            title="FLIGHTS"
-            items={flightItems}
-            outdated={outdated}
-            refreshStates={refreshStates}
-            onRefreshPrice={(item) => refreshItemPrice("flights", item)}
-            onDelete={(id) => setItemPendingDelete({ section: "flights", itemId: id })}
-            onBook={handleBook}
-          />
-          <TripSection
-            title="RESTAURANTS"
-            items={restaurantItems}
-            outdated={outdated}
-            onDelete={(id) =>
-              setItemPendingDelete({ section: "restaurants", itemId: id })
-            }
-            onBook={handleBook}
-          />
+          <TripColumn title="Hotels" empty={!hotelItems.length}>
+            {hotelItems.map((item) => {
+              const hotel =
+                (item.recordId && hotelRecords[item.recordId]) || fallbackHotel(item);
+              return (
+                <HotelSmallCard
+                  key={item.id}
+                  hotel={hotel}
+                  columns={3}
+                  isFavourite={Boolean(item.recordId && favourites.hotels.has(item.recordId))}
+                  href={item.bookUrl}
+                  bookingHref={bookingOrWebsiteHref(hotel, item.bookingParams)}
+                  availability={hotelAvailability(item, refreshStates[item.id])}
+                  priceBasis={item.priceBasis}
+                  details={<TripItemDetails item={item} />}
+                  blockedReason={outdated ? OUTDATED_REASON : null}
+                  renderSaveControl={() => (
+                    <TripItemActions
+                      item={item}
+                      outdated={outdated}
+                      refreshing={refreshStates[item.id]?.status === "loading"}
+                      onRefresh={(target) => refreshItemPrice("hotels", target)}
+                      onDelete={(id) => setItemPendingDelete({ section: "hotels", itemId: id })}
+                    />
+                  )}
+                />
+              );
+            })}
+          </TripColumn>
+
+          <TripColumn title="Flights" empty={!flightItems.length}>
+            {flightItems.map((item) => (
+              <SavedFlightRow
+                key={item.id}
+                item={item}
+                outdated={outdated}
+                refresh={refreshStates[item.id]}
+                onRefresh={(target) => refreshItemPrice("flights", target)}
+                onBook={handleBook}
+                onDelete={(id) => setItemPendingDelete({ section: "flights", itemId: id })}
+              />
+            ))}
+          </TripColumn>
+
+          <TripColumn title="Restaurants" empty={!restaurantItems.length}>
+            {restaurantItems.map((item) => {
+              const record = item.recordId ? restaurantRecords[item.recordId] : undefined;
+              return (
+                <RestaurantSmallCard
+                  key={item.id}
+                  restaurant={record ?? fallbackRestaurant(item)}
+                  columns={3}
+                  isFavourite={Boolean(
+                    item.recordId && favourites.restaurants.has(item.recordId)
+                  )}
+                  href={
+                    record?.city
+                      ? `/restaurants?city=${encodeURIComponent(record.city)}`
+                      : undefined
+                  }
+                  renderSaveControl={() => (
+                    <TripItemActions
+                      item={item}
+                      outdated={outdated}
+                      onDelete={(id) =>
+                        setItemPendingDelete({ section: "restaurants", itemId: id })
+                      }
+                    />
+                  )}
+                />
+              );
+            })}
+          </TripColumn>
         </div>
       </section>
 
@@ -863,165 +1038,193 @@ export default function SavedTripsView() {
   );
 }
 
-function TripSection({
+/* A column headed like a landing pane, its cards at the landing list's
+   spacing. */
+function TripColumn({
   title,
-  items,
-  showThumb = false,
-  outdated = false,
-  refreshStates,
-  onRefreshPrice,
-  onDelete,
-  onBook,
+  empty,
+  children,
 }: {
   title: string;
-  items: TripItemCard[];
-  showThumb?: boolean;
-  /** The trip's dates have passed: every button here is passive. */
-  outdated?: boolean;
-  refreshStates?: Record<string, RefreshState>;
-  onRefreshPrice?: (item: TripItemCard) => void;
-  onDelete: (itemId: string) => void;
-  onBook: (itemId: string, bookUrl?: string, hasOverlapWarning?: boolean) => void;
+  empty: boolean;
+  children: React.ReactNode;
 }) {
-  const passive = outdated ? "true" : undefined;
   return (
     <div className="members-trip-col">
-      <div className="members-section__header">
+      <div className={landing.summaryHeaderRow}>
         <div className="oltra-label">{title}</div>
       </div>
+      {empty ? (
+        <div className="members-empty">Nothing saved yet.</div>
+      ) : (
+        <div className="members-trip-list">{children}</div>
+      )}
+    </div>
+  );
+}
 
-      <div className="members-section__body">
-        {items.length ? (
-          items.map((item) => {
-            const refreshing = refreshStates?.[item.id]?.status === "loading";
-            const canRefresh = Boolean(item.refresh && onRefreshPrice);
-            const lines = [item.meta, item.travelers, item.roomsSummary].filter(Boolean);
-            return (
-              /* THE LANDING PAGE'S CARD (Ulrik, 2026-09-27): HotelSmallCard's
-                 frame, image, type and action column at its three-frame
-                 density, which is about as wide as a trip column. The price
-                 and what it covers over the buttons, stacked in the card's
-                 action width. No status label (Saved / Inquiry pending). */
-              <article key={item.id} className="oltra-output members-trip-card">
-                <div
-                  className={`grid gap-2.5 ${
-                    showThumb ? "grid-cols-[88px_1fr_auto]" : "grid-cols-[1fr_auto]"
-                  }`}
-                >
-                  {showThumb ? (
-                    <div className="overflow-hidden rounded-[var(--oltra-radius-md)] self-start">
-                      {item.hasPhoto === false ? (
-                        <div className="oltra-photo-placeholder h-[58px] w-full">
-                          Photos coming soon
-                        </div>
-                      ) : (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.thumbnail} alt="" className="h-[58px] w-full object-cover" />
-                      )}
-                    </div>
-                  ) : null}
+/* What this trip saved that the landing card cannot know: the stay's dates,
+   who it is for and the rooms picked. Under the location, as on a card. */
+function TripItemDetails({ item }: { item: TripItemCard }) {
+  const lines = [item.meta, item.travelers, item.roomsSummary].filter(Boolean);
+  if (!lines.length) return null;
+  return (
+    <div className="mt-1.5 text-xs leading-relaxed text-[color:var(--oltra-text-muted)]">
+      {lines.map((line) => (
+        <div key={line}>{line}</div>
+      ))}
+    </div>
+  );
+}
 
-                  <div className="flex min-h-[58px] min-w-0 flex-col">
-                    <div className="min-w-0 line-clamp-2 text-base font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
-                      {item.primary}
-                    </div>
-                    {item.secondary ? (
-                      <div className="mt-0.5 min-w-0 text-xs break-words text-[color:var(--oltra-text-muted)]">
-                        {item.secondary}
-                      </div>
-                    ) : null}
-                    {lines.length ? (
-                      <div className="mt-2 text-xs leading-relaxed text-[color:var(--oltra-text-muted)]">
-                        {lines.map((line) => (
-                          <div key={line}>{line}</div>
-                        ))}
-                      </div>
-                    ) : null}
-                    {/* The saved price is a flat number from save time, so the
-                        only way it moves is if the member asks (Update). */}
-                    {refreshing || refreshStates?.[item.id]?.message ? (
-                      <div
-                        className={
-                          refreshStates?.[item.id]?.status === "error"
-                            ? "members-item__refresh-note members-item__refresh-note--error"
-                            : "members-item__refresh-note"
-                        }
-                      >
-                        {refreshing ? "Checking..." : refreshStates?.[item.id]?.message}
-                      </div>
-                    ) : null}
-                    {/* No warning text on the card: every warning belongs in
-                        the Concierge notes, so there is one place to read
-                        them. hasOverlapWarning still gates the confirm step
-                        on Book. */}
-                  </div>
+/* Where SAVE sits on the landing card: Update (when the item can be
+   re-priced) and Delete, condensed like BOOK beside them. Delete opens the
+   "Remove this item" confirm. A trip whose dates have passed leaves only
+   Delete trip live. */
+function TripItemActions({
+  item,
+  outdated,
+  refreshing = false,
+  onRefresh,
+  onDelete,
+}: {
+  item: TripItemCard;
+  outdated: boolean;
+  refreshing?: boolean;
+  onRefresh?: (item: TripItemCard) => void;
+  onDelete: (itemId: string) => void;
+}) {
+  const passive = outdated ? "true" : undefined;
+  const reason = outdated ? OUTDATED_REASON : undefined;
+  return (
+    <>
+      {item.refresh && onRefresh ? (
+        <button
+          type="button"
+          className="oltra-btn oltra-btn--condensed oltra-btn--block"
+          disabled={refreshing}
+          aria-disabled={passive}
+          data-reason={reason}
+          onClick={() => !outdated && onRefresh(item)}
+        >
+          Update
+        </button>
+      ) : null}
+      <button
+        type="button"
+        className="oltra-btn oltra-btn--destructive oltra-btn--condensed oltra-btn--block"
+        aria-disabled={passive}
+        data-reason={reason}
+        onClick={() => !outdated && onDelete(item.id)}
+      >
+        Delete
+      </button>
+    </>
+  );
+}
 
-                  <div
-                    className={`members-trip-card__actions flex w-[74px] shrink-0 flex-col justify-center`}
-                  >
-                    {item.priceLabel ? (
-                      <div className="w-full text-center">
-                        <div className="text-[13px] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
-                          {item.priceLabel}
-                        </div>
-                        {item.priceBasis ? (
-                          <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--oltra-text-muted)]">
-                            {item.priceBasis}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
+/* THE LANDING PAGE'S FLIGHT ROW, from what a saved flight keeps. A saved
+   flight holds its route, times and price but not the itinerary's legs, so
+   the leg card shows the route and times rather than the Flights page's
+   card. The label, the price with what it covers over the buttons, and the
+   buttons at the hotel card's width are the landing row's own. */
+function SavedFlightRow({
+  item,
+  outdated,
+  refresh,
+  onRefresh,
+  onBook,
+  onDelete,
+}: {
+  item: TripItemCard;
+  outdated: boolean;
+  refresh?: RefreshState;
+  onRefresh: (item: TripItemCard) => void;
+  onBook: (itemId: string, bookUrl?: string, hasOverlapWarning?: boolean) => void;
+  onDelete: (itemId: string) => void;
+}) {
+  const { currency, approx } = useApproxPrice();
+  const refreshing = refresh?.status === "loading";
+  const canRefresh = Boolean(item.refresh);
+  const passive = outdated ? "true" : undefined;
+  const reason = outdated ? OUTDATED_REASON : undefined;
 
-                    <div className="mt-1.5 flex w-full flex-col gap-1.5">
-                      {canRefresh ? (
-                        <button
-                          type="button"
-                          className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-top"
-                          disabled={refreshing}
-                          aria-disabled={passive}
-                          onClick={() => !outdated && onRefreshPrice?.(item)}
-                        >
-                          Update
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className={`oltra-btn oltra-btn--condensed oltra-btn--block ${
-                          canRefresh ? "members-trip-card__middle" : "oltra-btn--stack-top"
-                        }`}
-                        aria-disabled={passive ?? (item.missingDates ? "true" : undefined)}
-                        data-reason={
-                          !outdated && item.missingDates
-                            ? "Saved without dates - search the hotel with dates to book"
-                            : undefined
-                        }
-                        onClick={() =>
-                          !outdated &&
-                          !item.missingDates &&
-                          onBook(item.id, item.bookUrl, item.hasOverlapWarning)
-                        }
-                      >
-                        Book
-                      </button>
-                      {/* Not immediate: onDelete opens the "Remove this item"
-                          confirm in SavedTripsView. */}
-                      <button
-                        type="button"
-                        className="oltra-btn oltra-btn--destructive oltra-btn--condensed oltra-btn--block oltra-btn--stack-bottom"
-                        aria-disabled={passive}
-                        onClick={() => !outdated && onDelete(item.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="members-empty">Nothing saved yet.</div>
-        )}
+  return (
+    <div className={`${landing.flightDetailRow} ${landing.flightDetailRowDense}`}>
+      <div className={landing.flightRowMain}>
+        <span className={`${landing.flightLineLabel} ${landing.flightLineLabelDense}`}>
+          {item.secondary || "Flight"}
+        </span>
+        <div className={flightsStyles.staticCard}>
+          <div className="min-w-0 text-[13px] font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
+            {item.primary}
+          </div>
+          {item.meta ? (
+            <div className="mt-0.5 min-w-0 text-xs break-words text-[color:var(--oltra-text-muted)]">
+              {item.meta}
+            </div>
+          ) : null}
+        </div>
+        {/* An Update replaces the saved fare with the cheapest on the route
+            now, and says so. */}
+        {refreshing || refresh?.message ? (
+          <div
+            className={
+              refresh?.status === "error"
+                ? "members-item__refresh-note members-item__refresh-note--error"
+                : "members-item__refresh-note"
+            }
+          >
+            {refreshing ? "Checking..." : refresh?.message}
+          </div>
+        ) : null}
+      </div>
+
+      <div className={landing.flightRowActions}>
+        {item.priceAmount && item.priceCurrency ? (
+          <div className={landing.flightRowPrice}>
+            {currency} {approx(item.priceAmount, item.priceCurrency)}
+            {(item.priceBasis ?? "").split(" · ").filter(Boolean).map((line, i) => (
+              <div key={i} className={landing.flightRowPriceBasis}>
+                {line}
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <div className={`${landing.flightRowButtons} ${SMALL_CARD_ACTION_WIDTH[3]}`}>
+          {canRefresh ? (
+            <button
+              type="button"
+              className="oltra-btn oltra-btn--condensed oltra-btn--block oltra-btn--stack-top"
+              disabled={refreshing}
+              aria-disabled={passive}
+              data-reason={reason}
+              onClick={() => !outdated && onRefresh(item)}
+            >
+              Update
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={`oltra-btn oltra-btn--condensed oltra-btn--block ${
+              canRefresh ? "members-trip-card__middle" : "oltra-btn--stack-top"
+            }`}
+            aria-disabled={passive}
+            data-reason={reason}
+            onClick={() => !outdated && onBook(item.id, item.bookUrl, item.hasOverlapWarning)}
+          >
+            Book
+          </button>
+          <button
+            type="button"
+            className="oltra-btn oltra-btn--destructive oltra-btn--condensed oltra-btn--block oltra-btn--stack-bottom"
+            aria-disabled={passive}
+            data-reason={reason}
+            onClick={() => !outdated && onDelete(item.id)}
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   );

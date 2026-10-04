@@ -89,6 +89,20 @@ function applyBookingOccupancyParams(
   return url;
 }
 
+/* The booking link, else the hotel's own website - the fallback chain every
+ * small card uses (landing, concierge, saved trips). Without the fallback a
+ * hotel with no provider had no BOOK at all. */
+export function bookingOrWebsiteHref(
+  hotel: BookableHotel,
+  params?: BookingSearchParams
+): string | null {
+  const link = buildBookingLink(hotel, params);
+  if (link) return link;
+  const site = (hotel.www ?? "").trim();
+  if (!site) return null;
+  return /^https?:\/\//i.test(site) ? site : `https://${site}`;
+}
+
 export function buildBookingLink(
   hotel: BookableHotel,
   params?: BookingSearchParams

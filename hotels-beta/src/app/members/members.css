@@ -325,6 +325,18 @@
   font-size: 0.92rem;
 }
 
+/* The password asked for while the e-mail changes, under its note. */
+.members-email-password {
+  margin-top: 6px;
+}
+
+/* A note under one field (the login e-mail), at the metadata size. */
+.members-note--field {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .members-empty {
   color: var(--oltra-text-secondary);
   padding: 4px 0;
@@ -491,14 +503,7 @@
   padding-top: 10px;
 }
 
-/* A trip card is the landing page's card (HotelSmallCard); the spacing
-   between cards comes from .members-section__body. */
-.members-trip-card {
-  display: block;
-  width: 100%;
-}
-
-/* Update, Book and Delete stack three high. The standard's stack classes
+/* A flight's Update, Book and Delete stack three high. The standard's stack classes
    split the gap between two buttons; the one in the middle gets half the gap
    on each side, so no tap reaches a neighbour. */
 .members-trip-card__middle::after {
@@ -509,11 +514,12 @@
   transform: translateX(-50%);
 }
 
+/* The landing page's three panes (Ulrik, 2026-10-04): equal columns at its
+   1rem gap, no rule between them, each headed and spaced as a pane. */
 .members-trip-columns {
   display: grid;
-  /* Hotels carries the most per card (stay dates, rooms, price), so it gets
-     the extra width; Flights and Restaurants stay equal to each other. */
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
   align-items: start;
   margin-top: 20px;
   padding-top: 20px;
@@ -521,21 +527,16 @@
 }
 
 .members-trip-col {
-  padding: 0 20px;
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
   min-width: 0;
-  overflow: visible;
 }
 
-.members-trip-col:first-child {
-  padding-left: 0;
-}
-
-.members-trip-col:last-child {
-  padding-right: 0;
-}
-
-.members-trip-col + .members-trip-col {
-  border-left: 1px solid var(--oltra-border-subtle);
+/* The landing list's spacing, without its scroll cap. */
+.members-trip-list {
+  display: grid;
+  gap: 0.55rem;
 }
 
 .members-trip-line {
@@ -1064,16 +1065,6 @@
     flex-wrap: wrap;
   }
 
-  .members-trip-col {
-    padding: 18px 0 0;
-    border-left: none;
-    border-top: 1px solid var(--oltra-border-subtle);
-  }
-
-  .members-trip-col:first-child {
-    padding-top: 0;
-    border-top: none;
-  }
 
   .members-profile-actions-row {
     flex-direction: column;

@@ -10,7 +10,7 @@ import HotelSmallCard, {
 } from "@/components/hotels/HotelSmallCard";
 import RestaurantSmallCard from "@/components/restaurants/RestaurantSmallCard";
 import type { HotelRecord } from "@/lib/directus";
-import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
+import { bookingOrWebsiteHref } from "@/lib/hotels/buildBookingLink";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
 import SaveToTripControl, {
   HOTEL_SAVED_HINT,
@@ -56,20 +56,6 @@ import { sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
  * numbers, and the summary inside the concierge modal cannot state one. */
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
-
-/* Same fallback chain the structured landing summary uses: the real booking
- * link, then the hotel's own site. Without the fallback a hotel with no
- * provider had no BOOK at all, so its actions column held a lone SAVE. */
-function bookingHrefFor(
-  hotel: HotelRecord,
-  params: { from: string; to: string; adults: number; kids: number }
-): string | null {
-  const link = buildBookingLink(hotel, params);
-  if (link) return link;
-  const site = (hotel.www ?? "").trim();
-  if (!site) return null;
-  return /^https?:\/\//i.test(site) ? site : `https://${site}`;
-}
 
 function legDateLabel(iso: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
@@ -418,7 +404,7 @@ function HotelStayGroup({
           myOLTRA yet", so it is findable. */}
       {sellableFirst(hotels).map((hotel) => {
         const record = hotel as unknown as HotelRecord;
-        const bookingHref = bookingHrefFor(record, {
+        const bookingHref = bookingOrWebsiteHref(record, {
           from,
           to,
           adults: query.adults,

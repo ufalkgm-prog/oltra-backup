@@ -31,6 +31,14 @@ export async function GET(request: Request) {
     }
   }
 
+  /* The first of the two links of an e-mail change (Secure email change sends
+     one to each address). Supabase accepts it and sends a message, not a code:
+     nothing is signed in yet, and the change waits for the other link.
+     Personal Information shows it as pending. */
+  if (!code && searchParams.get("message")) {
+    return NextResponse.redirect(`${publicOrigin}${next}`);
+  }
+
   return NextResponse.redirect(
     `${publicOrigin}/login?error=auth_callback_failed`
   );
@@ -68,6 +76,16 @@ async function ensureMemberProfile(
       );
 
     if (error) console.error("[auth callback] member profile", error.message);
+
+    /* Keep the copy in step with the login address, which an e-mail change
+       just moved (Ulrik, 2026-10-04). */
+    if (user.email) {
+      const { error: syncError } = await supabase
+        .from("member_profiles")
+        .update({ email: user.email })
+        .eq("user_id", user.id);
+      if (syncError) console.error("[auth callback] member email", syncError.message);
+    }
   } catch (err) {
     console.error("[auth callback] member profile", err);
   }

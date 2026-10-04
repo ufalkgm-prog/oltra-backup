@@ -81,6 +81,8 @@ export type SavedHotel = {
 
 export type SavedRestaurant = {
   id: string;
+  /** The restaurant's Directus id, for the full record its card draws. */
+  restaurantDirectusId?: string | null;
   name: string;
   location: string;
   time: string;

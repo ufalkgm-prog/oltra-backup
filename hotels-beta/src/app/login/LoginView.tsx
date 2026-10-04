@@ -3,21 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isValidEmail, isValidNewPassword } from "@/lib/members/credentials";
 import landingStyles from "../page.module.css";
 
 type View = "login" | "signup" | "forgot" | "reset";
-
-function isValidEmail(email: string): boolean {
-  const at = email.indexOf("@");
-  if (at < 1) return false;
-  const domain = email.slice(at + 1);
-  const dot = domain.lastIndexOf(".");
-  return dot >= 1 && dot < domain.length - 1;
-}
-
-function isValidNewPassword(pw: string): boolean {
-  return pw.length >= 7 && /[a-zA-Z]/.test(pw) && /[0-9]/.test(pw);
-}
 
 export default function LoginView() {
   const supabase = useMemo(() => createClient(), []);

@@ -160,6 +160,12 @@ type Props = {
   /** What the price covers, from lib/priceBasis.ts: "2 rooms – 7 nights".
    * The card cannot know the stay or the room count itself. */
   priceBasis?: string;
+  /** Lines under the location, before the highlights: Members > Saved trips
+   * puts the saved stay's dates and party here. Nothing on the landing page. */
+  details?: React.ReactNode;
+  /** BOOK passive with this reason, whatever the availability says - a saved
+   * trip whose dates have passed. */
+  blockedReason?: string | null;
 };
 
 export default function HotelSmallCard({
@@ -171,6 +177,8 @@ export default function HotelSmallCard({
   columns = 1,
   isFavourite = false,
   priceBasis = "",
+  details,
+  blockedReason,
 }: Props) {
   /* The card prices in whatever the member picked in the header, converting
      from the currency the supplier quoted. */
@@ -308,8 +316,9 @@ export default function HotelSmallCard({
   /* BOOK stays, passive, and says why: no dates chosen yet — for every BOOK,
      the hotel's own website included (Ulrik, 2026-09-28) — or nothing free on
      the dates that were. "idle" is what callers pass without dates. */
-  const bookBlockedReason =
-    availability?.status === "idle"
+  const bookBlockedReason = blockedReason
+    ? blockedReason
+    : availability?.status === "idle"
       ? "Select dates to book"
       : topAction && !topAction.offsite && availability?.status === "unavailable"
         ? "No availability for these dates"
@@ -431,6 +440,7 @@ export default function HotelSmallCard({
           </div>
         </div>
 
+        {details}
         {highlights}
         </div>
 

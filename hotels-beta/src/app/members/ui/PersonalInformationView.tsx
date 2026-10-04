@@ -6,10 +6,20 @@ import AirportAutocomplete from "@/app/flights/ui/AirportAutocomplete";
 import { DEFAULT_MEMBER_PROFILE } from "@/lib/members/defaults";
 import type { MemberBirthday, MemberProfile } from "@/lib/members/types";
 import {
+  EmailChangeError,
+  fetchLoginEmailStateBrowser,
   fetchMemberProfileBrowser,
+  requestLoginEmailChangeBrowser,
   saveMemberProfileBrowser,
+  type LoginEmailState,
 } from "@/lib/members/db";
 import { createClient } from "@/lib/supabase/client";
+import {
+  isGmailAddress,
+  isValidEmail,
+  isValidNewPassword,
+  NEW_PASSWORD_RULE,
+} from "@/lib/members/credentials";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
 
 type Option = {
@@ -18,6 +28,7 @@ type Option = {
 };
 
 const MAX_FAMILY_MEMBERS = 10;
+
 
 const PREFERRED_AIRLINE_OPTIONS: Option[] = [
   { value: "Air France", label: "Air France" },
@@ -230,6 +241,12 @@ export default function PersonalInformationView() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showLeavePrompt, setShowLeavePrompt] = useState(false);
   const [showTerminatePrompt, setShowTerminatePrompt] = useState(false);
+  const [loginEmail, setLoginEmail] = useState<LoginEmailState | null>(null);
+  /* Asked for only while the e-mail is being changed, and never saved here:
+     the current password confirms the change, the new one (a Google-only
+     member) becomes their password. */
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const pendingHrefRef = useRef<string | null>(null);
   const allowLeaveRef = useRef(false);
   const supabase = useMemo(() => createClient(), []);
@@ -246,6 +263,15 @@ export default function PersonalInformationView() {
 
   const familyCapReached = profile.familyMembers.length >= MAX_FAMILY_MEMBERS;
 
+  const typedEmail = profile.email.trim();
+  const emailChanging =
+    Boolean(loginEmail) &&
+    typedEmail.toLowerCase() !== (loginEmail?.email ?? "").toLowerCase();
+  /* A Google-only member moving off Gmail must set a password; to another
+     Gmail address it is optional. */
+  const passwordRequired =
+    emailChanging && loginEmail?.hasPassword === false && !isGmailAddress(typedEmail);
+
   useEffect(() => {
     let active = true;
 
@@ -254,8 +280,12 @@ export default function PersonalInformationView() {
         setIsLoading(true);
         setErrorMessage("");
 
-        const next = await fetchMemberProfileBrowser();
+        const [next, emailState] = await Promise.all([
+          fetchMemberProfileBrowser(),
+          fetchLoginEmailStateBrowser(),
+        ]);
         if (!active) return;
+        setLoginEmail(emailState);
 
         if (next) {
           const normalizedProfile = normalizeMemberProfile(next);
@@ -409,19 +439,66 @@ export default function PersonalInformationView() {
     clearMessages();
   }
 
+  /* A NEW E-MAIL IS A NEW LOGIN, AND IT WAITS FOR CONFIRMATION (Ulrik,
+     2026-10-04). Supabase is asked to move the login; nothing changes until
+     the link it sends is followed, so the field goes back to the address the
+     member still signs in with and the one asked for shows as pending under
+     it. The rest of the form saves as normal. Throws on a refused change so
+     neither caller saves half of it. */
+  async function saveProfile(): Promise<MemberProfile> {
+    let next = profile;
+
+    if (loginEmail && emailChanging) {
+      if (!isValidEmail(typedEmail)) {
+        throw new EmailChangeError("Please enter a valid e-mail address.");
+      }
+      if (loginEmail.hasPassword && !currentPassword) {
+        throw new EmailChangeError("Enter your current password to change your e-mail.");
+      }
+      if (!loginEmail.hasPassword && (passwordRequired || newPassword)) {
+        if (!isValidNewPassword(newPassword)) throw new EmailChangeError(NEW_PASSWORD_RULE);
+      }
+      await requestLoginEmailChangeBrowser(
+        typedEmail,
+        loginEmail.hasPassword
+          ? { currentPassword }
+          : newPassword
+            ? { newPassword }
+            : {}
+      );
+      setLoginEmail({
+        ...loginEmail,
+        pendingEmail: typedEmail,
+        hasPassword: loginEmail.hasPassword || Boolean(newPassword),
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      next = { ...profile, email: loginEmail.email };
+    }
+
+    await saveMemberProfileBrowser(next);
+    setProfile(next);
+    setSavedProfile(next);
+    return next;
+  }
+
+  function saveErrorMessage(error: unknown): string {
+    return error instanceof EmailChangeError
+      ? error.message
+      : "Could not save personal information.";
+  }
+
   async function handleSave() {
     if (!isDirty || isSaving) return;
 
     try {
       setIsSaving(true);
       setErrorMessage("");
-      setErrorMessage("");
 
-      await saveMemberProfileBrowser(profile);
-      setSavedProfile(profile);
+      await saveProfile();
       setJustSaved(true);
-    } catch {
-      setErrorMessage("Could not save personal information.");
+    } catch (error) {
+      setErrorMessage(saveErrorMessage(error));
     } finally {
       setIsSaving(false);
     }
@@ -451,12 +528,10 @@ export default function PersonalInformationView() {
       try {
         setIsSaving(true);
         setErrorMessage("");
-        setErrorMessage("");
 
-        await saveMemberProfileBrowser(profile);
-        setSavedProfile(profile);
-      } catch {
-        setErrorMessage("Could not save personal information.");
+        await saveProfile();
+      } catch (error) {
+        setErrorMessage(saveErrorMessage(error));
         setIsSaving(false);
         setShowLeavePrompt(false);
         return;
@@ -501,11 +576,49 @@ export default function PersonalInformationView() {
 
             <div className="members-form-field">
               <label className="oltra-label">E-MAIL</label>
+              {/* The member's one e-mail, which is also their login. A change
+                  is confirmed by a link to the new address only. */}
               <input
                 className="oltra-input"
+                type="email"
                 value={profile.email}
                 onChange={(event) => updateField("email", event.target.value)}
               />
+              {emailChanging && loginEmail ? (
+                <>
+                  <div className="members-note members-note--field">
+                    {loginEmail.hasPassword
+                      ? "This is also your login. Enter your current password; on Save we send a confirmation link to the new e-mail, and it takes over once the link is followed."
+                      : passwordRequired
+                        ? "This is also your login. You sign in with Google today, so set a password to sign in with the new e-mail. On Save we send a confirmation link to it."
+                        : "This is also your login. Once you confirm the link we send there, Continue with Google with that account signs you in. A password is optional."}
+                  </div>
+                  <input
+                    className="oltra-input members-email-password"
+                    type="password"
+                    autoComplete={loginEmail.hasPassword ? "current-password" : "new-password"}
+                    placeholder={
+                      loginEmail.hasPassword
+                        ? "Current password"
+                        : passwordRequired
+                          ? "New password"
+                          : "New password (optional)"
+                    }
+                    value={loginEmail.hasPassword ? currentPassword : newPassword}
+                    onChange={(event) => {
+                      clearMessages();
+                      (loginEmail.hasPassword ? setCurrentPassword : setNewPassword)(
+                        event.target.value
+                      );
+                    }}
+                  />
+                </>
+              ) : loginEmail?.pendingEmail ? (
+                <div className="members-note members-note--field">
+                  Changing to {loginEmail.pendingEmail}: follow the confirmation
+                  link sent there. Until then you sign in with the address above.
+                </div>
+              ) : null}
             </div>
 
             {/* A type-ahead, not a select: the airport list is ~4k entries

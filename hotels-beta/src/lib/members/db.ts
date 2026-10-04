@@ -9,6 +9,7 @@ import type {
   SavedTrip,
 } from "./types";
 import { MAX_TRIP_NAME_CHARS, MAX_TRIPS_PER_MEMBER, TripLimitError } from "./tripLimits";
+import { NEW_PASSWORD_RULE } from "./credentials";
 
 type ProfileUpsert = Database["public"]["Tables"]["member_profiles"]["Insert"];
 type FamilyInsert =
@@ -113,6 +114,121 @@ function serializeBirthday(birthday: MemberBirthday): string | null {
   return `${year}-${monthNumber}-${paddedDay}`;
 }
 
+/* THE LOGIN E-MAIL (Ulrik, 2026-10-04).
+ *
+ * A member has one e-mail, auth.users.email, and it is their login. Personal
+ * Information shows it and a change there moves it; member_profiles.email is
+ * only a copy, re-synced by the auth callback and on every save.
+ *
+ * One e-mail, but up to two ways in: a password, and "Continue with Google",
+ * which Supabase attaches to the same member when the Google address matches.
+ * A change keeps every way in that still works:
+ *  - a password member confirms the change with their current password;
+ *  - a Google-only member moving to a non-Gmail address sets a password in
+ *    the same step, or the new address would have no way to sign in. Moving
+ *    to another Gmail address, "Continue with Google" with that account signs
+ *    in to this member once the change is confirmed, so a password is
+ *    optional. The old Google login stays attached either way. */
+type AuthUserLike = {
+  email?: string | null;
+  new_email?: string | null;
+  identities?: { provider: string }[] | null;
+  app_metadata?: { providers?: string[] | null } | null;
+};
+
+export function signsInWithEmail(user: AuthUserLike): boolean {
+  const providers = user.identities?.length
+    ? user.identities.map((identity) => identity.provider)
+    : user.app_metadata?.providers ?? [];
+  return providers.includes("email");
+}
+
+export type LoginEmailState = {
+  email: string;
+  /** An address the member has asked to move to and not yet confirmed. */
+  pendingEmail: string | null;
+  /** False for a Google-only member, who has no password yet. */
+  hasPassword: boolean;
+};
+
+export async function fetchLoginEmailStateBrowser(): Promise<LoginEmailState | null> {
+  const supabase = createBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  return {
+    email: user.email ?? "",
+    pendingEmail: user.new_email ?? null,
+    hasPassword: signsInWithEmail(user),
+  };
+}
+
+export class EmailChangeError extends Error {}
+
+/* Supabase sends a confirmation link to the NEW address only and changes
+ * nothing until it is followed (Ulrik, 2026-10-04): a member changing address
+ * may have lost the old inbox. That needs "Secure email change" OFF in the
+ * Supabase dashboard - on, it also mails the old address and waits for both.
+ * The link lands on the auth callback, which signs the member in on the new
+ * address and returns them to Personal Information.
+ *
+ * With the old inbox out of the loop, the current password is what stops
+ * someone at an unattended signed-in screen from moving the account: it is
+ * checked first, by signing in with it. A new password (a Google-only member)
+ * is set in the same call and works at once; the e-mail waits for the link. */
+export async function requestLoginEmailChangeBrowser(
+  newEmail: string,
+  credentials: { currentPassword?: string; newPassword?: string } = {}
+): Promise<void> {
+  const supabase = createBrowserClient();
+
+  if (credentials.currentPassword !== undefined) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { error: checkError } = await supabase.auth.signInWithPassword({
+      email: user?.email ?? "",
+      password: credentials.currentPassword,
+    });
+    if (checkError) {
+      throw new EmailChangeError(
+        checkError.status === 429
+          ? "Too many attempts just now. Please try again in a few minutes."
+          : "That password is not correct."
+      );
+    }
+  }
+
+  const { error } = await supabase.auth.updateUser(
+    credentials.newPassword
+      ? { email: newEmail, password: credentials.newPassword }
+      : { email: newEmail },
+    {
+      emailRedirectTo: `${window.location.origin}/auth/callback?next=/members/personal-information`,
+    }
+  );
+  if (!error) return;
+  if (error.code === "reauthentication_needed" || error.code === "reauthentication_not_valid") {
+    throw new EmailChangeError(
+      "For your security, please log out, sign in again with Google and then try again."
+    );
+  }
+  if (error.code === "weak_password") {
+    throw new EmailChangeError(NEW_PASSWORD_RULE);
+  }
+  if (error.code === "email_exists" || /already been registered/i.test(error.message)) {
+    throw new EmailChangeError("That e-mail is already used by another account.");
+  }
+  if (error.code === "over_email_send_rate_limit" || error.status === 429) {
+    throw new EmailChangeError("Too many e-mails sent just now. Please try again in a few minutes.");
+  }
+  if (error.code === "email_address_invalid" || error.code === "validation_failed") {
+    throw new EmailChangeError("Please enter a valid e-mail address.");
+  }
+  throw new EmailChangeError("Could not start the e-mail change.");
+}
+
 export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null> {
   const supabase = createBrowserClient();
 
@@ -148,7 +264,8 @@ export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null>
 
   return {
     memberName: profile?.member_name ?? oauthName,
-    email: profile?.email ?? user.email ?? "",
+    // The login address - see "THE LOGIN E-MAIL".
+    email: user.email ?? profile?.email ?? "",
     phone: profile?.phone ?? "",
     homeAirport: profile?.home_airport ?? "",
     birthday: parseBirthday(profile?.birthday ?? null),
@@ -514,6 +631,7 @@ function mapSavedTrips(
       .filter((item) => item.trip_id === trip.id)
       .map((item) => ({
         id: item.id,
+        restaurantDirectusId: item.restaurant_directus_id,
         name: item.restaurant_name ?? "",
         location: item.location ?? "",
         time: item.reservation_label ?? "",

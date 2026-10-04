@@ -6,7 +6,7 @@ import type { HotelRecord } from "@/lib/directus";
 import type { RatehawkHeadline } from "@/lib/ratehawk/types";
 import { guessResidencyFromLocale } from "@/lib/countries";
 import { getAirportsForCity } from "@/lib/cityAirports";
-import { buildBookingLink } from "@/lib/hotels/buildBookingLink";
+import { bookingOrWebsiteHref } from "@/lib/hotels/buildBookingLink";
 import { addHotelToTripBrowser, addRestaurantToTripBrowser } from "@/lib/members/db";
 import { getHotelThumbnail } from "@/lib/hotels/cardHelpers";
 import SaveToTripControl, {
@@ -81,22 +81,6 @@ const CABINS: { key: CabinKey; label: string }[] = [
   { key: "business", label: "Business" },
 ];
 
-// buildBookingLink returns null unless a hotel has booking_provider configured,
-// and as of 2026-08-16 none of the 853 published hotels does (see CLAUDE.md
-// §23 - the booking fields were never populated), so on its own it would mean
-// no card ever shows a BOOK button. Falling back to the hotel's own website
-// gives a real destination now, and buildBookingLink takes precedence
-// automatically once those fields do get filled in.
-function bookingHrefFor(
-  hotel: HotelRecord,
-  params: { from: string; to: string; adults: number; kids: number }
-): string | null {
-  const link = buildBookingLink(hotel, params);
-  if (link) return link;
-  const site = (hotel.www ?? "").trim();
-  if (!site) return null;
-  return /^https?:\/\//i.test(site) ? site : `https://${site}`;
-}
 
 function getRatehawkHid(hotel: HotelRecord): number | null {
   const raw = hotel.ratehawk_hid;
@@ -596,7 +580,7 @@ export default function LandingSummary({
                 if (residency) hotelParams.set("residency", residency);
                 hotelParams.set("submitted", "1");
                 const hotelHref = `/hotels?${hotelParams.toString()}`;
-                const bookingHref = bookingHrefFor(h, {
+                const bookingHref = bookingOrWebsiteHref(h, {
                   from: fromDate,
                   to: toDate,
                   adults,

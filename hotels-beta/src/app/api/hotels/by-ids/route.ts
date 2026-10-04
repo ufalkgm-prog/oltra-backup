@@ -18,6 +18,22 @@ type HotelSummaryRow = {
   affiliation: string | null;
 };
 
+/* Members > Saved trips draws each hotel with the landing page's card
+ * (HotelSmallCard), which also needs its photo and who sells it. Small
+ * per-row fields only - never ratehawk_room_groups (see HotelRecord). */
+const CARD_FIELDS = [
+  "ratehawk_image_1",
+  "ratehawk_image_1_category",
+  "ratehawk_hid",
+  "ratehawk_status",
+  "booking_partner",
+  "booking_provider",
+  "booking_URL",
+  "booking_hotel_ref",
+  "booking_enabled",
+  "www",
+];
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { ids?: unknown };
@@ -35,7 +51,7 @@ export async function POST(request: Request) {
     if (!ids.length) return NextResponse.json({ ok: true, hotels: [] });
 
     const hotels = await getItems<HotelSummaryRow>("hotels", {
-      fields: ["id", "hotel_name", "highlights", "city", "country", "affiliation"],
+      fields: ["id", "hotel_name", "highlights", "city", "country", "affiliation", ...CARD_FIELDS],
       filter: { id: { _in: ids } },
       limit: -1,
     });
