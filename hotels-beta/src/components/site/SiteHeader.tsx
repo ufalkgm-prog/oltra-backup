@@ -155,7 +155,10 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
      * pane passes under the header, and the header changing while the page
      * itself stood still read as a glitch: scrolling the landing page's
      * welcome letter darkened it. So inner scrollers are ignored entirely,
-     * and this listens on the window only. */
+     * and this listens on the window only.
+     *
+     * Not on the landing page (Ulrik, 2026-10-04): there the header's shade is
+     * the top shade on bright photos in LandingBackground instead. */
     const onScroll = () => setIsScrolled(window.scrollY > 8);
     onScroll();
 
@@ -314,7 +317,7 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   return (
     <header
       ref={headerRef}
-      className={`oltra-site-header ${isScrolled ? "is-scrolled" : ""} ${
+      className={`oltra-site-header ${isScrolled && pathname !== "/" ? "is-scrolled" : ""} ${
         conciergeOpen ? "is-concierge-open" : ""
       }`}
     >
