@@ -965,14 +965,19 @@
   color: #1e2221;
 }
 
+/* NARROWING TAKES THE MARGINS FIRST (Ulrik, 2026-10-05). The search fields
+   stay on one row as the window narrows: the side margins close, then the
+   frame itself narrows, the destination track giving way first. The grid used
+   to switch to three columns at 1280px, dropping Bedrooms to a second row
+   while 75px of margin was still free each side. Measured in the browser: the
+   empty field's placeholder ("Type first 2 letters of hotel, city, country, or
+   purpose", 342px) still fits whole at 1060px and is cut off below about
+   1050px, so from 1059px the destination takes the first row whole and the
+   other three share the second. One column from 860px, as before. */
 @media (max-width: 1280px) {
   .heroPanel {
     width: min(1120px, calc(100vw - 2.5rem));
     margin-top: 0;
-  }
-
-  .searchGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .kidAgesGrid {
@@ -983,19 +988,26 @@
     display: none;
   }
 
-  .includeRow {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: end;
-  }
-
-  .includeSearchButtonWrap {
-    grid-column: 2 / 4;
-  }
-
   .searchButton,
   .searchButtonPassive {
     width: 100%;
     min-width: 0;
+  }
+}
+
+/* .98, not 1059: at a fractional zoom the viewport is 1059.x px wide, which
+   a 1059px limit misses, leaving a sliver where neither layout applies. */
+@media (max-width: 1059.98px) {
+  .searchGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .searchGrid > .destinationField {
+    grid-column: 1 / -1;
+  }
+
+  .includeRow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

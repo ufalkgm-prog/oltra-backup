@@ -246,11 +246,11 @@ Do not create a branch either — this repo's history is a deliberate linear ser
 
 Files: `/src/components/site/LandingBackground.tsx`, `/src/app/LandingSearchPanel.tsx`, `/src/app/LandingSummary.tsx`.
 
-**LandingBackground** — 49 images in `/public/images/landing/`, cross-fade + Ken Burns motion, `buildCycle` guarantees ≥20 positions between repeats. **A 5% dark overlay, nothing heavier** — the `rgba(0,0,0,0.34)` layer was removed, and the 10% one that outlived it was halved on 2026-09-14. **The 19 bright-topped photos add a header shade (reshaped 2026-10-04)**: 25% in all down to the header's foot, an eased fade ending 140px below the top of the page content — on `/` it replaces the header's dark fill on scroll. Buttons over the photo get their legibility from `.oltra-over-image` (§35A), not from the overlay.
+**LandingBackground** — 58 images in `/public/images/landing/`, cross-fade + Ken Burns motion, `buildCycle` guarantees ≥20 positions between repeats. **A 5% dark overlay, nothing heavier** — the `rgba(0,0,0,0.34)` layer was removed, and the 10% one that outlived it was halved on 2026-09-14. **The 22 bright-topped photos add a header shade (reshaped 2026-10-04)**: 25% in all down to the header's foot, an eased fade ending 140px below the top of the page content — on `/` it replaces the header's dark fill on scroll. Buttons over the photo get their legibility from `.oltra-over-image` (§35A), not from the overlay.
 
 **LandingSummary** — each hotel card links to `/hotels?q=<name>&from=&to=&adults=N&submitted=1`, i.e. the main Hotels page, **not** the standalone `/hotels/[hotelid]` page (which exists but is not part of the intended UX flow).
 
-**LandingSearchPanel** — Hotels and Flights checkboxes (§38). Flights activates when destination, dates and guests are filled; origin IATA resolves from `AIRPORT_OPTIONS`, defaulting to the member's home airport (§50).
+**LandingSearchPanel** — Hotels, Flights and Restaurants checkboxes (§38). **All three are always active (Ulrik, 2026-10-05); only Hotels is on by default** — Flights no longer waits for destination, dates and guests, nor Restaurants for a city we hold restaurants in; the panes say what is missing. Only the concierge's lock holds them. Origin IATA resolves from `AIRPORT_OPTIONS`, defaulting to the member's home airport (§50).
 
 ---
 

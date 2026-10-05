@@ -1390,13 +1390,20 @@ button.oltra-select {
   box-shadow: 0 8px 24px rgba(10, 24, 36, 0.24);
 }
 
+/* THE MENU STAYS BESIDE THE LOGO UNTIL IT NO LONGER FITS (Ulrik,
+   2026-10-05). A wrapping row: narrowing the window first closes the space
+   between the logo and the menu, and only when the menu's full width cannot
+   sit beside the logo does it drop to its own line, start-aligned. It was a
+   grid that stacked at a fixed 1000px, while the menu still had room. */
 .oltra-site-header__inner {
   width: min(1440px, 100%);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
   column-gap: 28px;
+  row-gap: 10px;
 }
 
 .oltra-site-header__brand {
@@ -1438,7 +1445,10 @@ button.oltra-select {
 
 .oltra-site-header__nav {
   display: flex;
-  justify-content: flex-end;
+  /* Start-aligned: beside the logo the menu is only as wide as its links, so
+     this changes nothing there; on its own line, narrower than the links, it
+     wraps from the left. */
+  justify-content: flex-start;
   align-items: center;
   gap: 22px;
   min-height: 40px;
@@ -1597,18 +1607,7 @@ button.oltra-select {
 }
 
 @media (max-width: 1000px) {
-  .oltra-site-header__inner {
-    grid-template-columns: 1fr;
-    row-gap: 10px;
-  }
-
-  .oltra-site-header__brand {
-    justify-self: start;
-    text-align: left;
-  }
-
   .oltra-site-header__nav {
-    justify-content: flex-start;
     gap: 14px;
   }
 }

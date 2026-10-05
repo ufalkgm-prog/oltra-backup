@@ -42,10 +42,6 @@ const HOME_AIRPORT_STORAGE_KEY = "oltra_home_airport";
 const HOME_AIRPORT_CITY_STORAGE_KEY = "oltra_home_airport_city";
 const SEARCH_STATE_KEY = "oltra_landing_search";
 
-const SINGLE_AIRPORT_COUNTRIES = new Set(
-  ["Maldives", "Bhutan", "Brunei"].map((c) => c.toLowerCase())
-);
-
 // Prefer the curated hotel-city mapping over the airport's own municipality -
 // see the matching helper in FlightsView. Never parsed out of the label (§39).
 function cityForAirportCode(code: string, fallbackCity: string): string {
@@ -58,9 +54,6 @@ type PageSearchParams = Record<string, string | string[] | undefined>;
 type Props = {
   initialSearchParams: PageSearchParams;
   dataset: HotelSuggestionDataset;
-  /** The submitted destination is a city we hold restaurants in — worked out
-   * by the page, which looks it up. */
-  restaurantsAvailable: boolean;
 };
 
 function buildComparableSearchKey(params: PageSearchParams): string {
@@ -84,7 +77,6 @@ function buildComparableSearchKey(params: PageSearchParams): string {
 export default function LandingSearchPanel({
   initialSearchParams,
   dataset,
-  restaurantsAvailable,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -517,47 +509,16 @@ export default function LandingSearchPanel({
     rooms: Math.max(1, Number(bedroomsValue) || 1),
   });
 
-  const flightsCanActivate = useMemo(() => {
-    const types = destinationState.selectedTypes;
-    const values = destinationState.selectedValues;
-
-    const hasHotelOrCity = types.includes("hotel") || types.includes("city");
-
-    const hasSingleAirportCountry =
-      types.includes("country") &&
-      (values.country ?? []).some((c) =>
-        SINGLE_AIRPORT_COUNTRIES.has(c.trim().toLowerCase())
-      );
-
-    const destinationOk = hasHotelOrCity || hasSingleAirportCountry;
-    const datesOk = Boolean(fromValue) && Boolean(toValue);
-    const guestsOk = guestSelection.adults > 0;
-
-    return destinationOk && datesOk && guestsOk;
-  }, [
-    destinationState.selectedTypes,
-    destinationState.selectedValues,
-    fromValue,
-    toValue,
-    guestSelection.adults,
-  ]);
-
-  const effectiveIncludeFlights = flightsCanActivate && includeFlights;
-
-  /* PASSIVE WHEN THERE IS NOTHING TO SHOW (Ulrik, 2026-09-28): the
-     destination is not a city we hold restaurants in (France + Beach), or the
-     page is showing the concierge's curated results. It used to tick anyway
-     and open a pane saying "We don't hold restaurants for this destination".
-     The choice itself is kept in the URL, so it comes back with a city that
-     has restaurants. */
-  const restaurantsCanActivate = restaurantsAvailable && !showsAiResults;
+  /* ALWAYS ACTIVE (Ulrik, 2026-10-05): Flights and Restaurants can be ticked
+     whatever the search holds; Hotels alone is on by default. They used to
+     stay passive until a city or hotel, dates and guests were in (Flights) or
+     the city was one we hold restaurants in (Restaurants). The panes say what
+     is missing instead: Flights asks for a more specific search, and the page
+     shows no restaurants pane for a place we hold none in (2026-09-28). Only
+     the concierge's lock, while its answer owns the search, still holds them. */
+  const effectiveIncludeFlights = includeFlights;
+  const restaurantsCanActivate = !showsAiResults;
   const effectiveIncludeRestaurants = restaurantsCanActivate && includeRestaurants;
-
-  useEffect(() => {
-    if (!flightsCanActivate && airportPopoverOpen) {
-      setAirportPopoverOpen(false);
-    }
-  }, [flightsCanActivate, airportPopoverOpen]);
 
   const allowedTypes = useMemo<SuggestionType[]>(
     // Every geography level the Hotels page offers, plus the colloquial regions
@@ -914,22 +875,16 @@ export default function LandingSearchPanel({
               <label
                 className={[
                   styles.includeChecksItem,
-                  aiLockedPanes || !flightsCanActivate ? styles.includeChecksItemDisabled : "",
+                  aiLockedPanes ? styles.includeChecksItemDisabled : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                title={
-                  aiLockedPanes
-                    ? AI_LOCK_REASON
-                    : !flightsCanActivate
-                      ? "Fill in city or hotel, dates and guests to activate"
-                      : undefined
-                }
+                title={aiLockedPanes ? AI_LOCK_REASON : undefined}
               >
                 <input
                   type="checkbox"
                   checked={aiLockedPanes ? aiLockedPanes.flights : effectiveIncludeFlights}
-                  disabled={Boolean(aiLockedPanes) || !flightsCanActivate}
+                  disabled={Boolean(aiLockedPanes)}
                   onChange={(e) => {
                     const checked = e.target.checked;
                     setIncludeFlights(checked);
@@ -949,7 +904,7 @@ export default function LandingSearchPanel({
                     that changes it. */}
                 <span className={styles.flightsCheckLabel}>
                   Flights
-                  {flightsCanActivate && effectiveIncludeFlights && !aiLockedPanes ? (
+                  {effectiveIncludeFlights && !aiLockedPanes ? (
                     <>
                       {homeAirport ? " assume you depart from " : " "}
                       <button
@@ -970,7 +925,7 @@ export default function LandingSearchPanel({
                 </span>
               </label>
 
-              {flightsCanActivate && effectiveIncludeFlights && airportPopoverOpen ? (
+              {effectiveIncludeFlights && airportPopoverOpen ? (
                 <div className={`oltra-popup-panel ${styles.airportPopover}`}>
                   <AirportAutocomplete
                     label="Home airport"
@@ -998,13 +953,7 @@ export default function LandingSearchPanel({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              title={
-                !restaurantsCanActivate
-                  ? showsAiResults
-                    ? AI_LOCK_REASON
-                    : "Choose a city we hold restaurants in to activate"
-                  : undefined
-              }
+              title={!restaurantsCanActivate ? AI_LOCK_REASON : undefined}
             >
               <input
                 type="checkbox"

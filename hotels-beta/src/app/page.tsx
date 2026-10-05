@@ -288,7 +288,6 @@ export default async function HomePage({
           <LandingSearchPanel
             initialSearchParams={resolvedSearchParams}
             dataset={dataset}
-            restaurantsAvailable={restaurantsAvailable}
           />
 
           {/* The structured summary and the concierge's frames are alternative
