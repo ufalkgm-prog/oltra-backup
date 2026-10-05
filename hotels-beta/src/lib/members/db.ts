@@ -655,34 +655,6 @@ export async function deleteSavedTripItemBrowser(
   if (error) throw error;
 }
 
-export async function submitFeedbackSuggestionBrowser(input: {
-  topic: string;
-  senderEmail: string;
-  message: string;
-}): Promise<void> {
-  const supabase = createBrowserClient();
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    throw new Error("Not authenticated");
-  }
-
-  const { error } = await supabase
-    .from("member_feedback_suggestions")
-    .insert({
-      user_id: user.id,
-      topic: input.topic,
-      sender_email: input.senderEmail || user.email || null,
-      message: input.message,
-    });
-
-  if (error) throw error;
-}
-
 export async function submitReviewBrowser(input: {
   reviewType: "hotel" | "restaurant";
   targetLabel: string;
