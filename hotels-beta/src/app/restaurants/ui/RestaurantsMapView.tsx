@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -25,18 +25,10 @@ import { buildAwardsLabel, buildLocationLabel, buildAddressLabel } from "../util
 import {
   addFavoriteRestaurantBrowser,
   addRestaurantToTripBrowser,
-  createTripBrowser,
-  fetchTripChoicesBrowser,
 } from "@/lib/members/db";
+import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import { markFavourite, useFavouriteIds } from "@/lib/members/favourites";
 import FavouriteStar from "@/components/members/FavouriteStar";
-import {
-  MAX_TRIPS_PER_MEMBER,
-  TRIP_LIMIT_MESSAGE,
-  getCreateTripBlockedReason,
-  isTripLimitError,
-  MAX_TRIP_NAME_CHARS,
-} from "@/lib/members/tripLimits";
 import { applyEnglishLabels } from "@/lib/maps/englishLabels";
 import { placeNameMatches, storedPlaceFor } from "@/lib/locationAliases";
 import { mapStyleUrl } from "@/lib/maps/style";
@@ -95,14 +87,33 @@ export default function RestaurantsMapView({
   const [mapReady, setMapReady] = useState(false);
   const cityInputRef = useRef<HTMLInputElement | null>(null);
   const cityLookupRef = useRef<HTMLDivElement | null>(null);
-  const tripPickerRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  // Set by a marker click, so the list follows a choice made on the map.
+  const revealInListRef = useRef(false);
 
   const [selectedId, setSelectedId] = useState<number | null>(
     restaurants[0]?.id ?? null
   );
   const [cityInput, setCityInput] = useState(city);
   const [showCityOptions, setShowCityOptions] = useState(false);
-  const [selectedType, setSelectedType] = useState<RestaurantType>("All");
+  /* The type is held WITH the city it was chosen in, so a new city reads All
+     from its very first render (2026-10-05). Reset only by the effect below,
+     the old city's type filtered the new city for one render: Paris on
+     "High-end casual", then Saint-Tropez, selected Beefbar - the first
+     high-end casual there - and kept it once the list went back to All. */
+  const [typeChoice, setTypeChoice] = useState<{ type: RestaurantType; city: string }>({
+    type: "All",
+    city,
+  });
+  const selectedType: RestaurantType = typeChoice.city === city ? typeChoice.type : "All";
+  const setSelectedType = useCallback(
+    (next: RestaurantType | ((prev: RestaurantType) => RestaurantType)) =>
+      setTypeChoice((prev) => {
+        const current = prev.city === city ? prev.type : "All";
+        return { type: typeof next === "function" ? next(current) : next, city };
+      }),
+    [city]
+  );
 
   /* THE CONCIERGE'S RESTAURANTS, ON THE RESTAURANTS PAGE (2026-09-15). Asked
      here for somewhere to eat in Rome, the concierge named three and the page
@@ -148,23 +159,6 @@ export default function RestaurantsMapView({
     "trip" | "favorite" | null
   >(null);
 
-  const [tripChoices, setTripChoices] = useState<
-    Array<{ id: string; name: string; label: string }>
-  >([]);
-  const [selectedTripIdForAdd, setSelectedTripIdForAdd] = useState("");
-  const [showTripPicker, setShowTripPicker] = useState(false);
-  const [newTripName, setNewTripName] = useState("");
-  const [creatingTrip, setCreatingTrip] = useState(false);
-  const tripLimitReached = tripChoices.length >= MAX_TRIPS_PER_MEMBER;
-
-  const [tripPickerNotice, setTripPickerNotice] = useState("");
-
-  const createTripBlockedReason = getCreateTripBlockedReason({
-    name: newTripName,
-    existingNames: tripChoices.map((trip) => trip.name),
-    tripCount: tripChoices.length,
-  });
-
   const [isMemberLoggedIn, setIsMemberLoggedIn] = useState(false);
   // The shared store (lib/members/favourites.ts), so a restaurant starred here
   // is starred on every page, and one favourited there is starred here.
@@ -174,7 +168,7 @@ export default function RestaurantsMapView({
     setCityInput(city);
     setShowCityOptions(false);
     setSelectedType("All");
-  }, [city]);
+  }, [city, setSelectedType]);
 
   /* Declared after the city reset so it wins it: a new city that holds the
      answer's picks opens on them, as does a new answer for this city. When the
@@ -182,7 +176,7 @@ export default function RestaurantsMapView({
   useEffect(() => {
     if (curatedKey) setSelectedType(AI_CURATED);
     else setSelectedType((prev) => (prev === AI_CURATED ? "All" : prev));
-  }, [curatedKey]);
+  }, [curatedKey, setSelectedType]);
 
   /* A new answer about another city, given while this page is open, moves the
      page to that city — the Restaurants half of what AiResultsSync does for
@@ -283,6 +277,22 @@ export default function RestaurantsMapView({
     return filteredRestaurants.find((r) => r.id === selectedId) ?? filteredRestaurants[0];
   }, [filteredRestaurants, selectedId]);
 
+  /* A restaurant picked on the map is scrolled into the list (2026-10-05): the
+     row was highlighted out of view. The list only, never the page. */
+  useEffect(() => {
+    if (!revealInListRef.current) return;
+    revealInListRef.current = false;
+    const list = listRef.current;
+    const id = selectedRestaurant?.id;
+    if (!list || id == null) return;
+    const row = list.querySelector<HTMLElement>(`[data-restaurant-id="${id}"]`);
+    if (!row) return;
+    const listBox = list.getBoundingClientRect();
+    const rowBox = row.getBoundingClientRect();
+    if (rowBox.top < listBox.top) list.scrollTop -= listBox.top - rowBox.top + 8;
+    else if (rowBox.bottom > listBox.bottom) list.scrollTop += rowBox.bottom - listBox.bottom + 8;
+  }, [selectedRestaurant?.id]);
+
   const selectedIsFavourite = Boolean(
     selectedRestaurant && favoriteRestaurantIds.has(String(selectedRestaurant.id))
   );
@@ -295,80 +305,6 @@ export default function RestaurantsMapView({
     city,
     country: selectedRestaurant?.country ?? "",
     restaurantName: selectedRestaurant?.restaurant_name ?? "",
-  });
-
-  async function handleAddRestaurantToTrip(tripId?: string) {
-    if (!selectedRestaurant) return;
-    if (!isMemberLoggedIn) {
-      setMemberActionError(getMemberActionLoginMessage("favorite"));
-      return;
-    }
-    try {
-      setMemberActionLoading("trip");
-      setMemberActionMessage("");
-      setMemberActionError("");
-
-      const result = await addRestaurantToTripBrowser({
-        tripId: tripId || selectedTripIdForAdd || null,
-        restaurantDirectusId: String(selectedRestaurant.id),
-        name: selectedRestaurant.restaurant_name,
-        location: buildLocationLabel(selectedRestaurant),
-        reservationLabel: null,
-        thumbnail: "/images/hero-lp.jpg",
-      });
-
-      if (result.duplicate) {
-        setMemberActionMessage("Restaurant already exists in this trip.");
-      } else {
-        setMemberActionMessage("Restaurant added to trip.");
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : "";
-
-      if (
-        message.includes("auth") ||
-        message.includes("login") ||
-        message.includes("sign in") ||
-        message.includes("unauthorized") ||
-        message.includes("not authenticated")
-      ) {
-        setMemberActionError("Log in to add to trip.");
-      } else {
-        setMemberActionError("Could not add restaurant to trip.");
-      }
-    } finally {
-      setMemberActionLoading(null);
-    }
-  }
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadTripChoices() {
-      try {
-        const trips = await fetchTripChoicesBrowser();
-        if (!active) return;
-
-        setTripChoices(trips);
-        setSelectedTripIdForAdd((prev) => prev || trips[0]?.id || "");
-      } catch {
-        if (!active) return;
-        setTripChoices([]);
-        setSelectedTripIdForAdd("");
-      }
-    }
-
-    loadTripChoices();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const tripPickerDismissProps = useDropdownDismiss({
-    open: showTripPicker,
-    onClose: () => setShowTripPicker(false),
-    refs: tripPickerRef,
   });
 
   // Layered alongside (not replacing) the input's existing onBlur +
@@ -392,70 +328,25 @@ export default function RestaurantsMapView({
     return () => window.clearTimeout(timer);
   }, [memberActionMessage, memberActionError]);
 
-  async function handleCreateTripAndAddRestaurant() {
-    if (!selectedRestaurant) return;
-    if (!isMemberLoggedIn) {
-      setShowTripPicker(false);
-      setMemberActionError(getMemberActionLoginMessage("trip"));
-      return;
-    }
-    try {
-      setCreatingTrip(true);
-      setMemberActionMessage("");
-      setMemberActionError("");
-
-      const createdTrip = await createTripBrowser({
-        name: newTripName || "New trip",
-        destination: buildLocationLabel(selectedRestaurant) || null,
-        periodLabel: null,
-      });
-
-      setTripChoices((prev) => [...prev, createdTrip]);
-      setSelectedTripIdForAdd(createdTrip.id);
-
-      const result = await addRestaurantToTripBrowser({
-        tripId: createdTrip.id,
-        restaurantDirectusId: String(selectedRestaurant.id),
-        name: selectedRestaurant.restaurant_name,
-        location: buildLocationLabel(selectedRestaurant),
-        reservationLabel: null,
-        thumbnail: "/images/hero-lp.jpg",
-      });
-
-      setNewTripName("");
-      setShowTripPicker(false);
-
-      if (result.duplicate) {
-        setMemberActionMessage("Restaurant already exists in this trip.");
-      } else {
-        setMemberActionMessage("New trip created and restaurant added.");
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : "";
-
-      if (isTripLimitError(error)) {
-        setMemberActionError(TRIP_LIMIT_MESSAGE);
-      } else if (
-        message.includes("auth") ||
-        message.includes("login") ||
-        message.includes("sign in") ||
-        message.includes("unauthorized") ||
-        message.includes("not authenticated")
-      ) {
-        setMemberActionError("Log in to add to trip.");
-      } else {
-        setMemberActionError("Could not create trip.");
-      }
-    } finally {
-      setCreatingTrip(false);
-    }
+  async function handleSaveRestaurant(
+    tripId: string,
+    restaurant: RestaurantRecord
+  ): Promise<SaveToTripResult> {
+    const result = await addRestaurantToTripBrowser({
+      tripId,
+      restaurantDirectusId: String(restaurant.id),
+      name: restaurant.restaurant_name,
+      location: buildLocationLabel(restaurant),
+      reservationLabel: null,
+      thumbnail: "/images/hero-lp.jpg",
+    });
+    return { message: result.duplicate ? "Already in that trip." : "Saved to trip." };
   }
 
   async function handleAddRestaurantToFavorites() {
     if (!selectedRestaurant) return;
     if (!isMemberLoggedIn) {
-      setShowTripPicker(false);
-      setMemberActionError(getMemberActionLoginMessage("trip"));
+      setMemberActionError(getMemberActionLoginMessage("favorite"));
       return;
     }
     try {
@@ -741,6 +632,7 @@ export default function RestaurantsMapView({
 
       el.addEventListener("click", (event) => {
         event.stopPropagation();
+        revealInListRef.current = true;
         setSelectedId(restaurant.id);
       });
 
@@ -959,7 +851,7 @@ export default function RestaurantsMapView({
           </p>
         </div>
 
-        <div className="restaurants-sidebar__list">
+        <div ref={listRef} className="restaurants-sidebar__list">
           <div className="restaurants-sidebar__list-inner">
             {filteredRestaurants.map((restaurant) => {
               const active = restaurant.id === selectedRestaurant?.id;
@@ -968,6 +860,7 @@ export default function RestaurantsMapView({
                 <button
                   key={restaurant.id}
                   type="button"
+                  data-restaurant-id={restaurant.id}
                   onClick={() => {
                     setSelectedId(restaurant.id);
                     const map = mapInstanceRef.current;
@@ -1104,129 +997,29 @@ export default function RestaurantsMapView({
                 </div>
               )}
 
-              <div
-                ref={tripPickerRef}
-                className="relative pt-1"
-                data-oltra-control="true"
-                {...tripPickerDismissProps}
-              >
-                {showTripPicker && (
-                  <div
-                    className="oltra-popup-panel oltra-popup-panel--bounded oltra-popup-panel--up absolute left-0 right-0 z-50 mb-2"
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                  >
-                    <div className="oltra-subheader">Select trip</div>
-
-                    <div className="mt-2 flex flex-col gap-2">
-                      {tripChoices.length ? (
-                        tripChoices.map((trip) => (
-                          <button
-                            key={trip.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedTripIdForAdd(trip.id);
-                              setShowTripPicker(false);
-                              void handleAddRestaurantToTrip(trip.id);
-                            }}
-                            className="oltra-dropdown-item"
-                          >
-                            {trip.label}
-                          </button>
-                        ))
-                      ) : (
-                        <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                          No trips available.
-                        </div>
-                      )}
-
-                      <div
-                        className="mt-3 border-t border-white/10 pt-3"
-                        title={tripLimitReached ? TRIP_LIMIT_MESSAGE : undefined}
-                      >
-                        <div className="oltra-subheader">Create new trip</div>
-
-                        <div className="mt-2 flex flex-col gap-2">
-                          <input
-                            type="text"
-                            value={newTripName}
-                            maxLength={MAX_TRIP_NAME_CHARS}
-                            onChange={(e) => setNewTripName(e.target.value)}
-                            placeholder="Trip name"
-                            className="oltra-input"
-                            disabled={tripLimitReached}
-                          />
-                          {/* maxLength stops typing silently; say so (2026-10-05). */}
-                          {newTripName.length >= MAX_TRIP_NAME_CHARS ? (
-                            <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                              Trip names are {MAX_TRIP_NAME_CHARS} characters at most
-                            </div>
-                          ) : null}
-
-
-                          {/* Stays clickable when blocked so it can say why;
-                              passive, with the reason on hover. */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (createTripBlockedReason) {
-                                setTripPickerNotice(createTripBlockedReason);
-                                return;
-                              }
-                              setTripPickerNotice("");
-                              handleCreateTripAndAddRestaurant();
-                            }}
-                            disabled={creatingTrip}
-                            aria-disabled={Boolean(createTripBlockedReason)}
-                            data-reason={createTripBlockedReason ?? undefined}
-                            className="oltra-btn oltra-btn--condensed oltra-btn--block"
-                          >
-                            {creatingTrip ? "Creating..." : "Create new trip"}
-                          </button>
-
-                          {tripPickerNotice ? (
-                            <div className="text-[12px] leading-snug text-[color:var(--oltra-error-text)]">
-                              {tripPickerNotice}
-                            </div>
-                          ) : null}
-
-                          {tripLimitReached ? (
-                            <div className="text-[12px] leading-snug text-[color:var(--oltra-text-muted)]">
-                              {TRIP_LIMIT_MESSAGE}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
+              {/* The shared trip picker (2026-10-05), as on Hotels, Flights and
+                  Landing. This page had its own copy, which opened inside the
+                  fixed-height panel, clipped, and never showed a saved state;
+                  the shared one is portalled, flips up when there is no room,
+                  and goes passive once saved. */}
+              <div className="relative pt-1" data-oltra-control="true">
                 {/* Side by side and equal width (Ulrik, 2026-09-21), through
                     §35A's own pair primitive rather than a local grid. Stacked
                     they cost the fixed-height pane a whole row, and the labels
                     fit the half-width comfortably at the condensed size. */}
                 <div className="oltra-btn-pair w-full">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMemberActionMessage("");
-                      setMemberActionError("");
-
-                      if (!isMemberLoggedIn) {
-                        setShowTripPicker(false);
-                        setMemberActionError(getMemberActionLoginMessage("trip"));
-                        return;
-                      }
-
-                      setShowTripPicker((prev) => !prev);
+                  <SaveToTripControl
+                    onSave={(tripId) => handleSaveRestaurant(tripId, selectedRestaurant)}
+                    newTripDefaults={{
+                      destination: buildLocationLabel(selectedRestaurant) || null,
+                      periodLabel: null,
                     }}
-                    className="oltra-btn oltra-btn--condensed"
-                    aria-disabled={!isMemberLoggedIn}
-                    data-reason={isMemberLoggedIn ? undefined : "Log in to save to a trip"}
-                  >
-                    {memberActionLoading === "trip" ? "SAVING..." : "SAVE TO TRIP"}
-                  </button>
+                    savedKey={`restaurant|${selectedRestaurant.id}`}
+                    label="SAVE TO TRIP"
+                    compact
+                    dropUp
+                    className="oltra-btn oltra-btn--condensed oltra-btn--block"
+                  />
 
                   {/* Passive and labelled FAVOURITE once it is one (Ulrik,
                       2026-09-24): nothing left to do, and the label says so. */}
