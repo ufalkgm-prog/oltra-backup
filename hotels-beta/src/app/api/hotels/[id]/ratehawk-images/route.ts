@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getItemById } from "@/lib/directus";
 import { getHotelImages } from "@/lib/hotels/hotelImages";
+import { STATIC_HOTEL_CACHE_HEADERS } from "@/lib/hotels/staticResponseCache";
 
 // Lazy-loads one hotel's full gallery.
 //
@@ -41,7 +42,7 @@ export async function GET(
           category: null,
           credit: image.credit,
         })),
-      });
+      }, { headers: STATIC_HOTEL_CACHE_HEADERS });
     }
 
     const hotel = await getItemById<RawHotelImageFields>("hotels", id, {
@@ -59,7 +60,7 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({ ok: true, images });
+    return NextResponse.json({ ok: true, images }, { headers: STATIC_HOTEL_CACHE_HEADERS });
   } catch (error) {
     console.error("HOTEL IMAGES ERROR:", error);
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getItemById } from "@/lib/directus";
+import { STATIC_HOTEL_CACHE_HEADERS } from "@/lib/hotels/staticResponseCache";
 
 // One published hotel's editorial description, for the Hotels page's selected
 // hotel. Kept out of the bulk hotels fetch (2026-09-15): with every
@@ -26,7 +27,10 @@ export async function GET(
     if (hotel.published !== true) {
       return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ ok: true, description: hotel.description ?? "" });
+    return NextResponse.json(
+      { ok: true, description: hotel.description ?? "" },
+      { headers: STATIC_HOTEL_CACHE_HEADERS }
+    );
   } catch (error) {
     console.error("HOTEL DESCRIPTION ERROR:", error);
     return NextResponse.json(

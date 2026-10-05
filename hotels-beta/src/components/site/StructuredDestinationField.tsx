@@ -801,6 +801,23 @@ export default function StructuredDestinationField({
     ? helperPrompt(tokens) || placeholder
     : placeholder;
 
+  /* Removing the LAST chip waits to search (2026-10-05 test pass). Submitting
+     at once emptied the search, which on Hotels swaps the whole page to the
+     featured hero while the guest is about to type the next place. It now
+     submits on the next pick (addToken), on Enter, or when the box loses
+     focus with nothing chosen. */
+  const pendingEmptySubmitRef = useRef(false);
+  const tokenCountRef = useRef(tokens.length);
+  useEffect(() => {
+    tokenCountRef.current = tokens.length;
+  }, [tokens.length]);
+
+  function flushPendingEmptySubmit() {
+    if (!pendingEmptySubmitRef.current) return;
+    pendingEmptySubmitRef.current = false;
+    if (tokenCountRef.current === 0) submitParentForm();
+  }
+
   function submitParentForm() {
     const form = rootRef.current?.closest("form");
     if (form instanceof HTMLFormElement) {
@@ -823,6 +840,7 @@ export default function StructuredDestinationField({
   }
 
   function addToken(item: SuggestionItem) {
+    pendingEmptySubmitRef.current = false;
     // Choosing a destination while the curated token shows starts an ordinary
     // search from scratch: the page's older tokens are not revived under it.
     const replacingCurated = showCurated;
@@ -892,10 +910,20 @@ export default function StructuredDestinationField({
     setTypedValue("");
     setOpen(false);
 
+    const leavesNone = tokens.every(
+      (token) =>
+        token.type === target.type &&
+        String(token.id ?? token.value) === String(target.id ?? target.value)
+    );
+
     requestAnimationFrame(() => {
       inputRef.current?.focus();
       refocusRequestedAt = Date.now();
-      submitParentForm();
+      if (leavesNone) {
+        pendingEmptySubmitRef.current = true;
+      } else {
+        submitParentForm();
+      }
     });
   }
 
@@ -1025,6 +1053,11 @@ export default function StructuredDestinationField({
                 setTypedValue(nextValue);
                 setOpen(nextValue.trim().length >= 2);
               }}
+              onBlur={() => {
+                // Later than the click on a suggestion, which blurs the box
+                // first and then picks - the pick cancels this.
+                if (pendingEmptySubmitRef.current) window.setTimeout(flushPendingEmptySubmit, 200);
+              }}
               onFocus={() => {
                 if (suppressNextFocusOpenRef.current) {
                   suppressNextFocusOpenRef.current = false;
@@ -1058,6 +1091,7 @@ export default function StructuredDestinationField({
                   } else {
                     setTypedValue("");
                     setOpen(false);
+                    flushPendingEmptySubmit();
                   }
                   return;
                 }

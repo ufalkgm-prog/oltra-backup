@@ -417,6 +417,13 @@ export default function SaveToTripControl({
                   className="oltra-input"
                   disabled={limitReached || busy}
                 />
+                {/* maxLength stops typing silently; say so (2026-10-05). */}
+                {newTripName.length >= MAX_TRIP_NAME_CHARS ? (
+                  <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
+                    Trip names are {MAX_TRIP_NAME_CHARS} characters at most
+                  </div>
+                ) : null}
+
 
                 {/* Deliberately not `disabled`: a disabled button fires no
                     click, so it can never say why. Reads as passive, shows the

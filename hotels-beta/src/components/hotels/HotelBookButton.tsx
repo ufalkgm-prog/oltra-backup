@@ -126,7 +126,7 @@ function BookDialog({
       role="presentation"
     >
       <div
-        className="oltra-modal-panel relative h-fit w-full max-w-[520px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6"
+        className="oltra-modal-panel relative my-auto h-fit w-full max-w-[520px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"

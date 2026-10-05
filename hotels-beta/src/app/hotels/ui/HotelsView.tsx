@@ -526,8 +526,9 @@ function HiddenPreserveParams(props: {
   );
 }
 
+// No `region`: it holds the continent, which read "Paris · Europe · France".
 function locationLine(h: HotelRecord): string {
-  return [h.local_area, h.city, h.region, h.country].filter(Boolean).join(" · ");
+  return [h.local_area, h.city, h.country].filter(Boolean).join(" · ");
 }
 
 /* WHO THE RATE IS PRICED FOR, not "Sleeps N" (Ulrik, 2026-09-28).
@@ -1381,24 +1382,6 @@ export default function HotelsView(props: {
     };
   }, []);
 
-  /* Escape closes the photo lightbox (Ulrik, 2026-09-21).
-   *
-   * It had the backdrop click and the × and nothing else, so the one key
-   * everybody reaches for did nothing. FlightDetailsPopup already does this;
-   * this is the same listener.
-   *
-   * Deliberately NO scroll lock to go with it: the lightbox has never had one,
-   * the page behind does not scroll at document level anyway, and adding one
-   * would introduce the very failure just fixed in the concierge modal. */
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setLightboxOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxOpen]);
-
   useEffect(() => {
     if (!shouldShowResults || visibleHotels.length === 0) {
       setSelectedHotelId(null);
@@ -1870,6 +1853,29 @@ export default function HotelsView(props: {
   // route the detail panel uses. Cached by hotel id: the revolver returns to
   // hotels it has already shown, and the arrows make that common.
   const featuredImagesCacheRef = useRef<Map<string, string[]>>(new Map());
+  /* One request per hotel's gallery, shared by the featured strip and the
+     selected-hotel panel. Each used to fetch on its own, so a hotel shown in
+     both was requested two or three times on one page load (2026-10-05). */
+  const hotelImagesRequestsRef = useRef<
+    Map<string, Promise<{ url: string; category: string | null }[] | null>>
+  >(new Map());
+  const requestHotelImages = useCallback((id: string) => {
+    const pending = hotelImagesRequestsRef.current.get(id);
+    if (pending) return pending;
+    const request = fetch(`/api/hotels/${id}/ratehawk-images`)
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; images?: { url: string; category: string | null }[] }) =>
+        data?.ok ? data.images ?? [] : null
+      )
+      .catch(() => null)
+      .then((images) => {
+        // A failure is not remembered, so the next look tries again.
+        if (images === null) hotelImagesRequestsRef.current.delete(id);
+        return images;
+      });
+    hotelImagesRequestsRef.current.set(id, request);
+    return request;
+  }, []);
   // Tagged with the hotel it belongs to: without the id, a hotel whose fetch
   // is still in flight would render the previous hotel's images for a frame.
   const [featuredExtraImages, setFeaturedExtraImages] = useState<{
@@ -1891,13 +1897,9 @@ export default function HotelsView(props: {
       if (cached) return cached;
 
       try {
-        const res = await fetch(`/api/hotels/${key}/ratehawk-images`);
-        const data = (await res.json()) as {
-          ok?: boolean;
-          images?: { url: string }[];
-        };
-        if (!data?.ok) return [];
-        const urls = (data.images ?? [])
+        const images = await requestHotelImages(key);
+        if (!images) return [];
+        const urls = images
           .slice(0, FEATURED_IMAGE_COUNT)
           .map((image) => resolveRatehawkUrl(image.url, RATEHAWK_FULL_SIZE));
         featuredImagesCacheRef.current.set(key, urls);
@@ -1907,7 +1909,7 @@ export default function HotelsView(props: {
         return [];
       }
     },
-    []
+    [requestHotelImages]
   );
 
   useEffect(() => {
@@ -2212,19 +2214,17 @@ export default function HotelsView(props: {
     if (!selectedHotel?.ratehawk_image_1) return;
     let cancelled = false;
 
-    fetch(`/api/hotels/${selectedHotel.id}/ratehawk-images`)
-      .then((res) => res.json())
-      .then((data: { ok?: boolean; images?: { url: string; category: string | null }[] }) => {
-        if (!cancelled && data?.ok) setRatehawkGallery(data.images ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setRatehawkGallery([]);
-      });
+    requestHotelImages(String(selectedHotel.id)).then((images) => {
+      if (cancelled) return;
+      // Nothing loaded empties the gallery rather than leaving the previous
+      // hotel's photos under this one's name.
+      setRatehawkGallery(images ?? []);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [selectedHotel?.id, selectedHotel?.ratehawk_image_1]);
+  }, [selectedHotel?.id, selectedHotel?.ratehawk_image_1, requestHotelImages]);
 
   // Children's ages from the live guest selection — the same source as the
   // adults and children counts the fetches below send — as one value those
@@ -2365,6 +2365,32 @@ export default function HotelsView(props: {
     () => selectedHotelGallery.map((image) => image.url),
     [selectedHotelGallery]
   );
+
+  /* Escape closes the photo lightbox (Ulrik, 2026-09-21).
+   *
+   * It had the backdrop click and the × and nothing else, so the one key
+   * everybody reaches for did nothing. FlightDetailsPopup already does this;
+   * this is the same listener.
+   *
+   * Deliberately NO scroll lock to go with it: the lightbox has never had one,
+   * the page behind does not scroll at document level anyway, and adding one
+   * would introduce the very failure just fixed in the concierge modal. */
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const count = selectedHotelImages.length;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLightboxOpen(false);
+      // The arrow keys step through the photos like the ‹ › buttons (2026-10-05).
+      if (count > 1 && event.key === "ArrowRight") {
+        setSelectedImageIndex((prev) => (prev === count - 1 ? 0 : prev + 1));
+      }
+      if (count > 1 && event.key === "ArrowLeft") {
+        setSelectedImageIndex((prev) => (prev === 0 ? count - 1 : prev - 1));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen, selectedHotelImages.length]);
 
   const isFavorited = Boolean(
     selectedHotel && favoriteHotelIds.has(String(selectedHotel.id))
@@ -3698,7 +3724,11 @@ export default function HotelsView(props: {
                                     {room.sizeSquareMeters ? (
                                       <span>· {room.sizeSquareMeters} m²</span>
                                     ) : null}
-                                    <span>· {formatRoomLayout(room)}</span>
+                                    {/* No "· —" when ETG sent no bed or room
+                                        type; the detail pop-up keeps its dash. */}
+                                    {formatRoomLayout(room) !== "—" ? (
+                                      <span>· {formatRoomLayout(room)}</span>
+                                    ) : null}
                                   </div>
                                   <button
                                     type="button"
@@ -3744,7 +3774,7 @@ export default function HotelsView(props: {
                                   onClick={() => setOpenRoomDetailKey(null)}
                                 >
                                   <div
-                                    className="oltra-modal-panel relative h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6 pt-14"
+                                    className="oltra-modal-panel relative my-auto h-fit w-full max-w-[720px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6 pt-14"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <button
@@ -4043,7 +4073,7 @@ export default function HotelsView(props: {
                             onClick={() => setPrebook({ status: "idle" })}
                           >
                             <div
-                              className="oltra-modal-panel relative h-fit w-full max-w-[620px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6"
+                              className="oltra-modal-panel relative my-auto h-fit w-full max-w-[620px] rounded-[var(--oltra-radius-xl)] border border-[var(--oltra-field-border)] p-6"
                               onClick={(e) => e.stopPropagation()}
                               role="dialog"
                               aria-modal="true"

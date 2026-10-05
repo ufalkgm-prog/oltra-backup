@@ -515,8 +515,13 @@ export function toGroupedRoom(rate: RawRate, roomGroups: RawRoomGroup[]): Rateha
   };
 }
 
-// The cheapest room whose per-room capacity fits the party as it is spread
-// across the rooms searched.
+// The cheapest room. ETG returns only rates that take the party searched
+// (measured 2026-09-28, see formatRatePartyLabel in HotelsView), so every rate
+// already fits. It used to keep only rooms whose rg_ext.capacity covered the
+// party - but capacity is a room CATEGORY, and ETG leaves it 0 on many rooms,
+// read here as 1. For 2 adults that dropped five of Cheval Blanc Paris's six
+// rooms and showed EUR 9,859 where the cheapest was EUR 7,169 (2026-10-05).
+// `totalGuests` is kept for callers.
 //
 // A rate's price is ALREADY the total for every room in the request's guests
 // array — measured live 2026-09-16 (§32): the same rate searched for 2 rooms
@@ -531,12 +536,11 @@ export function computeHeadlinePrice(
 ): RatehawkHeadline {
   if (!groupedRooms.length) return null;
 
+  void totalGuests;
   const roomCount = Math.max(1, Math.floor(rooms));
-  const perRoomGuests = Math.ceil(Math.max(1, totalGuests) / roomCount);
-
-  const qualifying = groupedRooms.filter((room) => room.capacity >= perRoomGuests);
-  const pool = qualifying.length > 0 ? qualifying : groupedRooms;
-  const cheapest = pool[0];
+  const cheapest = groupedRooms.reduce((best, room) =>
+    room.pricePerStay < best.pricePerStay ? room : best
+  );
 
   return {
     pricePerStay: cheapest.pricePerStay,

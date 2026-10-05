@@ -1156,6 +1156,13 @@ export default function RestaurantsMapView({
                             className="oltra-input"
                             disabled={tripLimitReached}
                           />
+                          {/* maxLength stops typing silently; say so (2026-10-05). */}
+                          {newTripName.length >= MAX_TRIP_NAME_CHARS ? (
+                            <div className="text-[12px] text-[color:var(--oltra-text-muted)]">
+                              Trip names are {MAX_TRIP_NAME_CHARS} characters at most
+                            </div>
+                          ) : null}
+
 
                           {/* Stays clickable when blocked so it can say why;
                               passive, with the reason on hover. */}

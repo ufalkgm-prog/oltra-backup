@@ -6,6 +6,7 @@ import {
   formatPolicyTime,
   type HotelPolicies,
 } from "@/lib/ratehawk/metapolicy";
+import { STATIC_HOTEL_CACHE_HEADERS } from "@/lib/hotels/staticResponseCache";
 
 // One published hotel's ETG policies (metapolicy_struct + metapolicy_extra_info,
 // and check-in/out times) for the Hotels page's selected hotel — read from what
@@ -49,7 +50,7 @@ export async function GET(
       sections: formatMetapolicyStruct(hotel.ratehawk_metapolicy_struct),
       extraInfo: formatMetapolicyExtraInfo(hotel.ratehawk_metapolicy_extra_info),
     };
-    return NextResponse.json({ ok: true, policies });
+    return NextResponse.json({ ok: true, policies }, { headers: STATIC_HOTEL_CACHE_HEADERS });
   } catch (error) {
     console.error("HOTEL POLICIES ERROR:", error);
     return NextResponse.json(
