@@ -49,7 +49,8 @@ type Props = {
   includeHotels: boolean;
   includeFlights: boolean;
   /** The destination city's restaurants when Restaurants is ticked; null when
-   * it is not. */
+   * it is not. Empty when the search is wider than a city, which the pane
+   * answers by asking for one. */
   restaurants: RestaurantRecord[] | null;
   origin: string;
   destinationCity: string;
@@ -65,6 +66,10 @@ type Props = {
   // the URL has none, and the browser locale fills in.
   residency: string;
   hasFullStayDetails: boolean;
+  /** Why dates that are set still cannot be priced (a child's age, too many
+   * guests per room, a stay over 30 nights). Without it the cards said
+   * "Select dates" with the dates in the box above. */
+  stayIssue: string | null;
   hotelsHref: string;
   flightsHref: string;
   narrowSuggestion: "city" | "purpose" | null;
@@ -106,6 +111,7 @@ export default function LandingSummary({
   childrenAges,
   residency: residencyParam,
   hasFullStayDetails,
+  stayIssue,
   hotelsHref,
   flightsHref,
   narrowSuggestion,
@@ -312,13 +318,20 @@ export default function LandingSummary({
   /* sellableFirst keeps the editorial order and moves the hotels we cannot
      sell to the bottom of the list (Ulrik, 2026-09-21). Applied after the
      slice, so which hotels appear is unchanged - only where they sit. */
-  const visibleHotels = useMemo(
+  const listedHotels = useMemo(
     () =>
       hotelSummary && hotelSummary.count <= CARD_LIMIT
         ? sellableFirst(hotelSummary.hotels.slice(0, CARD_LIMIT))
         : [],
     [hotelSummary]
   );
+  /* Every change to the form re-renders the page on the server, which hands
+     this component new hotel objects even when the hotels are the same - so
+     ticking Flights re-ran the price check below (2026-10-05 test pass: an
+     extra 1.2s availability call). Held by the ids, not by the objects. */
+  const visibleHotelsKey = listedHotels.map((h) => String(h.id)).join(",");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const visibleHotels = useMemo(() => listedHotels, [visibleHotelsKey]);
 
   // Residency is required by the Ratehawk endpoints. The guest's choice from
   // the guest selector wins; without one it is detected from the browser
@@ -597,8 +610,11 @@ export default function LandingSummary({
                   availability={
                     hasFullStayDetails
                       ? availabilityById[String(h.id)] ?? { status: "loading" }
-                      : { status: "idle" }
+                      : stayIssue
+                        ? { status: "note", text: stayIssue }
+                        : { status: "idle" }
                   }
+                  blockedReason={!hasFullStayDetails && stayIssue ? stayIssue : null}
                   bookingHref={bookingHref}
                   renderSaveControl={() => (
                     <SaveToTripControl
@@ -800,7 +816,7 @@ export default function LandingSummary({
             </div>
           ) : (
             <div className={styles.summaryLine}>
-              We don&apos;t hold restaurants for this destination yet. Choose a city to see ours.
+              Please choose a city to see restaurants
             </div>
           )}
           </div>

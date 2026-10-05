@@ -183,3 +183,9 @@
   text-transform: uppercase;
   color: var(--oltra-text-muted);
 }
+/* The answer to typed text that matches nothing - a statement, not a row. */
+.suggestionEmpty {
+  padding: 0.22rem 0.42rem;
+  font-size: 0.84rem;
+  color: var(--oltra-text-muted);
+}

@@ -9,7 +9,7 @@ import {
 import { buildHotelSuggestionDataset } from "@/lib/hotelSearchSuggestions";
 import { guestSelectionIssue, readGuestSelection } from "@/lib/guests";
 import { isValidResidencyCode } from "@/lib/countries";
-import { isStayTooLong } from "@/lib/stay";
+import { isStayTooLong, STAY_TOO_LONG_MESSAGE } from "@/lib/stay";
 import { getRestaurantsByCity } from "@/lib/restaurants";
 import type { RestaurantRecord } from "@/app/restaurants/types";
 import LandingSearchPanel from "./LandingSearchPanel";
@@ -160,6 +160,12 @@ export default async function HomePage({
     guests.adults > 0 &&
     Boolean(bedrooms) &&
     !guestSelectionIssue(guests, Math.max(1, Number(bedrooms) || 1));
+  const stayIssue =
+    fromDate && toDate && !hasFullStayDetails
+      ? isStayTooLong(fromDate, toDate)
+        ? STAY_TOO_LONG_MESSAGE
+        : guestSelectionIssue(guests, Math.max(1, Number(bedrooms) || 1))
+      : null;
   const childrenAges = guests.kidAges.slice(0, guests.kids).map((age) => Number(age));
   const residencyParam = normalizeParam(resolvedSearchParams.residency).trim().toLowerCase();
 
@@ -238,6 +244,8 @@ export default async function HomePage({
   } | null = null;
   let hotelHeaderLabel = "Hotels";
   let destinationCity = cityParam || q;
+  // Whether the search narrowed to one city, by name or by the hotels found.
+  let searchIsOneCity = Boolean(cityParam);
 
   if (hotelsAll) {
     const hotels = filterHotelsByMacroRegion(filterHotelsByTags(hotelsAll, {
@@ -257,6 +265,7 @@ export default async function HomePage({
     hotelHeaderLabel = buildHotelsHeaderLabel(hotels.length, resolvedSearchParams);
 
     destinationCity = pickDestinationCity(q, hotels, cityParam);
+    searchIsOneCity ||= new Set(hotels.map((h) => cleanLabel(h.city)).filter(Boolean)).size === 1;
   }
 
   /* The city's restaurants — the same list the Restaurants page draws for it,
@@ -273,7 +282,17 @@ export default async function HomePage({
   }
   const restaurantsAvailable = cityRestaurants.length > 0;
   const showRestaurants = submitted && hasDestination && includeRestaurants && restaurantsAvailable;
-  const restaurants: RestaurantRecord[] | null = showRestaurants ? cityRestaurants : null;
+  /* A country or region asked for restaurants gets an empty pane that asks
+     for a city, as Flights asks for a more specific search (2026-10-05 test
+     pass: the pane vanished without a word). A city we hold none in still
+     shows no pane (2026-09-28). */
+  const restaurantsNeedCity =
+    submitted && hasDestination && includeRestaurants && !restaurantsAvailable && !searchIsOneCity;
+  const restaurants: RestaurantRecord[] | null = showRestaurants
+    ? cityRestaurants
+    : restaurantsNeedCity
+      ? []
+      : null;
 
   const sharedQuery = buildQueryString({
     ...resolvedSearchParams,
@@ -312,7 +331,7 @@ export default async function HomePage({
             classicPanes={{
               hotels: submitted && hasDestination && includeHotels,
               flights: submitted && hasDestination && includeFlights,
-              restaurants: showRestaurants,
+              restaurants: restaurants !== null,
             }}
             summary={
               submitted && hasDestination ? (
@@ -332,6 +351,7 @@ export default async function HomePage({
                   childrenAges={childrenAges}
                   residency={isValidResidencyCode(residencyParam) ? residencyParam : ""}
                   hasFullStayDetails={hasFullStayDetails}
+                  stayIssue={stayIssue}
                   hotelsHref={hotelsHref}
                   flightsHref={flightsHref}
                   narrowSuggestion={narrowSuggestion}

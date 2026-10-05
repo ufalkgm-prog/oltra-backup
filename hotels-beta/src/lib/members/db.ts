@@ -11,6 +11,18 @@ import type {
 import { MAX_TRIP_NAME_CHARS, MAX_TRIPS_PER_MEMBER, TripLimitError } from "./tripLimits";
 import { NEW_PASSWORD_RULE } from "./credentials";
 
+/** A trip's period as members read it: "01 Sep 2026 – 10 Sep 2026". Landing
+ * and the concierge wrote ISO dates and Hotels wrote these, so one trip list
+ * showed both (2026-10-05 test pass). Applied on write and on read, which
+ * covers trips already saved the other way. */
+export function formatPeriodLabel(label: string | null | undefined): string {
+  return (label ?? "").replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_, y, m, d) =>
+    new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(
+      new Date(Number(y), Number(m) - 1, Number(d))
+    )
+  );
+}
+
 type ProfileUpsert = Database["public"]["Tables"]["member_profiles"]["Insert"];
 type FamilyInsert =
   Database["public"]["Tables"]["member_family_members"]["Insert"];
@@ -527,7 +539,7 @@ function mapSavedTrips(
     id: trip.id,
     name: trip.name,
     destination: trip.destination ?? "",
-    period: trip.period_label ?? "",
+    period: formatPeriodLabel(trip.period_label),
     travelers: trip.travelers_label ?? "",
     status: trip.status ?? "",
     hotels: hotels
@@ -825,7 +837,7 @@ export async function fetchTripChoicesBrowser(): Promise<TripChoice[]> {
 
   return (data ?? []).map((item) => {
     const name = item.name ?? "Untitled trip";
-    const parts = [item.destination, item.period_label].filter(Boolean);
+    const parts = [item.destination, formatPeriodLabel(item.period_label)].filter(Boolean);
     return {
       id: item.id,
       name,
@@ -891,7 +903,7 @@ export async function createTripBrowser(input?: {
     user_id: user.id,
     name: input?.name?.trim().slice(0, MAX_TRIP_NAME_CHARS) || "New trip",
     destination: input?.destination?.trim() || null,
-    period_label: input?.periodLabel?.trim() || null,
+    period_label: formatPeriodLabel(input?.periodLabel?.trim()) || null,
     travelers_label: input?.travelersLabel?.trim() || null,
     status: "Planning",
   };
@@ -904,7 +916,7 @@ export async function createTripBrowser(input?: {
 
   if (error) throw error;
 
-  const parts = [data.destination, data.period_label].filter(Boolean);
+  const parts = [data.destination, formatPeriodLabel(data.period_label)].filter(Boolean);
 
   return {
     id: data.id,

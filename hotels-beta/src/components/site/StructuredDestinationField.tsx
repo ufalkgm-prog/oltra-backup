@@ -450,6 +450,15 @@ export default function StructuredDestinationField({
 
     const hasHotelToken = nextTokens.some((token) => token.type === "hotel");
 
+    /* Someone typing in the box keeps their text and their suggestions. The
+       URL most often changes under them because removing a chip auto-submits
+       the page, and the round trip lands while they are typing the next place;
+       re-syncing then closed the list under the cursor and wiped the text
+       (2026-10-05 test pass: 2 of 4 suggestion clicks missed). */
+    if (typeof document !== "undefined" && document.activeElement === inputRef.current) {
+      return;
+    }
+
     setTypedValue(hasStructured || hasHotelToken ? "" : q);
     setOpen(false);
   }, [searchParams, dataset, allowedTypes]);
@@ -1043,6 +1052,9 @@ export default function StructuredDestinationField({
                   const match = resolveTypedValue();
                   if (match) {
                     addToken(match);
+                  } else if (minimumCharsReached) {
+                    // Keep the text and say why nothing happened.
+                    setOpen(true);
                   } else {
                     setTypedValue("");
                     setOpen(false);
@@ -1123,13 +1135,24 @@ export default function StructuredDestinationField({
               </div>
             ))}
           </div>
+        ) : open && minimumCharsReached ? (
+          /* Text that matches nothing used to get no answer at all, and Enter
+             quietly emptied the box while the last search's results stayed. */
+          <div className={`${styles.suggestionPanel} oltra-popup-panel`} role="status">
+            <div className={styles.suggestionEmpty}>
+              No hotel, place or purpose matches “{typedValue.trim()}”
+            </div>
+          </div>
         ) : null}
       </div>
 
+      {/* data-loose marks typed text that is not a chosen suggestion, so a
+          page's auto-submit can leave it out (see LandingSearchPanel). */}
       <input
         type="hidden"
         name="q"
         value={hotelToken?.value ?? (tokens.length === 0 ? typedValue : "")}
+        data-loose={!hotelToken && tokens.length === 0 && typedValue ? "1" : undefined}
       />
       <input type="hidden" name="city" value={cityToken?.value ?? ""} />
       <input type="hidden" name="state" value={stateToken?.value ?? ""} />

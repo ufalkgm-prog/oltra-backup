@@ -408,7 +408,8 @@ export default function HotelSmallCard({
         </div>
         {stacked && rightBlock ? <div className="mt-1.5">{rightBlock}</div> : null}
         {/* Three frames: BOOK beside SAVE, under the price. */}
-        {stacked && actions ? <div className="mt-2">{actions}</div> : null}
+        {/* Under the photo, at the card's left edge: a passive button's reason opens rightwards, or the card clips it (2026-10-05). */}
+        {stacked && actions ? <div className="mt-2 oltra-reason-start">{actions}</div> : null}
       </div>
 
       {/* items-baseline: the price sits on the name's first line rather than

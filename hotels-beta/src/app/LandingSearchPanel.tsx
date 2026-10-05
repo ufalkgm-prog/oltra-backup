@@ -562,15 +562,26 @@ export default function LandingSearchPanel({
     );
   }
 
-  function buildUrlFromForm(form: HTMLFormElement, submitted: boolean): string {
+  /** The form as search params. Typed text that is not a chosen suggestion
+   * (data-loose) is never searched - Enter refuses it too - so it is left at
+   * whatever the URL already holds. It used to ride along with any auto-submit,
+   * which is how a half-typed "Porto Cer" became the search (2026-10-05). */
+  function formParams(form: HTMLFormElement): URLSearchParams {
     const formData = new FormData(form);
     const params = new URLSearchParams();
+    const looseQ = form.querySelector('input[name="q"][data-loose="1"]') !== null;
+    const urlQ = new URLSearchParams(window.location.search).get("q") ?? "";
 
     for (const [key, value] of formData.entries()) {
       if (key === "submitted") continue;
-      const stringValue = String(value);
+      const stringValue = key === "q" && looseQ ? urlQ : String(value);
       if (stringValue) params.append(key, stringValue);
     }
+    return params;
+  }
+
+  function buildUrlFromForm(form: HTMLFormElement, submitted: boolean): string {
+    const params = formParams(form);
 
     if (submitted) params.set("submitted", "1");
 
@@ -688,14 +699,7 @@ export default function LandingSearchPanel({
     autoSubmitTimerRef.current = window.setTimeout(() => {
       if (!formRef.current) return;
 
-      const formData = new FormData(formRef.current);
-      const params = new URLSearchParams();
-
-      for (const [key, value] of formData.entries()) {
-        if (key === "submitted") continue;
-        const stringValue = String(value);
-        if (stringValue) params.append(key, stringValue);
-      }
+      const params = formParams(formRef.current);
 
       const nextKey = params.toString();
       if (!nextKey || nextKey === lastSubmittedKeyRef.current) return;

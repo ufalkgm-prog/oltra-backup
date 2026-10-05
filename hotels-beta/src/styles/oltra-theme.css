@@ -1126,6 +1126,15 @@ button.oltra-select {
   visibility: visible;
 }
 
+/* For a button at the left edge of a clipping container (the stacked small
+   card puts its actions under the photo): the reason opens rightwards. */
+.oltra-reason-start .oltra-btn[aria-disabled="true"][data-reason]::before {
+  right: auto;
+  left: 0;
+  /* SAVE sits about 95px into a card about 320px wide. */
+  max-width: 210px;
+}
+
 /* ---- formats ---- */
 
 .oltra-btn--condensed {
