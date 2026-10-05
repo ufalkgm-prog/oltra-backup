@@ -3109,7 +3109,7 @@ export default function HotelsView(props: {
                               // server-side with no beta cookie and is redirected to
                               // the login page.
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={img} alt="" className="h-20 w-full object-cover" />
+                              <img src={img} alt="" loading="lazy" decoding="async" className="h-20 w-full object-cover" />
                             ) : (
                               <div className="oltra-photo-placeholder h-20 w-full">Photos coming soon</div>
                             )}
@@ -3557,6 +3557,8 @@ export default function HotelsView(props: {
                           <img
                             src={image.url}
                             alt=""
+                            loading="lazy"
+                            decoding="async"
                             className="aspect-[4/3] w-full object-cover"
                           />
                         </button>

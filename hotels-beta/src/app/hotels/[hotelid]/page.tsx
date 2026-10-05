@@ -192,6 +192,8 @@ export default async function HotelDetailPage({
                     key={photo.url}
                     src={`${photo.url}?width=${i === 0 ? 1600 : 900}&fit=cover`}
                     alt={i === 0 ? (hotel.hotel_name ?? "Hotel photo") : ""}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
                     className={i === 0 ? "sm:col-span-2 h-[320px]" : "h-[240px]"}
                   />
                 ))}

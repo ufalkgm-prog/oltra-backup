@@ -55,6 +55,10 @@ export async function GET(
         "Content-Type": upstream.headers.get("content-type") ?? "image/jpeg",
         // Immutable: a Directus file id never points at different bytes.
         "Cache-Control": "public, max-age=31536000, immutable",
+        // Cache-Control alone is the browser's; Vercel's CDN only keeps a
+        // function response it is told to (measured 2026-10-05: MISS on every
+        // repeat). Middleware still runs before the CDN, so the beta gate holds.
+        "CDN-Cache-Control": "public, max-age=31536000, immutable",
       },
     });
   } catch (error) {

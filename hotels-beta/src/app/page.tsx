@@ -163,7 +163,19 @@ export default async function HomePage({
   const childrenAges = guests.kidAges.slice(0, guests.kids).map((age) => Number(age));
   const residencyParam = normalizeParam(resolvedSearchParams.residency).trim().toLowerCase();
 
-  const metaHotels = await getHotels({
+  /* The reads below do not depend on each other, so they run together; they
+     used to wait in line (metadata, then hotels, then restaurants). Restaurants
+     can start early only when the city is in the URL - otherwise the city comes
+     from the hotels found. */
+  const loadRestaurants = (city: string) =>
+    getRestaurantsByCity(city).catch((err) => {
+      console.error("[landing] restaurants", err);
+      return [] as RestaurantRecord[];
+    });
+  const earlyRestaurants =
+    submitted && hasDestination && cityParam ? loadRestaurants(cityParam) : null;
+
+  const metaHotelsPromise = getHotels({
     fields: [
       "hotel_name",
       "city",
@@ -177,20 +189,9 @@ export default async function HomePage({
     filter: { published: { _eq: true } },
     limit: -1,
   });
-  const dataset = buildHotelSuggestionDataset(metaHotels);
 
-  let hotelSummary: {
-    count: number;
-    names: string[];
-    hotels: Awaited<ReturnType<typeof getHotels>>;
-  } | null = null;
-  let hotelHeaderLabel = "Hotels";
-  let destinationCity = cityParam || q;
-
-  if (submitted && includeHotels) {
-    const filter = buildHotelsDirectusFilter(resolvedSearchParams);
-
-    const hotelsAll = await getHotels({
+  const hotelsAllPromise = submitted && includeHotels
+    ? getHotels({
       fields: [
         // Bulk list — fetched for every hotel in one request. Never add
         // `ratehawk_room_groups` or ratehawk_image_2..50; both are read
@@ -221,11 +222,24 @@ export default async function HomePage({
         "setting",
         "style",
       ],
-      filter,
+      filter: buildHotelsDirectusFilter(resolvedSearchParams),
       sort: ["-editor_rank", "-ext_points", "hotel_name"],
       limit: -1,
-    });
+    })
+    : null;
 
+  const [metaHotels, hotelsAll] = await Promise.all([metaHotelsPromise, hotelsAllPromise]);
+  const dataset = buildHotelSuggestionDataset(metaHotels);
+
+  let hotelSummary: {
+    count: number;
+    names: string[];
+    hotels: Awaited<ReturnType<typeof getHotels>>;
+  } | null = null;
+  let hotelHeaderLabel = "Hotels";
+  let destinationCity = cityParam || q;
+
+  if (hotelsAll) {
     const hotels = filterHotelsByMacroRegion(filterHotelsByTags(hotelsAll, {
       activities: normalizeParam(resolvedSearchParams.activities).split(",").map((s) => s.trim()).filter(Boolean),
       settings: normalizeParam(resolvedSearchParams.settings).split(",").map((s) => s.trim()).filter(Boolean),
@@ -252,12 +266,10 @@ export default async function HomePage({
      there is no pane saying "we don't hold…" any more, because it can no
      longer be asked for. */
   let cityRestaurants: RestaurantRecord[] = [];
-  if (submitted && hasDestination && destinationCity) {
-    try {
-      cityRestaurants = await getRestaurantsByCity(destinationCity);
-    } catch (err) {
-      console.error("[landing] restaurants", err);
-    }
+  if (earlyRestaurants) {
+    cityRestaurants = await earlyRestaurants;
+  } else if (submitted && hasDestination && destinationCity) {
+    cityRestaurants = await loadRestaurants(destinationCity);
   }
   const restaurantsAvailable = cityRestaurants.length > 0;
   const showRestaurants = submitted && hasDestination && includeRestaurants && restaurantsAvailable;

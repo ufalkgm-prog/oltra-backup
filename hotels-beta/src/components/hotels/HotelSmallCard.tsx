@@ -396,6 +396,8 @@ export default function HotelSmallCard({
             <img
               src={img}
               alt=""
+              loading="lazy"
+              decoding="async"
               className={`${layout.imageBox} object-cover`}
             />
           ) : (
