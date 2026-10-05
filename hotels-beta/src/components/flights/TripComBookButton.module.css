@@ -47,7 +47,7 @@
   color: var(--oltra-text-secondary);
 }
 
-/* Cancel and Proceed, equal width per §35A's rule for a paired choice. */
+/* Cancel and Continue, equal width per §35A's rule for a paired choice. */
 .actions {
   margin-top: 18px;
   width: 100%;

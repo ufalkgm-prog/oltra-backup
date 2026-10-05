@@ -674,6 +674,8 @@
   font-size: 0.82rem;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  /* One line: in the narrow one-way lane it broke into "EUR" / "~2,020" (2026-10-05). */
+  white-space: nowrap;
 }
 
 /* Two independently-scrolling panes side by side (Departure | Return+Price
@@ -1319,6 +1321,17 @@
   right: 0;
   z-index: 2;
   background: color-mix(in srgb, var(--oltra-field-bg) 55%, var(--oltra-bg-color));
+  /* An edge where the columns pass under it, so a cut-off flight reads as
+     scrolled rather than missing (2026-10-05). */
+  box-shadow: -10px 0 12px -10px rgba(0, 0, 0, 0.55);
+}
+
+/* Shown only while the flight columns overflow (FlightsView, overflowsX). */
+.multiScrollHint {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--oltra-text-muted);
+  text-align: right;
 }
 
 @media (max-width: 1000px) {

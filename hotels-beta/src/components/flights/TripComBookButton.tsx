@@ -23,7 +23,8 @@ import styles from "./TripComBookButton.module.css";
  *
  * THAT USED TO BE A PANEL UNDER EVERY CARD and it was far too much furniture
  * for something only read at the moment of leaving (Ulrik, 2026-09-21). It is
- * now this dialog: BOOK opens it, PROCEED goes to Trip.com, CANCEL closes it.
+ * now this dialog: BOOK opens it, CONTINUE goes to Trip.com, CANCEL closes it (Continue, as on
+ * the hotel BOOK pop-up, since 2026-10-05; it read Proceed).
  * The facts are identical — what changed is that they are asked for.
  *
  * The details are rendered from the itinerary, not written by the concierge.
@@ -195,7 +196,7 @@ function TripComHandoffDialog({
               onClose();
             }}
           >
-            Proceed
+            Continue
           </a>
         </div>
       </div>

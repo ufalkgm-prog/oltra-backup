@@ -35,3 +35,21 @@ const OWNER: Record<string, string> = (() => {
 export function cityOwningAirport(iata: string): string {
   return OWNER[iata.trim().toUpperCase()] ?? "";
 }
+
+const LABEL: Record<string, string> = (() => {
+  const labels: Record<string, string> = {};
+  for (const airports of Object.values(CITY_AIRPORTS)) {
+    for (const airport of airports) labels[airport.iata] ??= airport.label;
+  }
+  return labels;
+})();
+
+/** What to call an airport in a heading: the city it clearly belongs to
+ * ("London" for LHR), else its own name ("Denpasar I Gusti Ngurah Rai"), else
+ * "" (2026-10-05). The nearest-hotel-city lookup headed a search to DPS
+ * "Jimbaran Bay", a resort strip, which is a label for a hotel, not a place
+ * you fly to. */
+export function airportHeadingName(iata: string): string {
+  const code = iata.trim().toUpperCase();
+  return OWNER[code] ?? LABEL[code] ?? "";
+}

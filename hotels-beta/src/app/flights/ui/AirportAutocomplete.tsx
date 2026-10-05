@@ -62,13 +62,32 @@ export default function AirportAutocomplete({ label, value, onChange, codeOnly =
   // field once the query is specific enough. `city` is matched separately from
   // `label` because the label omits the city when the airport's own name
   // already implies it.
+  //
+  // Ranked in tiers, size order kept inside each (2026-10-05): the exact code,
+  // then a city or airport name that STARTS with the text, then the rest.
+  // "lond" put "King Phalo, East London, ZA" third, above Stansted, Luton and
+  // City, because a match anywhere in the label counted the same.
   const query = text.toLowerCase().trim()
   const matches = options && query.length >= 2
-    ? options.filter(o =>
-        o.label.toLowerCase().includes(query) ||
-        o.city.toLowerCase().includes(query) ||
-        o.value.toLowerCase().startsWith(query)
-      ).slice(0, 8)
+    ? options
+        .map(o => {
+          const label = o.label.toLowerCase()
+          const city = o.city.toLowerCase()
+          const code = o.value.toLowerCase()
+          // The label leads with "CODE · ", so its name starts after that.
+          const name = label.includes(' · ') ? label.slice(label.indexOf(' · ') + 3) : label
+          const tier =
+            code === query ? 0
+            : city.startsWith(query) || name.startsWith(query) ? 1
+            : code.startsWith(query) ? 2
+            : label.includes(query) || city.includes(query) ? 3
+            : -1
+          return { o, tier }
+        })
+        .filter(m => m.tier >= 0)
+        .sort((a, b) => a.tier - b.tier)
+        .slice(0, 8)
+        .map(m => m.o)
     : []
 
   function handleFocus() {

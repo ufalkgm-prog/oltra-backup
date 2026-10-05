@@ -61,6 +61,10 @@ The link lands on a filtered Trip.com *search*, never on the chosen flight: thei
 
 **Infants come from the children's ages (Ulrik, 2026-09-24).** The guest selector asks every child's age (0–17) on every page, and the flight side used to throw it away: Duffel got every child as a 10-year-old and Trip.com `babyqty=0`, so a baby was priced as a child with a seat. Every flight search and Trip.com link now takes its party from `flightPassengers` (`lib/flights/passengers.ts`, tested): an under-2 is a **lap infant by default** — no "own seat" choice — one per adult, a further under-2 takes a seat; other children fly at their real age (`childAges` to Duffel); a child with no age yet flies as a child. The Flights page keeps the ages (`SearchState.childrenAges`, from the URL, the shared search and its own selector, which used to save counts only). Verified: CPH–FCO for 2 adults is about €297 with a 10-year-old and €207 with a baby, and the Trip.com link reads `quantity=2&childqty=1&babyqty=1` for a 0- and a 7-year-old. Saved trips hold counts without ages, so a saved trip still re-searches every child as a child.
 
+### One row per physical flight (2026-10-05)
+
+`collapseFareBrands` (`lib/flights/itinerary.ts`, tested) runs on every search result: leg ids lose their `#fareBrand` suffix and each identical physical journey keeps only its cheapest itinerary. Duffel's fare brands had become separate, unlabelled rows (08:05 CPH–LHR at EUR 560 and again at EUR 780). The brand stays off the card (the 2026-09-21 decision below) and in the info popup; BOOK hands over to a Trip.com search, so the fare is chosen there anyway. Multi-city option prices are the cheapest **whole trip** using that flight and are labelled "Trip from".
+
 ### Cards and popup
 
 Cards are fixed `height: 96px`, two text rows: `dep → arr` + duration + (i); then airline + stop summary + match badge. The (i) opens `FlightDetailsPopup` with per-segment detail, layovers, total travel time, and time-zone change computed from the ISO offsets.

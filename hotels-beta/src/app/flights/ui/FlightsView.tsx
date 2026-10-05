@@ -13,14 +13,14 @@ import {
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members/db";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
-import type { Itinerary, FlightLeg } from "@/lib/flights/itinerary";
+import { collapseFareBrands, type Itinerary, type FlightLeg } from "@/lib/flights/itinerary";
 import TripComBookButton, { type FlightHandoff } from "@/components/flights/TripComBookButton";
 import { useApproxPrice } from "@/lib/flights/useApproxPrice";
 import { getAlliance, sharedAlliance, type Alliance } from "@/lib/flights/airlineAlliances";
 import FlightDetailsPopup from "./FlightDetailsPopup";
 import type { AirportOption } from "@/lib/airportOptions";
 import { getCityForAirportIata, pickPrimaryAirportForCity } from "@/lib/cityAirports";
-import { cityOwningAirport } from "@/lib/airportCity";
+import { airportHeadingName, cityOwningAirport } from "@/lib/airportCity";
 import AirportAutocomplete from "./AirportAutocomplete";
 import DateRangePicker from "@/components/site/DateRangePicker";
 import SingleDatePicker from "@/components/site/SingleDatePicker";
@@ -160,7 +160,7 @@ function hasFlightSearchParams(searchParams: PageSearchParams): boolean {
 // here, so it can't be looked up on demand.
 function cityForCode(code: string, picked: Record<string, string>): string {
   if (!code) return "";
-  return getCityForAirportIata(code) || picked[code] || code;
+  return airportHeadingName(code) || picked[code] || getCityForAirportIata(code) || code;
 }
 
 function resolveAirportCode(value: string): string {
@@ -213,8 +213,10 @@ function readLegParams(searchParams: PageSearchParams): MultiCityLeg[] {
 const VALID_CABINS: CabinClass[] = ["Economy", "Premium Economy", "Business", "First"];
 
 function cabinFromParams(searchParams: PageSearchParams): CabinClass | null {
-  const value = normalizeParam(searchParams.cabin) as CabinClass;
-  return VALID_CABINS.includes(value) ? value : null;
+  // Any case and the supplier spelling too ("business", "premium_economy"),
+  // which were ignored and left the form on Economy (2026-10-05).
+  const raw = normalizeParam(searchParams.cabin).trim().toLowerCase().replace(/_/g, " ");
+  return VALID_CABINS.find(cabin => cabin.toLowerCase() === raw) ?? null;
 }
 
 // "oneway" is the spelling the rest of the app links with, and the one
@@ -240,9 +242,15 @@ function filtersFromParams(searchParams: PageSearchParams, current: FilterState)
   };
   const departAfter = hour("depart_after");
   const returnAfter = hour("return_after");
-  if (departAfter === null && returnAfter === null) return current;
+  // Written back by the page after a search (writeSearchToUrl), so a reload
+  // keeps "Direct only" (2026-10-05).
+  const stopsRaw = normalizeParam(searchParams.stops);
+  const stops: FilterState["maxStops"] | null =
+    stopsRaw === "direct" || stopsRaw === "1" ? stopsRaw : null;
+  if (departAfter === null && returnAfter === null && stops === null) return current;
   return {
     ...current,
+    maxStops: stops ?? current.maxStops,
     outbound:
       departAfter === null ? current.outbound : { ...current.outbound, departStartHour: departAfter },
     inbound:
@@ -1051,7 +1059,8 @@ export default function FlightsView({ searchParams }: Props) {
       if (!res.ok || !data.ok) {
         setSearchError(data.error ?? "Search failed");
       } else {
-        const normalized: Itinerary[] = data.itineraries ?? [];
+        // One row per physical flight (collapseFareBrands).
+        const normalized: Itinerary[] = collapseFareBrands(data.itineraries ?? []);
         setItineraries(normalized);
         if (!normalized.length) setSearchError("No flights found for this route and date.");
       }
@@ -1114,6 +1123,44 @@ export default function FlightsView({ searchParams }: Props) {
     urlRerunFromKeyRef.current = null;
     void handleSearch();
   }, [searchKey, searchBlocker, isLoading, handleSearch]);
+
+  /* THE SEARCH IS WRITTEN TO THE ADDRESS BAR once its results are in
+     (2026-10-05 test pass): it used to stay a bare /flights, or keep the
+     parameters it arrived with after the form had moved on, so a search could
+     not be shared and a reload lost the stops filter. replaceState, not the
+     router: no server render, no history entry per search, and the page's
+     searchParams prop - which the concierge handoff effects above watch -
+     does not change, so this cannot trigger a re-run. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!lastSearchKey || isDirty || lastSearchKey !== searchKey || isLoading) return;
+    const params = new URLSearchParams();
+    if (isMultiple) {
+      search.multiCity.forEach((leg, i) => {
+        if (leg.from && leg.to && leg.date) params.set(`leg${i + 1}`, `${leg.from}-${leg.to}-${leg.date}`);
+      });
+      params.set("tripType", "multiple");
+    } else {
+      if (search.from) params.set("origin", search.from);
+      if (search.to) params.set("destination", search.to);
+      if (search.departDate) params.set("from", search.departDate);
+      if (isReturnTrip && search.returnDate) params.set("to", search.returnDate);
+      params.set("tripType", isReturnTrip ? "return" : "oneway");
+    }
+    params.set("adults", String(search.adults));
+    if (search.children > 0) {
+      params.set("kids", String(search.children));
+      for (const [key, value] of Object.entries(kidAgeFields(search.childrenAges))) {
+        if (value) params.set(key, String(value));
+      }
+    }
+    params.set("cabin", search.cabin);
+    if (filters.maxStops !== "any") params.set("stops", filters.maxStops);
+    const next = `${window.location.pathname}?${params.toString()}`;
+    if (next !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(window.history.state, "", next);
+    }
+  }, [lastSearchKey, searchKey, isDirty, isLoading, isMultiple, isReturnTrip, search, filters.maxStops]);
 
   /* BOOK LEAVES THE SITE. This used to post to /api/flights/book-link, which
    * opened Duffel's hosted checkout - a page where Duffel took the payment. We
@@ -1235,12 +1282,15 @@ export default function FlightsView({ searchParams }: Props) {
     setSearch(current => {
       if (tripType === "multiple") {
         const fromCity = current.from;
+        /* The route already entered becomes the first flight, and the next
+           one starts where it lands (2026-10-05): switching used to keep only
+           the origin and drop the destination and date. */
         return {
           ...current,
           tripType,
           multiCity: [
-            { id: "multi-1", from: fromCity, to: "", date: "" },
-            { id: "multi-2", from: "", to: "", date: "" },
+            { id: "multi-1", from: fromCity, to: current.to, date: current.departDate },
+            { id: "multi-2", from: current.to, to: "", date: "" },
             { id: "multi-3", from: "", to: "", date: "" },
           ],
         };
@@ -1728,6 +1778,20 @@ export default function FlightsView({ searchParams }: Props) {
                 {searchError}
               </div>
             )}
+
+            {/* The pane says what is happening (2026-10-05 test pass): a search
+                in flight left it blank but for the button's label, and an edit
+                after a search cleared the results with nothing in their place.
+                The edit still waits for Search, as decided (markDirty). */}
+            {isLoading ? (
+              <div className="oltra-output" style={{ color: "var(--oltra-text-muted)", padding: "12px 0" }}>
+                Searching flights…
+              </div>
+            ) : !searchError && itineraries.length === 0 && isDirty && lastSearchKey ? (
+              <div className="oltra-output" style={{ color: "var(--oltra-text-muted)", padding: "12px 0" }}>
+                Your search has changed. Press Search to see flights for it.
+              </div>
+            ) : null}
 
             {!isLoading && itineraries.length > 0 && (
               isMultiple ? (
@@ -2229,8 +2293,29 @@ function MultipleResults({
   ];
   const [priceScrollRef, priceHasGutter] = useScrollGutter(selectedItinerary);
 
+  /* Whether the columns run on past the price lane. The third flight of a
+     three-leg trip sat under it at 1536px with nothing to say so - the only
+     scrollbar is at the foot of the results (2026-10-05 test pass). */
+  const scrollXRef = useRef<HTMLDivElement | null>(null);
+  const [overflowsX, setOverflowsX] = useState(false);
+  useEffect(() => {
+    const el = scrollXRef.current;
+    if (!el) return;
+    const check = () => setOverflowsX(el.scrollWidth > el.clientWidth + 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [N]);
+
   return (
-    <div className={styles.multiScrollX}>
+    <>
+    {overflowsX ? (
+      <div className={styles.multiScrollHint}>
+        Scroll sideways to see all {N} flights →
+      </div>
+    ) : null}
+    <div ref={scrollXRef} className={styles.multiScrollX}>
     <div className={styles.multiTrack} style={{ minWidth: trackMinWidth }}>
       {/* Column headers — one per leg pane, plus the final total-price pane */}
       <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: "var(--oltra-gap-md)", alignItems: "end", padding: "0 13px", marginBottom: "-4px" }}>
@@ -2312,7 +2397,10 @@ function MultipleResults({
                         className={`${styles.selectCard} ${price ? styles.selectCardRow : ""} ${compact ? styles.selectCardCompact : ""} ${colSelected === legOpt.id ? styles.selectCardActive : ""}`}
                       >
                         <FlightCardContent flight={legOpt} onInfo={onInfo} compact={compact} showAirlineMarks={false} />
-                        {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} /> : null}
+                        {/* The cheapest whole trip using this flight, which is not what a
+                            single-flight price looks like: a direct SAS leg read EUR 8,250
+                            beside a EUR 310 trip (2026-10-05). Said so on the card. */}
+                        {price ? <InlinePrice priceEur={price.priceEur} currency={price.currency} label="Trip from" /> : null}
                       </div>
                     );
                   })
@@ -2336,6 +2424,7 @@ function MultipleResults({
       </div>
     </div>
     </div>
+    </>
   );
 }
 
@@ -2413,10 +2502,11 @@ function MultiPinnedRow({
 //
 // The figure is always a whole-itinerary price, never a per-leg one: Duffel
 // prices a return/multi-city offer as a single ticket (CLAUDE.md §7B).
-function InlinePrice({ priceEur, currency }: { priceEur: number; currency: string }) {
+function InlinePrice({ priceEur, currency, label }: { priceEur: number; currency: string; label?: string }) {
   const { currency: displayCurrency, approx } = useApproxPrice();
   return (
     <span className={styles.inlinePrice}>
+      {label ? <span className={styles.inlinePriceLabel}>{label}</span> : null}
       <span className={styles.inlinePriceAmount}>{displayCurrency} {approx(priceEur, currency)}</span>
     </span>
   );
@@ -2496,7 +2586,10 @@ function PinnedRow({
                 tabIndex={0}
                 onClick={() => onSelectReturn(matchingReturn.id)}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onSelectReturn(matchingReturn.id); }}
-                className={`${styles.selectCard} ${matchingReturn.id === selectedReturnId ? styles.selectCardActive : ""}`}
+                /* Active only when this row's departure is the chosen one too:
+                   picking 08:05 + 10:20 lit the 10:20 inside "Best price",
+                   whose departure is 16:40 (2026-10-05). */
+                className={`${styles.selectCard} ${matchingReturn.id === selectedReturnId && itinerary.outbound.id === selectedOutboundId ? styles.selectCardActive : ""}`}
               >
                 <FlightCardContent flight={itinerary.inbound} matchTier={tier} onInfo={onInfo} />
               </div>
@@ -2614,7 +2707,7 @@ function PriceCard({
           BOOK/SAVE state to draw. */}
       {!priceOnly && (
         <div className={styles.priceCardButtonRow}>
-          {/* Opens the "find this flight on Trip.com" dialog; PROCEED there
+          {/* Opens the "find this flight on Trip.com" dialog; CONTINUE there
               is what leaves the site. */}
           <TripComBookButton
             itinerary={itinerary}

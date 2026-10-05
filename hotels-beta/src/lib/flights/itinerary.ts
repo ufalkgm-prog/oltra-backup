@@ -276,3 +276,41 @@ export function selectedItineraryFrom(
     passengers,
   }
 }
+
+/* ------------------------------------------- one row per physical flight -- */
+
+/** A leg's id without its fare brand: the flights themselves. */
+function physicalLegId(id: string): string {
+  const hash = id.indexOf('#')
+  return hash === -1 ? id : id.slice(0, hash)
+}
+
+/** One itinerary per physical journey, the cheapest fare of it (2026-10-05
+ * test pass). Duffel sells one flight as several fare brands ("Light",
+ * "Plus"), and each became its own row - 08:05 CPH-LHR listed at EUR 560 and
+ * again at EUR 780 with nothing to tell them apart, since the brand left the
+ * card when the row clipped (2026-09-21). The member cannot act on the
+ * difference either: BOOK hands over to a Trip.com search, never a fare, and
+ * the fare is chosen there. Leg ids become the physical flight, so a flight
+ * is one row in every list; the kept leg keeps its own fareBrand for the
+ * info popup. */
+export function collapseFareBrands(itineraries: Itinerary[]): Itinerary[] {
+  const best = new Map<string, Itinerary>()
+  for (const it of itineraries) {
+    const slices = it.slices.map(leg => ({ ...leg, id: physicalLegId(leg.id) }))
+    const key = slices.map(leg => leg.id).join('||')
+    const current = best.get(key)
+    if (current && current.priceEur <= it.priceEur) continue
+    best.set(key, { ...it, slices, outbound: slices[0], inbound: it.inbound ? slices[1] : undefined })
+  }
+  // In the order the journeys first arrived, so the supplier's ranking is kept.
+  const out: Itinerary[] = []
+  const placed = new Set<string>()
+  for (const it of itineraries) {
+    const key = it.slices.map(leg => physicalLegId(leg.id)).join('||')
+    if (placed.has(key)) continue
+    placed.add(key)
+    out.push(best.get(key) as Itinerary)
+  }
+  return out
+}

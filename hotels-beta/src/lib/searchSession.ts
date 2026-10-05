@@ -67,8 +67,11 @@ export function saveHotelFlightSearch(values: SharedTravelSearch) {
   if (typeof window === "undefined") return;
 
   const next = { ...clean(values), savedAt: Date.now() };
-  window.sessionStorage.setItem(HOTEL_FLIGHT_KEY, JSON.stringify(next));
-  window.dispatchEvent(new Event("oltra:hotel-flight-search-change"));
+  // Storage can throw (private window, quota) - as every other write here.
+  try {
+    window.sessionStorage.setItem(HOTEL_FLIGHT_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event("oltra:hotel-flight-search-change"));
+  } catch {}
 }
 
 /* THE LATEST ENTRY WINS, WHOLE (Ulrik, 2026-09-28).
@@ -128,12 +131,42 @@ export function recordSearchEntry(values: SharedTravelSearch) {
  * the Flights page carries to Landing and Hotels only while they hold no
  * entry of their own; otherwise it stays on Flights, in Flights' own copy
  * below, and never clears or replaces what the other pages show. */
+/* ...AND KEEPS THE ENTRY IT WROTE UP TO DATE (2026-10-05 test pass). Filling
+ * once froze the search at the first keystroke that made it an entry: picking
+ * LHR before the dates wrote London with no dates, and the dates chosen a
+ * moment later never reached Hotels. So Flights remembers which entry is its
+ * own (by its savedAt) and goes on replacing that one; once another page
+ * records a search, the savedAt differs and Flights stops. */
+const FLIGHTS_FILLED_KEY = "oltra_shared_search_from_flights";
+
 export function fillHotelFlightSearchIfEmpty(values: SharedTravelSearch) {
   if (typeof window === "undefined") return;
   const current = readHotelFlightSearch() ?? {};
-  if (ENTRY_KEYS.some((key) => (current[key] ?? "").toString().trim())) return;
   if (!ENTRY_KEYS.some((key) => (values[key] ?? "").toString().trim())) return;
-  mergeHotelFlightSearch(values);
+  let ownedAt: string | null = null;
+  try {
+    ownedAt = window.sessionStorage.getItem(FLIGHTS_FILLED_KEY);
+  } catch {}
+  const hasEntry = ENTRY_KEYS.some((key) => (current[key] ?? "").toString().trim());
+  const ownsEntry = hasEntry && ownedAt !== null && ownedAt === String(current.savedAt ?? "");
+  if (hasEntry && !ownsEntry) return;
+
+  if (ownsEntry) {
+    const { savedAt: _ignored, ...rest } = current;
+    void _ignored;
+    const next = clean({ ...values, origin: values.origin || current.origin });
+    // Unchanged: no write, so the timestamp keeps meaning an entry.
+    const sorted = (v: SharedTravelSearch) =>
+      JSON.stringify(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)));
+    if (sorted(clean(rest)) === sorted(next)) return;
+    saveHotelFlightSearch(next);
+  } else {
+    mergeHotelFlightSearch(values);
+  }
+  try {
+    const written = readHotelFlightSearch();
+    if (written?.savedAt) window.sessionStorage.setItem(FLIGHTS_FILLED_KEY, String(written.savedAt));
+  } catch {}
 }
 
 const FLIGHTS_KEY = "oltra_flights_search";
