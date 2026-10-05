@@ -3163,8 +3163,12 @@ export default function HotelsView(props: {
                         </div>
 
                         <div className="hotel-result-card__fade flex min-h-[80px] min-w-0 flex-col">
-                          <div className="flex items-baseline gap-2">
-                            <div className="min-w-0 flex-1">
+                          {/* Wraps when the name would get under 120px: on a
+                              390px phone the photo and the 96px price box left
+                              it 9px, and the name vanished (2026-10-05). The
+                              price then sits under the name instead. */}
+                          <div className="flex flex-wrap items-baseline gap-2">
+                            <div className="min-w-[120px] flex-1">
                               {/* Two lines, not one clipped one: the house
                                   rule is wrap, never clip, with the hotel name
                                   capped at two (CLAUDE-AI.md). HotelSmallCard

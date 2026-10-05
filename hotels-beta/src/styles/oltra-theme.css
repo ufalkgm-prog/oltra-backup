@@ -1671,6 +1671,7 @@ button.oltra-select {
 
   .oltra-site-header__nav.is-open .oltra-site-header__nav-link {
     width: 100%;
+    justify-content: flex-start;
     padding-top: 10px;
     padding-bottom: 10px;
   }
