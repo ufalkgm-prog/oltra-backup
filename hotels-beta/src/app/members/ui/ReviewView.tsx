@@ -297,7 +297,8 @@ export default function ReviewView({
                 !canCompleteReview ? "members-form-disabled" : "",
               ].join(" ")}
             >
-              <label className="oltra-label">DATE VISITED</label>
+              {/* The label is the picker's own (label="Date visited"); a second
+                  one here printed it twice and pushed the field down. */}
               {/* The site's own calendar (2026-10-05): the browser's native date
                   input drew a light system picker unlike every other date on
                   the site. Visits are in the past, up to today. */}
