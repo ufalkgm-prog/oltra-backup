@@ -120,6 +120,35 @@ function transformFor(mode: MotionMode, end: boolean): string {
   }
 }
 
+/* NO SLIDE IS SHOWN BEFORE ITS PHOTO IS READY (2026-10-06). A slide used to
+   fade in on the clock whether or not its photo had arrived, so a photo still
+   downloading - or one that no longer exists, as photos 53-58 did for a page
+   opened before they were removed - showed the dark background for a whole
+   slide. Each photo is loaded and decoded once; the crossfade waits for it,
+   keeping the current photo up a little longer, and a photo that fails is
+   skipped. */
+const photoReady = new Map<string, Promise<boolean>>();
+
+function loadPhoto(src: string): Promise<boolean> {
+  const known = photoReady.get(src);
+  if (known) return known;
+  const request = new Promise<boolean>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      // Decoded before it is shown, so the fade does not stall on decoding.
+      img.decode().then(() => resolve(true), () => resolve(true));
+    };
+    img.onerror = () => resolve(false);
+    img.src = src;
+  });
+  photoReady.set(src, request);
+  return request;
+}
+
+// How long a slide waits for a slow photo before skipping it.
+const MAX_PHOTO_WAIT_MS = 8000;
+const PHOTO_POLL_MS = 250;
+
 type Slot = {
   index: number;
   motion: MotionMode;
@@ -185,6 +214,18 @@ export default function LandingBackground() {
     queueRef.current = buildCycle([], validImages.length);
     tailRef.current = [];
 
+    // Per side: the photo it holds, and whether that photo is ready
+    // (null while loading).
+    const slotPhoto: Record<"A" | "B", number> = { A: -1, B: -1 };
+    const slotReady: Record<"A" | "B", boolean | null> = { A: null, B: null };
+    const prime = (side: "A" | "B", index: number) => {
+      slotPhoto[side] = index;
+      slotReady[side] = null;
+      void loadPhoto(validImages[index]).then((ok) => {
+        if (!cancelled && slotPhoto[side] === index) slotReady[side] = ok;
+      });
+    };
+
     // First two images: slot A (visible) and slot B (preset, hidden).
     // B's motion must differ from A's so no two consecutive slides share a motion.
     const idx0 = takeNextIndex();
@@ -192,6 +233,8 @@ export default function LandingBackground() {
     const mot0 = randomMotion();
     const mot1 = randomMotionExcluding(mot0);
     slotMotionRef.current = { A: mot0, B: mot1 };
+    prime("A", idx0);
+    prime("B", idx1);
     setSlotA({
       index: idx0,
       motion: mot0,
@@ -217,6 +260,7 @@ export default function LandingBackground() {
     });
 
     let activeSide: "A" | "B" = "A";
+    let waitedMs = 0;
 
     function doTick() {
       if (cancelled) return;
@@ -224,6 +268,24 @@ export default function LandingBackground() {
       const outgoing = activeSide;
       const setIncoming = incoming === "A" ? setSlotA : setSlotB;
       const setOutgoing = outgoing === "A" ? setSlotA : setSlotB;
+
+      // The next photo is not ready: hold the current one and look again
+      // shortly. Failed, or still not there after MAX_PHOTO_WAIT_MS: put
+      // another photo in the hidden slot and wait for that one instead.
+      const ready = slotReady[incoming];
+      if (ready !== true) {
+        if (ready === false || waitedMs >= MAX_PHOTO_WAIT_MS) {
+          const replacement = takeNextIndex();
+          prime(incoming, replacement);
+          setIncoming((s) => ({ ...s, index: replacement }));
+          waitedMs = 0;
+        } else {
+          waitedMs += PHOTO_POLL_MS;
+        }
+        after(PHOTO_POLL_MS, doTick);
+        return;
+      }
+      waitedMs = 0;
 
       // Cross-fade: outgoing fades to 0, incoming fades to 1.
       // The incoming slot was reset (animateTransform=false, end=false) when it
@@ -243,6 +305,7 @@ export default function LandingBackground() {
         const nextIdx = takeNextIndex();
         const nextMot = randomMotionExcluding(slotMotionRef.current[incoming]);
         slotMotionRef.current[outgoing] = nextMot;
+        prime(outgoing, nextIdx);
         setOutgoing({
           index: nextIdx,
           motion: nextMot,
