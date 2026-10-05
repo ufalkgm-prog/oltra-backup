@@ -23,3 +23,4 @@
 - [Pre-launch member data](project_prelaunch_member_data.md) — stale names in members' saved items don't matter pre-launch; don't flag or migrate them
 - [Booking partners](project_booking_partners.md) — every published hotel needs RateHawk, KAYAK or andBeyond (direct); andBeyond never via RH/KAYAK; KAYAK fields added 2026-10-01
 - [Restaurant city passes](project_restaurant_city_passes.md) — HEC v2 passes: 8 cities inserted 2026-10-04; San Francisco 2376–2385 inserted 2026-10-05; Rome 2392–2394 inserted 2026-10-05; flag decisions settled (5 more inserted 2395–2399); Vancouver Suyo 2386 inserted (recheck Michelin 2026 list after 2026-10-06); Miami beach clubs 2387–2388 inserted; Dubai beach clubs 2389–2391 inserted; Doha: none (SUSHISAMBA excluded); all passes run
+- [Test pass 2026-10-05](project_test_pass_2026_10_05.md) — all 7 non-AI browser passes done, pushed through 7a93073; functions now lhr1 (measured gains), phone menu live; only TEST rows left to delete
