@@ -215,6 +215,8 @@ MapLibre GL. Markers from hotel coordinates, hover = popup, click = select, auto
 
 Add to trip, add to favourites, trip creation — all via `/src/lib/members/db`.
 
+**Reviews and feedback (members project, §31).** A review is a row in `member_reviews`, written by the browser (`submitReviewBrowser`); nothing reads it back yet, and three columns change meaning with the type (hotel Decor/Facilities/Room → `design_`/`food_`/`value_rating`; restaurant Style/Food/Ambience). **Feedback is e-mailed and stored (2026-10-05):** `/api/email/feedback` sends to the `SMTP_USER` mailbox (Reply-To the member) and writes `member_feedback` — `user_id`, `member_email`, `topic`, `message`, `emailed` — so a failed send is not lost; the member sees success if either worked. Members may insert only; read it in the Table Editor. SQL: `scripts/members/2026-10-05-member-feedback.sql`. The old `member_feedback_suggestions` table and its writer were removed the same day.
+
 ---
 
 ## 14. KEY RULES FOR DEVELOPMENT
