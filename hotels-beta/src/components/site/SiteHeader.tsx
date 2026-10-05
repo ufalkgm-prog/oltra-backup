@@ -35,6 +35,19 @@ const currencies = [
 ];
 const CURRENCY_STORAGE_KEY = "oltra_currency";
 
+/* Three lines, or a cross while the menu is open. */
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" style={{ width: 18, height: 18, display: "block" }}>
+      {open ? (
+        <path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      ) : (
+        <path d="M3.5 6h13M3.5 10h13M3.5 14h13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      )}
+    </svg>
+  );
+}
+
 function ChevronDown() {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" style={{ width: 12, height: 12, display: "block" }}>
@@ -56,6 +69,11 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
   const [hotelsHref, setHotelsHref] = useState("/hotels");
   const [flightsHref, setFlightsHref] = useState("/flights");
   const [restaurantsHref, setRestaurantsHref] = useState("/restaurants");
+  /* THE PHONE MENU (Ulrik, 2026-10-05). Below 700px the links wrapped onto
+     three rows, about 230px of header before any content, and on Inspire it
+     covered the top of the list. There they sit behind a menu button instead,
+     in a panel that overlays the page rather than pushing it down. */
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -301,6 +319,19 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
     };
   }, []);
 
+  // A page change closes the menu, and so does Escape.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
   const currencyDismissProps = useDropdownDismiss({
     open: currencyOpen,
     onClose: () => setCurrencyOpen(false),
@@ -361,7 +392,30 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
           )}
         </div>
 
-        <nav className="oltra-site-header__nav" aria-label="Primary">
+        {/* Shown below 700px only (oltra-theme.css). A control, not an action
+            (§35A), so it keeps its own shape rather than the button pill. */}
+        <button
+          type="button"
+          className="oltra-site-header__menu-toggle"
+          aria-label={menuOpen ? "Close menu" : "Menu"}
+          aria-expanded={menuOpen}
+          aria-controls="oltra-primary-nav"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <MenuIcon open={menuOpen} />
+        </button>
+
+        <nav
+          id="oltra-primary-nav"
+          className={`oltra-site-header__nav ${menuOpen ? "is-open" : ""}`}
+          aria-label="Primary"
+          onClick={(event) => {
+            // A choice closes the menu; opening the currency list does not.
+            const target = event.target as HTMLElement;
+            if (target.closest(".oltra-site-header__currency-trigger")) return;
+            if (target.closest("a, button")) setMenuOpen(false);
+          }}
+        >
           <AiModeButton placement="header" />
 
           {navItems.map((item) => {

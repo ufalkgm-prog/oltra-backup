@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const ALL_IMAGES = Array.from({ length: 58 }, (_, i) =>
+const ALL_IMAGES = Array.from({ length: 52 }, (_, i) =>
   `/images/landing/landing-${String(i + 1).padStart(2, "0")}.webp`
 );
 
@@ -10,9 +10,11 @@ const ALL_IMAGES = Array.from({ length: 58 }, (_, i) =>
    2026-10-04). The site header sits over the top of the photo, and a pale sky
    took its contrast away. Measured once with sharp: mean luminance (0-255) of
    each photo's top sixth and the band under it. Every photo at 175+ in the top
-   band or 190+ just below it is listed - 22 of the 58 (51, 55 and 56 joined
-   with the 2026-10-05 batch, by the same measure). The rest keep only the 5%
-   overlay. 1-based, as in the file names; re-measure if the photos change.
+   band or 190+ just below it is listed - 18 of the 52. The set was renumbered
+   on 2026-10-05 when four duplicates (old 20, 24, 42, 45) and two photos
+   (old 2, the beach path; old 49, the boat bow) went and the rest closed up.
+   The rest keep only the 5% overlay. 1-based, as in the file names;
+   re-measure if the photos change.
 
    Full strength down to the header's foot (just under the route label beneath
    the logo), then an eased fade that ends 140px below the top of the page
@@ -21,8 +23,7 @@ const ALL_IMAGES = Array.from({ length: 58 }, (_, i) =>
    0.21 over the 5% overlay below makes 25% in all. On the landing page it
    stands in for the header's dark fill on scroll (SiteHeader). */
 const BRIGHT_TOP = new Set([
-  1, 3, 6, 11, 12, 14, 15, 16, 17, 20, 23, 26, 30, 31, 35, 39, 42, 45, 49, 51,
-  55, 56,
+  1, 2, 5, 10, 11, 13, 14, 15, 16, 21, 23, 27, 28, 32, 36, 45, 49, 50,
 ]);
 const SHADE_FULL = "var(--oltra-header-height, 80px)";
 const SHADE_END = "calc(var(--oltra-page-top-padding, 110px) + 140px)";

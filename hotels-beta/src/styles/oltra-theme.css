@@ -1621,6 +1621,71 @@ button.oltra-select {
   }
 }
 
+/* THE PHONE MENU (Ulrik, 2026-10-05). Hidden above 700px, where the links
+   fit on one row. Below it the links leave the header for a panel that drops
+   under it, positioned against the fixed header, so the header - and the page
+   padding measured from it - keeps its height whether the menu is open or
+   not. Raised and solid, as §35 has popups. */
+.oltra-site-header__menu-toggle {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .oltra-site-header__inner {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .oltra-site-header__menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border: 1px solid var(--oltra-field-border);
+    border-radius: var(--oltra-radius-md);
+    background: var(--oltra-field-bg-solid);
+    color: var(--oltra-text-primary);
+  }
+
+  .oltra-site-header__nav {
+    display: none;
+  }
+
+  .oltra-site-header__nav.is-open {
+    display: flex;
+    position: absolute;
+    top: calc(100% - 6px);
+    left: var(--oltra-page-side);
+    right: var(--oltra-page-side);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 16px 14px;
+    background: var(--oltra-field-bg-solid);
+    border: var(--oltra-dropdown-border);
+    border-radius: var(--oltra-radius-md);
+    box-shadow: var(--oltra-dropdown-shadow);
+  }
+
+  .oltra-site-header__nav.is-open .oltra-site-header__nav-link {
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .oltra-site-header__nav.is-open .oltra-site-header__currency {
+    margin-top: 6px;
+  }
+
+  /* The currency list opens beside its trigger, inside the panel. */
+  .oltra-site-header__nav.is-open .oltra-site-header__currency-panel {
+    left: 0;
+    right: auto;
+  }
+}
+
 .hotel-date-field {
   height: var(--oltra-control-height);
   user-select: none;
