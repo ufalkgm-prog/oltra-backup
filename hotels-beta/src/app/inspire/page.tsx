@@ -8,12 +8,27 @@ export const metadata: Metadata = {
   description: "Discover where to go based on season, purpose, and travel radius.",
 };
 
-export default async function InspirePage() {
-  const cities = await buildInspireCities();
+type SearchParams = Record<string, string | string[] | undefined>;
+
+export default async function InspirePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const [cities, params] = await Promise.all([buildInspireCities(), searchParams]);
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
   return (
     <PageShell current="Inspire">
-      <InspireView cities={cities} />
+      <InspireView
+        cities={cities}
+        initial={{
+          month: one(params.month),
+          purpose: one(params.purpose),
+          hours: one(params.hours),
+          from: one(params.from),
+        }}
+      />
     </PageShell>
   );
 }

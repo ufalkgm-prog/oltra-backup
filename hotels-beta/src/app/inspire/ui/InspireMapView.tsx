@@ -557,7 +557,9 @@ export default function InspireMapView({
       }
     }
 
-    if (!bounds.isEmpty()) {
+    // With nothing matching, the bounds held only the starting point and the
+    // map zoomed to it at street level (2026-10-05); it now stays where it was.
+    if (matches.length && !bounds.isEmpty()) {
       const sw = bounds.getSouthWest();
       const ne = bounds.getNorthEast();
       const valid =

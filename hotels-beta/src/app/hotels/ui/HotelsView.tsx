@@ -3623,7 +3623,13 @@ export default function HotelsView(props: {
                             ))}
                           </>
                         );
-                      })() : "—"}
+                      })() : selectedDescription.id === String(selectedHotel.id)
+                        ? "—"
+                        : (
+                          /* Still loading: the dash read as "no description"
+                             for the second a cold fetch takes (2026-10-05). */
+                          <span className="text-[color:var(--oltra-text-muted)]">Loading…</span>
+                        )}
                     </div>
                   </div>
 

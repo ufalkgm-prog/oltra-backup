@@ -107,6 +107,8 @@ type OriginCity = (typeof ORIGIN_CITIES)[number];
 
 type Props = {
   cities: InspireCity[];
+  /** The filters from the URL; each falls back to its default when absent. */
+  initial?: { month: string; purpose: string; hours: string; from: string };
 };
 
 type DropdownFieldProps = {
@@ -185,35 +187,49 @@ function DropdownField({
   );
 }
 
-function purposeToQueryLabel(purpose: InspirePurpose | ""): string {
-  switch (purpose) {
-    case "beach":
-      return "beach";
-    case "ski":
-      return "ski";
-    case "city_break":
-      return "city break";
-    case "safari":
-      return "safari";
-    case "mountains":
-      return "mountains";
-    default:
-      return "";
-  }
-}
-
-export default function InspireView({ cities }: Props) {
+export default function InspireView({ cities, initial }: Props) {
   const [isPending, startTransition] = useTransition();
   const [pendingCityId, setPendingCityId] = useState<string | null>(null);
   const router = useRouter();
 
-  const [month, setMonth] = useState<InspireMonth>("june");
-  const [purpose, setPurpose] = useState<InspirePurpose | "">("");
-  const [maxFlightHours, setMaxFlightHours] = useState<number>(4);
+  /* THE FILTERS LIVE IN THE URL (2026-10-05 test pass): month, purpose, flying
+     time and starting point, so coming back - or sharing the link - shows the
+     same list. The page opened on June in October and forgot every choice the
+     moment you left. Without a month in the URL it opens on the current one. */
+  const urlOrigin = initial?.from
+    ? ORIGIN_CITIES.find((item) => item.label.toLowerCase() === initial.from.toLowerCase())
+    : undefined;
+  const [month, setMonth] = useState<InspireMonth>(() =>
+    MONTHS.includes(initial?.month as InspireMonth)
+      ? (initial?.month as InspireMonth)
+      : MONTHS[new Date().getMonth()]
+  );
+  const [purpose, setPurpose] = useState<InspirePurpose | "">(() =>
+    PURPOSES.some((item) => item.value && item.value === initial?.purpose)
+      ? (initial?.purpose as InspirePurpose)
+      : ""
+  );
+  const [maxFlightHours, setMaxFlightHours] = useState<number>(() => {
+    const hours = Number(initial?.hours);
+    return FLIGHT_HOURS.includes(hours) ? hours : 4;
+  });
   const [origin, setOrigin] = useState<OriginCity>(
-    SORTED_ORIGIN_CITIES.find((item) => item.label === "Copenhagen") ??
+    urlOrigin ??
+      SORTED_ORIGIN_CITIES.find((item) => item.label === "Copenhagen") ??
       SORTED_ORIGIN_CITIES[0]
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("month", month);
+    if (purpose) params.set("purpose", purpose);
+    params.set("hours", String(maxFlightHours));
+    params.set("from", origin.label);
+    const next = `${window.location.pathname}?${params.toString()}`;
+    if (next !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(window.history.state, "", next);
+    }
+  }, [month, purpose, maxFlightHours, origin]);
 
   const [openMenu, setOpenMenu] = useState<
     null | "month" | "purpose" | "flight" | "origin"
@@ -221,7 +237,7 @@ export default function InspireView({ cities }: Props) {
   const [activeCityId, setActiveCityId] = useState<string | null>(null);
   /* Set once the concierge has chosen the starting point, so the member's home
      airport - fetched asynchronously - cannot arrive late and undo it. */
-  const originFromAiRef = useRef(false);
+  const originFromAiRef = useRef(Boolean(urlOrigin));
 
   useEffect(() => {
     let cancelled = false;
@@ -378,20 +394,19 @@ export default function InspireView({ cities }: Props) {
 
   const goToHotels = useCallback(
     (match: InspireCityMatch) => {
+      /* The city alone (2026-10-05). The purpose went along as free text
+         (q=ski), which narrows Hotels to hotels whose text says "ski" - but
+         Inspire's purposes describe the CITY, and its "8 hotels" counts every
+         hotel there. Sent alone, Hotels shows exactly what was counted. */
       const params = new URLSearchParams();
       params.set("city", match.city.city);
-
-      const q = purposeToQueryLabel(purpose);
-      if (q) {
-        params.set("q", q);
-      }
 
       setPendingCityId(match.city.id);
       startTransition(() => {
         router.push(`/hotels?${params.toString()}`);
       });
     },
-    [router, purpose, startTransition]
+    [router, startTransition]
   );
 
   const goToHotel = useCallback(
