@@ -29,6 +29,8 @@ type Payload = {
   kids?: unknown;
   childrenAges?: unknown;
   rooms?: unknown;
+  /** The room the member saved, priced first when it is still offered. */
+  roomName?: unknown;
 };
 
 type HotelPricingRow = {
@@ -165,11 +167,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, status: "unavailable" });
     }
 
+    /* THE SAVED ROOM, when it is still offered (2026-10-05 test pass). This
+       priced the hotel's cheapest rate whatever was saved, so a card read
+       "1× Standard Double room" over the Deluxe's EUR 7,160. The cheapest of
+       that room's rates if it is there; otherwise the cheapest of all, and
+       the answer says which, so the card can say so too. */
+    const savedRoom = asString(body.roomName).toLowerCase();
+    const sameRoom = savedRoom
+      ? grouped
+          .filter((room) => room.roomName.trim().toLowerCase() === savedRoom)
+          .reduce<(typeof grouped)[number] | null>(
+            (best, room) => (!best || room.pricePerStay < best.pricePerStay ? room : best),
+            null
+          )
+      : null;
+    const cheapestRoom = grouped.find((room) => room.roomKey === headline.roomKey);
+
     return NextResponse.json({
       ok: true,
       status: "available",
-      priceAmount: headline.pricePerStay,
-      priceCurrency: headline.currency,
+      priceAmount: sameRoom ? sameRoom.pricePerStay : headline.pricePerStay,
+      priceCurrency: sameRoom ? sameRoom.currency : headline.currency,
+      roomMatched: Boolean(sameRoom),
+      roomName: sameRoom?.roomName ?? cheapestRoom?.roomName ?? null,
     });
   } catch (error) {
     console.error("SAVED TRIP HOTEL RE-PRICE ERROR:", error);

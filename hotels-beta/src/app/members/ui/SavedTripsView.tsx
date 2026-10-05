@@ -7,8 +7,10 @@ import {
   deleteSavedTripBrowser,
   deleteSavedTripItemBrowser,
   fetchSavedTripsBrowser,
+  formatPeriodLabel,
   updateTripItemPriceBrowser,
 } from "@/lib/members/db";
+import { formatReturnDeparture, reverseRoute } from "@/lib/members/savedFlights";
 import type { SavedTrip } from "@/lib/members/types";
 import { buildTripWarnings } from "@/lib/members/tripWarnings";
 import { guessResidencyFromLocale } from "@/lib/countries";
@@ -72,12 +74,16 @@ type RefreshTarget =
       adults: number;
       kids: number;
       childrenAges: number[];
+      /** The room saved, repriced first (hotel-price route). */
+      roomName?: string;
     }
   | {
       kind: "flight";
       origin: string;
       destination: string;
       departureDate: string;
+      /** The flight home of a saved return; absent for a one-way. */
+      returnDate?: string;
       cabinClass: CabinClass;
       adults: number;
       children: number;
@@ -250,6 +256,8 @@ function longDate(iso: string): string {
   return `${d} ${MONTHS[m - 1] ?? ""} ${y}`;
 }
 
+const LAST_TRIP_KEY = "oltra_last_saved_trip";
+
 function notesKey(tripId: string) {
   return `oltra_trip_notes_${tripId}`;
 }
@@ -304,26 +312,34 @@ function buildHotelBookUrl(
   return `/hotels?${params.toString()}`;
 }
 
-function buildFlightBookUrl(
-  route: string,
-  timing: string,
-  departAt: string | undefined,
-  cabin: string,
-  travelers: string
-): string {
-  const adults = parseTravelersAdults(travelers);
-  const kids = parseTravelersKids(travelers);
-  const { from: fromCity, to: toCity } = parseRoute(route);
-  const fromIata = cityToIata(fromCity);
-  const departDate = departAt ? departAt.slice(0, 10) : parseDateFromTiming(timing);
+/* BOOK ON A SAVED FLIGHT RE-SEARCHES THAT FLIGHT (2026-10-05 test pass). It
+   was rebuilt from the trip's travellers label and the route text, always as a
+   one-way: a CPH ⇄ LHR return for two came back one-way, for one, with no
+   departure airport ("CPH" went through a city-to-airport lookup and is
+   already a code). Now from what the flight row itself holds. */
+function buildFlightBookUrl(flight: {
+  route: string;
+  timing: string;
+  departAt?: string;
+  returnDepartAt?: string | null;
+  cabin: string;
+  adults: number;
+  kids: number;
+}): string {
+  const { from: fromPlace, to: toPlace } = parseRoute(flight.route);
+  const origin = /^[A-Za-z]{3}$/.test(fromPlace) ? fromPlace.toUpperCase() : cityToIata(fromPlace);
+  const departDate = flight.departAt ? flight.departAt.slice(0, 10) : parseDateFromTiming(flight.timing);
+  const returnDate = (flight.returnDepartAt ?? "").slice(0, 10);
   const params = new URLSearchParams();
-  if (fromIata) params.set("origin", fromIata);
-  if (toCity) params.set("city", toCity);
+  if (origin) params.set("origin", origin);
+  // A code or a city - the Flights page resolves either.
+  if (toPlace) params.set("destination", toPlace);
   if (departDate) params.set("from", departDate);
-  if (cabin) params.set("cabin", cabin);
-  if (adults > 0) params.set("adults", String(adults));
-  if (kids > 0) params.set("kids", String(kids));
-  params.set("tripType", "oneway");
+  if (returnDate) params.set("to", returnDate);
+  params.set("tripType", returnDate ? "return" : "oneway");
+  if (flight.cabin) params.set("cabin", flight.cabin);
+  if (flight.adults > 0) params.set("adults", String(flight.adults));
+  if (flight.kids > 0) params.set("kids", String(flight.kids));
   params.set("include_flights", "1");
   // Booking a saved flight can't reuse the stored offer: Duffel offers expire
   // within hours, so by the time a trip is revisited the price has almost
@@ -362,7 +378,14 @@ export default function SavedTripsView() {
         const next = await fetchSavedTripsBrowser();
         if (!active) return;
         setTrips(next);
-        setSelectedTripId((prev) => prev || next[0]?.id || "");
+        /* The trip last looked at, not always the first (2026-10-05). A
+           convenience for this browser only, so a failed read is no loss. */
+        let remembered = "";
+        try {
+          remembered = window.localStorage.getItem(LAST_TRIP_KEY) ?? "";
+        } catch {}
+        const reopen = next.some((t) => t.id === remembered) ? remembered : "";
+        setSelectedTripId((prev) => prev || reopen || next[0]?.id || "");
       } catch {
         if (!active) return;
         setErrorMessage("Could not load saved trips.");
@@ -383,6 +406,9 @@ export default function SavedTripsView() {
       setCurrentNotes("");
       return;
     }
+    try {
+      window.localStorage.setItem(LAST_TRIP_KEY, selectedTripId);
+    } catch {}
     const stored = window.localStorage.getItem(notesKey(selectedTripId)) ?? "";
     setCurrentNotes(stored);
   }, [selectedTripId]);
@@ -590,6 +616,7 @@ export default function SavedTripsView() {
             kids: target.kids,
             childrenAges: target.childrenAges,
             rooms: target.rooms,
+            roomName: target.roomName,
           }),
         });
         const data = (await res.json()) as {
@@ -597,6 +624,8 @@ export default function SavedTripsView() {
           status?: string;
           priceAmount?: number;
           priceCurrency?: string;
+          roomMatched?: boolean;
+          roomName?: string | null;
           error?: string;
         };
 
@@ -606,7 +635,13 @@ export default function SavedTripsView() {
         if (data.status === "unavailable" || !data.priceAmount)
           return fail("No availability for these dates.");
 
-        await store(data.priceAmount, data.priceCurrency ?? "EUR", "Updated just now");
+        await store(
+          data.priceAmount,
+          data.priceCurrency ?? "EUR",
+          target.roomName && !data.roomMatched
+            ? `Your saved room is no longer offered — cheapest room now${data.roomName ? `: ${data.roomName}` : ""}`
+            : "Updated just now"
+        );
         return;
       }
 
@@ -617,6 +652,8 @@ export default function SavedTripsView() {
           origin: target.origin,
           destination: target.destination,
           departureDate: target.departureDate,
+          // A saved return is priced as a return, as it was saved.
+          returnDate: target.returnDate,
           adults: target.adults,
           children: target.children,
           cabinClass: target.cabinClass,
@@ -682,7 +719,8 @@ export default function SavedTripsView() {
     id: item.id,
     primary: item.name,
     secondary: item.location,
-    meta: item.stay,
+    // One date format, whichever page saved it (formatPeriodLabel).
+    meta: formatPeriodLabel(item.stay),
     thumbnail: item.thumbnail,
     hasPhoto: Boolean(item.thumbnail) && item.thumbnail !== "/images/hero-lp.jpg",
     hasOverlapWarning: item.hasOverlapWarning,
@@ -713,6 +751,7 @@ export default function SavedTripsView() {
             adults: item.adults ?? parseTravelersAdults(travelers),
             kids: item.kids ?? parseTravelersKids(travelers),
             childrenAges: item.childrenAges ?? [],
+            roomName: item.roomSelection?.[0]?.roomName,
           }
         : undefined,
   }));
@@ -722,21 +761,39 @@ export default function SavedTripsView() {
     // same one buildFlightBookUrl uses. If either fails to resolve there is
     // nothing to search, so the item simply gets no refresh control.
     const { from: fromCity, to: toCity } = parseRoute(item.route);
-    const origin = cityToIata(fromCity) || fromCity.trim().toUpperCase();
-    const destination = cityToIata(toCity);
+    const origin = /^[A-Za-z]{3}$/.test(fromCity.trim())
+      ? fromCity.trim().toUpperCase()
+      : cityToIata(fromCity) || fromCity.trim().toUpperCase();
+    const destination = /^[A-Za-z]{3}$/.test(toCity.trim())
+      ? toCity.trim().toUpperCase()
+      : cityToIata(toCity);
     const departureDate = item.departAt
       ? item.departAt.slice(0, 10)
       : parseDateFromTiming(item.timing);
+    const adults = item.adults ?? parseTravelersAdults(travelers);
+    const kids = item.kids ?? parseTravelersKids(travelers);
+    // The flight home, which only this stamp records (lib/members/savedFlights).
+    const returnLine = item.returnDepartAt
+      ? `Return ${reverseRoute(item.route) || ""} · ${formatReturnDeparture(item.returnDepartAt)}`.replace("  ", " ")
+      : "";
 
     return {
       id: item.id,
       primary: item.route,
       secondary: item.cabin,
-      meta: item.timing,
+      meta: returnLine ? [item.timing, returnLine].join(String.fromCharCode(10)) : item.timing,
       travelers,
       thumbnail: item.thumbnail,
       hasOverlapWarning: item.hasOverlapWarning,
-      bookUrl: buildFlightBookUrl(item.route, item.timing, item.departAt, item.cabin, travelers),
+      bookUrl: buildFlightBookUrl({
+        route: item.route,
+        timing: item.timing,
+        departAt: item.departAt,
+        returnDepartAt: item.returnDepartAt,
+        cabin: item.cabin,
+        adults,
+        kids,
+      }),
       priceAmount: item.priceAmount ?? undefined,
       priceBasis: flightPriceBasisShort(
         {
@@ -753,10 +810,11 @@ export default function SavedTripsView() {
               origin,
               destination,
               departureDate,
+              returnDate: item.returnDepartAt ? item.returnDepartAt.slice(0, 10) : undefined,
               cabinClass:
                 CABIN_CLASS_BY_LABEL[item.cabin.trim().toLowerCase()] ?? "economy",
-              adults: parseTravelersAdults(travelers),
-              children: parseTravelersKids(travelers),
+              adults,
+              children: kids,
             }
           : undefined,
     };
@@ -1194,7 +1252,8 @@ function SavedFlightRow({
             {item.primary}
           </div>
           {item.meta ? (
-            <div className="mt-0.5 min-w-0 text-xs break-words text-[color:var(--oltra-text-muted)]">
+            // pre-line: a saved return carries its flight home on a second line.
+            <div className="mt-0.5 min-w-0 whitespace-pre-line text-xs break-words text-[color:var(--oltra-text-muted)]">
               {item.meta}
             </div>
           ) : null}

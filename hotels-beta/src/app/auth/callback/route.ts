@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { safeNext } from "@/lib/members/safeNext";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
@@ -6,11 +7,8 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const code = searchParams.get("code");
-  let next = searchParams.get("next") ?? "/members";
-
-  if (!next.startsWith("/")) {
-    next = "/members";
-  }
+  // "//host" passed the old startsWith("/") test (safeNext).
+  const next = safeNext(searchParams.get("next"));
 
   const headerStore = await headers();
   const forwardedProto = headerStore.get("x-forwarded-proto");

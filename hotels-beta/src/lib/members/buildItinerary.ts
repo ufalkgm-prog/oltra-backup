@@ -1,4 +1,5 @@
 import type { SavedTrip } from "./types";
+import { formatReturnDeparture, reverseRoute } from "./savedFlights";
 
 /* Turns a SavedTrip into a day-by-day itinerary: a short summary followed by
  * one block per date. Deliberately key-facts only - no hotel or restaurant
@@ -93,6 +94,28 @@ function roomSummary(trip: SavedTrip["hotels"][number]): string {
     .join(", ");
 }
 
+/* WHERE THE TRIP GOES, from what it holds (2026-10-05). The stored
+   destination is whatever the trip was created with, so one started from a
+   Costa Smeralda hotel still said Costa Smeralda once it held Paris, London and
+   Reykjavik. The places of its hotels, restaurants and flight destinations, in
+   that order, each once; the stored value only when it holds nothing placed. */
+function tripPlaces(trip: SavedTrip): string {
+  const places: string[] = [];
+  const add = (value: string | null | undefined) => {
+    const place = (value ?? "").trim();
+    if (place && !places.some((p) => p.toLowerCase() === place.toLowerCase())) places.push(place);
+  };
+  // "Paris · France" -> Paris; "Laugavegur · Reykjavik" -> Reykjavik.
+  for (const hotel of trip.hotels) add(hotel.location?.split("·")[0]);
+  for (const restaurant of trip.restaurants) add(restaurant.location?.split("·").at(-1));
+  for (const flight of trip.flights) {
+    const to = (flight.route ?? "").split("→")[1];
+    // A bare airport code says less than the places already listed.
+    if (to && !/^\s*[A-Z]{3}\s*$/.test(to)) add(to);
+  }
+  return places.join(", ");
+}
+
 export function buildTripItinerary(trip: SavedTrip): TripItinerary {
   const byDate = new Map<string, ItineraryEntry[]>();
   const unscheduled: ItineraryEntry[] = [];
@@ -128,6 +151,25 @@ export function buildTripItinerary(trip: SavedTrip): TripItinerary {
         { label: "Booking ref", value: text(flight.bookingReference) },
       ],
     });
+
+    /* The flight home of a saved return (2026-10-05 test pass). One saved row
+       holds both legs, and only the outbound reached the itinerary, so the
+       return was nowhere a member could see it. The row keeps the return's
+       departure time; its route is the outbound reversed. */
+    const returnDate = isoDay(flight.returnDepartAt);
+    if (returnDate) {
+      push(returnDate, {
+        id: `flight-${flight.id}-return`,
+        kind: "flight",
+        time: isoTime(flight.returnDepartAt),
+        title: reverseRoute(flight.route) || TBC,
+        subtitle: flight.cabin,
+        facts: [
+          { label: "Departs", value: text(formatReturnDeparture(flight.returnDepartAt)) },
+          { label: "Cabin", value: text(flight.cabin) },
+        ],
+      });
+    }
   }
 
   for (const hotel of trip.hotels) {
@@ -226,14 +268,16 @@ export function buildTripItinerary(trip: SavedTrip): TripItinerary {
       ? dayHeading(days[0].date)
       : `${dayHeading(days[0].date)} – ${dayHeading(days[days.length - 1].date)}`;
 
+  const destination = tripPlaces(trip) || trip.destination;
+
   return dropUnknownFacts({
     tripName: trip.name || "Trip",
-    destination: trip.destination,
+    destination,
     period: trip.period,
     travelers: trip.travelers,
     summaryFacts: [
       { label: "Dates", value: dateRange },
-      { label: "Destination", value: text(trip.destination) },
+      { label: "Destination", value: text(destination) },
       { label: "Travellers", value: text(trip.travelers) },
       { label: "Flights", value: String(trip.flights.length) },
       { label: "Hotels", value: String(trip.hotels.length) },

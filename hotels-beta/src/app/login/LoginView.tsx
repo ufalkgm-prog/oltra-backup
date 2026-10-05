@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { safeNext } from "@/lib/members/safeNext";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isValidEmail, isValidNewPassword } from "@/lib/members/credentials";
@@ -11,7 +12,8 @@ type View = "login" | "signup" | "forgot" | "reset";
 export default function LoginView() {
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/members";
+  // Same-site paths only (safeNext): this is followed after login.
+  const next = safeNext(searchParams.get("next"));
 
   // ?view=signup opens straight on the sign-up form (the landing intro's
   // "Become a member" links here).

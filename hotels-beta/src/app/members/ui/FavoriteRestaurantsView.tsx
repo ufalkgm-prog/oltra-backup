@@ -9,6 +9,7 @@ import {
 import type { RestaurantRecord } from "@/app/restaurants/types";
 import RestaurantSmallCard from "@/components/restaurants/RestaurantSmallCard";
 import { cityFromLocation, groupByCity } from "./groupByCity";
+import ConfirmDialog from "./ConfirmDialog";
 
 function realId(item: FavoriteRestaurant): string | null {
   const id = item.restaurantDirectusId?.trim();
@@ -30,6 +31,8 @@ function fallbackRestaurant(item: FavoriteRestaurant): RestaurantRecord {
 
 export default function FavoriteRestaurantsView() {
   const [items, setItems] = useState<FavoriteRestaurant[]>([]);
+  // Asked first, as Delete trip is (ConfirmDialog).
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   /* The live records, so each favourite draws the landing page's card (Ulrik,
@@ -165,7 +168,7 @@ export default function FavoriteRestaurantsView() {
                       <button
                         type="button"
                         className="oltra-btn oltra-btn--destructive oltra-btn--condensed oltra-btn--block"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
                       >
                         Delete
                       </button>
@@ -179,6 +182,18 @@ export default function FavoriteRestaurantsView() {
       ) : (
         <div className="members-empty">No favorite restaurants yet.</div>
       )}
+
+      {pendingDelete ? (
+        <ConfirmDialog
+          text={`Remove "${pendingDelete.name}" from your favourites?`}
+          onYes={() => {
+            const id = pendingDelete.id;
+            setPendingDelete(null);
+            void handleDelete(id);
+          }}
+          onNo={() => setPendingDelete(null)}
+        />
+      ) : null}
     </section>
   );
 }

@@ -10,6 +10,7 @@ import {
 import HotelSmallCard, { smallCardHasTopAction } from "@/components/hotels/HotelSmallCard";
 import { bookingOrWebsiteHref } from "@/lib/hotels/buildBookingLink";
 import { cityFromLocation, groupByCity } from "./groupByCity";
+import ConfirmDialog from "./ConfirmDialog";
 
 const FALLBACK_HOTEL_IMAGE = "/images/hero-lp.jpg";
 
@@ -44,6 +45,8 @@ function fallbackHotel(item: FavoriteHotel): HotelRecord {
 
 export default function FavoriteHotelsView() {
   const [items, setItems] = useState<FavoriteHotel[]>([]);
+  // Asked first, as Delete trip is (ConfirmDialog).
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   /* The live records, so each favourite draws the landing page's card with
@@ -184,7 +187,7 @@ export default function FavoriteHotelsView() {
                               ? " oltra-btn--stack-bottom"
                               : ""
                           }`}
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
                         >
                           Delete
                         </button>
@@ -199,6 +202,18 @@ export default function FavoriteHotelsView() {
       ) : (
         <div className="members-empty">No favorite hotels yet.</div>
       )}
+
+      {pendingDelete ? (
+        <ConfirmDialog
+          text={`Remove "${pendingDelete.name}" from your favourites?`}
+          onYes={() => {
+            const id = pendingDelete.id;
+            setPendingDelete(null);
+            void handleDelete(id);
+          }}
+          onNo={() => setPendingDelete(null)}
+        />
+      ) : null}
     </section>
   );
 }

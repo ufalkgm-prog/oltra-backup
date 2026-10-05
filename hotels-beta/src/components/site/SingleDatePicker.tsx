@@ -19,6 +19,8 @@ type Props = {
   value: string;
   onChange: (value: string) => void;
   minDate?: string;
+  /** The latest day allowed - a visit date cannot be in the future. */
+  maxDate?: string;
   label?: string;
   className?: string;
 };
@@ -58,6 +60,7 @@ export default function SingleDatePicker({
   value,
   onChange,
   minDate,
+  maxDate,
   label = "Date",
   className = "",
 }: Props) {
@@ -114,8 +117,8 @@ export default function SingleDatePicker({
   const effectiveMinIso = minDate || "";
 
   function isDisabled(iso: string): boolean {
-    if (!effectiveMinIso) return false;
-    return compareIso(iso, effectiveMinIso) < 0;
+    if (effectiveMinIso && compareIso(iso, effectiveMinIso) < 0) return true;
+    return Boolean(maxDate) && compareIso(iso, maxDate as string) > 0;
   }
 
   function isSelected(iso: string): boolean {
@@ -222,6 +225,7 @@ export default function SingleDatePicker({
                   type="button"
                   className={styles.navButton}
                   aria-label="Next month"
+                  disabled={Boolean(maxDate) && compareIso(toIsoDateLocal(addMonths(visibleMonth, 1)), maxDate as string) > 0}
                   onClick={() => pageMonths(1)}
                 >
                   ›

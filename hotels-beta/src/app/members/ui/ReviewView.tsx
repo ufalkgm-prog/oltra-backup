@@ -1,5 +1,6 @@
 "use client";
 
+import SingleDatePicker from "@/components/site/SingleDatePicker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
 import { useDropdownDismiss } from "@/lib/useDropdownDismiss";
@@ -68,9 +69,12 @@ function emptyRatings(): Record<RatingField, string> {
   };
 }
 
-function ratingToNumber(value: string): number {
+/* "Not observed" is no rating, sent as null (2026-10-05 test pass): it went
+   as 0, outside the 1-5 the table accepts, and every review that left one
+   aspect unrated - nearly all of them - was refused with a 400. */
+function ratingToNumber(value: string): number | null {
   const numeric = Number(value);
-  return Number.isFinite(numeric) && numeric >= 1 && numeric <= 5 ? numeric : 0;
+  return Number.isFinite(numeric) && numeric >= 1 && numeric <= 5 ? numeric : null;
 }
 
 function buildTargetLabel(option: ReviewTargetOption): string {
@@ -78,19 +82,6 @@ function buildTargetLabel(option: ReviewTargetOption): string {
     option.label ||
     [option.name, option.city, option.country].filter(Boolean).join(" · ")
   );
-}
-
-function formatDisplayDate(value: string): string {
-  if (!value) return "";
-
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return value;
-
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(year, month - 1, day));
 }
 
 export default function ReviewView({
@@ -109,7 +100,7 @@ export default function ReviewView({
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const dateVisitedRef = useRef<HTMLInputElement | null>(null);
+  const dateFieldRef = useRef<HTMLDivElement | null>(null);
   const typeFieldRef = useRef<HTMLDivElement | null>(null);
   const targetFieldRef = useRef<HTMLDivElement | null>(null);
 
@@ -168,11 +159,6 @@ export default function ReviewView({
           ? "Add the date you visited to continue"
           : undefined;
 
-  function openDatePicker(ref: React.RefObject<HTMLInputElement | null>) {
-    ref.current?.focus();
-    ref.current?.showPicker?.();
-  }
-
   function handleTypeChange(value: string) {
     const nextType = value as ReviewType;
 
@@ -212,7 +198,7 @@ export default function ReviewView({
       return;
     }
     if (missing === "date") {
-      openDatePicker(dateVisitedRef);
+      dateFieldRef.current?.querySelector("button")?.click();
       return;
     }
     // Narrowed for TypeScript; `missing` has already covered both.
@@ -312,38 +298,22 @@ export default function ReviewView({
               ].join(" ")}
             >
               <label className="oltra-label">DATE VISITED</label>
-              <div
-                className="hotel-date-field relative cursor-pointer"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (canCompleteReview) openDatePicker(dateVisitedRef);
+              {/* The site's own calendar (2026-10-05): the browser's native date
+                  input drew a light system picker unlike every other date on
+                  the site. Visits are in the past, up to today. */}
+              <div ref={dateFieldRef}>
+              <SingleDatePicker
+                value={dateVisited}
+                minDate={minDateVisitedIso}
+                maxDate={todayIso}
+                label="Date visited"
+                className={!canCompleteReview ? "pointer-events-none" : ""}
+                onChange={(value) => {
+                  setDateVisited(value);
+                  setStatusMessage("");
+                  setErrorMessage("");
                 }}
-              >
-                <input
-                  ref={dateVisitedRef}
-                  type="date"
-                  value={dateVisited}
-                  min={minDateVisitedIso}
-                  max={todayIso}
-                  disabled={!canCompleteReview}
-                  tabIndex={-1}
-                  aria-label="Date visited"
-                  onChange={(e) => {
-                    setDateVisited(e.target.value);
-                    setStatusMessage("");
-                    setErrorMessage("");
-                  }}
-                  onKeyDown={(e) => e.preventDefault()}
-                  onBeforeInput={(e) => e.preventDefault()}
-                  className="oltra-input hotel-date-field__input w-full cursor-pointer"
-                  data-has-value={dateVisited ? "true" : "false"}
-                />
-                <span
-                  className="hotel-date-field__display pointer-events-none absolute left-0 top-0 flex h-full items-center px-[14px]"
-                  data-has-value={dateVisited ? "true" : "false"}
-                >
-                  {formatDisplayDate(dateVisited) || "date"}
-                </span>
+              />
               </div>
             </div>
           </div>

@@ -541,6 +541,16 @@
   height: var(--oltra-control-height);
 }
 
+/* Once the row wraps (760px, below) the three take the row's full width, at a third each: at their
+   own width they ran 100px past a 390px screen and Delete trip was cut off
+   (2026-10-05). */
+@media (max-width: 760px) {
+  .members-trip-buttons {
+    flex: 1 1 100%;
+    gap: 8px;
+  }
+}
+
 /* The trip notes, now in a popup behind Notes. Two classes, to beat
    .members-leave-modal's 420px cap further down the file. */
 .members-leave-modal.members-trip-notes-modal {
@@ -959,6 +969,14 @@
   width: fit-content;
   max-width: min(420px, calc(100vw - 48px));
   min-width: 0;
+}
+
+/* Solid, as §35 has popups: raised on the panel colour (2026-10-05). Over the
+   glass, the trip's warnings read through Trip notes and Delete trip. */
+.oltra-glass.members-leave-modal {
+  background: var(--oltra-field-bg-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .members-leave-modal__text {

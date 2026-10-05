@@ -1,4 +1,35 @@
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
+
+/* ONE USER LOOKUP FOR A PAGE'S WORTH OF CALLS (2026-10-05 test pass). Every
+   member read here asked Supabase for the user on its own, so Saved trips
+   made the same /auth/v1/user request five times on one load. A lookup is
+   shared for a few seconds and dropped on any sign-in, sign-out or refresh,
+   so it can never outlive the session it describes. */
+type BrowserSupabase = ReturnType<typeof createBrowserClient>;
+const USER_REUSE_MS = 5000;
+let sharedUser: { at: number; request: ReturnType<BrowserSupabase["auth"]["getUser"]> } | null = null;
+let sharedUserWatched = false;
+
+function getUserShared(supabase: BrowserSupabase) {
+  if (!sharedUserWatched) {
+    sharedUserWatched = true;
+    supabase.auth.onAuthStateChange(() => {
+      sharedUser = null;
+    });
+  }
+  const now = Date.now();
+  if (sharedUser && now - sharedUser.at < USER_REUSE_MS) return sharedUser.request;
+  const request = supabase.auth.getUser();
+  sharedUser = { at: now, request };
+  request
+    .then((result) => {
+      if (result.error || !result.data.user) sharedUser = null;
+    })
+    .catch(() => {
+      sharedUser = null;
+    });
+  return request;
+}
 import type { Database } from "@/lib/supabase/database.types";
 import type {
   FavoriteHotel,
@@ -167,7 +198,7 @@ export async function fetchLoginEmailStateBrowser(): Promise<LoginEmailState | n
   const supabase = createBrowserClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
   if (!user) return null;
   return {
     email: user.email ?? "",
@@ -247,7 +278,7 @@ export async function fetchMemberProfileBrowser(): Promise<MemberProfile | null>
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -301,7 +332,7 @@ export async function saveMemberProfileBrowser(
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -385,7 +416,7 @@ export async function fetchFavoriteHotelsBrowser(): Promise<FavoriteHotel[]> {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -410,7 +441,7 @@ export async function fetchFavoriteRestaurantsBrowser(): Promise<
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -440,7 +471,7 @@ export async function fetchFavoriteRestaurantDirectusIdsBrowser(): Promise<
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -466,7 +497,7 @@ export async function fetchFavoriteHotelDirectusIdsBrowser(): Promise<string[]> 
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -603,7 +634,7 @@ export async function fetchSavedTripsBrowser(): Promise<SavedTrip[]> {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -672,12 +703,12 @@ export async function submitReviewBrowser(input: {
   targetLabel: string;
   targetDirectusId?: string | null;
   dateVisited?: string | null;
-  overallRating: number;
-  serviceRating: number;
-  designRating: number;
-  foodRating: number;
-  locationRating: number;
-  valueRating: number;
+  overallRating: number | null;
+  serviceRating: number | null;
+  designRating: number | null;
+  foodRating: number | null;
+  locationRating: number | null;
+  valueRating: number | null;
   comments: string;
 }): Promise<void> {
   const supabase = createBrowserClient();
@@ -685,7 +716,7 @@ export async function submitReviewBrowser(input: {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -720,7 +751,7 @@ export async function getMemberActionAccessBrowser(): Promise<{
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser();
+    } = await getUserShared(supabase);
 
     if (error || !user) {
       return { isLoggedIn: false };
@@ -744,7 +775,7 @@ export async function addFavoriteHotelBrowser(input: {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -793,7 +824,7 @@ export async function addFavoriteRestaurantBrowser(input: {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -821,7 +852,7 @@ export async function fetchTripChoicesBrowser(): Promise<TripChoice[]> {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -882,7 +913,7 @@ export async function createTripBrowser(input?: {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -933,7 +964,7 @@ async function getOrCreateDefaultTripIdBrowser(): Promise<string> {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -997,7 +1028,7 @@ export async function addHotelToTripBrowser(input: {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -1072,7 +1103,7 @@ export async function addRestaurantToTripBrowser(input: {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) {
     throw new Error("Not authenticated");
@@ -1145,7 +1176,7 @@ export async function addFlightToTripBrowser(input: {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await getUserShared(supabase);
 
   if (userError || !user) throw new Error("Not authenticated");
 
