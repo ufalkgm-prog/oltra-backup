@@ -560,8 +560,10 @@ export default function PersonalInformationView() {
 
   return (
     <>
-      <div className="members-stack">
-        <section className="oltra-glass members-section">
+      {/* --profile: the panel joins the shell's first row beside the menu,
+          so the two frames are one height (Ulrik, 2026-10-05). */}
+      <div className="members-stack members-stack--profile">
+        <section className="oltra-glass members-section members-profile-section">
           <div className="members-profile-form-grid">
             <div className="members-form-field">
               <label className="oltra-label">MEMBER NAME</label>
@@ -768,17 +770,16 @@ export default function PersonalInformationView() {
             empty box for a member with no family members saved. */}
         <div className="members-family-block">
           <div className="members-family-block__actions">
-            {/* In a wrapper of the account actions' width, so it matches the
-                Add family member button above. */}
-            <div className="members-action-width">
-              <button
-                type="button"
-                className="oltra-btn oltra-btn--destructive oltra-btn--block"
-                onClick={() => setShowTerminatePrompt(true)}
-              >
-                Terminate membership
-              </button>
-            </div>
+            {/* Red italic text, not a button (Ulrik, 2026-10-05) - a declared
+                exception to "italic means AI" (design-system.md §35A). It
+                still opens the confirmation. */}
+            <button
+              type="button"
+              className="members-terminate-link"
+              onClick={() => setShowTerminatePrompt(true)}
+            >
+              Terminate membership
+            </button>
           </div>
 
           <div className="members-family-grid">

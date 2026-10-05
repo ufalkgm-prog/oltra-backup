@@ -1,29 +1,42 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { DEFAULT_FAVORITE_RESTAURANTS } from "@/lib/members/defaults";
 import type { FavoriteRestaurant } from "@/lib/members/types";
 import {
   deleteFavoriteRestaurantBrowser,
   fetchFavoriteRestaurantsBrowser,
-  seedFavoriteRestaurantsIfEmptyBrowser,
 } from "@/lib/members/db";
 import type { RestaurantRecord } from "@/app/restaurants/types";
-import {
-  buildAwardsLabel,
-  buildAddressLabel,
-} from "@/app/restaurants/utils";
+import RestaurantSmallCard from "@/components/restaurants/RestaurantSmallCard";
+import { cityFromLocation, groupByCity } from "./groupByCity";
+
+function realId(item: FavoriteRestaurant): string | null {
+  const id = item.restaurantDirectusId?.trim();
+  return id && /^\d+$/.test(id) ? id : null;
+}
+
+/* A stand-in record while the real one loads, or for a restaurant no longer
+   in Directus (a closure is deleted, not archived): the name and city saved
+   with the favourite. */
+function fallbackRestaurant(item: FavoriteRestaurant): RestaurantRecord {
+  return {
+    id: Number(realId(item)) || 0,
+    restaurant_name: item.name,
+    city: cityFromLocation(item.location),
+    lat: null,
+    lng: null,
+  };
+}
 
 export default function FavoriteRestaurantsView() {
   const [items, setItems] = useState<FavoriteRestaurant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  // The favourite row stores only a name, a location label and a meta line.
-  // The editorial text shown on the Restaurants page lives in Directus, so it
-  // is fetched here by id - see /api/restaurants/by-ids.
-  const [records, setRecords] = useState<Record<string, RestaurantRecord>>({});
+  /* The live records, so each favourite draws the landing page's card (Ulrik,
+     2026-10-05). By id, and by name for the seeded demo favourites, whose
+     placeholder ids find nothing - see /api/restaurants/by-ids. */
+  const [byId, setById] = useState<Record<string, RestaurantRecord>>({});
+  const [byName, setByName] = useState<Record<string, RestaurantRecord>>({});
 
   useEffect(() => {
     let active = true;
@@ -33,9 +46,6 @@ export default function FavoriteRestaurantsView() {
         setIsLoading(true);
         setErrorMessage("");
 
-        await seedFavoriteRestaurantsIfEmptyBrowser(
-          DEFAULT_FAVORITE_RESTAURANTS
-        );
         const next = await fetchFavoriteRestaurantsBrowser();
 
         if (!active) return;
@@ -56,10 +66,9 @@ export default function FavoriteRestaurantsView() {
   }, []);
 
   useEffect(() => {
-    const ids = items
-      .map((item) => item.restaurantDirectusId)
-      .filter((id): id is string => Boolean(id));
-    if (!ids.length) return;
+    const ids = items.map(realId).filter((id): id is string => Boolean(id));
+    const names = items.filter((item) => !realId(item)).map((item) => item.name);
+    if (!ids.length && !names.length) return;
 
     let active = true;
 
@@ -68,20 +77,22 @@ export default function FavoriteRestaurantsView() {
         const res = await fetch("/api/restaurants/by-ids", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids }),
+          body: JSON.stringify({ ids, names }),
         });
         const data = (await res.json()) as {
           ok?: boolean;
           restaurants?: RestaurantRecord[];
         };
         if (!active || !data?.ok) return;
-        setRecords(
+        const restaurants = data.restaurants ?? [];
+        setById(Object.fromEntries(restaurants.map((r) => [String(r.id), r])));
+        setByName(
           Object.fromEntries(
-            (data.restaurants ?? []).map((r) => [String(r.id), r])
+            restaurants.map((r) => [(r.restaurant_name ?? "").trim().toLowerCase(), r])
           )
         );
       } catch {
-        // The cards still render from the stored name/location/meta.
+        // The cards still render from the stored name and city.
       }
     })();
 
@@ -90,30 +101,24 @@ export default function FavoriteRestaurantsView() {
     };
   }, [items]);
 
-  // Grouped by city so a member with favourites in several places reads them
-  // city by city rather than in save order.
-  const sortedItems = useMemo(() => {
-    function cityOf(item: FavoriteRestaurant): string {
-      const record = item.restaurantDirectusId
-        ? records[item.restaurantDirectusId]
-        : undefined;
-      return (record?.city ?? item.location ?? "").trim();
-    }
-
-    return [...items].sort(
-      (a, b) =>
-        cityOf(a).localeCompare(cityOf(b)) || a.name.localeCompare(b.name)
+  const groups = useMemo(() => {
+    const rows = items.map((item) => {
+      const id = realId(item);
+      const record = (id && byId[id]) || byName[item.name.trim().toLowerCase()];
+      return { item, record, restaurant: record ?? fallbackRestaurant(item) };
+    });
+    return groupByCity(
+      rows,
+      (row) => row.restaurant.city ?? cityFromLocation(row.item.location),
+      (row) => row.restaurant.restaurant_name ?? row.item.name
     );
-  }, [items, records]);
+  }, [items, byId, byName]);
 
   async function handleDelete(id: string) {
     try {
       setErrorMessage("");
-      setStatusMessage("");
-
       await deleteFavoriteRestaurantBrowser(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
-      setStatusMessage("Favorite restaurant removed.");
     } catch {
       setErrorMessage("Could not remove favorite restaurant.");
     }
@@ -129,107 +134,51 @@ export default function FavoriteRestaurantsView() {
 
   return (
     <section className="oltra-glass members-section">
-      {(errorMessage || statusMessage) ? (
+      {errorMessage ? (
         <div className="members-section__header">
-          <div className="members-note">
-            {errorMessage || statusMessage}
-          </div>
+          <div className="members-note">{errorMessage}</div>
         </div>
       ) : null}
 
-      <div className="members-favorite-restaurant-grid">
-        {sortedItems.length ? (
-          sortedItems.map((item) => {
-            const record = item.restaurantDirectusId
-              ? records[item.restaurantDirectusId]
-              : undefined;
-
-            const address = record ? buildAddressLabel(record) : "";
-            const awards = record ? buildAwardsLabel(record) : "";
-            const meta = record
-              ? [record.cuisine, record.restaurant_setting, record.restaurant_style]
-                  .filter(Boolean)
-                  .join(" · ")
-              : item.meta;
-
-            return (
-              <article key={item.id} className="members-item">
-                <div className="members-item__content">
-                  <div className="members-item__title">{item.name}</div>
-                  <div className="members-item__location">
-                    {address || item.location}
-                  </div>
-
-                  {record?.www || record?.insta ? (
-                    <div className="members-favorite-restaurant__links">
-                      {record.www ? (
-                        <a href={record.www} target="_blank" rel="noreferrer">
-                          Website
-                        </a>
-                      ) : null}
-                      {record.www && record.insta ? <span>·</span> : null}
-                      {record.insta ? (
-                        <a href={record.insta} target="_blank" rel="noreferrer">
-                          Instagram
-                        </a>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {meta ? <div className="members-item__meta">{meta}</div> : null}
-                  {awards ? <div className="members-item__meta">{awards}</div> : null}
-
-                  {record?.highlights ? (
-                    <p className="members-favorite-restaurant__highlights">
-                      {record.highlights}
-                    </p>
-                  ) : null}
-
-                  {record?.description
-                    ? record.description
-                        .split(/\n+/)
-                        .filter(Boolean)
-                        .map((para, index) => (
-                          <p
-                            key={index}
-                            className="members-favorite-restaurant__description"
-                          >
-                            {para}
-                          </p>
-                        ))
-                    : null}
-
-                  <div className="members-item__actions">
-                    {/* The Restaurants page takes only ?city= (no selection
-                        param), so this opens the restaurant's city. Without a
-                        live record the page picks its own default city. */}
-                    <Link
-                      href={
-                        record?.city
-                          ? `/restaurants?${new URLSearchParams({ city: record.city }).toString()}`
-                          : "/restaurants"
-                      }
-                      className="oltra-btn oltra-btn--condensed"
-                      prefetch={false}
-                    >
-                      View restaurant
-                    </Link>
-                    <button
-                      type="button"
-                      className="oltra-btn oltra-btn--destructive oltra-btn--condensed"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="members-empty">No favorite restaurants yet.</div>
-        )}
-      </div>
+      {groups.length ? (
+        /* The Favorite hotels arrangement: city headers in the left column,
+           two cards to a row under each (Ulrik, 2026-10-05). The landing
+           page's restaurant card, with Delete where SAVE is. The Restaurants
+           page takes only ?city=, so a card opens its city. */
+        <div className="members-city-groups">
+          {groups.map((group) => (
+            <div key={group.city} className="members-city-group">
+              <div className="oltra-label members-city-header">{group.city}</div>
+              <div className="members-card-grid">
+                {group.items.map(({ item, record, restaurant }) => (
+                  <RestaurantSmallCard
+                    key={item.id}
+                    restaurant={restaurant}
+                    columns={2}
+                    isFavourite
+                    href={
+                      record?.city
+                        ? `/restaurants?${new URLSearchParams({ city: record.city }).toString()}`
+                        : undefined
+                    }
+                    renderSaveControl={() => (
+                      <button
+                        type="button"
+                        className="oltra-btn oltra-btn--destructive oltra-btn--condensed oltra-btn--block"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="members-empty">No favorite restaurants yet.</div>
+      )}
     </section>
   );
 }

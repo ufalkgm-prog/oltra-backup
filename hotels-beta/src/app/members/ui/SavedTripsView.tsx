@@ -3,12 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import OltraSelect from "@/components/site/OltraSelect";
 import { pickPrimaryAirportForCity } from "@/lib/cityAirports";
-import { DEFAULT_TRIPS } from "@/lib/members/defaults";
 import {
   deleteSavedTripBrowser,
   deleteSavedTripItemBrowser,
   fetchSavedTripsBrowser,
-  seedSavedTripsIfEmptyBrowser,
   updateTripItemPriceBrowser,
 } from "@/lib/members/db";
 import type { SavedTrip } from "@/lib/members/types";
@@ -185,6 +183,28 @@ function fallbackHotel(item: TripItemCard): HotelRecord {
   };
 }
 
+/* The by-ids routes' lookup: a real (numeric) id, else the name. */
+function lookupKey(id: string | null | undefined, name: string): string {
+  const trimmed = id?.trim();
+  return trimmed && /^\d+$/.test(trimmed) ? trimmed : nameKey(name);
+}
+
+/* Case kept: Directus matches the name exactly, so the key carries the name
+   as it is sent. */
+function nameKey(name: string | null | undefined): string {
+  return `name:${(name ?? "").trim()}`;
+}
+
+function lookupBody(key: string): { ids: string[]; names: string[] } {
+  const parts = key.split("\n").filter(Boolean);
+  return {
+    ids: parts.filter((part) => !part.startsWith("name:")),
+    names: parts
+      .filter((part) => part.startsWith("name:") && part.length > 5)
+      .map((part) => part.slice(5)),
+  };
+}
+
 function fallbackRestaurant(item: TripItemCard): RestaurantRecord {
   return {
     id: Number(item.recordId) || 0,
@@ -339,7 +359,6 @@ export default function SavedTripsView() {
       try {
         setIsLoading(true);
         setErrorMessage("");
-        await seedSavedTripsIfEmptyBrowser(DEFAULT_TRIPS);
         const next = await fetchSavedTripsBrowser();
         if (!active) return;
         setTrips(next);
@@ -386,14 +405,15 @@ export default function SavedTripsView() {
   const [restaurantRecords, setRestaurantRecords] = useState<
     Record<string, RestaurantRecord>
   >({});
+  /* Ids, and the names of items with no real id: the seeded demo trips
+     carry placeholder ids, so they are found by name (keyed "name:…"). Joined
+     with a newline, which no id or name contains. */
   const hotelIdsKey = (selectedTrip?.hotels ?? [])
-    .map((hotel) => hotel.hotelDirectusId)
-    .filter(Boolean)
-    .join(",");
+    .map((hotel) => lookupKey(hotel.hotelDirectusId, hotel.name))
+    .join("\n");
   const restaurantIdsKey = (selectedTrip?.restaurants ?? [])
-    .map((restaurant) => restaurant.restaurantDirectusId)
-    .filter(Boolean)
-    .join(",");
+    .map((restaurant) => lookupKey(restaurant.restaurantDirectusId, restaurant.name))
+    .join("\n");
 
   useEffect(() => {
     if (!hotelIdsKey) return;
@@ -401,14 +421,19 @@ export default function SavedTripsView() {
     fetch("/api/hotels/by-ids", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: hotelIdsKey.split(",") }),
+      body: JSON.stringify(lookupBody(hotelIdsKey)),
     })
       .then((res) => res.json() as Promise<{ ok?: boolean; hotels?: HotelRecord[] }>)
       .then((data) => {
         if (!active || !data?.ok) return;
         setHotelRecords((prev) => ({
           ...prev,
-          ...Object.fromEntries((data.hotels ?? []).map((h) => [String(h.id), h])),
+          ...Object.fromEntries(
+            (data.hotels ?? []).flatMap((h) => [
+              [String(h.id), h],
+              [nameKey(h.hotel_name), h],
+            ])
+          ),
         }));
       })
       .catch(() => {
@@ -425,7 +450,7 @@ export default function SavedTripsView() {
     fetch("/api/restaurants/by-ids", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: restaurantIdsKey.split(",") }),
+      body: JSON.stringify(lookupBody(restaurantIdsKey)),
     })
       .then(
         (res) => res.json() as Promise<{ ok?: boolean; restaurants?: RestaurantRecord[] }>
@@ -434,7 +459,12 @@ export default function SavedTripsView() {
         if (!active || !data?.ok) return;
         setRestaurantRecords((prev) => ({
           ...prev,
-          ...Object.fromEntries((data.restaurants ?? []).map((r) => [String(r.id), r])),
+          ...Object.fromEntries(
+            (data.restaurants ?? []).flatMap((r) => [
+              [String(r.id), r],
+              [nameKey(r.restaurant_name), r],
+            ])
+          ),
         }));
       })
       .catch(() => {
@@ -824,7 +854,9 @@ export default function SavedTripsView() {
           <TripColumn title="Hotels" empty={!hotelItems.length}>
             {hotelItems.map((item) => {
               const hotel =
-                (item.recordId && hotelRecords[item.recordId]) || fallbackHotel(item);
+                (item.recordId && hotelRecords[item.recordId]) ||
+                hotelRecords[nameKey(item.primary)] ||
+                fallbackHotel(item);
               return (
                 <HotelSmallCard
                   key={item.id}
@@ -867,7 +899,9 @@ export default function SavedTripsView() {
 
           <TripColumn title="Restaurants" empty={!restaurantItems.length}>
             {restaurantItems.map((item) => {
-              const record = item.recordId ? restaurantRecords[item.recordId] : undefined;
+              const record =
+                (item.recordId && restaurantRecords[item.recordId]) ||
+                restaurantRecords[nameKey(item.primary)];
               return (
                 <RestaurantSmallCard
                   key={item.id}

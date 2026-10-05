@@ -1,33 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { DEFAULT_FAVORITE_HOTELS } from "@/lib/members/defaults";
+import { useEffect, useMemo, useState } from "react";
 import type { FavoriteHotel } from "@/lib/members/types";
+import type { HotelRecord } from "@/lib/directus";
 import {
   deleteFavoriteHotelBrowser,
   fetchFavoriteHotelsBrowser,
-  seedFavoriteHotelsIfEmptyBrowser,
 } from "@/lib/members/db";
-import {
-  RATEHAWK_THUMB_SIZE,
-  resolveRatehawkUrl,
-} from "@/lib/hotels/cardHelpers";
+import HotelSmallCard, { smallCardHasTopAction } from "@/components/hotels/HotelSmallCard";
+import { bookingOrWebsiteHref } from "@/lib/hotels/buildBookingLink";
+import { cityFromLocation, groupByCity } from "./groupByCity";
 
 const FALLBACK_HOTEL_IMAGE = "/images/hero-lp.jpg";
-
-/** How many thumbnails fill out the right-hand side of a card. */
-const STRIP_IMAGE_COUNT = 5;
-
-function getHotelImage(item: FavoriteHotel): string | null {
-  const thumbnail = item.thumbnail?.trim();
-
-  if (!thumbnail || thumbnail === FALLBACK_HOTEL_IMAGE) {
-    return null;
-  }
-
-  return thumbnail;
-}
 
 /* The main Hotels page searched for this one hotel - the same /hotels?q=…
    handoff LandingSummary's hotel cards use (CLAUDE.md §15), minus the dates
@@ -39,23 +23,34 @@ function buildHotelHref(hotelName: string): string {
   return `/hotels?${params.toString()}`;
 }
 
+function realId(item: FavoriteHotel): string | null {
+  const id = item.hotelDirectusId?.trim();
+  return id && /^\d+$/.test(id) ? id : null;
+}
+
+/* A stand-in record while the real one loads, or for a hotel no longer in
+   Directus: the name, location and photo saved with the favourite. */
+function fallbackHotel(item: FavoriteHotel): HotelRecord {
+  const thumbnail = item.thumbnail?.trim();
+  const hasPhoto = Boolean(thumbnail) && thumbnail !== FALLBACK_HOTEL_IMAGE;
+  return {
+    id: realId(item) ?? item.id,
+    hotel_name: item.name,
+    published: true,
+    city: cityFromLocation(item.location),
+    directus_images: hasPhoto ? [{ url: thumbnail, credit: null }] : undefined,
+  };
+}
+
 export default function FavoriteHotelsView() {
   const [items, setItems] = useState<FavoriteHotel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  // Directus id -> resolved thumbnail urls. The favourite row only stores one
-  // thumbnail, so the strip comes from the same per-hotel image route the
-  // Hotels page uses (§29 - the bulk hotel fetch deliberately carries only
-  // ratehawk_image_1).
-  const [stripsByHotelId, setStripsByHotelId] = useState<
-    Record<string, string[]>
-  >({});
-  // Highlights are not stored on the favourite row - read live so the text
-  // stays current if an editor revises it. See /api/hotels/by-ids.
-  const [detailsByHotelId, setDetailsByHotelId] = useState<
-    Record<string, { highlights: string | null; affiliation: string | null }>
-  >({});
+  /* The live records, so each favourite draws the landing page's card with
+     its photo and who sells it (Ulrik, 2026-10-05). By id, and by name for
+     the seeded demo favourites, whose placeholder ids find nothing. */
+  const [byId, setById] = useState<Record<string, HotelRecord>>({});
+  const [byName, setByName] = useState<Record<string, HotelRecord>>({});
 
   useEffect(() => {
     let active = true;
@@ -64,9 +59,7 @@ export default function FavoriteHotelsView() {
       try {
         setIsLoading(true);
         setErrorMessage("");
-        setStatusMessage("");
 
-        await seedFavoriteHotelsIfEmptyBrowser(DEFAULT_FAVORITE_HOTELS);
         const next = await fetchFavoriteHotelsBrowser();
 
         if (!active) return;
@@ -87,10 +80,9 @@ export default function FavoriteHotelsView() {
   }, []);
 
   useEffect(() => {
-    const ids = items
-      .map((item) => item.hotelDirectusId)
-      .filter((id): id is string => Boolean(id));
-    if (!ids.length) return;
+    const ids = items.map(realId).filter((id): id is string => Boolean(id));
+    const names = items.filter((item) => !realId(item)).map((item) => item.name);
+    if (!ids.length && !names.length) return;
 
     let active = true;
 
@@ -99,63 +91,46 @@ export default function FavoriteHotelsView() {
         const res = await fetch("/api/hotels/by-ids", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids }),
+          body: JSON.stringify({ ids, names }),
         });
-        const data = (await res.json()) as {
-          ok?: boolean;
-          hotels?: Array<{
-            id: string | number;
-            highlights: string | null;
-            affiliation: string | null;
-          }>;
-        };
+        const data = (await res.json()) as { ok?: boolean; hotels?: HotelRecord[] };
         if (!active || !data?.ok) return;
-        setDetailsByHotelId(
+        const hotels = data.hotels ?? [];
+        setById(Object.fromEntries(hotels.map((h) => [String(h.id), h])));
+        setByName(
           Object.fromEntries(
-            (data.hotels ?? []).map((h) => [
-              String(h.id),
-              { highlights: h.highlights, affiliation: h.affiliation },
-            ])
+            hotels.map((h) => [(h.hotel_name ?? "").trim().toLowerCase(), h])
           )
         );
       } catch {
-        // Cards still render from the stored name/location/meta.
+        // Cards still render from the stored name, location and photo.
       }
     })();
-
-    void Promise.all(
-      ids.map(async (id) => {
-        try {
-          const res = await fetch(`/api/hotels/${id}/ratehawk-images`);
-          const data = (await res.json()) as {
-            ok?: boolean;
-            images?: { url: string }[];
-          };
-          if (!data?.ok) return [id, []] as const;
-          return [
-            id,
-            (data.images ?? [])
-              .slice(0, STRIP_IMAGE_COUNT)
-              .map((image) => resolveRatehawkUrl(image.url, RATEHAWK_THUMB_SIZE)),
-          ] as const;
-        } catch {
-          return [id, []] as const;
-        }
-      })
-    ).then((entries) => {
-      if (active) setStripsByHotelId(Object.fromEntries(entries));
-    });
 
     return () => {
       active = false;
     };
   }, [items]);
 
+  const groups = useMemo(() => {
+    const rows = items.map((item) => {
+      const id = realId(item);
+      const hotel =
+        (id && byId[id]) ||
+        byName[item.name.trim().toLowerCase()] ||
+        fallbackHotel(item);
+      return { item, hotel };
+    });
+    return groupByCity(
+      rows,
+      (row) => row.hotel.city ?? cityFromLocation(row.item.location),
+      (row) => row.hotel.hotel_name ?? row.item.name
+    );
+  }, [items, byId, byName]);
+
   async function handleDelete(id: string) {
     try {
       setErrorMessage("");
-      setStatusMessage("");
-
       await deleteFavoriteHotelBrowser(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
     } catch {
@@ -173,92 +148,57 @@ export default function FavoriteHotelsView() {
 
   return (
     <section className="oltra-glass members-section">
-      {errorMessage || statusMessage ? (
+      {errorMessage ? (
         <div className="members-section__header">
-          <div className="members-note">{errorMessage || statusMessage}</div>
+          <div className="members-note">{errorMessage}</div>
         </div>
       ) : null}
 
-      <div className="members-section__body">
-        {items.length ? (
-          items.map((item) => {
-            const fallbackImage = getHotelImage(item);
-            const strip = item.hotelDirectusId
-              ? stripsByHotelId[item.hotelDirectusId] ?? []
-              : [];
-            // Until the strip resolves (or for a hotel with no Ratehawk
-            // images) fall back to the one thumbnail saved with the favourite.
-            const images = strip.length
-              ? strip
-              : fallbackImage
-                ? [fallbackImage]
-                : [];
-            const detail = item.hotelDirectusId
-              ? detailsByHotelId[item.hotelDirectusId]
-              : undefined;
-
-            return (
-              <article key={item.id} className="members-item">
-                {/* Text first, images filling out the card to its right. */}
-                <div className="members-favorite-layout">
-                  <div className="members-item__content">
-                    <div className="members-item__title">{item.name}</div>
-                    <div className="members-item__location">{item.location}</div>
-                    {detail?.affiliation || item.meta ? (
-                      <div className="members-item__meta">
-                        {detail?.affiliation || item.meta}
-                      </div>
-                    ) : null}
-                    {detail?.highlights ? (
-                      <p className="members-favorite-highlights">
-                        {detail.highlights}
-                      </p>
-                    ) : null}
-
-                    <div className="members-item__actions">
-                      <Link
-                        href={buildHotelHref(item.name)}
-                        className="oltra-btn oltra-btn--condensed"
-                        prefetch={false}
-                      >
-                        View hotel
-                      </Link>
-
-                      <button
-                        type="button"
-                        className="oltra-btn oltra-btn--destructive oltra-btn--condensed"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-
-                  {images.length ? (
-                    <div className="members-favorite-strip">
-                      {images.map((url, index) => (
-                        <div
-                          key={`${item.id}-${index}`}
-                          className="members-favorite-strip__image"
-                          style={{ backgroundImage: `url(${url})` }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="members-favorite-strip">
-                      <div className="members-favorite-strip__image members-favorite-strip__image--placeholder">
-                        Photos coming soon
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="members-empty">No favorite hotels yet.</div>
-        )}
-      </div>
+      {groups.length ? (
+        /* City headers above the cards, in the left column; two cards to a
+           row under each, left to right then down (Ulrik, 2026-10-05). The
+           landing page's card at its two-frame density, with Delete where
+           SAVE is - the Saved trips arrangement. */
+        <div className="members-city-groups">
+          {groups.map((group) => (
+            <div key={group.city} className="members-city-group">
+              <div className="oltra-label members-city-header">{group.city}</div>
+              <div className="members-card-grid">
+                {group.items.map(({ item, hotel }) => {
+                  const href = buildHotelHref(hotel.hotel_name ?? item.name);
+                  const bookingHref = bookingOrWebsiteHref(hotel);
+                  return (
+                    <HotelSmallCard
+                      key={item.id}
+                      hotel={hotel}
+                      columns={2}
+                      isFavourite
+                      href={href}
+                      bookingHref={bookingHref}
+                      availability={{ status: "idle" }}
+                      renderSaveControl={() => (
+                        <button
+                          type="button"
+                          className={`oltra-btn oltra-btn--destructive oltra-btn--condensed oltra-btn--block${
+                            smallCardHasTopAction(hotel, href, bookingHref)
+                              ? " oltra-btn--stack-bottom"
+                              : ""
+                          }`}
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="members-empty">No favorite hotels yet.</div>
+      )}
     </section>
   );
 }

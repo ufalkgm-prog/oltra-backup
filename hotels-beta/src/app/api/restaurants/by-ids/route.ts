@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRestaurantsByIds } from "@/lib/restaurants";
+import { getRestaurantsByIds, getRestaurantsByNames } from "@/lib/restaurants";
 
 /* Members > Favorite restaurants needs the full editorial record for a set of
  * favourites, but the ids only exist client-side (they come from the member's
@@ -8,7 +8,7 @@ import { getRestaurantsByIds } from "@/lib/restaurants";
  * page already serves publicly. */
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { ids?: unknown };
+    const body = (await request.json()) as { ids?: unknown; names?: unknown };
     const ids = Array.isArray(body.ids)
       ? body.ids
           .map((id) => String(id).trim())
@@ -19,10 +19,25 @@ export async function POST(request: Request) {
           .filter((id) => /^\d+$/.test(id))
           .slice(0, 200)
       : [];
+    /* By name, for the rows that have no real id (the seeded demo
+       favourites). */
+    const names = Array.isArray(body.names)
+      ? body.names
+          .map((name) => String(name).trim())
+          .filter(Boolean)
+          .slice(0, 50)
+      : [];
 
-    if (!ids.length) return NextResponse.json({ ok: true, restaurants: [] });
+    if (!ids.length && !names.length) {
+      return NextResponse.json({ ok: true, restaurants: [] });
+    }
 
-    const restaurants = await getRestaurantsByIds(ids);
+    const [byId, byName] = await Promise.all([
+      getRestaurantsByIds(ids),
+      getRestaurantsByNames(names),
+    ]);
+    const seen = new Set(byId.map((r) => String(r.id)));
+    const restaurants = [...byId, ...byName.filter((r) => !seen.has(String(r.id)))];
     return NextResponse.json({ ok: true, restaurants });
   } catch {
     return NextResponse.json(

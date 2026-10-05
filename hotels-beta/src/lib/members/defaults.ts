@@ -53,7 +53,7 @@ export const DEFAULT_TRIPS: SavedTrip[] = [
     hotels: [
       {
         id: "hotel-1",
-        name: "Hotel du Cap-Eden-Roc",
+        name: "Hôtel du Cap-Eden-Roc",
         location: "Antibes, France",
         stay: "1 Sep 2026 – 5 Sep 2026",
         status: "saved",
@@ -128,7 +128,7 @@ export const DEFAULT_FAVORITE_HOTELS: FavoriteHotel[] = [
 export const DEFAULT_FAVORITE_RESTAURANTS: FavoriteRestaurant[] = [
   {
     id: "fav-restaurant-1",
-    name: "Plénitude",
+    name: "Plénitude - Cheval Blanc Paris",
     location: "Paris, France",
     meta: "Fine dining · contemporary French",
     thumbnail: "/images/hero-lp.jpg",

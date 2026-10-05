@@ -149,14 +149,67 @@
 }
 
 /* ONE WIDTH FOR THE ACCOUNT ACTIONS (Ulrik, 2026-09-27). Save and Log out
-   share it half and half, Add family member spans it beneath them, and
-   Terminate membership (below the panel) takes it too. 15rem is the widest
-   label, TERMINATE MEMBERSHIP, measured at 234px, with a little to spare —
-   and leaves Save and Log out 115px each against Log out's 111px. */
-.members-profile-buttons,
-.members-action-width {
+   share it half and half, and Add family member spans it beneath them. 15rem
+   was set by TERMINATE MEMBERSHIP (234px), the widest label when it was a
+   button here; kept, and it leaves Save and Log out 115px each against Log
+   out's 111px. */
+.members-profile-buttons {
   width: 15rem;
   max-width: 100%;
+}
+
+/* THE PANEL AND THE MENU ARE ONE HEIGHT (Ulrik, 2026-10-05). They sit in
+   different wrappers, so on this page the wrappers step aside (display:
+   contents) and the panel takes the shell's first row beside the menu; a grid
+   row stretches both to the taller. The family block takes the next row.
+   Below 1100px the shell is one column and this is undone. */
+@media (min-width: 1101px) {
+  .members-page-shell:has(.members-profile-section) {
+    row-gap: 18px;
+  }
+
+  .members-page-shell:has(.members-profile-section) > .members-sidebar {
+    grid-row: 1;
+    align-self: stretch;
+  }
+
+  .members-page-shell:has(.members-profile-section) > .members-main,
+  .members-stack--profile {
+    display: contents;
+  }
+
+  .members-profile-section {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .members-stack--profile > .members-family-block {
+    grid-column: 2;
+  }
+}
+
+/* Terminate membership: red italic text, not a button (Ulrik, 2026-10-05) —
+   the declared exception to "italic means AI" (design-system.md §35A). The
+   destructive rim's red, lightening on hover as a rim does. */
+.members-terminate-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: var(--oltra-btn-destructive-rim);
+  cursor: pointer;
+}
+
+.members-terminate-link:hover {
+  color: var(--oltra-btn-destructive-rim-hover);
+}
+
+.members-terminate-link:focus-visible {
+  outline: 2px solid var(--oltra-text-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .members-profile-buttons {
@@ -600,51 +653,6 @@
   min-height: 100%;
 }
 
-.members-item {
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: var(--oltra-surface-lift-soft);
-  border: 1px solid var(--oltra-border-subtle);
-}
-
-.members-item__top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: start;
-}
-
-.members-item__title {
-  font-size: 0.96rem;
-  line-height: 1.35;
-  color: var(--oltra-text-primary);
-}
-
-.members-item__location,
-.members-item__meta {
-  font-size: 0.9rem;
-  line-height: 1.45;
-  color: var(--oltra-text-secondary);
-}
-
-.members-item__location {
-  margin-top: 2px;
-}
-
-.members-item__meta {
-  margin-top: 8px;
-}
-
-.members-item__status {
-  white-space: nowrap;
-  font-size: 0.74rem;
-  line-height: 1;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--oltra-text-secondary);
-  padding-top: 2px;
-}
-
 .members-item__layout {
   display: grid;
   grid-template-columns: 84px minmax(0, 1fr);
@@ -682,91 +690,27 @@
   text-transform: uppercase;
 }
 
-.members-item__content,
-.members-item__head {
-  min-width: 0;
-}
-
-/* Favourite hotels: text first, a strip of thumbnails filling the card out to
-   the right. */
-.members-favorite-layout {
+/* Favorite hotels and restaurants: a city header in the left column, then
+   the landing page's cards two to a row under it (Ulrik, 2026-10-05). */
+.members-city-groups {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: start;
+  gap: 22px;
 }
 
-.members-favorite-highlights {
-  margin: 8px 0 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--oltra-text-secondary);
+.members-city-group {
+  display: grid;
+  gap: 10px;
 }
 
-.members-favorite-strip {
-  display: flex;
-  gap: 8px;
+.members-city-header {
+  margin: 0;
 }
 
-.members-favorite-strip__image {
-  width: 88px;
-  aspect-ratio: 1 / 1;
-  border-radius: 12px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  border: 1px solid var(--oltra-border-subtle);
-}
-
-.members-favorite-strip__image--placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  text-align: center;
-  font-size: 0.72rem;
-  background: var(--oltra-glass-bg);
-  color: var(--oltra-text-muted);
-}
-
-/* Favourite restaurants: two per row, each carrying the full editorial text. */
-.members-favorite-restaurant-grid {
+.members-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 0.55rem 1rem;
   align-items: start;
-}
-
-.members-favorite-restaurant__links {
-  margin-top: 6px;
-  display: flex;
-  gap: 8px;
-  font-size: 0.86rem;
-  color: var(--oltra-text-secondary);
-}
-
-.members-favorite-restaurant__links a {
-  color: var(--oltra-text-secondary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.members-favorite-restaurant__links a:hover {
-  color: var(--oltra-text-primary);
-}
-
-.members-favorite-restaurant__highlights {
-  margin: 10px 0 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--oltra-text-primary);
-}
-
-.members-favorite-restaurant__description {
-  margin: 8px 0 0;
-  font-size: 0.86rem;
-  line-height: 1.55;
-  color: var(--oltra-text-secondary);
 }
 
 .members-item__price {
@@ -1054,15 +998,9 @@
   .members-family-grid,
   .members-rating-grid,
   .members-profile-form-grid,
-  .members-favorite-restaurant-grid,
-  .members-favorite-layout,
+  .members-card-grid,
   .members-trip-columns {
     grid-template-columns: 1fr;
-  }
-
-  /* The thumbnail strip drops under the text rather than squeezing it. */
-  .members-favorite-strip {
-    flex-wrap: wrap;
   }
 
 
@@ -1117,7 +1055,6 @@
     gap: 14px;
   }
 
-  .members-item__actions,
   .members-warning-panel__actions,
   .members-membership-actions,
   .members-leave-modal__actions {

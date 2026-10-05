@@ -165,6 +165,30 @@ export async function getRestaurantsByIds(
   return (rows ?? []).map(normalizeRestaurant);
 }
 
+/* Published restaurants by exact name — for the seeded demo favourites, whose
+ * placeholder ids find nothing. A JSON filter, so a name with a comma in it
+ * cannot split the list. */
+export async function getRestaurantsByNames(
+  names: string[]
+): Promise<RestaurantRecord[]> {
+  const wanted = names.map((name) => String(name).trim()).filter(Boolean);
+  if (!wanted.length) return [];
+
+  const params = new URLSearchParams({
+    fields: buildRestaurantFields(),
+    filter: JSON.stringify({
+      _and: [{ restaurant_name: { _in: wanted } }, { status: { _eq: "published" } }],
+    }),
+    limit: "-1",
+  });
+
+  const rows = await directusFetchJson<DirectusRestaurantRow[]>(
+    `/items/restaurants?${params.toString()}`
+  );
+
+  return (rows ?? []).map(normalizeRestaurant);
+}
+
 /* Candidate lookup for the AI concierge.
  *
  * Built on getRestaurantsByCity rather than a second Directus query, so the

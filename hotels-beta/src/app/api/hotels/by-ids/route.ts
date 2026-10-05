@@ -36,7 +36,7 @@ const CARD_FIELDS = [
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { ids?: unknown };
+    const body = (await request.json()) as { ids?: unknown; names?: unknown };
     const ids = Array.isArray(body.ids)
       ? body.ids
           .map((id) => String(id).trim())
@@ -47,12 +47,26 @@ export async function POST(request: Request) {
           .filter((id) => /^\d+$/.test(id))
           .slice(0, 200)
       : [];
+    /* By name, for the rows that have no real id: the seeded demo favourites
+       and trip items carry placeholder ids, so without this they never found
+       their hotel and drew "Photos coming soon". Published hotels only. */
+    const names = Array.isArray(body.names)
+      ? body.names
+          .map((name) => String(name).trim())
+          .filter(Boolean)
+          .slice(0, 50)
+      : [];
 
-    if (!ids.length) return NextResponse.json({ ok: true, hotels: [] });
+    if (!ids.length && !names.length) return NextResponse.json({ ok: true, hotels: [] });
+
+    const byId = ids.length ? [{ id: { _in: ids } }] : [];
+    const byName = names.length
+      ? [{ _and: [{ hotel_name: { _in: names } }, { published: { _eq: true } }] }]
+      : [];
 
     const hotels = await getItems<HotelSummaryRow>("hotels", {
       fields: ["id", "hotel_name", "highlights", "city", "country", "affiliation", ...CARD_FIELDS],
-      filter: { id: { _in: ids } },
+      filter: { _or: [...byId, ...byName] },
       limit: -1,
     });
 
