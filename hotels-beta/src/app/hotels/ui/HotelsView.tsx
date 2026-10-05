@@ -1405,7 +1405,9 @@ export default function HotelsView(props: {
       return;
     }
 
-    const firstHotelId = String(visibleHotels[0].id);
+    // The top of the list as drawn (sellable first), not the editorial order
+    // underneath it - which selected a hotel sitting third (2026-10-05).
+    const firstHotelId = String((orderedVisibleHotels[0] ?? visibleHotels[0]).id);
 
     if (!selectedHotelId) {
       setSelectedHotelId(firstHotelId);
@@ -1419,7 +1421,7 @@ export default function HotelsView(props: {
     if (!stillExists) {
       setSelectedHotelId(firstHotelId);
     }
-  }, [shouldShowResults, visibleHotels, selectedHotelId]);
+  }, [shouldShowResults, visibleHotels, orderedVisibleHotels, selectedHotelId]);
 
   useEffect(() => {
     setSelectedImageIndex(0);
@@ -3303,19 +3305,11 @@ export default function HotelsView(props: {
                       "macro_region",
                       "activities",
                       "settings",
-                      "from",
-                      "to",
-                      "adults",
-                      "kids",
-                      "bedrooms",
+                      // The stay (dates, party) is kept: this panel has no fields
+                      // for it, so leaving it out dropped it whenever a destination
+                      // was picked here (2026-10-05 test pass).
                       "filters_open",
                       "search_submitted",
-                      "kid_age_1",
-                      "kid_age_2",
-                      "kid_age_3",
-                      "kid_age_4",
-                      "kid_age_5",
-                      "kid_age_6",
                     ]}
                   />
 
