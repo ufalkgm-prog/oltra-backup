@@ -8,9 +8,7 @@ paths:
   - "**/src/lib/hotelFilters.ts"
   - "**/src/lib/hotelOptions.ts"
   - "**/src/lib/hotelSearchSuggestions.ts"
-  - "**/src/lib/editorHotels.ts"
   - "**/src/lib/restaurants.ts"
-  - "**/src/app/editor/**"
 ---
 
 <!-- Split out of CLAUDE.md on 2026-09-12. The text is moved verbatim and the
@@ -208,7 +206,6 @@ Directus `_contains`/`_in` throw `500` against native array columns — they can
 * `awards` (the "Accolades" facet) instead uses the **7 boolean columns**, which Directus can filter natively (`_eq: true`, OR'd). Allow-list in `/src/lib/hotels/awardCodes.ts`, shared between the server filter builder and the client badge UI so they can't drift.
 * The general `awards` tag field is separate from the 7 booleans and isn't wired into any UI.
 
-The `/editor/hotels/[id]` tool sources its checkbox options live from each field's `meta.options.choices` — `getEditorTaxonomies()` in `/src/lib/editorHotels.ts`.
 
 ### Writing these fields via the API — the trap
 

@@ -5,15 +5,15 @@ export const LANDING_INTRO = {
   tagline: "Curated travel planning redefined",
   paragraphs: [
     {
-      text: "myOLTRA was born from a vision of creating one single platform for discovering and booking the very best hotels and restaurants in the world and facilitate easy flight booking, high-quality concierge services and intuitive travel planning tools.",
+      text: "myOLTRA was born from a vision of creating one single platform for discovering and booking the very best hotels and restaurants in the world and offer easy flight booking, high-quality concierge services and intuitive travel planning tools.",
     },
     {
       label: "Hotels",
-      text: "Our collection currently includes around 750 of the world’s very best hotels, and we expect to add another 100 or so shortly. Each hotel has been reviewed and selected by our team, informed in part by the most recognized guides and rankings.",
+      text: "Our collection currently includes around 850 of the world’s very best hotels. Each hotel has been reviewed and selected by our team, informed in part by the most recognized guides and rankings.",
     },
     {
       label: "Restaurants",
-      text: "Our restaurant collection includes around 3,500 restaurants in around 70 typical travel destinations around the world, all selected using external sources as curation input. They range from some of the world’s most celebrated dining rooms to more relaxed bistros and beach clubs to cater to all occasions and moods.",
+      text: "Our restaurant collection includes around 2,500 restaurants in around 70 typical travel destinations around the world, all selected using external sources as curation input. They range from some of the world’s most celebrated dining rooms to more relaxed bistros and beach clubs to cater to all occasions and moods.",
     },
     {
       label: "Flights",
@@ -28,10 +28,10 @@ export const LANDING_INTRO = {
       text: "Our AI Concierge is a truly novel concierge format trained by us to assist you with all aspects of your trip including assisting and refining searches within myOLTRA, aligning with relevant leisure interests, and answering essentially any destination or travel related question, and pairing it with your travel itinerary.",
     },
     {
-      text: "Bookings are currently completed through one of our partners or directly with the hotel or restaurant. This means that the final booking and payment will be confirmed and managed by them. These are all highly accredited travel companies that we trust.",
+      text: "Bookings are currently completed through one of our partners or directly with the hotel or restaurant. This means that the final booking and payment will be confirmed and managed by them. These are all highly accredited partners that we trust.",
     },
     {
-      text: "myOLTRA has only just launched. More content, categories and a growing selection of hotels and restaurants will follow. We will also continue to increase our integration with partners to offer you an increasingly seamless and direct booking experience.",
+      text: "myOLTRA has only just launched. A mobile app, more content, categories and a growing selection of hotels and restaurants will follow. We will also continue to increase our integration with partners to offer you an increasingly seamless and direct booking experience.",
     },
     {
       text: "We hope you will enjoy using myOLTRA and return whenever you are looking for inspiration for your next trip. We also urge you to give us feedback on content and functionality as you go using the members feedback feature.",

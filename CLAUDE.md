@@ -19,7 +19,7 @@ The five rule files, and what opens each:
 
 | Rule file | Sections | Loads when you touch |
 |---|---|---|
-| `hotel-data.md` | §3, §4, §42B | Directus, the hotel/restaurant scripts, filters, the editor |
+| `hotel-data.md` | §3, §4, §42B | Directus, the hotel/restaurant scripts, filters |
 | `airports-and-flights.md` | §7B, §51, §52 | `scripts/airports`, the geography scripts, `lib/flights`, the Flights page |
 | `etg-ratehawk.md` | §32, §42, §47, §48 | `lib/ratehawk`, the ETG proxy, the static sync |
 | `concierge.md` | §50 | `lib/ai`, `components/ai`, the chat route |
@@ -126,7 +126,7 @@ Moved to `.claude/rules/hotel-data.md` — it loads by itself when you open a fi
 ---
 ## 5. KEY ARCHITECTURE FILES
 
-**Hotels** — page `/src/app/hotels/page.tsx`, UI `/src/app/hotels/ui/HotelsView.tsx`. Helpers: `/src/lib/directus`, `/src/lib/hotelFilters` (Directus filter builder + `filterHotelsByTags`), `/src/lib/hotelOptions`, `/src/lib/hotelSearchSuggestions`, `/src/lib/hotels/awardCodes`, `/src/lib/hotels/buildBookingLink`, `/src/lib/hotels/cardHelpers`, `/src/lib/editorHotels`.
+**Hotels** — page `/src/app/hotels/page.tsx`, UI `/src/app/hotels/ui/HotelsView.tsx`. Helpers: `/src/lib/directus`, `/src/lib/hotelFilters` (Directus filter builder + `filterHotelsByTags`), `/src/lib/hotelOptions`, `/src/lib/hotelSearchSuggestions`, `/src/lib/hotels/awardCodes`, `/src/lib/hotels/buildBookingLink`, `/src/lib/hotels/cardHelpers`. Hotels are edited in Directus itself — the in-app `/editor` was removed 2026-10-06, as it was open to anyone with the beta password.
 
 **Restaurants** — `/src/app/restaurants/page.tsx`, `/src/app/restaurants/ui/RestaurantsMapView.tsx`, `/src/lib/restaurants`.
 
