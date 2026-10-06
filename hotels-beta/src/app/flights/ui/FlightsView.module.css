@@ -1305,6 +1305,16 @@
   gap: var(--oltra-gap-md);
 }
 
+/* The flight columns keep their full height however few cards they hold
+   (Ulrik, 2026-10-06). Four or five flights often return only a couple of
+   whole trips - or none inside the default departure times - and the columns
+   then shrank to one card or to the "hidden by your filters" line, so the
+   sideways scrollbar sat just under it in a squashed box. Three flights fill
+   the 60vh with options, which is the shape every leg count now keeps. */
+.multiTrack .resultsScroll {
+  height: 60vh;
+}
+
 /* The total price and BOOK stay at the right edge while the flight columns
    scroll under them. Solid, so cards do not show through: the glass panel's
    own colour over the page (--oltra-field-bg at the glass's 55%). */
