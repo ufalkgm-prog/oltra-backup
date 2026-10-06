@@ -30,15 +30,17 @@ function getUserShared(supabase: BrowserSupabase) {
     });
   return request;
 }
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database, Json } from "@/lib/supabase/database.types";
 import type {
   FavoriteHotel,
   FavoriteRestaurant,
   MemberBirthday,
   MemberProfile,
   RoomSelectionEntry,
+  SavedFlightSegments,
   SavedTrip,
 } from "./types";
+import { parseFlightSegments } from "./savedFlights";
 import { MAX_TRIP_NAME_CHARS, MAX_TRIPS_PER_MEMBER, TripLimitError } from "./tripLimits";
 import { NEW_PASSWORD_RULE } from "./credentials";
 
@@ -566,9 +568,21 @@ function mapSavedTrips(
   restaurants: TripRestaurantRow[],
   flights: TripFlightRow[]
 ): SavedTrip[] {
+  // Rows carry created_at, and some updated_at too (a hotel re-saved with new
+  // dates); ISO timestamps compare correctly as strings.
+  const latest = (rows: { trip_id: string; created_at: string; updated_at?: string }[], tripId: string, start: string) =>
+    rows
+      .filter((row) => row.trip_id === tripId)
+      .reduce((max, row) => [max, row.created_at, row.updated_at ?? ""].reduce((a, b) => (b > a ? b : a)), start);
+
   return trips.map((trip) => ({
     id: trip.id,
     name: trip.name,
+    lastSavedAt: latest(
+      [...hotels, ...restaurants, ...flights],
+      trip.id,
+      trip.updated_at > trip.created_at ? trip.updated_at : trip.created_at
+    ),
     destination: trip.destination ?? "",
     period: formatPeriodLabel(trip.period_label),
     travelers: trip.travelers_label ?? "",
@@ -624,6 +638,7 @@ function mapSavedTrips(
         priceAmount: item.price_amount ?? null,
         priceCurrency: item.price_currency ?? null,
         hasOverlapWarning: item.has_overlap_warning ?? false,
+        segments: parseFlightSegments(item.segments),
       })),
   }));
 }
@@ -1170,6 +1185,8 @@ export async function addFlightToTripBrowser(input: {
   /** Total itinerary price as shown at save time - indicative, not a held fare. */
   priceAmount?: number | null;
   priceCurrency?: string | null;
+  /** Each flight's airline, number, terminals and bags (2026-10-06). */
+  segments?: SavedFlightSegments | null;
 }): Promise<{ status: "added" | "already_exists" }> {
   const supabase = createBrowserClient();
 
@@ -1211,9 +1228,18 @@ export async function addFlightToTripBrowser(input: {
     kids: input.kids ?? null,
     price_amount: input.priceAmount ?? null,
     price_currency: input.priceCurrency || null,
+    segments: (input.segments as unknown as Json) ?? null,
   };
 
-  const { error } = await supabase.from("member_trip_flights").insert(payload);
+  let { error } = await supabase.from("member_trip_flights").insert(payload);
+  /* The segments column arrives by hand-run SQL
+     (scripts/members/2026-10-06-trip-flight-segments.sql). Until then
+     PostgREST answers PGRST204 for it, and the flight is saved without. */
+  if (error?.code === "PGRST204" && /segments/.test(error.message)) {
+    const { segments: _omitted, ...withoutSegments } = payload;
+    void _omitted;
+    ({ error } = await supabase.from("member_trip_flights").insert(withoutSegments));
+  }
   if (error) throw error;
 
   return { status: "added" };

@@ -33,6 +33,7 @@ import { useApproxPrice } from "@/lib/flights/useApproxPrice";
 import landing from "@/app/page.module.css";
 import flightsStyles from "@/app/flights/ui/FlightsView.module.css";
 import TripItineraryDocument from "./TripItineraryDocument";
+import type { ItineraryDetails } from "@/lib/members/buildItinerary";
 
 type TripItemCard = {
   id: string;
@@ -256,8 +257,6 @@ function longDate(iso: string): string {
   return `${d} ${MONTHS[m - 1] ?? ""} ${y}`;
 }
 
-const LAST_TRIP_KEY = "oltra_last_saved_trip";
-
 function notesKey(tripId: string) {
   return `oltra_trip_notes_${tripId}`;
 }
@@ -361,7 +360,9 @@ export default function SavedTripsView() {
     itemId: string;
   } | null>(null);
   const [showItinerary, setShowItinerary] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
+  /* The notes field shows while it holds text or has the cursor (Ulrik,
+     2026-10-06); Add notes only while neither. */
+  const [editingNotes, setEditingNotes] = useState(false);
   const [refreshStates, setRefreshStates] = useState<
     Record<string, RefreshState>
   >({});
@@ -378,14 +379,13 @@ export default function SavedTripsView() {
         const next = await fetchSavedTripsBrowser();
         if (!active) return;
         setTrips(next);
-        /* The trip last looked at, not always the first (2026-10-05). A
-           convenience for this browser only, so a failed read is no loss. */
-        let remembered = "";
-        try {
-          remembered = window.localStorage.getItem(LAST_TRIP_KEY) ?? "";
-        } catch {}
-        const reopen = next.some((t) => t.id === remembered) ? remembered : "";
-        setSelectedTripId((prev) => prev || reopen || next[0]?.id || "");
+        /* Opens on the trip something was last saved to (Ulrik, 2026-10-06),
+           which replaced reopening the trip last looked at. */
+        const lastSaved = next.reduce<SavedTrip | null>(
+          (best, t) => (!best || t.lastSavedAt > best.lastSavedAt ? t : best),
+          null
+        );
+        setSelectedTripId((prev) => prev || lastSaved?.id || "");
       } catch {
         if (!active) return;
         setErrorMessage("Could not load saved trips.");
@@ -406,9 +406,6 @@ export default function SavedTripsView() {
       setCurrentNotes("");
       return;
     }
-    try {
-      window.localStorage.setItem(LAST_TRIP_KEY, selectedTripId);
-    } catch {}
     const stored = window.localStorage.getItem(notesKey(selectedTripId)) ?? "";
     setCurrentNotes(stored);
   }, [selectedTripId]);
@@ -501,6 +498,37 @@ export default function SavedTripsView() {
     };
   }, [restaurantIdsKey]);
 
+  /* What the itinerary prints beyond the saved rows (2026-10-06): each
+     hotel's address, phone, website, check-in times and destination (for the
+     transfer), each restaurant's type and contacts, from the records above. */
+  const itineraryDetails = useMemo<ItineraryDetails>(() => {
+    const hotels: ItineraryDetails["hotels"] = {};
+    for (const item of selectedTrip?.hotels ?? []) {
+      const record = hotelRecords[lookupKey(item.hotelDirectusId, item.name)];
+      if (!record) continue;
+      hotels[item.id] = {
+        city: record.city,
+        address: record.ratehawk_address,
+        phone: record.ratehawk_phone,
+        website: record.www,
+        checkInTime: record.ratehawk_check_in_time,
+        checkOutTime: record.ratehawk_check_out_time,
+      };
+    }
+    const restaurants: ItineraryDetails["restaurants"] = {};
+    for (const item of selectedTrip?.restaurants ?? []) {
+      const record = restaurantRecords[lookupKey(item.restaurantDirectusId, item.name)];
+      if (!record) continue;
+      restaurants[item.id] = {
+        type: record.restaurant_type,
+        address: record.address,
+        phone: record.phone,
+        website: record.www,
+      };
+    }
+    return { hotels, restaurants };
+  }, [selectedTrip, hotelRecords, restaurantRecords]);
+
   const tripWarnings = useMemo(
     () => (selectedTrip ? buildTripWarnings(selectedTrip) : []),
     [selectedTrip]
@@ -508,6 +536,7 @@ export default function SavedTripsView() {
 
   const lastDate = selectedTrip ? tripLastDate(selectedTrip) : "";
   const outdated = Boolean(lastDate) && lastDate < localToday();
+  const notesVisible = editingNotes || Boolean(currentNotes.trim());
 
   function handleNotesChange(value: string) {
     setCurrentNotes(value);
@@ -847,18 +876,20 @@ export default function SavedTripsView() {
             />
           </div>
 
-          {/* Notes, Itinerary and Delete trip: one width, level with the
-              trip field (Ulrik, 2026-09-27). The notes moved from a field on
-              the page into a popup behind the first. */}
+          {/* Add notes, Itinerary and Delete trip: one width, level with the
+              trip field (Ulrik, 2026-09-27). Add notes opens the notes field
+              below and is gone while the field shows. */}
           <div className="members-trip-buttons">
-            <button
-              type="button"
-              className="oltra-btn oltra-btn--block"
-              aria-disabled={outdated ? "true" : undefined}
-              onClick={() => !outdated && setShowNotes(true)}
-            >
-              Notes
-            </button>
+            {notesVisible ? null : (
+              <button
+                type="button"
+                className="oltra-btn oltra-btn--block"
+                aria-disabled={outdated ? "true" : undefined}
+                onClick={() => !outdated && setEditingNotes(true)}
+              >
+                Add notes
+              </button>
+            )}
 
             <button
               type="button"
@@ -878,6 +909,29 @@ export default function SavedTripsView() {
             </button>
           </div>
         </div>
+
+        {/* Under the trip field, as wide as it: five lines, then it scrolls.
+            Emptied, it closes once the cursor leaves it. */}
+        {notesVisible ? (
+          <div className="members-trip-notes-row">
+            <div className="members-trip-inline-field members-trip-inline-field--trip">
+              <label className="oltra-label" htmlFor="members-trip-notes">
+                NOTES
+              </label>
+              <textarea
+                id="members-trip-notes"
+                className="oltra-input members-textarea members-trip-notes"
+                value={currentNotes}
+                onChange={(e) => handleNotesChange(e.target.value)}
+                onFocus={() => setEditingNotes(true)}
+                onBlur={() => setEditingNotes(false)}
+                placeholder="Add notes for this trip..."
+                readOnly={outdated}
+                autoFocus={editingNotes && !currentNotes.trim()}
+              />
+            </div>
+          </div>
+        ) : null}
 
         {/* Always present, directly under the trip row and above the columns
             it refers to. Soft: nothing here blocks saving or booking — except
@@ -992,38 +1046,10 @@ export default function SavedTripsView() {
       {showItinerary ? (
         <TripItineraryDocument
           trip={selectedTrip}
+          details={itineraryDetails}
           notes={currentNotes}
           onClose={() => setShowItinerary(false)}
         />
-      ) : null}
-
-      {showNotes ? (
-        <div className="members-leave-overlay" onClick={() => setShowNotes(false)}>
-          <div
-            className="oltra-glass oltra-panel members-leave-modal members-trip-notes-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Trip notes"
-          >
-            <label className="oltra-label" htmlFor="members-trip-notes">
-              TRIP NOTES
-            </label>
-            <textarea
-              id="members-trip-notes"
-              className="oltra-input members-textarea members-trip-notes"
-              value={currentNotes}
-              onChange={(e) => handleNotesChange(e.target.value)}
-              placeholder="Add notes for this trip..."
-              autoFocus
-            />
-            <div className="members-leave-modal__actions">
-              <button type="button" className="oltra-btn" onClick={() => setShowNotes(false)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
       ) : null}
 
       {warningItemId ? (

@@ -535,10 +535,42 @@
 .members-trip-buttons {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Two or three, as Add notes comes and goes, still one width each. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   height: var(--oltra-control-height);
+}
+
+/* The trip field is exactly as wide as the Hotels column below it (Ulrik,
+   2026-10-06): the row takes the columns' own three tracks and 1rem gap, the
+   buttons the other two, kept to the right. Below 1100px the columns stack
+   and the row goes back to the flex layout above. */
+@media (min-width: 1101px) {
+  .members-trip-selector-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .members-trip-selector-row .members-trip-inline-field--trip,
+  .members-trip-notes-row .members-trip-inline-field--trip {
+    min-width: 0;
+  }
+
+  /* The notes field takes the same first track, so it is exactly as wide as
+     the trip field above it. */
+  .members-trip-notes-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .members-trip-buttons {
+    grid-column: 2 / -1;
+    justify-self: end;
+  }
 }
 
 /* Once the row wraps (760px, below) the three take the row's full width, at a third each: at their
@@ -551,19 +583,22 @@
   }
 }
 
-/* The trip notes, now in a popup behind Notes. Two classes, to beat
-   .members-leave-modal's 420px cap further down the file. */
-.members-leave-modal.members-trip-notes-modal {
-  width: min(520px, calc(100vw - 48px));
-  max-width: none;
-  display: grid;
-  gap: 8px;
+.members-trip-notes-row {
+  margin-bottom: 14px;
 }
 
-.members-trip-notes {
-  min-height: 160px;
-  resize: vertical;
+/* Five lines, then it scrolls (Ulrik, 2026-10-06): height from the line
+   height, not rows, so it holds in every browser. Two classes, to beat
+   .members-textarea's 160px minimum and .oltra-input's 34px height. */
+.members-textarea.members-trip-notes {
+  --notes-line: 1.5em;
+  height: calc(5 * var(--notes-line) + 20px);
+  min-height: 0;
   padding-top: 10px;
+  padding-bottom: 10px;
+  line-height: var(--notes-line);
+  overflow-y: auto;
+  resize: none;
 }
 
 /* A flight's Update, Book and Delete stack three high. The standard's stack classes
@@ -1101,7 +1136,7 @@
   }
 }
 /* ---------------------------------------------------------------------------
-   Trip itinerary document
+   Trip itinerary document (layout by Ulrik, 2026-10-06)
    --------------------------------------------------------------------------- */
 
 .itinerary-overlay {
@@ -1116,11 +1151,9 @@
 }
 
 /* A document, not a glass panel: solid white, dark text, on screen as well as
-   in print. Rather than restating every nested rule, the theme's text and
-   border tokens are re-pointed for this subtree only - they inherit, so every
-   descendant that reads them lands on readable dark-on-white automatically.
-   The toolbar sits outside this subtree, so its buttons keep the site's dark
-   tokens. */
+   in print. The theme's text and border tokens are re-pointed for this subtree
+   only, so every descendant reading them lands on dark-on-white. The toolbar
+   sits outside it and keeps the site's dark tokens. */
 .itinerary-modal {
   width: 100%;
   max-width: none;
@@ -1131,6 +1164,10 @@
   --oltra-badge-text: #5d6663;
   --oltra-field-border: #ded8cc;
   --oltra-border-subtle: #ebe6dc;
+  /* The logo's sage A, darkened until small capitals on white read: the
+     logo's own #8BAA85 is 2.4:1 there, this is 6.1:1. */
+  --itinerary-accent: #4c6a48;
+  --itinerary-rule: #cfc8ba;
 
   background: #ffffff;
   border: 1px solid #ded8cc;
@@ -1139,27 +1176,9 @@
   color: #14181a;
 }
 
-/* Red text on the document's own white, matching the on-screen Editor notes.
-   The previous tinted panel with a thick left rule read as a code block. */
-.itinerary-warnings {
-  display: grid;
-  gap: 4px;
-  margin: 16px 0 4px;
-}
-
-.itinerary-warning {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.55;
-  color: #c4422e;
-}
-
-.itinerary-notes__body {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--oltra-text-secondary);
-  white-space: pre-wrap;
+/* With .oltra-panel's 16px, 40px by 48px of paper around the text. */
+.itinerary-document {
+  padding: 24px 32px 32px;
 }
 
 /* A dark bar above the paper, on the site's raised-panel surface, so the
@@ -1184,92 +1203,133 @@
   flex-wrap: wrap;
 }
 
+/* The header: logo with ITINERARY beneath it, as the site header carries its
+   route label; then the trip's name; then its places and dates on one line,
+   closed by the document's heaviest rule. */
+.itinerary-document__header {
+  padding-bottom: 18px;
+  border-bottom: 2px solid #14181a;
+}
+
+.itinerary-brand {
+  margin-bottom: 30px;
+}
+
+.itinerary-brand__logo {
+  display: block;
+  width: auto;
+  height: 34px;
+}
+
+.itinerary-brand__label {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--itinerary-accent);
+}
+
 .itinerary-document__title {
   margin: 0;
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 1.15;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
   color: var(--oltra-text-primary);
 }
 
-/* The "key info in a short intro" block: a dense two-column fact list rather
-   than prose, so the whole trip is legible at a glance before the day-by-day
-   detail starts. */
-/* Two fixed columns, not auto-fit. On a printed sheet auto-fit produced six
-   columns spread edge to edge, which squeezed the date value into four narrow
-   lines while leaving huge gaps between labels. */
-.itinerary-summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px 28px;
-  margin: 12px 0 0;
-}
-
-.itinerary-fact {
+.itinerary-document__meta {
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  margin-top: 6px;
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
+  color: var(--oltra-text-secondary);
 }
 
-.itinerary-fact dt {
+.itinerary-document__dates {
   flex: 0 0 auto;
-  min-width: 96px;
-  color: var(--oltra-text-muted);
-}
-
-.itinerary-fact dd {
-  margin: 0;
-  min-width: 0;
+  white-space: nowrap;
+  font-weight: 600;
   color: var(--oltra-text-primary);
 }
 
-.itinerary-day {
-  margin-top: 22px;
+/* Red text on the document's own white, matching the on-screen Editor notes. */
+.itinerary-warnings {
+  display: grid;
+  gap: 4px;
+  margin: 18px 0 0;
 }
 
-.itinerary-day__heading {
-  margin: 0 0 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--oltra-field-border);
+.itinerary-warning {
+  margin: 0;
   font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  line-height: 1.55;
+  color: #c4422e;
+}
+
+.itinerary-warning__label {
+  font-weight: 600;
+}
+
+/* A date, RESTAURANTS or MEMBER NOTES, each over a full-width rule - the only
+   long rules in the document (Ulrik). */
+.itinerary-section {
+  margin-top: 30px;
+}
+
+.itinerary-section__heading {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--itinerary-rule);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--oltra-text-primary);
 }
 
+/* One block: the kind over the time on the left, the facts on the right.
+   Blocks within a section are parted by space, not by rules. */
 .itinerary-entry {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: 16px;
-  padding: 10px 0;
-}
-
-.itinerary-entry + .itinerary-entry {
-  border-top: 1px solid var(--oltra-field-border);
-}
-
-.itinerary-entry__time {
-  font-size: 15px;
-  line-height: 1.2;
-  color: var(--oltra-text-primary);
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 20px;
+  padding-top: 16px;
 }
 
 .itinerary-entry__kind {
-  margin-top: 2px;
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--oltra-text-muted);
+  color: var(--itinerary-accent);
+}
+
+.itinerary-entry__time {
+  margin-top: 3px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--oltra-text-primary);
 }
 
 .itinerary-entry__title {
   margin: 0;
   font-size: 15px;
-  font-weight: 500;
-  line-height: 1.3;
+  font-weight: 600;
+  line-height: 1.35;
   color: var(--oltra-text-primary);
+}
+
+/* The transfer is one sentence, not a titled block. */
+.itinerary-entry--transfer .itinerary-entry__title {
+  font-weight: 400;
+  font-size: 14px;
 }
 
 .itinerary-entry__subtitle {
@@ -1280,88 +1340,128 @@
 
 .itinerary-entry__facts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2px 28px;
-  margin: 8px 0 0;
+  gap: 3px;
+  margin: 9px 0 0;
 }
 
-.itinerary-document__footer {
-  margin-top: 24px;
-  padding-top: 12px;
-  border-top: 1px solid var(--oltra-field-border);
-  font-size: 12px;
-  line-height: 1.5;
+.itinerary-fact {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.itinerary-fact dt {
   color: var(--oltra-text-muted);
 }
 
-/* Print / Save as PDF. Everything except the document itself is hidden, and
-   the document is re-laid-out for paper: black on white (a dark glass panel
-   prints as a wall of ink), no page-break through an entry or a day heading.
-   This is what makes the PDF - no PDF library involved, per CLAUDE.md §2. */
+.itinerary-fact dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--oltra-text-primary);
+}
+
+.itinerary-notes__body {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--oltra-text-primary);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .itinerary-document {
+    padding: 12px 4px 16px;
+  }
+
+  .itinerary-document__meta {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .itinerary-entry {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .itinerary-entry__rail {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+
+  .itinerary-entry__time {
+    margin-top: 0;
+    font-size: 14px;
+  }
+
+  .itinerary-fact {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+}
+
+/* PRINT / SAVE AS PDF. The document is a direct child of body (portalled), so
+   print simply removes everything else and lets the overlay flow as an
+   ordinary block: pages then break naturally, where the old absolutely
+   positioned copy could be cut off after the first sheet. No PDF library -
+   CLAUDE.md §2. */
 @page {
-  margin: 14mm;
+  size: A4;
+  margin: 16mm 16mm 18mm;
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  body > :not(.itinerary-overlay) {
+    display: none !important;
   }
 
-  .itinerary-document,
-  .itinerary-document * {
-    visibility: visible;
+  html,
+  body {
+    background: #fff !important;
   }
 
-  .itinerary-document {
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
+  .itinerary-overlay {
+    position: static;
+    display: block;
     padding: 0;
-    color: #000;
-    background: #fff;
+    overflow: visible;
+    background: none;
+  }
+
+  .itinerary-frame {
+    width: auto;
+    margin: 0;
   }
 
   .itinerary-modal__toolbar {
     display: none;
   }
 
-  /* Keep the warnings red on paper rather than being flattened to #000. */
-  .itinerary-warning {
-    color: #c4422e;
+  .itinerary-modal {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .itinerary-document {
+    padding: 0;
+  }
+
+  /* The accent, the warnings and the rules are colour that must reach paper. */
+  .itinerary-document {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-
-  .itinerary-document__title,
-  .itinerary-entry__time,
-  .itinerary-entry__title,
-  .itinerary-day__heading,
-  .itinerary-fact dd {
-    color: #000;
-  }
-
-  .itinerary-fact dt,
-  .itinerary-entry__kind,
-  .itinerary-entry__subtitle,
-  .itinerary-document__footer {
-    color: #444;
-  }
-
-  .itinerary-day__heading,
-  .itinerary-entry + .itinerary-entry,
-  .itinerary-document__footer {
-    border-color: #ccc;
-  }
-
-  .itinerary-day {
-    break-inside: avoid-page;
   }
 
   .itinerary-entry {
     break-inside: avoid;
   }
 
-  .itinerary-day__heading {
+  .itinerary-section__heading,
+  .itinerary-document__header {
     break-after: avoid;
   }
 }

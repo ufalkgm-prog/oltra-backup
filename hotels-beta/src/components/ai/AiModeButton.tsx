@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAiSearch } from "@/lib/ai/aiSearchStore";
-import { AI_CHAT_ENABLED } from "@/lib/ai/routes";
+import { AI_CHAT_ENABLED, isAiConciergePath } from "@/lib/ai/routes";
 import { useIsMember } from "@/lib/members/useIsMember";
 import styles from "./AiModeButton.module.css";
 
@@ -37,6 +38,13 @@ import styles from "./AiModeButton.module.css";
 
 const MEMBERS_ONLY_REASON = "The AI Concierge is only available for members";
 
+/* PASSIVE WHERE THE PANEL CANNOT OPEN (Ulrik, 2026-10-06). The modal mounts
+   only on the five pages in lib/ai/routes.ts, so on Members, Login or Partners
+   the header button looked live and opened nothing. It is passive there, for
+   members too, with its own reason. */
+const MEMBERS_AREA_REASON = "The AI Concierge is not available in the Members area";
+const OTHER_PAGE_REASON = "The AI Concierge is not available on this page";
+
 type Props = {
   placement: "inline" | "header";
   /** Overrides the label where a page needs a shorter one. */
@@ -46,6 +54,7 @@ type Props = {
 export default function AiModeButton({ placement, label }: Props) {
   const { conciergeOpen, setConciergeOpen } = useAiSearch();
   const isMember = useIsMember();
+  const pathname = usePathname();
 
   /* A CLICK BEFORE THE SESSION IS READ IS KEPT, NOT LOST (2026-09-28).
      Reading the session takes a moment after every page load — about two
@@ -72,14 +81,22 @@ export default function AiModeButton({ placement, label }: Props) {
       ? `oltra-btn--ai-concierge ${styles.header}`
       : `oltra-btn--ai-ask ${styles.inline}`;
 
-  if (isMember === false) {
+  const passiveReason = !isAiConciergePath(pathname)
+    ? pathname?.startsWith("/members")
+      ? MEMBERS_AREA_REASON
+      : OTHER_PAGE_REASON
+    : isMember === false
+      ? MEMBERS_ONLY_REASON
+      : null;
+
+  if (passiveReason) {
     return (
       <button
         type="button"
         className={`oltra-btn oltra-btn--ai ${styles.passive} ${placementClass}`}
         aria-disabled="true"
-        data-reason={MEMBERS_ONLY_REASON}
-        aria-label={`${text}. ${MEMBERS_ONLY_REASON}`}
+        data-reason={passiveReason}
+        aria-label={`${text}. ${passiveReason}`}
         onClick={(event) => {
           // Opens nothing, and — inside the destination field's
           // click-to-focus box — must not open the suggestions either.

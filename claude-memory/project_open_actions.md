@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 113be546-0d38-4348-be9c-ff9b034556a4
-  modified: 2026-10-06T14:45:13.528Z
+  modified: 2026-10-06T19:36:54.067Z
 ---
 
 Outstanding, highest value first. Everything built so far is on `main` (through `c572e6d`) and backed up.
@@ -22,6 +22,7 @@ The question to RateHawk is drafted and held until their redirect spec arrives a
 **0c. Amankora (1066) unpublished 2026-10-06** — its only RateHawk photo was a food close-up. Republish once it has real photos (supplier images in `hotel_images`).
 
 **1. Supabase dashboard steps only Ulrik can do (members project `hrlvtzcapsqkgrcawluf`).**
+- ~~Run the trip-flight-segments SQL~~ — DONE by Ulrik 2026-10-06, verified (`member_trip_flights.segments` selectable).
 - ~~Run the member-feedback SQL~~ — DONE by Ulrik 2026-10-05, verified (anon refused with 42501, not PGRST205). The old empty `member_feedback_suggestions` table and its unused writer were removed 2026-10-05 (fcfebc0; drop verified).
 - Add `/auth/callback` to Authentication → URL Configuration → Redirect URLs, for `http://localhost:3000` **and** the Vercel domain. Without it the signup confirmation link silently falls back to the Site URL and lands on the landing page instead of Members — which looks exactly like the code failing.
 - Authentication → Email Templates → Confirm signup: subject `myOLTRA member authentication`, body `Follow this link to confirm your membership`, keeping `{{ .ConfirmationURL }}` untouched. The "Supabase Auth" **sender** name needs custom SMTP, which §16 already flags as a pre-production job.

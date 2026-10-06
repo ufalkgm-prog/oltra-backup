@@ -97,6 +97,31 @@ export type SavedRestaurant = {
   partySize?: number | null;
 };
 
+/** One flight of a saved journey, as the search showed it at save time. */
+export type SavedFlightSegment = {
+  airline: string;
+  flightNumber: string;
+  originCode: string;
+  originName: string;
+  originTerminal: string | null;
+  destinationCode: string;
+  destinationName: string;
+  destinationTerminal: string | null;
+  /** ISO with the airport's own offset. */
+  departIso: string;
+  arriveIso: string;
+  aircraft: string;
+  /** Bags per passenger; null when the airline did not say. */
+  carryOnBags: number | null;
+  checkedBags: number | null;
+};
+
+/** Stored in member_trip_flights.segments (2026-10-06). */
+export type SavedFlightSegments = {
+  outbound: SavedFlightSegment[];
+  inbound: SavedFlightSegment[];
+};
+
 export type SavedFlight = {
   id: string;
   route: string;
@@ -114,6 +139,8 @@ export type SavedFlight = {
   returnDepartAt?: string | null;
   adults?: number | null;
   kids?: number | null;
+  /** Each flight's details, for flights saved from 2026-10-06; null before. */
+  segments?: SavedFlightSegments | null;
   /** Total itinerary price shown at save time. Indicative - not a held fare. */
   priceAmount?: number | null;
   priceCurrency?: string | null;
@@ -139,6 +166,9 @@ export type SavedTrip = {
   hotels: SavedHotel[];
   restaurants: SavedRestaurant[];
   flights: SavedFlight[];
+  /** When anything was last saved to this trip - the trip itself or any item
+   * in it. Saved Trips opens on the trip with the latest one. */
+  lastSavedAt: string;
 };
 
 export type FavoriteHotel = {

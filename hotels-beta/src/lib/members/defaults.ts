@@ -50,6 +50,7 @@ export const DEFAULT_TRIPS: SavedTrip[] = [
     period: "1 Sep 2026 – 10 Sep 2026",
     travelers: "2 adults",
     status: "Planning",
+    lastSavedAt: "2026-01-01T00:00:00Z",
     hotels: [
       {
         id: "hotel-1",

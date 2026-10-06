@@ -255,6 +255,7 @@ export type Database = {
           price_currency: string | null
           return_depart_at: string | null
           route: string | null
+          segments: Json | null
           status: string | null
           thumbnail: string | null
           timing: string | null
@@ -277,6 +278,7 @@ export type Database = {
           price_currency?: string | null
           return_depart_at?: string | null
           route?: string | null
+          segments?: Json | null
           status?: string | null
           thumbnail?: string | null
           timing?: string | null
@@ -299,6 +301,7 @@ export type Database = {
           price_currency?: string | null
           return_depart_at?: string | null
           route?: string | null
+          segments?: Json | null
           status?: string | null
           thumbnail?: string | null
           timing?: string | null

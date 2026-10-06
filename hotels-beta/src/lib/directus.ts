@@ -204,6 +204,11 @@ export type HotelRecord = {
   total_rooms_suites_villas?: number | null;
 
   www?: string | null;
+  /** As ETG gives them (2026-10-06); read only by the Saved trips itinerary. */
+  ratehawk_address?: string | null;
+  ratehawk_phone?: string | null;
+  ratehawk_check_in_time?: string | null;
+  ratehawk_check_out_time?: string | null;
   insta?: string | null;
 
   /** Supplier images held in Directus, attached by attachHotelImages() rather

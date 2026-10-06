@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function MembersPage() {
-  redirect("/members/personal-information");
+  redirect("/members/saved-trips");
 }

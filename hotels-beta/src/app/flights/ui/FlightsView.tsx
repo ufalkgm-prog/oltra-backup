@@ -12,6 +12,7 @@ import {
 } from "@/lib/searchSession";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { addFlightToTripBrowser, fetchMemberProfileBrowser } from "@/lib/members/db";
+import { flightSegmentsForSave } from "@/lib/members/savedFlights";
 import SaveToTripControl, { type SaveToTripResult } from "@/components/members/SaveToTripControl";
 import { collapseFareBrands, type Itinerary, type FlightLeg } from "@/lib/flights/itinerary";
 import TripComBookButton, { type FlightHandoff } from "@/components/flights/TripComBookButton";
@@ -520,6 +521,7 @@ export default function FlightsView({ searchParams }: Props) {
         // search (see the rebook flow in buildFlightBookUrl).
         priceAmount: itinerary.priceEur,
         priceCurrency: itinerary.currency,
+        segments: flightSegmentsForSave(itinerary),
       });
       return {
         message: result.status === 'already_exists' ? 'Already in that trip.' : 'Saved to trip.',

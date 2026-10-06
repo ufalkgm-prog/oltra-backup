@@ -5,67 +5,77 @@ import { createPortal } from "react-dom";
 import {
   buildTripItinerary,
   itineraryToPlainText,
+  KIND_LABEL,
+  type ItineraryDetails,
   type ItineraryEntry,
 } from "@/lib/members/buildItinerary";
 import { buildTripWarnings } from "@/lib/members/tripWarnings";
 import type { SavedTrip } from "@/lib/members/types";
 
-const KIND_LABEL: Record<ItineraryEntry["kind"], string> = {
-  flight: "Flight",
-  "hotel-check-in": "Hotel",
-  "hotel-check-out": "Hotel",
-  "hotel-stay": "Hotel",
-  restaurant: "Restaurant",
-};
-
+/* The left column carries the kind above the time - FLIGHT over 08:30 - and
+   restaurants, listed under their own heading, carry only a time. */
 function EntryBlock({ entry }: { entry: ItineraryEntry }) {
+  const label = KIND_LABEL[entry.kind];
   return (
-    <article className="itinerary-entry">
+    <article className={`itinerary-entry itinerary-entry--${entry.kind}`}>
       <div className="itinerary-entry__rail">
-        <div className="itinerary-entry__time">{entry.time || "—"}</div>
-        <div className="itinerary-entry__kind">{KIND_LABEL[entry.kind]}</div>
+        {label ? <div className="itinerary-entry__kind">{label}</div> : null}
+        {entry.time ? <div className="itinerary-entry__time">{entry.time}</div> : null}
       </div>
       <div className="itinerary-entry__body">
         <h4 className="itinerary-entry__title">{entry.title}</h4>
         {entry.subtitle ? (
           <div className="itinerary-entry__subtitle">{entry.subtitle}</div>
         ) : null}
-        <dl className="itinerary-entry__facts">
-          {entry.facts.map((fact) => (
-            <div className="itinerary-fact" key={fact.label}>
-              <dt>{fact.label}</dt>
-              <dd>{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
+        {entry.facts.length ? (
+          <dl className="itinerary-entry__facts">
+            {entry.facts.map((fact) => (
+              <div className="itinerary-fact" key={fact.label}>
+                <dt>{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
       </div>
     </article>
   );
 }
 
+function Section({ heading, children }: { heading: string; children: React.ReactNode }) {
+  return (
+    <section className="itinerary-section">
+      <h3 className="itinerary-section__heading">{heading}</h3>
+      {children}
+    </section>
+  );
+}
+
 export default function TripItineraryDocument({
   trip,
+  details,
   notes,
   onClose,
 }: {
   trip: SavedTrip;
+  /** Address, phone, website and type, looked up live by the page. */
+  details?: ItineraryDetails;
   /** The trip's own notes, carried through to the printed/emailed document. */
   notes?: string;
   onClose: () => void;
 }) {
-  const itinerary = useMemo(() => buildTripItinerary(trip), [trip]);
+  const itinerary = useMemo(() => buildTripItinerary(trip, details), [trip, details]);
   const warnings = useMemo(() => buildTripWarnings(trip), [trip]);
 
-  const isEmpty = itinerary.days.length === 0 && itinerary.unscheduled.length === 0;
+  const isEmpty =
+    itinerary.days.length === 0 && itinerary.undated.length === 0 && itinerary.restaurants.length === 0;
   const trimmedNotes = (notes ?? "").trim();
 
   // Rendered through a portal to document.body. Inside the page tree it sat in
   // .oltra-page__content, which is position:relative + z-index:1 and therefore
   // its own stacking context - so the overlay's z-index:700 could not lift it
-  // above the fixed site header (z-index 30 in a sibling context). This modal
-  // is top-aligned, unlike the centred confirm dialogs that share the overlay
-  // class, so its toolbar landed under the header band and Close was
-  // unclickable. Same createPortal pattern the Hotels lightbox already uses.
+  // above the fixed site header (z-index 30 in a sibling context). Being a
+  // direct child of body is also what lets print hide everything else.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -82,7 +92,7 @@ export default function TripItineraryDocument({
   // Print is also how a PDF gets made: every browser's print dialog offers
   // "Save as PDF", so this needs no PDF library (and CLAUDE.md §2 rules out
   // adding one). The @media print block in members.css hides everything except
-  // .itinerary-document.
+  // the document.
   function handlePrint() {
     window.print();
   }
@@ -92,18 +102,10 @@ export default function TripItineraryDocument({
   // exceed some clients' mailto length limits - that's the trade-off for not
   // needing a backend, and it goes away when real mail sending lands.
   function handleSend() {
-    const subject = `Itinerary — ${itinerary.tripName}`;
-    const sections = [itineraryToPlainText(itinerary)];
-    if (warnings.length) {
-      sections.push(
-        warnings.map((w) => `Important note: ${w.message}`).join("\n")
-      );
-    }
-    if (trimmedNotes) sections.push(`Trip notes\n${trimmedNotes}`);
-    const body = sections.join("\n\n");
-    window.location.href = `mailto:?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
+    const subject = `myOLTRA itinerary: ${itinerary.tripName}`;
+    const warningText = warnings.map((w) => `Important note: ${w.message}`).join("\n");
+    const body = [itineraryToPlainText(itinerary, trimmedNotes), warningText].filter(Boolean).join("\n\n");
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   if (!mounted) return null;
@@ -131,66 +133,71 @@ export default function TripItineraryDocument({
 
         <div className="oltra-panel itinerary-modal">
           <div className="itinerary-document">
+            {/* The site header's logo and route label, on paper (Ulrik,
+                2026-10-06). The black wordmark: the header's is drawn for the
+                dark page. */}
             <header className="itinerary-document__header">
+              <div className="itinerary-brand">
+                {/* eslint-disable-next-line @next/next/no-img-element -- an SVG wordmark; next/image does not optimise SVG */}
+                <img
+                  src="/images/logo/myOLTRA-logo-black-vf.svg"
+                  alt="myOLTRA"
+                  className="itinerary-brand__logo"
+                />
+                <div className="itinerary-brand__label">Itinerary</div>
+              </div>
+
               <h2 className="itinerary-document__title">{itinerary.tripName}</h2>
-              <dl className="itinerary-summary">
-                {itinerary.summaryFacts.map((fact) => (
-                  <div className="itinerary-fact" key={fact.label}>
-                    <dt>{fact.label}</dt>
-                    <dd>{fact.value}</dd>
-                  </div>
-                ))}
-              </dl>
+              <div className="itinerary-document__meta">
+                <span>{itinerary.destination}</span>
+                {itinerary.dates ? (
+                  <span className="itinerary-document__dates">{itinerary.dates}</span>
+                ) : null}
+              </div>
             </header>
 
             {warnings.length ? (
               <section className="itinerary-warnings">
                 {warnings.map((warning) => (
                   <p className="itinerary-warning" key={warning.id}>
-                    <span className="itinerary-warning__label">
-                      Important note:
-                    </span>{" "}
+                    <span className="itinerary-warning__label">Important note:</span>{" "}
                     {warning.message}
                   </p>
                 ))}
               </section>
             ) : null}
 
-            {isEmpty ? (
-              <div className="members-empty">
-                Nothing saved to this trip yet.
-              </div>
-            ) : null}
+            {isEmpty ? <div className="members-empty">Nothing saved to this trip yet.</div> : null}
 
             {itinerary.days.map((day) => (
-              <section className="itinerary-day" key={day.date}>
-                <h3 className="itinerary-day__heading">{day.heading}</h3>
+              <Section heading={day.heading} key={day.date}>
                 {day.entries.map((entry) => (
                   <EntryBlock entry={entry} key={entry.id} />
                 ))}
-              </section>
+              </Section>
             ))}
 
-            {itinerary.unscheduled.length ? (
-              <section className="itinerary-day">
-                <h3 className="itinerary-day__heading">Not yet scheduled</h3>
-                {itinerary.unscheduled.map((entry) => (
+            {itinerary.undated.length ? (
+              <Section heading="Not yet dated">
+                {itinerary.undated.map((entry) => (
                   <EntryBlock entry={entry} key={entry.id} />
                 ))}
-              </section>
+              </Section>
+            ) : null}
+
+            {itinerary.restaurants.length ? (
+              <Section heading="Restaurants">
+                {itinerary.restaurants.map((entry) => (
+                  <EntryBlock entry={entry} key={entry.id} />
+                ))}
+              </Section>
             ) : null}
 
             {trimmedNotes ? (
-              <section className="itinerary-day itinerary-notes">
-                <h3 className="itinerary-day__heading">Trip notes</h3>
+              <Section heading="Member notes">
                 <p className="itinerary-notes__body">{trimmedNotes}</p>
-              </section>
+              </Section>
             ) : null}
-
-            <footer className="itinerary-document__footer">
-              Booking references, flight numbers, terminals and baggage
-              allowances appear here once each item is booked.
-            </footer>
           </div>
         </div>
       </div>

@@ -32,6 +32,11 @@ const CARD_FIELDS = [
   "booking_hotel_ref",
   "booking_enabled",
   "www",
+  // The itinerary's address, phone and check-in lines (2026-10-06).
+  "ratehawk_address",
+  "ratehawk_phone",
+  "ratehawk_check_in_time",
+  "ratehawk_check_out_time",
 ];
 
 export async function POST(request: Request) {

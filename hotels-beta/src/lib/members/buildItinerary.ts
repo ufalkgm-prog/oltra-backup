@@ -1,24 +1,23 @@
-import type { SavedTrip } from "./types";
-import { formatReturnDeparture, reverseRoute } from "./savedFlights";
+import type { SavedFlight, SavedFlightSegment, SavedTrip } from "./types";
+import { reverseRoute } from "./savedFlights";
+import { getTransferTime } from "@/lib/transferTimes";
+import { formatPolicyTime } from "@/lib/ratehawk/metapolicy";
 
-/* Turns a SavedTrip into a day-by-day itinerary: a short summary followed by
- * one block per date. Deliberately key-facts only - no hotel or restaurant
- * descriptions - so the printed document stays something you can read at a
- * check-in desk.
+/* Turns a SavedTrip into the printed itinerary (layout by Ulrik, 2026-10-06):
+ * the trip's places and dates, then one section per date holding that day's
+ * flight, the transfer from the airport and the hotel, then RESTAURANTS and
+ * MEMBER NOTES. Key facts only - no descriptions - so it reads at a check-in
+ * desk. A fact with no value is left out rather than printed as a gap.
  *
- * Fields that only exist once booking is wired (booking references, flight
- * numbers, terminals, baggage) come through as null and render as "To be
- * confirmed" rather than being hidden, so the document's shape is stable and
- * the gaps are visible. See the note in types.ts. */
-
-export const TBC = "To be confirmed";
+ * No long dashes anywhere (Ulrik): ranges take an en dash with spaces, as in
+ * "Thu, 12 – 15 Nov 2026", and nothing else needs one. */
 
 export type ItineraryFact = { label: string; value: string };
 
 export type ItineraryEntry = {
   id: string;
-  kind: "flight" | "hotel-check-in" | "hotel-check-out" | "hotel-stay" | "restaurant";
-  /** Sort key within a day - "HH:MM", or "" when the time is unknown. */
+  kind: "flight" | "transfer" | "hotel" | "restaurant";
+  /** "HH:MM", or "" when unknown or not a timed thing (a transfer). */
   time: string;
   title: string;
   subtitle: string;
@@ -35,17 +34,44 @@ export type ItineraryDay = {
 export type TripItinerary = {
   tripName: string;
   destination: string;
-  period: string;
-  travelers: string;
-  summaryFacts: ItineraryFact[];
+  /** "Thu, 12 – 15 Nov 2026", or "" when nothing is dated. */
+  dates: string;
   days: ItineraryDay[];
-  /** Items with no usable date - still listed, never silently dropped. */
-  unscheduled: ItineraryEntry[];
+  /** Hotels and flights with no usable date - still listed, never dropped. */
+  undated: ItineraryEntry[];
+  restaurants: ItineraryEntry[];
 };
 
-function text(value: string | null | undefined): string {
-  const v = (value ?? "").trim();
-  return v || TBC;
+/** What the saved rows do not hold, looked up live by the page (Directus). */
+export type ItineraryHotelDetails = {
+  city?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+};
+
+export type ItineraryRestaurantDetails = {
+  type?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+};
+
+/** Keyed by the saved item's own id. */
+export type ItineraryDetails = {
+  hotels: Record<string, ItineraryHotelDetails | undefined>;
+  restaurants: Record<string, ItineraryRestaurantDetails | undefined>;
+};
+
+const NO_DETAILS: ItineraryDetails = { hotels: {}, restaurants: {} };
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function clean(value: string | null | undefined): string {
+  return (value ?? "").trim();
 }
 
 function isoDay(value: string | null | undefined): string {
@@ -63,9 +89,9 @@ function isoDay(value: string | null | undefined): string {
   return `${y}-${m}-${d}`;
 }
 
+/** The wall-clock time as written in the stamp: the airport's own local time. */
 function isoTime(value: string | null | undefined): string {
-  if (!value) return "";
-  const match = value.match(/T(\d{2}:\d{2})/);
+  const match = (value ?? "").match(/T(\d{2}:\d{2})/);
   return match ? match[1] : "";
 }
 
@@ -76,6 +102,20 @@ function timeFromLabel(value: string | null | undefined): string {
   return `${match[1].padStart(2, "0")}:${match[2]}`;
 }
 
+function parts(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  return { y, m, d, weekday: WEEKDAYS[weekday] ?? "" };
+}
+
+/** "Thu, 12 Nov 2026". */
+function shortDate(iso: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  const { y, m, d, weekday } = parts(iso);
+  return `${weekday}, ${d} ${MONTHS[m - 1]} ${y}`;
+}
+
+/** "Thursday 12 November 2026" - the day headings. */
 function dayHeading(iso: string): string {
   const parsed = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return iso;
@@ -87,11 +127,253 @@ function dayHeading(iso: string): string {
   }).format(parsed);
 }
 
-function roomSummary(trip: SavedTrip["hotels"][number]): string {
-  if (!trip.roomSelection?.length) return TBC;
-  return trip.roomSelection
-    .map((room) => `${room.quantity}× ${room.roomName}`)
+/** "Thu, 12 – 15 Nov 2026"; the month and year repeat only where they change. */
+export function formatDateRange(first: string, last: string): string {
+  if (!first) return "";
+  if (!last || last === first) return shortDate(first);
+  const a = parts(first);
+  const b = parts(last);
+  const end = `${b.d} ${MONTHS[b.m - 1]} ${b.y}`;
+  if (a.y !== b.y) return `${a.weekday}, ${a.d} ${MONTHS[a.m - 1]} ${a.y} – ${end}`;
+  if (a.m !== b.m) return `${a.weekday}, ${a.d} ${MONTHS[a.m - 1]} – ${end}`;
+  return `${a.weekday}, ${a.d} – ${end}`;
+}
+
+function nights(checkIn: string, checkOut: string): number | null {
+  if (!checkIn || !checkOut) return null;
+  const ms = Date.parse(`${checkOut}T00:00:00Z`) - Date.parse(`${checkIn}T00:00:00Z`);
+  const n = Math.round(ms / 86_400_000);
+  return n > 0 ? n : null;
+}
+
+function plural(n: number, one: string, many = `${one}s`): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+/** "2 adults, 1 child (age 8)". */
+function partyLabel(adults?: number | null, kids?: number | null, ages?: number[] | null): string {
+  const out: string[] = [];
+  if (adults) out.push(plural(adults, "adult"));
+  if (kids) {
+    const known = (ages ?? []).filter((age) => Number.isFinite(age));
+    const suffix = known.length ? ` (${known.length === 1 ? "age" : "ages"} ${known.join(", ")})` : "";
+    out.push(`${plural(kids, "child", "children")}${suffix}`);
+  }
+  return out.join(", ");
+}
+
+function cabinLabel(cabin: string): string {
+  const value = clean(cabin).replace(/_/g, " ").toLowerCase();
+  return value ? value[0].toUpperCase() + value.slice(1) : "";
+}
+
+/** "www.belmond.com" from "https://www.belmond.com/". */
+function websiteLabel(url: string | null | undefined): string {
+  return clean(url).replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+}
+
+/** "1 hour 40 minutes", "45 minutes". */
+function durationLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (!h) return plural(m, "minute");
+  return m ? `${plural(h, "hour")} ${plural(m, "minute")}` : plural(h, "hour");
+}
+
+/* ------------------------------------------------------------- flights --- */
+
+function airport(name: string, code: string): string {
+  const n = clean(name);
+  return n && code ? `${n} (${code})` : n || code;
+}
+
+function withTerminal(base: string, terminal: string | null): string {
+  return terminal ? `${base}, Terminal ${terminal}` : base;
+}
+
+/** "SAS SK 1416", segments joined. Duffel's flight number already carries
+ * the carrier code on some fares and not on others, so it is shown as given. */
+function flightsLabel(segments: SavedFlightSegment[]): string {
+  return segments
+    .map((s) => [clean(s.airline), clean(s.flightNumber)].filter(Boolean).join(" "))
+    .filter(Boolean)
     .join(", ");
+}
+
+function luggageLabel(segments: SavedFlightSegment[]): string {
+  // The journey's allowance is what its tightest segment allows.
+  const least = (pick: (s: SavedFlightSegment) => number | null) => {
+    const known = segments.map(pick).filter((n): n is number => n !== null);
+    return known.length ? Math.min(...known) : null;
+  };
+  const carryOn = least((s) => s.carryOnBags);
+  const checked = least((s) => s.checkedBags);
+  const out: string[] = [];
+  if (carryOn !== null) out.push(carryOn ? plural(carryOn, "carry-on bag") : "No carry-on bag");
+  if (checked !== null) out.push(checked ? plural(checked, "checked bag") : "no checked bag");
+  return out.length ? `${out.join(", ")} per passenger` : "";
+}
+
+function dayAfter(departIso: string, arriveIso: string): string {
+  const a = isoDay(departIso);
+  const b = isoDay(arriveIso);
+  return a && b && b > a ? ` (${shortDate(b)})` : "";
+}
+
+/** One direction of a saved journey, from its stored segments. */
+function flightFromSegments(
+  id: string,
+  segments: SavedFlightSegment[],
+  flight: SavedFlight
+): ItineraryEntry {
+  const first = segments[0];
+  const last = segments[segments.length - 1];
+  const stops = segments.slice(0, -1).map((s) => airport(s.destinationName, s.destinationCode));
+  return {
+    id,
+    kind: "flight",
+    time: isoTime(first.departIso),
+    title: `${airport(first.originName, first.originCode)} → ${airport(last.destinationName, last.destinationCode)}`,
+    subtitle: "",
+    facts: [
+      {
+        label: "Departure",
+        value: withTerminal(`${isoTime(first.departIso)} from ${first.originCode}`, first.originTerminal),
+      },
+      {
+        label: "Arrival",
+        value: withTerminal(
+          `${isoTime(last.arriveIso)}${dayAfter(first.departIso, last.arriveIso)} at ${last.destinationCode}`,
+          last.destinationTerminal
+        ),
+      },
+      { label: segments.length > 1 ? "Flights" : "Flight", value: flightsLabel(segments) },
+      { label: "Stops", value: stops.length ? `${plural(stops.length, "stop")}: ${stops.join(", ")}` : "Direct" },
+      { label: "Passengers", value: partyLabel(flight.adults, flight.kids) },
+      { label: "Cabin", value: cabinLabel(flight.cabin) },
+      { label: "Luggage", value: luggageLabel(segments) },
+      { label: "Aircraft", value: segments.length === 1 ? clean(first.aircraft) : "" },
+    ],
+  };
+}
+
+type DatedEntry = { date: string; entry: ItineraryEntry };
+
+/** Every flight of a saved row, with where and when it lands. */
+function flightEntries(flight: SavedFlight): { dated: DatedEntry[]; arrivals: { date: string; iata: string; name: string }[] } {
+  const dated: DatedEntry[] = [];
+  const arrivals: { date: string; iata: string; name: string }[] = [];
+  const segments = flight.segments;
+
+  if (segments?.outbound.length) {
+    const out = flightFromSegments(`flight-${flight.id}`, segments.outbound, flight);
+    dated.push({ date: isoDay(segments.outbound[0].departIso), entry: out });
+    const last = segments.outbound[segments.outbound.length - 1];
+    arrivals.push({ date: isoDay(last.arriveIso), iata: last.destinationCode, name: last.destinationName });
+    if (segments.inbound.length) {
+      const back = flightFromSegments(`flight-${flight.id}-return`, segments.inbound, flight);
+      dated.push({ date: isoDay(segments.inbound[0].departIso), entry: back });
+    }
+    return { dated, arrivals };
+  }
+
+  // Saved before 2026-10-06: the route, times, cabin and party are all there is.
+  const shared = [
+    { label: "Passengers", value: partyLabel(flight.adults, flight.kids) },
+    { label: "Cabin", value: cabinLabel(flight.cabin) },
+  ];
+  dated.push({
+    date: isoDay(flight.departAt) || isoDay(flight.timing),
+    entry: {
+      id: `flight-${flight.id}`,
+      kind: "flight",
+      time: isoTime(flight.departAt) || timeFromLabel(flight.timing),
+      title: clean(flight.route),
+      subtitle: "",
+      facts: [{ label: "Departure", value: clean(flight.timing) }, ...shared],
+    },
+  });
+  if (flight.returnDepartAt) {
+    dated.push({
+      date: isoDay(flight.returnDepartAt),
+      entry: {
+        id: `flight-${flight.id}-return`,
+        kind: "flight",
+        time: isoTime(flight.returnDepartAt),
+        title: reverseRoute(flight.route),
+        subtitle: "",
+        facts: [{ label: "Departure", value: isoTime(flight.returnDepartAt) }, ...shared],
+      },
+    });
+  }
+  return { dated, arrivals };
+}
+
+/* --------------------------------------------------------------- hotels --- */
+
+function roomLabel(hotel: SavedTrip["hotels"][number]): string {
+  return (hotel.roomSelection ?? [])
+    .map((room) => (room.quantity > 1 ? `${room.quantity} × ${room.roomName}` : room.roomName))
+    .join(", ");
+}
+
+function guestsLabel(hotel: SavedTrip["hotels"][number]): string {
+  const party = partyLabel(hotel.adults, hotel.kids, hotel.childrenAges);
+  const rooms = hotel.rooms && hotel.rooms > 1 ? plural(hotel.rooms, "room") : "";
+  return [party, rooms].filter(Boolean).join(", ");
+}
+
+function hotelEntry(hotel: SavedTrip["hotels"][number], details: ItineraryHotelDetails): ItineraryEntry {
+  const checkIn = isoDay(hotel.checkIn);
+  const checkOut = isoDay(hotel.checkOut);
+  const inTime = formatPolicyTime(details.checkInTime) ?? clean(hotel.checkInTime);
+  const outTime = formatPolicyTime(details.checkOutTime) ?? clean(hotel.checkOutTime);
+  const stay = nights(checkIn, checkOut);
+  return {
+    id: `hotel-${hotel.id}`,
+    kind: "hotel",
+    time: inTime,
+    title: clean(hotel.name),
+    subtitle: clean(hotel.location),
+    facts: [
+      { label: "Address", value: clean(details.address ?? hotel.address) },
+      { label: "Website", value: websiteLabel(details.website) },
+      { label: "Tel", value: clean(details.phone ?? hotel.phone) },
+      { label: "Check-in", value: checkIn ? `${shortDate(checkIn)}${inTime ? `, from ${inTime}` : ""}` : "" },
+      { label: "Check-out", value: checkOut ? `${shortDate(checkOut)}${outTime ? `, by ${outTime}` : ""}` : "" },
+      { label: "Stay", value: stay ? plural(stay, "night") : clean(hotel.stay) },
+      { label: "Room", value: roomLabel(hotel) },
+      { label: "Guests", value: guestsLabel(hotel) },
+      { label: "Board", value: clean(hotel.boardBasis) },
+      { label: "Booking ref", value: clean(hotel.bookingReference) },
+    ],
+  };
+}
+
+/* ---------------------------------------------------------- restaurants --- */
+
+function restaurantEntry(
+  restaurant: SavedTrip["restaurants"][number],
+  details: ItineraryRestaurantDetails
+): ItineraryEntry {
+  const date = isoDay(restaurant.reservedAt);
+  const time = isoTime(restaurant.reservedAt) || timeFromLabel(restaurant.time);
+  return {
+    id: `restaurant-${restaurant.id}`,
+    kind: "restaurant",
+    time,
+    title: clean(restaurant.name),
+    subtitle: clean(restaurant.location),
+    facts: [
+      { label: "Type", value: clean(details.type) },
+      { label: "Address", value: clean(details.address ?? restaurant.address) },
+      { label: "Website", value: websiteLabel(details.website) },
+      { label: "Tel", value: clean(details.phone ?? restaurant.phone) },
+      { label: "Reservation", value: date ? `${shortDate(date)}${time ? `, ${time}` : ""}` : clean(restaurant.time) },
+      { label: "Party", value: restaurant.partySize ? String(restaurant.partySize) : "" },
+      { label: "Booking ref", value: clean(restaurant.bookingReference) },
+    ],
+  };
 }
 
 /* WHERE THE TRIP GOES, from what it holds (2026-10-05). The stored
@@ -116,230 +398,134 @@ function tripPlaces(trip: SavedTrip): string {
   return places.join(", ");
 }
 
-export function buildTripItinerary(trip: SavedTrip): TripItinerary {
+const KIND_ORDER: Record<ItineraryEntry["kind"], number> = { flight: 0, transfer: 1, hotel: 2, restaurant: 3 };
+
+export function buildTripItinerary(trip: SavedTrip, details: ItineraryDetails = NO_DETAILS): TripItinerary {
   const byDate = new Map<string, ItineraryEntry[]>();
-  const unscheduled: ItineraryEntry[] = [];
+  const undated: ItineraryEntry[] = [];
+  const allDates: string[] = [];
 
   const push = (date: string, entry: ItineraryEntry) => {
     if (!date) {
-      unscheduled.push(entry);
+      undated.push(entry);
       return;
     }
+    allDates.push(date);
     const list = byDate.get(date);
     if (list) list.push(entry);
     else byDate.set(date, [entry]);
   };
 
+  const arrivals: { date: string; iata: string; name: string }[] = [];
   for (const flight of trip.flights) {
-    const date = isoDay(flight.departAt) || isoDay(flight.timing);
-    push(date, {
-      id: `flight-${flight.id}`,
-      kind: "flight",
-      time: isoTime(flight.departAt) || timeFromLabel(flight.timing),
-      title: flight.route || TBC,
-      subtitle: [flight.airline, flight.cabin].filter(Boolean).join(" · ") || flight.cabin,
-      facts: [
-        { label: "Flight", value: text(flight.flightNumber) },
-        { label: "Departs", value: text(flight.timing) },
-        { label: "From", value: text(flight.departureAirport) },
-        { label: "Departure terminal", value: text(flight.departureTerminal) },
-        { label: "To", value: text(flight.arrivalAirport) },
-        { label: "Arrival terminal", value: text(flight.arrivalTerminal) },
-        { label: "Cabin", value: text(flight.cabin) },
-        { label: "Baggage", value: text(flight.baggageAllowance) },
-        { label: "Seat", value: text(flight.seat) },
-        { label: "Booking ref", value: text(flight.bookingReference) },
-      ],
-    });
-
-    /* The flight home of a saved return (2026-10-05 test pass). One saved row
-       holds both legs, and only the outbound reached the itinerary, so the
-       return was nowhere a member could see it. The row keeps the return's
-       departure time; its route is the outbound reversed. */
-    const returnDate = isoDay(flight.returnDepartAt);
-    if (returnDate) {
-      push(returnDate, {
-        id: `flight-${flight.id}-return`,
-        kind: "flight",
-        time: isoTime(flight.returnDepartAt),
-        title: reverseRoute(flight.route) || TBC,
-        subtitle: flight.cabin,
-        facts: [
-          { label: "Departs", value: text(formatReturnDeparture(flight.returnDepartAt)) },
-          { label: "Cabin", value: text(flight.cabin) },
-        ],
-      });
-    }
+    const result = flightEntries(flight);
+    for (const { date, entry } of result.dated) push(date, entry);
+    arrivals.push(...result.arrivals);
   }
 
   for (const hotel of trip.hotels) {
+    const hotelDetails = details.hotels[hotel.id] ?? {};
     const checkIn = isoDay(hotel.checkIn);
     const checkOut = isoDay(hotel.checkOut);
+    // The hotel sits on its arrival day; check-out is a line in it, so a day
+    // holding only a departure does not get a section of its own.
+    push(checkIn || checkOut, hotelEntry(hotel, hotelDetails));
+    if (checkOut) allDates.push(checkOut);
 
-    const sharedFacts: ItineraryFact[] = [
-      { label: "Rooms", value: roomSummary(hotel) },
-      { label: "Board", value: text(hotel.boardBasis) },
-      { label: "Address", value: text(hotel.address ?? hotel.location) },
-      { label: "Phone", value: text(hotel.phone) },
-      { label: "Booking ref", value: text(hotel.bookingReference) },
-    ];
-
-    // A stay produces two dated entries so it shows up on both the arrival and
-    // the departure day, which is what a day-by-day document needs. Falls back
-    // to one undated block when neither date is known.
-    if (!checkIn && !checkOut) {
-      push("", {
-        id: `hotel-${hotel.id}`,
-        kind: "hotel-stay",
-        time: "",
-        title: hotel.name || TBC,
-        subtitle: hotel.location,
-        facts: [{ label: "Stay", value: text(hotel.stay) }, ...sharedFacts],
-      });
-      continue;
-    }
-
-    if (checkIn) {
+    /* THE TRANSFER, when a flight lands the day the stay starts: the drive
+       from that airport, as transferTimes.ts measured it for the hotel's
+       destination. Train times are not held anywhere, so only the road. */
+    const landing = arrivals.find((a) => a.date === checkIn);
+    const city = clean(hotelDetails.city);
+    const road = landing && city ? getTransferTime(city, landing.iata) : null;
+    if (landing && road) {
       push(checkIn, {
-        id: `hotel-in-${hotel.id}`,
-        kind: "hotel-check-in",
-        time: hotel.checkInTime ?? "",
-        title: `Check in — ${hotel.name || TBC}`,
-        subtitle: hotel.location,
-        facts: [
-          { label: "Check-in", value: text(hotel.checkInTime) },
-          { label: "Stay", value: text(hotel.stay) },
-          ...sharedFacts,
-        ],
-      });
-    }
-
-    if (checkOut) {
-      push(checkOut, {
-        id: `hotel-out-${hotel.id}`,
-        kind: "hotel-check-out",
-        time: hotel.checkOutTime ?? "",
-        title: `Check out — ${hotel.name || TBC}`,
-        subtitle: hotel.location,
-        facts: [
-          { label: "Check-out", value: text(hotel.checkOutTime) },
-          { label: "Booking ref", value: text(hotel.bookingReference) },
-        ],
+        id: `transfer-${hotel.id}`,
+        kind: "transfer",
+        time: "",
+        title: `${durationLabel(road.minutes)} by private transfer from ${airport(landing.name, landing.iata)}`,
+        subtitle: "",
+        facts: [],
       });
     }
   }
 
-  for (const restaurant of trip.restaurants) {
-    const date = isoDay(restaurant.reservedAt) || isoDay(restaurant.time);
-    push(date, {
-      id: `restaurant-${restaurant.id}`,
-      kind: "restaurant",
-      time: isoTime(restaurant.reservedAt) || timeFromLabel(restaurant.time),
-      title: restaurant.name || TBC,
-      subtitle: restaurant.location,
-      facts: [
-        { label: "Reservation", value: text(restaurant.time) },
-        { label: "Party size", value: restaurant.partySize ? String(restaurant.partySize) : TBC },
-        { label: "Address", value: text(restaurant.address ?? restaurant.location) },
-        { label: "Phone", value: text(restaurant.phone) },
-        { label: "Booking ref", value: text(restaurant.bookingReference) },
-      ],
-    });
-  }
+  const restaurants = trip.restaurants
+    .map((restaurant) => ({
+      date: isoDay(restaurant.reservedAt),
+      entry: restaurantEntry(restaurant, details.restaurants[restaurant.id] ?? {}),
+    }))
+    // Reserved ones first, by date and time; the rest as saved.
+    .sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999") || a.entry.time.localeCompare(b.entry.time))
+    .map(({ entry }) => entry);
 
   const days: ItineraryDay[] = [...byDate.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, entries]) => ({
       date,
       heading: dayHeading(date),
-      // Untimed entries sort last within their day rather than jumping to 00:00.
-      entries: [...entries].sort((a, b) => {
-        if (!a.time && !b.time) return 0;
-        if (!a.time) return 1;
-        if (!b.time) return -1;
-        return a.time.localeCompare(b.time);
-      }),
+      // Flight, then the transfer from it, then the hotel (Ulrik); flights
+      // among themselves by departure time.
+      entries: [...entries].sort(
+        (a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.time.localeCompare(b.time)
+      ),
     }));
 
-  const dateRange =
-    days.length === 0
-      ? text(trip.period)
-      : days.length === 1
-      ? dayHeading(days[0].date)
-      : `${dayHeading(days[0].date)} – ${dayHeading(days[days.length - 1].date)}`;
+  const sortedDates = [...new Set(allDates)].sort();
 
-  const destination = tripPlaces(trip) || trip.destination;
-
-  return dropUnknownFacts({
+  return dropEmptyFacts({
     tripName: trip.name || "Trip",
-    destination,
-    period: trip.period,
-    travelers: trip.travelers,
-    summaryFacts: [
-      { label: "Dates", value: dateRange },
-      { label: "Destination", value: text(destination) },
-      { label: "Travellers", value: text(trip.travelers) },
-      { label: "Flights", value: String(trip.flights.length) },
-      { label: "Hotels", value: String(trip.hotels.length) },
-      { label: "Restaurants", value: String(trip.restaurants.length) },
-    ],
+    destination: tripPlaces(trip) || trip.destination,
+    dates: formatDateRange(sortedDates[0] ?? "", sortedDates.at(-1) ?? ""),
     days,
-    unscheduled,
+    undated,
+    restaurants,
   });
 }
 
-/* Strips every fact whose value is still "To be confirmed".
- *
- * Almost nothing beyond the booking basics exists until a trip is actually
- * booked - flight number, terminals, baggage, seat, board basis, phone,
- * booking reference - and printing a row of "To be confirmed" for each one
- * buried the handful of real values in filler. A field that has no answer
- * yet is simply not shown. Applied once here so the printed document and the
- * plain-text mail body stay identical. */
-function dropUnknownFacts(itinerary: TripItinerary): TripItinerary {
-  const keep = (facts: ItineraryFact[]) =>
-    facts.filter((fact) => fact.value && fact.value !== TBC);
-
-  const cleanEntries = (entries: ItineraryEntry[]) =>
-    entries.map((entry) => ({ ...entry, facts: keep(entry.facts) }));
-
+/* A fact with no answer yet is not shown: almost nothing beyond the booking
+   basics exists until a trip is booked, and rows of blanks buried the real
+   values. Applied once so the document and the mail body stay identical. */
+function dropEmptyFacts(itinerary: TripItinerary): TripItinerary {
+  const clean = (entries: ItineraryEntry[]) =>
+    entries.map((entry) => ({ ...entry, facts: entry.facts.filter((fact) => fact.value.trim()) }));
   return {
     ...itinerary,
-    summaryFacts: keep(itinerary.summaryFacts),
-    days: itinerary.days.map((day) => ({
-      ...day,
-      entries: cleanEntries(day.entries),
-    })),
-    unscheduled: cleanEntries(itinerary.unscheduled),
+    days: itinerary.days.map((day) => ({ ...day, entries: clean(day.entries) })),
+    undated: clean(itinerary.undated),
+    restaurants: clean(itinerary.restaurants),
   };
 }
 
-/** Plain-text rendering, used for the "Send" mail body. */
-export function itineraryToPlainText(itinerary: TripItinerary): string {
-  const lines: string[] = [];
+export const KIND_LABEL: Record<ItineraryEntry["kind"], string> = {
+  flight: "Flight",
+  transfer: "Transfer",
+  hotel: "Hotel",
+  restaurant: "",
+};
 
-  lines.push(itinerary.tripName.toUpperCase());
-  lines.push("");
-  for (const fact of itinerary.summaryFacts) {
-    lines.push(`${fact.label}: ${fact.value}`);
-  }
+/** Plain-text rendering, used for the "Send" mail body. */
+export function itineraryToPlainText(itinerary: TripItinerary, notes = ""): string {
+  const lines: string[] = ["myOLTRA ITINERARY", "", itinerary.tripName];
+  if (itinerary.destination) lines.push(itinerary.destination);
+  if (itinerary.dates) lines.push(itinerary.dates);
 
   const section = (heading: string, entries: ItineraryEntry[]) => {
-    lines.push("");
-    lines.push(heading);
-    lines.push("-".repeat(heading.length));
+    lines.push("", heading.toUpperCase(), "_".repeat(Math.min(heading.length, 40)));
     for (const entry of entries) {
       lines.push("");
-      lines.push(`${entry.time ? `${entry.time}  ` : ""}${entry.title}`);
+      const label = KIND_LABEL[entry.kind];
+      const lead = [label.toUpperCase(), entry.time].filter(Boolean).join(" ");
+      lines.push(lead ? `${lead}: ${entry.title}` : entry.title);
       if (entry.subtitle) lines.push(`  ${entry.subtitle}`);
-      for (const fact of entry.facts) {
-        lines.push(`  ${fact.label}: ${fact.value}`);
-      }
+      for (const fact of entry.facts) lines.push(`  ${fact.label}: ${fact.value}`);
     }
   };
 
   for (const day of itinerary.days) section(day.heading, day.entries);
-  if (itinerary.unscheduled.length) section("Not yet scheduled", itinerary.unscheduled);
+  if (itinerary.undated.length) section("Not yet dated", itinerary.undated);
+  if (itinerary.restaurants.length) section("Restaurants", itinerary.restaurants);
+  if (notes.trim()) lines.push("", "MEMBER NOTES", "_".repeat(12), "", notes.trim());
 
   return lines.join("\n");
 }

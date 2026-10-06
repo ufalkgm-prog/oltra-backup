@@ -9,13 +9,14 @@ type MembersNavItem = {
   label: string;
 };
 
+// Personal Information last (Ulrik, 2026-10-06); /members opens on the first.
 const MEMBERS_NAV: MembersNavItem[] = [
-  { href: "/members/personal-information", label: "PERSONAL INFORMATION" },
   { href: "/members/saved-trips", label: "SAVED TRIPS" },
   { href: "/members/favorite-hotels", label: "FAVORITE HOTELS" },
   { href: "/members/favorite-restaurants", label: "FAVORITE RESTAURANTS" },
   { href: "/members/feedback-suggest", label: "FEEDBACK / SUGGEST" },
   { href: "/members/review", label: "REVIEW" },
+  { href: "/members/personal-information", label: "PERSONAL INFORMATION" },
 ];
 
 type MembersShellProps = {

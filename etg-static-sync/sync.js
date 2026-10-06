@@ -153,6 +153,8 @@ const SYNCED_FIELDS = [
   "ratehawk_check_out_time",
   "ratehawk_is_closed",
   "ratehawk_deleted",
+  "ratehawk_address",
+  "ratehawk_phone",
 ];
 
 async function loadRoster() {
@@ -206,6 +208,10 @@ function buildPayload(hotel) {
     // daily job must not overwrite.
     ratehawk_is_closed: hotel.is_closed ?? null,
     ratehawk_deleted: hotel.deleted ?? null,
+    // For the Saved trips itinerary (2026-10-06): Directus holds a website
+    // per hotel but no address or phone. As ETG gives them, blank as null.
+    ratehawk_address: hotel.address?.trim() || null,
+    ratehawk_phone: hotel.phone?.trim() || null,
   };
 }
 

@@ -11,6 +11,7 @@ import SaveToTripControl, {
 } from "@/components/members/SaveToTripControl";
 import TripComBookButton from "@/components/flights/TripComBookButton";
 import { addFlightToTripBrowser } from "@/lib/members/db";
+import { flightSegmentsForSave } from "@/lib/members/savedFlights";
 import type { FlightLeg, Itinerary, PassengerCounts } from "@/lib/flights/itinerary";
 import type { TripComPlacement } from "@/lib/flights/partners";
 import { useApproxPrice } from "@/lib/flights/useApproxPrice";
@@ -131,6 +132,11 @@ export default function FlightResultRow({
         departAt: out.segments[0]?.departIso ?? null,
         arriveAt: (lastIn ?? lastOut)?.arriveIso ?? null,
         externalFlightId: itinerary.offerId,
+        // Both ends of the stay, as the Flights page saves them, so the
+        // itinerary shows the flight home too.
+        destinationArriveAt: lastOut?.arriveIso ?? null,
+        returnDepartAt: itinerary.inbound?.segments[0]?.departIso ?? null,
+        segments: flightSegmentsForSave(itinerary),
       });
       return {
         message: result.status === "already_exists" ? "Already in that trip." : "Saved to trip.",
