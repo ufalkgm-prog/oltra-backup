@@ -47,7 +47,6 @@ export type ItineraryHotelDetails = {
   city?: string | null;
   address?: string | null;
   phone?: string | null;
-  website?: string | null;
   checkInTime?: string | null;
   checkOutTime?: string | null;
 };
@@ -334,10 +333,10 @@ function hotelEntry(hotel: SavedTrip["hotels"][number], details: ItineraryHotelD
     kind: "hotel",
     time: inTime,
     title: clean(hotel.name),
-    subtitle: clean(hotel.location),
+    // No place line under the name, and no website (Ulrik, 2026-10-06).
+    subtitle: "",
     facts: [
       { label: "Address", value: clean(details.address ?? hotel.address) },
-      { label: "Website", value: websiteLabel(details.website) },
       { label: "Tel", value: clean(details.phone ?? hotel.phone) },
       { label: "Check-in", value: checkIn ? `${shortDate(checkIn)}${inTime ? `, from ${inTime}` : ""}` : "" },
       { label: "Check-out", value: checkOut ? `${shortDate(checkOut)}${outTime ? `, by ${outTime}` : ""}` : "" },
@@ -363,7 +362,7 @@ function restaurantEntry(
     kind: "restaurant",
     time,
     title: clean(restaurant.name),
-    subtitle: clean(restaurant.location),
+    subtitle: "",
     facts: [
       { label: "Type", value: clean(details.type) },
       { label: "Address", value: clean(details.address ?? restaurant.address) },
@@ -379,8 +378,10 @@ function restaurantEntry(
 /* WHERE THE TRIP GOES, from what it holds (2026-10-05). The stored
    destination is whatever the trip was created with, so one started from a
    Costa Smeralda hotel still said Costa Smeralda once it held Paris, London and
-   Reykjavik. The places of its hotels, restaurants and flight destinations, in
-   that order, each once; the stored value only when it holds nothing placed. */
+   Reykjavik. The places of its hotels and restaurants, in that order, each
+   once; flight destinations only when it holds neither, since the airport's
+   city is not where the trip goes (Geneva for Courchevel); the stored value
+   only when it holds nothing placed. */
 function tripPlaces(trip: SavedTrip): string {
   const places: string[] = [];
   const add = (value: string | null | undefined) => {
@@ -390,7 +391,7 @@ function tripPlaces(trip: SavedTrip): string {
   // "Paris · France" -> Paris; "Laugavegur · Reykjavik" -> Reykjavik.
   for (const hotel of trip.hotels) add(hotel.location?.split("·")[0]);
   for (const restaurant of trip.restaurants) add(restaurant.location?.split("·").at(-1));
-  for (const flight of trip.flights) {
+  for (const flight of places.length ? [] : trip.flights) {
     const to = (flight.route ?? "").split("→")[1];
     // A bare airport code says less than the places already listed.
     if (to && !/^\s*[A-Z]{3}\s*$/.test(to)) add(to);
@@ -507,8 +508,8 @@ export const KIND_LABEL: Record<ItineraryEntry["kind"], string> = {
 /** Plain-text rendering, used for the "Send" mail body. */
 export function itineraryToPlainText(itinerary: TripItinerary, notes = ""): string {
   const lines: string[] = ["myOLTRA ITINERARY", "", itinerary.tripName];
-  if (itinerary.destination) lines.push(itinerary.destination);
-  if (itinerary.dates) lines.push(itinerary.dates);
+  const meta = [itinerary.destination, itinerary.dates].filter(Boolean).join(" – ");
+  if (meta) lines.push(meta);
 
   const section = (heading: string, entries: ItineraryEntry[]) => {
     lines.push("", heading.toUpperCase(), "_".repeat(Math.min(heading.length, 40)));

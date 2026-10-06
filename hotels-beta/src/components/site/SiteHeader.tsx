@@ -299,7 +299,15 @@ export default function SiteHeader({ current = "", currentCurrency = "EUR" }: Si
       if (flightSaved?.origin) flightParams.set("origin", flightSaved.origin);
 
       setHotelsHref(hotelParams.toString() ? `/hotels?${hotelParams.toString()}` : "/hotels");
-      setFlightsHref(flightParams.toString() ? `/flights?${flightParams.toString()}` : "/flights");
+      // The Flights page's own search, when it is the latest, goes back whole:
+      // airport, trip type, cabin, multi-city flights, stops (2026-10-06).
+      setFlightsHref(
+        flightSaved?.flights_query
+          ? `/flights?${flightSaved.flights_query}`
+          : flightParams.toString()
+            ? `/flights?${flightParams.toString()}`
+            : "/flights"
+      );
 
       const restaurantCity = saved?.city?.trim();
       const restaurantParams = new URLSearchParams();

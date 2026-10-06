@@ -259,6 +259,40 @@ function filtersFromParams(searchParams: PageSearchParams, current: FilterState)
   };
 }
 
+/* THE WHOLE SEARCH AS A QUERY STRING (2026-10-06): what the page writes to
+ * its address bar after a search, and what it remembers for the header's
+ * Flights link. The shared search fields hold a city, dates and the party
+ * only, so coming back from Hotels lost the airport, cabin, trip type, the
+ * multi-city flights and the stops filter - a one-way search even came back as
+ * a return with no return date, so nothing searched and the page looked
+ * cleared. Multi-city keeps complete flights only, as `leg1`…`leg5` need. */
+function flightsQueryString(search: SearchState, maxStops: FilterState["maxStops"]): string {
+  const params = new URLSearchParams();
+  if (search.tripType === "multiple") {
+    search.multiCity.forEach((leg, i) => {
+      if (leg.from && leg.to && leg.date) params.set(`leg${i + 1}`, `${leg.from}-${leg.to}-${leg.date}`);
+    });
+    params.set("tripType", "multiple");
+  } else {
+    const isReturn = search.tripType === "return";
+    if (search.from) params.set("origin", search.from);
+    if (search.to) params.set("destination", search.to);
+    if (search.departDate) params.set("from", search.departDate);
+    if (isReturn && search.returnDate) params.set("to", search.returnDate);
+    params.set("tripType", isReturn ? "return" : "oneway");
+  }
+  params.set("adults", String(search.adults));
+  if (search.children > 0) {
+    params.set("kids", String(search.children));
+    for (const [key, value] of Object.entries(kidAgeFields(search.childrenAges))) {
+      if (value) params.set(key, String(value));
+    }
+  }
+  params.set("cabin", search.cabin);
+  if (maxStops !== "any") params.set("stops", maxStops);
+  return params.toString();
+}
+
 /* `saved` is the shared cross-page search, passed in only AFTER the first
  * render. Reading sessionStorage in here made the server render an empty date
  * box and the browser a filled one — a hydration mismatch, so React threw the
@@ -424,7 +458,14 @@ export default function FlightsView({ searchParams }: Props) {
       // This page's own last search, unless Landing, Hotels or the concierge
       // made a newer one (lib/searchSession.ts, 2026-09-28).
       const saved = readLatestFlightsSearch();
-      if (saved) setSearch(buildInitialSearch(searchParams, saved));
+      if (saved?.flights_query) {
+        // Our own, whole: read exactly as a link carrying it would be.
+        const params = Object.fromEntries(new URLSearchParams(saved.flights_query));
+        setSearch(buildInitialSearch(params));
+        setFilters(current => filtersFromParams(params, current));
+      } else if (saved) {
+        setSearch(buildInitialSearch(searchParams, saved));
+      }
     }
     setSessionRestored(true);
     // Once, on arrival: later URL changes are handled by the effect below.
@@ -645,9 +686,9 @@ export default function FlightsView({ searchParams }: Props) {
       ...kidAgeFields(search.childrenAges),
       origin: search.from,
     };
-    saveFlightsOwnSearch(values);
+    saveFlightsOwnSearch({ ...values, flights_query: flightsQueryString(search, filters.maxStops) });
     fillHotelFlightSearchIfEmpty(values);
-  }, [search, searchParams, isReturnTrip, sessionRestored]);
+  }, [search, searchParams, isReturnTrip, sessionRestored, filters.maxStops]);
 
   const allAirlines = useMemo(
     () => [...new Set(itineraries.flatMap(item => item.slices.map(l => l.airline)))].sort(),
@@ -737,11 +778,16 @@ export default function FlightsView({ searchParams }: Props) {
     if (!allAirlines.length) return;
     setFilters(current => {
       if (current.airlines.length) return current;
+      // "Preferred airlines only" can be ticked before the search it narrows.
       const airlines =
-        allianceOnly && allianceAirlinesInResults.length ? allianceAirlinesInResults : allAirlines;
+        preferredOnly && preferredAirlinesInResults.length
+          ? preferredAirlinesInResults
+          : allianceOnly && allianceAirlinesInResults.length
+            ? allianceAirlinesInResults
+            : allAirlines;
       return { ...current, airlines, layoverAirports };
     });
-  }, [allAirlines, layoverAirports, allianceOnly, allianceAirlinesInResults]);
+  }, [allAirlines, layoverAirports, allianceOnly, allianceAirlinesInResults, preferredOnly, preferredAirlinesInResults]);
 
 
   const filteredItineraries = useMemo(() => {
@@ -1136,33 +1182,11 @@ export default function FlightsView({ searchParams }: Props) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!lastSearchKey || isDirty || lastSearchKey !== searchKey || isLoading) return;
-    const params = new URLSearchParams();
-    if (isMultiple) {
-      search.multiCity.forEach((leg, i) => {
-        if (leg.from && leg.to && leg.date) params.set(`leg${i + 1}`, `${leg.from}-${leg.to}-${leg.date}`);
-      });
-      params.set("tripType", "multiple");
-    } else {
-      if (search.from) params.set("origin", search.from);
-      if (search.to) params.set("destination", search.to);
-      if (search.departDate) params.set("from", search.departDate);
-      if (isReturnTrip && search.returnDate) params.set("to", search.returnDate);
-      params.set("tripType", isReturnTrip ? "return" : "oneway");
-    }
-    params.set("adults", String(search.adults));
-    if (search.children > 0) {
-      params.set("kids", String(search.children));
-      for (const [key, value] of Object.entries(kidAgeFields(search.childrenAges))) {
-        if (value) params.set(key, String(value));
-      }
-    }
-    params.set("cabin", search.cabin);
-    if (filters.maxStops !== "any") params.set("stops", filters.maxStops);
-    const next = `${window.location.pathname}?${params.toString()}`;
+    const next = `${window.location.pathname}?${flightsQueryString(search, filters.maxStops)}`;
     if (next !== `${window.location.pathname}${window.location.search}`) {
       window.history.replaceState(window.history.state, "", next);
     }
-  }, [lastSearchKey, searchKey, isDirty, isLoading, isMultiple, isReturnTrip, search, filters.maxStops]);
+  }, [lastSearchKey, searchKey, isDirty, isLoading, search, filters.maxStops]);
 
   /* BOOK LEAVES THE SITE. This used to post to /api/flights/book-link, which
    * opened Duffel's hosted checkout - a page where Duffel took the payment. We
@@ -1468,24 +1492,26 @@ export default function FlightsView({ searchParams }: Props) {
                       </div>
                     );
                   })}
-                  <div className={styles.multiCityButtons}>
+                  {/* The Clear / Search row's size and placing (Ulrik,
+                      2026-10-06): the destructive one left, as Clear is. */}
+                  <div className={styles.searchActions}>
                     <button
                       type="button"
-                      className="oltra-btn"
-                      onClick={addMultiCityLeg}
-                      aria-disabled={search.multiCity.length >= MAX_MULTI_CITY_LEGS}
-                      data-reason={search.multiCity.length >= MAX_MULTI_CITY_LEGS ? `Up to ${MAX_MULTI_CITY_LEGS} flights` : undefined}
-                    >
-                      Add flight
-                    </button>
-                    <button
-                      type="button"
-                      className="oltra-btn oltra-btn--destructive"
+                      className={`oltra-btn oltra-btn--destructive ${styles.searchActionButton}`}
                       onClick={deleteLastMultiCityLeg}
                       aria-disabled={search.multiCity.length <= 1}
                       data-reason={search.multiCity.length <= 1 ? "At least one flight is needed" : undefined}
                     >
                       Delete flight
+                    </button>
+                    <button
+                      type="button"
+                      className={`oltra-btn ${styles.searchActionButton}`}
+                      onClick={addMultiCityLeg}
+                      aria-disabled={search.multiCity.length >= MAX_MULTI_CITY_LEGS}
+                      data-reason={search.multiCity.length >= MAX_MULTI_CITY_LEGS ? `Up to ${MAX_MULTI_CITY_LEGS} flights` : undefined}
+                    >
+                      Add flight
                     </button>
                   </div>
                 </div>
@@ -1558,6 +1584,47 @@ export default function FlightsView({ searchParams }: Props) {
                     options={["Economy", "Premium Economy", "Business", "First"].map(v => ({ value: v, label: v }))}
                   />
                 </div>
+              </div>
+
+              {/* In the search frame, above its buttons (Ulrik, 2026-10-06):
+                  they shape what a search shows, so they are set with it.
+                  "Direct flights only" is the Stops filter's "Direct only";
+                  "Preferred airlines only" narrows the Airlines filter to the
+                  member's carriers, and can be ticked before searching. */}
+              <div className={styles.searchToggles}>
+                <label className={styles.preferredOnlyToggle}>
+                  <span>Direct flights only</span>
+                  <input
+                    type="checkbox"
+                    checked={filters.maxStops === "direct"}
+                    onChange={e =>
+                      setFilters(c => ({ ...c, maxStops: e.target.checked ? "direct" : "any" }))
+                    }
+                  />
+                </label>
+                <label
+                  className={styles.preferredOnlyToggle}
+                  title={
+                    !preferredAirlines.length
+                      ? "Save your preferred airlines under Members, Personal information"
+                      : itineraries.length && !preferredAirlinesInResults.length
+                        ? "None of your preferred airlines fly this route"
+                        : `Show only ${(itineraries.length ? preferredAirlinesInResults : preferredAirlines).join(", ")}`
+                  }
+                >
+                  <span>Preferred airlines only</span>
+                  <input
+                    type="checkbox"
+                    checked={
+                      preferredOnly && (!itineraries.length || preferredAirlinesInResults.length > 0)
+                    }
+                    disabled={
+                      !preferredAirlines.length ||
+                      (itineraries.length > 0 && !preferredAirlinesInResults.length)
+                    }
+                    onChange={e => togglePreferredOnly(e.target.checked)}
+                  />
+                </label>
               </div>
 
               {/* Clear and Search at the Hotels page's button width, Clear at the
@@ -1682,27 +1749,6 @@ export default function FlightsView({ searchParams }: Props) {
                     checked={allianceOnly && allianceAirlinesInResults.length > 0}
                     disabled={!allianceAirlinesInResults.length}
                     onChange={e => toggleAllianceOnly(e.target.checked)}
-                  />
-                </label>
-              )}
-
-              {allAirlines.length > 0 && preferredAirlines.length > 0 && (
-                <label
-                  className={styles.preferredOnlyToggle}
-                  title={
-                    preferredAirlinesInResults.length
-                      ? `Show only ${preferredAirlinesInResults.join(", ")}`
-                      : "None of your preferred airlines fly this route"
-                  }
-                >
-                  {/* Text left, matching the "Airlines" label it sits above;
-                      tick box hard right. */}
-                  <span>Preferred airlines only</span>
-                  <input
-                    type="checkbox"
-                    checked={preferredOnly}
-                    disabled={!preferredAirlinesInResults.length}
-                    onChange={e => togglePreferredOnly(e.target.checked)}
                   />
                 </label>
               )}

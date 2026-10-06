@@ -37,6 +37,10 @@ export type SharedTravelSearch = {
   /** When it was written (ms). Lets a page with its own copy — Flights —
    * tell whether the shared search is newer than what it remembers. */
   savedAt?: number;
+  /** Flights' own copy only: the page's whole search as its URL query - the
+   * airport, trip type, cabin, multi-city flights and stops, which the fields
+   * above cannot hold (2026-10-06). Never written to the shared search. */
+  flights_query?: string;
 };
 
 const HOTEL_FLIGHT_KEY = "oltra_hotel_flight_search";

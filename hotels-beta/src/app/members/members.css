@@ -1215,10 +1215,14 @@
   margin-bottom: 30px;
 }
 
+/* The wordmark starts 16 units into its 585-unit canvas, ~4px at this
+   height, so it is pulled back to sit flush with the text (the site header
+   does the same). */
 .itinerary-brand__logo {
   display: block;
   width: auto;
   height: 34px;
+  margin-left: calc(-16 / 131 * 34px);
 }
 
 .itinerary-brand__label {
@@ -1239,21 +1243,25 @@
 }
 
 .itinerary-document__meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 24px;
   margin-top: 6px;
   font-size: 13px;
   line-height: 1.5;
   color: var(--oltra-text-secondary);
 }
 
-.itinerary-document__dates {
-  flex: 0 0 auto;
-  white-space: nowrap;
-  font-weight: 600;
-  color: var(--oltra-text-primary);
+/* On screen the print frame is an ordinary block and its spacer rows are not
+   there at all. */
+.itinerary-print-frame,
+.itinerary-print-frame > tbody,
+.itinerary-print-frame > tbody > tr,
+.itinerary-print-frame > tbody > tr > td {
+  display: block;
+  padding: 0;
+}
+
+.itinerary-print-frame > thead,
+.itinerary-print-frame > tfoot {
+  display: none;
 }
 
 /* Red text on the document's own white, matching the on-screen Editor notes. */
@@ -1376,11 +1384,6 @@
     padding: 12px 4px 16px;
   }
 
-  .itinerary-document__meta {
-    flex-direction: column;
-    gap: 2px;
-  }
-
   .itinerary-entry {
     grid-template-columns: 1fr;
     gap: 6px;
@@ -1407,9 +1410,12 @@
    ordinary block: pages then break naturally, where the old absolutely
    positioned copy could be cut off after the first sheet. No PDF library -
    CLAUDE.md §2. */
+/* No top or bottom margin: that is where the browser prints its own header
+   and footer, so with none there is nowhere to put them. The print frame's
+   repeating rows give each page its space instead. */
 @page {
   size: A4;
-  margin: 16mm 16mm 18mm;
+  margin: 0 16mm;
 }
 
 @media print {
@@ -1448,6 +1454,36 @@
 
   .itinerary-document {
     padding: 0;
+  }
+
+  .itinerary-print-frame {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .itinerary-print-frame > thead {
+    display: table-header-group;
+  }
+
+  .itinerary-print-frame > tfoot {
+    display: table-footer-group;
+  }
+
+  .itinerary-print-frame > tbody {
+    display: table-row-group;
+  }
+
+  .itinerary-print-frame > tbody > tr {
+    display: table-row;
+  }
+
+  .itinerary-print-frame > tbody > tr > td {
+    display: table-cell;
+  }
+
+  .itinerary-print-space {
+    height: 14mm;
   }
 
   /* The accent, the warnings and the rules are colour that must reach paper. */

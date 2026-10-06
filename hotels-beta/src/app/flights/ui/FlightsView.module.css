@@ -109,14 +109,6 @@
   gap: var(--oltra-gap-md);
 }
 
-/* Flex, not a 2-column grid: the buttons size to their labels, and "Delete
-   flight" is wider than half the column. */
-.multiCityButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .multiCityRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 132px;
@@ -1456,4 +1448,10 @@
 
 .searchActionButton {
   width: min(154px, calc(50% - 7px));
+}
+
+/* "Direct flights only" and "Preferred airlines only", above Clear / Search. */
+.searchToggles {
+  display: grid;
+  gap: 10px;
 }

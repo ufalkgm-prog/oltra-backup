@@ -499,7 +499,7 @@ export default function SavedTripsView() {
   }, [restaurantIdsKey]);
 
   /* What the itinerary prints beyond the saved rows (2026-10-06): each
-     hotel's address, phone, website, check-in times and destination (for the
+     hotel's address, phone, check-in times and destination (for the
      transfer), each restaurant's type and contacts, from the records above. */
   const itineraryDetails = useMemo<ItineraryDetails>(() => {
     const hotels: ItineraryDetails["hotels"] = {};
@@ -510,7 +510,6 @@ export default function SavedTripsView() {
         city: record.city,
         address: record.ratehawk_address,
         phone: record.ratehawk_phone,
-        website: record.www,
         checkInTime: record.ratehawk_check_in_time,
         checkOutTime: record.ratehawk_check_out_time,
       };
