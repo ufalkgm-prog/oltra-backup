@@ -163,6 +163,7 @@ Other fields:
 * Links: `www`, `insta`
 * Booking: `booking_provider`, `booking_URL` (capital URL — `official_website_booking_url` does not exist), `booking_enabled`, `booking_label`, `booking_hotel_ref`, `booking_notes`
 * Ratehawk: `ratehawk_hid`, `ratehawk_image_1`–`50` (+ `_category`), `ratehawk_status` (§42), and the static-content fields in §48
+  * **The image order is curated, not ETG's (2026-10-06).** A vision pass picked slot 1 (hero) and slot 2 for 819 hotels; floor plans, logos and staff shots moved to the end. ETG's `category_slug` is unreliable — Carlton St. Moritz's "exterior" was a floor plan. Re-applying images in ETG order (`apply-ratehawk-images.mjs`) undoes it. KAYAK hotels show these photos too: no KAYAK image is stored anywhere. Snapshot, rollback and scripts: `scripts/ratehawk/output/hero-reorder-2026-10-06/` (gitignored).
 * Geo: `lat` / `lng` — Directus reports these as `type: "integer"` but `schema.data_type` is `numeric` and decimals round-trip intact. **Never `Math.trunc` a coordinate** (§40).
 
 ### Restaurants

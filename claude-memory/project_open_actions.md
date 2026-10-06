@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 113be546-0d38-4348-be9c-ff9b034556a4
-  modified: 2026-10-05T18:09:00.188Z
+  modified: 2026-10-06T14:45:13.528Z
 ---
 
 Outstanding, highest value first. Everything built so far is on `main` (through `c572e6d`) and backed up.
@@ -16,6 +16,10 @@ Outstanding, highest value first. Everything built so far is on `main` (through 
 - different types need a search and Prebook per room, joined at checkout — only if the White Label accepts several `p-` hashes.
 
 The question to RateHawk is drafted and held until their redirect spec arrives and certification is done. A count-only stepper in the room panel is buildable now, within the rules, and was offered but deferred with the rest. Raise it when RateHawk reply or when go-live planning starts.
+
+**0b. AT GO-LIVE (~Nov 2026, Ulrik 2026-10-06): deploy the daily ETG static sync on Railway.** `etg-static-sync` never got its Railway service; all rows were last synced 2026-08-24. Not before go-live — Ulrik's decision. Steps are in `.claude/rules/etg-ratehawk.md` §48. Until then, after changing a hotel's `ratehawk_hid`, run `node sync.js --only <hid>` by hand.
+
+**0c. Amankora (1066) unpublished 2026-10-06** — its only RateHawk photo was a food close-up. Republish once it has real photos (supplier images in `hotel_images`).
 
 **1. Supabase dashboard steps only Ulrik can do (members project `hrlvtzcapsqkgrcawluf`).**
 - ~~Run the member-feedback SQL~~ — DONE by Ulrik 2026-10-05, verified (anon refused with 42501, not PGRST205). The old empty `member_feedback_suggestions` table and its unused writer were removed 2026-10-05 (fcfebc0; drop verified).

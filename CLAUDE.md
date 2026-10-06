@@ -493,7 +493,7 @@ Data that goes stale on a clock rather than when someone changes something. **Wh
 | What | Interval | Last run | Next due | How |
 |---|---|---|---|---|
 | Ratehawk hotel status (§42) | Quarterly | 2026-08-16 | **2026-11-16** | `probe-ratehawk-status.mjs` then `apply-ratehawk-status-*.mjs --confirm` (~12 requests) |
-| Ratehawk static content (§48) | Daily | 2026-08-24 | automatic (Railway cron) | `etg-static-sync` — no manual step; check the Railway run log if room images go missing |
+| Ratehawk static content (§48) | Daily, from go-live | 2026-08-24 (Cipriani alone 2026-10-06) | **Railway cron not deployed — start it at go-live (~Nov 2026, Ulrik)** | `etg-static-sync`; until then run `node sync.js --only <hid>` by hand after changing a hotel's `ratehawk_hid` |
 | Award source files (§25) | When each org publishes | 2026-07-14 | check annually | rebuild `awards-2026/*.json`, then `match-hotel-awards.mjs` per code |
 | City → airport mapping (§37) | When the roster's city list changes | 2026-10-01 | on demand | `build-city-airports.mjs` |
 | Airport options list (§39) | With the above | 2026-10-01 | on demand | `build-airport-options.mjs` (also writes the server-only `airportCoords.ts`) |
@@ -506,7 +506,7 @@ Data that goes stale on a clock rather than when someone changes something. **Wh
   session added `kayak_hotel_id` / `kayak_status` / `kayak_checked_at`
   (`scripts/kayak/`, rollback file in its `output/`); 96 published hotels are
   `kayak_status = unverified` until a production KAYAK rate probe.
-* **Ratehawk status is the one needing a human to remember it.** The static-content row runs itself; it's listed so its existence and failure point are on the record.
+* **Ratehawk status is the one needing a human to remember it.** The static-content row will run itself once its Railway cron exists; every row's `ratehawk_static_synced_at` still read 2026-08-24 on 2026-10-06, which is how its absence was noticed.
 * Award refreshes are event-driven — T+L published its 2026 list a week before a session happened to check. Annually is a reminder to *look*, not a deadline.
 * Re-run the two airport builds after any meaningful batch of new hotels, or destinations resolve to the wrong nearest airport.
 * **The invariant between them, verified 2026-09-12 and worth re-checking after
