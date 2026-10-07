@@ -3358,8 +3358,14 @@ export default function HotelsView(props: {
 
         <section
           className={[
-            "oltra-glass oltra-panel min-w-0",
-            shouldShowFeatured ? "self-start overflow-visible" : "oltra-hotels-right-pane",
+            "min-w-0",
+            /* Featured: no frame and no shade (Ulrik, 2026-10-07). The 17px
+               inset is the panel's 16px padding and 1px border, so the label,
+               the name and the left photo start where the destination input
+               above does. */
+            shouldShowFeatured
+              ? "self-start overflow-visible px-[17px]"
+              : "oltra-glass oltra-panel oltra-hotels-right-pane",
           ].join(" ")}
         >
           {effectiveView === "featured" ? (
