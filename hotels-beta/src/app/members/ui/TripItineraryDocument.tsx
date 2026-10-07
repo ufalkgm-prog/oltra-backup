@@ -113,24 +113,6 @@ export default function TripItineraryDocument({
   return createPortal(
     <div className="members-leave-overlay itinerary-overlay">
       <div className="itinerary-frame">
-        {/* On a dark bar above the paper, not on it: the button standard is
-            drawn for the site's dark surfaces, and the controls are not part
-            of the document being printed. */}
-        <div className="itinerary-modal__toolbar">
-          <div className="oltra-label">Itinerary</div>
-          <div className="itinerary-modal__toolbar-actions">
-            <button type="button" className="oltra-btn" onClick={handlePrint}>
-              Print / Save as PDF
-            </button>
-            <button type="button" className="oltra-btn" onClick={handleSend}>
-              Send
-            </button>
-            <button type="button" className="oltra-btn" onClick={onClose}>
-              Close
-            </button>
-          </div>
-        </div>
-
         <div className="oltra-panel itinerary-modal">
           {/* THE PRINT FRAME (2026-10-06). The browser prints its own header
               and footer (date, title, address, page numbers) in the page's top
@@ -161,14 +143,34 @@ export default function TripItineraryDocument({
                         2026-10-06). The black wordmark: the header's is drawn for the
                         dark page. */}
                     <header className="itinerary-document__header">
-                      <div className="itinerary-brand">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- an SVG wordmark; next/image does not optimise SVG */}
-                        <img
-                          src="/images/logo/myOLTRA-logo-black-vf.svg"
-                          alt="myOLTRA"
-                          className="itinerary-brand__logo"
-                        />
-                        <div className="itinerary-brand__label">Itinerary</div>
+                      <div className="itinerary-document__top">
+                        <div className="itinerary-brand">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- an SVG wordmark; next/image does not optimise SVG */}
+                          <img
+                            src="/images/logo/myOLTRA-logo-black-vf.svg"
+                            alt="myOLTRA"
+                            className="itinerary-brand__logo"
+                          />
+                          <div className="itinerary-brand__label">Itinerary</div>
+                        </div>
+
+                        {/* On the paper itself, opposite the logo (Ulrik,
+                            2026-10-07); the dark bar above it is gone. Hidden in
+                            print, and Send mails plain text, so neither carries
+                            them. oltra-over-image gives each button the site's
+                            dark fill, the ground its rim and label were measured
+                            on - a light label cannot sit on white. */}
+                        <div className="itinerary-actions oltra-over-image">
+                          <button type="button" className="oltra-btn" onClick={handlePrint}>
+                            Print / Save as PDF
+                          </button>
+                          <button type="button" className="oltra-btn" onClick={handleSend}>
+                            Send
+                          </button>
+                          <button type="button" className="oltra-btn" onClick={onClose}>
+                            Close
+                          </button>
+                        </div>
                       </div>
 
                       <h2 className="itinerary-document__title">{itinerary.tripName}</h2>

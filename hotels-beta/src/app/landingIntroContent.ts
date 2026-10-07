@@ -13,7 +13,7 @@ export const LANDING_INTRO = {
     },
     {
       label: "Restaurants",
-      text: "Our restaurant collection includes around 2,500 restaurants in around 70 typical travel destinations around the world, all selected using external sources as curation input. They range from some of the world’s most celebrated dining rooms to more relaxed bistros and beach clubs to cater to all occasions and moods.",
+      text: "Our collection covers 2,500 restaurants in 70 of the world’s most popular travel destinations, all carefully selected with reference to leading independent guides. They range from some of the world’s most celebrated dining rooms to more relaxed bistros and beach clubs to cater to all occasions and moods.",
     },
     {
       label: "Flights",

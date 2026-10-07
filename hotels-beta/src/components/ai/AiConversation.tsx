@@ -2256,6 +2256,18 @@ export default function AiConversation({
             at the end rather than vanishing. */}
         {framing && presentationIndex === -1 ? framingBlock : null}
 
+        {/* Under the latest answer, left-aligned, as part of the chat rather
+            than a bar of its own (Ulrik, 2026-10-07). Gone while the next
+            answer is written, whose results will replace these, and back
+            under that answer when it ends. */}
+        {onGoToResults && !busy ? (
+          <div className={styles.goToResults}>
+            <button type="button" className="oltra-btn" onClick={onGoToResults}>
+              {GO_TO_RESULTS}
+            </button>
+          </div>
+        ) : null}
+
         {busy ? (
           <div className={styles.thinking} role="status" aria-live="polite">
             {retrying ? (
@@ -2278,18 +2290,6 @@ export default function AiConversation({
 
         {error ? <div className={styles.error}>{errorMessage(error)}</div> : null}
       </div>
-
-      {/* In the chat, just above the question box, so the way to the results
-          is where the eye is when the answer ends (Ulrik, 2026-10-04). Not
-          while an answer is being written: the results it will replace are
-          the previous question's. */}
-      {onGoToResults && !busy ? (
-        <div className={styles.goToResults}>
-          <button type="button" className="oltra-btn" onClick={onGoToResults}>
-            {GO_TO_RESULTS}
-          </button>
-        </div>
-      ) : null}
 
       <form className={styles.form} onSubmit={submit}>
         {/* A textarea, not an input: a brief long enough to be worth writing

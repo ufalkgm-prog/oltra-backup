@@ -200,8 +200,8 @@ export default function AiConciergeModal() {
     };
   }, [conciergeOpen, close]);
 
-  /* "GO TO RESULTS" (Ulrik, 2026-10-04): one button, in the chat just above
-   * the question box, whenever the latest answer has results. Where it goes is
+  /* "GO TO RESULTS" (Ulrik, 2026-10-04): one button, in the chat under the
+   * latest answer (2026-10-07), whenever the latest answer has results. Where it goes is
    * chosen by how the answer sits against the page it was asked from:
    *
    *  - The answer is already on this page — the landing page, which IS the

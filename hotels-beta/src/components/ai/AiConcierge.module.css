@@ -451,10 +451,7 @@
 /* "Go to results", between the transcript and the question box. */
 .goToResults {
   display: flex;
-  justify-content: flex-end;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--oltra-border-subtle);
-  margin-top: 0.15rem;
+  justify-content: flex-start;
 }
 
 @media (max-width: 700px) {
