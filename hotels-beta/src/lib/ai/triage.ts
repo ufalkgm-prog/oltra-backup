@@ -129,7 +129,7 @@ Examples:
  * an instruction, and restaurants were missing from what it covers. The
  * prompt's own decline line (systemPrompt.ts, "Declining") says the same. */
 const DECLINE =
-  "I'm afraid I can only help with travel — hotels, flights and restaurants on myOLTRA. " +
+  "I'm afraid I can only help with travel: hotels, flights and restaurants on myOLTRA. " +
   "If you would like help planning a trip, please let me know where you are thinking of going.";
 
 /* A request to change the visitor's own account (2026-09-23). "I can only help
@@ -150,7 +150,7 @@ function accountReply(text: string): string {
     return (
       "I can't add or remove anything from here. ADD TO FAVOURITES and SAVE TO TRIP on each " +
       "hotel, restaurant and flight do it directly, and your favourites and saved trips are " +
-      "under Members — I'm happy to look through them with you or plan around them."
+      "under Members. I'm happy to look through them with you or plan around them."
     );
   }
   if (/password|log ?in|sign ?in|sign ?out|log ?out|e-?mail/.test(t)) {

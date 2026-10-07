@@ -55,7 +55,7 @@ import { sellsThroughRatehawk } from "@/lib/hotels/bookingPartner";
    input as well as the placeholder inside it, saying the same thing twice
    before the visitor had typed anything. */
 const PLACEHOLDER =
-  "What are you looking for — ask me anything about your upcoming trip";
+  "What are you looking for? Ask me anything about your upcoming trip";
 
 /** Ceiling on the growing input, in px — roughly six lines. */
 const ASK_INPUT_MAX_PX = 132;
@@ -1152,8 +1152,9 @@ function shortDate(iso: string): string {
  * a visitor told to close the panel needs to know the conversation survives. */
 /* The button the footnotes point at, drawn above the question box. */
 const GO_TO_RESULTS = "Go to results";
+const CONTINUE_BELOW = "…or continue chat below";
 
-const REVIEW_BEHIND = `Use ${GO_TO_RESULTS} below to see them — you can reopen this concierge chat anytime.`;
+const REVIEW_BEHIND = `Use ${GO_TO_RESULTS} below to see them. You can reopen this concierge chat anytime.`;
 
 /* The same promise for the pages where nothing renders behind the panel and the
  * results are one link away (Ulrik, 2026-09-14). "Cards" is our word for a UI
@@ -1436,7 +1437,7 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
         {why ? (
           <span className={styles.summaryReason}>
             {" "}
-            — {/* The model often ends a line without a full stop, and a
+            - {/* The model often ends a line without a full stop, and a
                 note after it then ran on as part of it: "…from Malpensa Not
                 available at myOLTRA yet." Closed on every line, note or not:
                 only lines with a note used to get one, so the Aman line ended
@@ -1460,7 +1461,7 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
         {why ? (
           <span className={styles.summaryReason}>
             {" "}
-            — {/[.!?]$/.test(why.trim()) ? why : `${why.trim()}.`}
+            - {/[.!?]$/.test(why.trim()) ? why : `${why.trim()}.`}
           </span>
         ) : null}
         {/* With no reason the status follows the name directly, and read as
@@ -1468,7 +1469,7 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
             for a restaurant without stars: "Not Michelin" is implied. */}
         {michelinStatus(restaurant) ? (
           <span className={styles.summaryAirport}>
-            {why ? " " : " — "}
+            {why ? " " : " - "}
             {michelinStatus(restaurant)}.
           </span>
         ) : null}
@@ -1523,13 +1524,13 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
     // its dates" over headers that carried none (2026-09-15).
     const hasDates = Boolean(query.from) || laterStops.some((stop) => stop.checkIn);
     const layout =
-      `the hotels stay by stay — ${placeList}${hasDates ? " — each under its dates" : ""}` +
+      `the hotels stay by stay: ${placeList}${hasDates ? ", each under its dates" : ""}` +
       (hasRestaurants ? ", the restaurants under each city" : "") +
       (hasFlights ? ", and the flights" : "");
     const where =
       page === "landing"
         ? `${GO_TO_RESULTS} below shows the whole trip on this page: ${layout}.`
-        : `I can only show the full trip on the main page — ${GO_TO_RESULTS} below takes you there. There you will find ${layout}.`;
+        : `I can only show the full trip on the main page, and ${GO_TO_RESULTS} below takes you there. There you will find ${layout}.`;
     // "…in each city, on your flights —" had lost its "and" (2026-09-15).
     const saveOn = [
       "on your choice in each city",
@@ -1539,7 +1540,7 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
     const keep =
       `Pick your favourites there and use SAVE ${
         saveOn.length > 1 ? `${saveOn.slice(0, -1).join(", ")} and ${saveOn.at(-1)}` : saveOn[0]
-      } — your full itinerary then appears under Members, in Saved trips.`;
+      }, and your full itinerary then appears under Members, in Saved trips.`;
     return `${where} ${keep} ${page === "landing" ? REOPEN_CHAT : RESUME_CHAT}`;
   })();
 
@@ -1641,7 +1642,7 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
                 </span>
                 <span className={styles.summaryReason}>
                   {" "}
-                  — {shortDate(leg.departureDate)}
+                  - {shortDate(leg.departureDate)}
                   {leg.returnDate ? ` – ${shortDate(leg.returnDate)}` : ""}
                   {/* The options themselves, in the model's words from
                       searchFlights: airlines, direct or not, times each way. */}
@@ -1681,7 +1682,7 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
               priced && partsElsewhere.includes("hotels") ? ", with prices and availability," : ""
             } ${verb(partsElsewhere)} on the main page${
               alsoBehind > 0 && !partsBehind.includes("hotels") && !partsBehind.includes("restaurants")
-                ? ` — the ones named here first, with the other ${alsoBehind} after them`
+                ? `, the ones named here first, with the other ${alsoBehind} after them`
                 : ""
             }. ${GO_TO_RESULTS} below shows both. ${RESUME_CHAT}`
           : page === "landing"
@@ -1689,19 +1690,19 @@ function ResultSummary({ past, own }: { past?: Presentation; own?: Presentation 
                panel (2026-09-15) — they appear when it closes — so "behind this
                panel" would send the visitor looking for something hidden. */
             alsoBehind > 0
-            ? `These are listed first on this page, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. Use ${GO_TO_RESULTS} below to see them. ${REOPEN_CHAT}`
+            ? `These are listed first on this page, with the other ${alsoBehind} below${priced ? ", all with prices and availability" : ""}. Use ${GO_TO_RESULTS} below to see them. ${REOPEN_CHAT}`
             : `The results of your query${priced ? ", with prices and availability," : ""} are ready on this page. Use ${GO_TO_RESULTS} below to see them. ${REOPEN_CHAT}`
           : alsoBehind > 0
           ? rendersBehind
-            ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? " — all with prices and availability" : ""}. ${REVIEW_BEHIND}`
-            : `These are listed first on ${linkedPage}, with the other ${alsoBehind} after them${priced ? " — all with prices and availability" : ""}. ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`
+            ? `These are listed first in the window behind this panel, with the other ${alsoBehind} below${priced ? ", all with prices and availability" : ""}. ${REVIEW_BEHIND}`
+            : `These are listed first on ${linkedPage}, with the other ${alsoBehind} after them${priced ? ", all with prices and availability" : ""}. ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`
           : priced
             ? rendersBehind
               ? `The results of your query, with prices and availability, are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : `Prices and availability are on ${linkedPage} — ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`
+              : `Prices and availability are on ${linkedPage}, and ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`
             : rendersBehind
               ? `The results of your query are listed in the window behind this panel. ${REVIEW_BEHIND}`
-              : `The results are on ${linkedPage} — ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`}
+              : `The results are on ${linkedPage}, and ${GO_TO_RESULTS} below takes you there. ${RESUME_CHAT}`}
       </p>}
       {past ? null : <DatesChangedNote />}
     </div>
@@ -2039,8 +2040,21 @@ export default function AiConversation({
     });
   }, [messages, status, framing, followUp, storeQuery.destination.city, setPresentation]);
 
+  /* While an answer is written, the bottom: the progress line and Stop. Once it
+     is done, the top of the latest question, so the answer reads from its start
+     and the question box waits below it, reached by scrolling (Ulrik,
+     2026-10-07). */
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    const box = scrollRef.current;
+    if (!box) return;
+    if (status === "submitted" || status === "streaming") {
+      box.scrollTo({ top: box.scrollHeight, behavior: "smooth" });
+      return;
+    }
+    const turns = box.querySelectorAll<HTMLElement>("[data-user-turn]");
+    const last = turns[turns.length - 1];
+    const top = last ? last.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop : 0;
+    box.scrollTo({ top, behavior: "smooth" });
   }, [messages.length, status]);
 
   const busy = status === "submitted" || status === "streaming";
@@ -2170,7 +2184,21 @@ export default function AiConversation({
     return -1;
   })();
 
-  /* The answer, what it found, and the one question that follows. */
+  /* Go to results, right under the footnote that explains it, with the way
+     back into the chat beside it (Ulrik, 2026-10-07). Not while the next answer
+     is written: its results will replace these. */
+  const goToResults =
+    onGoToResults && !busy ? (
+      <div className={styles.goToResults}>
+        <button type="button" className="oltra-btn" onClick={onGoToResults}>
+          {GO_TO_RESULTS}
+        </button>
+        <span className={styles.goToResultsAside}>{CONTINUE_BELOW}</span>
+      </div>
+    ) : null;
+
+  /* The answer, what it found, the way to it, and the one question that
+     follows. */
   const framingBlock = framing ? (
     <Fragment key="framing">
       <p className={styles.framing}>{framing}</p>
@@ -2181,6 +2209,7 @@ export default function AiConversation({
             : null
         }
       />
+      {goToResults}
       {followUp ? (
         <div className={`${styles.turnAgent} ${styles.followUp}`}>
           <AgentText text={followUp} detectClosingQuestion={false} />
@@ -2222,6 +2251,7 @@ export default function AiConversation({
             <div
               key={message.id}
               className={message.role === "user" ? styles.turnUser : styles.turnAgent}
+              data-user-turn={message.role === "user" ? "" : undefined}
             >
               {message.role === "user" ? text : <AgentText text={text} />}
             </div>
@@ -2256,17 +2286,9 @@ export default function AiConversation({
             at the end rather than vanishing. */}
         {framing && presentationIndex === -1 ? framingBlock : null}
 
-        {/* Under the latest answer, left-aligned, as part of the chat rather
-            than a bar of its own (Ulrik, 2026-10-07). Gone while the next
-            answer is written, whose results will replace these, and back
-            under that answer when it ends. */}
-        {onGoToResults && !busy ? (
-          <div className={styles.goToResults}>
-            <button type="button" className="oltra-btn" onClick={onGoToResults}>
-              {GO_TO_RESULTS}
-            </button>
-          </div>
-        ) : null}
+        {/* Results held with no answer of their own on screen: the button at
+            the end instead. */}
+        {framingBlock ? null : goToResults}
 
         {busy ? (
           <div className={styles.thinking} role="status" aria-live="polite">
@@ -2289,58 +2311,60 @@ export default function AiConversation({
         ) : null}
 
         {error ? <div className={styles.error}>{errorMessage(error)}</div> : null}
-      </div>
 
-      <form className={styles.form} onSubmit={submit}>
-        {/* A textarea, not an input: a brief long enough to be worth writing
-            scrolled its own beginning out of sight while it was being typed.
-            It grows with the text and then scrolls. Enter sends — Shift+Enter
-            breaks the line. */}
-        <textarea
-          ref={inputRef}
-          rows={1}
-          className={styles.input}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              submit(event);
-            }
-          }}
-          placeholder={hasConversation ? "Refine, or ask something else…" : PLACEHOLDER}
-          aria-label="Ask the concierge"
-          autoComplete="off"
-          // Gone while the concierge is thinking, back when it stops (Ulrik,
-          // 2026-09-26); Stop stands alone at the right meanwhile. Hidden
-          // rather than unmounted, so the draft and the ref survive.
-          hidden={busy}
-          disabled={busy}
-        />
-        {busy ? (
-          <button type="button" className={`oltra-btn ${styles.action}`} onClick={() => stop()}>
-            Stop
-          </button>
-        ) : (
-          /* Passive, not disabled, while there is nothing to send: a click
-             moves focus to the question field instead of submitting (submit()
-             also ignores an empty draft, which covers Enter). */
-          <button
-            type="submit"
-            className={`oltra-btn ${styles.action}`}
-            aria-disabled={!draft.trim()}
-            data-reason={draft.trim() ? undefined : "Type a question to continue"}
-            onClick={(event) => {
-              if (draft.trim()) return;
-              event.preventDefault();
-              inputRef.current?.focus();
+        {/* Inside the scroll, at the end: the question box and Stop move with
+            the conversation instead of standing under it (Ulrik, 2026-10-07). */}
+        <form className={styles.form} onSubmit={submit}>
+          {/* A textarea, not an input: a brief long enough to be worth writing
+              scrolled its own beginning out of sight while it was being typed.
+              It grows with the text and then scrolls. Enter sends — Shift+Enter
+              breaks the line. */}
+          <textarea
+            ref={inputRef}
+            rows={1}
+            className={styles.input}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                submit(event);
+              }
             }}
-            aria-label="Send"
-          >
-            Ask
-          </button>
-        )}
-      </form>
+            placeholder={hasConversation ? "Refine, or ask something else…" : PLACEHOLDER}
+            aria-label="Ask the concierge"
+            autoComplete="off"
+            // Gone while the concierge is thinking, back when it stops (Ulrik,
+            // 2026-09-26); Stop stands alone at the right meanwhile. Hidden
+            // rather than unmounted, so the draft and the ref survive.
+            hidden={busy}
+            disabled={busy}
+          />
+          {busy ? (
+            <button type="button" className={`oltra-btn ${styles.action}`} onClick={() => stop()}>
+              Stop
+            </button>
+          ) : (
+            /* Passive, not disabled, while there is nothing to send: a click
+               moves focus to the question field instead of submitting (submit()
+               also ignores an empty draft, which covers Enter). */
+            <button
+              type="submit"
+              className={`oltra-btn ${styles.action}`}
+              aria-disabled={!draft.trim()}
+              data-reason={draft.trim() ? undefined : "Type a question to continue"}
+              onClick={(event) => {
+                if (draft.trim()) return;
+                event.preventDefault();
+                inputRef.current?.focus();
+              }}
+              aria-label="Send"
+            >
+              Ask
+            </button>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

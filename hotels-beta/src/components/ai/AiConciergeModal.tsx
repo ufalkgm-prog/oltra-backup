@@ -189,7 +189,9 @@ export default function AiConciergeModal() {
     body.style.overflow = "hidden";
     if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
 
-    panelRef.current?.querySelector("textarea")?.focus();
+    // Without scrolling: the box now sits at the end of the conversation, and
+    // the panel opens on the latest answer, not on the box below it.
+    panelRef.current?.querySelector("textarea")?.focus({ preventScroll: true });
 
     return () => {
       window.removeEventListener("keydown", onKey);

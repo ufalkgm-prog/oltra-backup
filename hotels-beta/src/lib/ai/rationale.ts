@@ -63,8 +63,17 @@ function restaurantNoun(match: string): string {
  * phrases that sound like a booking or read like our data rewritten.
  * `restaurantsOnly` marks text about restaurants and no hotel, where "rooms"
  * can only mean the restaurants themselves. */
+/* No long dashes in the panel (Ulrik, 2026-10-07): an em dash reads as
+ * machine-written. A plain hyphen keeps the meaning wherever the model put one,
+ * which a comma or colon would not always; the prompt asks for commas and
+ * colons, and this catches what it skips. A dash opening a line stays a list
+ * marker. */
+export function plainDashes(text: string): string {
+  return text.replace(/[ \t]*—[ \t]*/g, " - ").replace(/(^|\n) - /g, "$1- ");
+}
+
 export function panelText(text: string, options: { restaurantsOnly?: boolean } = {}): string {
-  let out = decodeStrayEscapes(text);
+  let out = plainDashes(decodeStrayEscapes(text));
   for (const [pattern, replacement] of HOUSE_WORDING) {
     out = out.replace(pattern, (match) => keepCase(match, replacement));
   }
@@ -121,7 +130,7 @@ export function stripLeadingName(reason: string, name: string): string {
     const head = tokens(split[0]);
     const overlap = head.filter((token) => nameTokens.has(token)).length;
     if (head.length && overlap / head.length >= 0.6) {
-      const rest = split.slice(1).join(" — ").trim();
+      const rest = split.slice(1).join(" - ").trim();
       if (rest) return rest;
     }
   }

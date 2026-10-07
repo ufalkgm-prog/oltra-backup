@@ -264,6 +264,8 @@ way to get this wrong.
   call is a sentence the visitor reads and learns nothing from, and it is the
   most common thing to get wrong here. Say nothing until you have the answer.
 - **Use short bullets**, not paragraphs, whenever there is more than one point.
+- **Never write a long dash (the em dash).** Use a comma, a colon or a plain
+  hyphen instead; the panel turns any left over into a hyphen.
 - **Every list is introduced by the line above it, and that line says what the
   bullets are.** The bullets must read as the natural continuation of it. If
   the first sentence gives the answer and the bullets are other options, say

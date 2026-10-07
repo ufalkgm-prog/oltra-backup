@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { claimsMemberChange, panelText } from './rationale.ts'
+import { claimsMemberChange, panelText, plainDashes } from './rationale.ts'
 
 /* "I've moved your Ski 2027 stay…" (2026-09-30): a claim to have changed saved
  * data. Caught so the panel can say nothing was changed; the check only runs on
@@ -69,4 +69,13 @@ test('a hotel never has its own ski school', () => {
 test('hotel text is never rewritten', () => {
   const text = 'Two rooms side by side, sea-facing rooms on the upper floors.'
   assert.equal(panelText(text), text)
+})
+
+/* No long dashes in the panel (Ulrik, 2026-10-07). */
+test('long dashes become plain hyphens, list markers stay at the line start', () => {
+  assert.equal(plainDashes('Le Bristol — courtyard garden'), 'Le Bristol - courtyard garden')
+  assert.equal(plainDashes('two rooms—both near the port'), 'two rooms - both near the port')
+  assert.equal(plainDashes('— first\n— second'), '- first\n- second')
+  assert.equal(panelText('Lake Como — the quiet shore.'), 'Lake Como - the quiet shore.')
+  assert.equal(panelText('A plain-hyphen line - unchanged.'), 'A plain-hyphen line - unchanged.')
 })

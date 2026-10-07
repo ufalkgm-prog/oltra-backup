@@ -366,7 +366,7 @@ function HotelStayGroup({
           result.status === "already_exists"
             ? "Already in that trip."
             : result.overlapWarning
-              ? "Saved — dates overlap another item."
+              ? "Saved, but the dates overlap another item."
               : "Saved to trip.",
       };
     },
