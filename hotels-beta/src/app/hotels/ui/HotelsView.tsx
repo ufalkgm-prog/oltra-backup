@@ -110,15 +110,6 @@ const FEATURED_IMAGE_COUNT = 2;
  * 300 × 1.516 is 455. */
 const FEATURED_STRIP_HEIGHT = 455;
 
-/* Both boxes above the strip, fixed so nothing moves as hotels cycle.
- *
- * The row used to be as tall as whatever the current hotel's text needed, so
- * the search box under it grew and shrank every five seconds (Ulrik,
- * 2026-09-21). Sized for the most a card can now hold: the label, a name and
- * location that may wrap to two lines, and four lines of awards — everything
- * past that is clamped, so the height is a ceiling rather than a hope. */
-const FEATURED_HEADER_HEIGHT = 176;
-
 /** Pulls an image into the browser cache ahead of time. Resolves on error too
  * - a warm cache is an optimisation, never a reason to hold up the revolver. */
 function preloadImage(url: string): Promise<void> {
@@ -3275,6 +3266,85 @@ export default function HotelsView(props: {
         </section>
         ) : null}
 
+        {shouldShowFeatured ? (
+          /* FEATURED: the search with no frame of its own, at exactly the
+             width the input has on Results (Ulrik, 2026-10-07): the same
+             column track as the Results layout, inset by the left panel's
+             16px padding and 1px border. Outside the glass below, so its
+             dropdown layers over the frame rather than being trapped in it
+             (§35); z-30 for that. */
+          <div className="relative z-30 grid gap-4 lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]">
+            <div className="min-w-0 px-[17px]">
+            <form
+              action="/hotels"
+              method="GET"
+              className="grid gap-[14px]"
+              onChange={() => {
+                setAvailabilitySearchDirty(true);
+              }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const params = new URLSearchParams();
+                new FormData(e.currentTarget).forEach((value, key) => {
+                  if (typeof value === "string" && value) params.append(key, value);
+                });
+                startTransition(() => {
+                  router.replace(`/hotels?${params.toString()}`, { scroll: false });
+                });
+              }}
+            >
+              <HiddenPreserveParams
+                searchParams={searchParams}
+                excludeKeys={[
+                  "q",
+                  "city",
+                  "state",
+                  "admin_region",
+                  "ids",
+                  "country",
+                  "region",
+                  "macro_region",
+                  "activities",
+                  "settings",
+                  // The stay (dates, party) is kept: this panel has no fields
+                  // for it, so leaving it out dropped it whenever a destination
+                  // was picked here (2026-10-05 test pass).
+                  "filters_open",
+                  "search_submitted",
+                ]}
+              />
+
+              <input
+                type="hidden"
+                name="filters_open"
+                value={filtersOpen ? "1" : "0"}
+              />
+              <input
+                type="hidden"
+                name="search_submitted"
+                value={hasMeaningfulFilters ? "1" : simpleSearchSubmitted}
+              />
+
+              <StructuredDestinationField
+                label="Destination / purpose"
+                placeholder="Type first 2 letters of hotel, city, country, or purpose"
+                searchParams={searchParams}
+                dataset={props.suggestions}
+                wrapperClassName="pt-[2px]"
+                busy={isPending}
+                curated={curatedDestination}
+              />
+
+              {showNarrowFurtherMessage ? (
+                <div className="text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
+                  Narrow results further by adding region, country, city or setting.
+                </div>
+              ) : null}
+            </form>
+            </div>
+          </div>
+        ) : null}
+
         <section
           className={[
             "oltra-glass oltra-panel min-w-0",
@@ -3287,129 +3357,29 @@ export default function HotelsView(props: {
                (This replaced a full-bleed hero with both boxes floated on top
                of it.) */
             <div className="flex flex-col gap-4">
-              {/* Same track and gap as the image strip below, so the search
-                  box lines up with image 1 and the detail box with image 2.
-                  It followed the strip at three columns with the middle one
-                  left empty; at two there is no middle to leave.
-
-                  Both boxes are a FIXED height (Ulrik, 2026-09-21). The row
-                  used to be as tall as the current hotel's text needed, which
-                  meant the whole header — the search box included — resized
-                  every five seconds as the featured hotel cycled.
-
-                  The search has NO box of its own and sits at the top of the
-                  panel (Ulrik, 2026-09-23): that is exactly how the Results
-                  left panel holds it, so its input starts at the same place
-                  when a search turns into Featured or back. The columns stay
-                  equal; the input simply runs wider here. */}
-              <div className="grid items-stretch gap-3 sm:grid-cols-2">
-              <div>
-                <form
-                  action="/hotels"
-                  method="GET"
-                  className="grid gap-[14px]"
-                  onChange={() => {
-                    setAvailabilitySearchDirty(true);
-                  }}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const params = new URLSearchParams();
-                    new FormData(e.currentTarget).forEach((value, key) => {
-                      if (typeof value === "string" && value) params.append(key, value);
-                    });
-                    startTransition(() => {
-                      router.replace(`/hotels?${params.toString()}`, { scroll: false });
-                    });
-                  }}
-                >
-                  <HiddenPreserveParams
-                    searchParams={searchParams}
-                    excludeKeys={[
-                      "q",
-                      "city",
-                      "state",
-                      "admin_region",
-                      "ids",
-                      "country",
-                      "region",
-                      "macro_region",
-                      "activities",
-                      "settings",
-                      // The stay (dates, party) is kept: this panel has no fields
-                      // for it, so leaving it out dropped it whenever a destination
-                      // was picked here (2026-10-05 test pass).
-                      "filters_open",
-                      "search_submitted",
-                    ]}
-                  />
-
-                  <input
-                    type="hidden"
-                    name="filters_open"
-                    value={filtersOpen ? "1" : "0"}
-                  />
-                  <input
-                    type="hidden"
-                    name="search_submitted"
-                    value={hasMeaningfulFilters ? "1" : simpleSearchSubmitted}
-                  />
-
-                  <StructuredDestinationField
-                    label="Destination / purpose"
-                    placeholder="Type first 2 letters of hotel, city, country, or purpose"
-                    searchParams={searchParams}
-                    dataset={props.suggestions}
-                    wrapperClassName="pt-[2px]"
-                    busy={isPending}
-                    curated={curatedDestination}
-                  />
-
-                  {showNarrowFurtherMessage ? (
-                    <div className="text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
-                      Narrow results further by adding region, country, city or setting.
-                    </div>
-                  ) : null}
-                </form>
-              </div>
-
-              {/* Second column, matching image 2's width.
-
-                  Built like the search beside it (Ulrik, 2026-09-24): the
-                  "Featured hotel" label sits ABOVE the box as an oltra-label,
-                  with the same 2px top padding the destination field has, so
-                  the two labels share a line and the box starts level with
-                  the input. The label used to be inside the box, whose top
-                  edge then sat a label's height above the input's, with its
-                  text centred lower down. */}
-              <div
-                className="flex min-w-0 flex-col pt-[2px] sm:col-start-2"
-                style={{ height: FEATURED_HEADER_HEIGHT }}
-              >
-              <div className="oltra-label">Featured hotel</div>
+              {/* One frame, left-aligned, top to bottom (Ulrik, 2026-10-07):
+                  the label, the name, city and country, the accolades on one
+                  line, then the photos. Each line is one line, cut if long,
+                  and the accolade line is kept when empty, so the photos do
+                  not move as hotels cycle. The search sits above the frame,
+                  outside it. */}
               <a
                 href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
-                className="flex min-h-0 flex-1 cursor-pointer flex-col justify-start overflow-hidden rounded-[var(--oltra-radius-lg)] border border-[var(--oltra-field-border)] bg-[var(--oltra-field-bg)] px-4 py-3 transition-colors hover:border-white/22 hover:bg-[var(--oltra-field-bg-strong)]"
+                className="block min-w-0 cursor-pointer"
               >
-                {/* Clamped, both of them: the box is a fixed height now, so a
-                    long name or a hotel with every award going has to be cut
-                    rather than allowed to push the layout around. Two lines for
-                    the name and location, four for the awards. */}
-                <div className="line-clamp-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
-                    {featuredHotel.hotel_name ?? "Featured hotel"}
-                  </span>
-                  <span className="text-[12px] text-[color:var(--oltra-text-muted)]">
-                    {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(" · ") || "Curated selection"}
-                  </span>
+                <div className="oltra-label">Featured hotel</div>
+                <div className="mt-1 truncate text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+                  {featuredHotel.hotel_name ?? "Featured hotel"}
                 </div>
-                <div className="mt-1 line-clamp-4 text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
+                <div className="truncate text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
+                  {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(", ") || " "}
+                </div>
+                <div className="truncate text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
                   {getFeaturedAwardsForHotel(featuredHotel as HotelRecord)
                     .map((award) => award.label)
-                    .join(" · ") || "Curated featured selection"}
+                    .join(" · ") || " "}
                 </div>
               </a>
-              </div>
-              </div>
 
               <div className="relative">
                 <div className="grid gap-3 sm:grid-cols-2">
