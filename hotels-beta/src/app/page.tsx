@@ -121,7 +121,10 @@ export default async function HomePage({
   const submitted = normalizeParam(resolvedSearchParams.submitted) === "1";
 
   const includeHotels = normalizeParam(resolvedSearchParams.include_hotels) !== "0";
-  const includeFlights = normalizeParam(resolvedSearchParams.include_flights) === "1";
+  // Flights needs an airport to search from, as the panel's box does.
+  const includeFlights =
+    normalizeParam(resolvedSearchParams.include_flights) === "1" &&
+    Boolean(normalizeParam(resolvedSearchParams.origin).trim());
   const includeRestaurants = normalizeParam(resolvedSearchParams.include_restaurants) === "1";
 
   const q = normalizeParam(resolvedSearchParams.q).trim();

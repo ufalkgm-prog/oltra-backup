@@ -1416,6 +1416,7 @@ button.oltra-select {
 }
 
 .oltra-site-header__brand {
+  --oltra-header-logo-height: clamp(32px, 3vw, 46px);
   position: relative;
   justify-self: start;
   text-align: left;
@@ -1440,7 +1441,7 @@ button.oltra-select {
 .oltra-site-header__logo-image {
   display: block;
   width: auto;
-  height: clamp(32px, 3vw, 46px);
+  height: var(--oltra-header-logo-height);
   object-fit: contain;
 }
 
@@ -1448,8 +1449,14 @@ button.oltra-select {
   text-decoration: none;
 }
 
+/* Right-aligned to the logo's last letter (Ulrik, 2026-10-07), not to its
+   box: the wordmark ends at x 564.5 of its 585 viewBox, the image is nudged
+   4px left in SiteHeader, and the label's own tracking leaves 0.14em after
+   its last letter. */
 .oltra-site-header__route {
   margin-top: 4px;
+  align-self: flex-end;
+  margin-right: calc(4px + var(--oltra-header-logo-height) * 20.5 / 131 - 0.14em);
 }
 
 .oltra-site-header__nav {

@@ -1211,7 +1211,12 @@
   border-bottom: 2px solid #14181a;
 }
 
+/* As wide as the wordmark, so the label can end where it does. */
 .itinerary-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: max-content;
   margin-bottom: 30px;
 }
 
@@ -1225,7 +1230,12 @@
   margin-left: calc(-16 / 131 * 34px);
 }
 
+/* Right-aligned to the logo's last letter, as in the site header
+   (Ulrik, 2026-10-07): the wordmark ends at x 564.5 of 585, and the
+   tracking leaves 0.24em after the label's last letter. */
 .itinerary-brand__label {
+  align-self: flex-end;
+  margin-right: calc(20.5 / 131 * 34px - 0.24em);
   margin-top: 8px;
   font-size: 11px;
   line-height: 1;

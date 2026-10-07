@@ -516,7 +516,9 @@ export default function LandingSearchPanel({
      is missing instead: Flights asks for a more specific search, and the page
      shows no restaurants pane for a place we hold none in (2026-09-28). Only
      the concierge's lock, while its answer owns the search, still holds them. */
-  const effectiveIncludeFlights = includeFlights;
+  // Never ticked without an airport (2026-10-07): a search remembered from
+  // before that rule can hold Flights ticked with none.
+  const effectiveIncludeFlights = includeFlights && Boolean(homeAirport);
   const restaurantsCanActivate = !showsAiResults;
   const effectiveIncludeRestaurants = restaurantsCanActivate && includeRestaurants;
 
@@ -659,8 +661,8 @@ export default function LandingSearchPanel({
     guestSelection.kids === 0 &&
     bedroomsValue === String(DEFAULT_PARTY.rooms) &&
     includeHotels &&
-    !includeFlights &&
-    !includeRestaurants &&
+    // Ticking Flights or Restaurants alone is not a search to clear
+    // (Ulrik, 2026-10-07).
     !showsAiResults;
 
   function handleClear() {
@@ -891,26 +893,25 @@ export default function LandingSearchPanel({
                   disabled={Boolean(aiLockedPanes)}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    setIncludeFlights(checked);
+                    /* No airport yet: the box stays unticked and the picker
+                       opens; choosing an airport ticks it, and clicking out
+                       without one leaves it off (Ulrik, 2026-10-07). */
                     if (checked && !homeAirport) {
                       setAirportPopoverOpen(true);
-                    } else if (!checked) {
-                      setAirportPopoverOpen(false);
+                      return;
                     }
+                    setIncludeFlights(checked);
+                    if (!checked) setAirportPopoverOpen(false);
                     scheduleAutoSubmit();
                   }}
                 />
-                {/* One line: "Flights assume you depart from London".
-                    The assumption is stated rather than implied — the origin is
-                    now taken from the member's home airport without anyone
-                    choosing it here, so the sentence says where the fares are
-                    being priced from, and the city itself stays the control
-                    that changes it. */}
+                {/* One line: "Flights from London". The city stays the
+                    control that changes where the fares are priced from. */}
                 <span className={styles.flightsCheckLabel}>
                   Flights
-                  {effectiveIncludeFlights && !aiLockedPanes ? (
+                  {effectiveIncludeFlights && !aiLockedPanes && homeAirport ? (
                     <>
-                      {homeAirport ? " assume you depart from " : " "}
+                      {" from "}
                       <button
                         type="button"
                         className={styles.airportNameButton}
@@ -920,25 +921,24 @@ export default function LandingSearchPanel({
                           setAirportPopoverOpen((v) => !v);
                         }}
                       >
-                        {homeAirport
-                          ? cityForAirportCode(homeAirport, homeAirportCity)
-                          : "— set home airport"}
+                        {cityForAirportCode(homeAirport, homeAirportCity)}
                       </button>
                     </>
                   ) : null}
                 </span>
               </label>
 
-              {effectiveIncludeFlights && airportPopoverOpen ? (
+              {airportPopoverOpen && !aiLockedPanes ? (
                 <div className={`oltra-popup-panel ${styles.airportPopover}`}>
                   <AirportAutocomplete
-                    label="Home airport"
+                    label="Departure airport"
                     value={homeAirport}
                     onChange={(code, option) => {
                       // Picked by hand, so the profile stops asserting itself.
                       originIsExplicitRef.current = true;
                       setHomeAirport(code);
                       setHomeAirportCity(option?.city ?? "");
+                      if (code) setIncludeFlights(true);
                       setAirportPopoverOpen(false);
                       scheduleAutoSubmit();
                     }}
@@ -948,7 +948,7 @@ export default function LandingSearchPanel({
             </div>
 
             {/* After Flights in the same wrapping row, so it moves along as
-                the Flights line grows into "Flights assume you depart from
+                the Flights line grows into "Flights from
                 London". */}
             <label
               className={[
