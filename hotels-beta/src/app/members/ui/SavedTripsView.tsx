@@ -1267,12 +1267,12 @@ function SavedFlightRow({
   const reason = outdated ? OUTDATED_REASON : undefined;
 
   return (
-    <div className={`${landing.flightDetailRow} ${landing.flightDetailRowDense}`}>
+    <div className={`${landing.flightDetailRow} ${landing.flightDetailRowDense} members-trip-flight`}>
       <div className={landing.flightRowMain}>
         <span className={`${landing.flightLineLabel} ${landing.flightLineLabelDense}`}>
           {item.secondary || "Flight"}
         </span>
-        <div className={flightsStyles.staticCard}>
+        <div className={`${flightsStyles.staticCard} members-trip-flight__card`}>
           <div className="min-w-0 text-[13px] font-light tracking-wide break-words text-[color:var(--oltra-text-primary)]">
             {item.primary}
           </div>

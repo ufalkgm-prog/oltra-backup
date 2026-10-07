@@ -44,10 +44,12 @@
   gap: 0;
 }
 
+/* Body text, as the rest of the panel's prose (Ulrik, 2026-10-07): it was
+   1.1rem muted, a size used nowhere else on the page. */
 .intro {
   margin: 0;
-  color: var(--oltra-text-secondary);
-  font-size: 1.1rem;
+  color: var(--oltra-text-primary);
+  font-size: 14px;
   line-height: 1.5;
 }
 

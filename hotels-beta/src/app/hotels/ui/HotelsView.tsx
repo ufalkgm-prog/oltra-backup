@@ -955,6 +955,15 @@ export default function HotelsView(props: {
     String(clampBedrooms(normalizeParam(searchParams.bedrooms) || "1"))
   );
 
+  /* Dates, guests or rooms entered: removing the last destination chip then
+     waits for the next one instead of dropping the page to Featured (Ulrik,
+     2026-10-07). */
+  const stayEntered =
+    Boolean(fromValue || toValue) ||
+    guestSelection.adults !== DEFAULT_PARTY.adults ||
+    guestSelection.kids > 0 ||
+    (Number(bedroomsValue) || 1) !== DEFAULT_PARTY.rooms;
+
   // Passport country ("residency" in ETG's API), not country of residence —
   // sent on every /search/serp/*/ and /search/hp/ request, one value applied
   // to all guests in the search. Starts empty (SSR-safe — see the
@@ -2783,6 +2792,7 @@ export default function HotelsView(props: {
                 wrapperClassName="md:col-span-12 pt-[2px]"
                 busy={isPending}
                 curated={curatedDestination}
+                onEmptied={stayEntered ? "hold" : "submit"}
               />
 
               {!compactTopMode ? (
@@ -3333,6 +3343,7 @@ export default function HotelsView(props: {
                 wrapperClassName="pt-[2px]"
                 busy={isPending}
                 curated={curatedDestination}
+                onEmptied={stayEntered ? "hold" : "submit"}
               />
 
               {showNarrowFurtherMessage ? (

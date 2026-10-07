@@ -63,6 +63,14 @@ type Props = {
    * not stay dismissed for a later answer. `ids`, when given, is posted as a
    * hidden field so the page's own form submits (a date change) keep the set. */
   curated?: { key: string; ids?: string; onRemove: () => void };
+  /** What removing the LAST chip does.
+   *
+   * "wait" (the default, Landing): the search waits for the next pick, Enter,
+   * or the box losing focus. "submit" (Hotels with no stay entered): it runs at
+   * once, which empties the search and shows Featured. "hold" (Hotels with
+   * dates, guests or rooms entered): it waits for the next pick or Enter only,
+   * so the page does not drop to Featured mid-search (Ulrik, 2026-10-07). */
+  onEmptied?: "wait" | "submit" | "hold";
 };
 
 const CURATED_LABEL = "AI curated results";
@@ -392,6 +400,7 @@ export default function StructuredDestinationField({
   busy = false,
   trailingControl,
   curated,
+  onEmptied = "wait",
 }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -919,7 +928,7 @@ export default function StructuredDestinationField({
     requestAnimationFrame(() => {
       inputRef.current?.focus();
       refocusRequestedAt = Date.now();
-      if (leavesNone) {
+      if (leavesNone && onEmptied !== "submit") {
         pendingEmptySubmitRef.current = true;
       } else {
         submitParentForm();
@@ -1056,7 +1065,9 @@ export default function StructuredDestinationField({
               onBlur={() => {
                 // Later than the click on a suggestion, which blurs the box
                 // first and then picks - the pick cancels this.
-                if (pendingEmptySubmitRef.current) window.setTimeout(flushPendingEmptySubmit, 200);
+                if (pendingEmptySubmitRef.current && onEmptied !== "hold") {
+                  window.setTimeout(flushPendingEmptySubmit, 200);
+                }
               }}
               onFocus={() => {
                 if (suppressNextFocusOpenRef.current) {

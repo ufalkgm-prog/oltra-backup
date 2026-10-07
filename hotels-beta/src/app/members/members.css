@@ -554,17 +554,8 @@
     gap: 1rem;
   }
 
-  .members-trip-selector-row .members-trip-inline-field--trip,
-  .members-trip-notes-row .members-trip-inline-field--trip {
+  .members-trip-selector-row .members-trip-inline-field--trip {
     min-width: 0;
-  }
-
-  /* The notes field takes the same first track, so it is exactly as wide as
-     the trip field above it. */
-  .members-trip-notes-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
   }
 
   .members-trip-buttons {
@@ -583,8 +574,30 @@
   }
 }
 
+/* Full width, as wide as the three columns of cards below (Ulrik,
+   2026-10-07); it used to take only the trip field's track. */
 .members-trip-notes-row {
   margin-bottom: 14px;
+}
+
+.members-trip-notes-row .members-trip-inline-field--trip {
+  min-width: 0;
+}
+
+/* A saved flight as one card, like the hotel and restaurant cards beside it
+   (Ulrik, 2026-10-07): their field background and border on the row, and no
+   second box inside it, which read as a frame within a frame. Doubled so it
+   outranks the landing module class whatever order the sheets load in. */
+.members-trip-flight.members-trip-flight {
+  border-color: var(--oltra-field-border);
+  background: var(--oltra-field-bg);
+}
+
+.members-trip-flight .members-trip-flight__card {
+  border-color: transparent;
+  background: transparent;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* Five lines, then it scrolls (Ulrik, 2026-10-06): height from the line
