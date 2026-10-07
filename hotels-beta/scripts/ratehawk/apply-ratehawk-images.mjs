@@ -8,6 +8,14 @@
 // Ratehawk provides — see CLAUDE.md §27). URLs are stored unresolved, with
 // the {size} template placeholder intact.
 //
+// Skips every image in excluded-gallery-images.json (galleryExclusions.mjs):
+// floor plans and renderings taken out on purpose on 2026-10-07 must not come
+// back with a re-import. Slots past the last image written are cleared, so a
+// shorter gallery cannot leave an old image behind in its tail.
+//
+// Note: this writes ETG's order, which undoes the curated hero order of
+// 2026-10-06 (.claude/rules/hotel-data.md).
+//
 // Defaults to dry-run. --confirm to write. --only <oltra_id> for a single
 // hotel. --limit N to cap how many hotels are processed.
 //
@@ -15,6 +23,7 @@
 //   node scripts/ratehawk/apply-ratehawk-images.mjs [--confirm] [--only <id>] [--limit N]
 import fs from "fs/promises";
 import dotenv from "dotenv";
+import { isExcludedGalleryImage, excludedGalleryImageCount } from "./galleryExclusions.mjs";
 dotenv.config({ path: ".env.local" });
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL?.replace(/\/+$/, "");
@@ -35,13 +44,17 @@ function parseArgs(argv) {
   return args;
 }
 
+function galleryImages(record) {
+  return record.images_ext.filter((image) => !isExcludedGalleryImage(record.oltra_id, image.url));
+}
+
 function buildPayload(record) {
   const payload = {};
-  const images = record.images_ext.slice(0, MAX_IMAGES);
-  for (let i = 0; i < images.length; i++) {
-    const n = i + 1;
-    payload[`ratehawk_image_${n}`] = images[i].url;
-    payload[`ratehawk_image_${n}_category`] = images[i].category_slug ?? null;
+  const images = galleryImages(record).slice(0, MAX_IMAGES);
+  for (let n = 1; n <= MAX_IMAGES; n++) {
+    const image = images[n - 1];
+    payload[`ratehawk_image_${n}`] = image ? image.url : null;
+    payload[`ratehawk_image_${n}_category`] = image ? image.category_slug ?? null : null;
   }
   return payload;
 }
@@ -81,6 +94,8 @@ async function main() {
   let updated = 0;
   let skippedNoImages = 0;
   let failed = 0;
+  let excludedSkipped = 0;
+  console.log(`Excluded gallery images on file: ${excludedGalleryImageCount()}`);
 
   for (const record of records) {
     // Integrity guard: the payload we're about to write must belong to the
@@ -93,12 +108,14 @@ async function main() {
     }
 
     const payload = buildPayload(record);
-    const imageCount = record.images_ext.length;
+    const imageCount = galleryImages(record).length;
+    const excludedHere = record.images_ext.length - imageCount;
+    excludedSkipped += excludedHere;
 
     console.log(
       `${record.oltra_id} | hid=${record.hid} | ${record.name} | ${imageCount} image(s)${
         imageCount > MAX_IMAGES ? ` (truncated to ${MAX_IMAGES})` : ""
-      }`
+      }${excludedHere ? `, ${excludedHere} excluded` : ""}`
     );
 
     if (imageCount === 0) {
@@ -132,6 +149,7 @@ async function main() {
   console.log(`Updated (or would update):  ${updated}`);
   console.log(`No images, skipped:         ${skippedNoImages}`);
   console.log(`Failed:                     ${failed}`);
+  console.log(`Excluded images skipped:    ${excludedSkipped}`);
 }
 
 main().catch((error) => {

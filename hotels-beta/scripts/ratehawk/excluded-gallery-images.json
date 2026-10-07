@@ -1,0 +1,3653 @@
+{
+ "about": "Images removed from hotel galleries (ratehawk_image_1..50) on purpose. Scripts that write those fields skip these; see galleryExclusions.mjs. 2026-10-07: floor plans and CGI renderings removed after a vision pass, Ulrik approved. Images that pass judged uncertain were kept by decision and are not listed.",
+ "images": [
+  {
+   "hotel_id": 1013,
+   "hotel": "One&Only Le Saint Géran",
+   "key": "fc/7f/fc7fe34339e7bcd62fde2f270eb7bc79c55aae76.jpeg",
+   "kind": "rendering",
+   "reason": "Synthetic CGI pool scene",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "70/a3/70a3f84546f38e40ed05e29efe41d052ade4c67d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "37/78/3778493b1da4def1232523384ec561ed91ef21ec.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "70/a3/70a3f84546f38e40ed05e29efe41d052ade4c67d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom, same as slot 2",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "46/c0/46c0275ca6dbe6f70fbf07f66caa52bf6978f8fb.JPEG",
+   "kind": "rendering",
+   "reason": "CGI suite living area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "16/f8/16f8e87bc795485abd51e7d72f20a7d74dec5b55.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "73/08/73089202d6c35d9d4cbccf00cd2d551fa6efee12.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "a1/18/a118890eb7d7406b527fc927832c970ec9492c67.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant terrace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "97/ab/97abf39df21bd448b97ff3be816310d4084d5f43.jpeg",
+   "kind": "rendering",
+   "reason": "CGI dining/living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "df/c9/dfc957ed0a9ef9cf36a73729379dcf1288a9112b.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1033,
+   "hotel": "One&Only Gorilla's Nest",
+   "key": "b8/2c/b82cfed2a791d882eb64e6919d7aab07522720ee.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1056,
+   "hotel": "The Silo Hotel",
+   "key": "https://cdn.worldota.net/t/{size}/carsolize/83/c5/83c5a45a66085c193ed38e2d8d64769a70194db4.jpeg",
+   "kind": "floor_plan",
+   "reason": "Architectural section cutaway rendering of building",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1072,
+   "hotel": "Six Senses Krabey Island",
+   "key": "dc/88/dc880cdd03cc01b66860e418f0fd4f0e420b69d0.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1072,
+   "hotel": "Six Senses Krabey Island",
+   "key": "be/0f/be0f30ff10ef092d6dee9736acc5eca71a516a6c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1072,
+   "hotel": "Six Senses Krabey Island",
+   "key": "8b/51/8b51bf96c1f83978ad7c1ed932e6b3b0b659fc00.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1072,
+   "hotel": "Six Senses Krabey Island",
+   "key": "17/79/17794f7d0739869cbe5ba55290de47c5416b67f6.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1072,
+   "hotel": "Six Senses Krabey Island",
+   "key": "5d/e6/5de6eade4a0e818c704834f683dc4453df0584bc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1084,
+   "hotel": "The Ritz-Carlton, Nanjing",
+   "key": "1d/84/1d84b23b52cc6307ee8816b78c52816a0548947a.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1084,
+   "hotel": "The Ritz-Carlton, Nanjing",
+   "key": "d4/c8/d4c863deeb3b702c3a788d3639dc16165884772a.JPEG",
+   "kind": "floor_plan",
+   "reason": "Suite floor plan on white",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1091,
+   "hotel": "The Murray, Hong Kong",
+   "key": "10/e1/10e1d7e8a7950ce8c7bbae9aef8480307b9bff38.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1091,
+   "hotel": "The Murray, Hong Kong",
+   "key": "c3/ba/c3ba0e5719d3d7f02c312a4fde030fa500073edc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby with render figures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1091,
+   "hotel": "The Murray, Hong Kong",
+   "key": "b9/0e/b90e6cfa6830ee47ed495ae530ea49c34e957da6.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool and jacuzzi",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1091,
+   "hotel": "The Murray, Hong Kong",
+   "key": "e2/3a/e23a02f4d826c3811ea0428522994ee97c7c88ee.jpeg",
+   "kind": "rendering",
+   "reason": "CGI gym visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1091,
+   "hotel": "The Murray, Hong Kong",
+   "key": "28/e4/28e46a0fd1bd7d13e51739e8f4f361c498dc1772.jpeg",
+   "kind": "rendering",
+   "reason": "CGI meeting room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1091,
+   "hotel": "The Murray, Hong Kong",
+   "key": "a2/de/a2de7a0cdef60ad020113527f2c2d2e9b2d05395.JPEG",
+   "kind": "rendering",
+   "reason": "CGI ballroom setup",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "1f/60/1f60550bf4c205dc3b49afed26f8da1e036389c9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI suite interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "67/28/672800d1380ea9adad2ecf8d60cd94ca21e581f1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "8d/5e/8d5efe692f297f5e85455a3cdcfa713b362d39a1.JPEG",
+   "kind": "rendering",
+   "reason": "Mirrored CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "dd/12/dd125dfcaca7378ecaef106baf044e6f46667421.jpeg",
+   "kind": "rendering",
+   "reason": "CGI kids club",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "92/e7/92e76578a62586d90c553792edcde95a40f62972.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bumper car room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "11/c7/11c7ee904e992c1ec8e0ba943d82339b66a4cf92.jpeg",
+   "kind": "rendering",
+   "reason": "Architectural CGI villa",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "50/ec/50ec514d71e9618abd715b5d0c5ed098e2a8f9d4.JPEG",
+   "kind": "rendering",
+   "reason": "Architectural CGI exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1101,
+   "hotel": "The Sanya EDITION",
+   "key": "fe/65/fe651205b5fc72bd5ce219122e640c8dbc2a8956.jpeg",
+   "kind": "rendering",
+   "reason": "CGI interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "92/00/9200dfbec51d459aa69b7bf86c254b9d1620dfdc.jpeg",
+   "kind": "rendering",
+   "reason": "CGI suite living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "cd/62/cd6270c8099fcaf4cc8d6de8a313f41672d2ba23.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spiral staircase atrium",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "c6/e7/c6e7e0ff7c5a867fd26ff936f23ff6e579dc424e.jpeg",
+   "kind": "rendering",
+   "reason": "CGI library lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "a5/3d/a53d70a4548f780f9c15c7eeff5ba8ef2ee52dac.jpeg",
+   "kind": "rendering",
+   "reason": "CGI dining room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "f5/98/f5987bfadb935347e2acfd6e4ab0c4900cbae288.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "a5/8a/a58a628218b68433ba38870a3d4b98e67065002a.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool duplicate",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "9c/a8/9ca8e5eb6d8863e7dbb620c9894c7330ec7a5107.jpeg",
+   "kind": "rendering",
+   "reason": "CGI screening room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "b0/3e/b03e50ab4c4704e90fef2fda37674844b930ea73.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "b1/cb/b1cb88023cb2e0a596f7e3882e195401a9bbcd91.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby atrium",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "98/59/985918a5bed8e998adc2652735bd6ba3b92fcc06.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "28/e6/28e65815b9e676074f63fe3582de4277d0d56606.JPEG",
+   "kind": "rendering",
+   "reason": "CGI rooftop garden bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "zz/96/ad9654127020bccffaaa177bac31dff7708b785b.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge duplicate",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1102,
+   "hotel": "The Shanghai EDITION",
+   "key": "8f/37/8f37b9eb9a0c22e9a7c9345a572826122f94792b.jpeg",
+   "kind": "rendering",
+   "reason": "CGI private dining",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1104,
+   "hotel": "Upper House Chengdu",
+   "key": "e9/bf/e9bf12a0b16be8d3e03f37295e897aa5497ecb0b.jpeg",
+   "kind": "rendering",
+   "reason": "CGI ballroom with ghosted figures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1104,
+   "hotel": "Upper House Chengdu",
+   "key": "eb/de/ebde23f3f35a35a79887048e105b99cc289de987.jpeg",
+   "kind": "rendering",
+   "reason": "CGI staircase visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1104,
+   "hotel": "Upper House Chengdu",
+   "key": "74/f2/74f227d48b721c9096066561545e9bf99a6173b6.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1104,
+   "hotel": "Upper House Chengdu",
+   "key": "85/ec/85eca14adc2161b581aa82f1b04c832aaaf366b2.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1104,
+   "hotel": "Upper House Chengdu",
+   "key": "2b/7a/2b7a90f8a092bb45862cfefa97904a8d802c8c3e.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant and bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1104,
+   "hotel": "Upper House Chengdu",
+   "key": "1f/2d/1f2dc916250f6552a20d7b6f35998b8df0a54621.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1104,
+   "hotel": "Upper House Chengdu",
+   "key": "63/db/63db57fdb7750df9d721327cd45c275c492eca66.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1131,
+   "hotel": "Six Senses Uluwatu",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/0a/73/0a739bc612b9c8b5c08a1d9b2532288b071e6c7a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI aerial of villas, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "65/62/65629fa81ae5ef7c6090c7bf727c564bd573f4d3.jpeg",
+   "kind": "rendering",
+   "reason": "CGI tower exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "9e/d3/9ed39d76d5787fd48572e6d40eb27827e608f5e9.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa pool lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "13/24/1324cb84d62f513f2c6341abf7a8486fb06eab6e.jpeg",
+   "kind": "rendering",
+   "reason": "CGI dining room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "e8/d4/e8d49d351b80c294e3daf27bcbd8261bbfe3569c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "2b/ee/2beeb29d7c33ee9c244130f5618188a251618aa6.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "ff/64/ff64962fa13ef7f223b6f9212eb21dec54292b14.jpeg",
+   "kind": "rendering",
+   "reason": "CGI garden terrace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "da/53/da53bd2e3582e71111113bdd73936e0ff863efac.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1138,
+   "hotel": "Four Seasons Hotel Tokyo at Otemachi",
+   "key": "16/41/164153c7fd4f3027c4a0e8236a276208df7fb73e.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1143,
+   "hotel": "The Ritz-Carlton, Nikko",
+   "key": "f9/1d/f91dc1e29c1fabd75697197adb1030f5d87e0ec6.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa room, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1143,
+   "hotel": "The Ritz-Carlton, Nikko",
+   "key": "d9/be/d9be97197465c7dcc6ef25cc0d8edeec12c377a0.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa changing area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1143,
+   "hotel": "The Ritz-Carlton, Nikko",
+   "key": "1e/35/1e35e51d09d2d49ac0b31f0c84d27d811984df89.JPEG",
+   "kind": "rendering",
+   "reason": "CGI treatment room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1143,
+   "hotel": "The Ritz-Carlton, Nikko",
+   "key": "6f/ed/6fed200ad4614741fc3f8e48dcf6e09469a16b14.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1143,
+   "hotel": "The Ritz-Carlton, Nikko",
+   "key": "50/89/5089f00138e3c12c1c5b7db064dfb11ae7b8fdcc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI dining room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1146,
+   "hotel": "The Tokyo EDITION, Toranomon",
+   "key": "b5/d9/b5d973c1c9f19e778a9d071d40ddfa8da9b51e4e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI meeting room, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1146,
+   "hotel": "The Tokyo EDITION, Toranomon",
+   "key": "97/38/9738c0ba7fd7ab05e87090cb125b7bbe558a728f.JPEG",
+   "kind": "rendering",
+   "reason": "CGI classroom setup, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1146,
+   "hotel": "The Tokyo EDITION, Toranomon",
+   "key": "85/1b/851b4b121e4b8c85054e6b7ca09074b8e073d248.JPEG",
+   "kind": "rendering",
+   "reason": "CGI banquet room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1156,
+   "hotel": "Baglioni Resort Maldives",
+   "key": "38/db/38db5de7a2328fe29d79e39f85760eee0033bfa7.jpeg",
+   "kind": "rendering",
+   "reason": "CGI living area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1156,
+   "hotel": "Baglioni Resort Maldives",
+   "key": "35/ee/35ee39458a5cce6cad9ab956c0dfa4f97bd4affc.jpeg",
+   "kind": "rendering",
+   "reason": "CGI outdoor bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1156,
+   "hotel": "Baglioni Resort Maldives",
+   "key": "f2/08/f208807d856cfca7f1b17fe07c269735a520f93c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI outdoor bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1156,
+   "hotel": "Baglioni Resort Maldives",
+   "key": "ec/84/ec84225b0e9d24c516cd13624872b900e07ce307.jpeg",
+   "kind": "rendering",
+   "reason": "CGI villa aerial",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1156,
+   "hotel": "Baglioni Resort Maldives",
+   "key": "33/a8/33a81105f6096af59cf45a573eb16ba249e2676a.jpeg",
+   "kind": "rendering",
+   "reason": "CGI villa aerial",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1156,
+   "hotel": "Baglioni Resort Maldives",
+   "key": "9b/61/9b61c20146f6d6c36fcf3ae186e47f6d7b5e10b1.jpeg",
+   "kind": "rendering",
+   "reason": "CGI water villas",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1156,
+   "hotel": "Baglioni Resort Maldives",
+   "key": "9c/54/9c54e88d80a6aa458a78711a4e681288f4804a27.jpeg",
+   "kind": "rendering",
+   "reason": "CGI water villa",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1168,
+   "hotel": "JOALI Maldives",
+   "key": "8f/e0/8fe05a5092c6b45d830ee2cdb3ae835d4e204d8a.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa pavilion, synthetic water and lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1168,
+   "hotel": "JOALI Maldives",
+   "key": "6c/c3/6cc372c5b49d0128c669849a0f71d834c79eb2a2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI building exterior, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1169,
+   "hotel": "Kudadoo Maldives Private Island",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/a7/b8/a7b8138e64a089c703e7aec3b189aa51cff8e460.JPEG",
+   "kind": "rendering",
+   "reason": "Clearly synthetic bar render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1169,
+   "hotel": "Kudadoo Maldives Private Island",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/cc/b3/ccb32cb29a32bd64e132c9ba4e2a28ba1e9c59e8.JPEG",
+   "kind": "rendering",
+   "reason": "Synthetic lighting and geometry",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "24/5f/245f457e698f0df154b96b5239e83150c9641b34.jpeg",
+   "kind": "rendering",
+   "reason": "CGI villa and pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "4b/28/4b2866f0b39eeb66d74e9a1501d3272ecdc57ab9.jpeg",
+   "kind": "rendering",
+   "reason": "CGI dining interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "6b/99/6b9907926336fa99c8f451e226146ec453aa9c36.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "e5/49/e54975e88c827e88e51fbef4dec24591676e5799.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "46/1b/461b7d5db638b3058cd8db1bba172608c7b9a4ec.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "98/06/98066a0cac614751b8e2497092f86b40ba642b83.jpeg",
+   "kind": "rendering",
+   "reason": "CGI beach bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "bc/35/bc350094d9c6b839e68aa8d7c1557ec2445c7e70.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pavilion",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "75/7e/757eea795581c775a5a861690349d5d1f1a823d4.jpeg",
+   "kind": "rendering",
+   "reason": "CGI outdoor dining",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "36/fa/36fa372132f2b6849cb0422e20d6cd8a5f184a48.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool and building",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "cc/58/cc58e742d80a14193622bb64db71173b02d14f26.jpeg",
+   "kind": "rendering",
+   "reason": "CGI villa exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "d7/6a/d76a568d213bc156d9786612ece71a51d35f7fc5.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "92/3a/923a99554a503fffe0dd389857a06e4712e44a86.jpeg",
+   "kind": "rendering",
+   "reason": "CGI terrace and pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1180,
+   "hotel": "The Ritz-Carlton Maldives, Fari Islands",
+   "key": "1d/99/1d9962e28228ebf424b4607439304b6b08cd698f.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1184,
+   "hotel": "Solaire Resort Entertainment City",
+   "key": "1c/f3/1cf3c8ed4713be58589e9d3e901ff13953c54e82.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa room, render watermark",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1184,
+   "hotel": "Solaire Resort Entertainment City",
+   "key": "58/77/5877f4a1da3f14f7f0793ab6661d1b16ea0d8c4e.jpeg",
+   "kind": "rendering",
+   "reason": "CGI casino bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1184,
+   "hotel": "Solaire Resort Entertainment City",
+   "key": "0b/6e/0b6e991df0379da4f88ce81cc2faf8e0ff3a6619.jpeg",
+   "kind": "rendering",
+   "reason": "CGI dining room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1184,
+   "hotel": "Solaire Resort Entertainment City",
+   "key": "fb/58/fb5802a26b390e17f91f1ea0d9ebd8dcf6648df8.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1184,
+   "hotel": "Solaire Resort Entertainment City",
+   "key": "c5/6e/c56e63e18cc6e80c8d23a91c5dfc6374a2b18570.JPEG",
+   "kind": "rendering",
+   "reason": "CGI ballroom, render watermark",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1184,
+   "hotel": "Solaire Resort Entertainment City",
+   "key": "8b/24/8b24566e5679d408b24d8b9fd07574c5ac924def.jpeg",
+   "kind": "rendering",
+   "reason": "CGI gym interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1184,
+   "hotel": "Solaire Resort Entertainment City",
+   "key": "69/b3/69b3702caabbe6b6f00d6fc0f3d34284fd1e3604.jpeg",
+   "kind": "rendering",
+   "reason": "Aerial CGI of resort",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1195,
+   "hotel": "Anantara Golden Triangle Elephant Camp & Resort",
+   "key": "e0/a1/e0a19a8bfa7f032d008534a9d2804a38f776e2fd.JPEG",
+   "kind": "rendering",
+   "reason": "CGI gym visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1195,
+   "hotel": "Anantara Golden Triangle Elephant Camp & Resort",
+   "key": "f4/f7/f4f761704081772465179df8f4437d4722f15b4f.jpeg",
+   "kind": "rendering",
+   "reason": "CGI gym visualisation, duplicate",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1202,
+   "hotel": "Chiva-Som Hua Hin",
+   "key": "67/cf/67cf3ac24aa309297779c6bc9e8c3464bf8bc7e3.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1202,
+   "hotel": "Chiva-Som Hua Hin",
+   "key": "55/1e/551e166d97ebb7215c9da78786dc4cc1e9eac2f6.JPEG",
+   "kind": "rendering",
+   "reason": "CGI dressing room/bath",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1202,
+   "hotel": "Chiva-Som Hua Hin",
+   "key": "be/d0/bed07631411898685490b4ac8b9ad91359f1c15a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI wardrobe interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1211,
+   "hotel": "Phulay Bay, A Ritz-Carlton Reserve",
+   "key": "a8/d0/a8d02af494e9ad6fb865804aac5440fc4be749d8.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1212,
+   "hotel": "Pimalai Resort and Spa",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/4f/42/4f42e7f84f5e2bedadf22c1c936f3593095e066d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI beach restaurant, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1224,
+   "hotel": "The St. Regis Bangkok",
+   "key": "11/d1/11d1cc2c543e77c9aab86bb739635c246b38068b.jpeg",
+   "kind": "rendering",
+   "reason": "CGI meeting room, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1237,
+   "hotel": "Cap Juluca",
+   "key": "0c/02/0c023c0e9222f8925ed882bf7497624e8760a411.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1237,
+   "hotel": "Cap Juluca",
+   "key": "ca/31/ca31a5080961fb586761cdd3b2194fb32432f68d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1237,
+   "hotel": "Cap Juluca",
+   "key": "01/f0/01f01a004b8c857d607ece6a0bc053fbcebbb6e2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1237,
+   "hotel": "Cap Juluca",
+   "key": "e0/65/e06560c11530e3fe5e38935b804ea48b0d4c8e2a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1237,
+   "hotel": "Cap Juluca",
+   "key": "66/b5/66b5578d39ad9b930a57f4a3294936febc2b6cdb.jpeg",
+   "kind": "rendering",
+   "reason": "CGI terrace dining render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1237,
+   "hotel": "Cap Juluca",
+   "key": "c7/42/c74204803568f9d8b214600f1197a2cd58f966be.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1237,
+   "hotel": "Cap Juluca",
+   "key": "b4/c4/b4c4ed7945e0556a3558afc7100eafacf39f0258.jpeg",
+   "kind": "rendering",
+   "reason": "CGI gym render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "f3/06/f30605c801c6c22df3a3c2b76c0f8b3e4e5d581c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI aerial of resort",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "12/8a/128a59357c51dc85885ecdc9e6fc6fcccda2f47f.jpeg",
+   "kind": "rendering",
+   "reason": "CGI rooftop terrace pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "20/b3/20b3a7cecd6f8b96f30fce9b0a8982721e15f4cf.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "f7/04/f7043fbc8269777d23f5532c44db6960933bf261.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "58/24/5824bdc02bc1f1ec0c9ac6d95d4e6f66e5945a0f.jpeg",
+   "kind": "rendering",
+   "reason": "CGI room interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "89/01/8901af48220f91868c4d875ab5e366ce7adeef0c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "47/16/4716c9a7038b3ddb7a8042a0d927e233e05b4112.jpeg",
+   "kind": "rendering",
+   "reason": "CGI suite with ocean view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "06/f7/06f75b71de6ce303bcca45aa369698ba126f0e6a.jpeg",
+   "kind": "rendering",
+   "reason": "CGI suite interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "9d/72/9d72309bea9e5d723b76b38ad2e0309e4c9b3253.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby checkerboard floor",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "56/5c/565ca2da88a76afd796ff10031ca9e0ef9b179cd.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "1e/4d/1e4d104df0b20b6ca1517311a22c7ba6e840f366.jpeg",
+   "kind": "rendering",
+   "reason": "CGI terrace plunge pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "1b/4c/1b4c24d8c7d45ccd5b74bbb5a587ef1f2b0dc3a8.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar lobby",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "f3/92/f392d1f60a65e2199f411fb182076f57e79defdc.jpeg",
+   "kind": "rendering",
+   "reason": "CGI café",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "85/e0/85e0a7d5513c794cca29a02b2709cf4c9a20646a.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "72/c4/72c4d2b975715986f80acf5f738fbe3da88ff9d0.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "15/1b/151b20db63d161239c5e229461ab471f85d1b2a1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom vanity",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1247,
+   "hotel": "Excellence Oyster Bay",
+   "key": "63/65/63656c2e21fd86f7ec07a2326b638d0acf618054.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1252,
+   "hotel": "Sugar Beach",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/01/5d/015d2bea61b383f41416e95abb5304037576e822.jpeg",
+   "kind": "rendering",
+   "reason": "CGI gym visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "73/c8/73c8d7d212d79cbd77f2bb70b8f827a1bf3c78ac.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "75/3e/753ed7a30afdad24469853560dc37992939318c5.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "a5/6c/a56c175ac7160ead1c1543c410696024800f2578.jpeg",
+   "kind": "rendering",
+   "reason": "CGI outdoor terrace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "7c/57/7c57c301042f7e4ee0acf3d716d0400488c80723.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "29/02/29020ebc40012cadcedc0a731f44bb9aedcfc5fc.jpeg",
+   "kind": "rendering",
+   "reason": "CGI suite with plunge pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "bd/71/bd71d9f8357fb6e6f67e1a354032418678916fec.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pavilion view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "fd/82/fd82757bce212ba5c925d5cb5f14423208d72c65.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool with cabanas",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1262,
+   "hotel": "Four Seasons Resort Costa Rica at Peninsula Papagayo",
+   "key": "25/d1/25d11eef151f91075c9944c3a7b1ccce79352aea.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lawn and pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1274,
+   "hotel": "Palais Coburg",
+   "key": "a0/8a/a08aff263f4fac76a3ab05633a9d97c21be1ad0a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1274,
+   "hotel": "Palais Coburg",
+   "key": "09/37/093726e7b58573ec375ef2045d23c817c128babc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa reception",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1275,
+   "hotel": "Villa Dubrovnik",
+   "key": "d3/f0/d3f06e7ca81a8dfd7e2ef6ff2287143bb14ee36d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1275,
+   "hotel": "Villa Dubrovnik",
+   "key": "eb/fb/ebfb92b699abfa9a4c275722a40296b81ebf301d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living room visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1281,
+   "hotel": "1 Hotel Mayfair",
+   "key": "ed/76/ed767bbae94e5f0a04f5f21e9a336ceaef873fb2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI meeting room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1281,
+   "hotel": "1 Hotel Mayfair",
+   "key": "5a/72/5a725b536f65e9e67dfdc973b56e8017efcd3326.JPEG",
+   "kind": "rendering",
+   "reason": "CGI meeting room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1281,
+   "hotel": "1 Hotel Mayfair",
+   "key": "27/90/27904e697234a5a205fbfe2c7eec088db576d1da.jpeg",
+   "kind": "rendering",
+   "reason": "CGI banquet room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1283,
+   "hotel": "Bvlgari Hotel London",
+   "key": "84/dd/84dd17f95bd103270f1bbe4defa1eb8dd4eea113.JPEG",
+   "kind": "floor_plan",
+   "reason": "Room floor plan drawing",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1283,
+   "hotel": "Bvlgari Hotel London",
+   "key": "6b/1a/6b1ae37c44061c482ad3caedcbfc770552dae930.JPEG",
+   "kind": "floor_plan",
+   "reason": "Suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1283,
+   "hotel": "Bvlgari Hotel London",
+   "key": "b1/1d/b11da07b1dc6e324e7dc863495e050b24cf80eb6.JPEG",
+   "kind": "floor_plan",
+   "reason": "Suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1283,
+   "hotel": "Bvlgari Hotel London",
+   "key": "89/2b/892bc2b1dc913b7235519db1bcd516222045448d.JPEG",
+   "kind": "floor_plan",
+   "reason": "Suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1307,
+   "hotel": "The Lanesborough",
+   "key": "a4/fe/a4fe9a43b7e84b4cc3bd7a97cfae4e7b70be274e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa room, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1310,
+   "hotel": "The Peninsula London",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/af/c4/afc47b1af4350bb2425e47a2a405338732fffbf7.JPEG",
+   "kind": "rendering",
+   "reason": "CGI cinema, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1314,
+   "hotel": "Airelles Gordes, La Bastide",
+   "key": "33/57/33570b4833cba0217065e04cda47cca02d506fdd.jpeg",
+   "kind": "rendering",
+   "reason": "Watercolour sketch of interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1321,
+   "hotel": "Château Saint-Martin & Spa",
+   "key": "e4/aa/e4aa6ec2755dd38429d987d2eb6cf2adb780864a.PNG",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan on black",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1321,
+   "hotel": "Château Saint-Martin & Spa",
+   "key": "4d/bf/4dbf5fefd7c7bcaa2aed461b462c9a314d8c1d4b.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan on white",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1321,
+   "hotel": "Château Saint-Martin & Spa",
+   "key": "c8/da/c8da696e9b6aab87516c6bea3f6571230866d24f.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan on white",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1321,
+   "hotel": "Château Saint-Martin & Spa",
+   "key": "43/f4/43f4c54f7c516e5a3feb1f71e78daf14091afae7.PNG",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan on black",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1323,
+   "hotel": "Cheval Blanc Paris",
+   "key": "8f/b2/8fb24ed2e5207f1467635e0430813a8092bc3630.jpeg",
+   "kind": "floor_plan",
+   "reason": "3D cutaway suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1323,
+   "hotel": "Cheval Blanc Paris",
+   "key": "83/a1/83a166b5d562c65670f4d37fe876b305bdc47ff5.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D isometric room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "5b/4b/5b4bb522bc9d209d7e08e1c035163967a7e01abc.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "53/62/536207915f9547b5aee5af6377ac8b6b1b742447.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "9f/90/9f90f420d920be46e9fac7ada223b99713367f3c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar with rendered people",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "6a/a8/6aa839f7282b350a0f91c0c63599e3aa71dd3fb1.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa lounger hall",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "f4/03/f40392b90bf2f744cc41c44a641f4704fcd060ae.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "ed/6d/ed6d748014ff1734cdedf003e48eb61a66843a48.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool detail",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "e1/a9/e1a99b1db8621de1801050980e1016465da86226.jpeg",
+   "kind": "floor_plan",
+   "reason": "3D room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "f4/5a/f45a3e753a59e262f87fa35068b93581d3892110.jpeg",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1344,
+   "hotel": "Mandarin Oriental Lutetia, Paris",
+   "key": "26/18/2618e68bac119e1642a2545c68bb4ff721542e45.jpeg",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1379,
+   "hotel": "The Fontenay",
+   "key": "58/23/58232671f5afeafa374f80a51848ecc0c9fc991d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa pool render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1379,
+   "hotel": "The Fontenay",
+   "key": "eb/b0/ebb050eb934519607407c66534dafee07ecaf739.jpeg",
+   "kind": "rendering",
+   "reason": "CGI entrance with rendered people",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "1d/87/1d87918cd200fa376518211acc3e1067d8066b00.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "2b/65/2b6523cc6fc6fc09ed59cd29b9202ec83e6767c2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI suite living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "fe/fd/fefd8b938d4d2e033ba5be85b78c3bbb4b473f13.JPEG",
+   "kind": "rendering",
+   "reason": "CGI suite interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "27/33/27337b3aaa935ce34d5635d75e7c8ef6420d6566.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "33/b9/33b9b8a3ab4d932360028202073cea21d65dac95.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "d6/51/d6518dd5583469da9ef33e363da5efeb18f8a8e8.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "3e/6b/3e6badaa0c1405f34bda6724a4f73351b57e6d7e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "3f/88/3f88b6a7e97a20682db5569f9d96e3f3201a2a87.JPEG",
+   "kind": "rendering",
+   "reason": "CGI gym",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "9a/f7/9af7e80ded8e522e6ada9571aaa1f767dd4a199c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1380,
+   "hotel": "The Ritz-Carlton, Berlin",
+   "key": "eb/8e/eb8e8cc14be621c8e5c482f0ecaf43dbaa696a34.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1381,
+   "hotel": "Amanzoe",
+   "key": "2e/a1/2ea1b3b048136e08c37cc80a5a5e08ddc5f135e4.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1382,
+   "hotel": "Amirandes",
+   "key": "b3/bb/b3bbbddb45d24403044df6aeac4055c03db85830.JPEG",
+   "kind": "floor_plan",
+   "reason": "Coloured villa floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1382,
+   "hotel": "Amirandes",
+   "key": "c5/95/c5959ab6f891cb7260548a46f38a8a3323ddcc22.JPEG",
+   "kind": "floor_plan",
+   "reason": "Coloured room plan with pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1382,
+   "hotel": "Amirandes",
+   "key": "95/02/950281e62d3122939c71bf045013edda376ce4ba.JPEG",
+   "kind": "floor_plan",
+   "reason": "Coloured room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1393,
+   "hotel": "Domes Zeen Chania",
+   "key": "f2/f8/f2f8e1b4eb77ca825bec333ea405998eb6083579.jpeg",
+   "kind": "rendering",
+   "reason": "CGI suite visual with caption border",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1399,
+   "hotel": "Ikos Dassia",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/21/dd/21ddf01cc7f79347a259caf507cbe45d4935ad7c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI reception, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1399,
+   "hotel": "Ikos Dassia",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/4c/8a/4c8a5d6f8699a9c384e37e5eda77af45e837e396.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa treatment room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1403,
+   "hotel": "Nammos Hotel Mykonos",
+   "key": "e5/44/e544d4e30d7b07e91d4703493b22fbc59c3213d2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI interior, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1403,
+   "hotel": "Nammos Hotel Mykonos",
+   "key": "09/8c/098c8d0cbe329daac86ef22261aa70b60194f576.JPEG",
+   "kind": "rendering",
+   "reason": "CGI room, clean synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "a5/2b/a52bcf4bf13317915546d1466f1f9c67c95ea08c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI suite interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "73/66/736663a1dce9d0e9b74356915a534c2c1e7a91ea.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "62/7b/627b27ed2f67c16234eb37d310d7916fd9169fbc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI room render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "4d/d6/4dd681a74a8eb06a35bbdace0ebb46a13157372c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kitchen render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "5e/05/5e050bab534578f6f6243287887d8ad1c96d450c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kitchen render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "5d/f5/5df586fc482e8b0d8ccf8eb75dbc68816dbcb487.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kitchen render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "79/f2/79f24adb6372d3870b9937b957b353a632eded36.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1406,
+   "hotel": "Lesante Cape",
+   "key": "5d/f7/5df74bf8551b7b12b91d73fb4f625548714887a1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI wine cellar render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1409,
+   "hotel": "Mykonos Grand Hotel & Resort",
+   "key": "58/17/5817e893ff214a9a9192aab2b6288ac223bd0dd3.JPEG",
+   "kind": "rendering",
+   "reason": "CGI wine room, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1409,
+   "hotel": "Mykonos Grand Hotel & Resort",
+   "key": "f6/33/f63338cce1640d6f87205444573045a523aec0d3.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "9c/9c/9c9cd98d1932af5a2c5756777c0aa5dbf9181dc7.jpeg",
+   "kind": "rendering",
+   "reason": "CGI aerial of villas",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "48/72/4872b674c29d891f75f4591f460451717388c4fe.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom, synthetic view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "39/06/39066abc2dd9bee0ea724b8b1233502c4644425c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "db/23/db230275af735c6c89d32f3f378962b81a83305d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI suite interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "4b/b5/4bb5880984597dd0efcb91ef42fad045e07e76cb.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "61/35/6135c39b9ba21fd84e07447079c1417db84999d6.jpeg",
+   "kind": "rendering",
+   "reason": "CGI living area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "d5/3e/d53ead133f10f7b8f7a69c26fa18df293a1a660a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "0c/f8/0cf8932ae03c512be3c511cba8a5c54e62c4d856.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "79/c0/79c013130d5e0b361172872ec82fa96f2f143734.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "9f/1b/9f1bf45aecf22b8ea525cd3c1affcaa40298d831.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "e4/9b/e49b9237b1feb056658daea78b84ed472c660a9f.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "b9/83/b983abeecf69829f24daef08fc5fe03a65134f1b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI villa exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "bb/c1/bbc1c7189985c469dfe3d52c2e31cb50732adade.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "ff/dc/ffdc330fb7930976fbd1d5bd3a758e49508e9e31.JPEG",
+   "kind": "rendering",
+   "reason": "CGI interior hall",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "0b/9e/0b9ee3811a9bd8b804b4a907f5390372ce4082c9.jpeg",
+   "kind": "rendering",
+   "reason": "CGI villa exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1411,
+   "hotel": "One&Only Aesthesis",
+   "key": "c2/c7/c2c70bdc49a50116d3a00d2d5d0aacec27724db1.jpeg",
+   "kind": "rendering",
+   "reason": "CGI aerial view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1412,
+   "hotel": "One&Only Kéa Island",
+   "key": "5a/3f/5a3f6e45d1ac3591340c8af18e4751320262a095.JPEG",
+   "kind": "rendering",
+   "reason": "CGI aerial of resort on hillside",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1412,
+   "hotel": "One&Only Kéa Island",
+   "key": "8e/da/8eda69da801e4e71cc9b0c76dd1306b9b0cd84ea.JPEG",
+   "kind": "rendering",
+   "reason": "CGI dusk restaurant visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1412,
+   "hotel": "One&Only Kéa Island",
+   "key": "62/9f/629fc5ffe7576882291702da9b3f0d7933f24e2c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar interior, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1417,
+   "hotel": "The Reykjavik EDITION",
+   "key": "d5/83/d583d0dc13dde5b1b4d7d35ae4d7fbbe6ebfcc5b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI exterior visualisation of building",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1431,
+   "hotel": "Bvlgari Hotel Roma",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/4c/c0/4cc060b99cbb3b3b1ff5ddacc6165ae3df103fdf.jpeg",
+   "kind": "rendering",
+   "reason": "CGI exterior, synthetic lighting and grass",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1467,
+   "hotel": "Park Hyatt Milan",
+   "key": "01/cd/01cd442b4910076ba015eca2e7b195c5db7b1600.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace, synthetic sky and lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1476,
+   "hotel": "Six Senses Rome",
+   "key": "5d/aa/5daad37cb6e49682e924142685f50bcd919b718c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1476,
+   "hotel": "Six Senses Rome",
+   "key": "c4/f0/c4f0eb49bba87cb7a4bd90232a9fad42e6f0a809.jpeg",
+   "kind": "rendering",
+   "reason": "CGI courtyard render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1476,
+   "hotel": "Six Senses Rome",
+   "key": "e2/ec/e2ecf390838ef4b8aedba72d8e811e49dcd4ffe1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar/lounge render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1476,
+   "hotel": "Six Senses Rome",
+   "key": "3c/6b/3c6b3222c40cf07d7af4b1fa55f2287630b913ce.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1476,
+   "hotel": "Six Senses Rome",
+   "key": "4f/d9/4fd9b43ca2bfff81e9d86921882a9efad50d68f1.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bath corridor render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1482,
+   "hotel": "The Rome EDITION",
+   "key": "ec/22/ec22e647d7a7a384367dcffb21106e16f4458c15.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1482,
+   "hotel": "The Rome EDITION",
+   "key": "1f/fe/1ffe9d45e62848f56796e2235d7a246643d067dd.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1482,
+   "hotel": "The Rome EDITION",
+   "key": "e1/f3/e1f30efa64b037d4eb4a54f2edf2b22ff5f208cc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1482,
+   "hotel": "The Rome EDITION",
+   "key": "13/af/13afd1508e86ab4895a67bb02b2d56187a77fab2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI gym visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1482,
+   "hotel": "The Rome EDITION",
+   "key": "69/64/69642b0353ea598f875ed9dc122b28a2d059e5e9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI garden walkway",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1482,
+   "hotel": "The Rome EDITION",
+   "key": "70/92/70929071dac093d66e112e4098774df41722d780.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1482,
+   "hotel": "The Rome EDITION",
+   "key": "1f/73/1f73dab64d724013e826b8997599247898c7ac3e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI green bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/28/11/2811e5ed2b242bb09b88209d3606b2f834262ca2.jpeg",
+   "kind": "rendering",
+   "reason": "CGI villa exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/f4/d3/f4d3119fd637c7e4cc1553e566041fa29d223412.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/0b/85/0b852579781fa2f4f492d40fbfb340591b8b5312.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/66/d7/66d79c0534660d6ba19b2450d694025dba5683af.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/87/2a/872ab8343911f5b0fd5a524ad1f20e7ab60b79db.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/82/90/82903e174216229b7a1abf44aecc7b2197d63c86.jpeg",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/f0/13/f013c7a234364c8e06ad64e20b482a5f6f58c24c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/e2/bd/e2bd2319f51cad54ccf213cecb8b5a349cece6a1.jpeg",
+   "kind": "rendering",
+   "reason": "CGI suite",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/df/5b/df5b3852c7458c368e241bcdd4e873b420da407a.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/c4/6a/c46abc1784e0efef0a7827d316466abec29831c3.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1493,
+   "hotel": "One&Only Portonovi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/4b/8b/4b8b15b6bf679fc5ad17965b5fcc70b69bca0b12.jpeg",
+   "kind": "rendering",
+   "reason": "CGI marina aerial",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1498,
+   "hotel": "Britannia Hotel",
+   "key": "3e/b1/3eb13587a255705096d706fa1dc0c8d54eea1a84.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa render, synthetic lighting, render watermark",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1523,
+   "hotel": "Gran Hotel Miramar",
+   "key": "3d/03/3d03838fd368606a6213ec3d698038ee63d49de1.jpeg",
+   "kind": "rendering",
+   "reason": "Grey CGI visualisation of atrium",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1532,
+   "hotel": "Rosewood Villa Magna",
+   "key": "ae/79/ae7922f486c92396fb5190ae3457a28c0f131580.JPEG",
+   "kind": "rendering",
+   "reason": "CGI garden wedding visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1536,
+   "hotel": "The Barcelona EDITION",
+   "key": "ae/e6/aee631b36f6d783fea08dca80a982a6ebcbfa504.jpeg",
+   "kind": "rendering",
+   "reason": "CGI exterior of building",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1539,
+   "hotel": "URSO Hotel & Spa",
+   "key": "9f/db/9fdbe814517b93c7f7ea39d5cb064f5e17de0110.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby with stairs and fireplace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1539,
+   "hotel": "URSO Hotel & Spa",
+   "key": "68/60/6860cdea2fa56c9b87569e60d7925c3bfe84fd5d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI staircase and bar visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1545,
+   "hotel": "Carlton Hotel St. Moritz",
+   "key": "0b/80/0b80f400e7a0e0ec1ddb3fb291b38f07893ec995.JPEG",
+   "kind": "floor_plan",
+   "reason": "Coloured suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1545,
+   "hotel": "Carlton Hotel St. Moritz",
+   "key": "57/a2/57a28903b1d0bc0095ebafce41011feb75c13c4a.JPEG",
+   "kind": "floor_plan",
+   "reason": "Coloured room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1545,
+   "hotel": "Carlton Hotel St. Moritz",
+   "key": "38/d0/38d0f5cf515d2656876a071ef73e81051e6ae409.JPEG",
+   "kind": "floor_plan",
+   "reason": "Coloured room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1553,
+   "hotel": "Grand Hotel Zermatterhof",
+   "key": "33/02/33023688a1100a61e02a09d88274a09ee2d7006e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool visualisation, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1553,
+   "hotel": "Grand Hotel Zermatterhof",
+   "key": "5a/0a/5a0a324cf21a3dfd33fea457fe9f9bf198639207.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool visualisation, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1562,
+   "hotel": "LeCrans",
+   "key": "15/e6/15e672b977e0be23ff94ce32e294c63471e1ca99.JPEG",
+   "kind": "floor_plan",
+   "reason": "Prestige Apartment floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1585,
+   "hotel": "The Bodrum EDITION",
+   "key": "03/88/03885625b228fc0ee2180ceac5b7eb9f0e259487.jpeg",
+   "kind": "rendering",
+   "reason": "CGI meeting room, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1585,
+   "hotel": "The Bodrum EDITION",
+   "key": "c2/61/c261501bc3a2b53ec93a346aed69864559f62d47.jpeg",
+   "kind": "rendering",
+   "reason": "CGI boardroom, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1598,
+   "hotel": "Atlantis The Royal",
+   "key": "33/ee/33eeefafd870d59034b63cc518f282b5ea1a90a2.jpeg",
+   "kind": "rendering",
+   "reason": "CGI interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1598,
+   "hotel": "Atlantis The Royal",
+   "key": "7b/2b/7b2bef681c576345405cc453195742d5ade19ae6.jpeg",
+   "kind": "rendering",
+   "reason": "CGI kids club",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1598,
+   "hotel": "Atlantis The Royal",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/49/5e/495eb43e4302b0d6a8c8c8bb0f77b1ef4606b6b2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1598,
+   "hotel": "Atlantis The Royal",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/f4/f1/f4f18dde080998841a5baab563e136a9d17843cc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1604,
+   "hotel": "Mandarin Oriental Jumeira, Dubai",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/bd/da/bddab2ff53483f633ebea3fa980f1e7cab036d08.PNG",
+   "kind": "rendering",
+   "reason": "CGI aerial of building",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1617,
+   "hotel": "W Dubai - Mina Seyahi",
+   "key": "49/47/494756d0db1e85a9c5110a987432de4296c655b0.jpeg",
+   "kind": "rendering",
+   "reason": "CGI street view of tower",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1617,
+   "hotel": "W Dubai - Mina Seyahi",
+   "key": "https://cdn.worldota.net/t/{size}/extranet/4c/45/4c4554792cb3083fd94c8dd4b835ed077814418c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI aerial view of tower",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1623,
+   "hotel": "The Ritz-Carlton, Montréal",
+   "key": "9c/9d/9c9d4051f0dffe00fe4330e4b58565a3b017b14b.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D isometric room plan on white",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1623,
+   "hotel": "The Ritz-Carlton, Montréal",
+   "key": "e9/62/e96214dccc89fa2dc48453b4fa3af6b7d7e3b1f0.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D isometric room plan on white",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1624,
+   "hotel": "The Ritz-Carlton, Toronto",
+   "key": "fe/5d/fe5d1a71d58f6fb3dd5aee88ee1ce886474fdce5.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1624,
+   "hotel": "The Ritz-Carlton, Toronto",
+   "key": "a0/a3/a0a3d686d45fc6eb8d4a16b96709aa1d7ae5cf6e.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1624,
+   "hotel": "The Ritz-Carlton, Toronto",
+   "key": "d0/80/d080e3ad5fe1092963b0333d6966b4fc13e5becd.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1625,
+   "hotel": "Banyan Tree Cabo Marqués",
+   "key": "8b/d3/8bd3562a0639795d17fd6d060f1a94affde8d487.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom, synthetic lighting and textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1626,
+   "hotel": "Banyan Tree Mayakoba",
+   "key": "5b/ec/5bec1fb2159f4aeb8d90952dc6dee1ed08da7252.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom with pool view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1626,
+   "hotel": "Banyan Tree Mayakoba",
+   "key": "7e/bc/7ebc3606cd916c2ebf8be376cefc9a3dfe73277e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1626,
+   "hotel": "Banyan Tree Mayakoba",
+   "key": "8c/8c/8c8c72dd0f9eaefe5bb34baa86a6375eaaad6a2e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1634,
+   "hotel": "Hotel Esencia",
+   "key": "a1/88/a188b2037130557555a8b8086a005e3d7d63437a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI interior, synthetic smooth surfaces",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1640,
+   "hotel": "Nobu Hotel Los Cabos",
+   "key": "8c/28/8c2825edad4e8ecabb3fd70a8a47c966ec454580.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool deck, synthetic sun and textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1641,
+   "hotel": "One&Only Mandarina",
+   "key": "43/0c/430c3825535e393a6a27ae22fa6a8d976ca8f523.jpeg",
+   "kind": "rendering",
+   "reason": "Clearly CGI sunset pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1648,
+   "hotel": "The St. Regis Mexico City",
+   "key": "93/f3/93f3729189120c1f49a6ea427fc40f18552e3946.JPEG",
+   "kind": "rendering",
+   "reason": "CGI rooftop terrace with pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1648,
+   "hotel": "The St. Regis Mexico City",
+   "key": "zz/05/ad05803880220db92f5d107b2e77312d61c58f64.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace and plunge pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1648,
+   "hotel": "The St. Regis Mexico City",
+   "key": "1a/be/1abeda64e78e9bce8fcce1d57434af89f55f775b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pergola terrace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1648,
+   "hotel": "The St. Regis Mexico City",
+   "key": "3f/f4/3ff429556f42ceaa38493966aa762677c2404f8b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace with fireplace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1648,
+   "hotel": "The St. Regis Mexico City",
+   "key": "e6/60/e660c8455cbe5871433c82504257da4b341aec05.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace dining area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "9f/7a/9f7ae483663ea33fd0c434f028009d2f6cd2a926.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace with plunge pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "19/78/19783787c59b566950595901a53c1d53f5fa2509.JPEG",
+   "kind": "rendering",
+   "reason": "CGI villa terrace and pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "17/65/176595b55a3909a6f2d2a60fe08a54fcbcb61289.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "15/2b/152b2c0c9053220f609055258779e492a2e8c96e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom/bedroom view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "4b/f8/4bf84f257320f0295d9790c1e0d83317dc9569d2.jpeg",
+   "kind": "rendering",
+   "reason": "CGI boutique interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "63/18/63184d23e76c3920037bc569ffa7def28cb36e0e.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "02/f1/02f183a30bf619aad0732cb37dd528b61d973996.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant terrace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1650,
+   "hotel": "Zadun Los Cabos, a Ritz-Carlton Reserve",
+   "key": "b8/38/b83862e24b35df2460d2416e7a5e0400f6fad7a0.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "60/96/60966f96083e5383b32afb6f1ef96859cc9e7432.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "03/bf/03bf8c1df0fadfca88dd2f8a9392f88c8a1fb405.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "c7/0e/c70e8bb798531fb45143182e2e35d3a405e7c600.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "96/3d/963d56d1acea5a535259372444f96fb29cd594fe.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "23/70/237034c2f415936cb3c9de03c278fbbdefc956f2.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "c7/e9/c7e9f39bd10e5266150bdb9921f6e175a959f7b5.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "30/56/3056cd838d51c74261807eba1dd22d0685118c7b.jpeg",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "73/9e/739e6faf24e56a0d702ba2dfb8c286b51e7e871d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "ec/6c/ec6c376d6c5a1d4d65189da25bee3bc65d26ef9b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "06/02/0602c2a96f6a10e9438670f158458329c64e226c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "d9/ee/d9ee589db52e35e2dd2cfe6b6bd4c73a6ff7b8e1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "14/ac/14acf97ed7002f4363488bcf3139fe808e3f861e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "d4/c7/d4c7c3aefde72de414ccae2959cdd2ca2faf89e9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "0e/9d/0e9dab046b816576d16df75f6865a9269303b73d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1651,
+   "hotel": "Royalton Reserve Paraíso de la Bonita",
+   "key": "4d/bb/4dbb57f30121288b1481c00663dcea18c46e6038.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1652,
+   "hotel": "1 Hotel Hanalei Bay",
+   "key": "d0/79/d079fb4dfb07f589757862afc38d4acd582a31af.jpeg",
+   "kind": "rendering",
+   "reason": "CGI spa lounge, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1652,
+   "hotel": "1 Hotel Hanalei Bay",
+   "key": "4d/d0/4dd08614ba4515586f5d956891ad7dfa082a46a8.jpeg",
+   "kind": "rendering",
+   "reason": "CGI empty room, synthetic light",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1666,
+   "hotel": "Equinox Hotel New York",
+   "key": "75/41/75412080db1f42c7bec017e47d022cbe566ec76a.jpeg",
+   "kind": "rendering",
+   "reason": "Rooftop CGI visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1669,
+   "hotel": "Four Seasons Hotel at The Surf Club",
+   "key": "aa/50/aa50fe3e5b50a8d5cc8ced7eb5ba13cbc8968086.jpeg",
+   "kind": "rendering",
+   "reason": "CGI exterior, synthetic reflections",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1669,
+   "hotel": "Four Seasons Hotel at The Surf Club",
+   "key": "16/1e/161ecd2de22f3e1289bf6199df09d811aad52cf0.jpeg",
+   "kind": "rendering",
+   "reason": "CGI exterior, synthetic reflections",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1669,
+   "hotel": "Four Seasons Hotel at The Surf Club",
+   "key": "ee/8c/ee8c57680bba4cb08f22f4198e8db4eda002133a.png",
+   "kind": "rendering",
+   "reason": "CGI night exterior visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1673,
+   "hotel": "Four Seasons Hotel New Orleans",
+   "key": "0c/ab/0cabab6fcb5c61921a0e0455251b0a8fbc746a4d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1673,
+   "hotel": "Four Seasons Hotel New Orleans",
+   "key": "d6/4e/d64ee39115db14dbb402f87158da378bc5ca8617.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1673,
+   "hotel": "Four Seasons Hotel New Orleans",
+   "key": "e9/b4/e9b4f71adbe79ec03308212bc1f4737c9e4d6f90.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1673,
+   "hotel": "Four Seasons Hotel New Orleans",
+   "key": "e0/68/e0688d9adb8b96bc07ecdd2e83855817118ca88c.jpeg",
+   "kind": "rendering",
+   "reason": "CGI garden terrace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1675,
+   "hotel": "The Ritz-Carlton Dallas, Las Colinas",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/28/39/28399d5012344be5fd8380a08bf4670deac280bc.JPEG",
+   "kind": "rendering",
+   "reason": "CGI aerial of pool cabanas",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1675,
+   "hotel": "The Ritz-Carlton Dallas, Las Colinas",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/d8/69/d8696e6b5124f7262946fabcc5a63845025b73f3.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool and building view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1675,
+   "hotel": "The Ritz-Carlton Dallas, Las Colinas",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/2e/07/2e07004df1ea46b1c03f05d6b5158993331fd8a0.JPEG",
+   "kind": "rendering",
+   "reason": "Synthetic CGI spa interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1675,
+   "hotel": "The Ritz-Carlton Dallas, Las Colinas",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/21/3a/213aed0804acba57d6358976f8f1f7ea4ab90ab9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge with fireplace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1676,
+   "hotel": "Four Seasons Resort and Residences Napa Valley",
+   "key": "be/27/be27a56c4f8893727baa7158fda9737372f7a3b2.png",
+   "kind": "rendering",
+   "reason": "CGI twilight aerial with synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1676,
+   "hotel": "Four Seasons Resort and Residences Napa Valley",
+   "key": "9f/1d/9f1df104de226e0417d654e60db6a049c5b99895.jpeg",
+   "kind": "rendering",
+   "reason": "CGI exterior with car at dusk",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1676,
+   "hotel": "Four Seasons Resort and Residences Napa Valley",
+   "key": "f0/c9/f0c92f018afebbc15b343c02a040293a32ac8b37.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathtub, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1676,
+   "hotel": "Four Seasons Resort and Residences Napa Valley",
+   "key": "37/7c/377c004dea544f46f61e4be02136ef65454fe0ab.jpeg",
+   "kind": "rendering",
+   "reason": "CGI winery dining scene",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1683,
+   "hotel": "Four Seasons Hotel Seattle",
+   "key": "eb/b9/ebb96fb0a5443890e96f9614eb593fed978e3d47.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "04/f0/04f03caa892e9e2ef01739417bd6d3b41a554013.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "50/2d/502d076ff07fccb229771f31111a6df46f54c31c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "4f/85/4f853b8cb196ac9fa8903e0ae8b8fb5b484170c8.jpeg",
+   "kind": "rendering",
+   "reason": "CGI market interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "11/d4/11d425d1a2157efda79095b3a0310bc44efbf95e.jpeg",
+   "kind": "rendering",
+   "reason": "CGI corridor",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "0f/0a/0f0a2728c0b958dc82cc44d12df26ec57ed13fde.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bowling alley",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "fb/cb/fbcb44210ea49568bd1016d0d02e0125da5b33f1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kids club",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "b4/88/b48805b0a9d6ebbb3495cc732efd3b2c5d8f5f7a.jpeg",
+   "kind": "rendering",
+   "reason": "CGI indoor pool",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "27/60/2760ec6d06ea49103776769e64e5ea43b0262862.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "71/82/71828fc6000b10305ec2ecbe06d596110a3ff2f4.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "8c/29/8c29e47b2644ef728479f926fca8763df2a3b258.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "d7/54/d754e04c541234fcf2beb804aeb4c851ecd4144d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kitchen",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "db/fc/dbfc211342b3e2cab12efbc56ed7e5e774de48e4.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "b5/bc/b5bc1c4d435e6b73a1dd8ee8d5fc4a1912e5948c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kitchen",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "d5/d1/d5d194bc1e0e631d87298364ec4c977cbd0a0d9d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kitchen",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1694,
+   "hotel": "Montage Big Sky",
+   "key": "9f/b4/9fb4f6ee9d97bdb3b45a840d0f756cc41f431d00.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kitchen",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1695,
+   "hotel": "Montage Laguna Beach",
+   "key": "0a/de/0adee3ead2468404fec5607cb13d4c737a5697a0.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D isometric room plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1695,
+   "hotel": "Montage Laguna Beach",
+   "key": "69/d1/69d1f61035d2e1bd992a5df25464ba7f7d2bc05d.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D isometric room plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1695,
+   "hotel": "Montage Laguna Beach",
+   "key": "50/f2/50f20921db0783951d304442b83f4427c98e9288.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D isometric suite plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1695,
+   "hotel": "Montage Laguna Beach",
+   "key": "65/a3/65a380d7ecf451281bd0294261afea5a61f0a6c1.JPEG",
+   "kind": "floor_plan",
+   "reason": "3D isometric suite plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1699,
+   "hotel": "Nobu Hotel Miami Beach",
+   "key": "55/9e/559ef5463fd183e0d5a26e50a4a60cfe65bcc79d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI rooftop pool visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1699,
+   "hotel": "Nobu Hotel Miami Beach",
+   "key": "bd/13/bd1339eb09120400efb9f0a1c8427c3ed993293c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace render with synthetic sky",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1710,
+   "hotel": "Stanly Ranch",
+   "key": "c2/e8/c2e87b07ea3441797a850f2e7d63b7a8823b0cf1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI banquet hall, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1710,
+   "hotel": "Stanly Ranch",
+   "key": "c0/90/c090f3193510a7eefd18588f0967a1f1017d124d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI event pavilion visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1726,
+   "hotel": "The Inn at Mattei's Tavern",
+   "key": "92/a8/92a847610a343dcedd3b0ab1e587b5bd5bbb1ba0.jpeg",
+   "kind": "rendering",
+   "reason": "Watercolour sketch of cottage",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1742,
+   "hotel": "The Post Oak Hotel at Uptown Houston",
+   "key": "59/14/59146f6ffd4bcae8b1f90145be80d25551a5b861.jpeg",
+   "kind": "rendering",
+   "reason": "CGI porte cochere with figures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1742,
+   "hotel": "The Post Oak Hotel at Uptown Houston",
+   "key": "89/f6/89f66c90e94a0e63fd1a7002986ff30fde10afd5.jpeg",
+   "kind": "rendering",
+   "reason": "CGI lobby visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1778,
+   "hotel": "Carmel Taíba Exclusive Resort",
+   "key": "73/d5/73d503e5199c9f12188092b27c239e109edeb0c2.jpeg",
+   "kind": "floor_plan",
+   "reason": "Watercolour villa site plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1778,
+   "hotel": "Carmel Taíba Exclusive Resort",
+   "key": "5e/b6/5eb61a439607b03dc693f469177057176d11b054.jpeg",
+   "kind": "floor_plan",
+   "reason": "Watercolour room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1778,
+   "hotel": "Carmel Taíba Exclusive Resort",
+   "key": "20/1e/201edc786041a16a1bf78bef08f778475574d76e.jpeg",
+   "kind": "floor_plan",
+   "reason": "Two watercolour floor plans",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1778,
+   "hotel": "Carmel Taíba Exclusive Resort",
+   "key": "ea/2e/ea2eef101caa65395592e6feb97f3bcffebae227.jpeg",
+   "kind": "floor_plan",
+   "reason": "Watercolour suite floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1778,
+   "hotel": "Carmel Taíba Exclusive Resort",
+   "key": "99/bb/99bbb113367d47f3abc6a0701ac6151445b0b26d.jpeg",
+   "kind": "floor_plan",
+   "reason": "Watercolour room floor plan",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/9f/36/9f362b41ba26eb926a91fd46f983060e212b73e0.PNG",
+   "kind": "rendering",
+   "reason": "CGI exterior with gardens",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "15/46/1546a6abb9d287af41a41144d3a0a807cbcde54b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "28/b6/28b6e1902f609ce7c3c39c26e02f5d950405cdb7.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "88/c4/88c4a02823db4a836d9054fd89dbd4eb55f4b8f9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "5f/c6/5fc647c16d263c9aba785ba26da127923ee2e03e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "ef/1d/ef1d39f469d7e4b42a9dd9ccde8601d2673d6592.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "a6/61/a661812e6e8586de95ace4ab220dc97eebb922e5.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "2a/ee/2aeeca61996068a94ee9c803732a5426af3a9f70.JPEG",
+   "kind": "rendering",
+   "reason": "CGI beach venue",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "99/21/992113a15a94cfbec66fdef3501580eda4a0877d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI kids club",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "d9/db/d9dba64b5eb9d633bc88bcc74e21028987c5e113.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool scene",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1814,
+   "hotel": "Jumeirah Marsa Al Arab",
+   "key": "59/7f/597f9e0acb42740288357cbdf26433fd05216905.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool scene",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1833,
+   "hotel": "Desert Rock",
+   "key": "3a/f2/3af26312d5cdf08db983e959e37d7d166d00302c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1833,
+   "hotel": "Desert Rock",
+   "key": "0e/03/0e03ddd1285d7016baaf90cf7fa7a209c7f0775f.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa retail interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1833,
+   "hotel": "Desert Rock",
+   "key": "c3/0d/c30d9dd47505ef17829c3ca2e3bb92b43310d932.JPEG",
+   "kind": "rendering",
+   "reason": "CGI yoga deck",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1833,
+   "hotel": "Desert Rock",
+   "key": "01/92/01922bcbaddf6f7cd679d13381f26b80af4927be.JPEG",
+   "kind": "rendering",
+   "reason": "CGI arrival scene",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1834,
+   "hotel": "Nujuma, a Ritz-Carlton Reserve",
+   "key": "b3/0b/b30b1c699b496a9a120755c2ed7fe356179e8930.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1834,
+   "hotel": "Nujuma, a Ritz-Carlton Reserve",
+   "key": "5e/83/5e83e2474d169019831808547c8a9f7a95f3a63e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI aerial of island",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1834,
+   "hotel": "Nujuma, a Ritz-Carlton Reserve",
+   "key": "01/17/0117f036646cacc7482d7734c98433f3ed002b34.JPEG",
+   "kind": "rendering",
+   "reason": "CGI beach and villas",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1834,
+   "hotel": "Nujuma, a Ritz-Carlton Reserve",
+   "key": "1b/4f/1b4ff0e076f0b1b18774e9e7a16a34763cdb7a53.JPEG",
+   "kind": "rendering",
+   "reason": "CGI overhead villas view",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 1834,
+   "hotel": "Nujuma, a Ritz-Carlton Reserve",
+   "key": "2d/94/2d94de339bdf7dd486ad3f141496f0bee545b935.JPEG",
+   "kind": "rendering",
+   "reason": "CGI shell villas exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2001,
+   "hotel": "Aman Rosa Alpina",
+   "key": "7f/11/7f118893767f5adc40329b6bdd1d3d2f25acdb1b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI exterior with synthetic landscaping",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2006,
+   "hotel": "Aman Nai Lert Bangkok",
+   "key": "00/b7/00b72fde2778d873f9c93c4335dd218e8fc8f730.JPEG",
+   "kind": "rendering",
+   "reason": "CGI arrival court, synthetic ceiling and trees",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2007,
+   "hotel": "Six Senses Kanuhura",
+   "key": "0d/5c/0d5cc124c052277f50646edb13e5523afa678abd.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2007,
+   "hotel": "Six Senses Kanuhura",
+   "key": "01/26/01260238b6f8b76c5e23bda3bff00273541e845f.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2007,
+   "hotel": "Six Senses Kanuhura",
+   "key": "89/78/8978ed11a424692eb030a7352b130cc0e3fc6617.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2007,
+   "hotel": "Six Senses Kanuhura",
+   "key": "d0/48/d048a60329a0b3915a2b25d720b1f40d3b251af6.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2007,
+   "hotel": "Six Senses Kanuhura",
+   "key": "88/90/88902782a3c619f769c6d05c250f394d8fbf9ec7.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2007,
+   "hotel": "Six Senses Kanuhura",
+   "key": "4d/97/4d97705c38d0fff0c38e6729ad64160530a0c33a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "4b/89/4b89da7e09e4f11188bc40ff2ede41cbb7c41bf9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "18/95/1895f550179127aa468f098cbe4f57dc65e01054.JPEG",
+   "kind": "rendering",
+   "reason": "CGI exterior visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "0e/4c/0e4cf3850b14838ee23d8c65964ef0c51ba3a753.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "82/f3/82f38eabab264ba37d22c52c05f84590160fef24.JPEG",
+   "kind": "rendering",
+   "reason": "CGI courtyard with figures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "90/6f/906f6937cf63ef2b43090cd4dc72b0edea8a7a56.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "0a/ec/0aec26a0591328a513df6f3bf552c7f8eedd5df4.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "f1/1b/f11bb8be4f4e177dc771ff02f0b2420ea8528c0c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby/bar render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2008,
+   "hotel": "Six Senses London",
+   "key": "47/ee/47ee45e2dfc7181018bc5beb3703f0f09e6f98b5.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant render",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "ae/5f/ae5f7bdac47c383a85984ece2ea4c65037c2251a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa reception",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "37/2c/372c314d3a8520005e3f624ea4a4497dd63fa3f3.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "d8/a0/d8a0276a3cb41ffb41de331b809def62a64ac937.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "78/8c/788cec318b8553aa298f4b4aacf4d27e736ddea9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "b7/de/b7dee8bdb76319367986d30fac26ec2864c678a9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa relaxation area",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "00/24/0024298d252ba92747a581a6df9e4a04eb026813.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "f8/7d/f87dfa2ec3ac40894cde5040575c3b0b6574e972.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2023,
+   "hotel": "Mandarin Oriental Punta Negra, Mallorca",
+   "key": "1d/d6/1dd663504d4cb5886685e02171cccb048a10622b.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2026,
+   "hotel": "Mandarin Oriental, Vienna",
+   "key": "91/16/91165cc23ada7f597d72dc8cae4d6ee12e8dd075.JPEG",
+   "kind": "rendering",
+   "reason": "CGI aerial dusk exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2026,
+   "hotel": "Mandarin Oriental, Vienna",
+   "key": "2b/de/2bdef330cbbacfe8fd666f064c6637000fc255e0.JPEG",
+   "kind": "rendering",
+   "reason": "Synthetic CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2026,
+   "hotel": "Mandarin Oriental, Vienna",
+   "key": "27/69/2769191666a672ef9d3bfc9343ddc198f2350faf.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2026,
+   "hotel": "Mandarin Oriental, Vienna",
+   "key": "73/02/7302651785ee1e39864de047e1f19d332559c68d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI atrium restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2026,
+   "hotel": "Mandarin Oriental, Vienna",
+   "key": "65/3f/653f913fe5f33a44007e2d2c93a2ae6e14bbd172.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "95/08/9508a15def46993d02bec850beb9161c7caca1e3.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "97/de/97ded534bd42ffed6614c39f24576a687a3b2572.JPEG",
+   "kind": "rendering",
+   "reason": "CGI exterior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "c3/e0/c3e00fe74002fb9adf50a17078a3ef9aa2c57d78.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "18/7f/187fb633788a2da9db520310563f5f3b93b5c947.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "e2/76/e276611280c219a9bec82665034ba4e3f27a9818.JPEG",
+   "kind": "rendering",
+   "reason": "CGI terrace",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "34/da/34da729d56e1730b1eacabceccda8b6af4ce1baa.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "fa/dc/fadc142fdad73b9997c0104505889408559b2127.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "39/d8/39d8d86c38239dfbca3af9d4c3cca1666c56d95e.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "83/67/8367d7bbe93cc84a97a30eb83521195081a5c98c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lobby",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "a4/30/a4302b24214c5632d9b82976704c8cf05112f0e4.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "a3/5c/a35c7fe905630c75c0384e89c18ea8d75a220016.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "92/26/9226b84cc94ddb70f6fddbc22e8e3796d3257e89.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bathroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2029,
+   "hotel": "Mandarin Oriental Downtown, Dubai",
+   "key": "0f/92/0f9297fec98260675d00ad4f2e6b1bc61832479c.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "8d/b7/8db7a8d73dcba0d93b738d18b28fb124aeb6de7b.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "2a/ff/2aff1843fd38141bfbae223e7d90f56926bc30d3.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "85/fd/85fdd5f11488f1b55ecffa1094242e6864e4b522.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "bc/39/bc39240e50d7c59a7dd29147f6764027c480a058.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "b2/60/b2609863a6951be822b85585fc09bc0d84735d5d.jpeg",
+   "kind": "rendering",
+   "reason": "CGI bathroom interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "6d/5a/6d5ac1aae36c4183331625e11c0d3afec1d31446.jpeg",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "3d/18/3d181c52137b2cdb639b00a0ca3bf0879aca94f2.jpeg",
+   "kind": "rendering",
+   "reason": "CGI dusk dining scene",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2034,
+   "hotel": "Four Seasons Resort Tamarindo",
+   "key": "a2/5e/a25e7590aab99da40cf0a7f22714c1d506ce0763.jpeg",
+   "kind": "rendering",
+   "reason": "CGI beach dining at dusk",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2043,
+   "hotel": "Four Seasons Resort Bali at Sayan",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/1a/23/1a23a14eaf85484fade8a66abae227e9f06bf73d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bedroom, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2043,
+   "hotel": "Four Seasons Resort Bali at Sayan",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/84/cb/84cb924840e3f499a800fffcaf0063abc11148d4.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living room visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2043,
+   "hotel": "Four Seasons Resort Bali at Sayan",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/62/f9/62f958377a14bcba73d1634795246047eaa3a793.JPEG",
+   "kind": "rendering",
+   "reason": "CGI twin bedroom, same render set",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2053,
+   "hotel": "Rosewood Munich",
+   "key": "58/c6/58c638a46111517f1d948616eee3b6a6d8daee97.jpeg",
+   "kind": "rendering",
+   "reason": "CGI living room, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2053,
+   "hotel": "Rosewood Munich",
+   "key": "3a/2a/3a2ac8817c12c5e0a382dc244f436bef2c82ef05.jpeg",
+   "kind": "rendering",
+   "reason": "CGI pool visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2053,
+   "hotel": "Rosewood Munich",
+   "key": "97/64/976453aedc4ec42705e38403afc5db0ce53f04b0.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool, synthetic textures",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2053,
+   "hotel": "Rosewood Munich",
+   "key": "c2/3a/c23acd2fd9bc21f5cb205e5345279e8e9981d4fd.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa treatment room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2053,
+   "hotel": "Rosewood Munich",
+   "key": "27/7e/277e449f69c176fb089f1baf98214a33f4d5de5a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant visualisation",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2055,
+   "hotel": "Rosewood Vienna",
+   "key": "38/2c/382c57351d902e19433e82865d7b5ea534dd7e7a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2055,
+   "hotel": "Rosewood Vienna",
+   "key": "bc/4c/bc4cfccce00d347e45cd2525caa501edbf5d56ab.JPEG",
+   "kind": "rendering",
+   "reason": "CGI living room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2055,
+   "hotel": "Rosewood Vienna",
+   "key": "01/36/0136c63d44d4ca31ec239a23e5e26e1c1b620b94.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2055,
+   "hotel": "Rosewood Vienna",
+   "key": "f8/de/f8dece79887fdad7d718880a88a85863cc26196a.JPEG",
+   "kind": "rendering",
+   "reason": "CGI lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2055,
+   "hotel": "Rosewood Vienna",
+   "key": "0d/b2/0db266ed87acf1abf21b7767e0cf37b325b3bfb1.JPEG",
+   "kind": "rendering",
+   "reason": "CGI study nook",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2055,
+   "hotel": "Rosewood Vienna",
+   "key": "88/d5/88d58e05b5c558b1e7a2062433fee56e02fefaac.JPEG",
+   "kind": "rendering",
+   "reason": "CGI dining room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2056,
+   "hotel": "The Chancery Rosewood",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/ec/cc/eccc13ce65ba7e7bd2506302b6205553b54ddccf.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool, synthetic lighting",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 2056,
+   "hotel": "The Chancery Rosewood",
+   "key": "https://cdn.worldota.net/t/{size}/ostrovok/75/7e/757e987b74eb3ba785a30d4abe8fefa1c7f4c474.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool lounge",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "64/01/64017cb8e72e9bb26ac82592f5df5a372b2261de.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "12/cd/12cd78879ed824ebe92e3cba1b21db016d943ae7.JPEG",
+   "kind": "rendering",
+   "reason": "CGI treatment room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "fe/93/fe930f5dd74ba2b8eeae31a25d707c6752326bff.JPEG",
+   "kind": "rendering",
+   "reason": "CGI spa boutique",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "4b/30/4b30877916c3ed9b0a77dadbb4fccbaac6478d40.PNG",
+   "kind": "rendering",
+   "reason": "CGI pink lounge interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "30/be/30be834d5b787a3edebaf3e1101e05ebe442a7d7.JPEG",
+   "kind": "rendering",
+   "reason": "CGI double treatment room",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "7c/d6/7cd6be24a2992ee01257bde57741624b9341d01d.JPEG",
+   "kind": "rendering",
+   "reason": "CGI bath suite",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "dd/b2/ddb2064dd25de648f91b6a4ae67631db59c58d82.JPEG",
+   "kind": "rendering",
+   "reason": "CGI pool loungers",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "fa/11/fa11524c2ebbd2ab43ba5b9a621edce0ad8853c9.JPEG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "93/08/93082c036531d129f13e2c7b0928e683e9df0927.PNG",
+   "kind": "rendering",
+   "reason": "CGI restaurant interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "6e/2f/6e2f808bee09ac553cd6eddda992b9652bf7f167.JPEG",
+   "kind": "rendering",
+   "reason": "CGI dining pavilion",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "92/7e/927e9534097a0fe633be595fec3f45bdf62d0a0e.PNG",
+   "kind": "rendering",
+   "reason": "CGI bar interior",
+   "decided": "2026-10-07"
+  },
+  {
+   "hotel_id": 3023,
+   "hotel": "Four Seasons Resort Mauritius at Anahita",
+   "key": "f3/27/f3279e92f2425468b36e6d4cd89dc661ee5df54d.PNG",
+   "kind": "rendering",
+   "reason": "CGI terrace dining",
+   "decided": "2026-10-07"
+  }
+ ]
+}
