@@ -3060,11 +3060,12 @@ export default function HotelsView(props: {
                never scrolls itself; with 50vh the list ran ~45px past the
                bottom of the screen, so its last cards sat below the edge while
                the wheel only moved the list inside it. The floor keeps it
-               usable when the filters are open, and the column scrolls then. */
-            <div className="oltra-glass oltra-panel flex min-h-[280px] flex-1 flex-col">
-              <div className="flex flex-none items-baseline justify-between">
-                <div className="oltra-label">Results</div>
-                <div className="text-xs text-[color:var(--oltra-text-muted)]">{resultsCount} matching hotels found</div>
+               usable when the filters are open, and the column scrolls then.
+               No frame (Ulrik, 2026-10-08): the transparent border keeps the
+               panel's geometry, and the count is the header. */
+            <div className="oltra-panel flex min-h-[280px] flex-1 flex-col border border-transparent">
+              <div className="oltra-label flex-none">
+                {resultsCount} matching {resultsCount === 1 ? "hotel" : "hotels"}
               </div>
 
               {/* The fade padding replaces the 14px top margin (2026-10-08). */}
@@ -3474,17 +3475,18 @@ export default function HotelsView(props: {
                   </div>
                 </div>
 
-                {/* Row 1 right: switch button — the full width of this
-                    col-span-4 track, the same track and width as SAVE TO TRIP
-                    further down. */}
-                <div className="col-span-12 lg:col-span-4">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("map")}
-                    className="oltra-btn oltra-btn--block"
-                  >
-                    Switch to map view
-                  </button>
+                {/* Row 1 right: switch button — half this col-span-4 track,
+                    against its right edge (Ulrik, 2026-10-08). */}
+                <div className="col-span-12 flex justify-end lg:col-span-4">
+                  <div className="w-1/2">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("map")}
+                      className="oltra-btn oltra-btn--block"
+                    >
+                      Map view
+                    </button>
+                  </div>
                 </div>
 
                 {/* Row 2 left: highlights — same row as links for vertical alignment */}
