@@ -851,7 +851,7 @@ export default function RestaurantsMapView({
           </p>
         </div>
 
-        <div ref={listRef} className="restaurants-sidebar__list">
+        <div ref={listRef} className="restaurants-sidebar__list oltra-scroll-fade">
           <div className="restaurants-sidebar__list-inner">
             {filteredRestaurants.map((restaurant) => {
               const active = restaurant.id === selectedRestaurant?.id;
@@ -893,7 +893,7 @@ export default function RestaurantsMapView({
           <div className="restaurants-sidebar__detail">
             <div className="oltra-label restaurants-sidebar__label">SELECTED</div>
 
-            <article className="oltra-output restaurant-detail-card">
+            <article className="oltra-output restaurant-detail-card oltra-scroll-fade">
               <h2 className="restaurant-detail-card__title">
                 {selectedRestaurant.restaurant_name}
                 {favoriteRestaurantIds.has(String(selectedRestaurant.id)) ? (

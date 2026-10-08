@@ -71,7 +71,7 @@
   height: 212px;
   max-height: 212px;
   overflow-y: auto;
-  padding: 0 8px 0 0;
+  padding-right: 8px;
   border-bottom: 0;
   width: 100%;
 }
@@ -166,6 +166,8 @@
   height: 100%;
   overflow-y: auto;
   padding-right: 8px;
+  /* .oltra-output's 7px top is less than the scroll fade (2026-10-08). */
+  padding-top: var(--oltra-scroll-fade);
   padding-bottom: 16px;
 }
 

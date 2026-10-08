@@ -2220,7 +2220,7 @@ export default function AiConversation({
 
   return (
     <div className={styles.conversation}>
-      <div className={styles.scroll} ref={scrollRef}>
+      <div className={`${styles.scroll} oltra-scroll-fade`} ref={scrollRef}>
         {messages.map((message, index) => {
           const text = messageText(message);
           const anchorsAnswer = index === presentationIndex;

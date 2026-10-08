@@ -777,6 +777,45 @@ button.oltra-select {
   overflow-y: auto;
 }
 
+/* A scrolling section keeps clear space at its top and bottom, and the text
+   fades out over it instead of running into the frame (Ulrik, 2026-10-08).
+   The padding is the space at rest, so nothing is faded until it scrolls
+   into it. The padding sits in :where() so a section's own padding (the
+   Hotels pane's .oltra-panel) wins. The second mask layer keeps the
+   scrollbar strip on the right unfaded. Not on dropdowns or modals. */
+:where(.oltra-scroll-fade) {
+  padding-top: var(--oltra-scroll-fade);
+  padding-bottom: var(--oltra-scroll-fade);
+}
+
+.oltra-scroll-fade {
+  --oltra-scroll-fade: 14px;
+  -webkit-mask-image:
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--oltra-scroll-fade),
+      #000 calc(100% - var(--oltra-scroll-fade)),
+      transparent 100%
+    ),
+    linear-gradient(#000, #000);
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--oltra-scroll-fade),
+      #000 calc(100% - var(--oltra-scroll-fade)),
+      transparent 100%
+    ),
+    linear-gradient(#000, #000);
+  -webkit-mask-size: calc(100% - 12px) 100%, 12px 100%;
+  mask-size: calc(100% - 12px) 100%, 12px 100%;
+  -webkit-mask-position: left top, right top;
+  mask-position: left top, right top;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 /* One scrollbar treatment for the whole site.
    This used to be a hand-maintained selector list (.oltra-scrollbar,
    textarea, *[class*="overflow-y-auto"], ...), which meant every scroll

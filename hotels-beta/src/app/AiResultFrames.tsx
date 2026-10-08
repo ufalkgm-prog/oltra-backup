@@ -182,7 +182,7 @@ function FlightLegPanel({
         <div className={styles.summaryLine}>Couldn&apos;t check fares just now.</div>
       ) : null}
       {state.status === "ready" ? (
-        <div className={styles.flightDetailList}>
+        <div className={`${styles.flightDetailList} oltra-scroll-fade`}>
           {/* One row when the cheapest fare is also the quickest — the second
               would have repeated its times and its duration for more money. */}
           <FlightResultRow
@@ -642,7 +642,7 @@ export default function AiResultFrames() {
               </div>
             </div>
 
-            <div className={styles.smallCardsList}>
+            <div className={`${styles.smallCardsList} oltra-scroll-fade`}>
               {stays
                 .filter((stay) => stay.hotels.length)
                 .map((stay) => (
@@ -756,7 +756,7 @@ export default function AiResultFrames() {
               </div>
             </div>
 
-            <div className={styles.smallCardsList}>
+            <div className={`${styles.smallCardsList} oltra-scroll-fade`}>
               {/* Under each restaurant's own city (Ulrik, 2026-09-15), not
                   under the stop: a stop named "Côte d'Azur" held Nice and
                   Cannes under one header. Trip order, then first appearance. */}

@@ -576,7 +576,7 @@ export default function LandingSummary({
           ) : null}
 
           {showCards ? (
-            <div className={styles.smallCardsList}>
+            <div className={`${styles.smallCardsList} oltra-scroll-fade`}>
               {visibleHotels.map((h) => {
                 const hotelParams = new URLSearchParams();
                 hotelParams.set("q", h.hotel_name ?? "");
@@ -677,7 +677,7 @@ export default function LandingSummary({
               Please be more specific to find relevant flights
             </div>
           ) : (
-            <div className={styles.flightDetailList}>
+            <div className={`${styles.flightDetailList} oltra-scroll-fade`}>
               {airportBlocks.map(({ airport, ranked }) => (
                 <div className={styles.airportBlock} key={airport.iata}>
                   <div className={styles.airportBlockHeader}>
@@ -790,7 +790,7 @@ export default function LandingSummary({
           </div>
 
           {restaurants?.length ? (
-            <div className={styles.smallCardsList}>
+            <div className={`${styles.smallCardsList} oltra-scroll-fade`}>
               {restaurants.map((restaurant) => (
                 <RestaurantSmallCard
                   key={String(restaurant.id)}

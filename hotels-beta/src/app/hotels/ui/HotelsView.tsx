@@ -3067,7 +3067,8 @@ export default function HotelsView(props: {
                 <div className="text-xs text-[color:var(--oltra-text-muted)]">{resultsCount} matching hotels found</div>
               </div>
 
-              <div className="oltra-scrollbar mt-3.5 min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
+              {/* The fade padding replaces the 14px top margin (2026-10-08). */}
+              <div className="oltra-scrollbar oltra-scroll-fade min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
                 {orderedVisibleHotels.map((h) => {
                   const active = String(h.id) === selectedHotelId;
                   /* Twice the drawn width, for dense screens. */
@@ -3280,11 +3281,12 @@ export default function HotelsView(props: {
           /* FEATURED: the search with no frame of its own, at exactly the
              width the input has on Results (Ulrik, 2026-10-07): the same
              column track as the Results layout, inset by the left panel's
-             16px padding and 1px border. Outside the glass below, so its
+             16px padding and 1px border on the left and on top, so the label
+             and input sit exactly where they do on Results (2026-10-08). Outside the glass below, so its
              dropdown layers over the frame rather than being trapped in it
              (§35); z-30 for that. */
           <div className="relative z-30 grid gap-4 lg:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.45fr)]">
-            <div className="min-w-0 px-[17px]">
+            <div className="min-w-0 px-[17px] pt-[17px]">
             <form
               action="/hotels"
               method="GET"
@@ -3363,9 +3365,12 @@ export default function HotelsView(props: {
                inset is the panel's 16px padding and 1px border, so the label,
                the name and the left photo start where the destination input
                above does. */
+            /* Results: no frame either (Ulrik, 2026-10-08). The transparent
+               border keeps the panel's geometry, so the content sits where it
+               did; the text fades at the pane's ends as it scrolls. */
             shouldShowFeatured
               ? "self-start overflow-visible px-[17px]"
-              : "oltra-glass oltra-panel oltra-hotels-right-pane",
+              : "oltra-panel oltra-scroll-fade border border-transparent oltra-hotels-right-pane",
           ].join(" ")}
         >
           {effectiveView === "featured" ? (
@@ -3374,27 +3379,22 @@ export default function HotelsView(props: {
                (This replaced a full-bleed hero with both boxes floated on top
                of it.) */
             <div className="flex flex-col gap-4">
-              {/* One frame, left-aligned, top to bottom (Ulrik, 2026-10-07):
-                  the label, the name, city and country, the accolades on one
-                  line, then the photos. Each line is one line, cut if long,
-                  and the accolade line is kept when empty, so the photos do
-                  not move as hotels cycle. The search sits above the frame,
-                  outside it. */}
+              {/* Left-aligned, top to bottom (Ulrik, 2026-10-07): the label,
+                  the name, city and country, then the photos. Each line is one
+                  line, cut if long, so the photos do not move as hotels cycle.
+                  2026-10-08: no accolade line; the block sits further below
+                  the search (mt-4 on top of the gap), and the three lines are
+                  evenly spaced (gap-1.5, tight line heights). */}
               <a
                 href={featuredHotel.hotel_name ? `/hotels?q=${encodeURIComponent(featuredHotel.hotel_name)}&search_submitted=1` : "/hotels"}
-                className="block min-w-0 cursor-pointer"
+                className="mt-4 flex min-w-0 cursor-pointer flex-col gap-1.5"
               >
-                <div className="oltra-label">Featured hotel</div>
-                <div className="mt-1 truncate text-[1.15rem] font-light tracking-wide text-[color:var(--oltra-text-primary)]">
+                <div className="oltra-label !mb-0">Featured hotel</div>
+                <div className="truncate text-[1.15rem] font-light leading-tight tracking-wide text-[color:var(--oltra-text-primary)]">
                   {featuredHotel.hotel_name ?? "Featured hotel"}
                 </div>
-                <div className="truncate text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
+                <div className="truncate text-[12px] leading-tight text-[color:var(--oltra-text-muted)]">
                   {[featuredHotel.city, featuredHotel.country].filter(Boolean).join(", ") || " "}
-                </div>
-                <div className="truncate text-[12px] leading-relaxed text-[color:var(--oltra-text-muted)]">
-                  {getFeaturedAwardsForHotel(featuredHotel as HotelRecord)
-                    .map((award) => award.label)
-                    .join(" · ") || " "}
                 </div>
               </a>
 

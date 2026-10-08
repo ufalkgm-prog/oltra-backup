@@ -206,7 +206,7 @@
   display: grid;
   gap: 12px;
   align-content: start;
-  padding: 0 8px 8px 0;
+  padding-right: 8px;
   margin-top: 8px;
 }
 

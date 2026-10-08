@@ -1919,7 +1919,7 @@ export default function FlightsView({ searchParams }: Props) {
                     ) : null}
                   </div>
 
-                  <div className={styles.resultsScroll} ref={departureScrollRef}>
+                  <div className={`${styles.resultsScroll} oltra-scroll-fade`} ref={departureScrollRef}>
                     <div className={styles.cardStack}>
                       {(() => {
                         // The selected departure stays in the list (highlighted
@@ -2020,7 +2020,7 @@ export default function FlightsView({ searchParams }: Props) {
 
                   <div className={styles.splitPanes}>
                     {/* Departure pane - its own scroll, own "from €X" price per card */}
-                    <div className={styles.resultsScroll} ref={departureScrollRef}>
+                    <div className={`${styles.resultsScroll} oltra-scroll-fade`} ref={departureScrollRef}>
                       <div className={styles.cardStack}>
                         {(() => {
                           // Selected departure stays listed and highlighted -
@@ -2052,7 +2052,7 @@ export default function FlightsView({ searchParams }: Props) {
                     </div>
 
                     {/* Return + Total price pane - its own scroll, unchanged pairing */}
-                    <div className={`${styles.resultsScroll} ${styles.resultsScrollSpan2}`} ref={returnScrollRef}>
+                    <div className={`${styles.resultsScroll} ${styles.resultsScrollSpan2} oltra-scroll-fade`} ref={returnScrollRef}>
                       <div className={styles.resultsGridOneWay}>
                         {(() => {
                           // Selected return stays listed and highlighted too,
@@ -2426,7 +2426,7 @@ function MultipleResults({
           const [colScrollRef] = legGutters[k] ?? [];
           const isActive = k === activeLegIndex;
           return (
-            <div key={k} className={styles.resultsScroll} ref={colScrollRef}>
+            <div key={k} className={`${styles.resultsScroll} oltra-scroll-fade`} ref={colScrollRef}>
               <div className={styles.cardStack}>
                 {k > activeLegIndex ? (
                   k === activeLegIndex + 1 ? (

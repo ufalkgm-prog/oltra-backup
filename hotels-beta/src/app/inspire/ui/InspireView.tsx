@@ -557,7 +557,7 @@ export default function InspireView({ cities, initial }: Props) {
               </div>
             </div>
 
-            <div className={styles.destinationList}>
+            <div className={`${styles.destinationList} oltra-scroll-fade`}>
               {matches.length === 0 ? (
                 <div className={`oltra-output ${styles.destinationCard}`}>
                   <div className={styles.destinationTitle}>
