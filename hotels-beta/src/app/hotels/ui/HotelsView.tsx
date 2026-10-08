@@ -3061,9 +3061,8 @@ export default function HotelsView(props: {
                bottom of the screen, so its last cards sat below the edge while
                the wheel only moved the list inside it. The floor keeps it
                usable when the filters are open, and the column scrolls then.
-               No frame (Ulrik, 2026-10-08): the transparent border keeps the
-               panel's geometry, and the count is the header. */
-            <div className="oltra-panel flex min-h-[280px] flex-1 flex-col border border-transparent">
+               The count is the header (Ulrik, 2026-10-08); the frame stays. */
+            <div className="oltra-glass oltra-panel flex min-h-[280px] flex-1 flex-col">
               <div className="oltra-label flex-none">
                 {resultsCount} matching {resultsCount === 1 ? "hotel" : "hotels"}
               </div>
