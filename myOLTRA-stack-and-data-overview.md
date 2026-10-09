@@ -37,7 +37,7 @@ Two **separate** Supabase projects: A holds the hotel/restaurant catalogue (no c
 | Framework | Next.js 15 (App Router, Server Components), React 18, TypeScript 5.9 |
 | Styling / maps | Tailwind CSS v4, MapLibre GL with MapTiler tiles |
 | Auth & member data | Supabase (supabase-js 2, @supabase/ssr cookie sessions) |
-| Catalogue CMS | Directus (self-hosted on Railway) over Supabase Postgres |
+| Catalogue CMS | Directus (self-hosted on Railway) over Supabase Postgres (confirmed 2026-10-09: Directus `DB_HOST` points to Supabase) |
 | AI | Vercel AI SDK 7 with Anthropic provider; Claude Opus 5.5 (conversation), Claude Haiku 4.5 (triage), Anthropic web-search tool |
 | Flights | Duffel API (search/offers only); booking handed to Trip.com |
 | Hotels supply | ETG/RateHawk Affiliate API (search, rates, prebook); booking completes on a ZenHotels white label. KAYAK planned (not live); andBeyond direct |
@@ -144,6 +144,8 @@ Supplier rate limits are site-wide (ETG: hotel page and prebook 5/min, search 15
 
 ## 7. Supabase A — Hotel database (via Directus)
 
+**Location confirmed 2026-10-09:** the Directus service on Railway connects to this Supabase project (`DB_HOST` is a supabase.co host), so the live catalogue is here and Supabase backups are what protect it. The Railway project also contains a PostGIS database service that Directus does not use; it should be checked for data and either removed or documented.
+
 **No personal customer data.** Contents: public business data, editorial content, commercially sensitive supplier mappings, and licensed media. The app only reads at runtime; all writes come from Directus admin UI or hand-run Node scripts using the same admin token.
 
 ### `hotels` — 901 rows (809 published)
@@ -209,6 +211,7 @@ All access uses the anon key plus the member's session cookie, so RLS always app
 15. **Backup:** non-expiring SSH deploy key with write access; backup is a force-pushed mirror (code only — databases are not covered by this workflow; Supabase/Directus backup posture to be confirmed).
 16. **Credential hygiene on the dev machine:** plaintext credential files exist in the working copy (gitignored); some untracked scratch files in the repo root are unreviewed.
 17. **Go-live dependencies:** Duffel token may be test-mode; ETG static-sync cron not deployed; flight inquiry email is a stub.
+18. **Unused PostGIS database in the Railway project** next to Directus — not the live catalogue; check whether it holds anything, then remove or document it (cost and attack surface). Confirm the catalogue Supabase project is on a plan with daily backups (point-in-time recovery is an add-on).
 
 ---
 
