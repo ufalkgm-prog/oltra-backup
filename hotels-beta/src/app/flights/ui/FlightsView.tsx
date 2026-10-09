@@ -638,7 +638,7 @@ export default function FlightsView({ searchParams }: Props) {
       supabase
         .from("member_profiles")
         .select("home_airport")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single()
         .then(({ data }) => {
           const airport = (data as { home_airport?: string } | null)?.home_airport;
